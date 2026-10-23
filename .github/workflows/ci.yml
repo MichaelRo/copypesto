@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# The token can only read the repository; nothing here writes to it.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Actions are pinned to commit SHAs (tags can move). Bump with `gh api repos/<owner>/<repo>/git/ref/tags/<tag>`.
+
+jobs:
+  # A text search, so a Linux runner does it (macOS minutes cost several times as much).
+  no-analytics:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Grep for forbidden SDKs
+        run: |
+          set -e
+          forbidden=(Sentry Mixpanel Amplitude Bugsnag Crashlytics Firebase Datadog Segment GoogleAnalytics PostHog Heap)
+          fail=0
+          for sdk in "${forbidden[@]}"; do
+            if grep -rnE "\b(import|@import)\s+$sdk\b" --include='*.swift' .; then
+              echo "::error::Forbidden analytics SDK: $sdk"
+              fail=1
+            fi
+          done
+          exit $fail
+
+  # The same gate as `scripts/verify.sh` on a developer machine, minus the UI tests (they drive real windows and need
+  # a Mac that has granted the runner automation permission; run them locally, see docs/testing.md).
+  verify:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select the newest Xcode
+        run: scripts/select-xcode.sh
+      - name: Install pinned tools (SwiftFormat, SwiftLint, XcodeGen; checksummed)
+        run: echo "$(scripts/install-tools.sh)" >> "$GITHUB_PATH"
+      - name: Verify (lint, all SPM tests, build, hosted tests)
+        run: scripts/verify.sh --no-ui
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verify-logs
+          path: .build/verify/**

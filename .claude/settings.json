@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "grep -rn --include='*.swift' 'NSHostingView' Sources/ 2>/dev/null | grep -v 'SafeHostingView' | grep -v '^[^:]*:[0-9]*: *//' | grep -v '^Binary' && echo 'HOOK ERROR: Raw NSHostingView found \u2014 use SafeHostingView instead (see the repo-wide pitfalls in CLAUDE.md)' >&2 && exit 2 || exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

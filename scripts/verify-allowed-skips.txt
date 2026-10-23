@@ -1,0 +1,15 @@
+# Tests that may be skipped in a verify run; anything else that is skipped fails the gate (scripts/verify_judge.py).
+# One substring of the test's identifier or name per line.
+
+# This Mac's on-device model cannot read images.
+ImageDescriptionUITests
+the real on-device model describes a picture
+an ordinary picture is not flagged by the real model
+# Apple Intelligence is not available on this Mac.
+the real on-device model understands a question
+# Resident-memory deltas are only meaningful on a developer Mac (skipped when CI is set).
+HistoryMemoryTests
+# Takes two minutes, so it runs only with TEST_RUNNER_PESTO_LONG_COPY_MEMORY=1 (docs/perf/budgets-2026-10.md).
+LongCopyMemoryTests
+# Needs Touch ID and Apple Intelligence and a person at the Mac: only `make capture-real` runs it.
+RealDeviceCaptureTests

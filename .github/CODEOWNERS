@@ -1,0 +1,15 @@
+# Changes to these paths need the maintainer's review.
+/.github/ @MichaelRo
+/scripts/ @MichaelRo
+/Makefile @MichaelRo
+/Pesto.yml @MichaelRo
+/Pesto.resolved @MichaelRo
+/decisions/ @MichaelRo
+/Sources/Core/Security/ @MichaelRo
+/Sources/Core/Crypto/ @MichaelRo
+/Sources/Core/Backup/ @MichaelRo
+/Sources/Resources/Info.plist @MichaelRo
+/SECURITY.md @MichaelRo
+/TRADEMARKS.md @MichaelRo
+/.githooks/ @MichaelRo
+/Sources/Resources/Pesto.entitlements @MichaelRo

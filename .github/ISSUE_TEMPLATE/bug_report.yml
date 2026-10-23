@@ -1,0 +1,93 @@
+name: Bug report
+description: Something isn't working correctly in Pesto.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill in as much detail as you can.
+
+        A security or privacy problem does not belong here: report it privately (see SECURITY.md).
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: "When I copy a link from Safari and open the shelf, its card shows blank text instead of the link."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps that reliably reproduce the issue.
+      placeholder: |
+        1. Copy a link from Safari
+        2. Press ⌘⇧V to open the shelf
+        3. The link's card shows empty text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: input
+    id: pesto_version
+    attributes:
+      label: Pesto version
+      placeholder: "1.0.0 (build 42), or the commit if you built it yourself"
+    validations:
+      required: true
+
+  - type: input
+    id: macos_version
+    attributes:
+      label: macOS version
+      placeholder: "macOS 15.4"
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: >-
+        In Pesto, open About and choose Copy Diagnostics, then paste it here. It holds versions, your Mac model and
+        which switches are on. It holds no clips.
+      render: text
+
+  - type: textarea
+    id: crash
+    attributes:
+      label: Crash report (if Pesto quit)
+      description: >-
+        Open Console.app, choose Crash Reports, find the newest Pesto entry and paste its top (the first 40 lines are
+        enough). Remove anything private first: this issue is public.
+      render: text
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console logs (optional)
+      description: >-
+        Paste any relevant output from Console.app filtered to `net.copypesto.pesto`. If Pesto quit unexpectedly,
+        include `~/Library/Application Support/net.copypesto.pesto/last-exception.txt`. Remove anything private
+        first: this issue is public.
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I can reliably reproduce this bug.
+          required: false

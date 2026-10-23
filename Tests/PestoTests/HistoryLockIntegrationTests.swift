@@ -41,7 +41,10 @@ extension HostedGlobals {
             #expect(state.isHistoryLockedNow())
         }
 
-        @Test("turning the lock off and on again locks at once, even right after an unlock")
+        @Test(
+            "turning the lock off and on again locks at once, even right after an unlock",
+            .enabled(if: !RunEnvironment.isCI, "a hosted runner has no password or Touch ID to lock behind")
+        )
         func lock_reenabledAfterUnlock_locksImmediately() {
             AppDefaults.store.set(true, forKey: key)
             defer {

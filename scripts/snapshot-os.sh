@@ -13,6 +13,10 @@ if [[ -z "$baseline" ]]; then
   echo "snapshots skipped: Tests/PestoSnapshotTests/baseline-macos is missing"
   exit 1
 fi
+if [[ -n "${CI:-}" || -n "${PESTO_CI:-}" ]]; then
+  echo "snapshots skipped: a hosted runner draws them differently from the Mac that recorded them"
+  exit 1
+fi
 if [[ "$baseline" == "$host" ]]; then
   echo "match: baselines and this Mac are macOS $host"
   exit 0

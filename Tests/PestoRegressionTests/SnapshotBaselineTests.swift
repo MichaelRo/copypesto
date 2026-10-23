@@ -10,12 +10,12 @@ struct SnapshotBaselineTests {
         try String(contentsOf: SourceTree.repositoryRoot.appendingPathComponent(relative), encoding: .utf8)
     }
 
-    private func check(hostMajor: String) throws -> (code: Int32, output: String) {
+    private func check(hostMajor: String, ci: String = "") throws -> (code: Int32, output: String) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [SourceTree.repositoryRoot.appendingPathComponent("scripts/snapshot-os.sh").path]
         process.environment = ProcessInfo.processInfo.environment
-            .merging(["PESTO_SNAPSHOT_HOST_MAJOR": hostMajor]) { $1 }
+            .merging(["PESTO_SNAPSHOT_HOST_MAJOR": hostMajor, "CI": ci, "PESTO_CI": ci]) { $1 }
         let output = Pipe()
         process.standardOutput = output
         process.standardError = output
@@ -49,6 +49,15 @@ struct SnapshotBaselineTests {
         let result = try check(hostMajor: "99")
         #expect(result.code == 1)
         #expect(result.output.contains("snapshots skipped: baselines are macOS \(recorded), this Mac is macOS 99"))
+    }
+
+    @Test("a hosted runner skips them even on a matching macOS, because its virtual display draws them differently")
+    func hostedRunner_skipsAndSays() throws {
+        let recorded = try read("Tests/PestoSnapshotTests/baseline-macos")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let result = try check(hostMajor: recorded, ci: "1")
+        #expect(result.code == 1)
+        #expect(result.output.contains("snapshots skipped: a hosted runner draws them differently"))
     }
 
     @Test("verify.sh and make test-snapshots both ask the script, and verify.sh judges the snapshots it ran")

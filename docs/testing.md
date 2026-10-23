@@ -86,7 +86,7 @@ The first UI run may show a system dialog asking to allow UI automation; approve
 | Core (`PestoCoreTests`, `PestoRegressionTests`) | `swift test` / `make test-core` | SPM, no app | Nothing outside the process; a test that needs a Keychain item deletes it |
 | Hosted (`PestoTests`) | part of `verify.sh` | Inside Pesto.app as the XCTest host | Nothing real: `LaunchMode.hostedTests` skips boot, and defaults, pasteboard, storage path and key are isolated; no link preview or other network request (`LinkPreviewPolicy` is off outside a normal launch) |
 | UI (`PestoUITests`) | part of `verify.sh` | Pesto launched with `-UITestMode` | Nothing real (below); link previews are off, so seeded URL clips make no request |
-| Snapshot (`PestoSnapshotTests`) | `make test-snapshots` | Inside Pesto.app | Run by `verify.sh` only on the macOS that drew the baselines (`Tests/PestoSnapshotTests/baseline-macos`), and the summary says "snapshots skipped: …" otherwise; when to record them: "Card snapshots" below |
+| Snapshot (`PestoSnapshotTests`) | `make test-snapshots` | Inside Pesto.app | Run by `verify.sh` only on the macOS that drew the baselines (`Tests/PestoSnapshotTests/baseline-macos`) and never on a hosted CI runner (its virtual display draws the pictures differently), and the summary says "snapshots skipped: …" otherwise; when to record them: "Card snapshots" below |
 
 ## Card snapshots: when they are taken
 

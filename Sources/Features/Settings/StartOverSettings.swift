@@ -10,6 +10,17 @@ struct StartOverSettings: View {
     @State private var confirmingClear = false
     @State private var message: String?
 
+    private var startOverMessage: String {
+        let clipCount = snapshot?.clipCount ?? 0
+        var message = String(localized: "This deletes all \(clipCount) clips, including pinned ones.")
+        message += " Every collection and snippet goes too. It can\u{2019}t be undone."
+        if hasBackup {
+            message += " Keeping the backup leaves its file as it is and pauses automatic backup until you resume it;"
+            message += " deleting it removes the file too."
+        }
+        return message
+    }
+
     private var hasBackup: Bool {
         AutoBackupSettings().isEnabled
     }
@@ -40,14 +51,7 @@ struct StartOverSettings: View {
                 Button("Clear Everything", role: .destructive) { Task { await clearEverything(deleteBackup: false) } }
             }
         } message: {
-            Text(
-                String(localized: "This deletes all \(snapshot?.clipCount ?? 0) clips, including pinned ones.") + " " +
-                    "Every collection and snippet goes too. It can\u{2019}t be undone." +
-                    (hasBackup
-                        ? " Keeping the backup leaves its file as it is and pauses automatic backup until you " +
-                        "resume it; deleting it removes the file too."
-                        : "")
-            )
+            Text(startOverMessage)
         }
     }
 

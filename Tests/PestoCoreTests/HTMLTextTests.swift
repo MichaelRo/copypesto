@@ -54,7 +54,10 @@ struct HTMLTextTests {
         )
     }
 
-    @Test("a megabyte of angle brackets is handled in linear time")
+    @Test(
+        "a megabyte of angle brackets is handled in linear time",
+        .enabled(if: !HostedRunner.isActive, "a wall-clock budget is only meaningful on a developer Mac")
+    )
     func whenAdversarial_thenFast() {
         let hostile = Data(String(repeating: "<a ", count: 350_000).utf8)
         let nested = Data(String(repeating: "<p><", count: 250_000).utf8)

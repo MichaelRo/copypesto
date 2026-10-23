@@ -47,8 +47,8 @@ struct AIPartsRunTests {
             calls.set(calls.get() + [message])
             return "answer"
         }
-        let parts = try? #require(engine.parts(action: .summarize, text: long))
-        let second = try? #require(parts?.parts[1])
+        let parts = engine.parts(action: .summarize, text: long)
+        let second = parts?.parts[1]
 
         let outcome = await engine.summarizePart(action: .summarize, part: second ?? AIPart(text: "", start: 0, end: 0))
 

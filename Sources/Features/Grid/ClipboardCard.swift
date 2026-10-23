@@ -224,15 +224,7 @@ struct ClipboardCard: View {
                     if item.sensitivity == nil, concealment.allowsQuickLook { actions.quickLook?(item) }
                 }
                 .accessibilityAction(named: "Delete") { actions.delete?(item) }
-                .modifier(CardMoreActions(
-                    isPinned: item.isPinned,
-                    togglePin: actions.togglePin.map { toggle in { toggle(item) } },
-                    openLink: item.type == .url ? LinkOpenPolicy.action(for: item.displayPreviewText) : .none,
-                    tags: item.tags,
-                    removeTag: { tag in edit { $0.tags.removeAll { $0 == tag } } },
-                    isFocused: isFocused,
-                    spokenCard: "\(accessibility.label), \(accessibility.value)"
-                ))
+                .modifier(moreActions)
                 .modifier(CardEditActions(
                     rename: {
                         renameText = item.customTitle ?? ""
@@ -415,6 +407,26 @@ struct ClipboardCard: View {
 
     /// An edit to this clip from one of its own popovers or menus: through the shelf's editor when there is one, so the
     /// save can roll back, the person hears of a failure and the search row follows; on its own otherwise.
+    /// Built apart from `decoratedCard`: its closures and ternary were more than the compiler would type-check there.
+    private var moreActions: CardMoreActions {
+        let link: LinkOpenPolicy.Action = item.type == .url ? LinkOpenPolicy
+            .action(for: item.displayPreviewText) : .none
+        let pin: (() -> Void)? = actions.togglePin.map { toggle in { toggle(item) } }
+        return CardMoreActions(
+            isPinned: item.isPinned,
+            togglePin: pin,
+            openLink: link,
+            tags: item.tags,
+            removeTag: removeTagFromItem,
+            isFocused: isFocused,
+            spokenCard: "\(accessibility.label), \(accessibility.value)"
+        )
+    }
+
+    private func removeTagFromItem(_ tag: String) {
+        edit { $0.tags.removeAll { $0 == tag } }
+    }
+
     func edit(_ change: (ClipboardItem) -> Void) {
         if let clipEditor {
             clipEditor.edit(item, change)

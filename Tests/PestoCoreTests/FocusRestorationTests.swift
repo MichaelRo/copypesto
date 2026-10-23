@@ -34,6 +34,13 @@ struct FocusRestorationTests {
         var now = Date(timeIntervalSinceReferenceDate: 1000)
     }
 
+    private final class Frontmost: @unchecked Sendable {
+        var application: NSRunningApplication
+        init(_ application: NSRunningApplication) {
+            self.application = application
+        }
+    }
+
     @Test("Pesto itself is never the paste target, so a paste cannot land in Pesto's own field")
     func whenPestoIsFrontmost_thenNothingIsCaptured() throws {
         let pesto = try anotherApp()
@@ -66,13 +73,14 @@ struct FocusRestorationTests {
         let apps = NSWorkspace.shared.runningApplications.filter { !$0.isTerminated }
         let target = try #require(apps.first)
         let pesto = try #require(apps.first { $0.processIdentifier != target.processIdentifier })
-        var front = target
+        let front = Frontmost(target)
         let restoration = FocusRestoration(
-            frontmostApplication: { front }, now: { clock.now }, ownProcessIdentifier: pesto.processIdentifier
+            frontmostApplication: { front.application }, now: { clock.now },
+            ownProcessIdentifier: pesto.processIdentifier
         )
         restoration.capture()
         clock.now.addTimeInterval(60)
-        front = pesto
+        front.application = pesto
 
         restoration.captureKeepingTargetWhenPestoIsFront()
 

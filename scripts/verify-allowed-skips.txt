@@ -13,3 +13,13 @@ HistoryMemoryTests
 LongCopyMemoryTests
 # Needs Touch ID and Apple Intelligence and a person at the Mac: only `make capture-real` runs it.
 RealDeviceCaptureTests
+# A hosted CI runner is a virtual machine: Vision's text recognition never returns there, AppKit's rich-text import needs a
+# window-server session, and a wall-clock budget needs real hardware. Each of these skips when CI is set.
+OCRServiceTests
+recognize_
+warming the recognizer
+the recipe card is a picture whose words can be read back
+a 33 MP picture read from its scaled copy
+a megabyte of angle brackets
+an imported rich-text clip with no preview
+each kind of copy is saved within its budget

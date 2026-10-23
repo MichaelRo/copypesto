@@ -111,7 +111,89 @@ struct ClipboardCard: View {
 
     var body: some View {
         let accessibility = accessibility
-        return hoverableCard
+        return popoverCard
+            .modifier(CardClickGestures(
+                onClick: actions.click.map { click in { click(item, $0) } },
+                isFlashing: isFlashing
+            ))
+            // On the card itself, not on the body that shows the secret: covering and uncovering swaps the drag
+            // branch below, which rebuilds that body, and a hook there hid the text the moment it was shown.
+            .onDisappear { hideSecret() }
+            .onChange(of: hideSecretsGeneration) { hideSecret() }
+            .onChange(of: isPrivacyBlurred) { _, covered in
+                if covered {
+                    hideSecret()
+                    hideAgain()
+                }
+            }
+            // The shelf clears what it revealed when it closes; a card that was shown by its own click must follow.
+            .modifier(ShowRequestReceiver(request: showRequest, itemID: item.id, perform: showShortcut))
+            .onChange(of: revealedFromOutside) { _, outside in
+                if !outside { isNSFWRevealed = false }
+            }
+            .task(id: CardLoadKey(id: item.id, isPending: item.analysisPending, byteSize: item.byteSize)) {
+                await loadThumbnailIfNeeded()
+                await loadURLMetadataIfNeeded()
+            }
+            .task(id: item.displayPreviewText) {
+                guard item.type == .file else { return }
+                missingFileCount = await FileClip.missing(inText: item.displayPreviewText).count
+            }
+            .background { if isFocused, let focusAnchor { FocusedCardAnchorView(anchor: focusAnchor) } }
+            .contextMenu { cardContextMenu }
+            .gatedDrag(allowed: concealment.allowsDrag) {
+                closeDetailForGood()
+                actions.dragStarted?(item)
+                return makeItemProvider()
+            }
+            // One element per card: without this the icon and badge each surfaced as a duplicate button.
+            .accessibilityElement(children: .ignore)
+            .accessibilityIdentifier(AccessibilityID.card)
+            .accessibilityLabel(accessibility.label)
+            .accessibilityValue(revealedSecret.map { "\(accessibility.value), shown: \($0)" } ?? accessibility
+                .value)
+            .voiceOverContent(isFocused && !isCoveredForPrivacy ? voiceOverContent : VoiceOverDetails())
+            .accessibilityHint(hidesItsContent
+                ? (canRevealHidden ? "Hidden. Pastes without showing. Use Show to reveal it." : "Hidden.")
+                : "Pastes this clip.")
+            .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+            // The card is a plain `.onTapGesture`, not a `Button`, so nothing answers VoiceOver's own
+            // default activation (Return in the rotor, double-tap) without this.
+            // Pastes, hidden or not (ADR 0003); Show is its own action.
+            .accessibilityAction { actions.click?(item, .activate) }
+            .accessibilityAction(named: "Show") {
+                guard canRevealHidden else { return }
+                if isBlurredAsSensitive || isCoveredForPrivacy {
+                    reveal()
+                } else if item.sensitivity != nil {
+                    toggleReveal()
+                }
+            }
+            .accessibilityAction(named: "Copy") { actions.copy?(item) }
+            .accessibilityAction(named: "Quick Look") {
+                if item.sensitivity == nil, concealment.allowsQuickLook { actions.quickLook?(item) }
+            }
+            .accessibilityAction(named: "Delete") { actions.delete?(item) }
+            .modifier(moreActions)
+            .modifier(CardEditActions(
+                rename: {
+                    renameText = item.customTitle ?? ""
+                    isRenamingTitle = true
+                },
+                addNote: {
+                    noteText = item.userNote ?? ""
+                    showNotePopover = true
+                },
+                addTag: {
+                    tagText = ""
+                    showTagPopover = true
+                }
+            ))
+    }
+
+    /// The popovers, apart from `body`: one modifier chain this long was more than Xcode 26 would type-check.
+    private var popoverCard: some View {
+        hoverableCard
             // Anchored here, not to the context-menu buttons: the menu closes when an item is chosen, taking a
             // popover
             // attached to it along.
@@ -162,83 +244,6 @@ struct ClipboardCard: View {
                         showTagPopover = false
                     }
                 }
-                .modifier(CardClickGestures(
-                    onClick: actions.click.map { click in { click(item, $0) } },
-                    isFlashing: isFlashing
-                ))
-                // On the card itself, not on the body that shows the secret: covering and uncovering swaps the drag
-                // branch below, which rebuilds that body, and a hook there hid the text the moment it was shown.
-                .onDisappear { hideSecret() }
-                .onChange(of: hideSecretsGeneration) { hideSecret() }
-                .onChange(of: isPrivacyBlurred) { _, covered in
-                    if covered {
-                        hideSecret()
-                        hideAgain()
-                    }
-                }
-                // The shelf clears what it revealed when it closes; a card that was shown by its own click must follow.
-                .modifier(ShowRequestReceiver(request: showRequest, itemID: item.id, perform: showShortcut))
-                .onChange(of: revealedFromOutside) { _, outside in
-                    if !outside { isNSFWRevealed = false }
-                }
-                .task(id: CardLoadKey(id: item.id, isPending: item.analysisPending, byteSize: item.byteSize)) {
-                    await loadThumbnailIfNeeded()
-                    await loadURLMetadataIfNeeded()
-                }
-                .task(id: item.displayPreviewText) {
-                    guard item.type == .file else { return }
-                    missingFileCount = await FileClip.missing(inText: item.displayPreviewText).count
-                }
-                .background { if isFocused, let focusAnchor { FocusedCardAnchorView(anchor: focusAnchor) } }
-                .contextMenu { cardContextMenu }
-                .gatedDrag(allowed: concealment.allowsDrag) {
-                    closeDetailForGood()
-                    actions.dragStarted?(item)
-                    return makeItemProvider()
-                }
-                // One element per card: without this the icon and badge each surfaced as a duplicate button.
-                .accessibilityElement(children: .ignore)
-                .accessibilityIdentifier(AccessibilityID.card)
-                .accessibilityLabel(accessibility.label)
-                .accessibilityValue(revealedSecret.map { "\(accessibility.value), shown: \($0)" } ?? accessibility
-                    .value)
-                .voiceOverContent(isFocused && !isCoveredForPrivacy ? voiceOverContent : VoiceOverDetails())
-                .accessibilityHint(hidesItsContent
-                    ? (canRevealHidden ? "Hidden. Pastes without showing. Use Show to reveal it." : "Hidden.")
-                    : "Pastes this clip.")
-                .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
-                // The card is a plain `.onTapGesture`, not a `Button`, so nothing answers VoiceOver's own
-                // default activation (Return in the rotor, double-tap) without this.
-                // Pastes, hidden or not (ADR 0003); Show is its own action.
-                .accessibilityAction { actions.click?(item, .activate) }
-                .accessibilityAction(named: "Show") {
-                    guard canRevealHidden else { return }
-                    if isBlurredAsSensitive || isCoveredForPrivacy {
-                        reveal()
-                    } else if item.sensitivity != nil {
-                        toggleReveal()
-                    }
-                }
-                .accessibilityAction(named: "Copy") { actions.copy?(item) }
-                .accessibilityAction(named: "Quick Look") {
-                    if item.sensitivity == nil, concealment.allowsQuickLook { actions.quickLook?(item) }
-                }
-                .accessibilityAction(named: "Delete") { actions.delete?(item) }
-                .modifier(moreActions)
-                .modifier(CardEditActions(
-                    rename: {
-                        renameText = item.customTitle ?? ""
-                        isRenamingTitle = true
-                    },
-                    addNote: {
-                        noteText = item.userNote ?? ""
-                        showNotePopover = true
-                    },
-                    addTag: {
-                        tagText = ""
-                        showTagPopover = true
-                    }
-                ))
     }
 
     /// Split out of `body` (SwiftUI type-checker perf, same reason as `decoratedCard`): hover and

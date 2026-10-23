@@ -53,7 +53,9 @@ jobs:
       - name: Select the newest Xcode
         run: scripts/select-xcode.sh
       - name: Install pinned tools (SwiftFormat, SwiftLint, XcodeGen; checksummed)
-        run: echo "$(scripts/install-tools.sh)" >> "$GITHUB_PATH"
+        run: |
+          tools="$(scripts/install-tools.sh)"
+          echo "$tools" >> "$GITHUB_PATH"
       - name: Verify (lint, all SPM tests, build, hosted tests)
         run: scripts/verify.sh --no-ui
       - name: Upload logs

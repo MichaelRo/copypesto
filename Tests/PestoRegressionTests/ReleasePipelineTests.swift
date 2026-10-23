@@ -52,6 +52,17 @@ struct ReleasePipelineTests {
         #expect(makefile.contains("scripts/render-export-options.sh"))
     }
 
+    @Test("a clean checkout installs the pinned tools: the folder exists before curl writes into it, and CI fails when the install does")
+    func installToolsWorksOnACleanCheckoutAndCIStopsOnFailure() throws {
+        let script = try text("scripts/install-tools.sh")
+        let mkdir = try #require(script.range(of: "mkdir -p \"$TOOLS\""))
+        let firstFetch = try #require(script.range(of: "\nif [[ ! -x"))
+        #expect(mkdir.lowerBound < firstFetch.lowerBound, "curl cannot write into a folder that does not exist yet")
+
+        let workflow = try text(".github/workflows/ci.yml")
+        #expect(!workflow.contains("echo \"$(scripts/install-tools.sh)\""), "echo hides the failure of the command inside it")
+    }
+
     @Test("every package the app builds with is pinned to a commit, not a tag")
     func packagesArePinnedToRevisions() throws {
         let project = try text("Pesto.yml")

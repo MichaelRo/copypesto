@@ -10,6 +10,7 @@ cd "$(dirname "$0")/.."
 source scripts/tool-versions.env
 
 TOOLS=".build/tools"
+mkdir -p "$TOOLS"
 
 fetch() { # fetch <url> <sha256> <zip> <destination>
   curl -fsSL "$1" -o "$3"

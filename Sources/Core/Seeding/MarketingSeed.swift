@@ -2,6 +2,7 @@
 import Foundation
 
 /// The clips behind the website screenshots. Newest first here, as the shelf shows them.
+/// The first ten are the ones the website's demo shelf shows, in the same order (copypesto-website, src/lib/shelf-demo.ts).
 /// Every source is one of Apple's own apps, every address is example.com, and nothing is a real person, a real
 /// secret or a parcel number (the Track action would name a real carrier).
 public enum MarketingSeed {
@@ -21,14 +22,11 @@ public enum MarketingSeed {
         [
             .text("Pesto night at Dana's, Friday at 7:00 pm. Bring the basil and pecorino.", app: messages),
             .picture(ShowcaseArt.basilLeaves()),
-            .text(
-                "func scale(_ grams: Double, by servings: Int) -> Double {\n    grams * Double(servings) / 4\n}",
-                app: xcode
-            ),
+            .text("{\n  \"recipe\": \"pesto\",\n  \"basil\": \"60 g\",\n  \"servings\": 4\n}", app: terminal),
             .text("Rule 1: Pine nuts must be toasted until golden, never scorched.", app: notes),
             .text("https://example.com/recipes/pesto-genovese", app: safari),
             .text("#E4572E", app: colorSync),
-            .text("Rosa's Deli, 123 Basil Lane. Call (555) 010-0142.", app: notes),
+            .text("orders@copypesto.net", app: "com.apple.mail"),
             .picture(ShowcaseArt.ingredientPalette()),
             .text("4242 4242 4242 4242", app: safari),
             .text(
@@ -38,7 +36,7 @@ public enum MarketingSeed {
             ),
             .text("https://copypesto.net/docs/shortcuts/", app: safari),
             .picture(ShowcaseArt.recipeCard()),
-            .text("orders@copypesto.net", app: "com.apple.mail"),
+            .text("Rosa's Deli, 123 Basil Lane. Call (555) 010-0142.", app: notes),
             .text("export PESTO_API_KEY=test_0000_not_a_real_key", app: terminal),
             .text(
                 ":root {\n  --basil: #2F7A49;\n  --pine-nut: #EBD9B4;\n  --parmesan: #F6EFD9;\n  --mortar: #1F2320;\n}",
@@ -51,8 +49,7 @@ public enum MarketingSeed {
             ),
             .text("https://example.com/blog/why-pesto-is-o-n-log-n", app: safari),
             .text(
-                "{\n  \"recipe\": \"pesto genovese\",\n  \"basil\": \"60 g\",\n  \"pine_nuts\": \"50 g\",\n"
-                    + "  \"servings\": 4\n}",
+                "func scale(_ grams: Double, by servings: Int) -> Double {\n    grams * Double(servings) / 4\n}",
                 app: xcode
             ),
             .picture(ShowcaseArt.pineNuts()),

@@ -109,10 +109,17 @@ final class MarketingScreenshotTests: PestoUITestCase {
                 overlay.typeText("garlic")
                 XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
                 settle(1.5)
-                // The panel is fixed at the large cards' 180 pt plus the chrome (292 pt). With the search rows open the
-                // root view reports about 341 pt, and a crop that tall starts above the panel and shows backdrop.
-                let size = CGSize(width: shortSize.width, height: min(overlay.frame.height, largeShelfHeight))
-                capture(shotName, mode: mode, region: bottomStrip(size))
+                // The shelf window is bottom-anchored and `largeShelfHeight` tall, so that is the crop: a taller one shows
+                // backdrop above the search field. If the search field or the cards do not fit inside that window with the
+                // search rows open, the app is clipping them and the picture would show it, so the test fails first.
+                let panel = bottomStrip(CGSize(width: shortSize.width, height: largeShelfHeight))
+                XCTAssertGreaterThanOrEqual(
+                    element(AccessibilityID.searchField).frame.minY, panel.minY, "the search field is above the shelf"
+                )
+                XCTAssertLessThanOrEqual(
+                    cards.firstMatch.frame.maxY, panel.maxY, "a card is cut off by the shelf with the search rows open"
+                )
+                capture(shotName, mode: mode, region: panel)
             }
         }
     }

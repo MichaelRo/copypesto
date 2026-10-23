@@ -83,8 +83,9 @@ git config core.hooksPath .githooks
 ## CI
 
 The gate is `scripts/verify.sh` (and the `.githooks/pre-push` hook). The GitHub Actions workflow runs the Linux analytics
-check on every push and pull request; the macOS `verify` job runs by hand (Actions tab, CI, Run workflow) until a hosted run
-passes, and the comment at the top of `.github/workflows/ci.yml` says how to turn it on for every change. Its jobs (actions pinned to commit SHAs, lint tools
+check on every push and pull request; the macOS `verify` job runs by hand (Actions tab, CI, Run workflow). Lint and the Core tests pass on the hosted
+runner, but its newest compiler (Xcode 26.6) cannot type-check the app, which is built with Xcode 27, so the job stays
+manual until a macOS 27 runner exists; the comment at the top of `.github/workflows/ci.yml` says what to remove then. Its jobs (actions pinned to commit SHAs, lint tools
 pinned in `scripts/tool-versions.env`):
 
 | Job | What it checks |

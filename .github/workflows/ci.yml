@@ -1,8 +1,10 @@
 name: CI
 
 # The Linux analytics check runs on every push and pull request. The macOS `verify` job runs by hand (Actions tab > CI >
-# Run workflow): on a hosted runner it has not passed yet, and `scripts/verify.sh` and `.githooks/pre-push` are the gate
-# meanwhile. Remove the `if` on `verify` once a hosted run passes.
+# Run workflow). Lint and the Core tests pass on the hosted runner, but its newest compiler, Xcode 26.6, cannot
+# type-check the app (it is built with Xcode 27 and there is no macOS 27 runner yet): `ClipboardCard.swift` stops with "unable
+# to type-check this expression in reasonable time". `scripts/verify.sh` and `.githooks/pre-push` are the gate meanwhile.
+# Remove the `if` on `verify` once a macOS 27 runner passes it.
 on:
   pull_request:
   push:

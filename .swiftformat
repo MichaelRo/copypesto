@@ -1,0 +1,53 @@
+# SwiftFormat config — Pesto
+
+--swiftversion 6.0
+
+# Indentation
+--indent 4
+--tabwidth 4
+--smarttabs enabled
+--indentcase false
+
+# Line wrapping
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+--wrapreturntype if-multiline
+--funcattributes prev-line
+--typeattributes prev-line
+--storedvarattrs same-line
+--computedvarattrs prev-line
+
+# Spacing & semantics
+--commas inline
+--trimwhitespace always
+--semicolons never
+--ranges spaced
+--operatorfunc spaced
+--nospaceoperators ...,..<
+--elseposition same-line
+--guardelse same-line
+--xcodeindentation enabled
+
+# Self handling
+--self init-only
+--selfrequired log,Self
+
+# Misc
+--patternlet hoist
+--decimalgrouping 3,5
+--binarygrouping 4,8
+--hexgrouping 4,8
+--exponentcase lowercase
+--hexliteralcase uppercase
+
+# Import grouping
+--importgrouping testable-bottom
+
+# Disabled rules — keep flexibility where format would be too opinionated
+--disable redundantSelf
+--disable opaqueGenericParameters
+
+--exclude .build,DerivedData,Pesto.xcodeproj,Sources/Resources,scratch,*-workspace

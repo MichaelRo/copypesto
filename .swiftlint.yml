@@ -1,0 +1,163 @@
+# SwiftLint config — Pesto
+
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - DerivedData
+  - Pesto.xcodeproj
+  - Sources/Resources
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 600
+  error: 1000
+
+type_body_length:
+  warning: 400
+  error: 600
+
+function_body_length:
+  warning: 60
+  error: 100
+
+cyclomatic_complexity:
+  warning: 12
+  error: 20
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  excluded:
+    - id
+    - x
+    - y
+    - z
+    - i
+    - j
+    - k
+    # Color components — industry-standard single-letter names
+    - r
+    - g
+    - b
+    - a
+    # Common short-form conventions used in this codebase
+    - d  # digit / decimal
+    - c  # character / char
+    - s  # string / score
+    - e  # error / enum case binding
+    - q  # query
+    - h  # height / hue
+    - p  # predicate / policy / pinboard
+    - f  # field / file
+    - n  # name / node
+    - t  # text / type / token
+
+force_unwrapping: error
+force_cast: error
+force_try: error
+implicitly_unwrapped_optional: error
+
+# Run by `make lint-analyze` (it needs a build log, so it is not part of the gate).
+analyzer_rules:
+  - unused_import
+
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - explicit_init
+  - first_where
+  - last_where
+  - sorted_first_last
+  - contains_over_first_not_nil
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - reduce_into
+  - redundant_nil_coalescing
+  - toggle_bool
+  - force_unwrapping
+  - implicit_return
+  - implicitly_unwrapped_optional
+  - private_action
+  - private_outlet
+  - prohibited_super_call
+  - vertical_parameter_alignment_on_call
+  - operator_usage_whitespace
+  - closure_spacing
+  - collection_alignment
+
+disabled_rules:
+  - todo  # we use ADRs + GitHub issues, not TODOs
+  # opening_brace conflicts with SwiftFormat's multi-line condition wrapping style:
+  # SwiftFormat puts { on its own line after multi-line if/guard conditions, which
+  # SwiftLint's opening_brace rule flags. SwiftFormat is authoritative for brace style.
+  - opening_brace
+
+custom_rules:
+  no_print_in_release:
+    name: "No print() calls"
+    regex: '(?<!\.)\bprint\('
+    message: "Use os.Logger instead of print()."
+    severity: warning
+
+  no_force_cast_as_question:
+    name: "No `as!` casts"
+    regex: '\bas\!'
+    message: "Avoid `as!`. Use guard let / if let with `as?`."
+    severity: error
+
+  no_swiftui_in_core:
+    name: "Core/ must not import SwiftUI"
+    regex: '^import SwiftUI'
+    included: 'Sources/Core/.*'
+    message: "Core/ is UI-free. Move UI-dependent code to Features/."
+    severity: error
+
+  no_direct_user_defaults:
+    name: "Use AppDefaults.store, not UserDefaults.standard"
+    regex: 'UserDefaults\.standard'
+    excluded: '(Sources/Core/Runtime/AppDefaults|Tests/PestoCoreTests/AppDefaultsTests)\.swift'
+    message: "AppDefaults.store is the private suite under test; .standard writes to the user's real preferences."
+    severity: error
+
+  no_direct_general_pasteboard:
+    name: "Use AppPasteboard.general, not NSPasteboard.general"
+    regex: 'NSPasteboard\.general'
+    excluded: '(Sources/Core/Runtime/(AppPasteboard|RuntimeConfiguration)|Sources/CLI/main|Tests/.*)\.swift'
+    message: "AppPasteboard.general is a private pasteboard under test; .general is the user's real clipboard."
+    severity: error
+
+  no_direct_accessibility_check:
+    name: "Use AccessibilityAccess, not AXIsProcessTrusted"
+    regex: 'AXIsProcessTrusted'
+    excluded: 'Sources/Core/Runtime/AccessibilityAccess\.swift'
+    message: "AccessibilityAccess is stubbed under test so no run needs a real grant or shows the prompt."
+    severity: error
+
+  no_clip_content_in_logs:
+    name: "Never log clipboard content"
+    regex: '(?i)(logger|log)\b[^\n]*\b(previewText|displayPreviewText|gridPreview|payloadString)\b'
+    message: "Log output persists in the system log (and sysdiagnose). Log an item id, never its content."
+    severity: error
+
+  no_raw_safe_hosting_view:
+    name: "Host UI with SafeHostingView(pesto:)"
+    regex: 'SafeHostingView\(\s*erasing:'
+    excluded: 'Sources/(Shared/Components/SafeHostingView|Features/Overlay/SafeHostingView\+AppDefaults)\.swift'
+    message: "SafeHostingView(pesto:) routes @AppStorage through AppDefaults.store."
+    severity: error
+
+  no_direct_preview_in_grid:
+    name: "Grid must use gridPreview, not previewText"
+    regex: '\.previewText\b'
+    included: 'Sources/Features/Grid/.*'
+    message: "Use ClipboardItem.gridPreview — see ADR 0004."
+    severity: error

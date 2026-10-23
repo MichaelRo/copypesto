@@ -1,0 +1,25 @@
+{
+ "label": "safari-idle",
+ "windows": [
+  {
+   "alpha": 1,
+   "height": 948,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Safari",
+   "pid": 34102,
+   "sharingState": 0,
+   "width": 1512
+  },
+  {
+   "alpha": 1,
+   "height": 28,
+   "layer": 2147483630,
+   "onscreen": true,
+   "owner": "Window Server",
+   "pid": 610,
+   "sharingState": 1,
+   "width": 28
+  }
+ ]
+}

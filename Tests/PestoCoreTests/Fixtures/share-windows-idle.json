@@ -1,0 +1,195 @@
+{
+ "label": "idle",
+ "windows": [
+  {
+   "alpha": 1,
+   "height": 0,
+   "layer": 25,
+   "onscreen": false,
+   "owner": "Window Tool",
+   "pid": 2151,
+   "sharingState": 0,
+   "width": 0
+  },
+  {
+   "alpha": 1,
+   "height": 892,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Music App",
+   "pid": 1459,
+   "sharingState": 0,
+   "width": 1355
+  },
+  {
+   "alpha": 1,
+   "height": 948,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Google Chrome",
+   "pid": 1284,
+   "sharingState": 0,
+   "width": 1512
+  },
+  {
+   "alpha": 1,
+   "height": 800,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Visual Studio Code",
+   "pid": 1282,
+   "sharingState": 0,
+   "width": 1200
+  },
+  {
+   "alpha": 1,
+   "height": 900,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Code Editor",
+   "pid": 1290,
+   "sharingState": 0,
+   "width": 1400
+  },
+  {
+   "alpha": 1,
+   "height": 866,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Visual Studio Code",
+   "pid": 1282,
+   "sharingState": 0,
+   "width": 1344
+  },
+  {
+   "alpha": 1,
+   "height": 768,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Messages",
+   "pid": 1298,
+   "sharingState": 0,
+   "width": 1024
+  },
+  {
+   "alpha": 1,
+   "height": 488,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "TextEdit",
+   "pid": 1295,
+   "sharingState": 0,
+   "width": 586
+  },
+  {
+   "alpha": 1,
+   "height": 800,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Terminal App",
+   "pid": 1296,
+   "sharingState": 0,
+   "width": 1280
+  },
+  {
+   "alpha": 1,
+   "height": 726,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Assistant App",
+   "pid": 1291,
+   "sharingState": 0,
+   "width": 851
+  },
+  {
+   "alpha": 0,
+   "height": 0,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Assistant App",
+   "pid": 1291,
+   "sharingState": 0,
+   "width": 0
+  },
+  {
+   "alpha": 1,
+   "height": 874,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Chat App",
+   "pid": 75239,
+   "sharingState": 0,
+   "width": 1273
+  },
+  {
+   "alpha": 1,
+   "height": 180,
+   "layer": -2147483601,
+   "onscreen": true,
+   "owner": "Notification Center",
+   "pid": 1129,
+   "sharingState": 0,
+   "width": 360
+  },
+  {
+   "alpha": 1,
+   "height": 180,
+   "layer": -2147483601,
+   "onscreen": true,
+   "owner": "Notification Center",
+   "pid": 1129,
+   "sharingState": 0,
+   "width": 180
+  },
+  {
+   "alpha": 1,
+   "height": 180,
+   "layer": -2147483601,
+   "onscreen": true,
+   "owner": "Notification Center",
+   "pid": 1129,
+   "sharingState": 0,
+   "width": 180
+  },
+  {
+   "alpha": 1,
+   "height": 33,
+   "layer": 24,
+   "onscreen": true,
+   "owner": "Window Server",
+   "pid": 610,
+   "sharingState": 1,
+   "width": 1512
+  },
+  {
+   "alpha": 1,
+   "height": 800,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Notes App",
+   "pid": 89307,
+   "sharingState": 0,
+   "width": 1024
+  },
+  {
+   "alpha": 1,
+   "height": 254,
+   "layer": 25,
+   "onscreen": false,
+   "owner": "LinkedNotesUIService",
+   "pid": 76859,
+   "sharingState": 0,
+   "width": 254
+  },
+  {
+   "alpha": 1,
+   "height": 40,
+   "layer": 2147483630,
+   "onscreen": true,
+   "owner": "Window Server",
+   "pid": 610,
+   "sharingState": 0,
+   "width": 28
+  }
+ ]
+}

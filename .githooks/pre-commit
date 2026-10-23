@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Pesto pre-commit hook: format, lint, fast unit tests.
+# Skipped only on explicit WIP branches matching wip/*.
+
+set -euo pipefail
+
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")"
+if [[ "$branch" == wip/* ]]; then
+  echo "[pre-commit] WIP branch — skipping checks. Squash before merging."
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# The Command Line Tools cannot build PestoCore; use a full Xcode unless the environment names another.
+export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+
+red()    { printf '\033[31m%s\033[0m\n' "$*"; }
+green()  { printf '\033[32m%s\033[0m\n' "$*"; }
+yellow() { printf '\033[33m%s\033[0m\n' "$*"; }
+
+fail() { red "[pre-commit] $1"; exit 1; }
+
+# 1. swiftformat: fix the staged Swift files and stage the fix. A file that also has unstaged changes (git add -p)
+#    is only checked, so the hook never stages a hunk you left out on purpose.
+if command -v swiftformat >/dev/null; then
+  yellow "[pre-commit] swiftformat..."
+  fix=()
+  check=()
+  while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    if git diff --quiet -- "$file"; then fix+=("$file"); else check+=("$file"); fi
+  done < <(git diff --cached --name-only --diff-filter=ACMR -- '*.swift')
+  if [ ${#fix[@]} -gt 0 ]; then
+    swiftformat --quiet "${fix[@]}"
+    git add -- "${fix[@]}"
+  fi
+  if [ ${#check[@]} -gt 0 ]; then
+    swiftformat --lint --quiet "${check[@]}" || fail "partly staged files need formatting: run swiftformat on ${check[*]}"
+  fi
+else
+  red "[pre-commit] swiftformat not found. Run: brew install swiftformat"
+  exit 1
+fi
+
+# 2. swiftlint (strict)
+if command -v swiftlint >/dev/null; then
+  yellow "[pre-commit] swiftlint --strict..."
+  swiftlint --quiet --strict || fail "swiftlint failed"
+else
+  red "[pre-commit] swiftlint not found. Run: brew install swiftlint"
+  exit 1
+fi
+
+# 3. Fast unit tests (Core and Regression only — skip UI/snapshot for speed)
+if command -v swift >/dev/null; then
+  yellow "[pre-commit] swift test (Core only)..."
+  if [ -f Package.swift ]; then
+    # The whole run goes to a file: `tail` alone once lost the name of a test that failed and then passed on a retry.
+    log="$(mktemp -t pesto-precommit-tests)"
+    if ! swift test --filter "PestoCoreTests|PestoRegressionTests" > "$log" 2>&1; then
+      grep -E "^✘|error:" "$log" | head -20 || true
+      tail -5 "$log"
+      fail "Core tests failed (full log: $log)"
+    fi
+    tail -3 "$log"
+    rm -f "$log"
+  else
+    yellow "[pre-commit] Package.swift not found — skipping swift test"
+  fi
+else
+  fail "swift not found"
+fi
+
+green "[pre-commit] all checks passed"

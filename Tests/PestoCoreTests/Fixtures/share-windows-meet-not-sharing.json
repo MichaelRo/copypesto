@@ -1,0 +1,45 @@
+{
+ "label": "meet-not-sharing",
+ "windows": [
+  {
+   "alpha": 1,
+   "height": 523,
+   "layer": 3,
+   "onscreen": true,
+   "owner": "Google Chrome",
+   "pid": 65501,
+   "sharingState": 0,
+   "width": 300
+  },
+  {
+   "alpha": 1,
+   "height": 28,
+   "layer": 2147483630,
+   "onscreen": true,
+   "owner": "Window Server",
+   "pid": 610,
+   "sharingState": 1,
+   "width": 28
+  },
+  {
+   "alpha": 1,
+   "height": 948,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Google Chrome",
+   "pid": 65501,
+   "sharingState": 0,
+   "width": 1512
+  },
+  {
+   "alpha": 1,
+   "height": 900,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Google Chrome",
+   "pid": 65501,
+   "sharingState": 0,
+   "width": 1200
+  }
+ ]
+}

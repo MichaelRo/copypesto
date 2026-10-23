@@ -1,0 +1,12 @@
+title = "Pesto gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Fake secrets used as input by the sensitive-content detector, its tests and the sample data"
+paths = [
+    '''Tests/PestoCoreTests/SensitiveContentDetectorTests\.swift''',
+    '''Sources/Core/Runtime/SeedFixtures\.swift''',
+    '''Tests/.*Tests\.swift''',
+]

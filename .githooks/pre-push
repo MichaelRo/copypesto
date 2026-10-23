@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Pesto pre-push hook: full test suite and security check.
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
+
+red()    { printf '\033[31m%s\033[0m\n' "$*"; }
+green()  { printf '\033[32m%s\033[0m\n' "$*"; }
+yellow() { printf '\033[33m%s\033[0m\n' "$*"; }
+
+fail() { red "[pre-push] $1"; exit 1; }
+
+# 1. Full test suite
+if [ -f Package.swift ]; then
+  yellow "[pre-push] swift test (full)..."
+  swift test 2>&1 | tail -30 || fail "tests failed"
+fi
+
+# 2. Grep for forbidden analytics SDK imports (defense in depth)
+yellow "[pre-push] checking for analytics SDKs..."
+forbidden=(Sentry Mixpanel Amplitude Bugsnag Crashlytics Firebase Datadog Segment GoogleAnalytics PostHog Heap)
+for sdk in "${forbidden[@]}"; do
+  if git grep -nE "\b(import|@import)\s+$sdk\b" -- '*.swift' 2>/dev/null; then
+    fail "Forbidden analytics SDK reference: $sdk"
+  fi
+done
+
+# 2b. Secrets in what is about to be pushed (the history is scanned in full before the repository goes public)
+if command -v gitleaks >/dev/null 2>&1; then
+  yellow "[pre-push] gitleaks..."
+  range="origin/main..HEAD"
+  git rev-parse --verify -q origin/main >/dev/null || range="HEAD"
+  gitleaks git --no-banner --redact --log-opts="$range" >/dev/null 2>&1 \
+    || fail "gitleaks found something that looks like a secret: run 'gitleaks git --redact --log-opts=\"$range\"' to see where"
+else
+  yellow "[pre-push] gitleaks is not installed, so no secrets scan ran (brew install gitleaks)."
+fi
+
+green "[pre-push] all checks passed"

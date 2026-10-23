@@ -1,0 +1,65 @@
+{
+ "label": "firefox-sharing",
+ "windows": [
+  {
+   "alpha": 1,
+   "height": 20,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Firefox",
+   "pid": 63416,
+   "sharingState": 0,
+   "width": 66
+  },
+  {
+   "alpha": 1,
+   "height": 32,
+   "layer": 3,
+   "onscreen": true,
+   "owner": "Firefox",
+   "pid": 63416,
+   "sharingState": 0,
+   "width": 379
+  },
+  {
+   "alpha": 1,
+   "height": 28,
+   "layer": 2147483630,
+   "onscreen": true,
+   "owner": "Window Server",
+   "pid": 425,
+   "sharingState": 1,
+   "width": 28
+  },
+  {
+   "alpha": 1,
+   "height": 149,
+   "layer": 0,
+   "onscreen": false,
+   "owner": "Firefox",
+   "pid": 63416,
+   "sharingState": 0,
+   "width": 405
+  },
+  {
+   "alpha": 1,
+   "height": 854,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Firefox",
+   "pid": 63416,
+   "sharingState": 0,
+   "width": 1280
+  },
+  {
+   "alpha": 1,
+   "height": 948,
+   "layer": 0,
+   "onscreen": true,
+   "owner": "Google Chrome",
+   "pid": 45902,
+   "sharingState": 0,
+   "width": 1512
+  }
+ ]
+}

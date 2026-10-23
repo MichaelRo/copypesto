@@ -46,7 +46,7 @@ jobs:
   # a Mac that has granted the runner automation permission; run them locally, see docs/testing.md).
   verify:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 45
     env:
       PESTO_DISABLE_TEXT_RECOGNITION: "1"

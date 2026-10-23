@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="Pesto Scripting">
+
+    <suite name="Pesto Suite" code="pest" description="Pesto clipboard manager commands.">
+
+        <command name="copy item" code="pestcopy"
+                 description="Copy text to the clipboard; Pesto saves it as a clip.">
+            <cocoa class="CopyItemCommand"/>
+            <direct-parameter type="text" description="The text to copy."/>
+            <parameter name="concealed" code="pcnc" type="boolean" optional="yes"
+                       description="Mark the copy as concealed: it stays on this Mac, off Universal Clipboard, and Pesto does not record it.">
+                <cocoa key="concealed"/>
+            </parameter>
+            <result type="text" description="The copied text."/>
+        </command>
+
+        <command name="get last item" code="pestlast"
+                 description="Return the preview of the latest clip that holds no secret.">
+            <cocoa class="GetLastItemCommand"/>
+            <result type="text" description="Preview of the latest clip, or an empty string if there is none."/>
+        </command>
+
+        <command name="search history" code="pestsrch"
+                 description="Search the history and return matching clip previews, newest first (at most 20).">
+            <cocoa class="SearchHistoryCommand"/>
+            <parameter name="with query" code="quer" type="text" description="The search query string.">
+                <cocoa key="query"/>
+            </parameter>
+            <result type="text" list="yes" description="The matching clip previews, newest first."/>
+        </command>
+
+        <command name="paste item" code="pestpste"
+                 description="Paste a clip by its ID, as a double click on the shelf does.">
+            <cocoa class="PasteItemCommand"/>
+            <parameter name="id" code="uuid" type="text" description="The ID of the clip to paste.">
+                <cocoa key="itemID"/>
+            </parameter>
+        </command>
+
+        <command name="list collections" code="pestpbds"
+                 description="Return the names of all collections, in display order.">
+            <cocoa class="ListCollectionsCommand"/>
+            <result type="text" list="yes" description="The collection names, in display order."/>
+        </command>
+
+        <command name="clear history" code="pestclrh"
+                 description="Delete the clips that are not pinned, after the person confirms. Range: 'hour', 'today' or 'all'.">
+            <cocoa class="ClearHistoryCommand"/>
+            <parameter name="range" code="rang" type="text" description="Time window to clear (required).">
+                <cocoa key="range"/>
+            </parameter>
+        </command>
+
+    </suite>
+
+</dictionary>

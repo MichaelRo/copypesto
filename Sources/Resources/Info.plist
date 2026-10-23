@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>Pesto</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>Pesto</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+    <key>PestoAllowsTestHooks</key>
+    <string>$(PESTO_ALLOWS_TEST_HOOKS)</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>LSEnvironment</key>
+    <dict>
+        <key>MallocLargeCache</key>
+        <string>0</string>
+    </dict>
+    <key>NSAccessibilityUsageDescription</key>
+    <string>Pesto uses Accessibility to paste clips directly into the app you were using, and to notice a double ⌘C.</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Michael Roytman. Released under the MIT License.</string>
+    <!-- Sparkle auto-update. SUPublicEDKey is the public half of the release signing key (Sparkle's generate_keys); do not change it. -->
+    <!-- The appcast is served from the product domain; copies already shipped keep polling this URL, so do not move it. -->
+    <key>SUFeedURL</key>
+    <string>https://copypesto.net/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>aIii+OKzpxR5E+CnJyA7XFFxKav8/vilKIcV90Ffmqs=</string>
+    <!-- "YES" in a build made by make run or make install: such a build never polls the official update feed. -->
+    <key>PestoDevelopmentBuild</key>
+    <string>$(PESTO_DEV_BUILD)</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>NSServices</key>
+    <array>
+        <dict>
+            <key>NSMenuItem</key>
+            <dict>
+                <key>default</key>
+                <string>Copy to Pesto</string>
+            </dict>
+            <key>NSMessage</key>
+            <string>copyToPesto</string>
+            <key>NSPortName</key>
+            <string>Pesto</string>
+            <key>NSSendTypes</key>
+            <array>
+                <string>NSStringPboardType</string>
+            </array>
+        </dict>
+    </array>
+    <key>NSAppleScriptEnabled</key>
+    <true/>
+    <key>OSAScriptingDefinition</key>
+    <string>Pesto.sdef</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>net.copypesto.pesto.url-scheme</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>pesto</string>
+            </array>
+        </dict>
+    </array>
+</dict>
+</plist>

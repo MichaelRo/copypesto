@@ -1,0 +1,107 @@
+{
+  "groups": [
+    {
+      "layers": [
+        {
+          "glass": false,
+          "name": "P",
+          "image-name-specializations": [
+            {
+              "value": "letter.svg"
+            },
+            {
+              "appearance": "dark",
+              "value": "letter-dark.svg"
+            }
+          ]
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.35
+      },
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    },
+    {
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "front-card.svg",
+          "name": "front card"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    },
+    {
+      "layers": [
+        {
+          "glass": true,
+          "image-name": "stack.svg",
+          "name": "stack"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.4
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "macOS"
+    ]
+  },
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "extended-srgb:0.24300,0.56900,0.37600,1.00000",
+          "extended-srgb:0.12200,0.35300,0.21200,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.2,
+            "y": 0.0
+          },
+          "stop": {
+            "x": 0.7,
+            "y": 1.0
+          }
+        }
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "extended-srgb:0.16900,0.22700,0.18800,1.00000",
+          "extended-srgb:0.08200,0.10200,0.08600,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.2,
+            "y": 0.0
+          },
+          "stop": {
+            "x": 0.7,
+            "y": 1.0
+          }
+        }
+      }
+    }
+  ]
+}

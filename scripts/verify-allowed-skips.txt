@@ -24,3 +24,12 @@ a megabyte of angle brackets
 an imported rich-text clip with no preview
 each kind of copy is saved within its budget
 turning the lock off and on again locks at once
+# Hardware budgets and real-device captures that already skip when CI is set (RunEnvironment.isCI), and the History Lock test.
+BackupRestorePerformanceTests
+BackupVerifyMemoryTests
+BackupWritePerformanceTests
+LargePictureMemoryTests
+SourceIconMemoryTests
+CopyLatencyPerformanceTests
+lock_reenabledAfterUnlock_locksImmediately
+RealDeviceCaptureTests

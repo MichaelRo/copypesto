@@ -7,7 +7,10 @@ import Vision
 
 /// Text recognition on a picture over 24 MP reads a scaled copy (ADR 0006). This renders small text on a canvas over
 /// the limit and compares what the scaled read finds with a read of the same picture at full size.
-@Suite("Text recognition on pictures over the pixel limit")
+@Suite(
+    "Text recognition on pictures over the pixel limit",
+    .enabled(if: VisionAvailability.canRecognizeText, "text recognition needs a real Mac")
+)
 struct OCRLargePictureAccuracyTests {
     private static let words = [
         "invoice", "payment", "balance", "account", "reference", "quarterly", "meeting", "agenda", "deadline",

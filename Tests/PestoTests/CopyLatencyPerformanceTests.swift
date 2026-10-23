@@ -44,7 +44,13 @@ extension HostedGlobals {
             return (container, directory)
         }
 
-        @Test("each kind of copy is saved within its budget, and the numbers are reported")
+        @Test(
+            "each kind of copy is saved within its budget, and the numbers are reported",
+            .enabled(
+                if: !RunEnvironment.isCI,
+                "saving a picture runs text recognition, which never returns on a hosted runner"
+            )
+        )
         func ingest_perKind() async throws {
             let (container, directory) = try makeStore()
             defer { try? FileManager.default.removeItem(at: directory) }

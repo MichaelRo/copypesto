@@ -37,7 +37,7 @@ private func makePNG(text: String) -> Data? {
 
 // MARK: - Tests
 
-@Suite("OCRService")
+@Suite("OCRService", .enabled(if: VisionAvailability.canRecognizeText, "text recognition needs a real Mac"))
 struct OCRServiceTests {
     @Test
     func recognize_extractsTextFromImage() async throws {
@@ -116,7 +116,7 @@ struct OCRServiceTests {
     }
 }
 
-@Suite("OCR warm-up")
+@Suite("OCR warm-up", .enabled(if: VisionAvailability.canRecognizeText, "text recognition needs a real Mac"))
 struct OCRWarmUpTests {
     @Test("warming the recognizer completes and leaves it usable")
     func whenPrewarmed_thenStillRecognisesNothingInABlankImage() async {

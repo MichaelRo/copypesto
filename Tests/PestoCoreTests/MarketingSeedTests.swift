@@ -70,7 +70,10 @@ struct MarketingSeedTests {
         #expect(Set(styles.map(\.colorHex)).count == boards.count)
     }
 
-    @Test("the recipe card is a picture whose words can be read back, so searching for text in pictures works")
+    @Test(
+        "the recipe card is a picture whose words can be read back, so searching for text in pictures works",
+        .enabled(if: VisionAvailability.canRecognizeText, "text recognition needs a real Mac")
+    )
     func whenRecipeCardRead_thenWordsFound() async throws {
         let card = try #require(MarketingSeed.captures().first { $0.payload == ShowcaseArt.recipeCard() }?.payload)
 

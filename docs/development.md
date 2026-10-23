@@ -82,9 +82,9 @@ git config core.hooksPath .githooks
 
 ## CI
 
-The gate is `scripts/verify.sh` (and the `.githooks/pre-push` hook). The GitHub Actions workflow is currently
-**manual-only** (run it from the Actions tab) because the free plan's minutes are used up; see the comment at the top of
-`.github/workflows/ci.yml` for how to turn automatic runs back on. Its jobs (actions pinned to commit SHAs, lint tools
+The gate is `scripts/verify.sh` (and the `.githooks/pre-push` hook). The GitHub Actions workflow runs the Linux analytics
+check on every push and pull request; the macOS `verify` job runs by hand (Actions tab, CI, Run workflow) until a hosted run
+passes, and the comment at the top of `.github/workflows/ci.yml` says how to turn it on for every change. Its jobs (actions pinned to commit SHAs, lint tools
 pinned in `scripts/tool-versions.env`):
 
 | Job | What it checks |

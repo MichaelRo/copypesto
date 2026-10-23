@@ -1,11 +1,12 @@
 name: CI
 
-# Manual only, for now: macOS runners cost several times as much as Linux ones, and `scripts/verify.sh` and
-# `.githooks/pre-push` are the gate meanwhile. For a public repository, where Actions are free, restore:
-#   pull_request:
-#   push:
-#     branches: [main]
+# The Linux analytics check runs on every push and pull request. The macOS `verify` job runs by hand (Actions tab > CI >
+# Run workflow): on a hosted runner it has not passed yet, and `scripts/verify.sh` and `.githooks/pre-push` are the gate
+# meanwhile. Remove the `if` on `verify` once a hosted run passes.
 on:
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 # The token can only read the repository; nothing here writes to it.
@@ -42,7 +43,9 @@ jobs:
   # The same gate as `scripts/verify.sh` on a developer machine, minus the UI tests (they drive real windows and need
   # a Mac that has granted the runner automation permission; run them locally, see docs/testing.md).
   verify:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: macos-26
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -1,9 +1,11 @@
 name: CI
 
+# Manual only, for now: macOS runners cost several times as much as Linux ones, and `scripts/verify.sh` and
+# `.githooks/pre-push` are the gate meanwhile. For a public repository, where Actions are free, restore:
+#   pull_request:
+#   push:
+#     branches: [main]
 on:
-  pull_request:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 # The token can only read the repository; nothing here writes to it.

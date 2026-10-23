@@ -114,7 +114,13 @@ struct StorageRepairTests {
         #expect(try item(real).type == .color)
     }
 
-    @Test("an imported rich-text clip with no preview gets its text, a plain-text blob and a fresh hash")
+    @Test(
+        "an imported rich-text clip with no preview gets its text, a plain-text blob and a fresh hash",
+        .enabled(
+            if: !HostedRunner.isActive,
+            "reading rich text needs a window-server session, which a hosted runner lacks"
+        )
+    )
     func repair_emptyRichTextClip_isRebuilt() async throws {
         let id = try insertEmptyRichTextClip(#"{\rtf1\ansi Call the gas company}"#)
         let before = try item(id).contentHash

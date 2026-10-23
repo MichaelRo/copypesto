@@ -61,7 +61,8 @@ project_warnings() {
 }
 
 step_core() {
-  swift test >"$LOGS/core.log" 2>&1
+  # On a hosted runner (3 cores) the parallel tests starve each other's timers; serial takes about a minute.
+  swift test ${CI:+--no-parallel} >"$LOGS/core.log" 2>&1
   local code=$?
   sed -i '' 's/\x1b\[[0-9;]*m//g' "$LOGS/core.log"
   local warnings
@@ -175,7 +176,7 @@ step_hosted_and_ui() {
   # Apple account or provisioning profile is needed.
   # xcodebuild forwards TEST_RUNNER_* variables to the test process (a plain CI variable does not reach the app host).
   local ci_flag=()
-  [[ -n "${CI:-}" ]] && ci_flag=(TEST_RUNNER_PESTO_CI=1)
+  [[ -n "${CI:-}" ]] && ci_flag=(TEST_RUNNER_PESTO_CI=1 TEST_RUNNER_PESTO_DISABLE_TEXT_RECOGNITION=1)
   # A test host that dies of SIGTERM mid-run (2026-10-15, twice in 15 s) left no trace of what else was running:
   # sample the build and test processes so the next one can be matched against what was running (concurrent.log).
   ( while true; do

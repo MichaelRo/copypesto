@@ -16,11 +16,23 @@ public protocol TextRecognizing: Sendable {
 public struct OCRService: TextRecognizing {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "OCR")
 
-    public init() {}
+    /// Hosted CI runners are virtual machines on which Vision's text recognition never returns; their job sets this.
+    public static let disableVariable = "PESTO_DISABLE_TEXT_RECOGNITION"
+
+    private let disabled: Bool
+
+    public init(environment: [String: String] = ProcessInfo.processInfo.environment) {
+        disabled = Self.isDisabled(environment: environment)
+    }
+
+    public static func isDisabled(environment: [String: String]) -> Bool {
+        environment[disableVariable] != nil
+    }
 
     /// Runs the recognizer once on a blank image so the model is loaded before the first real screenshot; that first
     /// run can take many seconds, and a clip does not appear until it has been read (secrets in it are masked).
     public func prewarm() async {
+        guard !disabled else { return }
         let size = 16
         guard let context = CGContext(
             data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: 0,
@@ -37,7 +49,8 @@ public struct OCRService: TextRecognizing {
     /// Extracts printed text from image data. Returns nil when the image contains
     /// no recognizable text or cannot be decoded.
     public func recognize(imageData: Data) async -> String? {
-        await Task.detached(priority: .utility) {
+        guard !disabled else { return nil }
+        return await Task.detached(priority: .utility) {
             guard
                 let source = CGImageSourceCreateWithData(
                     imageData as CFData,

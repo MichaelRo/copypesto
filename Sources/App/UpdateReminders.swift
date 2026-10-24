@@ -31,24 +31,32 @@ final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdater
         }
     }
 
+    private nonisolated func onMain(_ work: @escaping @MainActor (UpdateReminders) -> Void) {
+        if Thread.isMainThread {
+            MainActor.assumeIsolated { work(self) }
+        } else {
+            Task { @MainActor in work(self) }
+        }
+    }
+
     nonisolated func standardUserDriverWillHandleShowingUpdate(
         _ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state _: SPUUserUpdateState
     ) {
         let version = update.displayVersionString
-        Task { @MainActor in
-            self.hasPendingManualCheck = false
-            self.appState.availableUpdateVersion = handleShowingUpdate ? nil : version
+        onMain {
+            $0.hasPendingManualCheck = false
+            $0.appState.availableUpdateVersion = handleShowingUpdate ? nil : version
         }
     }
 
     nonisolated func standardUserDriverDidReceiveUserAttention(forUpdate _: SUAppcastItem) {
-        Task { @MainActor in self.appState.availableUpdateVersion = nil }
+        onMain { $0.appState.availableUpdateVersion = nil }
     }
 
     nonisolated func standardUserDriverWillFinishUpdateSession() {
-        Task { @MainActor in
-            self.hasPendingManualCheck = false
-            self.appState.availableUpdateVersion = nil
+        onMain {
+            $0.hasPendingManualCheck = false
+            $0.appState.availableUpdateVersion = nil
         }
     }
 
@@ -62,8 +70,14 @@ final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdater
 
     nonisolated func updaterDidNotFindUpdate(_: SPUUpdater, error: any Error) {
         let userInitiated = (error as NSError).userInfo[SPUNoUpdateFoundUserInitiatedKey] as? Bool == true
-        Task { @MainActor in
-            self.handleNoUpdateFound(userInitiated: userInitiated)
-        }
+        onMain { $0.handleNoUpdateFound(userInitiated: userInitiated) }
+    }
+
+    nonisolated func updater(_: SPUUpdater, didFinishUpdateCycleFor _: SPUUpdateCheck, error _: (any Error)?) {
+        onMain { $0.hasPendingManualCheck = false }
+    }
+
+    nonisolated func updater(_: SPUUpdater, didAbortWithError _: any Error) {
+        onMain { $0.hasPendingManualCheck = false }
     }
 }

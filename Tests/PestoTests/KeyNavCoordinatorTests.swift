@@ -88,9 +88,25 @@ struct KeyNavCoordinatorTests {
 
         let right = try keyEvent(keyCode: 124, modifiers: [.control, .option])
         let left = try keyEvent(keyCode: 123, modifiers: [.control, .option])
+        let down = try keyEvent(keyCode: 125, modifiers: [.control, .option])
+        let up = try keyEvent(keyCode: 126, modifiers: [.control, .option])
 
         #expect(coordinator.handle(right) === right)
         #expect(coordinator.handle(left) === left)
+        #expect(coordinator.handle(down) === down)
+        #expect(coordinator.handle(up) === up)
+
+        coordinator.isSearchActive = true
+        #expect(coordinator.handle(down) === down)
+        #expect(coordinator.handle(up) === up)
+        coordinator.isSearchActive = false
+
+        coordinator.isLocked = true
+        #expect(coordinator.handle(right) === right)
+        coordinator.isLocked = false
+
+        coordinator.isConfirming = true
+        #expect(coordinator.handle(right) === right)
         #expect(!fired)
     }
 

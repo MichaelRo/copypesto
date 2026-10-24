@@ -96,6 +96,13 @@ extension HostedGlobals {
             delegate.appState.updateReminders.handleNoUpdateFound(userInitiated: false)
             #expect(upToDateCount == 1, "manual check fires the up-to-date toast once")
             #expect(!delegate.appState.updateReminders.hasPendingManualCheck)
+
+            delegate.appState.updateReminders.beginManualCheck()
+            #expect(delegate.appState.updateReminders.hasPendingManualCheck)
+            delegate.appState.updateReminders.standardUserDriverWillFinishUpdateSession()
+            #expect(!delegate.appState.updateReminders.hasPendingManualCheck)
+            delegate.appState.updateReminders.handleNoUpdateFound(userInitiated: false)
+            #expect(upToDateCount == 1, "aborted or finished session clears pending manual check")
         }
     }
 

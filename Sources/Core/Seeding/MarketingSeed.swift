@@ -2,7 +2,8 @@
 import Foundation
 
 /// The clips behind the website screenshots. Newest first here, as the shelf shows them.
-/// The first ten are the ones the website's demo shelf shows, in the same order (copypesto-website, src/lib/shelf-demo.ts).
+/// The first ten are the ones the website's demo shelf shows, in the same order
+/// (copypesto-website, src/lib/shelf-demo.ts).
 /// Every source is one of Apple's own apps, every address is example.com, and nothing is a real person, a real
 /// secret or a parcel number (the Track action would name a real carrier).
 public enum MarketingSeed {

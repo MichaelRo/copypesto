@@ -90,7 +90,9 @@ final class MarketingLoopTests: PestoUITestCase {
             parkPointer()
             settle()
             frame("secret", mode, 0, holdMilliseconds: 1000)
-            for _ in 0..<8 { overlay.typeKey(.rightArrow, modifierFlags: []) }
+            for _ in 0..<8 {
+                overlay.typeKey(.rightArrow, modifierFlags: [])
+            }
             settle(1.4)
             frame("secret", mode, 1, holdMilliseconds: 2600)
             overlay.typeKey(.escape, modifierFlags: [])

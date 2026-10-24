@@ -105,10 +105,22 @@ The full list of what is stored and sent, including what encryption does *not* p
 The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 
 <p align="center">
-  <img alt="The shelf in the Basil theme" src="docs/images/theme-basil.png" width="49%">
-  <img alt="The shelf in the Parmesan theme" src="docs/images/theme-parmesan.png" width="49%">
-  <img alt="The shelf in the Pine nut theme" src="docs/images/theme-pine-nut.png" width="49%">
-  <img alt="The shelf in the Mortar theme" src="docs/images/theme-mortar.png" width="49%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-basil-dark.png">
+    <img alt="The shelf in the Basil theme" src="docs/images/theme-basil-light.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-parmesan-dark.png">
+    <img alt="The shelf in the Parmesan theme" src="docs/images/theme-parmesan-light.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-pine-nut-dark.png">
+    <img alt="The shelf in the Pine nut theme" src="docs/images/theme-pine-nut-light.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-mortar-dark.png">
+    <img alt="The shelf in the Mortar theme" src="docs/images/theme-mortar-light.png" width="49%">
+  </picture>
 </p>
 
 
@@ -152,7 +164,9 @@ make test-core       # the fast tests, no Xcode project needed
 
 Architecture, how to build and test it, the security invariants and the project's working agreements are in
 [docs/development.md](docs/development.md) and [CONTRIBUTING.md](CONTRIBUTING.md). Every important decision has an
-[ADR](decisions/). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
+[ADR](decisions/). Planned directions live in [ROADMAP.md](ROADMAP.md). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
+
+Pesto is written with AI coding tools (Claude and Gemini) under human design, architecture records ([decisions/](decisions/)) and a verification suite that checks the security and privacy rules on every change.
 
 ## Support
 

@@ -76,16 +76,18 @@ final class ThemeAppearancePaneTests: PestoUITestCase {
 
 final class ThemeShelfTests: PestoUITestCase {
     func test_everyTheme_drawsTheShelfInLightAndDark() {
+        var isFirst = true
         for theme in ["basil", "parmesan", "pineNut", "mortar"] {
             for mode in ["light", "dark"] {
                 launch(
-                    seed: "marketing",
+                    seed: isFirst ? "marketing" : "empty",
                     defaults: [
                         "hasOnboarded": "true", "cardSize": "large", "accentColorHex": "brand",
                         "linkPreviewsEnabled": "false", "appearanceMode": mode, "appTheme": theme
                     ],
                     backdrop: "plain"
                 )
+                isFirst = false
                 showOverlay()
                 XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10), "\(theme) \(mode)")
                 RunLoop.current.run(until: Date().addingTimeInterval(1))

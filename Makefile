@@ -126,6 +126,14 @@ marketing-images: generate ## [Maintenance] Take the website screenshots into .b
 	scripts/export-marketing-images.sh; \
 	exit $$status
 
+.PHONY: marketing-loops
+marketing-loops: generate ## [Maintenance] Take the frames of the website's scenes into .build/marketing/loops/ and make the MP4, WebM and GIF for the README and launch posts in .build/marketing/video/ (needs ffmpeg and gifski); quit other apps first
+	@status=0; \
+	$(XCODEBUILD) $(UI_SIGNING) -only-testing:PestoUITests/MarketingLoopTests test || status=$$?; \
+	scripts/export-marketing-images.sh; \
+	scripts/encode-marketing-loops.sh; \
+	exit $$status
+
 .PHONY: capture-real
 capture-real: generate ## [Maintenance] Retake the Touch ID lock and the Ask pictures with the real Touch ID view and the on-device model (needs Touch ID and Apple Intelligence; stay at the Mac; docs/testing.md)
 	@status=0; \

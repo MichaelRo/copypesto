@@ -109,9 +109,10 @@ final class MarketingScreenshotTests: PestoUITestCase {
                 overlay.typeText("garlic")
                 XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
                 settle(1.5)
-                // The shelf window is bottom-anchored and `largeShelfHeight` tall, so that is the crop: a taller one shows
-                // backdrop above the search field. If the search field or the cards do not fit inside that window with the
-                // search rows open, the app is clipping them and the picture would show it, so the test fails first.
+                // The shelf window is bottom-anchored and `largeShelfHeight` tall, so that is the crop: a taller one
+                // shows backdrop above the search field. If the search field or the cards do not fit inside that
+                // window with the search rows open, the app is clipping them and the picture would show it, so the
+                // test fails first.
                 let panel = bottomStrip(CGSize(width: shortSize.width, height: largeShelfHeight))
                 XCTAssertGreaterThanOrEqual(
                     element(AccessibilityID.searchField).frame.minY, panel.minY, "the search field is above the shelf"

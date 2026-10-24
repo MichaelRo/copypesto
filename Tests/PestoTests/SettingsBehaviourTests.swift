@@ -77,6 +77,15 @@ extension HostedGlobals {
             #expect(HSBColor(hex: "E06C75")?.hexString == "E06C75")
             #expect(HSBColor(hex: "invalid") == nil)
         }
+
+        @Test("wiring update settings attaches the automatic update check switch and manual check handler")
+        @MainActor
+        func whenUpdateSettingsWired_thenAutomaticUpdateChecksAndManualCheckAreSet() {
+            let delegate = AppDelegate()
+            delegate.wireUpdateSettings()
+            #expect(delegate.appState.automaticUpdateChecks != nil)
+            #expect(delegate.appState.checkForUpdates != nil)
+        }
     }
 
     @Suite("Shortcuts action", .serialized)

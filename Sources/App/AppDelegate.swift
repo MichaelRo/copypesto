@@ -77,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         QuickLookPreviewController.sweepStaleTempFiles()
         if mode.usesSystemIntegrations {
             _ = updaterController
-            if !BuildKind.isDevelopment { wireUpdateSettings() }
+            wireUpdateSettings()
         }
         bootStorage()
         resolveMissingEncryptionKey { [self] in finishLaunch(mode: mode) }

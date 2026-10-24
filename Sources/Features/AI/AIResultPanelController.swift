@@ -50,8 +50,9 @@ final class AIResultPanel: NSPanel {
     override func sendEvent(_ event: NSEvent) {
         if event.type == .leftMouseDown,
            let contentView,
+           contentView.bounds.height > 80,
            event.locationInWindow.y >= contentView.bounds.height - 44,
-           event.locationInWindow.x < contentView.bounds.width - 48
+           !(contentView.hitTest(event.locationInWindow) is NSControl)
         {
             NSCursor.closedHand.push()
             performDrag(with: event)
@@ -72,6 +73,7 @@ private struct AIResultView: View {
     var onCombine: () -> Void = {}
 
     @State private var copied = false
+    @State private var scrollEnds = ScrollEnds()
     @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
@@ -103,8 +105,6 @@ private struct AIResultView: View {
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .contentShape(Rectangle())
-            .gesture(WindowDragGesture())
-            .allowsWindowActivationEvents()
 
             if !result.sourcePreview.isEmpty {
                 let ellipsis = result.sourcePreview.count >= 80 ? "…" : ""
@@ -147,15 +147,20 @@ private struct AIResultView: View {
                     ? AIResultLayout.answerHeight(for: result.result, width: AIResultLayout.textWidth)
                     : 220
             )
+            .onScrollGeometryChange(for: ScrollEnds.self, of: { ScrollEnds($0) }, action: { _, ends in
+                scrollEnds = ends
+            })
             .mask(
                 VStack(spacing: 0) {
                     Color.black
-                    LinearGradient(
-                        colors: [.black, .clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 22)
+                    if !scrollEnds.atBottom {
+                        LinearGradient(
+                            colors: [.black, .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 22)
+                    }
                 }
             )
             .accessibilityLabel(result.progress == nil ? "Answer" : "Parts read so far")

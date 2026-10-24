@@ -3,9 +3,9 @@ import AppKit
 import PestoCore
 import SwiftUI
 
-/// Small floating "Press ⌘V to paste" toast — Tier 3 paste UX.
+/// Small floating status toast — Tier 3 paste UX and update notices.
 ///
-/// Non-modal, non-activating, auto-dismisses after 2.5 s with a 0.5 s fade.
+/// Non-modal, non-activating, auto-dismisses after `toast.visibleSeconds` with a 0.5 s fade.
 /// Created fresh each time `ToastWindowController.show()` is called.
 private struct ToastView: View {
     @Environment(\.colorSchemeContrast) private var contrast
@@ -67,8 +67,8 @@ private struct ToastView: View {
         .accessibilityAddTraits(toast.isClickable ? .isButton : [])
         .accessibilityIdentifier(AccessibilityID.toast)
         .onAppear {
-            withAnimation(Motion.animation(.easeIn(duration: 0.15))) { opacity = 1 }
-            guard !holds else { return }
+            withAnimation(Motion.animation(.pestoQuick)) { opacity = 1 }
+            guard !holds, !Motion.reduceMotion else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + toast.visibleSeconds - 0.6) {
                 withAnimation(Motion.animation(.easeOut(duration: 0.5))) { opacity = 0 }
             }

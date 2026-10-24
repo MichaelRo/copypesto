@@ -85,6 +85,17 @@ extension HostedGlobals {
             delegate.wireUpdateSettings()
             #expect(delegate.appState.automaticUpdateChecks != nil)
             #expect(delegate.appState.checkForUpdates != nil)
+            #expect(delegate.appState.updateReminders.onUpToDate != nil)
+
+            var upToDateCount = 0
+            delegate.appState.updateReminders.onUpToDate = { upToDateCount += 1 }
+            delegate.appState.updateReminders.handleNoUpdateFound(userInitiated: false)
+            #expect(upToDateCount == 0, "scheduled background checks stay silent")
+
+            delegate.appState.updateReminders.beginManualCheck()
+            delegate.appState.updateReminders.handleNoUpdateFound(userInitiated: false)
+            #expect(upToDateCount == 1, "manual check fires the up-to-date toast once")
+            #expect(!delegate.appState.updateReminders.hasPendingManualCheck)
         }
     }
 

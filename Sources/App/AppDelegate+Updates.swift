@@ -7,6 +7,7 @@ extension AppDelegate {
     func wireUpdateSettings() {
         let updater = updaterController.updater
         appState.checkForUpdates = { [weak self] in self?.statusCheckUpdates() }
+        appState.updateReminders.onUpToDate = { [weak self] in self?.showUpToDateToast() }
         appState.automaticUpdateChecks = (
             get: { updater.automaticallyChecksForUpdates },
             set: { updater.automaticallyChecksForUpdates = $0 }

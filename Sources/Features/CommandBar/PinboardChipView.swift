@@ -160,9 +160,7 @@ struct ChipFramesKey: PreferenceKey {
 }
 
 /// One drop for the whole row of chips, so a dragged chip is accepted (a move) wherever the pointer is in the row. The
-/// row
-/// shows the new order live: the other chips slide around the dragged chip's empty slot, and nothing looks like a
-/// target.
+/// chips stay in place while a 2 pt accent bar marks the gap where the dragged chip will land.
 struct ChipRowDropDelegate: DropDelegate {
     let appState: AppState
     let baseOrder: [UUID]

@@ -69,10 +69,6 @@ struct CommandBarView: View {
         .onChange(of: appState.isHistoryLocked) { _, _ in suggestionsModel.refresh() }
         .onChange(of: appState.isSearchActive) { _, active in
             if active {
-                if !appState.appChipFilter.isEmpty {
-                    appState.searchSourceFilter.formUnion(appState.appChipFilter)
-                    appState.appChipFilter.removeAll()
-                }
                 searchFocused = true
             } else {
                 searchFocused = false
@@ -179,7 +175,10 @@ struct CommandBarView: View {
                 }
             }
 
-            AppChipsRow(recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost)
+            AppChipsRow(
+                recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost,
+                collapsesLabels: !shownPinboards.isEmpty
+            )
         }
         .animation(Motion.animation(.spring(response: 0.22, dampingFraction: 0.85)), value: creating)
         .animation(Motion.animation(.pestoPop), value: pinboards.map(\.id))
@@ -199,11 +198,12 @@ struct CommandBarView: View {
             delegate: ChipRowDropDelegate(
                 appState: appState, baseOrder: pinboards.map(\.id), frames: chipFrames,
                 frozenFrames: $chipFrozenFrames, liveOrder: $chipLiveOrder, insertionBar: $chipInsertionBar,
-                onCommit: { persistPinboardOrder($0) }
+                onCommit: { persistPinboardOrder($0, moved: appState.draggingPinboardID) }
             )
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Collections and filters")
+        .frame(minHeight: 26)
     }
 
     private var rightToolbar: some View {
@@ -245,7 +245,8 @@ struct CommandBarView: View {
         return PestoChip(
             label: "@\(tag)",
             tint: Color(hue: stableHue(for: tag), saturation: 0.7, brightness: 0.85),
-            isActive: isSelected
+            isActive: isSelected,
+            helpText: String(localized: "Filter by tag: \(tag)")
         ) {
             if isSelected {
                 appState.searchText = ""
@@ -254,7 +255,6 @@ struct CommandBarView: View {
                 appState.isSearchActive = false
             }
         }
-        .help("Filter by tag: \(tag)")
         .accessibilityIdentifier(AccessibilityID.tagChip(tag))
     }
 
@@ -361,9 +361,8 @@ struct CommandBarView: View {
     private func filterChip(_ entry: FilterEntry, hasCursor: Bool) -> some View {
         PestoChip(
             label: entry.label, icon: entry.icon, iconImage: entry.iconImage, isActive: entry.isActive,
-            hasKeyboardCursor: hasCursor, action: entry.toggle
+            hasKeyboardCursor: hasCursor, helpText: entry.help ?? "", action: entry.toggle
         )
-        .help(entry.help ?? "")
         .accessibilityLabel(entry.spoken ?? entry.label)
         .accessibilityIdentifier(AccessibilityID.filterChip(entry.label))
     }
@@ -516,7 +515,7 @@ struct CommandBarView: View {
         pinboards
     }
 
-    private func persistPinboardOrder(_ order: [UUID]) {
+    private func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
         let ids = pinboards.map(\.id)
         guard order != ids else { return }
         let reordered = order.compactMap { id in pinboards.first { $0.id == id } }
@@ -527,7 +526,14 @@ struct CommandBarView: View {
                 }
             }
         }
-        Announcer.announce("Moved")
+        if let id,
+           let position = order.firstIndex(of: id),
+           let name = pinboards.first(where: { $0.id == id })?.name
+        {
+            Announcer.announce("\(name), position \(position + 1) of \(order.count)")
+        } else {
+            Announcer.announce("Moved")
+        }
     }
 
     private func movePinboard(_ id: UUID, by offset: Int) {
@@ -535,10 +541,7 @@ struct CommandBarView: View {
         guard let from = ids.firstIndex(of: id), ids.indices.contains(from + offset) else { return }
         var order = ids
         order.swapAt(from, from + offset)
-        withAnimation(Motion.animation(.pestoMove)) { persistPinboardOrder(order) }
-        if let name = pinboards.first(where: { $0.id == id })?.name {
-            Announcer.announce("\(name), position \(from + offset + 1) of \(ids.count)")
-        }
+        withAnimation(Motion.animation(.pestoMove)) { persistPinboardOrder(order, moved: id) }
     }
 }
 

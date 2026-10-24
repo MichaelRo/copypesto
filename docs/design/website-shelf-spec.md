@@ -123,3 +123,32 @@ Any later change to a card or the shelf updates this file in the same app pull r
 numbers in "Values" stop matching `CardLayout`. The site's copy follows `docs/guide/` and `docs/feature-reference.md`, which
 the release step syncs.
 
+
+---
+
+## Part 3 — Command bar chips (1.0.1: D3 & D4)
+
+### Collection and app filter chips (D4)
+
+- **In the app (`CollectionChip.swift`, `PestoChip.swift`, `AppChipsRow.swift`):**
+  - **Collection chips (`CollectionChip.swift`):** Share the same 24 pt tinted capsule geometry, `.caption.weight(.medium)` typography, 9 pt horizontal padding, fill opacity (`0.10` rest, `0.18` hover, `0.25` selected), and border rules as `PestoChip`. Collection chips ("All" and every user collection) **always display both their icon and their collection name at rest**.
+  - **App chips (`PestoChip.swift`, `AppChipsRow.swift`):** When user collections are present on the command bar (`!shownPinboards.isEmpty`), app chips set `collapsesLabel = true` so collections keep their titles at rest while app chips show only their icon at rest. When there are no custom collections (`shownPinboards.isEmpty`), app chips set `collapsesLabel = false` and show their names at rest too.
+  - **At rest (unselected, unhovered, unfocused):** 24 × 24 pt minimum target, 14 × 14 pt app icon, 5 pt leading and trailing padding, no label text.
+  - **Expanded (pointer hover, keyboard focus, or active filter `isActive`):** 5 pt leading padding, 9 pt trailing padding, 4 pt icon-to-label gap, app name (`.caption.weight(.medium)`, `.lineLimit(1)`, `maxWidth: 200` pt), plus a bold `checkmark` icon when `isActive`.
+  - **Motion:** Expands and collapses with `Motion.animation(.pestoQuick)` (0.15 s ease-out; instant when Reduce Motion is on).
+  - **Accessibility & help:** `accessibilityLabel` is always the app name (`accessibilityValue` `"selected"` when active); tooltip is `"Show clips from <App>"` when inactive and `"Showing clips from <App>, click to remove"` when active.
+
+- **On the website (`Shelf.astro`, `src/styles/home.css`, `src/lib/shelf-demo.ts`):**
+  - Collection chips ("All", "Pesto night", "Recipes") always show their icon and title (`chip.label`), while each app chip carries `.chip--app` and wraps its text in `<span class="chip-label"><span>{chip.label}</span></span>`.
+  - **At rest:** `.chip--app` sets `padding-inline: 0.625rem` and `gap: 0`; `.chip-label` uses `display: inline-grid; grid-template-columns: 0fr; overflow: hidden` (`min-width: 0` on the inner span).
+  - **Expanded (`.chip--app:is(:hover, :has(input:focus-visible, :checked))`):** `padding-inline-end: 0.875rem`, `gap: 0.375rem`, and `.chip-label` opens to `grid-template-columns: 1fr`.
+  - **Motion:** Under `@media (prefers-reduced-motion: no-preference)`, `grid-template-columns`, `gap`, and `padding` transition over `var(--dur-quick) ease-out`.
+  - **Intentional differences from the app:** The website shelf uses radio inputs (single-selection CSS demo, no checkmark glyph) and keeps neutral outlined pill styling rather than the app's tinted fills. Each `.chip--app` keeps `title={chip.label}` and `aria-label={chip.name}` on its radio input.
+
+### Collection chip drag reorder (D3 — app only)
+
+- **In the app (`PinboardChipView.swift`, `CommandBarView.swift`, `CollectionReorder.swift`):**
+  - **Source chip while dragging:** Stays in its original slot at `0.35` opacity (`isBeingDragged`). Neighboring chips do not slide and the row width does not change.
+  - **Insertion bar:** A `2 × 20` pt `RoundedRectangle(cornerRadius: 1)` in `pestoAccent`, centered in the 8 pt gap between chips, marks where the drop will land (`CollectionReorder.insertionBar`). Hidden when dropping at the pointer's current position would not change the order. Fades in with `Motion.animation(.pestoQuick)`.
+  - **Drag preview:** `Color.opaqueSurface` capsule with a 1 pt `pestoAccent` border, `0.9` opacity, `1.04` scale (`1.0` under Reduce Motion), and shadow (`radius: 14, y: 6`, 28% black).
+- **On the website:** Not replicated (collection chips on the marketing shelf are static filter radios, not draggable).

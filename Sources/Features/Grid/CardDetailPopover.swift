@@ -76,7 +76,7 @@ struct CardDetailPopover: View {
         .frame(width: Self.width, alignment: .leading)
         .background {
             let shape = RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
-            shape.fill(Color.opaqueSurface.opacity(0.55)).adaptiveMaterialBackground(in: shape)
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
         }
         .overlay {
             RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)

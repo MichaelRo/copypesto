@@ -7,8 +7,8 @@ import XCTest
 /// does not jump). Motion is off in a UI-test launch, so each frame is a settled state and a run gives the same
 /// frames every time, with no screen recording and no permission to grant. The website plays the frames by scroll
 /// (no autoplay, so no pause button is needed); `scripts/encode-marketing-loops.sh` joins them into MP4, WebM and
-/// GIF for the README, the launch posts and the press kit. A frame is attached as `loop-<scene>-<mode>-<nn>-<hold
-/// in ms>@2x`.
+/// GIF for the README, the launch posts and the press kit. A frame is attached as
+/// `loop-<scene>-<mode>-<nn>-<hold in ms>@2x`.
 @MainActor
 final class MarketingLoopTests: PestoUITestCase {
     private let frameSize = CGSize(width: 1200, height: 400)

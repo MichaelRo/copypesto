@@ -28,7 +28,10 @@ extension AppState {
         if grace.isActive() { return true }
         guard authenticator.canAuthenticate() else { return false }
         guard embeddedAvailable, isOverlayVisible else {
-            return await withSystemAuthenticationDialog { await grace.verify(using: authenticator, reason: reason) }
+            let delay: Duration = LaunchMode.current.usesSystemIntegrations ? .milliseconds(200) : .zero
+            return await withSystemAuthenticationDialog(settleDelay: delay) {
+                await grace.verify(using: authenticator, reason: reason)
+            }
         }
         guard shelfAuthentication == nil else { return false }
         return await withCheckedContinuation { continuation in
@@ -45,11 +48,22 @@ extension AppState {
     }
 
     /// Runs a system authentication (the password dialog) with the shelf held open, then gives the shelf its keys back.
-    func withSystemAuthenticationDialog<T>(_ body: () async -> T) async -> T {
+    func withSystemAuthenticationDialog<T>(
+        settleDelay: Duration = .zero,
+        _ body: () async -> T
+    ) async
+    -> T {
         systemAuthenticationDialogs += 1
+        defer {
+            systemAuthenticationDialogs -= 1
+            onRestoreKeyFocus?()
+        }
         let result = await body()
-        systemAuthenticationDialogs -= 1
-        onRestoreKeyFocus?()
+        if settleDelay > .zero {
+            try? await Task.sleep(for: settleDelay)
+        } else {
+            await Task.yield()
+        }
         return result
     }
 

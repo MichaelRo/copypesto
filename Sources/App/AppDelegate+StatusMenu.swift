@@ -437,11 +437,21 @@ extension AppDelegate: NSMenuDelegate {
     func statusCheckUpdates() {
         switch UpdateCheckRoute.choose(isDevelopment: BuildKind.isDevelopment) {
         case .sparkle:
-            updaterController.checkForUpdates(nil)
+            if appState.availableUpdateVersion != nil || updaterController.updater.sessionInProgress {
+                updaterController.checkForUpdates(nil)
+            } else {
+                appState.updateReminders.beginManualCheck()
+                updaterController.updater.checkForUpdatesInBackground()
+            }
         case .explainUnavailable:
             toastController.show(.updatesUnavailable, anchor: statusItemFrame)
             ToastAnnouncement.updatesUnavailable()
         }
+    }
+
+    func showUpToDateToast() {
+        toastController.show(.upToDate, anchor: statusItemFrame)
+        ToastAnnouncement.upToDate()
     }
 
     @objc

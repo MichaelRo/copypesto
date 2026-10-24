@@ -21,8 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// SPUStandardUpdaterController must be retained on the delegate for the lifetime of the app.
     /// Lazy so only a normal launch starts the updater; `applicationDidFinishLaunching` touches it.
     lazy var updaterController = SPUStandardUpdaterController(
-        startingUpdater: !BuildKind.isDevelopment,
-        updaterDelegate: nil,
+        startingUpdater: LaunchMode.current.usesSystemIntegrations && !BuildKind.isDevelopment,
+        updaterDelegate: appState.updateReminders,
         userDriverDelegate: appState.updateReminders
     )
     var watcherTask: Task<Void, Never>?
@@ -77,7 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         QuickLookPreviewController.sweepStaleTempFiles()
         if mode.usesSystemIntegrations {
             _ = updaterController
-            if !BuildKind.isDevelopment { wireUpdateSettings() }
+            wireUpdateSettings()
         }
         bootStorage()
         resolveMissingEncryptionKey { [self] in finishLaunch(mode: mode) }

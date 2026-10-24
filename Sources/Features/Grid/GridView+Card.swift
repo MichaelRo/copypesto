@@ -63,11 +63,9 @@ extension GridView {
             },
             quickLook: { item in
                 Task {
-                    let permitted = await HiddenClipReveal.permitted(
-                        isHidden: item.sensitivityRaw != nil,
-                        using: UserAuthenticator.current,
-                        reason: "Show a clip that is hidden on the shelf"
-                    )
+                    let permitted = item.sensitivityRaw == nil
+                        ? true
+                        : await appState.authenticateInShelf(reason: "Show a clip that is hidden on the shelf")
                     if permitted { quickLookController.toggle(item: item) }
                 }
             },

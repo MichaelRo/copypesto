@@ -44,11 +44,16 @@ public extension ShelfActionDispatcher {
     func authenticateInShelf(
         reason: String,
         authenticator: any UserAuthenticating = UserAuthenticator.current,
-        embeddedAvailable: Bool = true,
+        embeddedAvailable: Bool? = nil,
         grace: AuthenticationGrace = .shared
     ) async
     -> Bool {
-        await authenticateInShelf(reason, authenticator, embeddedAvailable, grace)
+        await authenticateInShelf(
+            reason,
+            authenticator,
+            embeddedAvailable ?? AppState.embeddedBiometricsAvailable,
+            grace
+        )
     }
 }
 

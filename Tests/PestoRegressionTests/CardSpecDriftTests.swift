@@ -41,4 +41,14 @@ struct CardSpecDriftTests {
         )
         #expect(spec.contains("\(match.1) %") || spec.contains("\(match.1)%"), "spec must name the \(match.1)% wash")
     }
+
+    @Test("only a standalone color card computes detectedColor or badges as Color")
+    func whenCardIsTextOrCodeWithColorLiteral_thenNeverBadgedAsColor() throws {
+        let card = try String(
+            contentsOf: SourceTree.sources.appendingPathComponent("Features/Grid/ClipboardCard+Parts.swift"),
+            encoding: .utf8
+        )
+        #expect(card.contains("guard item.type == .color else { return nil }"))
+        #expect(!card.contains("colorSwatchBadge"))
+    }
 }

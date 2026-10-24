@@ -40,7 +40,7 @@ public enum SeedFixtures {
             app: "com.apple.Safari"
         ),
         Sample(text: "https://github.com/example/pesto/issues/42", app: "com.apple.Safari"),
-        Sample(text: "#FF5733", app: "com.apple.ColorSyncUtility"),
+        Sample(text: "#2F7A49", app: "com.apple.ColorSyncUtility"),
         Sample(text: "4242 4242 4242 4242", app: "com.apple.Safari"),
         Sample(text: "sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef", app: "com.apple.Terminal"),
         Sample(text: "hello@example.com", app: "com.apple.mail"),

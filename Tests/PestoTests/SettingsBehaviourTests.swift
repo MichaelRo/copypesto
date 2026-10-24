@@ -58,9 +58,9 @@ extension HostedGlobals {
 
         @Test("accent colours parse from six or eight hex digits, with or without a hash")
         func whenHex_thenColour() {
-            #expect(Color(hex: "#FF5733") != nil)
-            #expect(Color(hex: "FF5733") != nil)
-            #expect(Color(hex: "#FF573380") != nil)
+            #expect(Color(hex: "#2F7A49") != nil)
+            #expect(Color(hex: "2F7A49") != nil)
+            #expect(Color(hex: "#2F7A4980") != nil)
         }
 
         @Test("malformed accent colours are rejected, so the system accent is used instead")

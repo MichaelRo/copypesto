@@ -297,8 +297,6 @@ extension ClipboardCard {
             }
             if let cat = item.sensitivity {
                 sensitivityBadge(cat)
-            } else if item.type != .color, let swatchColor = detectedColor {
-                colorSwatchBadge(swatchColor)
             }
         }
     }
@@ -375,23 +373,8 @@ extension ClipboardCard {
     }
 
     var detectedColor: Color? {
-        guard item.type == .color || item.type == .text || item.type == .code else { return nil }
+        guard item.type == .color else { return nil }
         return ColorStringDetector.detect(in: item.gridPreview)
-    }
-
-    func colorSwatchBadge(_ color: Color) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 10, height: 10)
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.3), lineWidth: 0.5))
-            Text("Color")
-                .font(.caption2.weight(.medium))
-                .foregroundStyle(.primary)
-        }
-        .padding(.horizontal, 5)
-        .padding(.vertical, 2.5)
-        .background(color.opacity(0.15), in: Capsule())
     }
 
     func sensitivityBadge(_ category: SensitivityCategory) -> some View {

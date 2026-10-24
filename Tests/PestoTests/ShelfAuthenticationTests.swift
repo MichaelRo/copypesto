@@ -154,4 +154,20 @@ struct ShelfAuthenticationTests {
         #expect(!state.keepsShelfOpenForAuthentication)
         #expect(restored == 1)
     }
+
+    @Test("another app activating while the shelf is authenticating does not dismiss the shelf")
+    func whenOtherAppActivatesDuringAuthentication_thenShelfStaysOpen() {
+        let delegate = AppDelegate()
+        delegate.appState.isOverlayVisible = true
+        delegate.appState.systemAuthenticationDialogs = 1
+
+        delegate.dismissShelfOnExternalAppActivationIfNeeded()
+
+        #expect(delegate.appState.isOverlayVisible)
+
+        delegate.appState.systemAuthenticationDialogs = 0
+        delegate.dismissShelfOnExternalAppActivationIfNeeded()
+
+        #expect(!delegate.appState.isOverlayVisible)
+    }
 }

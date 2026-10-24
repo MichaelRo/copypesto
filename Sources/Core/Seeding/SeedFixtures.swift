@@ -93,7 +93,10 @@ public enum SeedFixtures {
             at: 5
         )
         captures.insert(
-            imageCapture(color: RGB(red: 0.90, green: 0.40, blue: 0.20), stripe: RGB(red: 0.1, green: 0.1, blue: 0.1)),
+            imageCapture(
+                color: RGB(red: 0.18, green: 0.48, blue: 0.29),
+                stripe: RGB(red: 0.96, green: 0.94, blue: 0.85)
+            ),
             at: 9
         )
         return captures

@@ -27,7 +27,7 @@ public enum MarketingSeed {
             ),
             .text("Rule 1: Pine nuts must be toasted until golden, never scorched.", app: notes),
             .text("https://example.com/recipes/pesto-genovese", app: safari),
-            .text("#E4572E", app: colorSync),
+            .text("#2F7A49", app: colorSync),
             .text("Rosa's Deli, 123 Basil Lane. Call (555) 010-0142.", app: notes),
             .picture(ShowcaseArt.ingredientPalette()),
             .text("4242 4242 4242 4242", app: safari),

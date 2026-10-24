@@ -22,7 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Lazy so only a normal launch starts the updater; `applicationDidFinishLaunching` touches it.
     lazy var updaterController = SPUStandardUpdaterController(
         startingUpdater: !BuildKind.isDevelopment,
-        updaterDelegate: nil,
+        updaterDelegate: appState.updateReminders,
         userDriverDelegate: appState.updateReminders
     )
     var watcherTask: Task<Void, Never>?

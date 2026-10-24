@@ -45,7 +45,7 @@ private struct ToastView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         // A tint under the glass and a separator edge keep the text legible over a white or a black window behind it.
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .windowBackgroundColor).opacity(0.55)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .windowBackgroundColor).opacity(0.8)))
         .glassPanelBackground(in: RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
         .opacity(opacity)

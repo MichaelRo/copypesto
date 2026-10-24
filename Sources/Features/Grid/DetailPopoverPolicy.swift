@@ -24,8 +24,8 @@ enum DetailPopoverPolicy {
         contentScrolls
     }
 
-    static func isSuppressed(isLocked: Bool, isShelfVisible: Bool) -> Bool {
-        isLocked || !isShelfVisible
+    static func isSuppressed(isLocked: Bool, isShelfVisible: Bool, voiceOverEnabled: Bool = false) -> Bool {
+        isLocked || !isShelfVisible || voiceOverEnabled
     }
 
     static func keyboardReveals(itemID: UUID, revealedID: UUID?) -> Bool {

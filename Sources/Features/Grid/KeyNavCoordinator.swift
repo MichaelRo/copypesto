@@ -272,8 +272,7 @@ final class KeyNavCoordinator {
         }
         switch event.keyCode {
         case 123, 124, 115, 119: // ← → Home End
-            moveFocus(keyCode: event.keyCode)
-            return nil
+            return moveFocus(event)
         case 125, 126: // ↓ ↑
             return nil
         case 48: // Tab
@@ -333,7 +332,7 @@ final class KeyNavCoordinator {
         case 121: return true
         case 116: return false
         case 123, 124:
-            guard event.modifierFlags.contains(.option) else { return nil }
+            guard event.modifierFlags.intersection([.option, .control, .command]) == .option else { return nil }
             return (event.keyCode == 124) != usesRightToLeft
         default: return nil
         }
@@ -348,12 +347,14 @@ final class KeyNavCoordinator {
         onPage?(forward ? size : -size)
     }
 
-    private func moveFocus(keyCode: UInt16) {
-        switch keyCode {
+    private func moveFocus(_ event: NSEvent) -> NSEvent? {
+        guard !event.modifierFlags.contains(.control) else { return event }
+        switch event.keyCode {
         case 123: (usesRightToLeft ? onRight : onLeft)?()
         case 124: (usesRightToLeft ? onLeft : onRight)?()
         case 115: onFirst?()
         default: onLast?()
         }
+        return nil
     }
 }

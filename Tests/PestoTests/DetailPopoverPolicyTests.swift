@@ -38,10 +38,11 @@ struct DetailPopoverPolicyTests {
         #expect(!wants(keyboard: true, spent: true))
     }
 
-    @Test("locked or hidden suppresses; a visible unlocked shelf does not")
+    @Test("locked, hidden or VoiceOver running suppresses; a visible unlocked shelf does not")
     func whenShelfState_thenSuppression() {
         #expect(DetailPopoverPolicy.isSuppressed(isLocked: true, isShelfVisible: true))
         #expect(DetailPopoverPolicy.isSuppressed(isLocked: false, isShelfVisible: false))
+        #expect(DetailPopoverPolicy.isSuppressed(isLocked: false, isShelfVisible: true, voiceOverEnabled: true))
         #expect(!DetailPopoverPolicy.isSuppressed(isLocked: false, isShelfVisible: true))
     }
 

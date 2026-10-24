@@ -46,13 +46,17 @@ extension View {
     /// Pins a pane's header (and anything else that should stay in view) above its form. The form stays the pane's root
     /// view, so the toolbar and the sidebar behave as they do for any scrolling pane. The pinned area is opaque and
     /// ends in a hairline: rows scroll under an inset, so without a ground they showed through the header's text.
+    /// Put above the form in a `VStack`, not in `safeAreaInset(edge: .top)`, because `safeAreaInset` places its view
+    /// after the scroll view in the accessibility hierarchy and caused VoiceOver to stop at the header's last button
+    /// instead of continuing into the form's rows.
     func settingsPaneTop(@ViewBuilder _ top: () -> some View) -> some View {
-        safeAreaInset(edge: .top, spacing: 0) {
+        VStack(spacing: 0) {
             VStack(spacing: 0) {
                 top()
                 Divider()
             }
             .background(Color(nsColor: .windowBackgroundColor))
+            self
         }
     }
 }

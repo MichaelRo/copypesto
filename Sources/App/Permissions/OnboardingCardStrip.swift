@@ -72,32 +72,30 @@ struct OnboardingCardStrip: View {
             withTransaction(Transaction(animation: nil)) { position.scrollTo(x: offset) }
             return
         }
-        let seconds = 18.0
-        var forward = offset < max(farthest - 30, 1)
-        var isResuming = true
-
-        // It starts from where the row actually is, with no jump: a short ease-in ramps up to the sweep's own speed
-        // (about 110 pt/s), and the first sweep runs at that speed before the usual ease-in-out takes over.
-        let ramp = forward ? min(48, max(0, farthest - offset)) : -min(48, offset)
-        if ramp != 0 {
-            withAnimation(Motion.animation(.easeIn(duration: 0.9))) { position.scrollTo(x: offset + ramp) }
-            try? await Task.sleep(for: .seconds(0.9))
+        // Wait for the initial geometry pass if `farthest` has not been measured yet.
+        for _ in 0..<20 where farthest <= 0 && !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(30))
         }
+        guard !Task.isCancelled, farthest > 0 else { return }
+        // Step smoothly so `offset` always reflects the real scroll position when the pointer enters or leaves.
+        let pointsPerTick: CGFloat = 1.65 // ~100 pt/s at 60 Hz
+        var forward = offset < max(farthest - 30, 1)
+        var current = offset
 
         while !Task.isCancelled {
-            let remaining = forward ? max(0, farthest - offset) : offset
-            let fraction = remaining / max(farthest, 1)
-            let duration = seconds * max(fraction, 0.08)
-            let curve: Animation = isResuming ? .linear(duration: duration) : .easeInOut(duration: duration)
-            withAnimation(Motion.animation(curve)) {
-                position.scrollTo(x: forward ? farthest : 0)
+            current = forward
+                ? min(farthest, current + pointsPerTick)
+                : max(0, current - pointsPerTick)
+            withTransaction(Transaction(animation: nil)) {
+                position.scrollTo(x: current)
             }
-            try? await Task.sleep(for: .seconds(duration))
-            guard !Task.isCancelled else { break }
-
-            isResuming = false
-            forward.toggle()
-            try? await Task.sleep(for: .milliseconds(350))
+            offset = current
+            if (forward && current >= farthest - 0.5) || (!forward && current <= 0.5) {
+                forward.toggle()
+                try? await Task.sleep(for: .milliseconds(350))
+            } else {
+                try? await Task.sleep(for: .milliseconds(16))
+            }
         }
     }
 }

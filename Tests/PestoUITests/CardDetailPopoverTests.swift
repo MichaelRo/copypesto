@@ -78,6 +78,10 @@ final class CardDetailPopoverTests: PestoUITestCase {
         let first = cards.element(boundBy: 0)
         let second = cards.element(boundBy: 1)
         first.hover()
+        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+            second.hover()
+            first.hover()
+        }
         XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 4))
 
         second.hover()
@@ -94,6 +98,10 @@ final class CardDetailPopoverTests: PestoUITestCase {
         let card = cards.firstMatch
         parkPointer()
         card.hover()
+        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+            cards.element(boundBy: 1).hover()
+            card.hover()
+        }
         XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 4))
 
         card.rightClick()

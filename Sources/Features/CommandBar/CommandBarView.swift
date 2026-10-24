@@ -23,6 +23,7 @@ struct CommandBarView: View {
     @AppStorage(Setting.keepsRemoteCopies) var keepsRemoteCopies: Bool
     @State var suggestionsModel = CommandBarSuggestionsModel()
     @State private var chipLiveOrder: [UUID]?
+    @State private var chipInsertionBar: CollectionReorder.InsertionBar?
     @State private var chipFrozenFrames: [UUID: CGRect]?
     @State private var chipFrames: [UUID: CGRect] = [:]
     @State private var isAllDropTarget = false
@@ -68,10 +69,6 @@ struct CommandBarView: View {
         .onChange(of: appState.isHistoryLocked) { _, _ in suggestionsModel.refresh() }
         .onChange(of: appState.isSearchActive) { _, active in
             if active {
-                if !appState.appChipFilter.isEmpty {
-                    appState.searchSourceFilter.formUnion(appState.appChipFilter)
-                    appState.appChipFilter.removeAll()
-                }
                 searchFocused = true
             } else {
                 searchFocused = false
@@ -93,14 +90,9 @@ struct CommandBarView: View {
         }
     }
 
-    /// While a collection chip is dragged the other chips step back, so the row reads as being rearranged.
-    private var otherChipsOpacity: Double {
-        appState.draggingPinboardID == nil ? 1 : 0.35
-    }
-
     private var scrollableChips: some View {
         let creating = appState.isCreatingCollection
-        return HStack(spacing: 6) {
+        return HStack(spacing: 8) {
             CollectionChip(
                 name: "All",
                 symbolName: "tray.full",
@@ -146,7 +138,8 @@ struct CommandBarView: View {
                     },
                     onMove: { movePinboard(pinboard.id, by: $0) },
                     canMoveLeft: pinboards.first?.id != pinboard.id,
-                    canMoveRight: pinboards.last?.id != pinboard.id
+                    canMoveRight: pinboards.last?.id != pinboard.id,
+                    insertionSide: chipInsertionBar?.target == pinboard.id ? chipInsertionBar?.side : nil
                 )
                 .transition(.scale(scale: 0.85).combined(with: .opacity))
             }
@@ -178,20 +171,23 @@ struct CommandBarView: View {
                     .frame(height: 14)
                     .padding(.horizontal, 2)
                 ForEach(suggestionsModel.suggestions.topTags, id: \.self) { tag in
-                    tagChip(tag).opacity(otherChipsOpacity)
+                    tagChip(tag)
                 }
             }
 
-            AppChipsRow(recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost)
-                .opacity(otherChipsOpacity)
+            AppChipsRow(
+                recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost,
+                collapsesLabels: !shownPinboards.isEmpty
+            )
         }
         .animation(Motion.animation(.spring(response: 0.22, dampingFraction: 0.85)), value: creating)
         .animation(Motion.animation(.pestoPop), value: pinboards.map(\.id))
         .animation(Motion.animation(.pestoQuick), value: appState.draggingPinboardID)
-        .animation(Motion.animation(.pestoMove), value: chipLiveOrder)
+        .animation(Motion.animation(.pestoQuick), value: chipInsertionBar)
         .onChange(of: appState.draggingPinboardID) { _, id in
             if id == nil {
                 chipLiveOrder = nil
+                chipInsertionBar = nil
                 chipFrozenFrames = nil
             }
         }
@@ -201,11 +197,13 @@ struct CommandBarView: View {
             of: [UTType.text, UTType.data],
             delegate: ChipRowDropDelegate(
                 appState: appState, baseOrder: pinboards.map(\.id), frames: chipFrames,
-                frozenFrames: $chipFrozenFrames, liveOrder: $chipLiveOrder, onCommit: { persistPinboardOrder($0) }
+                frozenFrames: $chipFrozenFrames, liveOrder: $chipLiveOrder, insertionBar: $chipInsertionBar,
+                onCommit: { persistPinboardOrder($0, moved: appState.draggingPinboardID) }
             )
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Collections and filters")
+        .frame(minHeight: 26)
     }
 
     private var rightToolbar: some View {
@@ -247,7 +245,8 @@ struct CommandBarView: View {
         return PestoChip(
             label: "@\(tag)",
             tint: Color(hue: stableHue(for: tag), saturation: 0.7, brightness: 0.85),
-            isActive: isSelected
+            isActive: isSelected,
+            helpText: String(localized: "Filter by tag: \(tag)")
         ) {
             if isSelected {
                 appState.searchText = ""
@@ -256,7 +255,6 @@ struct CommandBarView: View {
                 appState.isSearchActive = false
             }
         }
-        .help("Filter by tag: \(tag)")
         .accessibilityIdentifier(AccessibilityID.tagChip(tag))
     }
 
@@ -363,9 +361,8 @@ struct CommandBarView: View {
     private func filterChip(_ entry: FilterEntry, hasCursor: Bool) -> some View {
         PestoChip(
             label: entry.label, icon: entry.icon, iconImage: entry.iconImage, isActive: entry.isActive,
-            hasKeyboardCursor: hasCursor, action: entry.toggle
+            hasKeyboardCursor: hasCursor, helpText: entry.help ?? "", action: entry.toggle
         )
-        .help(entry.help ?? "")
         .accessibilityLabel(entry.spoken ?? entry.label)
         .accessibilityIdentifier(AccessibilityID.filterChip(entry.label))
     }
@@ -513,13 +510,12 @@ struct CommandBarView: View {
         appState.deleteCollection(id: pinboard.id, fromShelf: true)
     }
 
-    /// The collections in the order the row shows while a chip is dragged, else the stored order.
+    /// Collection chips stay in place while one is dragged; `chipInsertionBar` marks where it will land.
     private var shownPinboards: [Pinboard] {
-        guard let order = chipLiveOrder else { return pinboards }
-        return order.compactMap { id in pinboards.first { $0.id == id } }
+        pinboards
     }
 
-    private func persistPinboardOrder(_ order: [UUID]) {
+    private func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
         let ids = pinboards.map(\.id)
         guard order != ids else { return }
         let reordered = order.compactMap { id in pinboards.first { $0.id == id } }
@@ -530,7 +526,14 @@ struct CommandBarView: View {
                 }
             }
         }
-        Announcer.announce("Moved")
+        if let id,
+           let position = order.firstIndex(of: id),
+           let name = pinboards.first(where: { $0.id == id })?.name
+        {
+            Announcer.announce("\(name), position \(position + 1) of \(order.count)")
+        } else {
+            Announcer.announce("Moved")
+        }
     }
 
     private func movePinboard(_ id: UUID, by offset: Int) {
@@ -538,10 +541,7 @@ struct CommandBarView: View {
         guard let from = ids.firstIndex(of: id), ids.indices.contains(from + offset) else { return }
         var order = ids
         order.swapAt(from, from + offset)
-        withAnimation(Motion.animation(.pestoMove)) { persistPinboardOrder(order) }
-        if let name = pinboards.first(where: { $0.id == id })?.name {
-            Announcer.announce("\(name), position \(from + offset + 1) of \(ids.count)")
-        }
+        withAnimation(Motion.animation(.pestoMove)) { persistPinboardOrder(order, moved: id) }
     }
 }
 

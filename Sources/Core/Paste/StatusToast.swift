@@ -5,6 +5,8 @@ import Foundation
 public enum StatusToast: Equatable, Sendable {
     case manualPaste(ManualPasteToast)
     case updatesUnavailable
+    /// A manual Check for Updates found nothing newer.
+    case upToDate
     /// A paste found every file of the clip gone, and wrote nothing (the shelf has closed by then, so its banner is not
     /// seen).
     case filesGone
@@ -17,14 +19,14 @@ public enum StatusToast: Equatable, Sendable {
     public var isClickable: Bool {
         switch self {
         case let .manualPaste(toast): toast.isClickable
-        case .updatesUnavailable, .filesGone: false
+        case .updatesUnavailable, .upToDate, .filesGone: false
         }
     }
 
     public var visibleSeconds: Double {
         switch self {
         case let .manualPaste(toast): toast.visibleSeconds
-        case .updatesUnavailable, .filesGone: 4
+        case .updatesUnavailable, .upToDate, .filesGone: 4
         }
     }
 
@@ -33,7 +35,7 @@ public enum StatusToast: Equatable, Sendable {
     public var placement: Placement {
         switch self {
         case .manualPaste, .filesGone: .aboveDock
-        case .updatesUnavailable: .belowMenuBar
+        case .updatesUnavailable, .upToDate: .belowMenuBar
         }
     }
 }

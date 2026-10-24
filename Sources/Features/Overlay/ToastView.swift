@@ -17,6 +17,7 @@ private struct ToastView: View {
         switch toast {
         case .manualPaste: toast.isClickable ? "hand.point.up.left" : "keyboard"
         case .updatesUnavailable: "arrow.triangle.2.circlepath"
+        case .upToDate: "checkmark.circle"
         case .filesGone: "doc.badge.clock"
         }
     }
@@ -25,6 +26,7 @@ private struct ToastView: View {
         switch toast {
         case .manualPaste: toast.isClickable ? "Auto-paste is off. Click to turn it on." : "Press ⌘V to paste"
         case .updatesUnavailable: "This build does not check for updates."
+        case .upToDate: "You\u{2019}re up to date."
         case .filesGone: "Nothing pasted: those files were moved or deleted."
         }
     }
@@ -42,7 +44,12 @@ private struct ToastView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 10))
+        // Card material like the hover card, at 92%, so the text holds 4.5:1 over a white or a black window behind it.
+        .background {
+            let shape = RoundedRectangle(cornerRadius: 10)
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.primary.opacity(0.14), lineWidth: 1))
         .opacity(opacity)
         .contentShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture { onClick?() }

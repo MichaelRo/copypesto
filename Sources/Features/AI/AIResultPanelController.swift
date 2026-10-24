@@ -88,6 +88,9 @@ private struct AIResultView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
+            .contentShape(Rectangle())
+            .gesture(WindowDragGesture())
+            .allowsWindowActivationEvents()
 
             if !result.sourcePreview.isEmpty {
                 let ellipsis = result.sourcePreview.count >= 80 ? "…" : ""
@@ -181,7 +184,14 @@ private struct AIResultView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background {
+            let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.primary.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

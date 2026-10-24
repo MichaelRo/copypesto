@@ -37,25 +37,39 @@ are not pinned, so your retention setting may remove the older ones. Clips you a
 The import tells you how many clips came in and how many were left out.
 
 ## Moving from Maccy or Alfred
-*Settings → Data → Another app's library → Import… → From Maccy…* (or *From Alfred…*) opens the app's own library file
-(the file chooser starts in its folder) and reads a copy of it; the original is never changed and never opened for
-writing. Before anything comes in, a sheet shows what was found (pinned clips, history, how many entries cannot be
-imported, and how many clips are older than the time you keep clips, which the next cleanup removes), and you confirm.
-Maccy's pinned clips go to a collection called "Pinned in Maccy". Alfred's text and file paths come over;
-its pictures are skipped. Clips you already have are skipped, and Pesto's exclusion rules apply as for any copy.
+
+### Maccy
+*Settings → Data → Another app's library → Import… → From Maccy…* opens Maccy's library file (the file chooser starts in its folder) and reads a copy of it; the original is never changed and never opened for writing. Before anything comes in, a sheet shows what was found (pinned clips, history, how many clips cannot be imported, and how many clips are older than the time you keep clips, which the next cleanup removes), and you confirm. Maccy's pinned clips go to a collection called "Pinned in Maccy". Clips you already have are skipped, and Pesto's exclusion rules apply as for any copy.
+
+### Alfred
+*Settings → Data → Another app's library → Import… → From Alfred…* opens Alfred's clipboard database (the file chooser starts in its folder) and reads a copy of it read-only. Before anything comes in, the preview sheet shows what was found and you confirm. Alfred's text and file paths come over; its pictures are skipped. Clips you already have are skipped, and Pesto's exclusion rules apply as for any copy.
 
 ## Moving from other clipboard apps
-*Settings → Data → Another app's library → Import…* also supports direct import from CleanClip, PasteNow, CopyClip, PastePal, Pastebot, Clipy, Flycut, and Unclutter:
-- **CleanClip**: Clips from CleanClip's history are imported, preserving titles and source apps. Pinned clips become a collection.
-- **PasteNow**: Text, rich text, and URLs are imported. Pastelist categories are mapped to collections.
-- **CopyClip**: History is imported from CopyClip's SQLite database as plain text clips.
-- **PastePal**: History from PastePal's Core Data store is imported, and pinned clips become a collection named "Pinned in PastePal".
-- **Pastebot**: Text, rich text, and source apps are read from Pastebot's Core Data store.
-- **Clipy**: Clips are imported from Clipy's SQLite database.
-- **Flycut**: Clips are read from Flycut's preferences file. Its favorites go to a collection called "Favorites in Flycut".
-- **Unclutter**: Clips and favorites are read from Unclutter's storage folder.
+*Settings → Data → Another app's library → Import…* also supports direct import from CleanClip, PasteNow, CopyClip, PastePal, Pastebot, Clipy, Flycut, and Unclutter. For each app, the file chooser opens in the default folder. Pesto works on a copy, opens it read-only, and never modifies the original. Before anything is imported, a preview sheet displays what was found (pinned clips, history, and skipped clips) for confirmation.
 
-For each app, the file chooser opens in the default folder. Pesto works on a copy, opens it read-only, and never modifies the original. Before anything is imported, a preview sheet displays what was found (pinned clips, history, and skipped entries) for confirmation.
+### CleanClip
+Clips from CleanClip's history are imported, preserving titles and source apps. Pinned clips become a collection.
+
+### PasteNow
+Text, rich text, and URLs are imported. Pastelist categories are mapped to collections.
+
+### CopyClip
+History is imported from CopyClip's SQLite database as plain text clips.
+
+### PastePal
+History from PastePal's Core Data store is imported, and pinned clips become a collection named "Pinned in PastePal".
+
+### Pastebot
+Text, rich text, and source apps are read from Pastebot's Core Data store.
+
+### Clipy
+Clips are imported from Clipy's SQLite database.
+
+### Flycut
+Clips are read from Flycut's preferences file. Its favorites go to a collection called "Favorites in Flycut".
+
+### Unclutter
+Clips and favorites are read from Unclutter's storage folder.
 
 ## Raycast
 Raycast encrypts its local clipboard database with SQLCipher using a key stored in your login Keychain, so Pesto cannot read its database directly. You can import Raycast snippets via JSON export: see *Moving snippets from another app* below.

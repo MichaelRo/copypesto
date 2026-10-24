@@ -84,7 +84,7 @@ final class ClipboardCardTests: XCTestCase {
     /// (orange, red) showed through "Hidden for sharing".
     func test_coveredColorCard_showsNoColor() throws {
         let ctx = try makeContext()
-        let item = makeItem(in: ctx, type: .color, preview: "#FF5733")
+        let item = makeItem(in: ctx, type: .color, preview: "#2F7A49")
         let card = ClipboardCard(item: item, isPrivacyBlurred: true)
         let root = card
             .defaultAppStorage(AppDefaults.store)
@@ -202,7 +202,7 @@ final class ClipboardCardTests: XCTestCase {
 
     func test_colorCard() throws {
         let ctx = try makeContext()
-        let item = makeItem(in: ctx, type: .color, preview: "#FF5733")
+        let item = makeItem(in: ctx, type: .color, preview: "#2F7A49")
         snapshotCard(ClipboardCard(item: item))
     }
 

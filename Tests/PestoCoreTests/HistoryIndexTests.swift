@@ -124,6 +124,13 @@ struct HistoryIndexTests {
         #expect(index.matching(HistoryCriteria(searchActive: true, sensitiveOnly: true)) == [b.id])
         #expect(index.matching(HistoryCriteria(searchActive: true, remoteOnly: true)) == [c.id])
         #expect(
+            index.matching(HistoryCriteria(appBundleIDs: ["com.a"], searchActive: true, sources: ["com.b"])) == [
+                c.id,
+                b.id,
+                a.id
+            ]
+        )
+        #expect(
             index.matching(HistoryCriteria(types: ["nope"])).count == 3,
             "chips apply only while a search is active"
         )

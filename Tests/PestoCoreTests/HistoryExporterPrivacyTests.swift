@@ -188,7 +188,7 @@ struct HistoryExporterPrivacyTests {
     @Test("a real colour record is kept as a colour")
     func import_realColour_staysAColour() async throws {
         let destination = try ModelContainerSetup.makeInMemory().synced
-        let payload = try encode([record(type: "color", preview: "#FF5733")])
+        let payload = try encode([record(type: "color", preview: "#2F7A49")])
 
         try await HistoryExporter(modelContainer: destination).importRecords(from: payload)
 

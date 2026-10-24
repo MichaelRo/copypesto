@@ -484,11 +484,11 @@ extension HostedGlobals {
 
         @Test("a colour keeps its plain preview: it is not sensitive")
         func ingest_color_keepsPlainPreview() async throws {
-            try await service.ingest(capture(text: "#FF5733"))
+            try await service.ingest(capture(text: "#2F7A49"))
 
             let item = try #require(try fetchItems().first)
             #expect(item.type == .color)
-            #expect(item.previewText == "#FF5733")
+            #expect(item.previewText == "#2F7A49")
         }
 
         @Test("the migration encrypts plaintext previews from before, once")

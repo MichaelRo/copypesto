@@ -56,11 +56,17 @@ public struct ShelfFilter {
         }
     }
 
+    /// The apps allowed by the shelf chips and, while a search is active, the From chips (any of them matches).
+    private var allowedAppBundleIDs: Set<String> {
+        searchActive ? appBundleIDs.union(sources) : appBundleIDs
+    }
+
     /// Sensitive-clip hiding, the app-context filter and the collection.
     public func scope(_ items: [ClipboardItem]) -> [ClipboardItem] {
         var result = items
         if hidesSensitive { result = result.filter { !$0.isNSFW } }
-        if !appBundleIDs.isEmpty { result = result.filter { $0.sourceBundleID.map(appBundleIDs.contains) ?? false } }
+        let apps = allowedAppBundleIDs
+        if !apps.isEmpty { result = result.filter { $0.sourceBundleID.map(apps.contains) ?? false } }
         if let inCollection { result = result.filter(inCollection) }
         return result
     }
@@ -70,8 +76,9 @@ public struct ShelfFilter {
         guard searchActive else { return items }
         var result = items
         if !types.isEmpty { result = result.filter { types.contains($0.typeRaw) } }
-        if !sources.isEmpty {
-            result = result.filter { $0.sourceBundleID.map(sources.contains) ?? false }
+        let apps = allowedAppBundleIDs
+        if !apps.isEmpty {
+            result = result.filter { $0.sourceBundleID.map(apps.contains) ?? false }
         }
         if let cutoff = dateCutoff { result = result.filter { $0.timestamp >= cutoff } }
         if let before = dateBefore { result = result.filter { $0.timestamp < before } }

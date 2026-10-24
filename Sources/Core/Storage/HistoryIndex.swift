@@ -166,7 +166,8 @@ public struct HistoryIndex: Sendable {
     )
     -> Bool {
         if criteria.hidesSensitive, row.isNSFW { return false }
-        if !criteria.appBundleIDs.isEmpty, !(row.sourceBundleID.map(criteria.appBundleIDs.contains) ?? false) {
+        let apps = criteria.searchActive ? criteria.appBundleIDs.union(criteria.sources) : criteria.appBundleIDs
+        if !apps.isEmpty, !(row.sourceBundleID.map(apps.contains) ?? false) {
             return false
         }
         if let smartCollection { return smartCollection(row.id) }
@@ -177,7 +178,6 @@ public struct HistoryIndex: Sendable {
     /// The search bar's chips, which apply only while a search is open.
     private static func passesChips(_ row: HistoryRow, _ criteria: HistoryCriteria) -> Bool {
         if !criteria.types.isEmpty, !criteria.types.contains(row.typeRaw) { return false }
-        if !criteria.sources.isEmpty, !(row.sourceBundleID.map(criteria.sources.contains) ?? false) { return false }
         if let cutoff = criteria.dateCutoff, row.timestamp < cutoff { return false }
         if let before = criteria.dateBefore, row.timestamp >= before { return false }
         if criteria.sensitiveOnly, !row.isNSFW, !row.isSecret { return false }

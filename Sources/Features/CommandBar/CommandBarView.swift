@@ -68,6 +68,10 @@ struct CommandBarView: View {
         .onChange(of: appState.isHistoryLocked) { _, _ in suggestionsModel.refresh() }
         .onChange(of: appState.isSearchActive) { _, active in
             if active {
+                if !appState.appChipFilter.isEmpty {
+                    appState.searchSourceFilter.formUnion(appState.appChipFilter)
+                    appState.appChipFilter.removeAll()
+                }
                 searchFocused = true
             } else {
                 searchFocused = false

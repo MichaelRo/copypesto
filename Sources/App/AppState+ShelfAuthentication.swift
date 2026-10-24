@@ -48,6 +48,7 @@ extension AppState {
     func withSystemAuthenticationDialog<T>(_ body: () async -> T) async -> T {
         systemAuthenticationDialogs += 1
         let result = await body()
+        await Task.yield()
         systemAuthenticationDialogs -= 1
         onRestoreKeyFocus?()
         return result

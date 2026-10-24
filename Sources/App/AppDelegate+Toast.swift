@@ -31,10 +31,18 @@ extension AppDelegate {
                   app.bundleIdentifier != Bundle.main.bundleIdentifier else { return }
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                if appState.isOverlayVisible, !appState.isDragging { hideOverlay() }
+                dismissShelfOnExternalAppActivationIfNeeded()
                 updateWorkspacePinboard(for: app.bundleIdentifier)
             }
         }
+    }
+
+    func dismissShelfOnExternalAppActivationIfNeeded() {
+        guard appState.isOverlayVisible,
+              !appState.isDragging,
+              !appState.keepsShelfOpenForAuthentication,
+              !appState.isQuickLookOpen else { return }
+        hideOverlay()
     }
 
     /// Refresh Accessibility trust state when the user returns to Pesto (e.g. after granting

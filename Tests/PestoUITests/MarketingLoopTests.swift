@@ -46,7 +46,8 @@ final class MarketingLoopTests: PestoUITestCase {
         }
         let scale = CGFloat(cgImage.width) / backdrop.width
         let pixels = CGRect(
-            x: ((region.minX - backdrop.minX) * scale).rounded(), y: ((region.minY - backdrop.minY) * scale).rounded(),
+            x: ((region.minX - backdrop.minX) * scale).rounded(),
+            y: ((region.minY - backdrop.minY) * scale).rounded(),
             width: (region.width * scale).rounded(), height: (region.height * scale).rounded()
         ).intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
         guard let cropped = cgImage.cropping(to: pixels) else { return XCTFail("could not crop \(scene) \(number)") }

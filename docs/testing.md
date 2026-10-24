@@ -125,7 +125,7 @@ A UI-test launch runs the real UI on isolated data. `RuntimeConfiguration` (Core
 | `PESTO_UITEST_REAL_PASTE` | `1` uses the real pasteboard and a real paste instead of the private pasteboard and the paste log (`make bench-latency`) |
 | `PESTO_UITEST_PERF_TIMELINE` | `1` makes Pesto write its stage timings to `perf-timeline.tsv` (`make bench-latency`) |
 | `PESTO_UITEST_REAL_DEVICE` | `1` shows the real Touch ID view and the on-device model (`make capture-real`) |
-| `PESTO_UITEST_BACKDROP` | A backdrop style drawn behind the shelf for marketing pictures (`make marketing-images`) |
+| `PESTO_UITEST_BACKDROP` | A backdrop style drawn behind the shelf for marketing pictures (`make marketing-images`, and the frames of the website's loops, `make marketing-loops`) |
 | `PESTO_UITEST_DEFAULT_<key>` | Preference overrides, typed (`true`, `5`, `dark`): e.g. `appearanceMode`, `hasOnboarded` |
 
 What is isolated or stubbed under test, and the single seam for each (a lint rule keeps the real API from coming back):

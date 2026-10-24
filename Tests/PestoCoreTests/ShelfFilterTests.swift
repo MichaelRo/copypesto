@@ -73,6 +73,19 @@ struct ShelfFilterTests {
         #expect(filter(bundle: "com.apple.Notes").apply(to: [notes, mail]).map(\.id) == [notes.id])
     }
 
+    @Test("shelf app chips and search source chips combine as any-of while a search is active")
+    func whenAppChipAndSearchSourceDiffer_thenKeepsClipsFromEither() {
+        let notes = clip("a", bundle: "com.apple.Notes")
+        let mail = clip("b", bundle: "com.apple.mail")
+        let safari = clip("c", bundle: "com.apple.Safari")
+        let filter = ShelfFilter(
+            hidesSensitive: false, appBundleIDs: ["com.apple.Notes"], inCollection: nil,
+            searchActive: true, types: [], sources: ["com.apple.mail"], date: .all, sensitiveOnly: false
+        )
+
+        #expect(filter.apply(to: [notes, mail, safari]).map(\.id) == [notes.id, mail.id])
+    }
+
     @Test("the type, source and date chips narrow the results while a search is active")
     func searchBarChips() {
         let recentImage = clip("img", type: .image, bundle: "a", age: 60)

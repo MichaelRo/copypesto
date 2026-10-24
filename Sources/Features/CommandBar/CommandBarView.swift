@@ -23,6 +23,7 @@ struct CommandBarView: View {
     @AppStorage(Setting.keepsRemoteCopies) var keepsRemoteCopies: Bool
     @State var suggestionsModel = CommandBarSuggestionsModel()
     @State private var chipLiveOrder: [UUID]?
+    @State private var chipInsertionBar: CollectionReorder.InsertionBar?
     @State private var chipFrozenFrames: [UUID: CGRect]?
     @State private var chipFrames: [UUID: CGRect] = [:]
     @State private var isAllDropTarget = false
@@ -93,14 +94,9 @@ struct CommandBarView: View {
         }
     }
 
-    /// While a collection chip is dragged the other chips step back, so the row reads as being rearranged.
-    private var otherChipsOpacity: Double {
-        appState.draggingPinboardID == nil ? 1 : 0.35
-    }
-
     private var scrollableChips: some View {
         let creating = appState.isCreatingCollection
-        return HStack(spacing: 6) {
+        return HStack(spacing: 8) {
             CollectionChip(
                 name: "All",
                 symbolName: "tray.full",
@@ -146,7 +142,8 @@ struct CommandBarView: View {
                     },
                     onMove: { movePinboard(pinboard.id, by: $0) },
                     canMoveLeft: pinboards.first?.id != pinboard.id,
-                    canMoveRight: pinboards.last?.id != pinboard.id
+                    canMoveRight: pinboards.last?.id != pinboard.id,
+                    insertionSide: chipInsertionBar?.target == pinboard.id ? chipInsertionBar?.side : nil
                 )
                 .transition(.scale(scale: 0.85).combined(with: .opacity))
             }
@@ -178,20 +175,20 @@ struct CommandBarView: View {
                     .frame(height: 14)
                     .padding(.horizontal, 2)
                 ForEach(suggestionsModel.suggestions.topTags, id: \.self) { tag in
-                    tagChip(tag).opacity(otherChipsOpacity)
+                    tagChip(tag)
                 }
             }
 
             AppChipsRow(recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost)
-                .opacity(otherChipsOpacity)
         }
         .animation(Motion.animation(.spring(response: 0.22, dampingFraction: 0.85)), value: creating)
         .animation(Motion.animation(.pestoPop), value: pinboards.map(\.id))
         .animation(Motion.animation(.pestoQuick), value: appState.draggingPinboardID)
-        .animation(Motion.animation(.pestoMove), value: chipLiveOrder)
+        .animation(Motion.animation(.pestoQuick), value: chipInsertionBar)
         .onChange(of: appState.draggingPinboardID) { _, id in
             if id == nil {
                 chipLiveOrder = nil
+                chipInsertionBar = nil
                 chipFrozenFrames = nil
             }
         }
@@ -201,7 +198,8 @@ struct CommandBarView: View {
             of: [UTType.text, UTType.data],
             delegate: ChipRowDropDelegate(
                 appState: appState, baseOrder: pinboards.map(\.id), frames: chipFrames,
-                frozenFrames: $chipFrozenFrames, liveOrder: $chipLiveOrder, onCommit: { persistPinboardOrder($0) }
+                frozenFrames: $chipFrozenFrames, liveOrder: $chipLiveOrder, insertionBar: $chipInsertionBar,
+                onCommit: { persistPinboardOrder($0) }
             )
         )
         .accessibilityElement(children: .contain)
@@ -513,10 +511,9 @@ struct CommandBarView: View {
         appState.deleteCollection(id: pinboard.id, fromShelf: true)
     }
 
-    /// The collections in the order the row shows while a chip is dragged, else the stored order.
+    /// Collection chips stay in place while one is dragged; `chipInsertionBar` marks where it will land.
     private var shownPinboards: [Pinboard] {
-        guard let order = chipLiveOrder else { return pinboards }
-        return order.compactMap { id in pinboards.first { $0.id == id } }
+        pinboards
     }
 
     private func persistPinboardOrder(_ order: [UUID]) {

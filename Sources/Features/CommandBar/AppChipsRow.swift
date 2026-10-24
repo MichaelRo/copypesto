@@ -18,7 +18,8 @@ struct AppChipsRow: View {
             let isActive = appState.appChipFilter.contains(app.bundleID)
             PestoChip(
                 label: app.name, icon: "app.badge.checkmark",
-                iconImage: SourceIconCache.shared.image(forBundleID: app.bundleID), isActive: isActive
+                iconImage: SourceIconCache.shared.image(forBundleID: app.bundleID), isActive: isActive,
+                collapsesLabel: true
             ) {
                 if isActive {
                     appState.appChipFilter.remove(app.bundleID)

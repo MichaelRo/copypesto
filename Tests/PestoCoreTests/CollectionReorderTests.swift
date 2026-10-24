@@ -63,5 +63,9 @@ struct CollectionReorderTests {
         #expect(CollectionReorder.insertionBar(ids, moving: d, toIndex: 1) == .init(target: b, side: .before))
         #expect(CollectionReorder.insertionBar(ids, moving: a, toIndex: 0) == nil)
         #expect(CollectionReorder.insertionBar(ids, moving: a, toIndex: 2) == .init(target: c, side: .after))
+        #expect(CollectionReorder.insertionBar([], moving: a, toIndex: 0) == nil)
+        #expect(CollectionReorder.insertionBar(ids, moving: UUID(), toIndex: 1) == nil)
+        #expect(CollectionReorder.insertionBar(ids, moving: d, toIndex: -5) == .init(target: a, side: .before))
+        #expect(CollectionReorder.insertionBar(ids, moving: a, toIndex: 99) == .init(target: d, side: .after))
     }
 }

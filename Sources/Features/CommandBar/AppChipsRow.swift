@@ -8,6 +8,9 @@ struct AppChipsRow: View {
     @Environment(AppState.self) private var appState: AppState
     let recent: [SourceApp]
     let frontmost: SourceApp?
+    /// When the user has custom collections on the bar, app chips show only their icon at rest so the collections have
+    /// room; when there are no collections, app chips show their names at rest too.
+    var collapsesLabels = true
 
     private var chips: [SourceApp] {
         AppChips.chips(frontmost: frontmost, recent: recent, ownBundleID: Bundle.main.bundleIdentifier)
@@ -19,7 +22,10 @@ struct AppChipsRow: View {
             PestoChip(
                 label: app.name, icon: "app.badge.checkmark",
                 iconImage: SourceIconCache.shared.image(forBundleID: app.bundleID), isActive: isActive,
-                collapsesLabel: true
+                collapsesLabel: collapsesLabels,
+                helpText: isActive
+                    ? String(localized: "Showing clips from \(app.name), click to remove")
+                    : String(localized: "Show clips from \(app.name)")
             ) {
                 if isActive {
                     appState.appChipFilter.remove(app.bundleID)
@@ -27,7 +33,6 @@ struct AppChipsRow: View {
                     appState.appChipFilter.insert(app.bundleID)
                 }
             }
-            .help(isActive ? "Showing clips from \(app.name), click to remove" : "Show clips from \(app.name)")
             .accessibilityIdentifier(AccessibilityID.appChip(app.bundleID))
         }
     }

@@ -17,6 +17,7 @@ private struct ToastView: View {
         switch toast {
         case .manualPaste: toast.isClickable ? "hand.point.up.left" : "keyboard"
         case .updatesUnavailable: "arrow.triangle.2.circlepath"
+        case .upToDate: "checkmark.circle"
         case .filesGone: "doc.badge.clock"
         }
     }
@@ -25,6 +26,7 @@ private struct ToastView: View {
         switch toast {
         case .manualPaste: toast.isClickable ? "Auto-paste is off. Click to turn it on." : "Press ⌘V to paste"
         case .updatesUnavailable: "This build does not check for updates."
+        case .upToDate: "You\u{2019}re up to date."
         case .filesGone: "Nothing pasted: those files were moved or deleted."
         }
     }
@@ -42,7 +44,10 @@ private struct ToastView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        // A tint under the glass and a separator edge keep the text legible over a white or a black window behind it.
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .windowBackgroundColor).opacity(0.55)))
         .glassPanelBackground(in: RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
         .opacity(opacity)
         .contentShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture { onClick?() }

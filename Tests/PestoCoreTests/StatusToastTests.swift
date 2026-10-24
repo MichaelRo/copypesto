@@ -25,6 +25,15 @@ struct StatusToastTests {
         #expect(toast.visibleSeconds >= 4)
     }
 
+    @Test("the up-to-date notice sits under the menu bar like the update notice, with no click and a readable time")
+    func whenUpToDate_thenItAppearsNearTheMenuBarAndStaysReadable() {
+        let toast = StatusToast.upToDate
+
+        #expect(toast.placement == .belowMenuBar)
+        #expect(!toast.isClickable)
+        #expect(toast.visibleSeconds == 4)
+    }
+
     @Test("the notice that a paste found its files gone sits above the Dock and stays long enough to read")
     func whenFilesGone_thenItIsReadable() {
         let toast = StatusToast.filesGone

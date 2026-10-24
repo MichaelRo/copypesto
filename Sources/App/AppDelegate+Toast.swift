@@ -32,7 +32,9 @@ extension AppDelegate {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 dismissShelfOnExternalAppActivationIfNeeded()
-                updateWorkspacePinboard(for: app.bundleIdentifier)
+                if !appState.keepsShelfOpenForAuthentication {
+                    updateWorkspacePinboard(for: app.bundleIdentifier)
+                }
             }
         }
     }

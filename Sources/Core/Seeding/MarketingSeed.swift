@@ -22,7 +22,7 @@ public enum MarketingSeed {
         [
             .text("Pesto night at Dana's, Friday at 7:00 pm. Bring the basil and pecorino.", app: messages),
             .picture(ShowcaseArt.basilLeaves()),
-            .text("{\n  \"recipe\": \"pesto\",\n  \"basil\": \"60 g\",\n  \"servings\": 4\n}", app: terminal),
+            .text("{ \"recipe\": \"pesto\",\n  \"servings\": 4 }", app: terminal),
             .text("Rule 1: Pine nuts must be toasted until golden, never scorched.", app: notes),
             .text("https://example.com/recipes/pesto-genovese", app: safari),
             .text("#E4572E", app: colorSync),

@@ -55,4 +55,13 @@ struct CollectionReorderTests {
         #expect(CollectionReorder.order([a, b, c, d], moving: d, toIndex: 1) == [a, d, b, c])
         #expect(CollectionReorder.order([a, b, c, d], moving: a, toIndex: 9) == [b, c, d, a])
     }
+
+    @Test("the insertion bar appears on the gap where the chip will land and hides when the order does not change")
+    func whenInsertionBarCalculated_thenReturnsTargetAndSideOnlyWhenMoveChangesOrder() {
+        let ids = [a, b, c, d]
+        #expect(CollectionReorder.insertionBar(ids, moving: d, toIndex: 3) == nil)
+        #expect(CollectionReorder.insertionBar(ids, moving: d, toIndex: 1) == .init(target: b, side: .before))
+        #expect(CollectionReorder.insertionBar(ids, moving: a, toIndex: 0) == nil)
+        #expect(CollectionReorder.insertionBar(ids, moving: a, toIndex: 2) == .init(target: c, side: .after))
+    }
 }

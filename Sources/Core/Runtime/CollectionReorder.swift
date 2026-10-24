@@ -45,4 +45,23 @@ public enum CollectionReorder {
         result.insert(moving, at: min(max(index, 0), result.count))
         return result
     }
+
+    public struct InsertionBar: Equatable, Sendable {
+        public let target: UUID
+        public let side: Side
+
+        public init(target: UUID, side: Side) {
+            self.target = target
+            self.side = side
+        }
+    }
+
+    /// Where the insertion bar appears in the stationary `ids` row when `moving` would land at `index`, or nil when
+    /// dropping at `index` leaves the order unchanged.
+    public static func insertionBar(_ ids: [UUID], moving: UUID, toIndex index: Int) -> InsertionBar? {
+        guard !ids.isEmpty, let sourceIndex = ids.firstIndex(of: moving) else { return nil }
+        let clamped = min(max(index, 0), ids.count - 1)
+        guard clamped != sourceIndex else { return nil }
+        return InsertionBar(target: ids[clamped], side: clamped < sourceIndex ? .before : .after)
+    }
 }

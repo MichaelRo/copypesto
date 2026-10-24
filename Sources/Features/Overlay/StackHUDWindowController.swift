@@ -33,9 +33,11 @@ final class StackHUDViewModel {
 
 private struct StackHUDView: View {
     @Environment(\.pestoAccent) private var accent
+    @Environment(\.colorSchemeContrast) private var contrast
     @State var model: StackHUDViewModel
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
         HStack(spacing: 10) {
             Image(systemName: model.progress == "Done" ? "checkmark.circle.fill" : "square.stack.3d.up.fill")
                 .font(.system(size: 14, weight: .semibold))
@@ -75,7 +77,12 @@ private struct StackHUDView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .frame(width: 340, alignment: .leading)
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 12))
+        .background {
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
+        .overlay(
+            shape.strokeBorder(.primary.opacity(contrast == .increased ? 0.4 : 0.14), lineWidth: 1)
+        )
         .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
         .animation(Motion.animation(.easeInOut(duration: 0.2)), value: model.progress)
     }

@@ -8,15 +8,18 @@ import SwiftUI
 /// Non-modal, non-activating, auto-dismisses after 2.5 s with a 0.5 s fade.
 /// Created fresh each time `ToastWindowController.show()` is called.
 private struct ToastView: View {
+    @Environment(\.colorSchemeContrast) private var contrast
     let toast: StatusToast
     let onClick: (() -> Void)?
     var holds = false
     @State private var opacity: Double = 0
+    @State private var isHovered = false
 
     private var symbolName: String {
         switch toast {
         case .manualPaste: toast.isClickable ? "hand.point.up.left" : "keyboard"
         case .updatesUnavailable: "arrow.triangle.2.circlepath"
+        case .upToDate: "checkmark.circle"
         case .filesGone: "doc.badge.clock"
         }
     }
@@ -25,11 +28,13 @@ private struct ToastView: View {
         switch toast {
         case .manualPaste: toast.isClickable ? "Auto-paste is off. Click to turn it on." : "Press ⌘V to paste"
         case .updatesUnavailable: "This build does not check for updates."
+        case .upToDate: "You\u{2019}re up to date."
         case .filesGone: "Nothing pasted: those files were moved or deleted."
         }
     }
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
         HStack(spacing: 8) {
             Image(systemName: symbolName)
                 .font(.system(size: 13, weight: .medium))
@@ -42,9 +47,21 @@ private struct ToastView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 10))
+        // Card material like the hover card, at 92%, so the text holds 4.5:1 over a white or a black window behind it.
+        .background {
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
+        .overlay {
+            if toast.isClickable, isHovered {
+                shape.fill(Color.primary.opacity(0.06))
+            }
+        }
+        .overlay(
+            shape.strokeBorder(.primary.opacity(contrast == .increased ? 0.4 : 0.14), lineWidth: 1)
+        )
         .opacity(opacity)
-        .contentShape(RoundedRectangle(cornerRadius: 10))
+        .contentShape(shape)
+        .onHover { isHovered = $0 }
         .onTapGesture { onClick?() }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(toast.isClickable ? .isButton : [])

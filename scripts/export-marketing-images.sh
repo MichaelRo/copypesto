@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Copies the website screenshots from the newest UI-test result into .build/marketing/, named as the test
 # attached them (hero-light@2x.png, 01-shelf-dark@2x.png, ...). Run by `make marketing-images`; never resamples.
+# The frames of the loops (loop-<scene>-<mode>-<nn>-<ms>@2x) go to .build/marketing/loops/ for encode-marketing-loops.sh.
 # The website repo takes them from there: scripts/marketing/copy-from-app.sh in that repo.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -17,13 +18,19 @@ DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer} \
 OUT=.build/marketing
 mkdir -p "$OUT"
 python3 - "$WORK" "$OUT" <<'PY'
-import json, shutil, subprocess, sys
+import json, os, shutil, subprocess, sys
 work, out = sys.argv[1], sys.argv[2]
 count = 0
+loops = 0
+os.makedirs(f"{out}/loops", exist_ok=True)
 for test in json.load(open(f"{work}/manifest.json")):
     for item in test["attachments"]:
         name = item["suggestedHumanReadableName"].split("_0_")[0]
         if "@2x" not in name:
+            continue
+        if name.startswith("loop-"):
+            shutil.copy(f"{work}/{item['exportedFileName']}", f"{out}/loops/{name}.png")
+            loops += 1
             continue
         target = f"{out}/{name}.png"
         shutil.copy(f"{work}/{item['exportedFileName']}", target)
@@ -31,5 +38,5 @@ for test in json.load(open(f"{work}/manifest.json")):
                               capture_output=True, text=True).stdout.split()
         print(f"{target}  {size[-3]} x {size[-1]}")
         count += 1
-print(f"{count} images in {out}")
+print(f"{count} images in {out}, {loops} loop frames in {out}/loops")
 PY

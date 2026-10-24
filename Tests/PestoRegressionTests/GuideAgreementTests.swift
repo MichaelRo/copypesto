@@ -28,8 +28,8 @@ struct GuideAgreementTests {
     private func otherDocumentFiles() throws -> [URL] {
         let root = SourceTree.repositoryRoot
         let names = [
-            "README.md", "CONTRIBUTING.md", "SECURITY.md", "SUPPORT.md", "docs/feature-reference.md", "docs/testing.md",
-            "docs/development.md", "docs/design-language.md"
+            "README.md", "ROADMAP.md", "CONTRIBUTING.md", "SECURITY.md", "SUPPORT.md", "docs/feature-reference.md",
+            "docs/testing.md", "docs/development.md", "docs/design-language.md"
         ]
         let files = names.map { root.appendingPathComponent($0) }
         for file in files {

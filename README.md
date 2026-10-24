@@ -152,7 +152,9 @@ make test-core       # the fast tests, no Xcode project needed
 
 Architecture, how to build and test it, the security invariants and the project's working agreements are in
 [docs/development.md](docs/development.md) and [CONTRIBUTING.md](CONTRIBUTING.md). Every important decision has an
-[ADR](decisions/). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
+[ADR](decisions/). Planned directions live in [ROADMAP.md](ROADMAP.md). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
+
+Pesto is built with AI coding assistants (Claude and Gemini) alongside human design, architecture decisions ([decisions/](decisions/)), and an automated test and verification suite that enforces the project's security and privacy invariants.
 
 ## Support
 

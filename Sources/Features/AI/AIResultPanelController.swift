@@ -184,10 +184,12 @@ private struct AIResultView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background {
+            let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.primary.opacity(0.14), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }

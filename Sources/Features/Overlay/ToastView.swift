@@ -44,10 +44,12 @@ private struct ToastView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        // A tint under the glass and a separator edge keep the text legible over a white or a black window behind it.
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .windowBackgroundColor).opacity(0.8)))
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5))
+        // Card material like the hover card, at 92%, so the text holds 4.5:1 over a white or a black window behind it.
+        .background {
+            let shape = RoundedRectangle(cornerRadius: 10)
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.primary.opacity(0.14), lineWidth: 1))
         .opacity(opacity)
         .contentShape(RoundedRectangle(cornerRadius: 10))
         .onTapGesture { onClick?() }

@@ -46,6 +46,20 @@ final class AIResultPanel: NSPanel {
     override func cancelOperation(_: Any?) {
         onEscape()
     }
+
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .leftMouseDown,
+           let contentView,
+           event.locationInWindow.y >= contentView.bounds.height - 44,
+           event.locationInWindow.x < contentView.bounds.width - 48
+        {
+            NSCursor.closedHand.push()
+            performDrag(with: event)
+            NSCursor.pop()
+            return
+        }
+        super.sendEvent(event)
+    }
 }
 
 private struct AIResultView: View {
@@ -88,6 +102,9 @@ private struct AIResultView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 14)
+            .contentShape(Rectangle())
+            .gesture(WindowDragGesture())
+            .allowsWindowActivationEvents()
 
             if !result.sourcePreview.isEmpty {
                 let ellipsis = result.sourcePreview.count >= 80 ? "…" : ""
@@ -129,6 +146,17 @@ private struct AIResultView: View {
                 height: result.progress == nil
                     ? AIResultLayout.answerHeight(for: result.result, width: AIResultLayout.textWidth)
                     : 220
+            )
+            .mask(
+                VStack(spacing: 0) {
+                    Color.black
+                    LinearGradient(
+                        colors: [.black, .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 22)
+                }
             )
             .accessibilityLabel(result.progress == nil ? "Answer" : "Parts read so far")
 
@@ -181,14 +209,25 @@ private struct AIResultView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background {
+            let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(.primary.opacity(contrast == .increased ? 0.4 : 0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
 // MARK: - Loading view
 
 private struct AILoadingView: View {
+    @Environment(\.colorSchemeContrast) private var contrast
+
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
         HStack(spacing: 10) {
             ProgressView()
                 .controlSize(.small)
@@ -197,7 +236,13 @@ private struct AILoadingView: View {
                 .pestoQuiet()
         }
         .padding(20)
-        .glassPanelBackground(in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background {
+            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+        }
+        .overlay(
+            shape.strokeBorder(.primary.opacity(contrast == .increased ? 0.4 : 0.14), lineWidth: 1)
+        )
+        .clipShape(shape)
     }
 }
 
@@ -250,6 +295,10 @@ final class AIResultPanelController {
         hide()
 
         content.frame = NSRect(origin: .zero, size: size)
+        content.wantsLayer = true
+        content.layer?.cornerRadius = 16
+        content.layer?.cornerCurve = .continuous
+        content.layer?.masksToBounds = true
 
         let newPanel = AIResultPanel(size: size) { [weak self] in self?.hide() }
         newPanel.contentView = content
@@ -276,6 +325,7 @@ final class AIResultPanelController {
             )
         }
         newPanel.makeKeyAndOrderFront(nil)
+        newPanel.invalidateShadow()
         panel = newPanel
     }
 }

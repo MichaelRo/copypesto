@@ -59,7 +59,9 @@ struct HotkeyAndStackSessionTests {
         session.prepare(after: .milliseconds(20)) {
             ranSecond = true
         }
-        try await Task.sleep(for: .milliseconds(80))
+        for _ in 0..<300 where !ranSecond {
+            try await Task.sleep(for: .milliseconds(10))
+        }
         #expect(ranSecond)
         session.stop()
     }

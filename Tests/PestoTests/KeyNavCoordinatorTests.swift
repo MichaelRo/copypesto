@@ -78,6 +78,22 @@ struct KeyNavCoordinatorTests {
         #expect(result == nil)
     }
 
+    @Test("Control-Option-Arrow (VoiceOver navigation) passes through without moving the grid focus")
+    func whenControlOptionArrow_thenPassesThroughWithoutMovingGridFocus() throws {
+        let coordinator = makeCoordinator()
+        var fired = false
+        coordinator.onRight = { fired = true }
+        coordinator.onLeft = { fired = true }
+        coordinator.onPage = { _ in fired = true }
+
+        let right = try keyEvent(keyCode: 124, modifiers: [.control, .option])
+        let left = try keyEvent(keyCode: 123, modifiers: [.control, .option])
+
+        #expect(coordinator.handle(right) === right)
+        #expect(coordinator.handle(left) === left)
+        #expect(!fired)
+    }
+
     @Test("up/down arrows are silently consumed (no vertical grid)")
     func verticalArrows_areConsumedWithoutCallback() throws {
         let coordinator = makeCoordinator()
@@ -448,7 +464,9 @@ struct KeyNavCoordinatorTests {
     }
 
     // MARK: - Only the host window's keys (the monitor is app-wide)
+}
 
+extension KeyNavCoordinatorTests {
     @Test("a key typed in another window passes through untouched")
     func keyInAnotherWindow_isNotConsumed() throws {
         let coordinator = makeCoordinator()

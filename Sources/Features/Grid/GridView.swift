@@ -160,7 +160,8 @@ struct GridView: View {
     var detailSuppressed: Bool {
         DetailPopoverPolicy.isSuppressed(
             isLocked: appState.isHistoryLocked,
-            isShelfVisible: isPinnedHost ? appState.isPinnedWindowVisible : appState.isOverlayVisible
+            isShelfVisible: isPinnedHost ? appState.isPinnedWindowVisible : appState.isOverlayVisible,
+            voiceOverEnabled: NSWorkspace.shared.isVoiceOverEnabled
         )
     }
 

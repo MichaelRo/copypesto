@@ -32,6 +32,7 @@ public actor StorageService: ModelActor {
         keyRotator = environment.keyRotator
         undoHistory = environment.undoHistory
         wipeSuggestionLedger = environment.wipeSuggestionLedger
+        nsfwModeProvider = environment.nsfwMode ?? { NSFWMode.current() }
     }
 
     /// The longest a copy kept from an allowed password manager stays in the history, whatever its allowance.
@@ -46,6 +47,7 @@ public actor StorageService: ModelActor {
     /// Read by the app for the Edit menu and the banner; written only through this service and `ClipEditor`.
     public nonisolated let undoHistory: UndoHistory
     let wipeSuggestionLedger: (@Sendable () -> Void)?
+    let nsfwModeProvider: @Sendable () -> NSFWMode
     let encryption = BlobEncryption()
     let keyRotator: @Sendable () throws -> Void
     let resolver = SourceAppResolver()

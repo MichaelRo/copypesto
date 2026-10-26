@@ -205,8 +205,8 @@ struct OverlayRootView: View {
                     // (D-01).
                     .blur(radius: appState.isHistoryLocked ? ShelfLockCover.blurRadius : 0)
                     .padding(.horizontal, 16)
-                    .padding(.top, 12)
-                    .padding(.bottom, 8)
+                    .padding(.top, appState.isSearchActive ? 6 : 12)
+                    .padding(.bottom, appState.isSearchActive ? 2 : 8)
 
                 BiometricLockOverlay {
                     GridView(

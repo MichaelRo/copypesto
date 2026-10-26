@@ -198,8 +198,9 @@ final class MarketingScreenshotTests: PestoUITestCase {
     func test_smartClips() throws {
         try inBothAppearances { mode in
             showOverlay()
-            let first = cards.firstMatch
-            first.rightClick()
+            let target = card(containing: "Friday at 7:00 pm")
+            XCTAssertTrue(target.waitForExistence(timeout: 10), "date card not found")
+            target.rightClick()
             XCTAssertTrue(app.menuItems["Add to Calendar"].waitForExistence(timeout: 10))
             settle()
             capture("09-smart-clips", mode: mode, region: bottomStrip(CGSize(width: 720, height: 680)))

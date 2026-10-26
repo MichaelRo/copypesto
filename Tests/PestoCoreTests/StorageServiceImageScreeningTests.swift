@@ -21,16 +21,33 @@ private final class FakeScreener: ImageSensitivityScreening {
     }
 }
 
+private final class ModeHolder: @unchecked Sendable {
+    private let mode = Mutex(NSFWMode.blur)
+
+    func get() -> NSFWMode {
+        mode.withLock { $0 }
+    }
+
+    func set(_ value: NSFWMode) {
+        mode.withLock { $0 = value }
+    }
+}
+
 @Suite("StorageService image screening", .serialized)
 struct StorageServiceImageScreeningTests {
     private let container: ModelContainer
     private let service: StorageService
     private let screener = FakeScreener()
+    private let mode = ModeHolder()
 
     init() async throws {
         container = try ModelContainerSetup.makeInMemory().synced
         let screener = screener
-        service = StorageService(modelContainer: container, environment: .testing { $0.imageScreener = screener })
+        let mode = mode
+        service = StorageService(modelContainer: container, environment: .testing {
+            $0.imageScreener = screener
+            $0.nsfwMode = { mode.get() }
+        })
     }
 
     private func png() throws -> Data {
@@ -60,9 +77,7 @@ struct StorageServiceImageScreeningTests {
     }
 
     private func withMode(_ mode: NSFWMode, _ body: () async throws -> Void) async rethrows {
-        let previous = AppDefaults.store.string(forKey: NSFWMode.defaultsKey)
-        AppDefaults.store.set(mode.rawValue, forKey: NSFWMode.defaultsKey)
-        defer { AppDefaults.store.set(previous, forKey: NSFWMode.defaultsKey) }
+        self.mode.set(mode)
         try await body()
     }
 

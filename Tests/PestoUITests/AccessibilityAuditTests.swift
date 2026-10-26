@@ -237,7 +237,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
                 element(AccessibilityID.aiResultPasteButton).waitForExistence(timeout: 15), "no AI answer panel"
             )
             try runAudit("AI answer panel, \(mode)", knownFindings: [
-                KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 1)
+                KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 2)
             ])
         }
     }

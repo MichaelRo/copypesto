@@ -33,7 +33,7 @@ final class SelectionBarTests: PestoUITestCase {
 
     func test_selectionBar_ofTextClips_offersPasteAllPasteOneByOneAndDelete() {
         inBothAppearances { mode in
-            pick([0, 2, 3])
+            pick([0, 1, 3])
             XCTAssertTrue(element(AccessibilityID.pasteAllButton).waitForExistence(timeout: 5))
             XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).exists)
             XCTAssertTrue(element(AccessibilityID.deleteSelectedButton).exists)
@@ -44,7 +44,7 @@ final class SelectionBarTests: PestoUITestCase {
 
     func test_selectionBar_ofMixedClips_offersNoPasteAll() {
         inBothAppearances { mode in
-            pick([0, 1])
+            pick([1, 2])
             XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitForExistence(timeout: 5))
             XCTAssertFalse(
                 element(AccessibilityID.pasteAllButton).exists,
@@ -57,7 +57,7 @@ final class SelectionBarTests: PestoUITestCase {
 
     func test_selectionBar_deleteAsksInsideTheShelf() {
         inBothAppearances { mode in
-            pick([0, 2, 3])
+            pick([0, 1, 3])
             element(AccessibilityID.deleteSelectedButton).click()
             XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitForExistence(timeout: 5))
             settle()
@@ -72,7 +72,7 @@ final class SelectionBarTests: PestoUITestCase {
             "linkPreviewsEnabled": "false", "shelfPosition": "underNotch"
         ])
         showOverlay()
-        pick([0, 2, 3])
+        pick([0, 1, 3])
         let bar = element(AccessibilityID.deleteSelectedButton)
         XCTAssertTrue(bar.waitForExistence(timeout: 5))
         XCTAssertLessThanOrEqual(bar.frame.maxY, overlay.frame.maxY, "the bar must not hang below the panel")

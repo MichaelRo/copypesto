@@ -80,8 +80,10 @@ struct CardFirstIngestTests {
     init() async throws {
         container = try ModelContainerSetup.makeInMemory().synced
         let spy = lastItem
-        service = StorageService(modelContainer: container, environment: .testing { $0.lastItemStore = spy })
-        AppDefaults.store.set(NSFWMode.blur.rawValue, forKey: NSFWMode.defaultsKey)
+        service = StorageService(modelContainer: container, environment: .testing {
+            $0.lastItemStore = spy
+            $0.nsfwMode = { .blur }
+        })
     }
 
     /// A service over the same store whose picture reading and screening wait on `gate`.
@@ -91,6 +93,7 @@ struct CardFirstIngestTests {
             $0.lastItemStore = spy
             $0.textRecognizer = HeldRecognizer(gate: gate, text: text)
             $0.imageScreener = HeldScreener(gate: gate, verdict: verdict)
+            $0.nsfwMode = { .blur }
         })
     }
 

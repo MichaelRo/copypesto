@@ -30,8 +30,12 @@ struct CardActions {
     var togglePin: (@MainActor (ClipboardItem) -> Void)?
     /// Writes the clip to the pasteboard without pasting or closing the shelf.
     var copy: (@MainActor (ClipboardItem) -> Void)?
-    /// Copy As on a colour clip: puts this text on the clipboard.
+    /// Copy As on a colour clip or URL title: puts this text on the clipboard.
     var copyText: (@MainActor (ClipboardItem, String) -> Void)?
+    /// Writes raw image data to the pasteboard.
+    var copyImageData: (@MainActor (ClipboardItem, Data) -> Void)?
+    /// Writes an image (e.g. URL preview image) to the pasteboard.
+    var copyImage: (@MainActor (ClipboardItem, NSImage) -> Void)?
     /// Save Image on a picture: writes it to the Downloads folder.
     var saveImage: (@MainActor (ClipboardItem) -> Void)?
     /// Moves a clip to a collection; `nil` takes it out of all of them.

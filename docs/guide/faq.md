@@ -67,7 +67,7 @@ and picture screening need macOS 27.
 ## How do I uninstall it?
 
 Quit Pesto, drag it to the Trash, and optionally delete
-`~/Library/Application Support/net.copypesto.pesto/` and `~/Library/Preferences/net.copypesto.pesto.plist`. To remove
+`~/Library/Application Support/net.copypesto.pesto/` and `~/Library/Preferences/net.copypesto.pesto.plist`. If you installed with Homebrew, `brew uninstall --cask pesto` keeps your settings and history; `brew uninstall --cask --zap pesto` deletes them too (the Keychain key stays behind). To remove
 the keys, search Keychain Access for `net.copypesto.pesto` and delete what it finds: the encryption key
 (`net.copypesto.pesto.blobKey`), the device ID (`net.copypesto.pesto.deviceID`) and, if you set up backup, the backup key (`net.copypesto.pesto.backupKey`). Backup
 files you saved stay where you put them until you delete them.

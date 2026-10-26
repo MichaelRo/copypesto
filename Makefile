@@ -280,12 +280,13 @@ SIGN_ID ?= Developer ID Application
 
 .PHONY: dmg
 dmg: notarize ## [Release] Package the notarized app into a signed, notarized, stapled DMG (the file Sparkle serves)
-	rm -f $(EXPORT_PATH)/Pesto-*.dmg
+	rm -f $(EXPORT_PATH)/Pesto-*.dmg $(EXPORT_PATH)/Pesto-*.dmg.sha256
 	scripts/make-dmg.sh $(EXPORT_PATH)/Pesto.app $(DMG)
 	codesign --force --sign "$(SIGN_ID)" --timestamp $(DMG)
 	xcrun notarytool submit $(DMG) --keychain-profile pesto-notarytool --wait
 	xcrun stapler staple $(DMG)
 	spctl --assess --type open --context context:primary-signature --verbose $(DMG)
+	(cd $(EXPORT_PATH) && shasum -a 256 Pesto-$(VERSION).dmg > Pesto-$(VERSION).dmg.sha256)
 
 .PHONY: release-check
 release-check: ## [Release] Build the Release configuration unsigned, ad-hoc sign it with the hardened runtime and verify the bundle

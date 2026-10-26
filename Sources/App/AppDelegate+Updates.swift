@@ -6,7 +6,8 @@ extension AppDelegate {
     /// app whose only other network request is one the person can disable too.
     func wireUpdateSettings() {
         let updater = updaterController.updater
-        appState.checkForUpdates = { [weak self] in self?.updaterController.checkForUpdates(nil) }
+        appState.checkForUpdates = { [weak self] in self?.statusCheckUpdates() }
+        appState.updateReminders.onUpToDate = { [weak self] in self?.showUpToDateToast() }
         appState.automaticUpdateChecks = (
             get: { updater.automaticallyChecksForUpdates },
             set: { updater.automaticallyChecksForUpdates = $0 }

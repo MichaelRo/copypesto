@@ -165,6 +165,7 @@ final class KeyNavCoordinator {
     }
 
     private func handleConfirming(_ event: NSEvent) -> NSEvent? {
+        if event.modifierFlags.contains(.control) { return event }
         switch event.keyCode {
         case 53:
             onCancelConfirmation?()
@@ -183,6 +184,7 @@ final class KeyNavCoordinator {
     }
 
     private func handleLocked(_ event: NSEvent) -> NSEvent? {
+        if event.modifierFlags.contains(.control) { return event }
         switch event.keyCode {
         case 53:
             onEscape?()
@@ -230,10 +232,10 @@ final class KeyNavCoordinator {
             if onFilterChipRelease?() == true { return nil }
             onEscapeFromSearch?()
             return nil
-        case 125: // ↓
+        case 125 where !event.modifierFlags.contains(.control): // ↓
             onRight?()
             return nil
-        case 126: // ↑
+        case 126 where !event.modifierFlags.contains(.control): // ↑
             onLeft?()
             return nil
         case 116, 121: // Page Up, Page Down: a one-line field has no page, and AppKit beeps
@@ -272,10 +274,9 @@ final class KeyNavCoordinator {
         }
         switch event.keyCode {
         case 123, 124, 115, 119: // ← → Home End
-            moveFocus(keyCode: event.keyCode)
-            return nil
+            return moveFocus(event)
         case 125, 126: // ↓ ↑
-            return nil
+            return event.modifierFlags.contains(.control) ? event : nil
         case 48: // Tab
             return event
         case 53: // Escape
@@ -333,7 +334,7 @@ final class KeyNavCoordinator {
         case 121: return true
         case 116: return false
         case 123, 124:
-            guard event.modifierFlags.contains(.option) else { return nil }
+            guard event.modifierFlags.intersection([.option, .control, .command]) == .option else { return nil }
             return (event.keyCode == 124) != usesRightToLeft
         default: return nil
         }
@@ -348,12 +349,14 @@ final class KeyNavCoordinator {
         onPage?(forward ? size : -size)
     }
 
-    private func moveFocus(keyCode: UInt16) {
-        switch keyCode {
+    private func moveFocus(_ event: NSEvent) -> NSEvent? {
+        guard !event.modifierFlags.contains(.control) else { return event }
+        switch event.keyCode {
         case 123: (usesRightToLeft ? onRight : onLeft)?()
         case 124: (usesRightToLeft ? onLeft : onRight)?()
         case 115: onFirst?()
         default: onLast?()
         }
+        return nil
     }
 }

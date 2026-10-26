@@ -120,6 +120,18 @@ final class NSFWURLDetectorTests: XCTestCase {
         XCTAssertTrue(NSFWURLDetector.isExplicit(urlString: "https://coomer.su/onlyfans/user/foo"))
     }
 
+    func test_danbooruDomain_isExplicit() {
+        XCTAssertTrue(NSFWURLDetector.isExplicit(urlString: "https://danbooru.donmai.us/posts/123"))
+    }
+
+    func test_rule34PahealDomain_isExplicit() {
+        XCTAssertTrue(NSFWURLDetector.isExplicit(urlString: "https://rule34.paheal.net/post/view/456"))
+    }
+
+    func test_e621Domain_isExplicit() {
+        XCTAssertTrue(NSFWURLDetector.isExplicit(urlString: "https://e621.net/posts/789"))
+    }
+
     // MARK: - Metadata-aware classification
 
     func test_metadataAware_opaqueHostWithExplicitTitle_isExplicit() {
@@ -145,6 +157,38 @@ final class NSFWURLDetectorTests: XCTestCase {
             urlString: "https://github.com/user/swift-tutorial",
             metadata: signals
         ))
+    }
+
+    func test_metadataAware_redditMatureContentPrefix_isExplicit() {
+        let signals = NSFWURLDetector.LinkPreviewSignals(
+            title: "[Mature Content] Some Reddit post title",
+            description: nil,
+            siteName: "Reddit"
+        )
+        XCTAssertTrue(NSFWURLDetector.isExplicit(
+            urlString: "https://www.reddit.com/r/talkedintoit/s/dj3NIjoDUu",
+            metadata: signals
+        ))
+    }
+
+    func test_metadataAware_explicitPhrases_areExplicit() {
+        let phrases = [
+            "Adult Content warning on this profile",
+            "Marked as Not Safe For Work by creator",
+            "Notice: 18+ content ahead",
+            "Content Warning: NSFW"
+        ]
+        for phrase in phrases {
+            let signals = NSFWURLDetector.LinkPreviewSignals(
+                title: phrase,
+                description: nil,
+                siteName: "Platform"
+            )
+            XCTAssertTrue(
+                NSFWURLDetector.isExplicit(urlString: "https://example.com/item/1", metadata: signals),
+                "Expected phrase '\(phrase)' to trigger explicit detection"
+            )
+        }
     }
 
     func test_metadataAware_nilMetadata_matchesHostOnlyVariant() {

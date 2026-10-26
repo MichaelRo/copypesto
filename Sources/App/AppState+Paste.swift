@@ -73,6 +73,15 @@ extension AppState {
         if protected { scheduleSecretClear() }
     }
 
+    /// Writes an image back to the pasteboard through the write gate, keeping the protection the source had.
+    func writeImage(_ image: NSImage, protected: Bool) {
+        writeToPasteboard { pb in
+            Self.beginWrite(on: pb, protected: protected)
+            pb.writeObjects([image])
+        }
+        if protected { scheduleSecretClear() }
+    }
+
     /// Writes the next clip of a paste stack. A secret is marked and, like every other paste of one, taken off the
     /// pasteboard again after `secretClearDelay`; a stack writes each clip as the one before is read, so the timer
     /// restarts with every secret and the last one is cleared too.

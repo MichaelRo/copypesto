@@ -63,11 +63,9 @@ extension GridView {
             },
             quickLook: { item in
                 Task {
-                    let permitted = await HiddenClipReveal.permitted(
-                        isHidden: item.sensitivityRaw != nil,
-                        using: UserAuthenticator.current,
-                        reason: "Show a clip that is hidden on the shelf"
-                    )
+                    let permitted = item.sensitivityRaw == nil
+                        ? true
+                        : await appState.authenticateInShelf(reason: "Show a clip that is hidden on the shelf")
                     if permitted { quickLookController.toggle(item: item) }
                 }
             },
@@ -96,6 +94,8 @@ extension GridView {
             togglePin: { togglePin(ofClip: $0.id) },
             copy: { copyToPasteboard($0) },
             copyText: copyText,
+            copyImageData: { copyImageData($1, from: $0) },
+            copyImage: { copyImage($1, from: $0) },
             saveImage: { saveImage($0) },
             moveToCollection: { item, targetID in editor.edit(item) { $0.collectionID = targetID } },
             delete: { requestDelete(ofCard: $0.id) },

@@ -3,6 +3,7 @@ public enum ShelfEmptyState: Equatable, Sendable {
     case storageUnavailable
     case noResults
     case emptyCollection
+    case emptyAppFilter(appName: String)
     case captureBlocked
     case paused
     case noClips
@@ -12,6 +13,7 @@ public enum ShelfEmptyState: Equatable, Sendable {
         public var visibleCount: Int
         public var isSearching: Bool
         public var inCollection: Bool
+        public var selectedAppName: String?
         public var isPaused: Bool
         public var captureBlocked: Bool
 
@@ -20,6 +22,7 @@ public enum ShelfEmptyState: Equatable, Sendable {
             visibleCount: Int,
             isSearching: Bool,
             inCollection: Bool,
+            selectedAppName: String? = nil,
             isPaused: Bool,
             captureBlocked: Bool
         ) {
@@ -27,6 +30,7 @@ public enum ShelfEmptyState: Equatable, Sendable {
             self.visibleCount = visibleCount
             self.isSearching = isSearching
             self.inCollection = inCollection
+            self.selectedAppName = selectedAppName
             self.isPaused = isPaused
             self.captureBlocked = captureBlocked
         }
@@ -42,7 +46,7 @@ public enum ShelfEmptyState: Equatable, Sendable {
         switch self {
         case .captureBlocked: .openPrivacySettings
         case .paused: .resumeCapturing
-        case .storageUnavailable, .noResults, .emptyCollection, .noClips: nil
+        case .storageUnavailable, .noResults, .emptyCollection, .emptyAppFilter, .noClips: nil
         }
     }
 
@@ -51,6 +55,9 @@ public enum ShelfEmptyState: Equatable, Sendable {
         if !context.hasStorage { return .storageUnavailable }
         if context.isSearching { return .noResults }
         if context.inCollection { return .emptyCollection }
+        if let app = context.selectedAppName, !app.isEmpty {
+            return .emptyAppFilter(appName: app)
+        }
         if context.captureBlocked { return .captureBlocked }
         if context.isPaused { return .paused }
         return .noClips

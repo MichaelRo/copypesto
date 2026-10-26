@@ -31,10 +31,14 @@ copy history-locked.png history-locked.png
 copy onboarding-shelf-step.png onboarding-welcome.png
 copy onboarding-accessibility-denied.png onboarding.png
 copy onboarding-ready.png onboarding-ready.png
-copy shelf-basil-light.png theme-basil.png
-copy shelf-parmesan-light.png theme-parmesan.png
-copy shelf-pineNut-light.png theme-pine-nut.png
-copy shelf-mortar-dark.png theme-mortar.png
+copy shelf-basil-light.png theme-basil-light.png
+copy shelf-basil-dark.png theme-basil-dark.png
+copy shelf-parmesan-light.png theme-parmesan-light.png
+copy shelf-parmesan-dark.png theme-parmesan-dark.png
+copy shelf-pineNut-light.png theme-pine-nut-light.png
+copy shelf-pineNut-dark.png theme-pine-nut-dark.png
+copy shelf-mortar-light.png theme-mortar-light.png
+copy shelf-mortar-dark.png theme-mortar-dark.png
 copy settings-Data.png settings-data.png
 # General, Appearance and Privacy come as a light and a dark picture; the guide names the light one and the website
 # swaps in the dark one for a reader whose page is dark.

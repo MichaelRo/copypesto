@@ -78,7 +78,7 @@ update-resolved` refreshes it: review the diff). CI installs SwiftFormat, SwiftL
    `date`, `dmgURL` (the GitHub release asset), `length`, `edSignature`, `sha256` (`shasum -a 256 <dmg>`) and
    `minimumSystemVersion`, and the release notes as the body. The same file feeds the changelog page and `/appcast.xml`, and
    `npm run verify` there checks the URL and the shape of every field.
-5. Upload the DMG to a GitHub release, publish the appcast, then check for updates from an older build.
+5. Upload `Pesto-<version>.dmg` and `Pesto-<version>.dmg.sha256` to the GitHub release, publish the appcast, then check for updates from an older build.
 6. Put these in the GitHub release body, so anyone can check a download against the source: the commit or tag, the Xcode
    version (`xcodebuild -version`), the SHA-256 of the DMG, the `codesign -dvvv` lines for the Team ID, and the three
    commands a person can run (`shasum -a 256`, `spctl --assess --type execute -vv`, `xcrun stapler validate`). Build

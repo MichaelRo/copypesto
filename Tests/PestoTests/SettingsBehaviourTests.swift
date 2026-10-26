@@ -77,6 +77,33 @@ extension HostedGlobals {
             #expect(HSBColor(hex: "E06C75")?.hexString == "E06C75")
             #expect(HSBColor(hex: "invalid") == nil)
         }
+
+        @Test("wiring update settings attaches the automatic update check switch and manual check handler")
+        @MainActor
+        func whenUpdateSettingsWired_thenAutomaticUpdateChecksAndManualCheckAreSet() {
+            let delegate = AppDelegate()
+            delegate.wireUpdateSettings()
+            #expect(delegate.appState.automaticUpdateChecks != nil)
+            #expect(delegate.appState.checkForUpdates != nil)
+            #expect(delegate.appState.updateReminders.onUpToDate != nil)
+
+            var upToDateCount = 0
+            delegate.appState.updateReminders.onUpToDate = { upToDateCount += 1 }
+            delegate.appState.updateReminders.handleNoUpdateFound(userInitiated: false)
+            #expect(upToDateCount == 0, "scheduled background checks stay silent")
+
+            delegate.appState.updateReminders.beginManualCheck()
+            delegate.appState.updateReminders.handleNoUpdateFound(userInitiated: false)
+            #expect(upToDateCount == 1, "manual check fires the up-to-date toast once")
+            #expect(!delegate.appState.updateReminders.hasPendingManualCheck)
+
+            delegate.appState.updateReminders.beginManualCheck()
+            #expect(delegate.appState.updateReminders.hasPendingManualCheck)
+            delegate.appState.updateReminders.standardUserDriverWillFinishUpdateSession()
+            #expect(!delegate.appState.updateReminders.hasPendingManualCheck)
+            delegate.appState.updateReminders.handleNoUpdateFound(userInitiated: false)
+            #expect(upToDateCount == 1, "aborted or finished session clears pending manual check")
+        }
     }
 
     @Suite("Shortcuts action", .serialized)

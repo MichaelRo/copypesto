@@ -50,7 +50,7 @@ struct ShelfEmptyStateView: View {
         switch state {
         case .storageUnavailable: "IllustrationUnavailable"
         case .noResults: "IllustrationNoResults"
-        case .emptyCollection, .noClips: "IllustrationNoClips"
+        case .emptyCollection, .noClips, .emptyAppFilter: "IllustrationNoClips"
         case .captureBlocked: "IllustrationBlocked"
         case .paused: "IllustrationPaused"
         }
@@ -61,6 +61,7 @@ struct ShelfEmptyStateView: View {
         case .storageUnavailable: "History is unavailable"
         case .noResults: "No results"
         case .emptyCollection: "This collection is empty"
+        case let .emptyAppFilter(name): "No clips from \(name)"
         case .captureBlocked: "Clipboard access is blocked"
         case .paused: "Capturing is paused"
         case .noClips: "Nothing copied yet"
@@ -75,6 +76,8 @@ struct ShelfEmptyStateView: View {
             "Nothing matches “\(query)”. Search reads the first 500 characters of each clip."
         case .emptyCollection:
             "Drag a clip onto the collection to add it."
+        case let .emptyAppFilter(name):
+            "Clips you copy while using \(name) will appear here."
         case .captureBlocked:
             "Allow “Paste from Other Apps” for Pesto in System Settings → Privacy & Security."
         case .paused:

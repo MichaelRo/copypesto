@@ -20,6 +20,7 @@ struct PinboardChipView: View {
     var onMove: ((Int) -> Void)?
     var canMoveLeft = false
     var canMoveRight = false
+    var insertionSide: CollectionReorder.Side?
 
     @Environment(AppState.self) private var appState: AppState
     @State private var isEditing = false
@@ -37,12 +38,16 @@ struct PinboardChipView: View {
             isSelected: isSelected,
             onSelect: onSelect
         )
-        // The chip being dragged leaves an empty, dashed slot, and the others slide around it (the row owns the drop,
-        // `ChipRowDropDelegate`).
-        .opacity(isDragSource ? 0 : 1)
-            .overlay {
-                if isDragSource {
-                    Capsule().strokeBorder(accent.opacity(0.45), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+        // The chip being dragged stays in the row at 35% opacity so the row never changes width, and one accent bar
+        // marks the gap where it will land (`ChipRowDropDelegate`).
+        .opacity(isDragSource ? 0.35 : 1)
+            .overlay(alignment: insertionSide == .before ? .leading : .trailing) {
+                if let insertionSide {
+                    RoundedRectangle(cornerRadius: 1, style: .continuous)
+                        .fill(accent)
+                        .frame(width: 2, height: 20)
+                        .offset(x: insertionSide == .before ? -5 : 5)
+                        .transition(.opacity)
                         .accessibilityHidden(true)
                 }
             }
@@ -74,9 +79,10 @@ struct PinboardChipView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(Capsule().fill(Color.opaqueSurface))
-                .overlay(Capsule().strokeBorder(Color(hex: pinboard.colorHex) ?? accent, lineWidth: 1))
-                .scaleEffect(1.06)
-                .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
+                .overlay(Capsule().strokeBorder(accent, lineWidth: 1))
+                .opacity(0.9)
+                .scaleEffect(Motion.reduceMotion ? 1 : 1.04)
+                .shadow(color: .black.opacity(0.28), radius: 14, y: 6)
             }
             .onDrop(
                 of: [UTType.text, UTType.data],
@@ -154,15 +160,14 @@ struct ChipFramesKey: PreferenceKey {
 }
 
 /// One drop for the whole row of chips, so a dragged chip is accepted (a move) wherever the pointer is in the row. The
-/// row
-/// shows the new order live: the other chips slide around the dragged chip's empty slot, and nothing looks like a
-/// target.
+/// chips stay in place while a 2 pt accent bar marks the gap where the dragged chip will land.
 struct ChipRowDropDelegate: DropDelegate {
     let appState: AppState
     let baseOrder: [UUID]
     let frames: [UUID: CGRect]
     @Binding var frozenFrames: [UUID: CGRect]?
     @Binding var liveOrder: [UUID]?
+    @Binding var insertionBar: CollectionReorder.InsertionBar?
     let onCommit: ([UUID]) -> Void
 
     func validateDrop(info _: DropInfo) -> Bool {
@@ -171,7 +176,6 @@ struct ChipRowDropDelegate: DropDelegate {
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
         guard let source = appState.draggingPinboardID else { return nil }
-        // The slots are the chips' places when the drag began: the chips that slide must not move the thresholds.
         let slots = frozenFrames ?? frames
         if frozenFrames == nil { frozenFrames = frames }
         let others = baseOrder.filter { $0 != source }
@@ -180,18 +184,22 @@ struct ChipRowDropDelegate: DropDelegate {
         let current = (liveOrder ?? baseOrder).firstIndex(of: source) ?? 0
         let index = CollectionReorder.insertionIndex(slotMidXs: mids, pointerX: info.location.x, currentIndex: current)
         let order = CollectionReorder.order(baseOrder, moving: source, toIndex: index)
+        let bar = CollectionReorder.insertionBar(baseOrder, moving: source, toIndex: index)
         if order != liveOrder { liveOrder = order }
+        if bar != insertionBar { insertionBar = bar }
         return DropProposal(operation: .move)
     }
 
     func dropExited(info _: DropInfo) {
         liveOrder = nil
+        insertionBar = nil
         frozenFrames = nil
     }
 
     func performDrop(info _: DropInfo) -> Bool {
         defer {
             liveOrder = nil
+            insertionBar = nil
             frozenFrames = nil
             appState.isDragging = false
             appState.draggingPinboardID = nil

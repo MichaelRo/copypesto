@@ -140,12 +140,21 @@ struct GridView: View {
         NSFWMode(rawValue: nsfwModeRaw) ?? .blur
     }
 
+    private var selectedAppFilterName: String? {
+        guard !appState.appChipFilter.isEmpty else { return nil }
+        if appState.appChipFilter.count == 1, let bundleID = appState.appChipFilter.first {
+            return SourceIconCache.shared.displayName(forBundleID: bundleID) ?? bundleID
+        }
+        return String(localized: "selected apps")
+    }
+
     private var emptyState: ShelfEmptyState? {
         ShelfEmptyState.evaluate(.init(
             hasStorage: appState.historyContainer != nil,
             visibleCount: displayedItems.count,
             isSearching: !appState.searchText.trimmingCharacters(in: .whitespaces).isEmpty,
             inCollection: appState.selectedCollectionID != nil,
+            selectedAppName: selectedAppFilterName,
             isPaused: appState.isCapturingPaused,
             captureBlocked: PasteboardCaptureAccess.current() == .blocked
         ))
@@ -160,7 +169,8 @@ struct GridView: View {
     var detailSuppressed: Bool {
         DetailPopoverPolicy.isSuppressed(
             isLocked: appState.isHistoryLocked,
-            isShelfVisible: isPinnedHost ? appState.isPinnedWindowVisible : appState.isOverlayVisible
+            isShelfVisible: isPinnedHost ? appState.isPinnedWindowVisible : appState.isOverlayVisible,
+            voiceOverEnabled: NSWorkspace.shared.isVoiceOverEnabled
         )
     }
 

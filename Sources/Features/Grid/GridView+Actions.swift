@@ -439,9 +439,24 @@ extension GridView {
     }
 
     func copyText(_ item: ClipboardItem, _ text: String) {
-        appState.writeText(text, protected: false)
+        appState.writeText(text, protected: item.sensitivityRaw != nil)
         appState.noteCopied(item, in: modelContext)
-        Announcer.announce("Copied \(text)")
+        if item.sensitivityRaw != nil {
+            Announcer.announce("Copied")
+        } else {
+            Announcer.announce("Copied \(text)")
+        }
+    }
+
+    func copyImageData(_ data: Data, from item: ClipboardItem) {
+        guard let image = NSImage(data: data) else { return }
+        copyImage(image, from: item)
+    }
+
+    func copyImage(_ image: NSImage, from item: ClipboardItem) {
+        appState.writeImage(image, protected: item.sensitivityRaw != nil)
+        appState.noteCopied(item, in: modelContext)
+        Announcer.announce("Copied image")
     }
 
     private func flashSaved(_ id: UUID) {

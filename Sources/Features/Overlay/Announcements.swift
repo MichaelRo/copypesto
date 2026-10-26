@@ -20,6 +20,10 @@ extension ToastAnnouncement {
     static func updatesUnavailable() {
         Announcer.announce("This build does not check for updates.")
     }
+
+    static func upToDate() {
+        Announcer.announce("Pesto is up to date.")
+    }
 }
 
 /// The stack HUD is a panel that never takes focus, so its progress is spoken instead.

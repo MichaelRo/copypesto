@@ -9,6 +9,7 @@ struct ShelfEmptyStateTests {
         visibleCount: Int = 0,
         isSearching: Bool = false,
         inCollection: Bool = false,
+        selectedAppName: String? = nil,
         isPaused: Bool = false,
         captureBlocked: Bool = false
     )
@@ -18,6 +19,7 @@ struct ShelfEmptyStateTests {
             visibleCount: visibleCount,
             isSearching: isSearching,
             inCollection: inCollection,
+            selectedAppName: selectedAppName,
             isPaused: isPaused,
             captureBlocked: captureBlocked
         ))
@@ -41,6 +43,11 @@ struct ShelfEmptyStateTests {
     @Test("an empty collection is distinct from an empty history")
     func whenCollectionEmpty_thenEmptyCollection() {
         #expect(state(inCollection: true) == .emptyCollection)
+    }
+
+    @Test("an empty app filter says no clips from that app")
+    func whenAppFilterEmpty_thenEmptyAppFilter() {
+        #expect(state(selectedAppName: "Safari") == .emptyAppFilter(appName: "Safari"))
     }
 
     @Test("while paused the empty shelf explains why nothing arrives")
@@ -71,7 +78,10 @@ struct ShelfEmptyStateTests {
 
     @Test("a state with nothing to press offers no action")
     func whenNothingToDo_thenNoAction() {
-        for state in [ShelfEmptyState.noClips, .noResults, .emptyCollection, .storageUnavailable] {
+        let noActionStates: [ShelfEmptyState] = [
+            .noClips, .noResults, .emptyCollection, .emptyAppFilter(appName: "Safari"), .storageUnavailable
+        ]
+        for state in noActionStates {
             #expect(state.action == nil)
         }
     }

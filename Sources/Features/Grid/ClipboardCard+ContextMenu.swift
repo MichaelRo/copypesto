@@ -17,6 +17,29 @@ extension ClipboardCard {
         }
         .keyboardShortcut("c", modifiers: .command)
 
+        if item.type == .url, item.sensitivity == nil, !concealment.isConcealed {
+            if let pageTitle = item.ogTitle, !pageTitle.isEmpty, actions.copyText != nil {
+                Button {
+                    actions.copyText?(item, pageTitle)
+                } label: {
+                    Label("Copy Page Title", systemImage: "text.quote")
+                }
+            }
+            if let image = urlOGImage, actions.copyImage != nil {
+                Button {
+                    actions.copyImage?(item, image)
+                } label: {
+                    Label("Copy Preview Image", systemImage: "photo")
+                }
+            } else if let thumbData = item.ogImageThumbnail, !thumbData.isEmpty, actions.copyImageData != nil {
+                Button {
+                    actions.copyImageData?(item, thumbData)
+                } label: {
+                    Label("Copy Preview Image", systemImage: "photo")
+                }
+            }
+        }
+
         if item.sensitivity == nil {
             // A covered card is read with Show (or once screen sharing stops), not Quick Look.
             if concealment.allowsQuickLook {

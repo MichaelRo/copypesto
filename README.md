@@ -19,10 +19,9 @@ Pesto is a native clipboard manager for the Mac. It remembers the text, code, li
   </picture>
 </p>
 
-> **Status:** Pesto 1.0 is available from the [Releases page](https://github.com/MichaelRo/copypesto/releases) and
+> **Status:** Pesto is available from the [Releases page](https://github.com/MichaelRo/copypesto/releases) and
 > from [copypesto.net/download](https://copypesto.net/download), with its SHA-256. Requires **macOS 15 or later**. Some
-> features use Apple Intelligence and say so where they do. 1.0 is not signed with an Apple Developer ID, so macOS asks
-> you to confirm it once: the Open Anyway steps are in [Getting started](docs/guide/getting-started.md).
+> features use Apple Intelligence and say so where they do. Signed with an Apple Developer ID and notarized by Apple.
 
 > **Official downloads:** Pesto is published only at [copypesto.net](https://copypesto.net). Any other site that
 > offers Pesto is not ours.
@@ -105,19 +104,33 @@ The full list of what is stored and sent, including what encryption does *not* p
 The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 
 <p align="center">
-  <img alt="The shelf in the Basil theme" src="docs/images/theme-basil.png" width="49%">
-  <img alt="The shelf in the Parmesan theme" src="docs/images/theme-parmesan.png" width="49%">
-  <img alt="The shelf in the Pine nut theme" src="docs/images/theme-pine-nut.png" width="49%">
-  <img alt="The shelf in the Mortar theme" src="docs/images/theme-mortar.png" width="49%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-basil-dark.png">
+    <img alt="The shelf in the Basil theme" src="docs/images/theme-basil-light.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-parmesan-dark.png">
+    <img alt="The shelf in the Parmesan theme" src="docs/images/theme-parmesan-light.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-pine-nut-dark.png">
+    <img alt="The shelf in the Pine nut theme" src="docs/images/theme-pine-nut-light.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/theme-mortar-dark.png">
+    <img alt="The shelf in the Mortar theme" src="docs/images/theme-mortar-light.png" width="49%">
+  </picture>
 </p>
 
 
 ## Install
 
+- **Homebrew (optional).** Run `brew install michaelro/copypesto/pesto` to install the notarized disk image from the
+  Releases page. Homebrew checks its SHA-256 and can be a version behind. Pesto updates itself, so `brew upgrade` leaves
+  it alone unless you add `--greedy`. Remove it with `brew uninstall --cask pesto`.
 - **Download.** Get Pesto from the [Releases page](https://github.com/MichaelRo/copypesto/releases) or from
   [copypesto.net/download](https://copypesto.net/download), check the SHA-256 shown there, open the disk image and drag
-  Pesto to Applications. If macOS says it could not verify Pesto, follow the Open Anyway steps in
-  [Getting started](docs/guide/getting-started.md).
+  Pesto to Applications.
 - **Source.** Build it yourself; see For developers below. The `pesto` command-line tool is in the source tree and is
   not part of the download yet (`make build-cli`).
 
@@ -152,7 +165,9 @@ make test-core       # the fast tests, no Xcode project needed
 
 Architecture, how to build and test it, the security invariants and the project's working agreements are in
 [docs/development.md](docs/development.md) and [CONTRIBUTING.md](CONTRIBUTING.md). Every important decision has an
-[ADR](decisions/). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
+[ADR](decisions/). Planned directions live in [ROADMAP.md](ROADMAP.md). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
+
+Pesto is written with AI coding tools (Claude and Gemini) under human design, architecture records ([decisions/](decisions/)) and a verification suite that checks the security and privacy rules on every change.
 
 ## Support
 

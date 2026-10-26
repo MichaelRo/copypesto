@@ -50,6 +50,7 @@ public enum NSFWURLDetector: Sendable {
                 }
             }
         }
+        if explicitPhrases.contains(where: { corpus.contains($0) }) { return true }
         return keywordScore(in: corpus) >= threshold
     }
 
@@ -78,6 +79,14 @@ public enum NSFWURLDetector: Sendable {
 
     // MARK: - Static data
 
+    private static let explicitPhrases: [String] = [
+        "mature content",
+        "adult content",
+        "not safe for work",
+        "18+ content",
+        "content warning: nsfw"
+    ]
+
     private static let blocklist: Set<String> = [
         "pornhub.com", "xvideos.com", "xnxx.com", "redtube.com", "youporn.com",
         "tube8.com", "spankwire.com", "xtube.com", "porn.com", "sex.com",
@@ -94,7 +103,8 @@ public enum NSFWURLDetector: Sendable {
         "coomer.party", "coomer.su", "kemono.party", "kemono.su",
         "pornpics.com", "eporner.com", "spankbang.com",
         "xhamster.com", "xhamsterlive.com", "sxyprn.com",
-        "hqporner.com", "hclips.com", "hotmovs.com", "tubegalore.com"
+        "hqporner.com", "hclips.com", "hotmovs.com", "tubegalore.com",
+        "danbooru.donmai.us", "rule34.paheal.net", "e621.net"
     ]
 
     private static let explicitHostStems = ["porn", "hentai", "xvideos", "xnxx", "xhamster", "nsfw"]

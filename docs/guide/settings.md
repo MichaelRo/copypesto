@@ -41,8 +41,8 @@ two look alike and every one keeps its text and accent readable in light and dar
 with one icon for each theme, named after it and in the same order: Basil, Parmesan, Pine nut and Mortar. The icon's ground carries the theme and its P is the theme's accent. It shows in the Dock and the app switcher while a Pesto window is open; Finder and
 Launchpad keep the default Basil icon, because changing the icon of the installed app would break its code signature.
 
-![The shelf in the Parmesan theme: a warm cream wash and a gold accent.](../images/theme-parmesan.png)
-![The shelf in the Mortar theme, in dark mode.](../images/theme-mortar.png)
+![The shelf in the Parmesan theme: a warm cream wash and a gold accent.](../images/theme-parmesan-light.png)
+![The shelf in the Mortar theme: cool stone and a sage accent.](../images/theme-mortar-light.png)
 
 **Cards:** one slider, with ticks at Small, Medium and Large (160 to 240 points wide; letting go near a tick lands on
 it). The text on a card grows and shrinks with it. **Light and dark:** light, dark or follow the system, each shown in the current theme. **Accent color:** the

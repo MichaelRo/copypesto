@@ -27,14 +27,28 @@ public enum SnippetSuggester {
     public static let minimumPastes = 3
     public static let textLengths = 8...2000
 
+    public static func isEligible(
+        pasteCount: Int,
+        isPinned: Bool,
+        isTextual: Bool,
+        isSecret: Bool,
+        length: Int
+    )
+    -> Bool {
+        isTextual && !isSecret && !isPinned && pasteCount >= minimumPastes && textLengths.contains(length)
+    }
+
     public static func suggestions(from candidates: [SnippetCandidate], dismissed: Set<UUID> = [], limit: Int = 3)
     -> [SnippetCandidate] {
         candidates
             .filter { candidate in
-                candidate.isTextual && !candidate.isSecret && !candidate.isPinned
-                    && candidate.pasteCount >= minimumPastes
-                    && textLengths.contains(candidate.text.trimmingCharacters(in: .whitespacesAndNewlines).count)
-                    && !dismissed.contains(candidate.id)
+                isEligible(
+                    pasteCount: candidate.pasteCount,
+                    isPinned: candidate.isPinned,
+                    isTextual: candidate.isTextual,
+                    isSecret: candidate.isSecret,
+                    length: candidate.text.trimmingCharacters(in: .whitespacesAndNewlines).count
+                ) && !dismissed.contains(candidate.id)
             }
             .sorted { $0.pasteCount > $1.pasteCount }
             .prefix(limit)

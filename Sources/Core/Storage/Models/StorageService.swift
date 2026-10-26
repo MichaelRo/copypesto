@@ -474,6 +474,10 @@ public actor StorageService: ModelActor {
         linkPreviews.delete(ids: ids)
         linkPreviewCache.clear()
         lastItemStore.clear()
+        if range == .all {
+            AppDefaults.store.set("", for: Setting.shelfSuggestionLedger)
+            AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
+        }
         return ids
     }
 

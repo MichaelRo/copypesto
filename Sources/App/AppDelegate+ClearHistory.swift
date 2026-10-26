@@ -14,6 +14,9 @@ extension AppDelegate {
             do {
                 let ids = try await service.clearNonPinned(in: range)
                 AutoBackupSettings().lowerBaseline(by: ids.count)
+                if range == .all {
+                    appState.clearShelfSuggestions()
+                }
             } catch {
                 Self.logger.error("Clear history failed: \(error.localizedDescription, privacy: .public)")
             }

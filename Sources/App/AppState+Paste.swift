@@ -24,6 +24,9 @@ extension AppState {
     /// for a save between the key press and the paste. Without a storage service (a test, a first run) it is written
     /// here.
     func notePastedInBackground(_ item: ClipboardItem, in context: ModelContext) {
+        shelfSuggestionDwellTask?.cancel()
+        shelfSuggestionDwellTask = nil
+        shelfPasteTally[item.id, default: 0] += 1
         guard let service = storageService else { return notePasted(item, in: context) }
         let id = item.id
         Task {

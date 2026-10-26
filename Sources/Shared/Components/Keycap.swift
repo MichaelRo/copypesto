@@ -9,8 +9,14 @@ struct Keycap: View {
         case regular
     }
 
+    enum Style {
+        case solid
+        case ghost
+    }
+
     let symbol: String
     var size: Size = .regular
+    var style: Style = .solid
     /// A compact cap that is audited text (the delete question's hint) gets the solid ground and the primary color of
     /// the regular one; the compact cap on a card keeps the website's faint look.
     var solid = false
@@ -52,7 +58,10 @@ struct Keycap: View {
             .background(RoundedRectangle(cornerRadius: radius, style: .continuous).fill(fill))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.28), lineWidth: 1)
+                    .strokeBorder(
+                        style == .ghost ? Color.primary.opacity(0.35) : Color.primary.opacity(0.28),
+                        style: style == .ghost ? StrokeStyle(lineWidth: 1, dash: [3, 2]) : StrokeStyle(lineWidth: 1)
+                    )
             )
     }
 }

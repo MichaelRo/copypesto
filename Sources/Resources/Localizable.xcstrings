@@ -1106,6 +1106,246 @@
           }
         }
       }
+    },
+    "Show suggestions on the shelf": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show suggestions on the shelf"
+          }
+        }
+      }
+    },
+    "Pesto notices clips you paste often and offers a shortcut, suggests snippets for repeated text, and tidies unused shortcuts.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto notices clips you paste often and offers a shortcut, suggests snippets for repeated text, and tidies unused shortcuts."
+          }
+        }
+      }
+    },
+    "Reset Suggestions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset Suggestions"
+          }
+        }
+      }
+    },
+    "Resets what Pesto has suggested and re-arms all suggestions.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resets what Pesto has suggested and re-arms all suggestions."
+          }
+        }
+      }
+    },
+    "Suggestions are off. Turn them back on in Settings, under General.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggestions are off. Turn them back on in Settings, under General."
+          }
+        }
+      }
+    },
+    "That shortcut was just taken.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That shortcut was just taken."
+          }
+        }
+      }
+    },
+    "Make Snippet…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make Snippet…"
+          }
+        }
+      }
+    },
+    "No Thanks": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Thanks"
+          }
+        }
+      }
+    },
+    "Got It": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got It"
+          }
+        }
+      }
+    },
+    "Remove Shortcut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Shortcut"
+          }
+        }
+      }
+    },
+    "Keep Shortcut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Shortcut"
+          }
+        }
+      }
+    },
+    "Use %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use %@"
+          }
+        }
+      }
+    },
+    "Pin with %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pin with %@"
+          }
+        }
+      }
+    },
+    "You have pasted this clip %lld times. Paste it from any app with %@?": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have pasted this clip %1$lld time. Paste it from any app with %2$@?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have pasted this clip %1$lld times. Paste it from any app with %2$@?"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "You have pasted this clip %lld times. Pin it and paste it from any app with %@?": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have pasted this clip %1$lld time. Pin it and paste it from any app with %2$@?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have pasted this clip %1$lld times. Pin it and paste it from any app with %2$@?"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "You have not used %@ in %lld weeks. Remove the shortcut? The clip stays pinned.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have not used %1$@ in %2$lld week. Remove the shortcut? The clip stays pinned."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have not used %1$@ in %2$lld weeks. Remove the shortcut? The clip stays pinned."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "You pasted this clip from the shelf %lld times. %@ pastes it from any app.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You pasted this clip from the shelf %1$lld time. %2$@ pastes it from any app."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You pasted this clip from the shelf %1$lld times. %2$@ pastes it from any app."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "You have pasted this clip %lld times. Make it a snippet?": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have pasted this clip %lld time. Make it a snippet?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "You have pasted this clip %lld times. Make it a snippet?"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.0"

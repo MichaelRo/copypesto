@@ -11,6 +11,9 @@ macOS can keep the old entry for a copy of Pesto it no longer recognizes, so the
 *System Settings → Privacy & Security → Accessibility*, select Pesto, and remove it with the **−** button. Then quit
 Pesto, open it again from Applications, and turn it on when it asks (or use *General → Open Accessibility Settings…*).
 
+## macOS asks for Keychain access after an update
+When updating from version 1.0.0 to 1.0.1 or later, macOS asks to confirm access to Pesto's encryption key in your login Keychain. Choose **Always Allow**. The first release was signed with a self-signed identity; releases from 1.0.1 onward are signed with an Apple Developer ID, and macOS preserves access across subsequent updates.
+
 ## Nothing new is captured
 - macOS may be blocking clipboard reads: *System Settings → Privacy & Security → Paste from Other Apps → Pesto → Allow*.
   The menu bar shows "Clipboard Access Limited — Open Settings…" when this is the case.

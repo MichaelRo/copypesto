@@ -119,6 +119,16 @@ public enum SettingsIndex {
             "sparkle",
             "version"
         ),
+        entry(
+            "Show suggestions on the shelf",
+            "General",
+            "Show suggestions on the shelf",
+            "suggestion",
+            "shortcut",
+            "recommendation",
+            "dormant",
+            "tip"
+        ),
         entry("Version and build", "General", "AppVersion", "about", "version", "build"),
         entry(
             "Appearance: light, dark or system",

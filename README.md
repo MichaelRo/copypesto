@@ -125,10 +125,9 @@ The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 
 ## Install
 
-- **Homebrew.** Install the cask:
-  ```bash
-  brew install --cask copypesto
-  ```
+- **Homebrew (optional).** Run `brew install michaelro/copypesto/pesto` to install the notarized disk image from the
+  Releases page. Homebrew checks its SHA-256 and can be a version behind. Pesto updates itself, so `brew upgrade` leaves
+  it alone unless you add `--greedy`. Remove it with `brew uninstall --cask pesto`.
 - **Download.** Get Pesto from the [Releases page](https://github.com/MichaelRo/copypesto/releases) or from
   [copypesto.net/download](https://copypesto.net/download), check the SHA-256 shown there, open the disk image and drag
   Pesto to Applications.

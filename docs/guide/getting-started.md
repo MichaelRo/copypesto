@@ -4,7 +4,7 @@
 1. Download Pesto from copypesto.net/download, and open `Pesto-<version>.dmg` from your Downloads folder.
 2. The window shows Pesto, a dotted arrow ending in a basil leaf, and your Applications folder. Drag Pesto onto Applications,
    then open it from there.
-3. Pesto is signed with an Apple Developer ID and notarized by Apple, so macOS opens it directly.
+3. If macOS asks whether to open Pesto, choose Open. A build that is not notarized shows Open Anyway in System Settings, under Privacy & Security.
 
 Pesto lives in the menu bar; it shows in the Dock only while Settings, About or the setup window is open.
 

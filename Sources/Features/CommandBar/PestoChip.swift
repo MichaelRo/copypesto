@@ -16,7 +16,7 @@ struct PestoChip: View {
     let isActive: Bool
     /// The keyboard is on this chip (Tab in search): it is drawn with a focus ring.
     var hasKeyboardCursor = false
-    /// When true (shelf app chips), shows only the icon at rest and opens the label on hover, keyboard focus or
+    /// When true (shelf app chips), shows only the icon at rest and opens the label on keyboard focus or
     /// selection.
     var collapsesLabel = false
     var helpText: String?

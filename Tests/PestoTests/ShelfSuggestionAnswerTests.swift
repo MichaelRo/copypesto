@@ -21,30 +21,14 @@ private final class SpokenLog: @unchecked Sendable {
 extension HostedGlobals {
     @Suite("Shelf suggestion answers", .serialized)
     @MainActor
-    final class ShelfSuggestionAnswerTests {
-        private let previousArmed: Int
-        private let previousLastShown: Int
-        private let previousDeclines: Int
-        private let previousEnabled: Bool
-        private let previousLedger: String
-        private let previousOnboarded: Bool
-
-        init() {
-            previousArmed = AppDefaults.store.value(for: Setting.shelfSuggestionsArmedAt)
-            previousLastShown = AppDefaults.store.value(for: Setting.shelfSuggestionsLastShownAt)
-            previousDeclines = AppDefaults.store.value(for: Setting.shelfSuggestionDeclines)
-            previousEnabled = AppDefaults.store.value(for: Setting.shelfSuggestionsEnabled)
-            previousLedger = AppDefaults.store.value(for: Setting.shelfSuggestionLedger)
-            previousOnboarded = AppDefaults.store.value(for: Setting.hasOnboarded)
-        }
-
-        deinit {
-            AppDefaults.store.set(previousArmed, for: Setting.shelfSuggestionsArmedAt)
-            AppDefaults.store.set(previousLastShown, for: Setting.shelfSuggestionsLastShownAt)
-            AppDefaults.store.set(previousDeclines, for: Setting.shelfSuggestionDeclines)
-            AppDefaults.store.set(previousEnabled, for: Setting.shelfSuggestionsEnabled)
-            AppDefaults.store.set(previousLedger, for: Setting.shelfSuggestionLedger)
-            AppDefaults.store.set(previousOnboarded, for: Setting.hasOnboarded)
+    struct ShelfSuggestionAnswerTests {
+        private func resetSettings() {
+            AppDefaults.store.removeObject(forKey: Setting.shelfSuggestionsArmedAt.name)
+            AppDefaults.store.removeObject(forKey: Setting.shelfSuggestionsLastShownAt.name)
+            AppDefaults.store.removeObject(forKey: Setting.shelfSuggestionDeclines.name)
+            AppDefaults.store.removeObject(forKey: Setting.shelfSuggestionsEnabled.name)
+            AppDefaults.store.removeObject(forKey: Setting.shelfSuggestionLedger.name)
+            AppDefaults.store.removeObject(forKey: Setting.hasOnboarded.name)
         }
 
         private func makeState() -> AppState {
@@ -56,6 +40,7 @@ extension HostedGlobals {
 
         @Test("evaluating when eligible sets last shown date and does not duplicate")
         func whenOpened_thenSetsLastShownAndNoSecondOne() {
+            defer { resetSettings() }
             let state = makeState()
             let clipID = UUID()
             let armed = Date.now.addingTimeInterval(-86_400 * 10)
@@ -91,6 +76,7 @@ extension HostedGlobals {
 
         @Test("declining 4 times turns feature off and shows notice")
         func whenDeclinedFourTimes_thenFeatureOffAndNoticeShown() {
+            defer { resetSettings() }
             let state = makeState()
             let clipID = UUID()
             AppDefaults.store.set(3, for: Setting.shelfSuggestionDeclines)
@@ -107,6 +93,7 @@ extension HostedGlobals {
 
         @Test("accepting a shortcut offer resets the decline streak and announces")
         func whenAcceptedBetweenDeclines_thenStreakResets() async {
+            defer { resetSettings() }
             let state = makeState()
             let clipID = UUID()
             AppDefaults.store.set(2, for: Setting.shelfSuggestionDeclines)
@@ -128,6 +115,7 @@ extension HostedGlobals {
 
         @Test("acknowledging a reminder leaves the decline streak untouched")
         func whenGotIt_thenStreakUntouched() {
+            defer { resetSettings() }
             let state = makeState()
             let clipID = UUID()
             AppDefaults.store.set(2, for: Setting.shelfSuggestionDeclines)
@@ -144,6 +132,7 @@ extension HostedGlobals {
 
         @Test("locking history or suppressing clears active shelf suggestion")
         func whenLockEngagesWhileShown_thenCleared() {
+            defer { resetSettings() }
             let state = makeState()
             let clipID = UUID()
             state.shelfSuggestion = ShelfSuggestionPresentation(
@@ -159,6 +148,7 @@ extension HostedGlobals {
 
         @Test("closing shelf notes shown in suggestion ledger")
         func whenShelfClosesUnanswered_thenIgnoredShowCounted() {
+            defer { resetSettings() }
             let state = makeState()
             let clipID = UUID()
             state.shelfSuggestion = ShelfSuggestionPresentation(
@@ -174,6 +164,7 @@ extension HostedGlobals {
 
         @Test("accepting snippet suggestion opens settings with clip id")
         func whenSnippetAccepted_thenPendingSeedAndSettingsOpened() {
+            defer { resetSettings() }
             let state = makeState()
             let clipID = UUID()
             var settingsOpened = 0

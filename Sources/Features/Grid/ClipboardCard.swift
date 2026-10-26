@@ -37,6 +37,10 @@ struct ClipboardCard: View {
     /// False on a Mac that cannot authenticate: a hidden clip cannot be shown there, so Show is not offered. Pasting it
     /// still writes the real text.
     var canRevealHidden = true
+    /// True when a shelf suggestion targets this clip, highlighting it with an accent ring.
+    var isSuggested = false
+    /// Ghost shortcut badge shown when a shortcut offer suggestion targets this clip.
+    var suggestedHotkeySlot: Int?
 
     @AppStorage(Setting.cardSize) var cardSizeRaw: String
     @AppStorage(Setting.cardWidth) var cardWidth: Int
@@ -314,6 +318,7 @@ struct ClipboardCard: View {
                 isFocused: isFocused,
                 isHovered: isPointed,
                 isLifted: isLifted,
+                isSuggested: isSuggested,
                 cornerRadius: Self.cardCornerRadius
             ))
             .overlay(alignment: .topTrailing) {
@@ -359,6 +364,7 @@ struct ClipboardCard: View {
             .animation(Motion.animation(.spring(response: 0.22, dampingFraction: 0.72)), value: isLifted)
             .animation(Motion.animation(.easeOut(duration: 0.12)), value: isFocused)
             .animation(Motion.animation(.spring(response: 0.18, dampingFraction: 0.75)), value: isSelected)
+            .animation(Motion.animation(.pestoPop), value: isSuggested)
     }
 
     /// Built from gridPreview so a masked secret is never read out or exposed to automation.

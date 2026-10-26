@@ -483,6 +483,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         overlayWindowController?.show()
         appState.isOverlayVisible = true
         appState.checkAndApplyBiometricLock()
+        appState.shelfDidOpen()
     }
 
     /// Closes the overlay without pasting (Escape / hotkey toggle path); any paste that was waiting is dropped.

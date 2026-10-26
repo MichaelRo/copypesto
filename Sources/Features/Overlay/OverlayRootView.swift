@@ -226,6 +226,9 @@ struct OverlayRootView: View {
                         undoBanner(label)
                             .padding(.bottom, SelectionActionBar.bottomInset)
                             .transition(.opacity.combined(with: .offset(y: 8)))
+                    } else if let presentation = appState.shelfSuggestion, appState.importOffer.isEmpty {
+                        SuggestionBanner(presentation: presentation)
+                            .padding(.bottom, SelectionActionBar.bottomInset)
                     }
                 }
                 .overlay(alignment: .top) {

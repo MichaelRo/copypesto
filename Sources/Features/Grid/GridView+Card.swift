@@ -8,7 +8,12 @@ extension GridView {
     /// One card. What it can ask the shelf to do arrives through `cardActions` in the environment, built once for the
     /// whole row; only the values that differ per card are parameters.
     func cardView(for item: ClipboardItem, at idx: Int) -> some View {
-        ClipboardCard(
+        let isSuggested = appState.shelfSuggestion?.targetClipID == item.id
+            && !appState
+            .isContentCovered(screenSharingPrivacy: AppDefaults.store.value(for: Setting.screenSharingPrivacy))
+            && !appState.isHistoryLocked
+        let suggestedHotkeySlot = isSuggested ? appState.shelfSuggestion?.targetSlot : nil
+        return ClipboardCard(
             item: item,
             isFocused: idx == focusedIndex,
             focusAnchor: focusAnchor,
@@ -29,7 +34,9 @@ extension GridView {
             revealedFromOutside: revealedIDs.contains(item.id),
             previewsAllowed: !appState.isHistoryLocked,
             hideSecretsGeneration: hideSecretsGeneration,
-            canRevealHidden: appState.authenticationAvailability == .available
+            canRevealHidden: appState.authenticationAvailability == .available,
+            isSuggested: isSuggested,
+            suggestedHotkeySlot: suggestedHotkeySlot
         )
         .environment(\.clipEditor, clipEditor)
         .onDrop(

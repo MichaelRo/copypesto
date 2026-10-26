@@ -94,6 +94,8 @@ extension GridView {
             togglePin: { togglePin(ofClip: $0.id) },
             copy: { copyToPasteboard($0) },
             copyText: copyText,
+            copyImageData: { copyImageData($1, from: $0) },
+            copyImage: { copyImage($1, from: $0) },
             saveImage: { saveImage($0) },
             moveToCollection: { item, targetID in editor.edit(item) { $0.collectionID = targetID } },
             delete: { requestDelete(ofCard: $0.id) },

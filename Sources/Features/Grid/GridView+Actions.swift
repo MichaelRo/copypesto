@@ -444,6 +444,17 @@ extension GridView {
         Announcer.announce("Copied \(text)")
     }
 
+    func copyImageData(_ data: Data, from item: ClipboardItem) {
+        guard let image = NSImage(data: data) else { return }
+        copyImage(image, from: item)
+    }
+
+    func copyImage(_ image: NSImage, from item: ClipboardItem) {
+        appState.writeImage(image, protected: item.sensitivityRaw != nil)
+        appState.noteCopied(item, in: modelContext)
+        Announcer.announce("Copied image")
+    }
+
     private func flashSaved(_ id: UUID) {
         flashedID = id
         Task {

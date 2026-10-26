@@ -22,7 +22,11 @@ brings the default back. Pesto refuses a combination macOS already uses, and say
 
 ## Is it on the Mac App Store?
 
-No. Pesto is a direct download from copypesto.net.
+No. Pesto is not on the Mac App Store.
+
+Mac App Store apps run in a sandbox that prohibits monitoring the clipboard in the background while other applications are active. Pasting clips directly into the frontmost app also requires Accessibility access, which App Store apps cannot use for keystroke synthesis.
+
+Pesto is distributed directly and notarized by Apple so macOS Gatekeeper accepts it without sandbox limitations.
 
 ## Does Pesto send my clipboard anywhere?
 

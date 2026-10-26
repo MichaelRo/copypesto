@@ -59,6 +59,9 @@ public final class ClipboardItem {
     public var expiresAt: Date?
     /// 1–9: maps to the Ctrl+N global hotkey for instant paste. nil = none.
     public var pinnedHotkeyIndex: Int?
+    /// The day a ⌃1–9 shortcut was last used to paste this clip. Plain Date at day resolution. nil when no shortcut is
+    /// set.
+    public var shortcutLastUsedAt: Date?
 
     /// The search-by-meaning vector (typically 768d Float32) as it was stored before it was sealed into
     /// `embeddingCiphertext`. Read only until `StorageService.sealEmbeddings()` has emptied it; use

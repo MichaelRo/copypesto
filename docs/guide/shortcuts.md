@@ -11,7 +11,7 @@ These work in any app. Click a shortcut in *Settings → Shortcuts*, then press 
 | **⌘⇧V** | Open the shelf. (*Settings → General* can open a small mouse-only menu of your last five copies at the cursor instead.) |
 | **Unset** | Paste the previous copy (the second most recent) without opening anything. Record a shortcut for it in *Settings → Shortcuts*; Pesto no longer claims ⌘⌥V for it on a new install, because other apps use that key. |
 | **⌃⌥⌘V** | Paste what is on the clipboard now as plain text. It needs plain text on the clipboard; if it does nothing, another app may own the combination, so record a different one in *Settings → Shortcuts* (a conflict shows there). |
-| **⌃1** to **⌃9** | Paste the pinned clip you gave that shortcut. Choose one from a clip's menu, under *Paste Shortcut*. |
+| **⌃1** to **⌃9** | Paste the pinned clip you gave that shortcut. Choose one from a clip's menu, under *Paste Shortcut*. Pesto may offer one for a clip you paste often (Settings, General, Suggestions). Choosing it pins the clip. A shortcut you have not used for a while can be freed up. |
 | Not set | *Show or hide the floating window*, *Pause or resume capturing* and *Hide or show clip contents* start without a shortcut. Record one in *Settings → Shortcuts*. |
 | **⌘C** twice | Add the second copy to the first. Off by default; turn it on in *Settings → Shortcuts*, under *Copying*. It needs Accessibility. |
 | **⌘V** | While *Paste One by One* is running, paste the next clip in any app. |

@@ -3,6 +3,12 @@ import CryptoKit
 import Foundation
 import SwiftData
 
+public enum AssignFreeSlotResult: Equatable, Sendable {
+    case assigned
+    case slotTaken
+    case clipGone
+}
+
 public extension StorageService {
     /// Saves text as a snippet: it goes through `ingest` like any copy (sealed preview and blob, sensitivity masking,
     /// searchable, part of every backup) and is then pinned. Text the history already holds is pinned in place instead
@@ -129,7 +135,7 @@ public extension StorageService {
         guard let item = try modelContext.fetch(descriptor).first else { return nil }
         let before = ClipFieldState(item)
         item.isPinned.toggle()
-        if !item.isPinned { item.pinnedHotkeyIndex = nil }
+        if !item.isPinned { item.setShortcut(nil) }
         try saveOrRollback()
         recordEdits([(item, before)])
         return item.isPinned
@@ -151,14 +157,37 @@ public extension StorageService {
             ))
             for other in holders where other.id != id {
                 before.append((other, ClipFieldState(other)))
-                other.pinnedHotkeyIndex = nil
+                other.setShortcut(nil)
             }
             item.isPinned = true
         }
-        item.pinnedHotkeyIndex = slot
+        item.setShortcut(slot)
         try saveOrRollback()
         recordEdits(before)
         return true
+    }
+
+    /// Assigns a shortcut slot to a clip only if the slot is currently free.
+    @discardableResult
+    func assignFreeHotkeySlot(_ slot: Int, to id: UUID) throws -> AssignFreeSlotResult {
+        guard (1...9).contains(slot) else { return .slotTaken }
+        var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        guard let item = try modelContext.fetch(descriptor).first else { return .clipGone }
+
+        let holders = try modelContext.fetch(FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { $0.pinnedHotkeyIndex == slot }
+        ))
+        if holders.contains(where: { $0.id != id }) {
+            return .slotTaken
+        }
+
+        let before = [(item: item, state: ClipFieldState(item))]
+        item.isPinned = true
+        item.setShortcut(slot)
+        try saveOrRollback()
+        recordEdits(before)
+        return .assigned
     }
 
     /// Snippets saved before they went through `ingest` have no blob, so they paste only their first 500 characters

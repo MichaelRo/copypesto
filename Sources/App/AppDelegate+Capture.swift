@@ -15,10 +15,11 @@ extension AppDelegate {
         if let service = storageService {
             appState.privacySnapshot = { try? await service.privacySnapshot() }
             appState.commandBarSuggestions = { try? await service.commandBarSuggestions() }
-            appState.clearEverything = {
+            appState.clearEverything = { [weak self] in
                 ThumbnailCache.shared.clear()
                 LinkPreviewCache.shared.clear()
                 QuickLookPreviewController.sweepStaleTempFiles()
+                self?.appState.clearShelfSuggestions()
                 return try await service.clearEverything()
             }
         }

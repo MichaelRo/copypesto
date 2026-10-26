@@ -112,6 +112,7 @@ struct RestoreSheet: View {
 
     let coordinator: BackupCoordinator
     let onClose: () -> Void
+    @Environment(AppState.self) private var appState: AppState
     /// Set when the history cannot be opened: the restore discards it first, after the backup has been verified.
     var replacing: (@MainActor () throws -> Void)?
     @State private var file: URL?
@@ -330,6 +331,7 @@ struct RestoreSheet: View {
                 } else {
                     try await coordinator.restore(preview)
                 }
+                appState.clearShelfSuggestions()
                 phase = .done(summary, settings: restoreSettingsIfAsked(from: preview))
             } catch {
                 phase = .failed("Couldn’t restore. \(error.localizedDescription)")

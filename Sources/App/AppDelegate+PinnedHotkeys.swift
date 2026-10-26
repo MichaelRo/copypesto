@@ -52,9 +52,13 @@ extension AppDelegate {
             guard let rawPayload = delegate.writeItemToPasteboard(item) else { return nil }
             let (payloadKind, caretOffset) = delegate.expandedPayload(from: rawPayload, of: item)
             delegate.appState.pasteCoordinator.focusRestoration.capture()
-            return await delegate.appState.pasteCoordinator.executePaste(
+            let outcome = await delegate.appState.pasteCoordinator.executePaste(
                 payload: payloadKind, caretOffsetFromEnd: caretOffset
             )
+            if outcome != .requiresManualPaste {
+                delegate.appState.noteShortcutUsed(id: item.id)
+            }
+            return outcome
         }
     }
 }

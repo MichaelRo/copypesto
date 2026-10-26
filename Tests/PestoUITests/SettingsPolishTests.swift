@@ -95,4 +95,12 @@ final class SettingsPolishTests: PestoUITestCase {
         XCTAssertLessThan(rebuild.frame.maxY, settingsWindow.frame.maxY)
         XCTAssertGreaterThan(rebuild.frame.minY, settingsWindow.frame.minY)
     }
+
+    func test_settings_shelfSuggestionsToggleAndReset() {
+        openSettings(pane: "General")
+        let toggle = element(AccessibilityID.shelfSuggestionsSettingsToggle)
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "no shelf suggestions toggle in General settings")
+        let resetButton = element(AccessibilityID.resetSuggestionsButton)
+        XCTAssertTrue(resetButton.waitForExistence(timeout: 5), "no reset suggestions button in General settings")
+    }
 }

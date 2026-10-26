@@ -18,6 +18,7 @@ struct GeneralSettings: View {
     @AppStorage(Setting.pictureSaveFolder) private var pictureSaveFolder: String
     @AppStorage(Setting.opensQuickMenuAtCursor) private var opensQuickMenuAtCursor: Bool
     @AppStorage(Setting.showMenuBarIcon) private var showMenuBarIcon: Bool
+    @AppStorage(Setting.shelfSuggestionsEnabled) private var shelfSuggestionsEnabled: Bool
     @Environment(AppState.self) private var appState: AppState
     @State private var checksForUpdates = true
 
@@ -120,6 +121,26 @@ struct GeneralSettings: View {
                 }
             }
             .settingsRow("Open a small menu at the cursor")
+            Toggle(isOn: $shelfSuggestionsEnabled) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Show suggestions on the shelf")
+                    Text(
+                        "Suggests a shortcut or a snippet for a clip you paste often, and suggests removing "
+                            + "a shortcut you stopped using. It uses paste counts kept on this Mac."
+                    )
+                    .pestoCaption()
+                }
+            }
+            .accessibilityIdentifier(AccessibilityID.shelfSuggestionsSettingsToggle)
+            .settingsRow("Show suggestions on the shelf")
+            HStack {
+                Text("Reset suggestions")
+                Spacer()
+                Button("Reset Suggestions") {
+                    appState.resetShelfSuggestions()
+                }
+                .accessibilityIdentifier(AccessibilityID.resetSuggestionsButton)
+            }
         } header: {
             Text("Copy and paste")
         }

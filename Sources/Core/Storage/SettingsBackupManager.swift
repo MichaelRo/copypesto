@@ -56,7 +56,8 @@ public enum SettingsBackupManager {
         Setting.showMenuBarIcon.name: .bool,
         Setting.pinnedWindowAutoPaste.name: .bool,
         Setting.opensQuickMenuAtCursor.name: .bool,
-        Setting.doubleCopyAppend.name: .bool
+        Setting.doubleCopyAppend.name: .bool,
+        Setting.shelfSuggestionsEnabled.name: .bool
     ]
 
     public static var backupKeys: [String] {

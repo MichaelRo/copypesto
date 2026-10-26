@@ -173,6 +173,12 @@ final class AppState {
     var importedThisSession: [ImportSource: Int] = [:]
     /// Set when the offer is accepted; Settings, Data starts that import once it is showing.
     var pendingImportSource: ImportSource?
+    var pendingSnippetSeed: UUID?
+    var shelfSuggestion: ShelfSuggestionPresentation?
+    @ObservationIgnored var shelfSuggestionFacts: ShelfSuggestionFacts?
+    @ObservationIgnored var shelfPasteTally: [UUID: Int] = [:]
+    @ObservationIgnored var shelfFactsProvider: (@Sendable () async -> ShelfSuggestionFacts?)?
+    @ObservationIgnored var shelfSuggestionDwellTask: Task<Void, Never>?
     @ObservationIgnored var clipboardAppDetector: any ClipboardAppDetecting = ClipboardAppDetection.forThisLaunch()
     /// Reads and sets whether Sparkle checks for updates by itself. Set when the updater runs (a normal launch), so
     /// Settings offers the switch only where it does something.
@@ -252,6 +258,7 @@ final class AppState {
     /// would clear an exit that was about to be used.
     func close(_ exit: ShelfExit = .dismissed) {
         guard isOverlayVisible || exit.actsWhenAlreadyClosed else { return }
+        shelfDidClose()
         pendingExit = exit
         isOverlayVisible = false
     }
@@ -394,6 +401,7 @@ final class AppState {
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
             dismissUndoOffer()
+            suppressShelfSuggestions()
             PreviewTextCache.shared.clear()
             historyStore?.dropSearchText()
             ThumbnailCache.shared.clear()
@@ -433,6 +441,7 @@ final class AppState {
         aiResult = nil
         storageService?.undoHistory.clear()
         dismissUndoOffer()
+        suppressShelfSuggestions()
         PreviewTextCache.shared.clear()
         historyStore?.dropSearchText()
         ThumbnailCache.shared.clear()

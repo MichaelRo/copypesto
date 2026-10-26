@@ -26,6 +26,19 @@ struct ClearEverythingResidueTests {
         }
     }
 
+    private final class WipeTracker: @unchecked Sendable {
+        private let lock = NSLock()
+        private var wiped = false
+
+        var isWiped: Bool {
+            lock.withLock { wiped }
+        }
+
+        func markWiped() {
+            lock.withLock { wiped = true }
+        }
+    }
+
     private func sha(_ text: String) -> String {
         SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
     }
@@ -119,5 +132,29 @@ struct ClearEverythingResidueTests {
 
         #expect(removed == 1)
         #expect(try ModelContext(container).fetchCount(FetchDescriptor<ClipboardItem>()) == 0)
+    }
+
+    @Test("clearEverything invokes wipeSuggestionLedger")
+    func clearEverything_invokesWipeSuggestionLedger() async throws {
+        let container = try ModelContainerSetup.makeInMemory().synced
+        let tracker = WipeTracker()
+        let service = StorageService(modelContainer: container, environment: .testing {
+            $0.wipeSuggestionLedger = { tracker.markWiped() }
+        })
+        try await service.ingest(capture("clip", bundleID: "com.example.app"))
+        _ = try await service.clearEverything()
+        #expect(tracker.isWiped == true)
+    }
+
+    @Test("clearNonPinned in range all invokes wipeSuggestionLedger")
+    func clearNonPinnedAll_invokesWipeSuggestionLedger() async throws {
+        let container = try ModelContainerSetup.makeInMemory().synced
+        let tracker = WipeTracker()
+        let service = StorageService(modelContainer: container, environment: .testing {
+            $0.wipeSuggestionLedger = { tracker.markWiped() }
+        })
+        try await service.ingest(capture("clip", bundleID: "com.example.app"))
+        _ = try await service.clearNonPinned(in: .all)
+        #expect(tracker.isWiped == true)
     }
 }

@@ -31,6 +31,7 @@ public actor StorageService: ModelActor {
         loadDeviceID = environment.deviceID
         keyRotator = environment.keyRotator
         undoHistory = environment.undoHistory
+        wipeSuggestionLedger = environment.wipeSuggestionLedger
     }
 
     /// The longest a copy kept from an allowed password manager stays in the history, whatever its allowance.
@@ -44,6 +45,7 @@ public actor StorageService: ModelActor {
 
     /// Read by the app for the Edit menu and the banner; written only through this service and `ClipEditor`.
     public nonisolated let undoHistory: UndoHistory
+    let wipeSuggestionLedger: (@Sendable () -> Void)?
     let encryption = BlobEncryption()
     let keyRotator: @Sendable () throws -> Void
     let resolver = SourceAppResolver()
@@ -474,6 +476,9 @@ public actor StorageService: ModelActor {
         linkPreviews.delete(ids: ids)
         linkPreviewCache.clear()
         lastItemStore.clear()
+        if range == .all {
+            wipeSuggestionLedger?()
+        }
         return ids
     }
 

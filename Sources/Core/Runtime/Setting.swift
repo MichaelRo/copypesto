@@ -60,6 +60,7 @@ public enum Setting {
     public static let searchHistory = SettingKey("searchHistory", default: "")
     public static let hasOnboarded = SettingKey("hasOnboarded", default: false)
     public static let showMenuBarIcon = SettingKey("showMenuBarIcon", default: true)
+    public static let shelfSuggestionsEnabled = SettingKey("shelfSuggestionsEnabled", default: true)
 
     // MARK: Shortcuts (key code and modifier mask; a zero mask means the default, or none for the optional ones)
 
@@ -103,6 +104,10 @@ public enum Setting {
     public static let spotlightIndexRemoved = SettingKey("spotlightIndexRemoved", default: false)
     public static let legacyPreferencesCopied = SettingKey("legacyPreferencesCopied", default: false)
     public static let legacyAIKeysRemoved = SettingKey("legacyAIKeysRemoved", default: false)
+    public static let shelfSuggestionsArmedAt = SettingKey("shelfSuggestionsArmedAt", default: 0)
+    public static let shelfSuggestionsLastShownAt = SettingKey("shelfSuggestionsLastShownAt", default: 0)
+    public static let shelfSuggestionDeclines = SettingKey("shelfSuggestionDeclines", default: 0)
+    public static let shelfSuggestionLedger = SettingKey("shelfSuggestionLedger", default: "")
 
     // MARK: Switches only a UI test sets
 
@@ -122,7 +127,8 @@ public enum Setting {
         authenticationGraceMinutes.name, linkPreviews.name,
         appleIntelligenceEnabled.name, pinnedWindowAutoPaste.name, pictureSaveFolder.name, soundEffects.name,
         searchHistory.name,
-        hasOnboarded.name, showMenuBarIcon.name, overlayHotkeyKeyCode.name, overlayHotkeyModifiers.name,
+        hasOnboarded.name, showMenuBarIcon.name, shelfSuggestionsEnabled.name, overlayHotkeyKeyCode.name,
+        overlayHotkeyModifiers.name,
         quickPasteHotkeyKeyCode.name,
         quickPasteHotkeyModifiers.name, pastePlainHotkeyKeyCode.name, pastePlainHotkeyModifiers.name,
         togglePinnedWindowHotkeyKeyCode.name, togglePinnedWindowHotkeyModifiers.name,
@@ -138,6 +144,10 @@ public enum Setting {
         authenticationWindowMigrated.name, spotlightIndexRemoved.name,
         legacyPreferencesCopied.name,
         legacyAIKeysRemoved.name,
+        shelfSuggestionsArmedAt.name,
+        shelfSuggestionsLastShownAt.name,
+        shelfSuggestionDeclines.name,
+        shelfSuggestionLedger.name,
         uitestAuthenticationGranted.name, uitestAuthenticationUnavailable.name
     ]
 }

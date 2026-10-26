@@ -153,7 +153,8 @@ extension StorageService {
                 customTitle: item.customTitle, userNote: item.userNote, tags: item.tags, isPinned: item.isPinned,
                 collectionID: item.collectionID, pinnedHotkeyIndex: item.pinnedHotkeyIndex,
                 expiresAt: item.expiresAt, isNSFW: item.isNSFW, pasteCount: item.pasteCount,
-                sensitivityRaw: item.sensitivityRaw, isRemote: item.isRemote
+                sensitivityRaw: item.sensitivityRaw, isRemote: item.isRemote,
+                shortcutLastUsedAt: item.shortcutLastUsedAt
             ),
             payload: payload
         )
@@ -182,6 +183,7 @@ extension StorageService {
         let collectionIDs = try restoreCollections(contents.records, summary: &summary)
         try saveOrRollback()
         try await restoreItems(contents.records, deleted: deleted, collectionIDs: collectionIDs, summary: &summary)
+        wipeSuggestionLedger?()
         return summary
     }
 
@@ -197,6 +199,7 @@ extension StorageService {
         try await backup.forEachItem { record in
             try await restoreItem(record, deleted: deleted, collectionIDs: collectionIDs, summary: &summary)
         }
+        wipeSuggestionLedger?()
         return summary
     }
 
@@ -324,7 +327,10 @@ extension StorageService {
         item.pasteCount = meta.pasteCount
         if meta.isNSFW { item.isNSFW = true }
         if let board = meta.collectionID, collectionIDs.contains(board) { item.collectionID = board }
-        if let slot = meta.pinnedHotkeyIndex, try !slotIsTaken(slot) { item.pinnedHotkeyIndex = slot }
+        if let slot = meta.pinnedHotkeyIndex, try !slotIsTaken(slot) {
+            item.pinnedHotkeyIndex = slot
+            item.shortcutLastUsedAt = meta.shortcutLastUsedAt
+        }
         try saveOrRollback()
     }
 

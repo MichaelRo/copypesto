@@ -67,6 +67,14 @@ public struct StorageEnvironment: Sendable {
     )
     -> StorageEnvironment {
         let mode = LaunchMode.current
+        let wipeLedger: (@Sendable () -> Void)? = if mode == .hostedTests {
+            nil
+        } else {
+            { @Sendable in
+                AppDefaults.store.set("", for: Setting.shelfSuggestionLedger)
+                AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
+            }
+        }
         return StorageEnvironment(
             lastItemStore: mode == .hostedTests ? NoLastItemFile() : FileLastItemStore(),
             linkPreviews: LinkPreviewImageStore(),
@@ -83,10 +91,7 @@ public struct StorageEnvironment: Sendable {
                 guard configuration.mode.usesSystemIntegrations else { return "uitest-device-\(configuration.session)" }
                 return try DeviceIdentity().loadOrCreate()
             },
-            wipeSuggestionLedger: {
-                AppDefaults.store.set("", for: Setting.shelfSuggestionLedger)
-                AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
-            }
+            wipeSuggestionLedger: wipeLedger
         )
     }
 

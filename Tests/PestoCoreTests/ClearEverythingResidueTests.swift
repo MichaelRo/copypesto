@@ -8,7 +8,7 @@ import Testing
 /// Clear Everything is the panic button. Deleting rows does not overwrite the pages they were in, and the write-ahead
 /// log
 /// keeps old frames until a checkpoint, so these tests read the real files after a clear.
-@Suite("Clear Everything leaves nothing that could be read back")
+@Suite("Clear Everything leaves nothing that could be read back", .serialized)
 struct ClearEverythingResidueTests {
     private static let databaseFiles: Set<String> = ["clips.store", "clips.store-wal", "clips.store-shm"]
 

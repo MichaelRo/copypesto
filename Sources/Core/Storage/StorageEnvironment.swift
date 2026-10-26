@@ -30,6 +30,8 @@ public struct StorageEnvironment: Sendable {
     /// Wipes the suggestion ledger and decline counter when history is wiped or restored. In the app this points
     /// to AppDefaults.store; tests leave it nil unless verifying ledger reset.
     public var wipeSuggestionLedger: (@Sendable () -> Void)?
+    /// Provides the current NSFWMode for content screening. Defaults to reading AppDefaults.store in live mode.
+    public var nsfwMode: (@Sendable () -> NSFWMode)?
 
     public init(
         lastItemStore: any LastItemStoring, linkPreviews: LinkPreviewImageStore,
@@ -40,7 +42,8 @@ public struct StorageEnvironment: Sendable {
         rules: ClipboardRules, sequenceCounter: SequenceCounter, deviceID: @escaping @Sendable () throws -> String,
         keyRotator: @escaping @Sendable () throws -> Void = { try BlobEncryption().rotateKey() },
         undoHistory: UndoHistory = UndoHistory(), linkPreviewCache: LinkPreviewCache = .shared,
-        wipeSuggestionLedger: (@Sendable () -> Void)? = nil
+        wipeSuggestionLedger: (@Sendable () -> Void)? = nil,
+        nsfwMode: (@Sendable () -> NSFWMode)? = nil
     ) {
         self.lastItemStore = lastItemStore
         self.linkPreviews = linkPreviews
@@ -57,6 +60,7 @@ public struct StorageEnvironment: Sendable {
         self.keyRotator = keyRotator
         self.undoHistory = undoHistory
         self.wipeSuggestionLedger = wipeSuggestionLedger
+        self.nsfwMode = nsfwMode
     }
 
     /// The app's choices. Outside a normal launch (a test host, a UI-test launch) the last-item file is not written

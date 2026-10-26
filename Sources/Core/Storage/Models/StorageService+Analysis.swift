@@ -72,7 +72,7 @@ extension StorageService {
         IngestAnalysisInput(
             clipType: clipType, image: image, text: text, link: link,
             readsImages: RuntimeConfiguration.current.mode != .uiTest,
-            screensContent: NSFWMode.current().detectsContent
+            screensContent: nsfwModeProvider().detectsContent
         )
     }
 

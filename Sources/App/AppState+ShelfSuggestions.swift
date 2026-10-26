@@ -17,12 +17,6 @@ extension AppState {
         }
 
         shelfSuggestionFacts = facts
-
-        if let clips = facts?.clips {
-            var ledger = SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
-            ledger.prune(existingClipIDs: Set(clips.map(\.id)))
-            AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
-        }
     }
 
     func shelfDidOpen() {
@@ -96,15 +90,13 @@ extension AppState {
 
         let context = makeShelfSuggestionContext()
 
-        var ledger = SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
+        let ledger = SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
 
         guard let suggestion = ShelfSuggestionPolicy.next(context: context, facts: facts, ledger: ledger) else {
             return
         }
 
         AppDefaults.store.set(Int(Date.now.timeIntervalSince1970), for: Setting.shelfSuggestionsLastShownAt)
-        ledger.noteShown(suggestion.kind, suggestion.clipID)
-        AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
 
         shelfSuggestion = ShelfSuggestionPresentation(suggestion: suggestion)
         announceSuggestion(suggestion)
@@ -155,14 +147,15 @@ extension AppState {
 
     func acceptShelfSuggestion() {
         guard let suggestion = shelfSuggestion?.suggestion else { return }
+        shelfSuggestion = nil
 
         var ledger = SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
 
         switch suggestion {
         case let .snippet(clip, _):
-            shelfSuggestion = nil
             ledger.resolve(.snippet, clip, as: .accepted)
             AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
+            AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
             pendingSnippetSeed = clip
             pendingSettingsSection = SettingsSection.snippets.rawValue
             close()
@@ -187,9 +180,10 @@ extension AppState {
                     AssignFreeSlotResult.assigned
                 }
                 if result == .assigned {
-                    self.shelfSuggestion = nil
-                    ledger.resolve(.shortcutOffer, clip, as: .accepted)
-                    AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
+                    var updatedLedger = SuggestionLedger(serialized: AppDefaults.store
+                        .value(for: Setting.shelfSuggestionLedger))
+                    updatedLedger.resolve(.shortcutOffer, clip, as: .accepted)
+                    AppDefaults.store.set(updatedLedger.serialized, for: Setting.shelfSuggestionLedger)
                     AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
                     Announcer.announce("Control \(slot) set. The clip is pinned.")
                     self.offerUndo(since: beforeUndoCount)
@@ -198,9 +192,11 @@ extension AppState {
                 }
             case let .shortcutRelease(clip, slot, _):
                 _ = try? await self.storageService?.assignHotkeySlot(nil, to: clip)
-                self.shelfSuggestion = nil
-                ledger.resolve(.shortcutRelease, clip, as: .accepted)
-                AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
+                var updatedLedger = SuggestionLedger(serialized: AppDefaults.store
+                    .value(for: Setting.shelfSuggestionLedger))
+                updatedLedger.resolve(.shortcutRelease, clip, as: .accepted)
+                AppDefaults.store.set(updatedLedger.serialized, for: Setting.shelfSuggestionLedger)
+                AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
                 Announcer.announce("Control \(slot) is free.")
                 self.offerUndo(since: beforeUndoCount)
             case .shortcutReminder, .snippet:

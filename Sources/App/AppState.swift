@@ -401,6 +401,7 @@ final class AppState {
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
             dismissUndoOffer()
+            suppressShelfSuggestions()
             PreviewTextCache.shared.clear()
             historyStore?.dropSearchText()
             ThumbnailCache.shared.clear()
@@ -440,6 +441,7 @@ final class AppState {
         aiResult = nil
         storageService?.undoHistory.clear()
         dismissUndoOffer()
+        suppressShelfSuggestions()
         PreviewTextCache.shared.clear()
         historyStore?.dropSearchText()
         ThumbnailCache.shared.clear()

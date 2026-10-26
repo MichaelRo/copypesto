@@ -26,9 +26,7 @@ extension AppState {
     func notePastedInBackground(_ item: ClipboardItem, in context: ModelContext) {
         shelfSuggestionDwellTask?.cancel()
         shelfSuggestionDwellTask = nil
-        if item.pinnedHotkeyIndex != nil {
-            shelfPasteTally[item.id, default: 0] += 1
-        }
+        shelfPasteTally[item.id, default: 0] += 1
         guard let service = storageService else { return notePasted(item, in: context) }
         let id = item.id
         Task {

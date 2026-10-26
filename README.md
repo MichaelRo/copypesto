@@ -19,10 +19,9 @@ Pesto is a native clipboard manager for the Mac. It remembers the text, code, li
   </picture>
 </p>
 
-> **Status:** Pesto 1.0 is available from the [Releases page](https://github.com/MichaelRo/copypesto/releases) and
+> **Status:** Pesto is available from the [Releases page](https://github.com/MichaelRo/copypesto/releases) and
 > from [copypesto.net/download](https://copypesto.net/download), with its SHA-256. Requires **macOS 15 or later**. Some
-> features use Apple Intelligence and say so where they do. 1.0 is not signed with an Apple Developer ID, so macOS asks
-> you to confirm it once: the Open Anyway steps are in [Getting started](docs/guide/getting-started.md).
+> features use Apple Intelligence and say so where they do. Signed with an Apple Developer ID and notarized by Apple.
 
 > **Official downloads:** Pesto is published only at [copypesto.net](https://copypesto.net). Any other site that
 > offers Pesto is not ours.
@@ -128,8 +127,7 @@ The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 
 - **Download.** Get Pesto from the [Releases page](https://github.com/MichaelRo/copypesto/releases) or from
   [copypesto.net/download](https://copypesto.net/download), check the SHA-256 shown there, open the disk image and drag
-  Pesto to Applications. If macOS says it could not verify Pesto, follow the Open Anyway steps in
-  [Getting started](docs/guide/getting-started.md).
+  Pesto to Applications.
 - **Source.** Build it yourself; see For developers below. The `pesto` command-line tool is in the source tree and is
   not part of the download yet (`make build-cli`).
 

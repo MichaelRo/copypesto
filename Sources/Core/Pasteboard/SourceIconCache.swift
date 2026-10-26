@@ -27,6 +27,11 @@ public final class SourceIconCache {
         return data.isEmpty ? nil : data
     }
 
+    public func displayName(forBundleID bundleID: String?) -> String? {
+        guard let bundleID else { return nil }
+        return record(for: bundleID).displayName
+    }
+
     /// The app's record, drawn on the first ask. The ingest path (`SourceAppResolver`) and the cards both come here.
     func record(for bundleID: String) -> SourceAppRecord {
         if let cached = records[bundleID] { return cached }

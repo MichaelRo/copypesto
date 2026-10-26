@@ -65,7 +65,7 @@ private struct StubRecognizer: TextRecognizing {
 }
 
 extension HostedGlobals {
-    @Suite("StorageService ingest pipeline")
+    @Suite("StorageService ingest pipeline", .serialized)
     struct StorageServiceIntegrationTests {
         private let container: ModelContainer
         private let service: StorageService

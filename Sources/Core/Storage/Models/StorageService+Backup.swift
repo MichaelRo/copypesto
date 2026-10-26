@@ -183,8 +183,7 @@ extension StorageService {
         let collectionIDs = try restoreCollections(contents.records, summary: &summary)
         try saveOrRollback()
         try await restoreItems(contents.records, deleted: deleted, collectionIDs: collectionIDs, summary: &summary)
-        AppDefaults.store.set("", for: Setting.shelfSuggestionLedger)
-        AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
+        wipeSuggestionLedger?()
         return summary
     }
 
@@ -200,8 +199,7 @@ extension StorageService {
         try await backup.forEachItem { record in
             try await restoreItem(record, deleted: deleted, collectionIDs: collectionIDs, summary: &summary)
         }
-        AppDefaults.store.set("", for: Setting.shelfSuggestionLedger)
-        AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
+        wipeSuggestionLedger?()
         return summary
     }
 

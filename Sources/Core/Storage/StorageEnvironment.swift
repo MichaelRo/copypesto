@@ -27,6 +27,9 @@ public struct StorageEnvironment: Sendable {
     public var keyRotator: @Sendable () throws -> Void
     /// What ⌘Z undoes; wiped with the history (ADR 0008).
     public var undoHistory: UndoHistory
+    /// Wipes the suggestion ledger and decline counter when history is wiped or restored. In the app this points
+    /// to AppDefaults.store; tests leave it nil unless verifying ledger reset.
+    public var wipeSuggestionLedger: (@Sendable () -> Void)?
 
     public init(
         lastItemStore: any LastItemStoring, linkPreviews: LinkPreviewImageStore,
@@ -36,7 +39,8 @@ public struct StorageEnvironment: Sendable {
         remoteGIFFetcher: (@Sendable (URL) async -> Data?)?, clock: @escaping @Sendable () -> Date,
         rules: ClipboardRules, sequenceCounter: SequenceCounter, deviceID: @escaping @Sendable () throws -> String,
         keyRotator: @escaping @Sendable () throws -> Void = { try BlobEncryption().rotateKey() },
-        undoHistory: UndoHistory = UndoHistory(), linkPreviewCache: LinkPreviewCache = .shared
+        undoHistory: UndoHistory = UndoHistory(), linkPreviewCache: LinkPreviewCache = .shared,
+        wipeSuggestionLedger: (@Sendable () -> Void)? = nil
     ) {
         self.lastItemStore = lastItemStore
         self.linkPreviews = linkPreviews
@@ -52,6 +56,7 @@ public struct StorageEnvironment: Sendable {
         self.deviceID = deviceID
         self.keyRotator = keyRotator
         self.undoHistory = undoHistory
+        self.wipeSuggestionLedger = wipeSuggestionLedger
     }
 
     /// The app's choices. Outside a normal launch (a test host, a UI-test launch) the last-item file is not written
@@ -77,6 +82,10 @@ public struct StorageEnvironment: Sendable {
                 let configuration = RuntimeConfiguration.current
                 guard configuration.mode.usesSystemIntegrations else { return "uitest-device-\(configuration.session)" }
                 return try DeviceIdentity().loadOrCreate()
+            },
+            wipeSuggestionLedger: {
+                AppDefaults.store.set("", for: Setting.shelfSuggestionLedger)
+                AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
             }
         )
     }
@@ -86,6 +95,7 @@ public struct StorageEnvironment: Sendable {
         var environment = live()
         environment.lastItemStore = NoLastItemFile()
         environment.embedder = NoEmbedding()
+        environment.wipeSuggestionLedger = nil
         environment.linkPreviewCache = LinkPreviewCache(
             fileURL: FileManager.default.temporaryDirectory
                 .appendingPathComponent("pesto-test-link-previews-\(UUID().uuidString)")

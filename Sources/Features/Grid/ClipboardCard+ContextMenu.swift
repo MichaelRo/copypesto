@@ -17,7 +17,7 @@ extension ClipboardCard {
         }
         .keyboardShortcut("c", modifiers: .command)
 
-        if item.type == .url {
+        if item.type == .url, item.sensitivity == nil, !concealment.isConcealed {
             if let pageTitle = item.ogTitle, !pageTitle.isEmpty, actions.copyText != nil {
                 Button {
                     actions.copyText?(item, pageTitle)

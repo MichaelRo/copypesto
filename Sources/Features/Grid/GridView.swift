@@ -143,7 +143,7 @@ struct GridView: View {
     private var selectedAppFilterName: String? {
         guard !appState.appChipFilter.isEmpty else { return nil }
         if appState.appChipFilter.count == 1, let bundleID = appState.appChipFilter.first {
-            return SourceIconCache.shared.displayName(forBundleID: bundleID)
+            return SourceIconCache.shared.displayName(forBundleID: bundleID) ?? bundleID
         }
         return String(localized: "selected apps")
     }

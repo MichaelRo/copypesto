@@ -12,8 +12,8 @@ make release-check
 echo "==> Building notarized release DMG..."
 make dmg
 
-VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' .build/xcode/export/Pesto.app/Contents/Info.plist 2>/dev/null || grep 'MARKETING_VERSION:' Pesto.yml | head -1 | awk '{print $2}' | tr -d '"')
-BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' .build/xcode/export/Pesto.app/Contents/Info.plist 2>/dev/null || grep 'CURRENT_PROJECT_VERSION:' Pesto.yml | head -1 | awk '{print $2}' | tr -d '"')
+VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' .build/xcode/export/Pesto.app/Contents/Info.plist 2>/dev/null || awk -F': ' '/MARKETING_VERSION:/ {gsub(/[" ]/, "", $2); print $2; exit}' Pesto.yml)
+BUILD=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' .build/xcode/export/Pesto.app/Contents/Info.plist 2>/dev/null || awk -F': ' '/CURRENT_PROJECT_VERSION:/ {gsub(/[" ]/, "", $2); print $2; exit}' Pesto.yml)
 DMG=".build/xcode/export/Pesto-${VERSION}.dmg"
 SHA="${DMG}.sha256"
 

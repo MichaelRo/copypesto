@@ -34,7 +34,7 @@ struct PestoChip: View {
     }
 
     private var isLabelVisible: Bool {
-        !collapsesLabel || isActive || isHovered || hasFocus
+        !collapsesLabel || isActive || hasFocus
     }
 
     private var fillOpacity: Double {

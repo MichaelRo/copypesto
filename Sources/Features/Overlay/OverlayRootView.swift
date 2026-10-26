@@ -95,7 +95,7 @@ struct OverlayRootView: View {
                 .scaledFont(size: 11)
                 .foregroundStyle(.primary)
                 .lineLimit(1)
-            Button { appState.performUndo() } label: { Text("Undo \u{2318}Z") }
+            Button { appState.performUndo() } label: { Text("Undo (\u{2318}Z)") }
                 .buttonStyle(.pestoProminent)
                 .controlSize(.small)
                 .accessibilityIdentifier(AccessibilityID.undoButton)

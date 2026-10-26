@@ -12,8 +12,8 @@ public struct ClipSnapshot: Sendable {
         "previewText", "previewCiphertext", "previewNonce", "previewAADBound", "sensitivityRaw",
         "sensitivityMaskedPreview", "contentHash", "perceptualHash", "byteSize", "textLength", "pixelWidth",
         "pixelHeight", "deviceID", "sequenceNumber", "collectionID", "isPinned", "expiresAt", "pinnedHotkeyIndex",
-        "legacyEmbeddingData", "embeddingCiphertext", "embeddingNonce", "blob", "legacyOgTitle", "ogImageThumbnail",
-        "legacyOgSiteName", "detectedLanguage", "pasteCount", "legacyCustomTitle", "legacyUserNote",
+        "shortcutLastUsedAt", "legacyEmbeddingData", "embeddingCiphertext", "embeddingNonce", "blob", "legacyOgTitle",
+        "ogImageThumbnail", "legacyOgSiteName", "detectedLanguage", "pasteCount", "legacyCustomTitle", "legacyUserNote",
         "legacyTagsRaw", "metadataCiphertext", "metadataNonce", "isNSFW", "analysisPending", "isRemote"
     ]
 
@@ -52,6 +52,7 @@ public struct ClipSnapshot: Sendable {
     let isPinned: Bool
     let expiresAt: Date?
     let pinnedHotkeyIndex: Int?
+    let shortcutLastUsedAt: Date?
     let legacyEmbeddingData: Data?
     let embeddingCiphertext: Data?
     let embeddingNonce: Data?
@@ -115,6 +116,7 @@ public struct ClipSnapshot: Sendable {
         isPinned = item.isPinned
         expiresAt = item.expiresAt
         pinnedHotkeyIndex = item.pinnedHotkeyIndex
+        shortcutLastUsedAt = item.shortcutLastUsedAt
         legacyEmbeddingData = item.legacyEmbeddingData
         embeddingCiphertext = item.embeddingCiphertext
         embeddingNonce = item.embeddingNonce
@@ -159,6 +161,7 @@ public struct ClipSnapshot: Sendable {
         item.textLength = textLength
         item.expiresAt = expiresAt
         item.pinnedHotkeyIndex = pinnedHotkeyIndex
+        item.shortcutLastUsedAt = shortcutLastUsedAt
         item.legacyEmbeddingData = legacyEmbeddingData
         item.embeddingCiphertext = embeddingCiphertext
         item.embeddingNonce = embeddingNonce

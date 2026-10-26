@@ -24,13 +24,15 @@ public struct BackupItemMetadata: Codable, Sendable, Equatable {
     public var sensitivityRaw: String?
     /// True when the clip arrived from another device. Absent in backups made before it existed (read as false).
     public var isRemote: Bool?
+    /// Day the shortcut was last used. Absent in backups made before it existed.
+    public var shortcutLastUsedAt: Date?
 
     public init(
         id: UUID, timestamp: Date, typeRaw: String, mimeType: String, plainHash: String,
         sourceBundleID: String? = nil, sourceAppName: String? = nil, customTitle: String? = nil,
         userNote: String? = nil, tags: [String] = [], isPinned: Bool = false, collectionID: UUID? = nil,
         pinnedHotkeyIndex: Int? = nil, expiresAt: Date? = nil, isNSFW: Bool = false, pasteCount: Int = 0,
-        sensitivityRaw: String? = nil, isRemote: Bool? = nil
+        sensitivityRaw: String? = nil, isRemote: Bool? = nil, shortcutLastUsedAt: Date? = nil
     ) {
         self.id = id
         self.timestamp = timestamp
@@ -50,6 +52,7 @@ public struct BackupItemMetadata: Codable, Sendable, Equatable {
         self.pasteCount = pasteCount
         self.sensitivityRaw = sensitivityRaw
         self.isRemote = isRemote
+        self.shortcutLastUsedAt = shortcutLastUsedAt
     }
 }
 

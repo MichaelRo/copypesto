@@ -82,6 +82,10 @@ extension ClipboardCard {
             headerBadges
             if let slot = item.pinnedHotkeyIndex {
                 Keycap(symbol: "⌃\(slot)", size: .compact).accessibilityHidden(true)
+            } else if let slot = suggestedHotkeySlot {
+                Keycap(symbol: "⌃\(slot)", size: .compact, style: .ghost)
+                    .accessibilityHidden(true)
+                    .animation(Motion.animation(.pestoPop), value: slot)
             }
             if item.isPinned {
                 Image(systemName: "pin.fill")

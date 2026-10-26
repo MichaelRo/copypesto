@@ -35,6 +35,8 @@ public extension StorageService {
         lastItemStore.clear()
         ExceptionRecorder.clear(in: AppPaths.supportDirectory)
         AppDefaults.store.removeObject(forKey: SearchHistory.defaultsKey)
+        AppDefaults.store.set("", for: Setting.shelfSuggestionLedger)
+        AppDefaults.store.set(0, for: Setting.shelfSuggestionDeclines)
         do {
             try keyRotator()
         } catch {

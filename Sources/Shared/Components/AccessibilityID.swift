@@ -196,4 +196,11 @@ enum AccessibilityID {
     static let onboardingContinueButton = "onboarding-continue"
     static let onboardingSkipAccessibilityButton = "onboarding-skip-accessibility"
     static let onboardingGetStartedButton = "onboarding-get-started"
+
+    /// Shelf suggestions
+    static let shelfSuggestionBanner = "shelf-suggestion-banner"
+    static let shelfSuggestionAcceptButton = "shelf-suggestion-accept"
+    static let shelfSuggestionDeclineButton = "shelf-suggestion-decline"
+    static let shelfSuggestionsSettingsToggle = "settings-shelf-suggestions"
+    static let resetSuggestionsButton = "settings-reset-suggestions"
 }

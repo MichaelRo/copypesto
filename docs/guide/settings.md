@@ -19,6 +19,7 @@ The header shows the version and opens **About Pesto**.
   the floating window pastes the clip or only copies it, and *Open a small menu at the cursor* (off by default): on, in a text
   field the shortcut shows your last five copies by the cursor, for the mouse only (arrow keys and Return go to the app you are typing in); off, it always opens the full shelf, which works
   fully from the keyboard. On the shelf a click only focuses a clip; a double click pastes it.
+- **Show suggestions on the shelf** (on by default): Pesto notices clips you paste often and offers a shortcut, suggests snippets for repeated text, and tidies unused shortcuts. It uses paste counts kept on this Mac. Reset Suggestions re-arms all suggestions and clears past declines.
 - **Apple Intelligence:** one switch, on by default, over every on-device AI feature: Summarize, Translate and Extract;
   Describe Image; picture screening for the content filter; and sentence understanding in Ask. It shows whether this Mac
   is ready. Off, the AI actions are grayed out. There is no account and no key, and nothing you copy leaves your Mac.
@@ -93,7 +94,7 @@ Keys that work in every app, and the keys that work on the shelf.
   floating window*, *Pause or resume capturing* and *Hide or show clip contents* start unset.
 - **Copying:** *Double-press ⌘C to append to the last clip* (off by default; it needs Accessibility).
 - **Pinned clip shortcuts:** pinned clips can each get ⌃1 to ⌃9. Choose one from a clip's menu (choosing a shortcut pins
-  the clip, and unpinning it frees the shortcut); the list shows which clips have one, with a Remove button.
+  the clip, and unpinning it frees the shortcut); the list shows which clips have one, with a Remove button. Pesto can also offer a shortcut on the shelf for a clip you paste often, and suggest freeing an unused one (Settings → General, Show suggestions on the shelf).
 - **On the shelf:** the keys that work while the shelf is open (arrows, Return, Space, ⌘K and the rest). They are fixed.
 
 ## Collections

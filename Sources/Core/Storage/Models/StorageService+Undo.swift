@@ -85,7 +85,7 @@ extension StorageService {
             where !present.contains(snapshot.id.uuidString) && !present.contains(snapshot.contentHash)
         {
             let item = snapshot.makeItem()
-            if let slot = item.pinnedHotkeyIndex, try !clips(holding: slot).isEmpty { item.pinnedHotkeyIndex = nil }
+            if let slot = item.pinnedHotkeyIndex, try !clips(holding: slot).isEmpty { item.setShortcut(nil) }
             modelContext.insert(item)
             restored.append(snapshot)
         }
@@ -276,10 +276,10 @@ extension StorageService {
         if fields.contains(.shortcut) {
             if let slot = state.pinnedHotkeyIndex {
                 for other in try clips(holding: slot) where other.id != item.id {
-                    other.pinnedHotkeyIndex = nil
+                    other.setShortcut(nil)
                 }
             }
-            item.pinnedHotkeyIndex = state.pinnedHotkeyIndex
+            item.setShortcut(state.pinnedHotkeyIndex)
         }
         if fields.contains(.sensitive) { item.isNSFW = state.isNSFW }
         if fields.contains(.expiry) { item.expiresAt = state.expiresAt }

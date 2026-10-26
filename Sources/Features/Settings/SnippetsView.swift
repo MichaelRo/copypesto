@@ -121,6 +121,20 @@ struct SnippetsView: View {
         }
         .formStyle(.grouped)
         .onChange(of: addRequest) { editor = .new() }
+        .onAppear {
+            if let seedID = appState.pendingSnippetSeed {
+                appState.pendingSnippetSeed = nil
+                if let item = pastedOften.first(where: { $0.id == seedID }) ?? pinnedItems
+                    .first(where: { $0.id == seedID })
+                {
+                    editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+                } else if let item = try? modelContext
+                    .fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == seedID })).first
+                {
+                    editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+                }
+            }
+        }
         .confirmationDialog(
             "Delete this snippet?", isPresented: Binding(
                 get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }

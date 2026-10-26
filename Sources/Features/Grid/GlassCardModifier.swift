@@ -13,14 +13,20 @@ struct GlassCardModifier: ViewModifier {
     let isFocused: Bool
     let isHovered: Bool
     let isLifted: Bool
+    var isSuggested: Bool = false
     let cornerRadius: CGFloat
     @Environment(\.colorSchemeContrast) private var contrast
 
     private var borderColor: Color {
-        if isSelected { return accent }
-        if isFocused { return accent }
+        if isSelected || isFocused || isSuggested { return accent }
         let base = contrast == .increased ? 0.45 : 0.14
         return Color.primary.opacity(isHovered ? base * 1.6 : base)
+    }
+
+    private var lineWidth: CGFloat {
+        if isSuggested { return 2.0 }
+        if isSelected || isFocused { return 1.5 }
+        return 0.75
     }
 
     func body(content: Content) -> some View {
@@ -40,7 +46,7 @@ struct GlassCardModifier: ViewModifier {
             }
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .strokeBorder(borderColor, lineWidth: isSelected || isFocused ? 1.5 : 0.75)
+                    .strokeBorder(borderColor, lineWidth: lineWidth)
             }
     }
 }

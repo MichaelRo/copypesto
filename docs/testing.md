@@ -297,8 +297,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - The snippet editor in the list: add, edit, Esc, ⌘Return, and a clip's ⌃N keycap on the card and in the hover card.
   Pass: each works, and the keycap shows in both places.
 - Shelf suggestions (ADR 0014): paste the same clip 6+ times from the shelf. Pass: after 1.5 s dwell, a bottom banner
-  appears ("Set ⌘N as a shortcut for this clip?"), the target card gains a 2 pt accent ring, and a dashed ghost keycap
-  appears with a subtle pop settle. "Set shortcut" (or Return) assigns the slot; "Not now" dismisses it; 4 consecutive
+  appears ("You have pasted this clip 6 times. Pin it and paste it from any app with ⌃N?"), the target card gains a 2 pt accent ring, and a dashed ghost keycap
+  appears with a subtle pop settle. Clicking "Pin with ⌃N" assigns the slot (Return continues to paste the selected card and never accepts suggestions); "No Thanks" dismisses it; 4 consecutive
   declines turns off the feature; Settings → General toggle and "Reset suggestions" button work; History Lock suppresses
   suggestions without wiping the ledger; Clear History and Restore wipe the ledger.
 - App chips and URL card actions: hover across app filter chips. Pass: chips stay steady 24×24 pt circular icons with

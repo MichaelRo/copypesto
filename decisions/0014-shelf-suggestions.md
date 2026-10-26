@@ -13,7 +13,7 @@ Pesto introduces shelf suggestions, governed strictly by on-device policy (`Shel
 counts kept on the Mac. UI text and code strictly use the term "suggestion" (never "magic", "smart slot", or similar terms).
 
 1. **Four suggestion moments**:
-   - **Shortcut offer**: Offered when an unassigned clip has been pasted at least 6 times in the last 30 days, with at least
+   - **Shortcut offer**: Offered when an unassigned clip has been pasted at least 6 times in the last 14 days, with at least
      one paste from the shelf in the current run, and a shortcut slot (`⌃1`–`⌃9`) is free. Accepting pins the clip, assigns
      the slot, and offers Undo.
    - **Shortcut reminder**: Offered when a clip already assigned to `⌃1`–`⌃9` is pasted from the shelf at least 5 times in
@@ -21,7 +21,7 @@ counts kept on the Mac. UI text and code strictly use the term "suggestion" (nev
    - **Dormant shortcut release**: Offered when a pinned shortcut has not been used in at least 60 days (measured against
      `shortcutLastUsedAt` or the suggestion feature arming date). Accepting frees the shortcut slot while keeping the clip
      pinned in history.
-   - **Snippet suggestion**: Offered when an unpinned text clip has been pasted at least 8 times in the last 30 days and
+   - **Snippet suggestion**: Offered when an unpinned text clip has been pasted at least 8 times in the last 14 days and
      meets template eligibility (`SnippetSuggester`). Accepting navigates to Settings → Snippets with the clip pre-filled.
 
 2. **Presentation and non-intrusiveness invariants**:
@@ -30,7 +30,7 @@ counts kept on the Mac. UI text and code strictly use the term "suggestion" (nev
    - Banners say "this clip", never quoting or naming clip contents.
    - Suggestions never take keyboard focus and never bind global keyboard shortcuts.
    - A target card is highlighted with a 2 pt accent ring and a dashed ghost keycap with `pestoPop` spring settle.
-   - Suggestions wait for a 1.5 s dwell time before appearing, and respect a 7-day quiet period after first onboarding
+   - Suggestions wait for a 1.5 s dwell time before appearing, and respect a 3-day quiet period after first onboarding
      and a 24-hour minimum interval between presentations.
 
 3. **Ledger and suppression**:

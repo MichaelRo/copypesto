@@ -125,6 +125,10 @@ The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 
 ## Install
 
+- **Homebrew.** Install the cask:
+  ```bash
+  brew install --cask copypesto
+  ```
 - **Download.** Get Pesto from the [Releases page](https://github.com/MichaelRo/copypesto/releases) or from
   [copypesto.net/download](https://copypesto.net/download), check the SHA-256 shown there, open the disk image and drag
   Pesto to Applications.

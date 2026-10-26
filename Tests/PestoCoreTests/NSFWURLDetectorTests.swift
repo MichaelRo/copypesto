@@ -147,6 +147,18 @@ final class NSFWURLDetectorTests: XCTestCase {
         ))
     }
 
+    func test_metadataAware_redditMatureContentPrefix_isExplicit() {
+        let signals = NSFWURLDetector.LinkPreviewSignals(
+            title: "[Mature Content] Some Reddit post title",
+            description: nil,
+            siteName: "Reddit"
+        )
+        XCTAssertTrue(NSFWURLDetector.isExplicit(
+            urlString: "https://www.reddit.com/r/talkedintoit/s/dj3NIjoDUu",
+            metadata: signals
+        ))
+    }
+
     func test_metadataAware_nilMetadata_matchesHostOnlyVariant() {
         XCTAssertEqual(
             NSFWURLDetector.isExplicit(urlString: "https://www.erome.com/a/foo"),

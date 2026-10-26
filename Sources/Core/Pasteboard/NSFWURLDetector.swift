@@ -50,6 +50,7 @@ public enum NSFWURLDetector: Sendable {
                 }
             }
         }
+        if corpus.contains("mature content") { return true }
         return keywordScore(in: corpus) >= threshold
     }
 

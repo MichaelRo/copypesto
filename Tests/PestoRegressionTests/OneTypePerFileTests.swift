@@ -8,7 +8,7 @@ struct OneTypePerFileTests {
     /// and the second test makes sure a row that no longer applies is deleted (R-10).
     private static let accepted: Set<String> = [
         "Sources/Core/Security/HistoryLock.swift", "Sources/Core/Runtime/LoginItemService.swift",
-        "Sources/Core/Paste/ShelfActions.swift", "Sources/Features/Settings/SnippetEditorView.swift",
+        "Sources/Core/Paste/ShelfActions.swift",
         "Sources/Features/Grid/HoverCardPanel.swift", "Sources/Core/Backup/BackupFile.swift",
         "Sources/Features/Settings/BackupSheets.swift", "Sources/Features/Overlay/Announcements.swift",
         "Sources/Features/AI/AIResultPanelController.swift", "Sources/Core/Storage/Undo/UndoChanges.swift",

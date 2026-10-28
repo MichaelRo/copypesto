@@ -42,7 +42,7 @@ measurements below hold; if they do not, the release is option 2 and nothing els
   "look alike" costs more trust than a missed one saves. Copied text is mostly not the person's own boilerplate, so the
   suggestion will be rarer than TextExpander's; the value is quality, not frequency.
 
-## Decision (proposed)
+## Decision
 Option 3, built as one plan and released together, in this build order (each step lands green; the order is
 dependency, not release scope):
 
@@ -167,8 +167,9 @@ Differences from the plan above, found while building and measured on the develo
   and to the three-days habit for shortcuts. The numbers 3 days in 30, 3 clips on 2 days, 40 to 2,000 characters and a 0.5
   similarity are starting values in `ShelfSuggestionPolicy.Thresholds` and `TextSignature`, to be read against the statistics.
 - **A family's "days" are the days of each clip's last use** (`timestamp`), because a clip keeps no creation date.
-- **The proposal is the editor itself**, opened with the template: the fields show as chips under the text (a chip renames
-  its field everywhere), and a new snippet offers a checkbox "Also paste it with ⌃N from any app" when a slot is free.
+- **The proposal is the editor itself**, opened with the template. The editor was redesigned after hardware testing (PR C):
+  questions are tinted in the text and listed under "When you paste", where each renames, takes a starting value or
+  options, or is removed; "Add Question…" and "Fill From Mac…" replace the row of Insert chips. A new snippet offers a checkbox "Also paste it with ⌃N from any app" when a slot is free.
 - **Not built:** a separate proposal sheet, and a Settings panel for the on-device model's reason beyond the existing
   availability message.
 - **Choice options are typed with commas in the *Ask for…* popover** and written with `|` in the token, so an option cannot

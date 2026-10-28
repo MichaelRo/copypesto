@@ -214,7 +214,7 @@ struct SnippetsView: View {
     // MARK: - Sub-views
 
     private func editorView(_ draft: SnippetEditorDraft) -> some View {
-        SnippetEditorView(draft: draft, onSave: save, onCancel: { editor = nil })
+        SnippetEditorView(draft: draft, freeShortcutSlot: freeShortcutSlot, onSave: save, onCancel: { editor = nil })
             .id(draft.id)
     }
 
@@ -327,9 +327,21 @@ struct SnippetsView: View {
             if let clipID = draft.clipID {
                 _ = try? await service.updateSnippet(id: clipID, title: title.isEmpty ? nil : title, text: text)
             } else {
-                _ = try? await service.addSnippet(text, title: title.isEmpty ? nil : title)
+                let id = try? await service.addSnippet(text, title: title.isEmpty ? nil : title)
+                if let id, let slot = draft.shortcutSlot {
+                    await appState.attempt("Couldn\u{2019}t set the shortcut") {
+                        try await service.assignFreeHotkeySlot(slot, to: id)
+                    }
+                }
             }
         }
+    }
+
+    private var freeShortcutSlot: Int? {
+        ShelfSuggestionPolicy.freeSlot(
+            assigned: Set(pinnedItems.compactMap(\.pinnedHotkeyIndex)),
+            unavailable: appState.hotkeyController.unavailableSlots
+        )
     }
 
     private func addStarter(_ starter: SnippetStarter) {

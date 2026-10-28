@@ -167,8 +167,9 @@ Differences from the plan above, found while building and measured on the develo
   and to the three-days habit for shortcuts. The numbers 3 days in 30, 3 clips on 2 days, 40 to 2,000 characters and a 0.5
   similarity are starting values in `ShelfSuggestionPolicy.Thresholds` and `TextSignature`, to be read against the statistics.
 - **A family's "days" are the days of each clip's last use** (`timestamp`), because a clip keeps no creation date.
-- **Not built:** the "also assign a shortcut" row in the proposal (a snippet that is pasted on three days is offered a
-  shortcut like any pinned clip), field chips in the proposal (the editor opens with the template), and a Settings
-  panel for the on-device model's reason beyond the existing availability message.
+- **The proposal is the editor itself**, opened with the template: the fields show as chips under the text (a chip renames
+  its field everywhere), and a new snippet offers a checkbox "Also paste it with ⌃N from any app" when a slot is free.
+- **Not built:** a separate proposal sheet, and a Settings panel for the on-device model's reason beyond the existing
+  availability message.
 - **Choice options are typed with commas in the *Ask for…* popover** and written with `|` in the token, so an option cannot
   hold a comma there (the token itself can).

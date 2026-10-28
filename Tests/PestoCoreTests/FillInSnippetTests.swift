@@ -122,6 +122,30 @@ struct FillInSnippetTests {
     }
 }
 
+@Suite("Renaming a field")
+struct FillInRenameTests {
+    @Test("every use of the label is renamed, and an optional section's tag with it")
+    func whenRenamed_thenAllTokensFollow() {
+        let text = #"Hi {{input:Field}}, {{input:Field}} {{choice:Tone options="a|b"}}{{optional:Field}}x{{/optional}}"#
+
+        let renamed = FillInParser.renaming("Field", to: "Customer", in: text)
+
+        let expected = #"Hi {{input:Customer}}, {{input:Customer}} {{choice:Tone options="a|b"}}"#
+            + "{{optional:Customer}}x{{/optional}}"
+        #expect(renamed == expected)
+    }
+
+    @Test("a taken, empty or unusable name changes nothing")
+    func whenNameUnusable_thenNil() {
+        let text = "{{input:A}} {{input:B}}"
+
+        #expect(FillInParser.renaming("A", to: "B", in: text) == nil)
+        #expect(FillInParser.renaming("A", to: "  ", in: text) == nil)
+        #expect(FillInParser.renaming("A", to: "x}}y", in: text) == nil)
+        #expect(FillInParser.renaming("Nope", to: "C", in: text) == nil)
+    }
+}
+
 @Suite("Fill-in prompt")
 struct FillInPromptTests {
     private let fields = FillInParser.fields(

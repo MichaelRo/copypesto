@@ -30,6 +30,32 @@ public enum FillInParser {
         return result
     }
 
+    /// The text with every use of the field `label` renamed, or nil when the new name is empty, too long, holds braces,
+    /// quotes or a pipe, is already another field's, or the field is not there.
+    public static func renaming(_ label: String, to newLabel: String, in text: String) -> String? {
+        let name = newLabel.trimmingCharacters(in: .whitespaces)
+        let all = fields(in: text)
+        guard all.contains(where: { $0.label == label }), validLabel(name),
+              !name.contains(where: { "{}\"|".contains($0) }),
+              name == label || !all.contains(where: { $0.label == name }),
+              let regex = tokenRegex else { return nil }
+        let ns = text as NSString
+        var result = ""
+        var cursor = 0
+        for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            let body = ns.substring(with: match.range(at: 1))
+            guard let field = field(fromToken: body), field.label == label,
+                  let prefix = ["input:", "choice:", "optional:"].first(where: { body.hasPrefix($0 + label) }) else
+            {
+                continue
+            }
+            result += ns.substring(with: NSRange(location: cursor, length: match.range(at: 1).location - cursor))
+            result += prefix + name + body.dropFirst(prefix.count + label.count)
+            cursor = match.range(at: 1).upperBound
+        }
+        return result + ns.substring(from: cursor)
+    }
+
     /// The fields of several snippets together, each label once, so a stack asks everything up front.
     public static func fields(inAll texts: [String]) -> [SnippetField] {
         var seen = Set<String>()

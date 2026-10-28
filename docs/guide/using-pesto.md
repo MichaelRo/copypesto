@@ -109,7 +109,7 @@ caret lands afterwards).
 | `{{optional:P.S.}}Thanks again!{{/optional}}` | A switch that keeps or drops the text between the tags (off to start). |
 
 A label used twice asks once. Return pastes, **⌘Return** pastes from a box of several lines, Esc cancels, and Tab moves between rows.
-The *Ask for…* menu in the snippet editor writes these tokens for you. A snippet pasted one by one with a stack asks everything
+The *Ask for…* menu in the snippet editor writes these tokens for you, the fields show as chips under the text (click one to rename it), and a new snippet can claim the next free `⌃1`–`⌃9` shortcut with one checkbox. A snippet pasted one by one with a stack asks everything
 before the first clip. If a token is misspelled or has no label it pastes as typed.
 
 Pesto starts a field with what you typed last time. That is kept with the snippet, encrypted like its text, and turned off

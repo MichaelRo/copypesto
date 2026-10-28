@@ -91,8 +91,8 @@ public enum ShelfKeyReference {
             needsCommand: false, needsShift: true, requiresSearch: true
         ),
         ShelfKey(
-            keys: ["↓", "↑"], action: "In search, move through the results", keyCodes: [125, 126], needsCommand: false,
-            requiresSearch: true
+            keys: ["←", "→", "↓", "↑"], action: "In search, move through the results", keyCodes: [123, 124, 125, 126],
+            needsCommand: false, requiresSearch: true
         ),
         ShelfKey(keys: ["⌘", "F"], action: "Search", keyCodes: [3], needsCommand: true),
         ShelfKey(keys: ["⌘", "K"], action: "Open the focused clip's actions", keyCodes: [40], needsCommand: true),

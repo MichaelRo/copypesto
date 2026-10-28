@@ -90,4 +90,23 @@ final class SearchKeyboardTests: PestoUITestCase {
         expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: overlay)
         waitForExpectations(timeout: 5)
     }
+
+    func test_rightArrowInSearch_movesToTheNextResultAndReturnPastesIt() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5))
+        app.typeText("pesto")
+        XCTAssertTrue(card(containing: "Pesto keeps your clipboard history").waitForExistence(timeout: 5))
+
+        app.typeKey(.rightArrow, modifierFlags: [])
+        app.typeKey(.rightArrow, modifierFlags: [])
+        app.typeKey(.return, modifierFlags: [])
+
+        XCTAssertEqual(
+            waitForPaste(count: 1).first?.hasPrefix("Pesto keeps your clipboard history"),
+            true,
+            "two Rights then Return pastes the third result, the oldest of the three that mention pesto"
+        )
+    }
 }

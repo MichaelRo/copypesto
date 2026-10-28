@@ -23,6 +23,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0012](0012-settings-and-shortcuts.md) | Settings are seven panes with search that goes to the row, typed keys with one default, and one list of global shortcuts |
 | [0013](0013-appearance-and-shelf-position.md) | Four themes share one identity with the icons, a theme owns the shelf's colour, and the shelf opens at the Bottom or the Top |
 | [0014](0014-shelf-suggestions.md) | Shelf suggestions offer shortcuts, free idle keys and suggest snippets without moving cards |
+| [0016](0016-search-arrows-move-cards.md) | In search, the arrow keys move between result cards and Return pastes; supersedes the key handling of 0009 |
 | [0017](0017-smart-snippets.md) | Snippets ask for fill-in fields at paste time, and Pesto offers them for clips that differ in a few words |
 
 ## Template

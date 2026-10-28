@@ -33,7 +33,7 @@ These work while the shelf is open.
 | **Esc** | Go back one step: a prompt, Quick Look, the hover card or the selection, then the shelf |
 | **⌘W** | Close the shelf |
 | Type | Search your clips |
-| **Home** **End** | Jump to the first or the last clip. In search, **←** **→** **Home** **End** move the text cursor instead. |
+| **Home** **End** | Jump to the first or the last clip. In search, **Home** **End** move the text cursor instead. |
 | **⌘F** | Search |
 | **⌘A** | Select every clip shown |
 | **⌘1** to **⌘9** | Paste the clip in that position |
@@ -50,7 +50,7 @@ These work while the shelf is open.
 | **⇧⌘Z** | Redo what you undid |
 | **⌘S** | Save the focused picture to your Downloads folder (a covered or hidden picture is not saved) |
 | **⌘,** | Open Settings |
-| **↓** **↑** | In search, move through the results |
+| **←** **→** **↓** **↑** | In search, move through the results. **Return** pastes the focused one. Hold **⌘**, **⌥** or **⇧** with **←** **→** to move the text cursor instead. |
 | **Tab** **⇧Tab** | In search, move through the filters (type, date, app, Sensitive). **Return** or **Space** turns the one you are on on or off, **Esc** goes back to the search field. |
 
 ## With the mouse

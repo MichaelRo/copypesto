@@ -58,7 +58,8 @@ final class SnippetFamilySuggestionUITests: PestoUITestCase {
         capture("snippet-family-editor", of: settingsWindow)
         let preview = element(AccessibilityID.snippetPreview)
         XCTAssertTrue(preview.waitForExistence(timeout: 5), "the editor shows no preview")
-        capture("snippet-family-preview", of: preview)
+        let shown = (preview.value as? String) ?? preview.label
+        XCTAssertTrue(shown.contains("Number"), "the preview should show the Number field: \(shown)")
     }
 
     func test_whenTheSnippetOfferIsDeclined_thenItGoesAndStaysAwayForTheFamily() {

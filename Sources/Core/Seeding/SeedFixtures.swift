@@ -294,7 +294,7 @@ public enum SeedFixtures {
         ]
     }
 
-    private static func fileCapture(_ paths: [String]) -> PasteboardCapture {
+    static func fileCapture(_ paths: [String]) -> PasteboardCapture {
         let text = FileClip.encode(paths.map { URL(fileURLWithPath: $0) })
         let payload = Data(text.utf8)
         return PasteboardCapture(

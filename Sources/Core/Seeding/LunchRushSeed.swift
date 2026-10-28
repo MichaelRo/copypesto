@@ -31,6 +31,7 @@ public enum LunchRushSeed {
                 + #"{{choice:Day options="Thursday|Friday"}}."#,
             shortcut: 2
         ),
+        Snippet(title: "Quick thanks", text: "Thanks, I\u{2019}ll get back to you today.", shortcut: 4),
         Snippet(
             title: "Failing test",
             text: #"Write a failing test for {{input:Function}} that reproduces "#
@@ -54,7 +55,7 @@ public enum LunchRushSeed {
     private static let safari = "com.apple.Safari"
     private static let messages = "com.apple.MobileSMS"
 
-    /// Oldest first, which is the order `SeedFixtures` ingests in; the six ingredients are the newest.
+    /// Oldest first, which is the order `SeedFixtures` ingests in.
     static func captures() -> [PasteboardCapture] {
         var captures: [PasteboardCapture] = []
         let chatter: [(String, String)] = [
@@ -70,9 +71,43 @@ public enum LunchRushSeed {
         ]
         captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
         captures += supplierLinks.map { SeedFixtures.textCapture($0.url, app: safari) }
-        captures.append(SeedFixtures.pictureCapture(sensitivePicture()))
-        captures.append(SeedFixtures.textCapture(cardNumber, app: safari))
-        captures += ingredients.map { SeedFixtures.textCapture($0, app: notes) }
+        captures += richClips().reversed()
         return captures
+    }
+
+    /// Newest first, as the shelf shows them: the masked card and the covered picture open it, then a GIF, a video, a
+    /// PDF
+    /// and the rest of the kinds. The six ingredients are not here: the finale copies them live.
+    private static func richClips() -> [PasteboardCapture] {
+        let gif = LunchRushMedia.pestoGIF
+        var clips: [PasteboardCapture] = [
+            SeedFixtures.textCapture(cardNumber, app: safari),
+            SeedFixtures.pictureCapture(sensitivePicture()),
+            PasteboardCapture(
+                typeIdentifier: "com.compuserve.gif", payload: gif, frontmostBundleID: safari,
+                contentHash: SeedFixtures.hash(of: gif)
+            )
+        ]
+        if let video = LunchRushMedia.bowlVideo { clips.append(SeedFixtures.fileCapture([video.path])) }
+        if let pdf = LunchRushMedia.recipePDF { clips.append(SeedFixtures.fileCapture([pdf.path])) }
+        clips += [
+            SeedFixtures.pictureCapture(ShowcaseArt.basilLeaves()),
+            SeedFixtures.textCapture("#2F7A49", app: "com.apple.ColorSyncUtility"),
+            SeedFixtures.textCapture("\u{1F33F}\u{1F9C4}\u{1F9C0} Pesto night!", app: messages),
+            SeedFixtures.textCapture(
+                "## Pesto for four\n\n- **60 g** basil\n- **50 g** pine nuts\n- 1 clove garlic\n\n"
+                    + "Toast the nuts first.",
+                app: notes
+            ),
+            SeedFixtures.pictureCapture(ShowcaseArt.recipeCard()),
+            SeedFixtures.textCapture(
+                "func scale(_ grams: Double, by servings: Int) -> Double {\n    grams * Double(servings) / 4\n}",
+                app: "com.apple.dt.Xcode"
+            ),
+            SeedFixtures.textCapture("{ \"recipe\": \"pesto\",\n  \"servings\": 4 }", app: "com.apple.Terminal"),
+            SeedFixtures.pictureCapture(ShowcaseArt.pineNuts()),
+            SeedFixtures.textCapture("#EBD9B4", app: "com.apple.ColorSyncUtility")
+        ]
+        return clips
     }
 }

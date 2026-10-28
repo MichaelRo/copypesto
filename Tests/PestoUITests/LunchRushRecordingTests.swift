@@ -20,6 +20,7 @@ final class LunchRushRecordingTests: PestoUITestCase {
         )
         showOverlay()
         pause(1.5)
+        capture("lunch-rush-shelf")
     }
 
     private func pause(_ seconds: TimeInterval) {
@@ -151,9 +152,19 @@ final class LunchRushRecordingTests: PestoUITestCase {
         )
     }
 
-    /// The finale: the six ingredient clips are selected one by one, then Paste All joins them.
+    /// The finale: six copies land on the shelf one by one, then the six clips are selected and Paste All joins them.
     func test_g_pasteAllJoinsTheIngredients() {
         beat()
+        let ingredients = [
+            "2 cups basil", "1 cup parmesan", "1/2 cup pine nuts", "1/2 cup olive oil", "2 cloves garlic",
+            "a pinch of salt"
+        ]
+        for ingredient in ingredients {
+            copyToClipboard(ingredient)
+            pause(2.2)
+        }
+        XCTAssertTrue(card(containing: "a pinch of salt").waitForExistence(timeout: 10), "the last copy never arrived")
+        pause(1.0)
         for _ in 0..<5 {
             overlay.typeKey(.rightArrow, modifierFlags: [])
         }
@@ -169,35 +180,43 @@ final class LunchRushRecordingTests: PestoUITestCase {
         element(AccessibilityID.pasteAllButton).click()
         pause(2.0)
         let joined = pastes.joined()
-        for ingredient in [
-            "2 cups basil",
-            "1 cup parmesan",
-            "1/2 cup pine nuts",
-            "1/2 cup olive oil",
-            "2 cloves garlic",
-            "a pinch of salt"
-        ] {
+        for ingredient in ingredients {
             XCTAssertTrue(joined.contains(ingredient), "\(ingredient) missing from \(joined)")
         }
     }
 
-    /// The optional beat: a sensitive picture stays covered until Show, then Hide covers it again.
+    /// The optional beat: a sensitive picture stays covered until Show, then covers itself again after a few seconds.
     func test_h_sensitivePictureShowAndHide() {
         beat()
-        for _ in 0..<7 {
-            overlay.typeKey(.rightArrow, modifierFlags: [])
-            pause(0.3)
-        }
-        let picture = cards.matching(NSPredicate(format: "label CONTAINS %@", "image from")).firstMatch
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        pause(0.8)
+        let picture = cards.matching(NSPredicate(format: "label CONTAINS %@", "sensitive content")).firstMatch
         XCTAssertTrue(picture.waitForExistence(timeout: 10))
-        picture.rightClick()
+        let center = picture.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        center.rightClick()
         pause(1.2)
         app.menuItems["Show"].click()
-        pause(2.5)
-        picture.rightClick()
-        pause(1.0)
-        let hide = app.menuItems["Hide"]
-        if hide.exists { hide.click() } else { overlay.typeKey(.escape, modifierFlags: []) }
-        pause(2.0)
+        pause(6.0)
+    }
+
+    /// The theme flip: the same shelf in Basil, Parmesan, Pine nut and Mortar, a couple of seconds each. The app
+    /// relaunches for each, so the take is cut from the settled shelves.
+    func test_i_fourThemes() {
+        for theme in ["basil", "parmesan", "pineNut", "mortar"] {
+            if theme != "basil" { app.terminate() }
+            launch(
+                seed: "lunchRush",
+                defaults: [
+                    "hasOnboarded": "true", "cardSize": "large", "linkPreviewsEnabled": "false",
+                    "appearanceMode": ProcessInfo.processInfo.environment["PESTO_LUNCH_RUSH_MODE"] ?? "light",
+                    "appTheme": theme
+                ],
+                backdrop: "plain",
+                motion: true
+            )
+            showOverlay()
+            pause(2.5)
+            capture("lunch-rush-theme-\(theme)")
+        }
     }
 }

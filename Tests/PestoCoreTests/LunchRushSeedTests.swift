@@ -9,17 +9,17 @@ struct LunchRushSeedTests {
         LunchRushSeed.captures().compactMap(\.payloadString) + LunchRushSeed.snippets.map(\.text)
     }
 
-    @Test("the six ingredients are the newest text clips, in the order they are copied")
-    func whenBuilt_thenIngredientsAreNewestInOrder() {
-        let newest = LunchRushSeed.captures().compactMap(\.payloadString).suffix(6)
+    @Test("the six ingredients are not on the shelf at the start: the finale copies them live")
+    func whenBuilt_thenIngredientsAreNotSeeded() {
+        let texts = LunchRushSeed.captures().compactMap(\.payloadString)
 
-        #expect(Array(newest) == LunchRushSeed.ingredients)
         #expect(LunchRushSeed.ingredients.count == 6)
+        #expect(LunchRushSeed.ingredients.allSatisfy { !texts.contains($0) })
     }
 
     @Test("every address is on example.com and every source is an Apple app")
     func whenBuilt_thenNoRealDomainOrSource() {
-        for text in texts where text.contains("://") {
+        for text in texts where text.contains("://") && !text.hasPrefix("file://") {
             #expect(text.hasPrefix("https://example.com/"), Comment(rawValue: text))
         }
         for capture in LunchRushSeed.captures() {
@@ -63,11 +63,28 @@ struct LunchRushSeedTests {
         #expect(LunchRushSeed.supplierLinks.count == 4)
     }
 
-    @Test("the profile builds from the seed and ends on the ingredients")
-    func whenProfileBuilt_thenIngredientsLast() {
+    @Test(
+        "the shelf holds a clip of every kind: pictures, a GIF, a PDF, a video, a colour, an emoji and a quick snippet"
+    )
+    func whenBuilt_thenEveryKindIsThere() {
+        let captures = LunchRushSeed.captures()
+        let types = Set(captures.map(\.typeIdentifier))
+
+        #expect(types.contains("com.compuserve.gif"))
+        #expect(captures
+            .contains { $0.payloadString?.hasSuffix(".pdf") == true || $0.payloadString?.contains(".pdf") == true })
+        #expect(captures.contains { $0.payloadString?.contains(".mp4") == true })
+        #expect(captures.contains { $0.payloadString?.hasPrefix("#2F7A49") == true })
+        #expect(captures.contains { $0.payloadString?.unicodeScalars.contains { $0.value > 0x1F000 } == true })
+        #expect(LunchRushSeed.snippets.contains { $0.title == "Quick thanks" && !$0.text.contains("{{") })
+    }
+
+    @Test("the shelf opens on the masked card, then the covered picture, then the GIF")
+    func whenProfileBuilt_thenRichClipsAreNewest() {
         let captures = SeedFixtures.captures(for: .lunchRush)
 
-        #expect(captures.suffix(6).compactMap(\.payloadString) == LunchRushSeed.ingredients)
-        #expect(captures.contains { $0.payload == LunchRushSeed.sensitivePicture() })
+        #expect(captures.last?.payloadString == LunchRushSeed.cardNumber)
+        #expect(captures.dropLast().last?.payload == LunchRushSeed.sensitivePicture())
+        #expect(captures.dropLast(2).last?.typeIdentifier == "com.compuserve.gif")
     }
 }

@@ -80,7 +80,8 @@ extension AppDelegate {
             item.isPinned = true
             item.pinnedHotkeyIndex = snippet.shortcut
         }
-        items.first(where: { $0.type == .image })?.isNSFW = true
+        let pictures = items.filter { $0.type == .image }.sorted { $0.timestamp > $1.timestamp }
+        pictures.first?.isNSFW = true
         let rule = PredicateRule(field: .contentShape, op: .equals, value: .string("link"))
         let ruleSet = PredicateRuleSet(combinator: .and, groups: [.init(combinator: .and, rules: [rule])])
         if let data = try? SmartCollectionPredicate.encodeRuleSet(ruleSet) {

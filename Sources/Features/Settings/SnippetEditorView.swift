@@ -58,8 +58,10 @@ struct SnippetEditorView: View {
                 if inOptional { run.foregroundColor = .secondary }
                 result += run
             case let .field(label, hint, kind):
-                let detail = kind == .input ? hint.map { ": \($0)" } ?? "" : ""
-                let name = "\u{2009}\(label)\(detail)\(kind == .choice ? " \u{25BE}" : "")\u{2009}"
+                var name = "\u{2009}\(label)"
+                if kind == .input, let hint { name += ": \(hint)" }
+                if kind == .choice { name += " \u{25BE}" }
+                name += "\u{2009}"
                 var chip = AttributedString(name)
                 let tint = kind == .context ? Color.secondary : accent
                 chip.foregroundColor = tint

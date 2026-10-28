@@ -10,14 +10,17 @@ struct SnippetFieldChips: View {
     var body: some View {
         let fields = FillInParser.fields(in: text)
         if !fields.isEmpty {
-            PlaceholderFlowLayout(spacing: 6) {
-                Text("Fields").pestoCaption()
-                ForEach(fields) { field in
-                    FieldChip(field: field, text: $text)
+            VStack(alignment: .leading, spacing: 4) {
+                PlaceholderFlowLayout(spacing: 6) {
+                    Text("Asks for").pestoCaption()
+                    ForEach(fields) { field in
+                        FieldChip(field: field, text: $text)
+                    }
                 }
+                Text("Pesto asks for these when you paste. Click a name to rename it.").pestoCaption()
             }
             .accessibilityElement(children: .contain)
-            .accessibilityLabel("Fields this snippet asks for")
+            .accessibilityLabel("What this snippet asks for when you paste")
         }
     }
 }

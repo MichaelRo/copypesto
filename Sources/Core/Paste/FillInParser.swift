@@ -47,8 +47,8 @@ public enum FillInParser {
         for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
             let body = ns.substring(with: match.range(at: 1))
             var marker: String?
-            if body == "app" {
-                marker = fieldStart + "context" + fieldSeparator + "app" + fieldSeparator + fieldEnd
+            if body == "app" || body == "clipboard" {
+                marker = fieldStart + "context" + fieldSeparator + body + fieldSeparator + fieldEnd
             } else if body == "/optional" {
                 marker = optionalClose
             } else if let field = field(fromToken: body) {

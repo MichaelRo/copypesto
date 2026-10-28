@@ -3,7 +3,7 @@
 `scripts/verify.sh` is the gate. Run it before claiming any task done and paste its summary.
 
 ```bash
-scripts/verify.sh          # lint, Core tests, Debug build, hosted + UI tests, screenshots (about 40 minutes)
+scripts/verify.sh          # lint, Core tests, Debug build, hosted + UI tests, screenshots (about an hour)
 scripts/verify.sh --fast   # lint, Core tests, Debug build only (a few minutes on a cold build)
 make verify                # same as scripts/verify.sh
 make verify-fast           # same as scripts/verify.sh --fast
@@ -38,7 +38,7 @@ The gate already keeps its output small: each step writes its log to a file, and
 step and the summary. Reading the logs is what costs time and tokens, so don't.
 
 - Start it in the background (the shell tool's `run_in_background` option) and wait for it to finish rather than
-  polling. It takes about 40 minutes with the UI tests.
+  polling. It takes about an hour with the UI tests.
 - Read only the summary: `.build/verify/<run>/SUMMARY.txt`, or the last 15 lines of the output.
 - On a failure, read `.build/verify/<run>/failures.txt`: one line per failing test (`target/Suite/test: message`),
   from the result bundle. Open a log only for a failure whose line does not explain it.

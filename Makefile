@@ -420,7 +420,7 @@ doctor: ## [Develop] Print dev-environment diagnostics — signing identity, CDH
 	@echo "If something looks wrong, run 'PESTO_DEV_RESET=1 make reset-dev-state' (it deletes this Mac's Pesto preferences)."
 
 .PHONY: verify
-verify: ## [Test] Full gate: lint, Core tests, build, hosted + UI tests, screenshots (scripts/verify.sh; about 40 minutes with the UI tests)
+verify: ## [Test] Full gate: lint, Core tests, build, hosted + UI tests, screenshots (scripts/verify.sh; about an hour with the UI tests)
 	scripts/verify.sh
 
 .PHONY: verify-changed

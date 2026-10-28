@@ -41,7 +41,7 @@ measurements below hold; if they do not, the release is option 2 and nothing els
   "look alike" costs more trust than a missed one saves. Copied text is mostly not the person's own boilerplate, so the
   suggestion will be rarer than TextExpander's; the value is quality, not frequency.
 
-## Decision (proposed)
+## Decision
 Option 3, built as one plan and released together, in this build order (each step lands green; the order is
 dependency, not release scope):
 

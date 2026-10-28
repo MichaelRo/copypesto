@@ -325,6 +325,13 @@ struct SnippetRichPreviewTests {
         ])
     }
 
+    @Test("the clipboard is a named piece, never the text that is on the clipboard now")
+    func whenClipboardToken_thenItIsNotRead() {
+        let pieces = SnippetPreview.pieces(from: "Re: {{clipboard}}", clipboardProvider: { "hunter2" })
+
+        #expect(pieces == [.text("Re: "), .field(label: "clipboard", hint: nil, kind: .context)])
+    }
+
     @Test("dates and the clock are filled in as before, and plain text is one piece")
     func whenOnlyPlaceholders_thenFilledIn() {
         #expect(SnippetPreview.pieces(from: "Just text") == [.text("Just text")])

@@ -9,15 +9,13 @@ public extension StorageService {
     /// How many clips look like `id`, itself included, once three or more do (a family worth a snippet).
     static let minimumFamilySize = 3
 
+    /// Text over this many bytes is never signed, so the length of a huge copy is never counted.
+    static let maxSignedBytes = 8000
+
     /// Signs a new clip after its card is on the shelf. Everything about it stays on the Mac: the signature is sealed
     /// with the clip's metadata, and only the in-memory index reads it back (ADR 0017).
     func noteSignature(of item: ClipboardItem, text: String) {
-        guard TextSignature.isEligible(
-            isTextual: item.type == .text || item.type == .code,
-            isSensitive: item.sensitivityRaw != nil,
-            expires: item.expiresAt != nil,
-            length: text.count
-        ), let signature = TextSignature.make(from: text) else { return }
+        guard isSignable(item, text: text), let signature = TextSignature.make(from: text) else { return }
         item.updateMetadata { $0.signature = signature.values }
         do {
             try saveOrRollback()
@@ -60,32 +58,49 @@ public extension StorageService {
 
     /// Signs up to `limit` eligible clips that have none, newest first, and returns how many were left to do. The app
     /// calls it in small steps while the Mac is idle, so a long history is indexed without anyone noticing.
-    func signMissingClips(limit: Int) throws -> Int {
+    func signMissingClips(limit: Int, before cursor: Date?) throws -> SigningPass {
+        let batch = limit * 8
+        let bound = cursor ?? Date.distantFuture
         var descriptor = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate {
                 $0.sensitivityRaw == nil && $0.expiresAt == nil && !$0.analysisPending && $0.byteSize <= 8000
+                    && $0.timestamp < bound
             },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
-        descriptor.fetchLimit = limit * 8
+        descriptor.fetchLimit = batch
+        let items = try modelContext.fetch(descriptor)
         var signed = 0
-        var remaining = 0
-        for item in try modelContext.fetch(descriptor) where item.type == .text || item.type == .code {
-            guard item.metadata.signature == nil, !item.metadataIsUnreadable else { continue }
-            guard signed < limit else {
-                remaining += 1
-                continue
-            }
-            guard let data = item.blob?.decryptedData(),
-                  let text = String(data: data, encoding: .utf8) else { continue }
-            guard TextSignature.isEligible(isTextual: true, isSensitive: false, expires: false, length: text.count),
-                  let signature = TextSignature.make(from: text) else { continue }
+        var lastExamined: Date?
+        for item in items {
+            lastExamined = item.timestamp
+            guard item.metadata.signature == nil, !item.metadataIsUnreadable,
+                  let data = item.blob?.decryptedData(), let text = String(data: data, encoding: .utf8),
+                  isSignable(item, text: text), let signature = TextSignature.make(from: text) else { continue }
             item.updateMetadata { $0.signature = signature.values }
             similarity.insert(signature, for: item.id)
             signed += 1
+            if signed == limit { break }
         }
         try saveOrRollback()
-        return remaining
+        return SigningPass(nextCursor: lastExamined, isFinished: items.count < batch && signed < limit)
+    }
+
+    /// Where the next idle step of signing starts, and whether every clip has been looked at.
+    struct SigningPass: Sendable {
+        public let nextCursor: Date?
+        public let isFinished: Bool
+    }
+
+    /// Whether `item` may be signed: ordinary text of a message's length that is not a secret, does not expire and is
+    /// not a snippet (a saved snippet looks like the clips it came from and must not join their family).
+    private func isSignable(_ item: ClipboardItem, text: String) -> Bool {
+        text.utf8.count <= Self.maxSignedBytes && !text.contains("{{") && TextSignature.isEligible(
+            isTextual: item.type == .text || item.type == .code,
+            isSensitive: item.sensitivityRaw != nil,
+            expires: item.expiresAt != nil,
+            length: text.count
+        )
     }
 
     /// The history locked: nothing derived from clips stays in memory.

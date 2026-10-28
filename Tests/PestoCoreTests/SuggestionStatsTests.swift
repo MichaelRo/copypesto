@@ -9,12 +9,12 @@ struct SuggestionStatsTests {
     func whenLedgerHasOutcomes_thenCountedPerKind() {
         var ledger = SuggestionLedger(serialized: "")
         let a = UUID(), b = UUID(), c = UUID()
-        ledger.noteShown(.snippet, a)
-        ledger.noteShown(.snippet, b)
-        ledger.noteShown(.snippet, c)
+        ledger.noteShown(.snippet, a, pastes: 0, now: .now)
+        ledger.noteShown(.snippet, b, pastes: 0, now: .now)
+        ledger.noteShown(.snippet, c, pastes: 0, now: .now)
         ledger.resolve(.snippet, a, as: .accepted)
         ledger.resolve(.snippet, b, as: .declined(atPasteCount: 1))
-        ledger.noteShown(.shortcutOffer, a)
+        ledger.noteShown(.shortcutOffer, a, pastes: 0, now: .now)
         ledger.resolve(.shortcutOffer, a, as: .accepted)
 
         let stats = SuggestionStats(ledger: ledger)
@@ -28,7 +28,7 @@ struct SuggestionStatsTests {
     func whenSummarized_thenNumbersOnly() {
         var ledger = SuggestionLedger(serialized: "")
         let id = UUID()
-        ledger.noteShown(.snippet, id)
+        ledger.noteShown(.snippet, id, pastes: 0, now: .now)
         ledger.resolve(.snippet, id, as: .accepted)
 
         let summary = SuggestionStats(ledger: ledger).summary

@@ -72,8 +72,10 @@ extension AppDelegate {
         await service.waitForBackgroundWork()
         if profile == .marketing { await seedMarketingCollections() }
         if profile == .suggestion {
-            for _ in 0..<SeedFixtures.suggestionPasteCount {
-                _ = try? await service.notePasted(id: SeedFixtures.suggestionClipID)
+            for daysAgo in (0..<SeedFixtures.suggestionPasteCount).reversed() {
+                _ = try? await service.notePasted(
+                    id: SeedFixtures.suggestionClipID, at: Date.now.addingTimeInterval(-Double(daysAgo) * 86_400)
+                )
             }
         }
         return seeded

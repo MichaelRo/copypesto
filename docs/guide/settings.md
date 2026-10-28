@@ -112,7 +112,25 @@ when you open the pane, so there is nothing to press. *Add Collection* is in the
 
 Text you paste again and again. *Edit* (or a double click) opens the snippet where it sits in the list, and *Add Snippet* opens a new one at the top of the
 list, with the same editor: a name, the text, *Insert* chips for the placeholders, and a card that shows what it pastes as.
-A snippet holds at least one placeholder, which is filled in or removed when you paste it: `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`, `{{date+3d}}` or `{{date-1d}}` (a day count), `{{clipboard}}` (the text on the clipboard when you paste), `{{uuid}}` and `{{cursor}}`; the editor asks for one before it saves. Esc cancels and ⌘Return saves. After a plain-text paste, the caret lands where `{{cursor}}` was. **Starters** are templates to begin with, and **From your clips** offers text you have
+A snippet holds at least one placeholder, which is filled in or removed when you paste it. The editor asks for one before it saves. Esc cancels and ⌘Return saves.
+
+| Placeholder | What it pastes | Example |
+|---|---|---|
+| `{{date}}` | Today's date, in your Mac's short format | 5/15/2026 |
+| `{{time}}` | The current time, in your Mac's short format | 2:30 PM |
+| `{{datetime}}` | The date and the time, with a space between | 5/15/2026 2:30 PM |
+| `{{isodate}}` | Today's date as year-month-day, whatever your region | 2026-05-15 |
+| `{{weekday}}` | The day of the week | Friday |
+| `{{date+Nd}}` | The date N days from now: `{{date+3d}}` | 5/18/2026 |
+| `{{date-Nd}}` | The date N days ago: `{{date-1d}}` | 5/14/2026 |
+| `{{clipboard}}` | The text on the clipboard when you paste | whatever you copied last |
+| `{{uuid}}` | A new random ID each time | 3f2b8c1e-9a47-4d0e-b6a5-1c2d3e4f5a6b |
+| `{{app}}` | The name of the app you paste into | Mail |
+| `{{cursor}}` | Nothing: after a plain-text paste, the caret lands here | |
+
+A name Pesto does not know, such as `{{name}}`, pastes as typed. Only a snippet is filled in, so other text that holds double braces pastes as you copied it. After a plain-text paste, the caret lands where `{{cursor}}` was.
+
+**Starters** are templates to begin with, and **From your clips** offers text you have
 pasted from the shelf more than twice (*Make Snippet*). *Add Snippet* is in the pane's header. The editor's *Add Question…* menu adds a
 question that is asked when you paste, and *Suggest Names* renames the fields of a snippet made from similar clips with the on-device model.
 All the tokens are in [Using Pesto](using-pesto.md#snippets).

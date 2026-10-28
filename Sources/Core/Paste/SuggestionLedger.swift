@@ -85,6 +85,23 @@ public struct SuggestionLedger: Equatable, Sendable {
         }.joined(separator: "\n")
     }
 
+    public struct Counts: Equatable, Sendable {
+        public let shown: Int
+        public let accepted: Int
+        public let declined: Int
+    }
+
+    /// How many suggestions of `kind` the ledger remembers, and how they were answered. Counts only: no clip appears.
+    public func counts(for kind: ShelfSuggestionKind) -> Counts {
+        let own = entries.filter { $0.kind == kind }
+        let accepted = own.count(where: { $0.outcome == .accepted })
+        let declined = own.count(where: {
+            if case .declined = $0.outcome { return true }
+            return false
+        })
+        return Counts(shown: own.count, accepted: accepted, declined: declined)
+    }
+
     public var clipIDs: Set<UUID> {
         Set(entries.map(\.clipID))
     }

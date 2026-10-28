@@ -41,6 +41,11 @@ press ⌘V yourself.
 ## Encryption
 The content of everything you copy, its preview, and the titles, notes and tags you add are encrypted with AES-256-GCM before it is written to disk. The
 key is random, created on first launch and kept in your login Keychain for this Mac only; it is never sent anywhere.
+To notice clips that look alike, Pesto keeps a small fingerprint of each ordinary text clip's words (never a secret, a clip that
+expires, or a picture) and the days it was pasted, sealed with the clip's titles and notes. It is not in a backup, it is
+rebuilt after a restore, and it goes when the clip does. Finding the shared text of look-alike clips happens in memory when you
+accept a suggestion. Nothing is sent anywhere, and no clip goes to the on-device model unless you click *Suggest Names*, which sees the
+template with its changing words removed.
 A clip's fingerprint, used to spot duplicates, is a keyed hash under that key, so it reveals nothing about the content.
 
 What is not encrypted, so you know: the names of the apps clips came from, when they were copied and how big they are (for a picture, its width and height in pixels); what kind each clip is (text, picture, link and so on), whether it is pinned, how often it was pasted and which collection it is in; which clips are secrets, their category and the masked preview the shelf shows (for a card its last four digits; for a key with a known prefix, such as `ghp_`, that prefix and how many characters it hides; for a JWT, a long random key or a password hash, how many characters it hides; other secrets show only dots or a label); its length in characters, the language of a code clip, its expiry and shortcut, and whether it is marked sensitive, flagged adult or came from another device (with the device's identifier and the number that orders it among that device's clips); the names, icons and rules of your collections; colors you copied; and a coarse fingerprint of each picture, used to spot near duplicates.

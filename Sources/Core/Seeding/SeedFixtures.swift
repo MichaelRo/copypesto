@@ -63,14 +63,52 @@ public enum SeedFixtures {
         case .remote: remoteCaptures()
         case .latency: LatencySeed.captures()
         case .pictures: MixedSeed.pictureCaptures()
+        case .suggestion: suggestionCaptures()
         }
         return captures.enumerated().map { index, capture in
-            capture.with(timestamp: now.addingTimeInterval(-Double(captures.count - 1 - index) * 60))
+            let age = age(ofCapture: index, of: captures.count, in: profile)
+            return capture.with(timestamp: now.addingTimeInterval(-age))
         }
+    }
+
+    private static func age(ofCapture index: Int, of count: Int, in profile: SeedProfile) -> Double {
+        let minutes = Double(count - 1 - index) * 60
+        guard profile == .suggestion else { return minutes }
+        return lookalikeAges[index - (count - lookalikeAges.count)] ?? minutes
     }
 
     public static func hash(of payload: Data) -> String {
         payload.sha256Hex
+    }
+
+    /// The clip the `suggestion` profile is about (its first capture); the harness gives it `suggestionPasteCount`
+    /// pastes.
+    public static let suggestionClipID = UUID(uuid: (0x5E, 0x6E, 0x57, 0xED, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1))
+    public static let suggestionPasteCount = 6
+
+    /// How long ago each look-alike message of the `suggestion` profile (its last three captures) was copied: over
+    /// three
+    /// days, so the family spans more than one.
+    private static let lookalikeAges: [Int: Double] = [0: 2 * 86_400, 1: 86_400, 2: 60]
+
+    private static func suggestionCaptures() -> [PasteboardCapture] {
+        [
+            textCapture("Quarterly report draft — final review pending.", app: "com.apple.TextEdit"),
+            textCapture("Team lunch is at 12:30 on Thursday, booked under Alex.", app: "com.apple.iChat"),
+            textCapture("Best regards,\nAlex from the Pesto team", app: "com.apple.mail"),
+            textCapture(
+                "Hi Anna, your order 4821 has shipped and should arrive on Friday. Thanks for shopping with us!",
+                app: "com.apple.mail"
+            ),
+            textCapture(
+                "Hi Bruno, your order 77 has shipped and should arrive on Friday. Thanks for shopping with us!",
+                app: "com.apple.mail"
+            ),
+            textCapture(
+                "Hi Chloe, your order 9034 has shipped and should arrive on Friday. Thanks for shopping with us!",
+                app: "com.apple.mail"
+            )
+        ]
     }
 
     private static func remoteCaptures() -> [PasteboardCapture] {

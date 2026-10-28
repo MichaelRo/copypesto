@@ -50,8 +50,10 @@ extension AppDelegate {
                 return nil
             }
             guard let rawPayload = delegate.writeItemToPasteboard(item) else { return nil }
-            let (payloadKind, caretOffset) = delegate.expandedPayload(from: rawPayload, of: item)
             delegate.appState.pasteCoordinator.focusRestoration.capture()
+            guard let (payloadKind, caretOffset) = await delegate.expandedPayload(from: rawPayload, of: item) else {
+                return nil
+            }
             let outcome = await delegate.appState.pasteCoordinator.executePaste(
                 payload: payloadKind, caretOffsetFromEnd: caretOffset
             )

@@ -24,6 +24,8 @@ copy showcase-ask.png ask-pesto.png
 copy showcase-collections.png collections.png
 copy showcase-settings-collections.png settings-collections.png
 copy settings-Snippets.png settings-snippets.png
+copy settings-snippet-fields.png settings-snippet-fields.png
+cp Tests/PestoSnapshotTests/__Snapshots__/FillInPromptTests/test_allKindsOfField_light.1.png "$out/fill-in-prompt.png"
 copy settings-shortcuts.png settings-shortcuts.png
 copy about.png about.png
 copy showcase-sensitive.png sensitive-card.png

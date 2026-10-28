@@ -15,6 +15,13 @@ public struct ShelfClipFacts: Equatable, Sendable {
     public let analysisPending: Bool
     public let expires: Bool
     public var shelfPastesThisRun: Int
+    /// On how many different days of the last month the clip was pasted.
+    public let pasteDaysInWindow: Int
+    /// How many clips look like this one (itself included), on how many days they were copied, and the one that stands
+    /// for the family: the same for every member (ADR 0017).
+    public let familySize: Int
+    public let familyDays: Int
+    public let familyRepresentative: UUID?
 
     public init(
         id: UUID,
@@ -29,7 +36,11 @@ public struct ShelfClipFacts: Equatable, Sendable {
         isNSFW: Bool = false,
         analysisPending: Bool = false,
         expires: Bool = false,
-        shelfPastesThisRun: Int = 0
+        shelfPastesThisRun: Int = 0,
+        pasteDaysInWindow: Int = 0,
+        familySize: Int = 1,
+        familyDays: Int = 1,
+        familyRepresentative: UUID? = nil
     ) {
         self.id = id
         self.pasteCount = pasteCount
@@ -44,6 +55,10 @@ public struct ShelfClipFacts: Equatable, Sendable {
         self.analysisPending = analysisPending
         self.expires = expires
         self.shelfPastesThisRun = shelfPastesThisRun
+        self.pasteDaysInWindow = pasteDaysInWindow
+        self.familySize = familySize
+        self.familyDays = familyDays
+        self.familyRepresentative = familyRepresentative
     }
 }
 

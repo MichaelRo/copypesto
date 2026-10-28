@@ -55,6 +55,19 @@ public struct OnboardingProgress: Equatable, Sendable {
         return pastingConfirmed ? .lock : .pasting
     }
 
+    public var canStepBack: Bool {
+        screen != .shelf
+    }
+
+    /// Back is a step in the flow, not an undo: the key stays created, and the earlier screen shows again.
+    public mutating func stepBack() {
+        switch screen {
+        case .shelf: break
+        case .pasting: shelfIntroduced = false
+        case .lock: pastingConfirmed = false
+        }
+    }
+
     public var offersSkip: Bool {
         accessibilityStep == .active
     }

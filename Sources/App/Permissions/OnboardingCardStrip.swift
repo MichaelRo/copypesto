@@ -13,6 +13,7 @@ struct OnboardingCardStrip: View {
     @State private var offset: CGFloat = 0
     @State private var farthest: CGFloat = 0
     @State private var isHovered = false
+    @State private var motion = CardStripDrift(offset: 0)
     @State private var wasScrolledByHand = false
     @State private var resumeDriftTask: Task<Void, Never>?
 
@@ -70,6 +71,7 @@ struct OnboardingCardStrip: View {
         guard isDrifting else {
             // A scroll still running when the pointer arrives is stopped where it is.
             withTransaction(Transaction(animation: nil)) { position.scrollTo(x: offset) }
+            motion.pause()
             return
         }
         // Wait for the initial geometry pass if `farthest` has not been measured yet.
@@ -77,25 +79,18 @@ struct OnboardingCardStrip: View {
             try? await Task.sleep(for: .milliseconds(30))
         }
         guard !Task.isCancelled, farthest > 0 else { return }
-        // Step smoothly so `offset` always reflects the real scroll position when the pointer enters or leaves.
-        let pointsPerTick: CGFloat = 1.65 // ~100 pt/s at 60 Hz
-        var forward = offset < max(farthest - 30, 1)
-        var current = offset
-
+        motion.place(at: offset, farthest: farthest)
+        let clock = ContinuousClock()
+        var last = clock.now
         while !Task.isCancelled {
-            current = forward
-                ? min(farthest, current + pointsPerTick)
-                : max(0, current - pointsPerTick)
-            withTransaction(Transaction(animation: nil)) {
-                position.scrollTo(x: current)
-            }
-            offset = current
-            if (forward && current >= farthest - 0.5) || (!forward && current <= 0.5) {
-                forward.toggle()
-                try? await Task.sleep(for: .milliseconds(350))
-            } else {
-                try? await Task.sleep(for: .milliseconds(16))
-            }
+            try? await Task.sleep(for: .milliseconds(16))
+            let now = clock.now
+            let elapsed = last.duration(to: now)
+            last = now
+            let seconds = Double(elapsed.components.seconds) + Double(elapsed.components.attoseconds) / 1e18
+            motion.advance(by: min(seconds, 0.1), farthest: farthest)
+            withTransaction(Transaction(animation: nil)) { position.scrollTo(x: motion.offset) }
+            offset = motion.offset
         }
     }
 }

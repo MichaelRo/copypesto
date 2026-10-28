@@ -7,21 +7,21 @@ struct OnboardingView: View {
     var appState: AppState
     @Environment(\.pestoAccent) private var accent
     @State private var pollingTimer: Timer?
-    @State private var shelfIntroduced = false
+    @State var shelfIntroduced = false
     @State private var shelfTried = false
-    @State private var pastingConfirmed = false
+    @State var pastingConfirmed = false
     @State private var moreOptionsOpen = false
     @AppStorage(Setting.showMenuBarIcon) private var showsMenuBarIcon: Bool
     @AppStorage(Setting.keepsRemoteCopies) private var keepsRemoteCopies: Bool
     @AppStorage(Setting.biometricLockEnabled) private var biometricLockEnabled: Bool
     private let lockMethod = LockMethod.current()
-    @State private var accessibilityGranted = false
+    @State var accessibilityGranted = false
     @State private var accessibilitySkipped = false
     @State private var keychainGranted = false
     @State private var keychainError: String?
-    @State private var isSettingUpKeychain = false
+    @State var isSettingUpKeychain = false
 
-    private var progress: OnboardingProgress {
+    var progress: OnboardingProgress {
         OnboardingProgress(
             accessibilityGranted: accessibilityGranted,
             keyReady: keychainGranted,
@@ -77,6 +77,7 @@ struct OnboardingView: View {
         .onChange(of: appState.isOverlayVisible) { _, visible in
             if visible { shelfTried = true }
         }
+        .background { keyboardShortcuts }
         .onAppear { checkAndStartPolling() }
         .onDisappear { stopPolling() }
     }
@@ -355,6 +356,14 @@ struct OnboardingView: View {
                 .accessibilityIdentifier(AccessibilityID.onboardingGetStartedButton)
             }
 
+            if progress.canStepBack {
+                Button("Back") { stepBack() }
+                    .buttonStyle(.pestoLink)
+                    .font(.callout)
+                    .help("Go back a page (Left Arrow)")
+                    .accessibilityIdentifier(AccessibilityID.onboardingBackButton)
+            }
+
             HStack(spacing: 6) {
                 Image(systemName: "lock.shield.fill")
                     .pestoCaption()
@@ -387,7 +396,7 @@ struct OnboardingView: View {
         }
     }
 
-    private func setupKeychain() {
+    func setupKeychain() {
         isSettingUpKeychain = true
         keychainError = nil
         Task {

@@ -33,6 +33,18 @@ update-resolved` refreshes it: review the diff). CI installs SwiftFormat, SwiftL
    it up before the first release).
 3. **Where the appcast lives**: as in "Later, once enrolled", step 4. `https://copypesto.net/appcast.xml` never changes.
 
+## Choosing the version
+`MARKETING_VERSION` follows semantic versioning, `major.minor.patch`, and `CURRENT_PROJECT_VERSION` goes up by one on every
+release.
+- **Patch** (1.1.0 to 1.1.1): fixes and polish only; no new thing a person can do, no changed behavior they would notice
+  as a feature.
+- **Minor** (1.0.1 to 1.1.0): a new feature or a changed behavior, with or without fixes. Two or more features in one
+  release are still one minor step.
+- **Major** (1.x to 2.0): a break, such as a stored-data migration that cannot be undone, a dropped macOS version, or a
+  redesign of the product's core.
+A patch number is never skipped to look bigger; a version that was never released does not count (1.0.1 to 1.1.2 would
+imply a 1.1.1 nobody got).
+
 ## Each release, unsigned (1.0)
 1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`.
 2. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` ("Before a release") is done.

@@ -307,8 +307,9 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   appears with a subtle pop settle. Clicking "Pin with ⌃N" assigns the slot (Return continues to paste the selected card and never accepts suggestions); "No Thanks" dismisses it; 4 consecutive
   declines turns off the feature; Settings → General toggle and "Reset suggestions" button work; History Lock suppresses
   suggestions without wiping the ledger; Clear History and Restore wipe the ledger.
-- App chips and URL card actions: hover across app filter chips. Pass: chips stay steady 24×24 pt circular icons with
-  native tooltips and do not jump horizontally; right-click a URL card: "Copy Page Title" and "Copy Preview Image" appear
+- App chips and URL card actions: hover across app filter chips slowly and fast. Pass: chips stay steady 24×24 pt
+  circular icons that never move their neighbors; resting on one for a moment opens its name over the row, moving to the
+  next chip closes it and opens that one, and a quick pass opens nothing; right-click a URL card: "Copy Page Title" and "Copy Preview Image" appear
   directly under "Copy".
 
 **Privacy**

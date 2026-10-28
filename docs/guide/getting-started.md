@@ -36,6 +36,8 @@ A short setup window appears with three steps. It takes about a minute:
 
 ![Pesto's last setup step, showing the Touch ID and Launch Pesto at login choices and a Get Started button.](../images/onboarding-ready.png)
 
+The setup works from the keyboard alone: **Return** or **→** goes on where *Continue* is available, **←** (or *Back*) goes back a page, and **Esc** closes the window. Closing it early is fine; the setup comes back at the next launch until you finish it.
+
 Sensitive pictures and links are blurred by default; you can hide or show them instead in *Settings → Privacy*.
 
 ## Your first paste

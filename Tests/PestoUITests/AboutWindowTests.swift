@@ -26,6 +26,17 @@ final class AboutWindowTests: PestoUITestCase {
         XCTAssertTrue(window.waitForExistence(timeout: 10), "About did not reopen")
     }
 
+    func test_aboutWindow_closesWithEscape() {
+        launch(defaults: ["hasOnboarded": "true"])
+        send(.openAbout)
+        let window = app.windows.matching(identifier: AccessibilityID.aboutWindow).firstMatch
+        XCTAssertTrue(window.waitForExistence(timeout: 10), "About did not open")
+
+        app.typeKey(.escape, modifierFlags: [])
+
+        waitForNonExistence(window, timeout: 5, "Escape did not close About")
+    }
+
     /// There was no way to see the welcome screen again short of resetting the app's state.
     func test_aboutWindow_canShowTheWelcomeScreenAgain() {
         launch(defaults: ["hasOnboarded": "true"])

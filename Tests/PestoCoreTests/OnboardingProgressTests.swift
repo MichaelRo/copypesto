@@ -109,3 +109,40 @@ struct OnboardingProgressTests {
         #expect(OnboardingProgress.Screen.allCases.map(\.rawValue) == [1, 2, 3])
     }
 }
+
+extension OnboardingProgressTests {
+    private func progress(introduced: Bool, confirmed: Bool) -> OnboardingProgress {
+        OnboardingProgress(
+            accessibilityGranted: true, keyReady: true, accessibilitySkipped: false,
+            shelfIntroduced: introduced, pastingConfirmed: confirmed
+        )
+    }
+
+    @Test("going back from the last screen returns to pasting, and from pasting to the shelf")
+    func whenSteppedBack_thenThePreviousScreenShows() {
+        var state = progress(introduced: true, confirmed: true)
+        #expect(state.screen == .lock)
+
+        state.stepBack()
+        #expect(state.screen == .pasting)
+
+        state.stepBack()
+        #expect(state.screen == .shelf)
+    }
+
+    @Test("going back from the first screen stays there")
+    func whenSteppedBackOnTheFirstScreen_thenNothingChanges() {
+        var state = progress(introduced: false, confirmed: false)
+
+        state.stepBack()
+
+        #expect(state.screen == .shelf)
+        #expect(!state.canStepBack)
+    }
+
+    @Test("only the screens after the first can go back")
+    func whenOnLaterScreens_thenCanStepBack() {
+        #expect(progress(introduced: true, confirmed: false).canStepBack)
+        #expect(progress(introduced: true, confirmed: true).canStepBack)
+    }
+}

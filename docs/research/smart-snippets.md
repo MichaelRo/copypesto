@@ -155,7 +155,26 @@ fields in text the person pasted into the Add Snippet sheet.
 | (d) On-device model, click only | Medium (polish) | S–M | Low | (c) or (b) |
 | (a) Repeated-phrase detection | Uncertain | L | Highest | none |
 
-## 4. Sources
+After review, the draft ADR takes (c), (b) as an on-request search and as a noticing signature gated on measurements,
+and (d) on a click; (a) stays out. Where the sections above say "stage", read "build order": the plan is one release.
+
+## 4. Follow-up research (after review)
+
+**Syntax.** There is no standard for clipboard snippets. Two families exist. *Named inline attributes*: TextExpander
+(`%filltext:name=…:default=…%`, `%fillpopup`, `%fillpart…%fillpartend`) and Raycast (`{argument name="…" options="…"}`,
+at most three). *Numbered stops in editors*: the LSP/TextMate grammar behind VS Code (`${1:default}`, `${1|a,b|}`,
+linked repeats, a formal grammar with escapes). Espanso and Typinator define the field in a form beside or inside the
+text. TextExpander's popup, multi-line and optional-section kinds are the most complete set and the one people know.
+Pesto's pick (ADR 0017): keep `{{ }}`, use named fields with quoted attributes (self-describing, extensible, no
+delimiter ambiguity, unlike a `|default` suffix), TextExpander's optional section, TextExpander and Typinator's rule
+that a repeated label asks once, and a field editor so the syntax is never typed by hand. This is a judgment from the
+documents above, not a quoted standard; no human expert was consulted.
+
+**Cost of noticing similar clips.** MinHash over word shingles estimates overlap with a fixed-size signature, and
+SimHash compares in bits but is reported as unstable on very short texts, which is why the draft uses MinHash. The
+sources give no latency figures for this workload, so the ADR makes the cost a measured gate, not a claim.
+
+## 5. Sources
 
 - TextExpander: [Advanced snippet elements](https://textexpander.com/help/desktop/specials.html),
   [Suggested Snippets](https://textexpander.com/learn/using/snippets/create/suggested-snippets)
@@ -165,5 +184,7 @@ fields in text the person pasted into the Add Snippet sheet.
   [Snippets](https://alfredapp.com/help/features/snippets/)
 - Espanso: [Forms](https://espanso.org/docs/matches/forms/), [Variables](https://espanso.org/docs/matches/variables)
 - Typinator: [The power of Typinator forms](https://help.typinator.ergonis.com/hc/en-us/articles/22843804128284)
+- VS Code / LSP: [Snippets](https://code.visualstudio.com/docs/editing/userdefinedsnippets)
+- TextExpander fill-ins: [Advanced fill-in syntax](https://textexpander.com/learn/using/snippets/snippet-fill-ins/advanced-fill-in-syntax)
 - Paste: [a third-party review](https://www.podfeet.com/blog/?p=33592); Paste's own documentation was not read, so its
   absence of placeholders is unconfirmed.

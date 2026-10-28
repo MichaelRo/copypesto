@@ -294,6 +294,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   still pastes it in any app, and a toast says nothing was pasted for the deleted file.
 - The color panel from the shelf, Paste the previous clip after an iPhone copy, and the Other Devices chip with the
   setting off. Pass: the panel opens, the previous clip pastes, and the chip is hidden.
+- A snippet with fill-ins (ADR 0017), on hardware, in Mail, Notes, a browser field and Terminal: paste it from the shelf, from
+  a `⌃N` shortcut and with Paste the Previous Clip. Pass: the prompt opens over the app without taking the app's place in
+  the Dock or menu bar, typing works at once, Return pastes the filled text into the same field the caret was in within
+  about 300 ms of Return, Esc pastes nothing, and a second paste or locking the Mac while the prompt is up closes it.
+  Also paste one by one with a fill-in snippet in the selection: the prompt comes before the first clip and ⌘V never waits.
 - The snippet editor in the list: add, edit, Esc, ⌘Return, and a clip's ⌃N keycap on the card and in the hover card.
   Pass: each works, and the keycap shows in both places.
 - Shelf suggestions (ADR 0014): paste the same clip 6+ times from the shelf. Pass: after 1.5 s dwell, a bottom banner

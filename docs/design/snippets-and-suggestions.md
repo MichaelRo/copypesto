@@ -14,9 +14,16 @@ do not match what the person copies are noise.
 preview contains `{{`). There is no snippet model and no flag. A badge marks it on the card, and Settings → Snippets
 lists them.
 
-- Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}`, `{{datetime}}` in the person's locale, short style, and
-  `{{cursor}}`. Unknown tokens such as `{{name}}` are left as typed. Only a snippet is expanded, so Helm, Jinja or
-  Handlebars text that happens to contain double braces pastes as copied.
+- Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}`, `{{datetime}}` in the person's locale, short style,
+  `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}`/`{{date-Nd}}`, `{{clipboard}}`, `{{uuid}}`, `{{app}}` (the paste target's name)
+  and `{{cursor}}`. Unknown tokens such as `{{name}}` are left as typed.
+- **Fill-ins** (ADR 0017, `FillInParser`, `SnippetField`): `{{input:Label}}` (attributes `default="…"` and `multiline`),
+  `{{choice:Label options="a|b"}}` and `{{optional:Label}}…{{/optional}}` are asked in a small non-activating panel
+  (`FillInPromptWindowController`) inside the paste task; a label used twice asks once; without answers (a path that cannot
+  ask) the defaults are used. A value typed is inserted literally, never expanded again. The panel serves every paste path
+  through `AppDelegate.expandedPayload` (shelf, `⌃N`, quick paste, AppleScript); a stack asks for all its snippets' fields
+  when it starts (`AppState.expandedStackItems`). The last answers are kept as `ItemMetadata.fieldMemory` (sealed), unless a
+  value looks like a secret or Settings → Snippets → Remember fill-in values is off.
 - Expansion happens in the paste flow before the write (`AppDelegate.expandedPayload`), through
   `AppState.writeText(_:protected:)`, so all three paste tiers (ADR 0009) see the same expanded text and a secret stays
   protected. `{{cursor}}` is removed and the caret is moved back over the text that followed it

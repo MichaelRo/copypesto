@@ -127,6 +127,7 @@ extension AppDelegate {
                 return nil
             }
             fills = asked
+            appState.pasteCoordinator.focusRestoration.markHidden()
             if remembers { rememberFillIns(fills, fields: fields, in: item) }
         }
         guard let expanded = TemplateExpander.expansionWithCaret(

@@ -21,6 +21,36 @@ final class OnboardingAndStatesTests: PestoUITestCase {
         next.click()
     }
 
+    func test_onboarding_movesWithTheArrowKeysAndClosesWithEscape() {
+        launch(accessibility: "trusted")
+        send(.showOnboarding)
+        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitForExistence(timeout: 10))
+        XCTAssertFalse(element(AccessibilityID.onboardingBackButton).exists, "the first page has nothing to go back to")
+
+        app.typeKey(.rightArrow, modifierFlags: [])
+        XCTAssertTrue(
+            element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 10),
+            "Right Arrow did not move to the second page"
+        )
+
+        app.typeKey(.rightArrow, modifierFlags: [])
+        XCTAssertTrue(element(AccessibilityID.onboardingGetStartedButton).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.onboardingBackButton).exists)
+
+        app.typeKey(.leftArrow, modifierFlags: [])
+        XCTAssertTrue(
+            element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 5),
+            "Left Arrow did not go back a page"
+        )
+
+        element(AccessibilityID.onboardingBackButton).click()
+        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitForExistence(timeout: 5), "Back did not go back")
+
+        app.typeKey(.escape, modifierFlags: [])
+        waitForNonExistence(onboardingWindow, timeout: 5, "Escape did not close the welcome screen")
+    }
+
     func test_firstRun_withAccessibilityDenied_showsOnboardingAndTheOverlayBanner() {
         launch(accessibility: "denied", defaults: [:])
 

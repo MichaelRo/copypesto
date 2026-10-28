@@ -19,6 +19,8 @@ struct PestoChip: View {
     /// When true (shelf app chips), shows only the icon at rest and opens the label on keyboard focus or
     /// selection.
     var collapsesLabel = false
+    /// The row has decided to show this collapsed chip's name (the pointer rests on it); see `ChipHoverIntent`.
+    var isRevealed = false
     var helpText: String?
     let action: () -> Void
 
@@ -34,7 +36,7 @@ struct PestoChip: View {
     }
 
     private var isLabelVisible: Bool {
-        !collapsesLabel || isActive || hasFocus
+        !collapsesLabel || isActive || hasFocus || isRevealed
     }
 
     private var fillOpacity: Double {

@@ -31,6 +31,12 @@ extension AppDelegate {
         let hosting = SafeHostingView(pesto: AboutView().environment(appState).environment(
             \.shelfActions,
             appState.asShelfActions
+        ).background(
+            Button("Close") { [weak window] in window?.performClose(nil) }
+                .keyboardShortcut(.cancelAction)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
         ))
         hosting.setAccessibilityLabel(String(localized: "About Pesto"))
         window.contentView = hosting

@@ -57,7 +57,8 @@ extension HostedGlobals {
                         shortcutLastUsedAt: nil,
                         kind: .text,
                         textLength: 100,
-                        shelfPastesThisRun: 1
+                        shelfPastesThisRun: 1,
+                        pasteDaysInWindow: 3
                     )
                 ],
                 assignedSlots: [],

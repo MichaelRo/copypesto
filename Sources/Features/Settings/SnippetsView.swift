@@ -159,7 +159,9 @@ struct SnippetsView: View {
             if let seedID = appState.pendingSnippetSeed {
                 appState.pendingSnippetSeed = nil
                 Task {
-                    if let proposal = await appState.storageService?.snippetProposal(forFamilyOf: seedID) {
+                    if let texts = await appState.storageService?.familyTexts(of: seedID),
+                       let proposal = TemplateInferrer.propose(from: texts)
+                    {
                         editor = .new(text: proposal.template, anchorID: seedID.uuidString)
                         return
                     }

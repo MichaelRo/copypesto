@@ -33,17 +33,18 @@ public extension StorageService {
         return similarity.matches(for: signature, threshold: threshold, excluding: id)
     }
 
-    /// The snippet that clips like `id` make together: the shared text with a fill-in where they differ.
-    func snippetProposal(forFamilyOf id: UUID) -> TemplateInferrer.Proposal? {
+    /// The texts of the clips that look like `id`, itself included, for turning them into one snippet. Nil when they
+    /// are
+    /// too few to be a family.
+    func familyTexts(of id: UUID) -> [String]? {
         let ids = lookalikes(of: id).map(\.id) + [id]
         guard ids.count >= Self.minimumFamilySize,
               let items = try? modelContext.fetch(FetchDescriptor<ClipboardItem>(
                   predicate: #Predicate { ids.contains($0.id) && $0.sensitivityRaw == nil }
               )) else { return nil }
-        let texts = items
+        return items
             .sorted { $0.id.uuidString < $1.id.uuidString }
             .compactMap { $0.blob?.decryptedData().flatMap { String(data: $0, encoding: .utf8) } }
-        return TemplateInferrer.propose(from: texts)
     }
 
     /// Loads the signatures already stored into the index, a page at a time. Run at launch and at unlock.

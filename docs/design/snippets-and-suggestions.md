@@ -14,7 +14,8 @@ do not match what the person copies are noise.
 preview contains `{{`). There is no snippet model and no flag. A badge marks it on the card, and Settings → Snippets
 lists them.
 
-- Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}`, `{{datetime}}` in the person's locale, short style, and
+- Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}` and `{{datetime}}` in the person's locale, short style,
+  `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}` and `{{date-Nd}}` (a day offset), `{{clipboard}}`, `{{uuid}}` and
   `{{cursor}}`. Unknown tokens such as `{{name}}` are left as typed. Only a snippet is expanded, so Helm, Jinja or
   Handlebars text that happens to contain double braces pastes as copied.
 - Expansion happens in the paste flow before the write (`AppDelegate.expandedPayload`), through

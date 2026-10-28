@@ -544,3 +544,50 @@ extension KeyNavCoordinatorTests {
         #expect(fired, "onSearch must fire")
     }
 }
+
+extension KeyNavCoordinatorTests {
+    @Test("in search mode, Right and Left move the focused result and are consumed")
+    func whenSearching_thenRightAndLeftMoveFocus() throws {
+        let coordinator = makeCoordinator()
+        coordinator.isSearchActive = true
+        var moves: [String] = []
+        coordinator.onRight = { moves.append("next") }
+        coordinator.onLeft = { moves.append("previous") }
+
+        #expect(try coordinator.handle(keyEvent(keyCode: 124)) == nil)
+        #expect(try coordinator.handle(keyEvent(keyCode: 123)) == nil)
+
+        #expect(moves == ["next", "previous"])
+    }
+
+    @Test(
+        "in search mode, an arrow with ⌘, ⌥, ⇧ or ⌃ and Home and End still reach the text field",
+        arguments: [
+            "123:command", "123:option", "123:shift", "123:control",
+            "124:command", "124:option", "124:shift", "124:control", "115:", "119:"
+        ]
+    )
+    func whenSearching_thenCaretEditingKeysAreNotMovedToCards(key: String) throws {
+        let parts = key.split(separator: ":", omittingEmptySubsequences: false)
+        let keyCode = try #require(UInt16(parts[0]))
+        let modifiers: NSEvent.ModifierFlags = switch parts[1] {
+        case "command": .command
+        case "option": .option
+        case "shift": .shift
+        case "control": .control
+        default: []
+        }
+        let coordinator = makeCoordinator()
+        coordinator.isSearchActive = true
+        var moved = false
+        coordinator.onLeft = { moved = true }
+        coordinator.onRight = { moved = true }
+        coordinator.onFirst = { moved = true }
+        coordinator.onLast = { moved = true }
+        coordinator.onPage = { _ in moved = true }
+        let event = try keyEvent(keyCode: keyCode, modifiers: modifiers)
+
+        #expect(coordinator.handle(event) === event)
+        #expect(!moved)
+    }
+}

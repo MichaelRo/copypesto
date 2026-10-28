@@ -68,11 +68,7 @@ struct SnippetsView: View {
             } header: {
                 Text("Placeholders")
             } footer: {
-                Text(
-                    "Use these inside a snippet. They are filled in when you paste it. "
-                        + "\u{201C}Ask for\u{2026}\u{201D} in the editor asks a question instead."
-                )
-                .pestoCaption()
+                Text("Filled in when you paste. Add Question\u{2026} in the editor asks one instead.").pestoCaption()
             }
 
             Section {

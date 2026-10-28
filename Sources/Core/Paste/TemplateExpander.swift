@@ -33,6 +33,14 @@ public enum TemplateExpander {
         text.contains("{{clipboard}}")
     }
 
+    /// Whether `token` (the text between the braces) is something Pesto fills in by itself: a date, the clipboard, the
+    /// app,
+    /// a new ID or the caret.
+    public static func isFill(_ token: String) -> Bool {
+        ["date", "time", "datetime", "isodate", "weekday", "clipboard", "uuid", "cursor", "app"].contains(token)
+            || relativeDayOffset(from: token) != nil
+    }
+
     public static func containsPlaceholders(_ text: String) -> Bool {
         text.contains("{{")
     }
@@ -221,7 +229,7 @@ public enum TemplateExpander {
         }
     }
 
-    private static func relativeDayOffset(from token: String) -> Int? {
+    static func relativeDayOffset(from token: String) -> Int? {
         guard token.hasPrefix("date+") || token.hasPrefix("date-"), token.hasSuffix("d") else {
             return nil
         }

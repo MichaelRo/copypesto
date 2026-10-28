@@ -74,7 +74,7 @@ public enum ShelfSuggestionPolicy {
 
         let calendar = Calendar.current
         let eligible = facts.clips.filter { clip in
-            isEligibleForShortcut(clip) && !ledger.isSilenced(clip.id, currentPastes: clip.pasteCount)
+            isEligibleForShortcut(clip)
         }
 
         if let suggestion = nextShortcutOffer(
@@ -130,7 +130,7 @@ public enum ShelfSuggestionPolicy {
                 && clip.pasteCount >= Thresholds.offerMinimumPastes
                 && clip.lastUsedAt >= cutoff
                 && clip.shelfPastesThisRun >= 1
-                && !ledger.isResolved(.shortcutOffer, clip.id)
+                && !ledger.isBlocked(.shortcutOffer, clip.id, pastes: clip.pasteCount, now: context.now)
         }.sorted {
             if $0.pasteCount != $1.pasteCount { return $0.pasteCount > $1.pasteCount }
             if $0.lastUsedAt != $1.lastUsedAt { return $0.lastUsedAt > $1.lastUsedAt }
@@ -158,7 +158,7 @@ public enum ShelfSuggestionPolicy {
             let idleEnough = clip.shortcutLastUsedAt == nil || (clip.shortcutLastUsedAt ?? .distantFuture) <= cutoff
             return clip.shelfPastesThisRun >= Thresholds.reminderShelfPastes
                 && idleEnough
-                && !ledger.isResolved(.shortcutReminder, clip.id)
+                && !ledger.isBlocked(.shortcutReminder, clip.id, pastes: clip.pasteCount, now: context.now)
         }.sorted {
             if $0.shelfPastesThisRun != $1.shelfPastesThisRun { return $0.shelfPastesThisRun > $1.shelfPastesThisRun }
             if $0.lastUsedAt != $1.lastUsedAt { return $0.lastUsedAt > $1.lastUsedAt }
@@ -190,7 +190,7 @@ public enum ShelfSuggestionPolicy {
                 value: Thresholds.releaseIdleDays,
                 to: lastUse
             ) else { return false }
-            return context.now >= idleThreshold && !ledger.isResolved(.shortcutRelease, clip.id)
+            return context.now >= idleThreshold && !ledger.isBlocked(.shortcutRelease, clip.id, pastes: clip.pasteCount, now: context.now)
         }.sorted {
             let u0 = [$0.shortcutLastUsedAt, context.armedAt].compactMap(\.self).max() ?? .distantPast
             let u1 = [$1.shortcutLastUsedAt, context.armedAt].compactMap(\.self).max() ?? .distantPast
@@ -226,7 +226,7 @@ public enum ShelfSuggestionPolicy {
                     isSecret: clip.isSensitive,
                     length: clip.textLength
                 )
-                && !ledger.isResolved(.snippet, clip.id)
+                && !ledger.isBlocked(.snippet, clip.id, pastes: clip.pasteCount, now: context.now)
         }.sorted {
             if $0.pasteCount != $1.pasteCount { return $0.pasteCount > $1.pasteCount }
             if $0.lastUsedAt != $1.lastUsedAt { return $0.lastUsedAt > $1.lastUsedAt }

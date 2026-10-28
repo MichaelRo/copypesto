@@ -126,9 +126,8 @@ struct SimilarityPerformanceTests {
         report("signature \(String(format: "%.1f", milliseconds(signingTime) * 1000 / Double(clips.count))) us each")
         report("index build \(String(format: "%.1f", milliseconds(buildTime))) ms for \(index.count) signatures")
         report("lookup \(String(format: "%.1f", averageLookup * 1000)) us average over \(lookups) queries")
-        report(
-            "index approx \(index.approximateBytes / 1024) KB, footprint change \((footprintBytes() - footprintBefore) / 1024) KB"
-        )
+        let footprintChange = (footprintBytes() - footprintBefore) / 1024
+        report("index approx \(index.approximateBytes / 1024) KB, footprint change \(footprintChange) KB")
         report("precision \(String(format: "%.3f", precision))")
         for (shape, pair) in zip(Self.shapes, zip(found, expected)) {
             report("recall at \(shape.words) words: \(String(format: "%.3f", Double(pair.0) / Double(max(1, pair.1))))")

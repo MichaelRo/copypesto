@@ -12,11 +12,13 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
     public var ogTitle: String?
     public var ogSiteName: String?
     public var linkPreviewFetched: Bool?
+    /// What the person last typed into each fill-in of a snippet, sealed with the rest (ADR 0017).
+    public var fieldMemory: [String: String]?
 
     public init(
         customTitle: String? = nil, userNote: String? = nil, tags: [String] = [],
         customSymbolName: String? = nil, collectionOrder: Int? = nil, ogTitle: String? = nil,
-        ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil
+        ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil, fieldMemory: [String: String]? = nil
     ) {
         self.customTitle = customTitle
         self.userNote = userNote
@@ -26,11 +28,13 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
         self.ogTitle = ogTitle
         self.ogSiteName = ogSiteName
         self.linkPreviewFetched = linkPreviewFetched
+        self.fieldMemory = fieldMemory
     }
 
     public var isEmpty: Bool {
         customTitle == nil && userNote == nil && tags.isEmpty && customSymbolName == nil
             && collectionOrder == nil && ogTitle == nil && ogSiteName == nil && linkPreviewFetched != true
+            && (fieldMemory ?? [:]).isEmpty
     }
 
     public static func parseTags(_ raw: String) -> [String] {

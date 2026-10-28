@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import SwiftData
 import Testing
 @testable import PestoCore
 
@@ -213,5 +214,72 @@ struct StackSnippetTests {
         #expect(result.payloadKind == .text("Hi Ana in Mail"))
         #expect(result.pasteboardData == Data("Hi Ana in Mail".utf8))
         #expect(result.richPayload == nil)
+    }
+}
+
+@Suite("Remembered fill-in values")
+struct FillInMemoryTests {
+    private let fields = FillInParser.fields(
+        in: "{{input:Name}}{{input:Card}}{{choice:Tone options=\"a|b\"}}{{optional:PS}}x{{/optional}}{{input:Empty}}"
+    )
+
+    @Test("typed values are kept per field, optional sections as on or off, and empty values are not")
+    func whenRemembered_thenValuesKept() {
+        let fills = SnippetFills(values: ["Name": "Ana", "Tone": "b", "Empty": "  "], included: ["PS"])
+
+        let memory = FillInMemory.remembered(from: fills, fields: fields)
+
+        #expect(memory == ["Name": "Ana", "Tone": "b", "PS": "1"])
+    }
+
+    @Test("a value that looks like a secret or is too long is never kept")
+    func whenSecretOrLong_thenDropped() {
+        let fills = SnippetFills(values: [
+            "Name": "4111 1111 1111 1111",
+            "Card": String(repeating: "x", count: FillInMemory.maxValueLength + 1)
+        ])
+
+        #expect(FillInMemory.remembered(from: fills, fields: fields) == ["PS": "0"])
+    }
+}
+
+@Suite("Remembered fill-ins in storage")
+struct FillInMemoryStorageTests {
+    private let container: ModelContainer
+
+    init() throws {
+        container = try ModelContainerSetup.makeInMemory().synced
+    }
+
+    private func memory(_ id: UUID) throws -> [String: String]? {
+        try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == id }?.metadata.fieldMemory
+    }
+
+    @Test("values are stored on the clip, replaced by the next prompt, and erased on request")
+    func whenRemembered_thenStoredReplacedAndForgotten() async throws {
+        let service = StorageService(modelContainer: container)
+        let id = try #require(await service.addSnippet("Hi {{input:Name}}"))
+
+        try await service.rememberFillIns(id: id, memory: ["Name": "Ana"])
+        #expect(try memory(id) == ["Name": "Ana"])
+
+        try await service.rememberFillIns(id: id, memory: ["Name": "Bo"])
+        #expect(try memory(id) == ["Name": "Bo"])
+
+        try await service.forgetAllFillIns()
+        #expect(try memory(id) == nil)
+    }
+
+    @Test("the remembered values leave with the clip's sealed metadata, not in the clear")
+    func whenRemembered_thenSealed() async throws {
+        let service = StorageService(modelContainer: container)
+        let id = try #require(await service.addSnippet("Hi {{input:Name}}"))
+
+        try await service.rememberFillIns(id: id, memory: ["Name": "Zebediah"])
+
+        let item = try #require(try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+            .first { $0.id == id })
+        #expect(item.metadataCiphertext != nil)
+        #expect(item.metadataCiphertext?.range(of: Data("Zebediah".utf8)) == nil)
     }
 }

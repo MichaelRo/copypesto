@@ -119,13 +119,15 @@ extension AppDelegate {
             return (payload, nil)
         }
         let fields = FillInParser.fields(in: str)
-        var fills = SnippetFills.initial(for: fields)
+        let remembers = AppDefaults.store.value(for: Setting.rememberFillIns)
+        var fills = SnippetFills.initial(for: fields, remembered: remembers ? item.metadata.fieldMemory ?? [:] : [:])
         if !fields.isEmpty {
             guard let asked = await fillInPrompt.ask(title: title, fields: fields, initial: fills) else {
                 Self.pasteLogger.notice("[end] outcome=fill-in-cancelled")
                 return nil
             }
             fills = asked
+            if remembers { rememberFillIns(fills, fields: fields, in: item) }
         }
         guard let expanded = TemplateExpander.expansionWithCaret(
             of: str,
@@ -138,6 +140,21 @@ extension AppDelegate {
         }
         appState.writeText(expanded.text, protected: AppState.isProtected(AppPasteboard.general))
         return (.text(expanded.text), expanded.charactersAfterCursor)
+    }
+}
+
+@MainActor
+private extension AppDelegate {
+    func rememberFillIns(_ fills: SnippetFills, fields: [SnippetField], in item: ClipboardItem) {
+        let id = item.id
+        let memory = FillInMemory.remembered(from: fills, fields: fields)
+        Task {
+            do {
+                try await storageService?.rememberFillIns(id: id, memory: memory)
+            } catch {
+                Self.pasteLogger.error("remembering fill-ins failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
     }
 }
 

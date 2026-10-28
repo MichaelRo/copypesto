@@ -190,7 +190,12 @@ public enum ShelfSuggestionPolicy {
                 value: Thresholds.releaseIdleDays,
                 to: lastUse
             ) else { return false }
-            return context.now >= idleThreshold && !ledger.isBlocked(.shortcutRelease, clip.id, pastes: clip.pasteCount, now: context.now)
+            return context.now >= idleThreshold && !ledger.isBlocked(
+                .shortcutRelease,
+                clip.id,
+                pastes: clip.pasteCount,
+                now: context.now
+            )
         }.sorted {
             let u0 = [$0.shortcutLastUsedAt, context.armedAt].compactMap(\.self).max() ?? .distantPast
             let u1 = [$1.shortcutLastUsedAt, context.armedAt].compactMap(\.self).max() ?? .distantPast

@@ -141,8 +141,11 @@ enum ShowcaseArt {
             drawLeaf(context, at: CGPoint(x: 92, y: 96), angle: 0.7, scale: 0.55, hex: "3F8F5B")
             drawLeaf(context, at: CGPoint(x: 70, y: 150), angle: -0.4, scale: 0.4, hex: "6DBE85")
             context.setFillColor(color(hex: "F2C14E", alpha: 0.85))
-            for (x, y, w, h) in [(238.0, 96.0, 10.0, 16.0), (214.0, 70.0, 7.0, 11.0), (262.0, 58.0, 6.0, 9.0)] {
-                context.fillEllipse(in: CGRect(x: x, y: y, width: w, height: h))
+            for drop in [
+                CGRect(x: 238, y: 96, width: 10, height: 16), CGRect(x: 214, y: 70, width: 7, height: 11),
+                CGRect(x: 262, y: 58, width: 6, height: 9)
+            ] {
+                context.fillEllipse(in: drop)
             }
         }
     }

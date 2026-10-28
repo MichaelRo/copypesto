@@ -221,6 +221,25 @@ final class KeyNavCoordinator {
         }
     }
 
+    /// ↑ ↓ move cards unless ⌃ is held. ← → move them only bare: with ⌘, ⌥ or ⇧ they edit the caret (line start, word,
+    /// selection), so those reach the text field.
+    private func searchArrowMoves(_ event: NSEvent) -> Bool {
+        let flags = event.modifierFlags
+        switch event.keyCode {
+        case 123 where flags.isDisjoint(with: [.command, .option, .shift, .control]):
+            onLeft?()
+        case 124 where flags.isDisjoint(with: [.command, .option, .shift, .control]):
+            onRight?()
+        case 125 where !flags.contains(.control):
+            onRight?()
+        case 126 where !flags.contains(.control):
+            onLeft?()
+        default:
+            return false
+        }
+        return true
+    }
+
     private func handleSearchMode(_ event: NSEvent) -> NSEvent? {
         switch event.keyCode {
         case 48: // Tab, Shift-Tab: through the filter chips
@@ -232,12 +251,8 @@ final class KeyNavCoordinator {
             if onFilterChipRelease?() == true { return nil }
             onEscapeFromSearch?()
             return nil
-        case 125 where !event.modifierFlags.contains(.control): // ↓
-            onRight?()
-            return nil
-        case 126 where !event.modifierFlags.contains(.control): // ↑
-            onLeft?()
-            return nil
+        case 123, 124, 125, 126: // ← → ↓ ↑
+            return searchArrowMoves(event) ? nil : event
         case 116, 121: // Page Up, Page Down: a one-line field has no page, and AppKit beeps
             return nil
         case 36:

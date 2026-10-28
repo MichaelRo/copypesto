@@ -71,7 +71,7 @@ struct ShelfKeyReferenceBindingTests {
         "⌘ E Show or hide a covered clip (⌘Return does too)": ["onShowHidden", "onShowHidden"],
         "Tab In search, move through the filters": ["onFilterChipMove"],
         "⇧ Tab In search, move back through the filters": ["onFilterChipMove"],
-        "↓ ↑ In search, move through the results": ["onRight", "onLeft"],
+        "← → ↓ ↑ In search, move through the results": ["onLeft", "onRight", "onRight", "onLeft"],
         "⌘ F Search": ["onSearch"],
         "⌘ K Open the focused clip's actions": ["onShowActions"],
         "⌘ C Copy the focused clip": ["onCopy"],

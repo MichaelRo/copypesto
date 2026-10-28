@@ -13,7 +13,7 @@ A text clip shows its paragraphs, with a slim dotted gap for a blank line. When 
 - **Space** selects a clip so you can act on several at once (for example paste them together). **⌘A** selects every clip currently shown, so you can filter first and then delete or paste them all.
 - **⌫** deletes the selected clips, or the focused one when none is selected; Return confirms and Esc keeps them.
 - **Undo.** After a delete a bar reads *Deleted 3 clips* with an **Undo** button, and **⌘Z** takes back the last delete or change; **⇧⌘Z** does it again. It covers deleting clips and collections, renaming, notes, tags, icons, moving a clip to a collection (also by dragging), pinning, paste shortcuts, the sensitive mark, a dragged card's place, creating, editing, duplicating and reordering collections, adding or editing a snippet, and an import. In *Settings* the Edit menu's *Undo* does the same, and names the action. Pesto remembers the last 20 actions, only until you lock the history, clear it or quit. *Clear History* and *Clear Everything* are final, and so is deleting a clip that expires on its own, a hidden password or a very large clip; the question before a delete says which it is.
-- In search, **Return** pastes the focused result (the first one to start with), and **⌘Return** asks Pesto, and **↓** and **↑** move through the
+- In search, **Return** pastes the focused result (the first one to start with), and **⌘Return** asks Pesto, and the arrow keys **←** **→** **↓** **↑** move through the
   results.
 - A clip the sensitive-content filter blurs pastes like any other: **Return**, **⌘1** to **⌘9** and a double click paste
   it without showing it, so you can paste a link without seeing the picture that comes with it. Showing it is always

@@ -16,7 +16,18 @@ extension AppState {
             try? await storageService?.shelfSuggestionFacts(unavailableSlots: hotkeyController.unavailableSlots)
         }
 
-        shelfSuggestionFacts = facts
+        if let facts { shelfSuggestionFacts = facts }
+        await pruneShelfSuggestionLedger()
+    }
+
+    private func pruneShelfSuggestionLedger() async {
+        guard let storageService else { return }
+        var ledger = SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
+        let ids = ledger.clipIDs
+        guard !ids.isEmpty, let existing = try? await storageService.existingClipIDs(among: ids),
+              existing.count < ids.count else { return }
+        ledger.prune(existingClipIDs: existing)
+        AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
     }
 
     func shelfDidOpen() {
@@ -35,6 +46,8 @@ extension AppState {
         shelfSuggestionDwellTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(1500))
             guard !Task.isCancelled, let self else { return }
+            await self.refreshShelfSuggestionFacts()
+            guard !Task.isCancelled else { return }
             self.evaluateShelfSuggestion()
         }
     }
@@ -45,7 +58,8 @@ extension AppState {
 
         if let suggestion = shelfSuggestion?.suggestion {
             var ledger = SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
-            ledger.noteShown(suggestion.kind, suggestion.clipID)
+            let pastes = shelfSuggestionFacts?.clips.first(where: { $0.id == suggestion.clipID })?.pasteCount ?? 0
+            ledger.noteShown(suggestion.kind, suggestion.clipID, pastes: pastes, now: Date())
             AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
         }
         shelfSuggestion = nil
@@ -115,7 +129,8 @@ extension AppState {
             hasOnboarded: AppDefaults.store.value(for: Setting.hasOnboarded),
             armedAt: armedAt,
             lastShownAt: lastShownAt,
-            hotkeysLive: LaunchMode.current.usesSystemIntegrations || LaunchMode.current == .hostedTests,
+            hotkeysLive: LaunchMode.current.usesSystemIntegrations || LaunchMode.current == .hostedTests
+                || RuntimeConfiguration.current.suggestionsLive,
             hasAccessibility: hasAccessibilityPermission,
             isHistoryLocked: isHistoryLocked,
             isContentCovered: isContentCovered(screenSharingPrivacy: AppDefaults.store
@@ -213,7 +228,7 @@ extension AppState {
 
         var ledger = SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
         let currentPastes = shelfSuggestionFacts?.clips.first(where: { $0.id == suggestion.clipID })?.pasteCount ?? 0
-        ledger.resolve(suggestion.kind, suggestion.clipID, as: .declined(atPasteCount: currentPastes))
+        ledger.resolve(suggestion.kind, suggestion.clipID, as: .declined(atPasteCount: currentPastes), now: Date())
         AppDefaults.store.set(ledger.serialized, for: Setting.shelfSuggestionLedger)
 
         let declines = AppDefaults.store.value(for: Setting.shelfSuggestionDeclines) + 1

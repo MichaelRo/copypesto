@@ -316,4 +316,24 @@ struct ShelfSuggestionPolicyTests {
         #expect(ShelfSuggestionPolicy
             .next(context: context(), facts: facts, ledger: SuggestionLedger(serialized: "")) == nil)
     }
+
+    @Test("a declined offer stays away with the pause over, and returns once, after doubled pastes and thirty days")
+    func whenDeclined_thenOfferReturnsOnlyAfterDoubledPastesAndThirtyDays() {
+        let id = UUID()
+        var ledger = SuggestionLedger(serialized: "")
+        let declinedOn = now.addingTimeInterval(-31 * 86_400)
+        ledger.resolve(.shortcutOffer, id, as: .declined(atPasteCount: 7), now: declinedOn)
+
+        func offer(pastes: Int) -> ShelfSuggestion? {
+            let facts = ShelfSuggestionFacts(
+                clips: [makeClip(id: id, pasteCount: pastes)],
+                assignedSlots: [],
+                unavailableSlots: []
+            )
+            return ShelfSuggestionPolicy.next(context: context(lastShownHoursAgo: 30), facts: facts, ledger: ledger)
+        }
+
+        #expect(offer(pastes: 13)?.kind != .shortcutOffer)
+        #expect(offer(pastes: 14)?.kind == .shortcutOffer)
+    }
 }

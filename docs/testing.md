@@ -117,10 +117,11 @@ A UI-test launch runs the real UI on isolated data. `RuntimeConfiguration` (Core
 |---|---|
 | `PESTO_UITEST_SESSION` | Names the pasteboard and command queue; the private defaults file lives in `PESTO_UITEST_DIR`, so it goes when the test's directory does |
 | `PESTO_UITEST_DIR` | Working directory shared by the app and the runner (store, paste log, commands, ready marker) |
-| `PESTO_UITEST_SEED` | `empty`, `basic` (14 items: text, code, URL, color, images, two masked secrets) or `large` (5,000) |
+| `PESTO_UITEST_SEED` | `empty`, `basic` (14 items: text, code, URL, color, images, two masked secrets), `large` (5,000) or `suggestion` (three text clips, the first pasted 6 times) |
 | `PESTO_UITEST_ACCESSIBILITY` | `trusted` or `denied`: the stubbed Accessibility state |
 | `PESTO_UITEST_IMPORT_FIXTURE` `otherfile` | Other File… reads a built-in CSV instead of opening a file panel |
 | `PESTO_UITEST_AI_FIXTURE` | `1` swaps the on-device model for a fake that answers at once (budget 300 characters) and reports AI as available, so `AIPartsUITests` drives the panel on any Mac |
+| `PESTO_UITEST_SUGGESTIONS_LIVE` | `1` makes the shelf-suggestion policy see global hotkeys as live (a UI-test launch registers none), so `ShelfSuggestionUITests` can see a banner; nothing is registered. Pair it with `PESTO_UITEST_SEED=suggestion` (three text clips, the first pasted 6 times) and `PESTO_UITEST_DEFAULT_shelfSuggestionsArmedAt` four days back |
 | `PESTO_UITEST_KEYLOSS` | `1` forces the "can't unlock your history" flow: the alert comes just after launch, and the restore window uses a fixture backup (`KeyLossFixture`: passphrase "fixture passphrase", one clip) instead of a file panel; use the empty seed |
 | `PESTO_UITEST_REAL_PASTE` | `1` uses the real pasteboard and a real paste instead of the private pasteboard and the paste log (`make bench-latency`) |
 | `PESTO_UITEST_PERF_TIMELINE` | `1` makes Pesto write its stage timings to `perf-timeline.tsv` (`make bench-latency`) |

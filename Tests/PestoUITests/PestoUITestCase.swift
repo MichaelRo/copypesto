@@ -41,6 +41,7 @@ class PestoUITestCase: XCTestCase {
         importFixture: String? = nil,
         keyLoss: Bool = false,
         aiFixture: Bool = false,
+        suggestionsLive: Bool = false,
         recordsPerfTimeline: Bool = false,
         timeout: TimeInterval = 90
     ) {
@@ -62,6 +63,7 @@ class PestoUITestCase: XCTestCase {
         if let importFixture { environment["PESTO_UITEST_IMPORT_FIXTURE"] = importFixture }
         if keyLoss { environment["PESTO_UITEST_KEYLOSS"] = "1" }
         if aiFixture { environment["PESTO_UITEST_AI_FIXTURE"] = "1" }
+        if suggestionsLive { environment["PESTO_UITEST_SUGGESTIONS_LIVE"] = "1" }
         if recordsPerfTimeline { environment["PESTO_UITEST_PERF_TIMELINE"] = "1" }
         app.launchEnvironment = environment
         app.launch()

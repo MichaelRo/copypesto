@@ -224,6 +224,7 @@ extension GridView {
             // Pinned-window flow: keep the panel visible, route through executePasteItem
             // which captures focus and runs the paste task without touching isOverlayVisible.
             appState.notePasted(item, in: modelContext)
+            appState.shelfPasteTally[item.id, default: 0] += 1
             appState.pasteInPlace?(item)
             // Release the guard after the focus-capture / write window has elapsed so
             // the user can pick a second card quickly. 500 ms matches FocusRestoration
@@ -248,8 +249,7 @@ extension GridView {
         let rawText = extractText(from: item)
         let transformed = transform.apply(to: rawText, language: item.detectedLanguage)
         shelfActions.writeText(transformed, item.sensitivityRaw != nil)
-        item.timestamp = Date()
-        appState.attempt("Couldn’t save the change") { try modelContext.saveOrRollback() }
+        appState.notePastedInBackground(item, in: modelContext)
         appState.close(.paste(item, .text(transformed)))
     }
 

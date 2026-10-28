@@ -16,6 +16,16 @@ public extension StorageService {
         try saveOrRollback()
     }
 
+    func existingClipIDs(among ids: Set<UUID>) throws -> Set<UUID> {
+        var found: Set<UUID> = []
+        for id in ids {
+            var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
+            descriptor.fetchLimit = 1
+            if try !modelContext.fetch(descriptor).isEmpty { found.insert(id) }
+        }
+        return found
+    }
+
     /// Gathers lightweight facts needed by ShelfSuggestionPolicy without decrypting any content.
     func shelfSuggestionFacts(unavailableSlots: Set<Int>) throws -> ShelfSuggestionFacts {
         var frequentDesc = FetchDescriptor<ClipboardItem>(

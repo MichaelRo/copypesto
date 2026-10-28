@@ -70,4 +70,18 @@ struct ShelfSuggestionFactsStorageTests {
         #expect(facts.assignedSlots.contains(5))
         #expect(facts.unavailableSlots == [1, 2])
     }
+
+    @Test("when asked which clip ids still exist, deleted ones are left out")
+    func whenIdsChecked_thenOnlyExistingReturned() async throws {
+        let service = await service()
+        let context = ModelContext(container)
+        let kept = ClipboardItem(
+            type: .text, previewText: "kept", contentHash: "hash-kept", byteSize: 4, deviceID: "dev", sequenceNumber: 1
+        )
+        context.insert(kept)
+        try context.save()
+
+        let found = try await service.existingClipIDs(among: [kept.id, UUID()])
+        #expect(found == [kept.id])
+    }
 }

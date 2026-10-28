@@ -38,6 +38,42 @@ extension HostedGlobals {
             return state
         }
 
+        @Test("opening the shelf loads the facts itself, so the first open after launch can suggest")
+        func whenOpenedWithoutFacts_thenFactsLoadAndSuggestionShows() async throws {
+            defer { resetSettings() }
+            let state = makeState()
+            let clipID = UUID()
+            AppDefaults.store.set(
+                Int(Date.now.addingTimeInterval(-86_400 * 10).timeIntervalSince1970),
+                for: Setting.shelfSuggestionsArmedAt
+            )
+            let facts = ShelfSuggestionFacts(
+                clips: [
+                    ShelfClipFacts(
+                        id: clipID,
+                        pasteCount: 7,
+                        lastUsedAt: Date.now,
+                        isPinned: false,
+                        shortcutSlot: nil,
+                        shortcutLastUsedAt: nil,
+                        kind: .text,
+                        textLength: 100,
+                        shelfPastesThisRun: 1
+                    )
+                ],
+                assignedSlots: [],
+                unavailableSlots: []
+            )
+            state.shelfFactsProvider = { facts }
+            state.shelfPasteTally[clipID] = 1
+            #expect(state.shelfSuggestionFacts == nil)
+
+            state.shelfDidOpen()
+            try await Task.sleep(for: .milliseconds(1900))
+
+            #expect(state.shelfSuggestion?.suggestion?.clipID == clipID)
+        }
+
         @Test("evaluating when eligible sets last shown date and does not duplicate")
         func whenOpened_thenSetsLastShownAndNoSecondOne() {
             defer { resetSettings() }

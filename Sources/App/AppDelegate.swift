@@ -246,6 +246,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             ))
             storageService = service
             appState.storageService = service
+            appState.startSimilarityWork()
             let store = StorageRetentionStore(service: service)
             let pruner = RetentionPruner(store: store) { RetentionPolicy.fromDefaults(AppDefaults.store) }
             retentionPruner = pruner

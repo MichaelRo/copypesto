@@ -16,9 +16,14 @@ struct SimilarityIndexTests {
 
     @Test("the same message with another name and number is close; unrelated text is not")
     func whenTemplateVariants_thenSimilar() {
-        let a = signature("Hi Anna, your order 48213 has shipped and should arrive on Friday. Thanks for shopping with us!")
-        let b = signature("Hi Bruno, your order 77 has shipped and should arrive on Friday. Thanks for shopping with us!")
-        let c = signature("The quarterly report shows revenue growth across all regions with a notable uptick in the south.")
+        let a =
+            signature("Hi Anna, your order 48213 has shipped and should arrive on Friday. Thanks for shopping with us!")
+        let b =
+            signature("Hi Bruno, your order 77 has shipped and should arrive on Friday. Thanks for shopping with us!")
+        let c =
+            signature(
+                "The quarterly report shows revenue growth across all regions with a notable uptick in the south."
+            )
 
         #expect(a.similarity(to: b) > 0.5)
         #expect(a.similarity(to: c) < 0.2)
@@ -37,16 +42,30 @@ struct SimilarityIndexTests {
         var index = SimilarityIndex()
         let ids = (0..<5).map { _ in UUID() }
         for (offset, id) in ids.enumerated() {
-            index.insert(signature("Hi person\(offset), your order has shipped and should arrive on Friday. Thanks for shopping!"), for: id)
+            index.insert(
+                signature(
+                    "Hi person\(offset), your order has shipped and should arrive on Friday. Thanks for shopping!"
+                ),
+                for: id
+            )
         }
         let other = UUID()
-        index.insert(signature("Completely different text about weather forecasts and rainfall in the northern hills today"), for: other)
+        index.insert(
+            signature("Completely different text about weather forecasts and rainfall in the northern hills today"),
+            for: other
+        )
 
-        let found = index.matches(for: signature("Hi someone, your order has shipped and should arrive on Friday. Thanks for shopping!"))
+        let found = index
+            .matches(
+                for: signature("Hi someone, your order has shipped and should arrive on Friday. Thanks for shopping!")
+            )
         #expect(Set(found.map(\.id)) == Set(ids))
 
         index.remove(ids[0])
-        let after = index.matches(for: signature("Hi person1, your order has shipped and should arrive on Friday. Thanks for shopping!"), excluding: ids[1])
+        let after = index.matches(
+            for: signature("Hi person1, your order has shipped and should arrive on Friday. Thanks for shopping!"),
+            excluding: ids[1]
+        )
         #expect(Set(after.map(\.id)) == Set(ids.dropFirst(2)))
         #expect(index.count == 5)
     }

@@ -87,6 +87,7 @@ public actor StorageService: ModelActor {
     /// host gets none unless its environment names one, so no vector arrives from the background at a random moment.
     let embedder: any TextEmbedding
 
+    var similarity = SimilarityIndex()
     var pendingEmbeddings: [UUID: Task<Void, Never>] = [:]
     var pendingAnalyses: [UUID: Task<Void, Never>] = [:]
     let remoteGIFFetcher: (@Sendable (URL) async -> Data?)?
@@ -345,6 +346,7 @@ public actor StorageService: ModelActor {
             startAnalysis(of: item.id, input: analysisInput)
         } else {
             startEmbedding(for: item, text: payloadString)
+            noteSignature(of: item, text: payloadString)
             mirrorToLastItemFile(item)
         }
     }
@@ -439,6 +441,7 @@ public actor StorageService: ModelActor {
         if let undoable { undoHistory.record(UndoEntry(.clipsDeleted(undoable))) }
         PreviewTextCache.shared.clear()
         let deletedIDs = doomed.map(\.id)
+        deletedIDs.forEach { similarity.remove($0) }
         linkPreviews.delete(ids: deletedIDs)
         linkPreviewCache.remove(pages)
         deletedIDs.forEach { lastItemStore.clear(ifItemID: $0) }
@@ -474,6 +477,7 @@ public actor StorageService: ModelActor {
         undoHistory.clear()
         items.forEach { modelContext.delete($0) }
         try saveOrRollback()
+        ids.forEach { similarity.remove($0) }
         PreviewTextCache.shared.clear()
         linkPreviews.delete(ids: ids)
         linkPreviewCache.clear()

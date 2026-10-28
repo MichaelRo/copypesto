@@ -44,7 +44,8 @@ public struct SimilarityIndex: Sendable {
     }
 
     public mutating func remove(_ id: UUID) {
-        guard let slot = slots.removeValue(forKey: id), let signature = signatures.removeValue(forKey: id) else { return }
+        guard let slot = slots.removeValue(forKey: id),
+              let signature = signatures.removeValue(forKey: id) else { return }
         for band in 0..<Self.bands {
             let key = Self.key(of: signature, band: band, slot: slot)
             let at = Self.insertionPoint(in: buckets[band], for: key)

@@ -8,11 +8,18 @@ public struct TextSignature: Equatable, Sendable {
     public static let width = 64
     public static let minimumWords = 6
 
+    public static let eligibleLengths = 40...2000
+
     public let values: [UInt32]
 
     public init(values: [UInt32]) {
         precondition(values.count == Self.width)
         self.values = values
+    }
+
+    /// A secret, a clip that expires, a picture and text outside the lengths of a message are never signed.
+    public static func isEligible(isTextual: Bool, isSensitive: Bool, expires: Bool, length: Int) -> Bool {
+        isTextual && !isSensitive && !expires && eligibleLengths.contains(length)
     }
 
     /// Nil when the text is too short to compare.
@@ -49,7 +56,8 @@ public struct TextSignature: Equatable, Sendable {
         return Double(same) / Double(Self.width)
     }
 
-    /// Lowercased words, every run of digits read as one `#` so an order number or a date does not set two copies of the
+    /// Lowercased words, every run of digits read as one `#` so an order number or a date does not set two copies of
+    /// the
     /// same message apart.
     static func normalizedWords(in text: String) -> [UInt64] {
         var words: [UInt64] = []

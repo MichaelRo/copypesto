@@ -54,6 +54,11 @@ final class AppState {
     private(set) var authenticationAvailability = AuthenticationAvailability.available
     @ObservationIgnored private var lastBiometricUnlock: Date?
     @ObservationIgnored private var lockWatchdog: Task<Void, Never>?
+    @ObservationIgnored var similarityTask: Task<Void, Never>?
+    @ObservationIgnored static let similarityLogger = Logger(
+        subsystem: AppIdentity.logSubsystem,
+        category: "Similarity"
+    )
     /// The Touch ID request the shelf is showing, if any (`AppState+ShelfAuthentication.swift`).
     var shelfAuthentication: ShelfAuthenticationRequest?
     @ObservationIgnored var shelfAuthenticationContinuation: CheckedContinuation<Bool, Never>?
@@ -402,6 +407,7 @@ final class AppState {
         if isHistoryLocked {
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
+            stopSimilarityWork()
             dismissUndoOffer()
             suppressShelfSuggestions()
             PreviewTextCache.shared.clear()
@@ -430,8 +436,10 @@ final class AppState {
 
     func completeUnlock(at date: Date = Date()) {
         AuthenticationGrace.shared.record()
+        let wasLocked = isHistoryLocked
         isHistoryLocked = false
         lastBiometricUnlock = date
+        if wasLocked { startSimilarityWork() }
     }
 
     /// Immediately locks history and purges decrypted previews from memory.
@@ -442,6 +450,7 @@ final class AppState {
         clipboardBeforeLastItemWrite = ""
         aiResult = nil
         storageService?.undoHistory.clear()
+        stopSimilarityWork()
         dismissUndoOffer()
         suppressShelfSuggestions()
         PreviewTextCache.shared.clear()

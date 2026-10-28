@@ -332,6 +332,7 @@ struct RestoreSheet: View {
                     try await coordinator.restore(preview)
                 }
                 appState.clearShelfSuggestions()
+                appState.startSimilarityWork()
                 phase = .done(summary, settings: restoreSettingsIfAsked(from: preview))
             } catch {
                 phase = .failed("Couldn’t restore. \(error.localizedDescription)")

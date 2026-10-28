@@ -14,11 +14,14 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
     public var linkPreviewFetched: Bool?
     /// What the person last typed into each fill-in of a snippet, sealed with the rest (ADR 0017).
     public var fieldMemory: [String: String]?
+    /// The clip's `TextSignature`, for noticing clips that look alike (ADR 0017). Derived data, sealed with the rest.
+    public var signature: [UInt32]?
 
     public init(
         customTitle: String? = nil, userNote: String? = nil, tags: [String] = [],
         customSymbolName: String? = nil, collectionOrder: Int? = nil, ogTitle: String? = nil,
-        ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil, fieldMemory: [String: String]? = nil
+        ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil, fieldMemory: [String: String]? = nil,
+        signature: [UInt32]? = nil
     ) {
         self.customTitle = customTitle
         self.userNote = userNote
@@ -29,12 +32,13 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
         self.ogSiteName = ogSiteName
         self.linkPreviewFetched = linkPreviewFetched
         self.fieldMemory = fieldMemory
+        self.signature = signature
     }
 
     public var isEmpty: Bool {
         customTitle == nil && userNote == nil && tags.isEmpty && customSymbolName == nil
             && collectionOrder == nil && ogTitle == nil && ogSiteName == nil && linkPreviewFetched != true
-            && (fieldMemory ?? [:]).isEmpty
+            && (fieldMemory ?? [:]).isEmpty && signature == nil
     }
 
     public static func parseTags(_ raw: String) -> [String] {

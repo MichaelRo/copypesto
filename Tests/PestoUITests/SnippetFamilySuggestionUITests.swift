@@ -54,7 +54,10 @@ final class SnippetFamilySuggestionUITests: PestoUITestCase {
         XCTAssertTrue(text.contains("{{input:Name}}"), "the template should ask for the name: \(text)")
         XCTAssertTrue(text.contains("{{input:Number}}"), "the template should ask for the number: \(text)")
         XCTAssertTrue(text.contains("has shipped and should arrive on Friday"), "the shared words stay: \(text)")
-        XCTAssertTrue(settingsWindow.buttons["Name"].exists, "the Name field should show as a chip")
+        XCTAssertTrue(
+            element(AccessibilityID.snippetQuestionName).waitForExistence(timeout: 5),
+            "the questions should each have a row"
+        )
         capture("snippet-family-editor", of: settingsWindow)
         let preview = element(AccessibilityID.snippetPreview)
         XCTAssertTrue(preview.waitForExistence(timeout: 5), "the editor shows no preview")

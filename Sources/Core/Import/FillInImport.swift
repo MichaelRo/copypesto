@@ -24,8 +24,11 @@ enum FillInImport {
             let attributes = ns.substring(with: match.range(at: 1))
             var values: [String: String] = [:]
             let attributeNS = attributes as NSString
-            for found in attribute?.matches(in: attributes, range: NSRange(location: 0, length: attributeNS.length)) ?? [] {
-                values[attributeNS.substring(with: found.range(at: 1))] = attributeNS.substring(with: found.range(at: 2))
+            for found in attribute?
+                .matches(in: attributes, range: NSRange(location: 0, length: attributeNS.length)) ?? []
+            {
+                values[attributeNS.substring(with: found.range(at: 1))] = attributeNS
+                    .substring(with: found.range(at: 2))
             }
             let label = clean(values["name"]) ?? "Argument"
             let options = (values["options"] ?? "").split(separator: ",")

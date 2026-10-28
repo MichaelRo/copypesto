@@ -11,7 +11,9 @@ struct SnippetFieldMenu: View {
         case choice = "Choice"
         case optional = "Optional Section"
 
-        var id: String { rawValue }
+        var id: String {
+            rawValue
+        }
     }
 
     let insert: (String) -> Void
@@ -80,7 +82,11 @@ struct SnippetFieldMenu: View {
         let extra = detail.trimmingCharacters(in: .whitespaces)
         let built: SnippetField? = switch choice {
         case .text: SnippetField(label: name, kind: .text(multiline: false), defaultValue: extra.isEmpty ? nil : extra)
-        case .multiline: SnippetField(label: name, kind: .text(multiline: true), defaultValue: extra.isEmpty ? nil : extra)
+        case .multiline: SnippetField(
+                label: name,
+                kind: .text(multiline: true),
+                defaultValue: extra.isEmpty ? nil : extra
+            )
         case .choice:
             SnippetField(
                 label: name, kind: .choice(extra.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces) }),

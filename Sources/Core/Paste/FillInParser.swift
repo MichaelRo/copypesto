@@ -30,6 +30,12 @@ public enum FillInParser {
         return result
     }
 
+    /// The fields of several snippets together, each label once, so a stack asks everything up front.
+    public static func fields(inAll texts: [String]) -> [SnippetField] {
+        var seen = Set<String>()
+        return texts.flatMap { fields(in: $0) }.filter { seen.insert($0.label).inserted }
+    }
+
     /// Whether pasting `text` has to ask the person anything: a `{{app}}` or a date fills itself in.
     public static func needsPrompt(_ text: String) -> Bool {
         !fields(in: text).isEmpty
@@ -70,7 +76,10 @@ public enum FillInParser {
         !label.isEmpty && label.count <= maxLabelLength
     }
 
-    private static func split(_ rest: String) -> (label: String, attributes: (values: [String: String], flags: Set<String>)) {
+    private static func split(_ rest: String) -> (label: String, attributes: (
+        values: [String: String],
+        flags: Set<String>
+    )) {
         let ns = rest as NSString
         let full = NSRange(location: 0, length: ns.length)
         let boundary = attributeStart?.firstMatch(in: rest, range: full)?.range.location ?? ns.length
@@ -79,7 +88,10 @@ public enum FillInParser {
         var values: [String: String] = [:]
         var flags = Set<String>()
         let attributeNS = attributeText as NSString
-        for match in attributeRegex?.matches(in: attributeText, range: NSRange(location: 0, length: attributeNS.length)) ?? [] {
+        for match in attributeRegex?.matches(
+            in: attributeText,
+            range: NSRange(location: 0, length: attributeNS.length)
+        ) ?? [] {
             if match.range(at: 1).location != NSNotFound {
                 let value = attributeNS.substring(with: match.range(at: 2))
                 values[attributeNS.substring(with: match.range(at: 1))] = unescaped(value)

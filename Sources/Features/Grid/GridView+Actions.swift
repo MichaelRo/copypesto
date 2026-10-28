@@ -524,11 +524,15 @@ extension GridView {
 
         guard stackItems.count > 1 else { return }
 
-        let stack = PasteStack(items: stackItems)
-        selection.clear()
+        let isSnippet = chosen.map(\.isTemplate)
+        Task {
+            guard let ready = await appState.expandedStackItems(stackItems, isSnippet: isSnippet) else { return }
+            let stack = PasteStack(items: ready)
+            selection.clear()
 
-        // Activate the stack — AppDelegate's overlay-hidden handler will paste item 1.
-        appState.activeStack = stack
-        appState.close(.startStack)
+            // Activate the stack — AppDelegate's overlay-hidden handler will paste item 1.
+            appState.activeStack = stack
+            appState.close(.startStack)
+        }
     }
 }

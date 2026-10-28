@@ -37,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastRetentionPolicy: RetentionPolicy?
     let toastController = ToastWindowController()
     let stackHUDController = StackHUDWindowController()
+    let fillInPrompt = FillInPromptWindowController()
     let stackSession = StackPasteSession()
     let aiResultController = AIResultPanelController()
     var onboardingWindow: NSWindow?
@@ -366,6 +367,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             })
         }
         appState.showToast = { [weak self] toast in self?.toastController.show(toast) }
+        appState.askFillIns = { [weak self] title, fields, initial in
+            await self?.fillInPrompt.ask(title: title, fields: fields, initial: initial)
+        }
         appState.openSettingsFromOverlay = { [weak self] in
             guard let self else { return }
             self.appState.close(.afterHide { [weak self] in self?.openSettingsWindow() })

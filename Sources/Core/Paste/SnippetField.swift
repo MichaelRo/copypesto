@@ -14,7 +14,9 @@ public struct SnippetField: Equatable, Sendable, Identifiable {
     public let kind: Kind
     public let defaultValue: String?
 
-    public var id: String { label }
+    public var id: String {
+        label
+    }
 
     public init(label: String, kind: Kind, defaultValue: String?) {
         self.label = label
@@ -60,5 +62,25 @@ public struct SnippetFills: Equatable, Sendable {
     public init(values: [String: String] = [:], included: Set<String> = []) {
         self.values = values
         self.included = included
+    }
+}
+
+public extension SnippetFills {
+    /// What the prompt starts with: a remembered value if there is one, else the field's default, the first choice, and
+    /// every optional section off. A remembered choice that is no longer an option is ignored.
+    static func initial(for fields: [SnippetField], remembered: [String: String] = [:]) -> SnippetFills {
+        var fills = SnippetFills()
+        for field in fields {
+            switch field.kind {
+            case .text:
+                fills.values[field.label] = remembered[field.label] ?? field.defaultValue ?? ""
+            case let .choice(options):
+                let kept = remembered[field.label].flatMap { options.contains($0) ? $0 : nil }
+                fills.values[field.label] = kept ?? field.defaultValue ?? options.first ?? ""
+            case .optional:
+                if remembered[field.label] == "1" { fills.included.insert(field.label) }
+            }
+        }
+        return fills
     }
 }

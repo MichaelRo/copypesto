@@ -85,8 +85,14 @@ public enum TemplateExpander {
     )
     -> String {
         guard containsPlaceholders(text) else { return text }
-        return expandSinglePass(text, at: date, fills: SnippetFills(), targetApp: "", clipboardProvider: clipboardProvider)
-            .text
+        return expandSinglePass(
+            text,
+            at: date,
+            fills: SnippetFills(),
+            targetApp: "",
+            clipboardProvider: clipboardProvider
+        )
+        .text
     }
 
     private static func expandSinglePass(

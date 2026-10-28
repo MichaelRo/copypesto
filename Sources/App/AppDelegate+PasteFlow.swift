@@ -35,7 +35,6 @@ extension AppDelegate {
     }
 
     private func hideThenPaste(_ item: ClipboardItem, _ chosen: PasteCoordinator.PayloadKind) {
-        let (payloadKind, caretOffset) = expandedPayload(from: chosen, of: item)
         // If the Mac sleeps or locks before the hide animation finishes, this selection is stale.
         let requestedAtEpoch = pasteTasks.interruptionEpoch
         // Fire paste in the hide() completion block, which runs after orderOut(nil).
@@ -48,7 +47,10 @@ extension AppDelegate {
             // runPasteTask starts the paste through pasteTasks so the wake/lock handler
             // can cancel it before the FocusRestoration sleep completes.
             runPasteTask(.overlaySelect(itemID: item.id), requestedAtEpoch: requestedAtEpoch) { delegate in
-                await delegate.appState.pasteCoordinator.executePaste(
+                guard let (payloadKind, caretOffset) = await delegate.expandedPayload(from: chosen, of: item) else {
+                    return nil
+                }
+                return await delegate.appState.pasteCoordinator.executePaste(
                     payload: payloadKind, caretOffsetFromEnd: caretOffset
                 )
             }
@@ -101,19 +103,37 @@ extension AppDelegate {
         }
     }
 
-    /// The payload with a snippet's placeholders filled in, and how far the caret must move back afterwards.
-    func expandedPayload(from payload: PasteCoordinator.PayloadKind, of item: ClipboardItem)
-        -> (PasteCoordinator.PayloadKind, caretOffset: Int?)
+    /// The payload with a snippet's placeholders filled in, and how far the caret must move back afterwards. A snippet
+    /// that asks for values shows the prompt first; nil means the person cancelled it, or the paste was.
+    func expandedPayload(
+        from payload: PasteCoordinator.PayloadKind,
+        of item: ClipboardItem
+    )
+        async -> (PasteCoordinator.PayloadKind, caretOffset: Int?)?
     {
+        let isSnippet = item.isTemplate
+        let title = item.metadata.customTitle ?? String(localized: "Snippet")
         let priorClipboard = appState.clipboardBeforeLastItemWrite
         appState.clipboardBeforeLastItemWrite = ""
-        guard case let .text(str) = payload,
-              let expanded = TemplateExpander.expansionWithCaret(
-                  of: str,
-                  isSnippet: item.isTemplate,
-                  clipboardProvider: { priorClipboard }
-              ) else
-        {
+        guard case let .text(str) = payload, isSnippet, TemplateExpander.containsPlaceholders(str) else {
+            return (payload, nil)
+        }
+        let fields = FillInParser.fields(in: str)
+        var fills = SnippetFills.initial(for: fields)
+        if !fields.isEmpty {
+            guard let asked = await fillInPrompt.ask(title: title, fields: fields, initial: fills) else {
+                Self.pasteLogger.notice("[end] outcome=fill-in-cancelled")
+                return nil
+            }
+            fills = asked
+        }
+        guard let expanded = TemplateExpander.expansionWithCaret(
+            of: str,
+            isSnippet: true,
+            fills: fills,
+            targetApp: appState.pasteCoordinator.focusRestoration.targetName,
+            clipboardProvider: { priorClipboard }
+        ) else {
             return (payload, nil)
         }
         appState.writeText(expanded.text, protected: AppState.isProtected(AppPasteboard.general))
@@ -137,8 +157,10 @@ extension AppDelegate {
                 return nil
             }
             guard let rawPayload = delegate.writeItemToPasteboard(item) else { return nil }
-            let (payloadKind, caretOffset) = delegate.expandedPayload(from: rawPayload, of: item)
             delegate.appState.pasteCoordinator.focusRestoration.capture()
+            guard let (payloadKind, caretOffset) = await delegate.expandedPayload(from: rawPayload, of: item) else {
+                return nil
+            }
             return await delegate.appState.pasteCoordinator.executePaste(
                 payload: payloadKind, caretOffsetFromEnd: caretOffset
             )
@@ -223,7 +245,9 @@ extension AppDelegate {
         appState.pasteCoordinator.focusRestoration.capture()
         runPasteTask(.scriptOrURLScheme(itemID: item.id)) { delegate in
             guard let rawPayload = delegate.writeItemToPasteboard(item) else { return nil }
-            let (payloadKind, caretOffset) = delegate.expandedPayload(from: rawPayload, of: item)
+            guard let (payloadKind, caretOffset) = await delegate.expandedPayload(from: rawPayload, of: item) else {
+                return nil
+            }
             return await delegate.appState.pasteCoordinator.executePaste(
                 payload: payloadKind, caretOffsetFromEnd: caretOffset
             )

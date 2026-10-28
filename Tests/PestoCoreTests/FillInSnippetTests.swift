@@ -108,7 +108,8 @@ struct FillInSnippetTests {
 
     @Test("the app token is the paste target's name")
     func whenAppToken_thenTargetName() {
-        #expect(TemplateExpander.expansion(of: "Sent from {{app}}", isSnippet: true, targetApp: "Mail") == "Sent from Mail")
+        #expect(TemplateExpander
+            .expansion(of: "Sent from {{app}}", isSnippet: true, targetApp: "Mail") == "Sent from Mail")
         #expect(TemplateExpander.expansion(of: "Sent from {{app}}", isSnippet: true) == "Sent from ")
     }
 
@@ -120,6 +121,36 @@ struct FillInSnippetTests {
     }
 }
 
+@Suite("Fill-in prompt")
+struct FillInPromptTests {
+    private let fields = FillInParser.fields(
+        in: #"{{input:Name default="Ana"}}{{choice:Tone options="warm|formal"}}{{optional:PS}}x{{/optional}}"#
+    )
+
+    @Test("the prompt starts from defaults, the first choice and optional sections off")
+    func whenNothingRemembered_thenDefaults() {
+        let fills = SnippetFills.initial(for: fields)
+
+        #expect(fills.values == ["Name": "Ana", "Tone": "warm"])
+        #expect(fills.included.isEmpty)
+    }
+
+    @Test("a remembered value wins, unless a choice is no longer offered")
+    func whenRemembered_thenUsedIfStillValid() {
+        let fills = SnippetFills.initial(for: fields, remembered: ["Name": "Bo", "Tone": "gone", "PS": "1"])
+
+        #expect(fills.values == ["Name": "Bo", "Tone": "warm"])
+        #expect(fills.included == ["PS"])
+    }
+
+    @Test("several snippets ask each label once")
+    func whenManySnippets_thenFieldsMerged() {
+        let merged = FillInParser.fields(inAll: ["{{input:A}}{{input:B}}", "{{input:B}}{{input:C}}"])
+
+        #expect(merged.map(\.label) == ["A", "B", "C"])
+    }
+}
+
 @Suite("Fill-in imports")
 struct FillInImportTests {
     private func text(_ json: String) throws -> String? {
@@ -128,7 +159,8 @@ struct FillInImportTests {
 
     @Test("Raycast arguments become inputs and choices")
     func whenRaycastArgument_thenConverted() throws {
-        let result = try text(#"[{"text":"Hi {argument name=\"Who\"}, {argument name=\"Tone\" options=\"warm, formal\"} {argument}"}]"#)
+        let raw = #"Hi {argument name=\"Who\"}, {argument name=\"Tone\" options=\"warm, formal\"} {argument}"#
+        let result = try text(#"[{"text":"\#(raw)"}]"#)
 
         #expect(result == #"Hi {{input:Who}}, {{choice:Tone options="warm|formal"}} {{input:Argument}}"#)
     }
@@ -149,5 +181,37 @@ struct FillInImportTests {
 
         #expect(pack.withUnsupportedTokens == 0)
         #expect(pack.snippets.count == 1)
+    }
+}
+
+@Suite("Fill-ins in a stack")
+struct StackSnippetTests {
+    private func item(_ text: String) -> PasteStack.Item {
+        PasteStack.Item(
+            previewText: text,
+            payloadKind: .text(text),
+            pasteboardData: Data(text.utf8),
+            pasteboardType: "text/plain"
+        )
+    }
+
+    @Test("a stack asks for the fields of its snippets only, each label once")
+    func whenStackHasSnippets_thenFieldsAreMerged() {
+        let items = [item("{{input:A}}"), item("{{input:B}} {{input:A}}"), item("{{input:Z}}")]
+
+        let fields = PasteStack.fields(of: items, isSnippet: [true, true, false])
+
+        #expect(fields.map(\.label) == ["A", "B"])
+    }
+
+    @Test("an item is expanded with the answers, and its bytes follow its text")
+    func whenExpanded_thenTextAndBytesAgree() {
+        let result = item("Hi {{input:A}} in {{app}}").expandingSnippet(
+            fills: SnippetFills(values: ["A": "Ana"]), targetApp: "Mail", clipboard: ""
+        )
+
+        #expect(result.payloadKind == .text("Hi Ana in Mail"))
+        #expect(result.pasteboardData == Data("Hi Ana in Mail".utf8))
+        #expect(result.richPayload == nil)
     }
 }

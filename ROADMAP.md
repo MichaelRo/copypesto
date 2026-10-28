@@ -16,6 +16,7 @@ What is planned for Pesto, grouped into **Now**, **Next** and **Later**. For shi
 - **Apple Developer ID signing and notarization.** Signing release builds with a Developer ID certificate and notarizing with Apple so macOS opens Pesto without the first-launch Gatekeeper confirmation and keeps Keychain and Accessibility permissions across updates without re-prompting.
 - **Homebrew Cask.** Publishing an official Cask once builds are Developer ID notarized.
 - **Additional clipboard importers.** Expanding Settings → Data → Import to cover more macOS clipboard managers alongside the 11 already supported.
+- **Smart / Dynamic Snippets.** Snippets that ask for a value when you paste (a name, a choice, an optional paragraph) and remember what you typed, and a suggestion that notices clips differing in a few words and turns them into one snippet, all on your Mac and never sent anywhere ([ADR 0017](decisions/0017-smart-snippets.md), built, awaiting its release).
 
 ## Later: under consideration
 

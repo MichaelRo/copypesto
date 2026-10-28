@@ -12,6 +12,8 @@ struct SnippetEditorDraft: Identifiable, Equatable {
     var text: String
     /// The suggestion row the editor opens in place of, so it appears where the person clicked and not at the top.
     var anchorID: String?
+    /// The shortcut the person asked for with a new snippet, from the next free slot.
+    var shortcutSlot: Int?
 
     static func new(text: String = "", title: String = "", anchorID: String? = nil) -> SnippetEditorDraft {
         SnippetEditorDraft(clipID: nil, title: title, text: text, anchorID: anchorID)
@@ -34,7 +36,11 @@ struct SnippetEditorView: View {
     @Environment(\.pestoAccent) private var accent
     @State var draft: SnippetEditorDraft
     @State private var pendingInsertion: SnippetInsertionRequest?
+    @State private var suggestingNames = false
+    @State private var namesFailed = false
     @FocusState private var focus: Field?
+    /// The lowest free ⌃1 to ⌃9, or nil when none is: a new snippet can claim it when it is saved.
+    var freeShortcutSlot: Int?
     let onSave: (SnippetEditorDraft) -> Void
     let onCancel: () -> Void
 
@@ -43,14 +49,38 @@ struct SnippetEditorView: View {
     }
 
     private var preview: AttributedString {
-        let parts = SnippetPreview.make(from: draft.text)
-        var result = AttributedString(parts.before)
-        if parts.hasCaret {
-            var caret = AttributedString("\u{258F}")
-            caret.foregroundColor = accent
-            result += caret
+        var result = AttributedString()
+        var inOptional = false
+        for piece in SnippetPreview.pieces(from: draft.text) {
+            switch piece {
+            case let .text(text):
+                var run = AttributedString(text)
+                if inOptional { run.foregroundColor = .secondary }
+                result += run
+            case let .field(label, hint, kind):
+                var name = "\u{2009}\(label)"
+                if kind == .input, let hint { name += ": \(hint)" }
+                if kind == .choice { name += " \u{25BE}" }
+                name += "\u{2009}"
+                var chip = AttributedString(name)
+                let tint = kind == .context ? Color.secondary : accent
+                chip.foregroundColor = tint
+                chip.backgroundColor = tint.opacity(0.18)
+                result += chip
+            case let .optionalStart(label):
+                var tag = AttributedString("\u{2039}\(label)\u{203A} ")
+                tag.foregroundColor = .secondary
+                result += tag
+                inOptional = true
+            case .optionalEnd:
+                inOptional = false
+            case .caret:
+                var caret = AttributedString("\u{258F}")
+                caret.foregroundColor = accent
+                result += caret
+            }
         }
-        return result + AttributedString(parts.after)
+        return result
     }
 
     var body: some View {
@@ -63,61 +93,132 @@ struct SnippetEditorView: View {
                     .onSubmit(save)
                     .accessibilityIdentifier(AccessibilityID.snippetNameField)
             }
-            row("Text", alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
-                    SnippetBodyEditor(
-                        text: $draft.text,
-                        pendingInsertion: $pendingInsertion,
-                        focusOnAppear: !(draft.clipID == nil && draft.text.isEmpty)
-                    )
-                    .focused($focus, equals: .text)
-                    .padding(6)
-                    .frame(minHeight: 96, maxHeight: 180)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
-                    .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.35)) }
-                    placeholderChips
-                    if state == .needsPlaceholder {
-                        Text("Add a placeholder, like {{date}}, so Pesto can fill it in when you paste.")
-                            .pestoCaption()
-                            .accessibilityIdentifier(AccessibilityID.snippetNeedsPlaceholder)
-                    }
-                }
-            }
+            textColumn
+            questionsPanel
             row("Pastes as", alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     previewCard
-                    Text("The caret lands where {{cursor}} is, in apps that let Pesto move it. The first one counts.")
-                        .pestoCaption()
+                    Text(
+                        "Highlighted names are asked for when you paste. A dimmed part is optional. "
+                            + "The caret lands where {{cursor}} is, in apps that let Pesto move it."
+                    )
+                    .pestoCaption()
                 }
             }
-            HStack(spacing: 8) {
-                Text("Esc cancels. \u{2318}Return saves.").pestoCaption()
-                Spacer()
-                Button("Cancel", action: onCancel)
-                    .keyboardShortcut(.cancelAction)
-                Button("Save", action: save)
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .buttonStyle(.pestoProminent)
-                    .disabled(state != .ready)
-                    .accessibilityIdentifier(AccessibilityID.snippetSaveButton)
-            }
+            footer
         }
         .padding(.vertical, 6)
         .onAppear { focus = draft.clipID == nil && draft.text.isEmpty ? .name : .text }
     }
 
-    private var placeholderChips: some View {
-        PlaceholderFlowLayout(spacing: 6) {
-            Text("Insert").pestoCaption()
-            ForEach(SnippetDraft.placeholders, id: \.token) { placeholder in
-                Button(placeholder.token) {
-                    pendingInsertion = SnippetInsertionRequest(token: placeholder.token)
-                }
+    private var textColumn: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Text").scaledFont(size: 12, weight: .semibold).pestoQuiet()
+            SnippetBodyEditor(
+                text: $draft.text,
+                pendingInsertion: $pendingInsertion,
+                focusOnAppear: !(draft.clipID == nil && draft.text.isEmpty),
+                accent: NSColor(accent)
+            )
+            .focused($focus, equals: .text)
+            .padding(6)
+            .frame(minHeight: 120, maxHeight: 200)
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
+            .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.35)) }
+            HStack(spacing: 6) {
+                SnippetFieldMenu { token in pendingInsertion = SnippetInsertionRequest(token: token) }
+                FillFromMacMenu { token in pendingInsertion = SnippetInsertionRequest(token: token) }
+            }
+            if state == .needsPlaceholder {
+                Text("Add a question or a fill, like {{date}}, so Pesto can fill it in when you paste.")
+                    .pestoCaption()
+                    .accessibilityIdentifier(AccessibilityID.snippetNeedsPlaceholder)
+            }
+        }
+    }
+
+    private var questionsPanel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("When you paste").scaledFont(size: 12, weight: .semibold).pestoQuiet()
+                Spacer()
+                suggestNamesButton
+            }
+            SnippetQuestionRows(text: $draft.text)
+            suggestNamesNote
+        }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.04)))
+        .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.12)) }
+    }
+
+    private var footer: some View {
+        HStack(spacing: 8) {
+            shortcutRow
+            Spacer()
+            Button("Cancel", action: onCancel)
+                .keyboardShortcut(.cancelAction)
+            Button("Save", action: save)
+                .keyboardShortcut(.return, modifiers: .command)
+                .buttonStyle(.pestoProminent)
+                .disabled(state != .ready)
+                .accessibilityIdentifier(AccessibilityID.snippetSaveButton)
+        }
+    }
+
+    @ViewBuilder
+    private var shortcutRow: some View {
+        if draft.clipID == nil, let slot = freeShortcutSlot {
+            Toggle(isOn: Binding(
+                get: { draft.shortcutSlot != nil },
+                set: { draft.shortcutSlot = $0 ? slot : nil }
+            )) {
+                Text("Also paste it with \u{2303}\(slot) from any app")
+            }
+            .toggleStyle(.checkbox)
+        } else {
+            Text("Esc cancels. \u{2318}Return saves.").pestoCaption()
+        }
+    }
+
+    private var namedFields: Bool {
+        FillInParser.fields(in: draft.text).contains { $0.kind != .optional }
+    }
+
+    @ViewBuilder
+    private var suggestNamesButton: some View {
+        let availability = AIAvailability.current
+        if namedFields, availability.presentation != .hidden {
+            Button("Suggest Names") { suggestNames() }
                 .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
                 .controlSize(.small)
-                .font(.system(.caption, design: .monospaced, weight: .semibold))
-                .help(placeholder.meaning)
+                .disabled(!availability.isAvailable || suggestingNames)
+        }
+    }
+
+    @ViewBuilder
+    private var suggestNamesNote: some View {
+        let availability = AIAvailability.current
+        if namedFields, availability.presentation != .hidden {
+            if !availability.isAvailable {
+                Text(availability.message).pestoCaption()
+            } else if namesFailed {
+                Text("Couldn\u{2019}t suggest names. The questions keep their names.").pestoCaption()
+            }
+        }
+    }
+
+    private func suggestNames() {
+        suggestingNames = true
+        namesFailed = false
+        let template = draft.text
+        Task {
+            let renamed = await SnippetNaming.suggest(for: template, using: AIActionCoordinator.onDevice)
+            suggestingNames = false
+            if let renamed, draft.text == template {
+                draft.text = renamed
+            } else {
+                namesFailed = true
             }
         }
     }
@@ -166,7 +267,7 @@ struct SnippetEditorView: View {
     }
 }
 
-private struct PlaceholderFlowLayout: Layout {
+struct PlaceholderFlowLayout: Layout {
     var spacing: CGFloat = 6
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {
@@ -210,141 +311,5 @@ private struct PlaceholderFlowLayout: Layout {
             currentX += size.width + spacing
             lineHeight = max(lineHeight, size.height)
         }
-    }
-}
-
-private struct SnippetBodyEditor: NSViewRepresentable {
-    @Binding var text: String
-    @Binding var pendingInsertion: SnippetInsertionRequest?
-    let focusOnAppear: Bool
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text)
-    }
-
-    func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
-        scrollView.drawsBackground = false
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
-        scrollView.autohidesScrollers = true
-        scrollView.borderType = .noBorder
-
-        let textView = UndoableSnippetTextView()
-        textView.delegate = context.coordinator
-        textView.drawsBackground = false
-        textView.isRichText = false
-        textView.allowsUndo = true
-        textView.isAutomaticQuoteSubstitutionEnabled = false
-        textView.isAutomaticDashSubstitutionEnabled = false
-        textView.isAutomaticTextReplacementEnabled = false
-        textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        textView.textColor = .labelColor
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.autoresizingMask = [.width]
-        textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(
-            width: scrollView.contentSize.width,
-            height: .greatestFiniteMagnitude
-        )
-        textView.setAccessibilityIdentifier(AccessibilityID.snippetTextEditor)
-        textView.string = text
-        textView.setSelectedRange(NSRange(location: (text as NSString).length, length: 0))
-        textView.focusOnFirstWindowMove = focusOnAppear
-
-        scrollView.documentView = textView
-        context.coordinator.textView = textView
-        return scrollView
-    }
-
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
-        guard let textView = scrollView.documentView as? UndoableSnippetTextView else { return }
-        context.coordinator.textBinding = $text
-        if textView.string != text {
-            let previousRange = textView.selectedRange()
-            textView.string = text
-            let clampedLocation = min(previousRange.location, (text as NSString).length)
-            textView.setSelectedRange(NSRange(location: clampedLocation, length: 0))
-        }
-        if let insertion = pendingInsertion, context.coordinator.lastInsertionID != insertion.id {
-            context.coordinator.lastInsertionID = insertion.id
-            let step = SnippetDraft.inserting(insertion.token, into: textView.string, at: textView.selectedRange())
-            if textView.shouldChangeText(in: step.clampedRange, replacementString: insertion.token) {
-                textView.replaceCharacters(in: step.clampedRange, with: insertion.token)
-                textView.didChangeText()
-                textView.setSelectedRange(NSRange(location: step.cursorLocation, length: 0))
-                let newText = textView.string
-                DispatchQueue.main.async {
-                    context.coordinator.textBinding.wrappedValue = newText
-                }
-            }
-            textView.window?.makeFirstResponder(textView)
-        }
-    }
-
-    @MainActor
-    final class Coordinator: NSObject, NSTextViewDelegate {
-        var textBinding: Binding<String>
-        weak var textView: NSTextView?
-        var lastInsertionID: UUID?
-
-        init(text: Binding<String>) {
-            textBinding = text
-        }
-
-        func textDidChange(_ notification: Notification) {
-            guard let tv = notification.object as? NSTextView else { return }
-            let string = tv.string
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                if self.textBinding.wrappedValue != string {
-                    self.textBinding.wrappedValue = string
-                }
-            }
-        }
-    }
-}
-
-private final class UndoableSnippetTextView: NSTextView {
-    var focusOnFirstWindowMove = false
-
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        if focusOnFirstWindowMove, let window {
-            focusOnFirstWindowMove = false
-            window.makeFirstResponder(self)
-        }
-    }
-
-    override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        guard event.type == .keyDown else { return super.performKeyEquivalent(with: event) }
-        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        let key = event.charactersIgnoringModifiers?.lowercased()
-        if flags == .command {
-            switch key {
-            case "z":
-                undoManager?.undo()
-                return true
-            case "x":
-                cut(nil)
-                return true
-            case "c":
-                copy(nil)
-                return true
-            case "v":
-                paste(nil)
-                return true
-            case "a":
-                selectAll(nil)
-                return true
-            default:
-                break
-            }
-        } else if flags == [.command, .shift], key == "z" {
-            undoManager?.redo()
-            return true
-        }
-        return super.performKeyEquivalent(with: event)
     }
 }

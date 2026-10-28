@@ -117,10 +117,11 @@ A UI-test launch runs the real UI on isolated data. `RuntimeConfiguration` (Core
 |---|---|
 | `PESTO_UITEST_SESSION` | Names the pasteboard and command queue; the private defaults file lives in `PESTO_UITEST_DIR`, so it goes when the test's directory does |
 | `PESTO_UITEST_DIR` | Working directory shared by the app and the runner (store, paste log, commands, ready marker) |
-| `PESTO_UITEST_SEED` | `empty`, `basic` (14 items: text, code, URL, color, images, two masked secrets) or `large` (5,000) |
+| `PESTO_UITEST_SEED` | `empty`, `basic` (14 items: text, code, URL, color, images, two masked secrets), `large` (5,000) or `suggestion` (three text clips, the first pasted 6 times) |
 | `PESTO_UITEST_ACCESSIBILITY` | `trusted` or `denied`: the stubbed Accessibility state |
 | `PESTO_UITEST_IMPORT_FIXTURE` `otherfile` | Other File… reads a built-in CSV instead of opening a file panel |
 | `PESTO_UITEST_AI_FIXTURE` | `1` swaps the on-device model for a fake that answers at once (budget 300 characters) and reports AI as available, so `AIPartsUITests` drives the panel on any Mac |
+| `PESTO_UITEST_SUGGESTIONS_LIVE` | `1` makes the shelf-suggestion policy see global hotkeys as live (a UI-test launch registers none), so `ShelfSuggestionUITests` can see a banner; nothing is registered. Pair it with `PESTO_UITEST_SEED=suggestion` (three text clips, the first pasted 6 times) and `PESTO_UITEST_DEFAULT_shelfSuggestionsArmedAt` four days back |
 | `PESTO_UITEST_KEYLOSS` | `1` forces the "can't unlock your history" flow: the alert comes just after launch, and the restore window uses a fixture backup (`KeyLossFixture`: passphrase "fixture passphrase", one clip) instead of a file panel; use the empty seed |
 | `PESTO_UITEST_REAL_PASTE` | `1` uses the real pasteboard and a real paste instead of the private pasteboard and the paste log (`make bench-latency`) |
 | `PESTO_UITEST_PERF_TIMELINE` | `1` makes Pesto write its stage timings to `perf-timeline.tsv` (`make bench-latency`) |
@@ -294,6 +295,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   still pastes it in any app, and a toast says nothing was pasted for the deleted file.
 - The color panel from the shelf, Paste the previous clip after an iPhone copy, and the Other Devices chip with the
   setting off. Pass: the panel opens, the previous clip pastes, and the chip is hidden.
+- A snippet with fill-ins (ADR 0017), on hardware, in Mail, Notes, a browser field and Terminal: paste it from the shelf, from
+  a `⌃N` shortcut and with Paste the Previous Clip. Pass: the prompt opens over the app without taking the app's place in
+  the Dock or menu bar, typing works at once, Return pastes the filled text into the same field the caret was in within
+  about 300 ms of Return, Esc pastes nothing, and a second paste while the prompt is up closes it. Locking the screen with ⌃⌘Q leaves the prompt open (checked by hand 2026-10-28, accepted: it is still there after the unlock).
+  Also paste one by one with a fill-in snippet in the selection: the prompt comes before the first clip and ⌘V never waits.
 - The snippet editor in the list: add, edit, Esc, ⌘Return, and a clip's ⌃N keycap on the card and in the hover card.
   Pass: each works, and the keycap shows in both places.
 - Shelf suggestions (ADR 0014): paste the same clip 6+ times from the shelf. Pass: after 1.5 s dwell, a bottom banner

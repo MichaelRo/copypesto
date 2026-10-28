@@ -54,6 +54,11 @@ final class AppState {
     private(set) var authenticationAvailability = AuthenticationAvailability.available
     @ObservationIgnored private var lastBiometricUnlock: Date?
     @ObservationIgnored private var lockWatchdog: Task<Void, Never>?
+    @ObservationIgnored var similarityTask: Task<Void, Never>?
+    @ObservationIgnored static let similarityLogger = Logger(
+        subsystem: AppIdentity.logSubsystem,
+        category: "Similarity"
+    )
     /// The Touch ID request the shelf is showing, if any (`AppState+ShelfAuthentication.swift`).
     var shelfAuthentication: ShelfAuthenticationRequest?
     @ObservationIgnored var shelfAuthenticationContinuation: CheckedContinuation<Bool, Never>?
@@ -272,6 +277,8 @@ final class AppState {
     /// Called when the user taps the Settings gear button inside the overlay.
     /// Wired by AppDelegate to hide the overlay then open the Settings window.
     @ObservationIgnored var openSettingsFromOverlay: (@MainActor () -> Void)?
+    /// Shows the fill-in prompt for a snippet and answers nil when it is cancelled (set by the delegate).
+    @ObservationIgnored var askFillIns: (@MainActor (String, [SnippetField], SnippetFills) async -> SnippetFills?)?
     /// Floats a notice that does not need the shelf (set by the delegate).
     @ObservationIgnored var showToast: (@MainActor (StatusToast) -> Void)?
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?
@@ -400,6 +407,7 @@ final class AppState {
         if isHistoryLocked {
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
+            stopSimilarityWork()
             dismissUndoOffer()
             suppressShelfSuggestions()
             PreviewTextCache.shared.clear()
@@ -428,8 +436,10 @@ final class AppState {
 
     func completeUnlock(at date: Date = Date()) {
         AuthenticationGrace.shared.record()
+        let wasLocked = isHistoryLocked
         isHistoryLocked = false
         lastBiometricUnlock = date
+        if wasLocked { startSimilarityWork() }
     }
 
     /// Immediately locks history and purges decrypted previews from memory.
@@ -440,6 +450,7 @@ final class AppState {
         clipboardBeforeLastItemWrite = ""
         aiResult = nil
         storageService?.undoHistory.clear()
+        stopSimilarityWork()
         dismissUndoOffer()
         suppressShelfSuggestions()
         PreviewTextCache.shared.clear()

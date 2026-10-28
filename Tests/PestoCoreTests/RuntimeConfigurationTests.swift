@@ -31,6 +31,24 @@ struct RuntimeConfigurationTests {
         #expect(!parse([], ["PESTO_UITEST_AI_FIXTURE": "1"]).aiFixture)
     }
 
+    @Test("a UI-test launch can report hotkeys live to the suggestion policy, and a normal launch never does")
+    func whenSuggestionsLive_thenOnlyInUITestMode() {
+        #expect(!parse(["-UITestMode"]).suggestionsLive)
+        #expect(parse(["-UITestMode"], ["PESTO_UITEST_SUGGESTIONS_LIVE": "1"]).suggestionsLive)
+        #expect(!parse([], ["PESTO_UITEST_SUGGESTIONS_LIVE": "1"]).suggestionsLive)
+    }
+
+    @Test("the suggestion seed is three ordinary clips and a family of three look-alikes over three days")
+    func whenSuggestionSeed_thenOrdinaryClipsThenALookalikeFamily() {
+        let captures = SeedFixtures.captures(for: .suggestion)
+        #expect(captures.count == 6)
+        let family = captures.suffix(3).compactMap(\.payloadString)
+        #expect(family.allSatisfy { $0.contains("has shipped and should arrive on Friday") })
+        let days = Set(captures.suffix(3).map { Calendar.current.startOfDay(for: $0.timestamp) })
+        #expect(days.count == 3)
+        #expect(SeedProfile(rawValue: "suggestion") == .suggestion)
+    }
+
     @Test("a normal launch carries no test configuration")
     func whenNormalLaunch_thenDefaults() {
         let config = parse([])

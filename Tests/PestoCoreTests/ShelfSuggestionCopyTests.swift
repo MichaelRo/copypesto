@@ -27,7 +27,7 @@ struct ShelfSuggestionCopyTests {
         let offerPinned = ShelfSuggestionCopy.shortcutOfferTitle(pasteCount: 6, keyString: "⌃3", isPinned: true)
         let dormant = ShelfSuggestionCopy.dormantTitle(keyString: "⌃4", weeks: 8)
         let reminder = ShelfSuggestionCopy.reminderTitle(shelfPastes: 5, keyString: "⌃3")
-        let snippet = ShelfSuggestionCopy.snippetTitle(pasteCount: 8)
+        let snippet = ShelfSuggestionCopy.snippetTitle()
         let off = ShelfSuggestionCopy.offNoticeTitle
 
         let allTexts = [offerUnpinned, offerPinned, dormant, reminder, snippet, off]

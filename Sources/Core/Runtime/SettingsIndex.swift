@@ -335,6 +335,14 @@ public enum SettingsIndex {
             "template", "placeholder", "date", "time", "text expander", "boilerplate", "canned"
         ),
         entry(
+            "Remember fill-in values", "Snippets", "Remember fill-in values",
+            "fill-in", "input", "field", "last value", "remember", "prefill", "name"
+        ),
+        entry(
+            "Suggestion statistics", "Snippets", "Suggestion statistics",
+            "suggestions", "accepted", "declined", "summary", "numbers", "copy"
+        ),
+        entry(
             "Apple Intelligence", "General", "Apple Intelligence",
             "on-device", "model", "summarize", "translate", "extract", "describe image", "ask pesto", "ai", "turn off"
         ),

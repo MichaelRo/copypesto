@@ -23,6 +23,7 @@ public enum SnippetDraft: Equatable, Sendable {
         SnippetPlaceholder(token: "{{date+1d}}", meaning: "tomorrow's date"),
         SnippetPlaceholder(token: "{{clipboard}}", meaning: "current clipboard text"),
         SnippetPlaceholder(token: "{{uuid}}", meaning: "a new unique ID"),
+        SnippetPlaceholder(token: "{{app}}", meaning: "the app you paste into"),
         SnippetPlaceholder(token: "{{cursor}}", meaning: "removed when you paste")
     ]
 

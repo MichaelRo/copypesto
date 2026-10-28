@@ -129,7 +129,8 @@ extension AppState {
             hasOnboarded: AppDefaults.store.value(for: Setting.hasOnboarded),
             armedAt: armedAt,
             lastShownAt: lastShownAt,
-            hotkeysLive: LaunchMode.current.usesSystemIntegrations || LaunchMode.current == .hostedTests,
+            hotkeysLive: LaunchMode.current.usesSystemIntegrations || LaunchMode.current == .hostedTests
+                || RuntimeConfiguration.current.suggestionsLive,
             hasAccessibility: hasAccessibilityPermission,
             isHistoryLocked: isHistoryLocked,
             isContentCovered: isContentCovered(screenSharingPrivacy: AppDefaults.store
@@ -153,8 +154,8 @@ extension AppState {
         case let .shortcutRelease(_, slot, weeks):
             "Shortcut suggestion. You have not used Control \(slot) in \(weeks) weeks. "
                 + "Remove the shortcut? The clip stays pinned."
-        case let .snippet(_, pasteCount):
-            "Suggestion. You have pasted this clip \(pasteCount) times. Make it a snippet?"
+        case .snippet:
+            "Suggestion. These clips look alike. Make one snippet with a fill-in for what changes?"
         }
         Announcer.announce(announcement)
     }

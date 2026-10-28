@@ -1,8 +1,7 @@
 # 0017. Snippets ask for fill-in fields at paste time, and Pesto offers them for clips that differ in a few words
 
-Status: Proposed
+Status: Accepted
 
-Draft for Michael to decide. Research and the evaluation of each scope: [`docs/research/smart-snippets.md`](../docs/research/smart-snippets.md).
 
 ## Context
 A snippet in Pesto is a pinned clip whose text holds `{{token}}` (`docs/design/snippets-and-suggestions.md`), expanded

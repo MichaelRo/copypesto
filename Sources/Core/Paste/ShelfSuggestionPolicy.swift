@@ -209,7 +209,7 @@ public enum ShelfSuggestionPolicy {
 
     private static func nextSnippet(
         eligible: [ShelfClipFacts],
-        context _: ShelfSuggestionContext,
+        context: ShelfSuggestionContext,
         ledger: SuggestionLedger,
         calendar _: Calendar
     )

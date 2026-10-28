@@ -66,12 +66,15 @@ public enum SeedFixtures {
         case .suggestion: suggestionCaptures()
         }
         return captures.enumerated().map { index, capture in
-            var age = Double(captures.count - 1 - index) * 60
-            if profile == .suggestion, let family = lookalikeAges[index - (captures.count - lookalikeAges.count)] {
-                age = family
-            }
+            let age = age(ofCapture: index, of: captures.count, in: profile)
             return capture.with(timestamp: now.addingTimeInterval(-age))
         }
+    }
+
+    private static func age(ofCapture index: Int, of count: Int, in profile: SeedProfile) -> Double {
+        let minutes = Double(count - 1 - index) * 60
+        guard profile == .suggestion else { return minutes }
+        return lookalikeAges[index - (count - lookalikeAges.count)] ?? minutes
     }
 
     public static func hash(of payload: Data) -> String {

@@ -38,9 +38,14 @@ struct RuntimeConfigurationTests {
         #expect(!parse([], ["PESTO_UITEST_SUGGESTIONS_LIVE": "1"]).suggestionsLive)
     }
 
-    @Test("the suggestion seed is three clips and the first is the one the harness gives pastes")
-    func whenSuggestionSeed_thenFirstCaptureIsTheSuggestionClip() {
-        #expect(SeedFixtures.captures(for: .suggestion).count == 3)
+    @Test("the suggestion seed is three ordinary clips and a family of three look-alikes over three days")
+    func whenSuggestionSeed_thenOrdinaryClipsThenALookalikeFamily() {
+        let captures = SeedFixtures.captures(for: .suggestion)
+        #expect(captures.count == 6)
+        let family = captures.suffix(3).compactMap(\.payloadString)
+        #expect(family.allSatisfy { $0.contains("has shipped and should arrive on Friday") })
+        let days = Set(captures.suffix(3).map { Calendar.current.startOfDay(for: $0.timestamp) })
+        #expect(days.count == 3)
         #expect(SeedProfile(rawValue: "suggestion") == .suggestion)
     }
 

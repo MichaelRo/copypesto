@@ -40,7 +40,7 @@ lists them.
 - Saving and editing a snippet go through `StorageService.ingest` (`addSnippet`, `updateSnippet`), so the text is
   sealed, masked if sensitive, searchable and in every backup (ADR 0002). Text the history already holds is pinned in
   place instead of becoming a second clip. The Add Snippet sheet (`SnippetDraft`) refuses text with no placeholder,
-  because it would be saved and never listed, and offers an Insert Placeholder menu.
+  because it would be saved and never listed, and offers Add Question and Fill From Mac menus; questions are tinted in the text and listed in a When you paste panel (ADR 0017).
 - **Snippet suggestions** (`SnippetSuggester`): `SnippetStarters` (five templates, each with a placeholder and a one-line
   blurb in Pesto's voice) and text pasted from the shelf three or more times. Never offered: a secret, a picture, a
   pinned clip, text under 8 or over 2,000 characters. At most three; a dismissed id is remembered

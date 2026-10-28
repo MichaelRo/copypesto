@@ -86,6 +86,7 @@ enum AccessibilityID {
     static let deleteConfirmButton = "delete-confirm"
     static let stackCancelButton = "stack-cancel"
     static let fillInPasteButton = "fill-in-paste"
+    static let snippetQuestionName = "snippet-question-name"
     static let deleteCancelButton = "delete-cancel"
 
     static let searchButton = "toolbar-search"

@@ -2,7 +2,8 @@
 import PestoCore
 import SwiftUI
 
-/// "Ask for…" in the Add Snippet sheet: pick the kind of value a snippet asks for, name it, and Pesto writes the token
+/// "Add Question…" in the snippet editor: pick the kind of value a snippet asks for, name it, and Pesto writes the
+/// token
 /// so nobody types attributes by hand.
 struct SnippetFieldMenu: View {
     private enum Choice: String, CaseIterable, Identifiable {
@@ -26,7 +27,7 @@ struct SnippetFieldMenu: View {
         PopUpMenuButton(items: Choice.allCases.map { option in
             .action(String(localized: String.LocalizationValue(option.rawValue))) { open(option) }
         }) {
-            Text("Ask for\u{2026}")
+            Text("Add Question\u{2026}")
         }
         .buttonStyle(.bordered)
         .buttonBorderShape(.capsule)

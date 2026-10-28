@@ -12,12 +12,15 @@ extension AppState {
         similarityTask = Task(priority: .background) { [weak self] in
             do {
                 try await service.loadSimilarityIndex()
+                var cursor: Date?
                 while !Task.isCancelled {
                     if self?.isSimilarityWorkPaused() ?? true {
                         try await Task.sleep(for: .seconds(30))
                         continue
                     }
-                    guard try await service.signMissingClips(limit: 10) > 0 else { return }
+                    let pass = try await service.signMissingClips(limit: 10, before: cursor)
+                    if pass.isFinished { return }
+                    cursor = pass.nextCursor
                     try await Task.sleep(for: .milliseconds(250))
                 }
             } catch is CancellationError {

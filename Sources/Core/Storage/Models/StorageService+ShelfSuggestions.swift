@@ -104,9 +104,11 @@ public extension StorageService {
         let members = (try? modelContext.fetch(FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { ids.contains($0.id) }
         ))) ?? []
-        let days = Set(members.map { ItemMetadata.dayNumber(of: $0.timestamp) }).count
-        let representative = ids.min { $0.uuidString < $1.uuidString }
-        return FamilyFacts(size: ids.count, days: max(1, days), representative: representative)
+        let open = members.filter { !$0.isPinned }
+        guard !item.isPinned, open.count > 1 else { return alone }
+        let days = Set(open.map { ItemMetadata.dayNumber(of: $0.timestamp) }).count
+        let representative = open.map(\.id).min { $0.uuidString < $1.uuidString }
+        return FamilyFacts(size: open.count, days: max(1, days), representative: representative)
     }
 
     private struct FamilyFacts {

@@ -297,7 +297,7 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - A snippet with fill-ins (ADR 0017), on hardware, in Mail, Notes, a browser field and Terminal: paste it from the shelf, from
   a `⌃N` shortcut and with Paste the Previous Clip. Pass: the prompt opens over the app without taking the app's place in
   the Dock or menu bar, typing works at once, Return pastes the filled text into the same field the caret was in within
-  about 300 ms of Return, Esc pastes nothing, and a second paste or locking the Mac while the prompt is up closes it.
+  about 300 ms of Return, Esc pastes nothing, and a second paste while the prompt is up closes it. Locking the screen with ⌃⌘Q leaves the prompt open (checked by hand 2026-10-28, accepted: it is still there after the unlock).
   Also paste one by one with a fill-in snippet in the selection: the prompt comes before the first clip and ⌘V never waits.
 - The snippet editor in the list: add, edit, Esc, ⌘Return, and a clip's ⌃N keycap on the card and in the hover card.
   Pass: each works, and the keycap shows in both places.

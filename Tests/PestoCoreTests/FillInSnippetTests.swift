@@ -307,3 +307,29 @@ struct FillInMemoryStorageTests {
         #expect(item.metadataCiphertext?.range(of: Data("Zebediah".utf8)) == nil)
     }
 }
+
+@Suite("Snippet preview with fill-ins")
+struct SnippetRichPreviewTests {
+    @Test("fields, a choice, the app, an optional section and the caret each show as their own piece")
+    func whenTemplateHasEverything_thenPiecesNameThem() {
+        let template = #"Hi {{input:Name default="Ana"}}, {{choice:Tone options="warm|formal"}} "#
+            + "from {{app}}.{{cursor}}{{optional:P.S.}} Thanks!{{/optional}}"
+
+        let pieces = SnippetPreview.pieces(from: template)
+
+        #expect(pieces == [
+            .text("Hi "), .field(label: "Name", hint: "Ana", kind: .input), .text(", "),
+            .field(label: "Tone", hint: "warm / formal", kind: .choice), .text(" from "),
+            .field(label: "app", hint: nil, kind: .context), .text("."), .caret,
+            .optionalStart(label: "P.S."), .text(" Thanks!"), .optionalEnd
+        ])
+    }
+
+    @Test("dates and the clock are filled in as before, and plain text is one piece")
+    func whenOnlyPlaceholders_thenFilledIn() {
+        #expect(SnippetPreview.pieces(from: "Just text") == [.text("Just text")])
+        let dated = SnippetPreview.pieces(from: "On {{isodate}} ok")
+        #expect(dated.count == 1)
+        if case let .text(text) = dated[0] { #expect(!text.contains("{{")) }
+    }
+}

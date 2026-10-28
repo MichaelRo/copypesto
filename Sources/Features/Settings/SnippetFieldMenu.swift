@@ -6,10 +6,10 @@ import SwiftUI
 /// so nobody types attributes by hand.
 struct SnippetFieldMenu: View {
     private enum Choice: String, CaseIterable, Identifiable {
-        case text = "Text Field"
-        case multiline = "Multi-Line Field"
-        case choice = "Choice"
-        case optional = "Optional Section"
+        case text = "Text Field…"
+        case multiline = "Multi-Line Field…"
+        case choice = "Choice…"
+        case optional = "Optional Section…"
 
         var id: String {
             rawValue
@@ -23,14 +23,11 @@ struct SnippetFieldMenu: View {
     @State private var detail = ""
 
     var body: some View {
-        Menu {
-            ForEach(Choice.allCases) { option in
-                Button(LocalizedStringKey(option.rawValue)) { open(option) }
-            }
-        } label: {
+        PopUpMenuButton(items: Choice.allCases.map { option in
+            .action(String(localized: String.LocalizationValue(option.rawValue))) { open(option) }
+        }) {
             Text("Ask for\u{2026}")
         }
-        .menuStyle(.button)
         .buttonStyle(.bordered)
         .buttonBorderShape(.capsule)
         .controlSize(.small)
@@ -74,7 +71,7 @@ struct SnippetFieldMenu: View {
     }
 
     private var detailPrompt: String {
-        choice == .choice ? "Hi|Hello|Dear" : "Optional"
+        choice == .choice ? "Hi, Hello, Dear" : "Optional"
     }
 
     private var field: SnippetField? {
@@ -89,7 +86,7 @@ struct SnippetFieldMenu: View {
             )
         case .choice:
             SnippetField(
-                label: name, kind: .choice(extra.split(separator: "|").map { $0.trimmingCharacters(in: .whitespaces) }),
+                label: name, kind: .choice(extra.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }),
                 defaultValue: nil
             )
         case .optional: SnippetField(label: name, kind: .optional, defaultValue: nil)

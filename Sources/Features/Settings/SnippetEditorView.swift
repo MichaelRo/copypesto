@@ -12,6 +12,8 @@ struct SnippetEditorDraft: Identifiable, Equatable {
     var text: String
     /// The suggestion row the editor opens in place of, so it appears where the person clicked and not at the top.
     var anchorID: String?
+    /// The shortcut the person asked for with a new snippet, from the next free slot.
+    var shortcutSlot: Int?
 
     static func new(text: String = "", title: String = "", anchorID: String? = nil) -> SnippetEditorDraft {
         SnippetEditorDraft(clipID: nil, title: title, text: text, anchorID: anchorID)
@@ -34,7 +36,11 @@ struct SnippetEditorView: View {
     @Environment(\.pestoAccent) private var accent
     @State var draft: SnippetEditorDraft
     @State private var pendingInsertion: SnippetInsertionRequest?
+    @State private var suggestingNames = false
+    @State private var namesFailed = false
     @FocusState private var focus: Field?
+    /// The lowest free ⌃1 to ⌃9, or nil when none is: a new snippet can claim it when it is saved.
+    var freeShortcutSlot: Int?
     let onSave: (SnippetEditorDraft) -> Void
     let onCancel: () -> Void
 
@@ -100,6 +106,9 @@ struct SnippetEditorView: View {
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
                     .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.35)) }
                     placeholderChips
+                    suggestNamesRow
+                    SnippetFieldChips(text: $draft.text)
+                    shortcutRow
                     if state == .needsPlaceholder {
                         Text("Add a placeholder, like {{date}}, so Pesto can fill it in when you paste.")
                             .pestoCaption()
@@ -131,6 +140,56 @@ struct SnippetEditorView: View {
         }
         .padding(.vertical, 6)
         .onAppear { focus = draft.clipID == nil && draft.text.isEmpty ? .name : .text }
+    }
+
+    @ViewBuilder
+    private var shortcutRow: some View {
+        if draft.clipID == nil, let slot = freeShortcutSlot {
+            Toggle(isOn: Binding(
+                get: { draft.shortcutSlot != nil },
+                set: { draft.shortcutSlot = $0 ? slot : nil }
+            )) {
+                Text("Also paste it with \u{2303}\(slot) from any app")
+            }
+            .toggleStyle(.checkbox)
+        }
+    }
+
+    private var namedFields: Bool {
+        FillInParser.fields(in: draft.text).contains { $0.kind != .optional }
+    }
+
+    @ViewBuilder
+    private var suggestNamesRow: some View {
+        let availability = AIAvailability.current
+        if namedFields, availability.presentation != .hidden {
+            HStack(spacing: 8) {
+                Button("Suggest Names") { suggestNames() }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(!availability.isAvailable || suggestingNames)
+                if !availability.isAvailable {
+                    Text(availability.message).pestoCaption()
+                } else if namesFailed {
+                    Text("Couldn\u{2019}t suggest names. The fields keep their names.").pestoCaption()
+                }
+            }
+        }
+    }
+
+    private func suggestNames() {
+        suggestingNames = true
+        namesFailed = false
+        let template = draft.text
+        Task {
+            let renamed = await SnippetNaming.suggest(for: template, using: AIActionCoordinator.onDevice)
+            suggestingNames = false
+            if let renamed, draft.text == template {
+                draft.text = renamed
+            } else {
+                namesFailed = true
+            }
+        }
     }
 
     private var placeholderChips: some View {
@@ -196,7 +255,7 @@ struct SnippetEditorView: View {
     }
 }
 
-private struct PlaceholderFlowLayout: Layout {
+struct PlaceholderFlowLayout: Layout {
     var spacing: CGFloat = 6
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {

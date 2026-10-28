@@ -111,6 +111,7 @@ struct SelectionActionBar: View {
         let icon: String
         let role: PestoCapsuleButtonStyle.Role
         let help: LocalizedStringKey
+        var shortcut: String?
     }
 
     private func actions(iconOnly: Bool) -> some View {
@@ -119,7 +120,8 @@ struct SelectionActionBar: View {
                 actionButton(
                     BarAction(
                         title: "Paste All", icon: "text.append", role: .primary,
-                        help: "Join the selected clips with a blank line and paste them at once"
+                        help: "Join the selected clips with a blank line and paste them at once (\u{2318}P)",
+                        shortcut: "\u{2318}P"
                     ),
                     iconOnly: iconOnly, action: onPasteAll
                 )
@@ -130,7 +132,8 @@ struct SelectionActionBar: View {
                 BarAction(
                     title: "Paste One by One", icon: "square.stack.3d.up.fill",
                     role: canPasteAll ? .secondary : .primary,
-                    help: "Paste one selected clip each time you press ⌘V"
+                    help: "Paste one selected clip each time you press ⌘V (\u{21E7}\u{2318}P)",
+                    shortcut: "\u{21E7}\u{2318}P"
                 ),
                 iconOnly: iconOnly, action: onPasteOneByOne
             )
@@ -146,9 +149,17 @@ struct SelectionActionBar: View {
 
     private func actionButton(_ spec: BarAction, iconOnly: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Label(spec.title, systemImage: spec.icon)
-                .scaledFont(size: 12, weight: .semibold, maxScale: 1.3)
-                .modifier(IconOnlyIf(iconOnly))
+            HStack(spacing: 6) {
+                Label(spec.title, systemImage: spec.icon)
+                    .scaledFont(size: 12, weight: .semibold, maxScale: 1.3)
+                    .modifier(IconOnlyIf(iconOnly))
+                if let shortcut = spec.shortcut, !iconOnly {
+                    Text(shortcut)
+                        .scaledFont(size: 10.5, weight: .medium, maxScale: 1.3)
+                        .opacity(0.7)
+                        .accessibilityHidden(true)
+                }
+            }
         }
         .buttonStyle(.pestoCapsule(spec.role))
         .help(spec.help)

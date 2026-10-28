@@ -68,31 +68,11 @@ struct SnippetsView: View {
             } header: {
                 Text("Placeholders")
             } footer: {
-                Text("Use these inside a snippet. They are filled in when you paste it.").pestoCaption()
-            }
-
-            Section {
-                Toggle(isOn: $remembersFillIns) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Remember fill-in values")
-                        Text(
-                            remembersFillIns
-                                ? "A snippet starts with what you typed last time. It is kept with the snippet, "
-                                + "sealed like its text."
-                                : "A snippet starts empty every time. What was remembered is erased."
-                        )
-                        .pestoCaption()
-                    }
-                }
-                .settingsRow("Remember fill-in values")
-                .onChange(of: remembersFillIns) { _, remembers in
-                    guard !remembers else { return }
-                    Task {
-                        await appState.attempt("Couldn\u{2019}t erase the remembered values") {
-                            try await appState.storageService?.forgetAllFillIns()
-                        }
-                    }
-                }
+                Text(
+                    "Use these inside a snippet. They are filled in when you paste it. "
+                        + "\u{201C}Ask for\u{2026}\u{201D} in the editor asks a question instead."
+                )
+                .pestoCaption()
             }
 
             Section {
@@ -143,20 +123,53 @@ struct SnippetsView: View {
                         .pestoCaption()
                 }
             }
+
+            Section {
+                Toggle(isOn: $remembersFillIns) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Remember fill-in values")
+                        Text(
+                            remembersFillIns
+                                ? "A snippet starts with what you typed last time. It is kept with the snippet, "
+                                + "sealed like its text."
+                                : "A snippet starts empty every time. What was remembered is erased."
+                        )
+                        .pestoCaption()
+                    }
+                }
+                .settingsRow("Remember fill-in values")
+                .onChange(of: remembersFillIns) { _, remembers in
+                    guard !remembers else { return }
+                    Task {
+                        await appState.attempt("Couldn\u{2019}t erase the remembered values") {
+                            try await appState.storageService?.forgetAllFillIns()
+                        }
+                    }
+                }
+            }
+
+            Section {
+                suggestionStatistics
+            } header: {
+                Text("Suggestion statistics")
+            } footer: {
+                Text("Kept on this Mac, from the suggestions the shelf has shown. Nothing is sent anywhere.")
+                    .pestoCaption()
+            }
         }
         .formStyle(.grouped)
         .onChange(of: addRequest) { editor = .new() }
         .onAppear {
             if let seedID = appState.pendingSnippetSeed {
                 appState.pendingSnippetSeed = nil
-                if let item = pastedOften.first(where: { $0.id == seedID }) ?? pinnedItems
-                    .first(where: { $0.id == seedID })
-                {
-                    editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
-                } else if let item = try? modelContext
-                    .fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == seedID })).first
-                {
-                    editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+                Task {
+                    if let texts = await appState.storageService?.familyTexts(of: seedID),
+                       let proposal = TemplateInferrer.propose(from: texts)
+                    {
+                        editor = .new(text: proposal.template)
+                        return
+                    }
+                    seedFromClip(seedID)
                 }
             }
         }
@@ -176,10 +189,36 @@ struct SnippetsView: View {
         }
     }
 
+    private var suggestionStatistics: some View {
+        let summary = SuggestionStats(
+            ledger: SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
+        ).summary
+        return HStack(alignment: .top, spacing: 12) {
+            Text(verbatim: summary)
+                .scaledFont(size: 11.5, design: .monospaced)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button("Copy Summary") { appState.writeText(summary, protected: false) }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+        }
+        .settingsRow("Suggestion statistics")
+    }
+
+    private func seedFromClip(_ seedID: UUID) {
+        if let item = pastedOften.first(where: { $0.id == seedID }) ?? pinnedItems.first(where: { $0.id == seedID }) {
+            editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+        } else if let item = try? modelContext
+            .fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == seedID })).first
+        {
+            editor = .new(text: item.displayPreviewText)
+        }
+    }
+
     // MARK: - Sub-views
 
     private func editorView(_ draft: SnippetEditorDraft) -> some View {
-        SnippetEditorView(draft: draft, onSave: save, onCancel: { editor = nil })
+        SnippetEditorView(draft: draft, freeShortcutSlot: freeShortcutSlot, onSave: save, onCancel: { editor = nil })
             .id(draft.id)
     }
 
@@ -292,9 +331,21 @@ struct SnippetsView: View {
             if let clipID = draft.clipID {
                 _ = try? await service.updateSnippet(id: clipID, title: title.isEmpty ? nil : title, text: text)
             } else {
-                _ = try? await service.addSnippet(text, title: title.isEmpty ? nil : title)
+                let id = try? await service.addSnippet(text, title: title.isEmpty ? nil : title)
+                if let id, let slot = draft.shortcutSlot {
+                    await appState.attempt("Couldn\u{2019}t set the shortcut") {
+                        try await service.assignFreeHotkeySlot(slot, to: id)
+                    }
+                }
             }
         }
+    }
+
+    private var freeShortcutSlot: Int? {
+        ShelfSuggestionPolicy.freeSlot(
+            assigned: Set(pinnedItems.compactMap(\.pinnedHotkeyIndex)),
+            unavailable: appState.hotkeyController.unavailableSlots
+        )
     }
 
     private func addStarter(_ starter: SnippetStarter) {

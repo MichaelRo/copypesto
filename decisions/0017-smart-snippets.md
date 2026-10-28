@@ -2,6 +2,7 @@
 
 Status: Accepted
 
+Research and the evaluation of each scope: [`docs/research/smart-snippets.md`](../docs/research/smart-snippets.md). What changed in the building is under "As built".
 
 ## Context
 A snippet in Pesto is a pinned clip whose text holds `{{token}}` (`docs/design/snippets-and-suggestions.md`), expanded
@@ -149,3 +150,26 @@ permission), phrase detection across unrelated clips (weak signal, highest cost)
 - `decisions/0002-clip-data-is-sealed-at-rest.md` is not edited; this record adds the sealed fields
 - `decisions/0014-shelf-suggestions.md` status line
 - `Sources/Core/Paste/CLAUDE.md` (the prompt in the paste task), `Sources/Core/AI/CLAUDE.md` (naming, click only)
+
+## As built
+Differences from the plan above, found while building and measured on the developer Mac (optimized build, 5,000 clips,
+`SimilarityPerformanceTests`):
+- **Signatures live in the sealed metadata (`ItemMetadata.signature`), not in a new column.** No SwiftData migration, the same
+  sealing and AAD as titles and notes, wiped with the clip. The backup lists metadata fields by name, so it carries none of
+  them (nor the remembered values or paste days); the idle backfill signs clips again after a restore.
+- **The numbers:** a signature costs 37 µs on average (up to a few hundred µs for 2,000 characters), the index builds in 16 ms
+  for 5,000 signatures, a lookup takes 3.5 µs, the index is about 2.2 MB, and precision on synthetic families is 1.00.
+  **Recall is 1.00 for texts of 35 words or more and 0.48 at 12 words** with two changing words: very short messages are
+  found about half the time. This is the cost of preferring precision; a short template is simply suggested less.
+- **The statistics summary is in Settings → Snippets**, not "Advanced" (there is no such pane); it is the ledger's counts per
+  kind, nothing else.
+- **The Settings list "From your clips" (3 pastes) is unchanged**; only the shelf suggestion moved to look-alike families
+  and to the three-days habit for shortcuts. The numbers 3 days in 30, 3 clips on 2 days, 40 to 2,000 characters and a 0.5
+  similarity are starting values in `ShelfSuggestionPolicy.Thresholds` and `TextSignature`, to be read against the statistics.
+- **A family's "days" are the days of each clip's last use** (`timestamp`), because a clip keeps no creation date.
+- **The proposal is the editor itself**, opened with the template: the fields show as chips under the text (a chip renames
+  its field everywhere), and a new snippet offers a checkbox "Also paste it with ⌃N from any app" when a slot is free.
+- **Not built:** a separate proposal sheet, and a Settings panel for the on-device model's reason beyond the existing
+  availability message.
+- **Choice options are typed with commas in the *Ask for…* popover** and written with `|` in the token, so an option cannot
+  hold a comma there (the token itself can).

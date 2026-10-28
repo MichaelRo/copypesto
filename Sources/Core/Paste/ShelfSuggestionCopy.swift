@@ -33,8 +33,8 @@ public enum ShelfSuggestionCopy {
         )
     }
 
-    public static func snippetTitle(pasteCount: Int) -> String {
-        String(localized: "You have pasted this clip \(pasteCount) times. Make it a snippet?")
+    public static func snippetTitle() -> String {
+        String(localized: "These clips look alike. Make one snippet with a fill-in for what changes?")
     }
 
     public static var offNoticeTitle: String {

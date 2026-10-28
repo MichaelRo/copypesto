@@ -93,7 +93,8 @@ extension HostedGlobals {
                         shortcutLastUsedAt: nil,
                         kind: .text,
                         textLength: 100,
-                        shelfPastesThisRun: 1
+                        shelfPastesThisRun: 1,
+                        pasteDaysInWindow: 3
                     )
                 ],
                 assignedSlots: [],
@@ -206,7 +207,7 @@ extension HostedGlobals {
             var settingsOpened = 0
             state.openSettingsFromOverlay = { settingsOpened += 1 }
             state.shelfSuggestion = ShelfSuggestionPresentation(
-                suggestion: .snippet(clip: clipID, pasteCount: 8),
+                suggestion: .snippet(clip: clipID, familySize: 3),
                 isNotice: false
             )
 

@@ -38,6 +38,15 @@ public extension StorageService {
 
         let frequent = try modelContext.fetch(frequentDesc)
 
+        var recentDesc = FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate {
+                $0.pasteCount >= 1 && $0.sensitivityRaw == nil && $0.isNSFW == false && $0.analysisPending == false
+            },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        recentDesc.fetchLimit = 10
+        let recent = try modelContext.fetch(recentDesc)
+
         let shortcutDesc = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { $0.pinnedHotkeyIndex != nil }
         )
@@ -45,8 +54,10 @@ public extension StorageService {
 
         var clipsByID: [UUID: ShelfClipFacts] = [:]
 
+        let windowStart = ItemMetadata.dayNumber(of: .now) - ItemMetadata.pasteDayWindow
         func toFacts(_ item: ClipboardItem) -> ShelfClipFacts {
-            ShelfClipFacts(
+            let family = familyFacts(of: item)
+            return ShelfClipFacts(
                 id: item.id,
                 pasteCount: item.pasteCount,
                 lastUsedAt: item.timestamp,
@@ -59,11 +70,15 @@ public extension StorageService {
                 isNSFW: item.isNSFW,
                 analysisPending: item.analysisPending,
                 expires: item.expiresAt != nil,
-                shelfPastesThisRun: 0
+                shelfPastesThisRun: 0,
+                pasteDaysInWindow: (item.metadata.pasteDays ?? []).count(where: { $0 > windowStart }),
+                familySize: family.size,
+                familyDays: family.days,
+                familyRepresentative: family.representative
             )
         }
 
-        for item in frequent {
+        for item in frequent + recent where clipsByID[item.id] == nil {
             clipsByID[item.id] = toFacts(item)
         }
         for item in shortcutHolders where clipsByID[item.id] == nil {
@@ -76,5 +91,29 @@ public extension StorageService {
             assignedSlots: assigned,
             unavailableSlots: unavailableSlots
         )
+    }
+
+    /// How many clips look like `item` (itself included), over how many days they were copied, and the clip that stands
+    /// for them all (the smallest id), so one answer silences the family.
+    private func familyFacts(of item: ClipboardItem) -> FamilyFacts {
+        let alone = FamilyFacts(size: 1, days: 1, representative: nil)
+        guard item.type == .text || item.type == .code else { return alone }
+        let matches = lookalikes(of: item.id)
+        guard !matches.isEmpty else { return alone }
+        let ids = matches.map(\.id) + [item.id]
+        let members = (try? modelContext.fetch(FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { ids.contains($0.id) }
+        ))) ?? []
+        let open = members.filter { !$0.isPinned }
+        guard !item.isPinned, open.count > 1 else { return alone }
+        let days = Set(open.map { ItemMetadata.dayNumber(of: $0.timestamp) }).count
+        let representative = open.map(\.id).min { $0.uuidString < $1.uuidString }
+        return FamilyFacts(size: open.count, days: max(1, days), representative: representative)
+    }
+
+    private struct FamilyFacts {
+        let size: Int
+        let days: Int
+        let representative: UUID?
     }
 }

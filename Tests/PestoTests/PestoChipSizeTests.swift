@@ -47,19 +47,6 @@ struct PestoChipSizeTests {
         #expect(focusedWidth > restWidth + 20)
     }
 
-    @Test("a chip that shows its name on hover keeps the width it has at rest, so neighbors do not move")
-    func whenAppChipPeeks_thenItsLayoutWidthIsUnchanged() {
-        let rest = PestoChip(
-            label: "Safari", icon: "app.badge.checkmark", isActive: false, collapsesLabel: true, action: {}
-        )
-        let peeking = PestoChip(
-            label: "Safari", icon: "app.badge.checkmark", isActive: false, collapsesLabel: true,
-            startsPeeking: true, action: {}
-        )
-
-        #expect(width(of: peeking, proposing: 600) == width(of: rest, proposing: 600))
-    }
-
     @Test("app chips collapse their labels at rest only when collections are present on the command bar")
     func whenCollectionsAreAbsent_thenAppChipsShowNamesAtRest() {
         let withCollections = AppChipsRow(

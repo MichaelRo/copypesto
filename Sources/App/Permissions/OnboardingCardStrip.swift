@@ -15,6 +15,7 @@ struct OnboardingCardStrip: View {
     @State private var isHovered = false
     @State private var motion = CardStripDrift(offset: 0)
     @State private var wasScrolledByHand = false
+    @State private var offsetWhenHandScrollBegan: CGFloat = 0
     @State private var resumeDriftTask: Task<Void, Never>?
 
     static let height: CGFloat = 150
@@ -43,11 +44,14 @@ struct OnboardingCardStrip: View {
         .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { offset = $1 }
         .onScrollPhaseChange { _, phase in
             if phase == .interacting {
+                if !wasScrolledByHand { offsetWhenHandScrollBegan = offset }
                 resumeDriftTask?.cancel()
                 resumeDriftTask = nil
                 wasScrolledByHand = true
             } else if phase == .idle, wasScrolledByHand {
                 withTransaction(Transaction(animation: nil)) { position.scrollTo(x: offset) }
+                if abs(offset - offsetWhenHandScrollBegan) >
+                    2 { motion.turn(forward: offset > offsetWhenHandScrollBegan) }
                 resumeDriftTask?.cancel()
                 resumeDriftTask = Task {
                     try? await Task.sleep(for: .seconds(Self.resumeDelay))

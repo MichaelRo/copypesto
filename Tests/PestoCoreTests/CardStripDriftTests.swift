@@ -53,6 +53,20 @@ struct CardStripDriftTests {
         #expect(!drift.movesForward)
     }
 
+    @Test("after a hand scroll it carries on the way the person scrolled")
+    func whenTurned_thenItMovesThatWay() {
+        var drift = CardStripDrift(offset: 500)
+
+        drift.turn(forward: false)
+        run(&drift, seconds: 1, farthest: 1000)
+        #expect(drift.offset < 500)
+
+        drift.turn(forward: true)
+        let before = drift.offset
+        run(&drift, seconds: 1, farthest: 1000)
+        #expect(drift.offset > before)
+    }
+
     @Test("it slows toward either end, waits there, and turns around")
     func whenReachingAnEnd_thenItTurnsAfterAPause() {
         var drift = CardStripDrift(offset: 990)

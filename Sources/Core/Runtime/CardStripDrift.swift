@@ -24,6 +24,11 @@ public struct CardStripDrift: Equatable, Sendable {
         secondsMoving = 0
     }
 
+    /// The person scrolled the row by hand: it carries on the way they sent it.
+    public mutating func turn(forward: Bool) {
+        movesForward = forward
+    }
+
     public mutating func place(at newOffset: CGFloat, farthest: CGFloat = .greatestFiniteMagnitude) {
         offset = min(max(0, newOffset), max(0, farthest))
     }

@@ -19,34 +19,13 @@ struct PestoChip: View {
     /// When true (shelf app chips), shows only the icon at rest and opens the label on keyboard focus or
     /// selection.
     var collapsesLabel = false
+    /// The row has decided to show this collapsed chip's name (the pointer rests on it); see `ChipHoverIntent`.
+    var isRevealed = false
     var helpText: String?
-    /// Starts with the name already shown over the row; only tests set it.
-    var startsPeeking = false
     let action: () -> Void
 
     @State private var isHovered = false
-    @State private var isOverPeek = false
-    @State private var isPeeking: Bool
-    @State private var peekTask: Task<Void, Never>?
     @FocusState private var isKeyboardFocused: Bool
-
-    init(
-        label: String, icon: String? = nil, iconImage: NSImage? = nil, tint: Color? = nil, isActive: Bool,
-        hasKeyboardCursor: Bool = false, collapsesLabel: Bool = false, helpText: String? = nil,
-        startsPeeking: Bool = false, action: @escaping () -> Void
-    ) {
-        self.label = label
-        self.icon = icon
-        self.iconImage = iconImage
-        self.tint = tint
-        self.isActive = isActive
-        self.hasKeyboardCursor = hasKeyboardCursor
-        self.collapsesLabel = collapsesLabel
-        self.helpText = helpText
-        self.startsPeeking = startsPeeking
-        self.action = action
-        _isPeeking = State(initialValue: startsPeeking)
-    }
 
     private var color: Color {
         tint ?? accent
@@ -57,7 +36,7 @@ struct PestoChip: View {
     }
 
     private var isLabelVisible: Bool {
-        !collapsesLabel || isActive || hasFocus
+        !collapsesLabel || isActive || hasFocus || isRevealed
     }
 
     private var fillOpacity: Double {
@@ -119,14 +98,8 @@ struct PestoChip: View {
         .buttonStyle(.plain)
         .focused($isKeyboardFocused)
         .focusEffectDisabled()
-        .overlay(alignment: .trailing) { peekedChip }
-        .zIndex(isPeeking ? 1 : 0)
         .onHover { over in
             withAnimation(Motion.animation(.pestoQuick)) { isHovered = over }
-            updatePointer()
-        }
-        .onChange(of: isLabelVisible) { _, visible in
-            if visible { closePeek() }
         }
         .help(helpText ?? label)
         .accessibilityLabel(label)
@@ -134,66 +107,5 @@ struct PestoChip: View {
         .accessibilityAddTraits(isActive ? .isSelected : [])
         .animation(Motion.animation(.pestoQuick), value: isLabelVisible)
         .animation(Motion.animation(.pestoQuick), value: isActive)
-    }
-
-    /// The name opens over the row, never in it, growing leftward from the chip so the bar's scroll view never cuts it
-    /// off at the right edge: neighbors keep their place, so the pointer cannot land on one of them
-    /// because this chip grew. It opens after a short dwell and closes after a short grace, so crossing the row does
-    /// not
-    /// flicker every chip it passes.
-    private func updatePointer() {
-        setPointer(over: isHovered || isOverPeek)
-    }
-
-    private func closePeek() {
-        peekTask?.cancel()
-        isPeeking = false
-        isOverPeek = false
-    }
-
-    private func setPointer(over: Bool) {
-        peekTask?.cancel()
-        guard collapsesLabel, !isLabelVisible || isPeeking else { return }
-        peekTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(over ? Self.peekDwellMilliseconds : Self.peekGraceMilliseconds))
-            guard !Task.isCancelled else { return }
-            withAnimation(Motion.animation(.pestoQuick)) { isPeeking = over }
-        }
-    }
-
-    static let peekDwellMilliseconds = 120
-    static let peekGraceMilliseconds = 90
-
-    @ViewBuilder
-    private var peekedChip: some View {
-        if isPeeking, collapsesLabel, !isLabelVisible {
-            Button(action: action) {
-                HStack(spacing: 4) {
-                    if let iconImage {
-                        Image(nsImage: iconImage).resizable().frame(width: 14, height: 14)
-                    } else if let icon {
-                        Image(systemName: icon)
-                    }
-                    Text(label).lineLimit(1).frame(maxWidth: 200).fixedSize(horizontal: true, vertical: false)
-                }
-                .font(.caption.weight(.medium))
-                .foregroundStyle(Color.primary)
-                .padding(.horizontal, 9)
-                .frame(minHeight: 24)
-                .fixedSize()
-                .background(Capsule().fill(.regularMaterial))
-                .background(Capsule().fill(color.opacity(0.18)))
-                .overlay(Capsule().strokeBorder(color.opacity(0.5), lineWidth: 0.5))
-                .contentShape(Capsule())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHidden(true)
-            .focusable(false)
-            .onHover { over in
-                isOverPeek = over
-                updatePointer()
-            }
-            .transition(.opacity)
-        }
     }
 }

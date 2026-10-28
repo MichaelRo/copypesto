@@ -24,6 +24,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0013](0013-appearance-and-shelf-position.md) | Four themes share one identity with the icons, a theme owns the shelf's colour, and the shelf opens at the Bottom or the Top |
 | [0014](0014-shelf-suggestions.md) | Shelf suggestions offer shortcuts, free idle keys and suggest snippets without moving cards |
 | [0015](0015-a-declined-suggestion-comes-back-once.md) | A declined suggestion comes back once, after the clip is used twice as much and thirty days pass |
+| [0016](0016-search-arrows-move-cards.md) | In search, the arrow keys move between result cards and Return pastes; supersedes the key handling of 0009 |
 
 ## Template
 

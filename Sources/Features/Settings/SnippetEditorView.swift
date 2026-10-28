@@ -34,6 +34,8 @@ struct SnippetEditorView: View {
     @Environment(\.pestoAccent) private var accent
     @State var draft: SnippetEditorDraft
     @State private var pendingInsertion: SnippetInsertionRequest?
+    @State private var suggestingNames = false
+    @State private var namesFailed = false
     @FocusState private var focus: Field?
     let onSave: (SnippetEditorDraft) -> Void
     let onCancel: () -> Void
@@ -76,6 +78,7 @@ struct SnippetEditorView: View {
                     .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
                     .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.35)) }
                     placeholderChips
+                    suggestNamesRow
                     if state == .needsPlaceholder {
                         Text("Add a placeholder, like {{date}}, so Pesto can fill it in when you paste.")
                             .pestoCaption()
@@ -104,6 +107,43 @@ struct SnippetEditorView: View {
         }
         .padding(.vertical, 6)
         .onAppear { focus = draft.clipID == nil && draft.text.isEmpty ? .name : .text }
+    }
+
+    private var namedFields: Bool {
+        FillInParser.fields(in: draft.text).contains { $0.kind != .optional }
+    }
+
+    @ViewBuilder
+    private var suggestNamesRow: some View {
+        let availability = AIAvailability.current
+        if namedFields, availability.presentation != .hidden {
+            HStack(spacing: 8) {
+                Button("Suggest Names") { suggestNames() }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(!availability.isAvailable || suggestingNames)
+                if !availability.isAvailable {
+                    Text(availability.message).pestoCaption()
+                } else if namesFailed {
+                    Text("Couldn\u{2019}t suggest names. The fields keep their names.").pestoCaption()
+                }
+            }
+        }
+    }
+
+    private func suggestNames() {
+        suggestingNames = true
+        namesFailed = false
+        let template = draft.text
+        Task {
+            let renamed = await SnippetNaming.suggest(for: template, using: AIActionCoordinator.onDevice)
+            suggestingNames = false
+            if let renamed, draft.text == template {
+                draft.text = renamed
+            } else {
+                namesFailed = true
+            }
+        }
     }
 
     private var placeholderChips: some View {

@@ -44,7 +44,7 @@ public extension StorageService {
 
         var clipsByID: [UUID: ShelfClipFacts] = [:]
 
-        let today = ItemMetadata.dayNumber(of: .now)
+        let windowStart = ItemMetadata.dayNumber(of: .now) - ItemMetadata.pasteDayWindow
         func toFacts(_ item: ClipboardItem) -> ShelfClipFacts {
             let family = familyFacts(of: item)
             return ShelfClipFacts(
@@ -61,8 +61,7 @@ public extension StorageService {
                 analysisPending: item.analysisPending,
                 expires: item.expiresAt != nil,
                 shelfPastesThisRun: 0,
-                pasteDaysInWindow: (item.metadata.pasteDays ?? [])
-                    .count(where: { $0 > today - ItemMetadata.pasteDayWindow }),
+                pasteDaysInWindow: (item.metadata.pasteDays ?? []).count(where: { $0 > windowStart }),
                 familySize: family.size,
                 familyDays: family.days,
                 familyRepresentative: family.representative
@@ -87,9 +86,10 @@ public extension StorageService {
     /// How many clips look like `item` (itself included), over how many days they were copied, and the clip that stands
     /// for them all (the smallest id), so one answer silences the family.
     private func familyFacts(of item: ClipboardItem) -> FamilyFacts {
-        guard item.type == .text || item.type == .code else { return FamilyFacts(size: 1, days: 1, representative: nil) }
+        let alone = FamilyFacts(size: 1, days: 1, representative: nil)
+        guard item.type == .text || item.type == .code else { return alone }
         let matches = lookalikes(of: item.id)
-        guard !matches.isEmpty else { return FamilyFacts(size: 1, days: 1, representative: nil) }
+        guard !matches.isEmpty else { return alone }
         let ids = matches.map(\.id) + [item.id]
         let members = (try? modelContext.fetch(FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { ids.contains($0.id) }

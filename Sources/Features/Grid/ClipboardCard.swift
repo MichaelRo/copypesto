@@ -154,8 +154,7 @@ struct ClipboardCard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityIdentifier(AccessibilityID.card)
             .accessibilityLabel(accessibility.label)
-            .accessibilityValue(revealedSecret.map { "\(accessibility.value), shown: \($0)" } ?? accessibility
-                .value)
+            .accessibilityValue(accessibilityValueText)
             .voiceOverContent(isFocused && !isCoveredForPrivacy ? voiceOverContent : VoiceOverDetails())
             .accessibilityHint(hidesItsContent
                 ? (canRevealHidden ? "Hidden. Pastes without showing. Use Show to reveal it." : "Hidden.")
@@ -454,6 +453,14 @@ struct ClipboardCard: View {
     func hideAgain() {
         isNSFWRevealed = false
         actions.revealChanged?(item, false)
+    }
+
+    private var accessibilityValueText: String {
+        var value = revealedSecret.map { "\(accessibility.value), shown: \($0)" } ?? accessibility.value
+        if isSuggested {
+            value += suggestedHotkeySlot.map { ", suggested shortcut Control \($0)" } ?? ", suggested"
+        }
+        return value
     }
 
     private var accessibility: CardAccessibility {

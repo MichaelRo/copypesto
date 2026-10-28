@@ -63,6 +63,7 @@ public enum SeedFixtures {
         case .remote: remoteCaptures()
         case .latency: LatencySeed.captures()
         case .pictures: MixedSeed.pictureCaptures()
+        case .suggestion: suggestionCaptures()
         }
         return captures.enumerated().map { index, capture in
             capture.with(timestamp: now.addingTimeInterval(-Double(captures.count - 1 - index) * 60))
@@ -71,6 +72,19 @@ public enum SeedFixtures {
 
     public static func hash(of payload: Data) -> String {
         payload.sha256Hex
+    }
+
+    /// The clip the `suggestion` profile is about (its first capture); the harness gives it `suggestionPasteCount`
+    /// pastes.
+    public static let suggestionClipID = UUID(uuid: (0x5E, 0x6E, 0x57, 0xED, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 1))
+    public static let suggestionPasteCount = 6
+
+    private static func suggestionCaptures() -> [PasteboardCapture] {
+        [
+            textCapture("Quarterly report draft — final review pending.", app: "com.apple.TextEdit"),
+            textCapture("Team lunch is at 12:30 on Thursday, booked under Alex.", app: "com.apple.iChat"),
+            textCapture("Best regards,\nAlex from the Pesto team", app: "com.apple.mail")
+        ]
     }
 
     private static func remoteCaptures() -> [PasteboardCapture] {

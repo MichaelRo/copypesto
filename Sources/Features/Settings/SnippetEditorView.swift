@@ -43,14 +43,36 @@ struct SnippetEditorView: View {
     }
 
     private var preview: AttributedString {
-        let parts = SnippetPreview.make(from: draft.text)
-        var result = AttributedString(parts.before)
-        if parts.hasCaret {
-            var caret = AttributedString("\u{258F}")
-            caret.foregroundColor = accent
-            result += caret
+        var result = AttributedString()
+        var inOptional = false
+        for piece in SnippetPreview.pieces(from: draft.text) {
+            switch piece {
+            case let .text(text):
+                var run = AttributedString(text)
+                if inOptional { run.foregroundColor = .secondary }
+                result += run
+            case let .field(label, hint, kind):
+                let detail = kind == .input ? hint.map { ": \($0)" } ?? "" : ""
+                let name = "\u{2009}\(label)\(detail)\(kind == .choice ? " \u{25BE}" : "")\u{2009}"
+                var chip = AttributedString(name)
+                let tint = kind == .context ? Color.secondary : accent
+                chip.foregroundColor = tint
+                chip.backgroundColor = tint.opacity(0.18)
+                result += chip
+            case let .optionalStart(label):
+                var tag = AttributedString("\u{2039}\(label)\u{203A} ")
+                tag.foregroundColor = .secondary
+                result += tag
+                inOptional = true
+            case .optionalEnd:
+                inOptional = false
+            case .caret:
+                var caret = AttributedString("\u{258F}")
+                caret.foregroundColor = accent
+                result += caret
+            }
         }
-        return result + AttributedString(parts.after)
+        return result
     }
 
     var body: some View {
@@ -86,8 +108,11 @@ struct SnippetEditorView: View {
             row("Pastes as", alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     previewCard
-                    Text("The caret lands where {{cursor}} is, in apps that let Pesto move it. The first one counts.")
-                        .pestoCaption()
+                    Text(
+                        "Highlighted names are asked for when you paste. A dimmed part is optional. "
+                            + "The caret lands where {{cursor}} is, in apps that let Pesto move it."
+                    )
+                    .pestoCaption()
                 }
             }
             HStack(spacing: 8) {

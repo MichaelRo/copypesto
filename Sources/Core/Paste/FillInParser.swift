@@ -30,6 +30,46 @@ public enum FillInParser {
         return result
     }
 
+    static let fieldStart = "\u{E000}"
+    static let fieldSeparator = "\u{E001}"
+    static let fieldEnd = "\u{E002}"
+    static let optionalOpen = "\u{E003}"
+    static let optionalOpenEnd = "\u{E004}"
+    static let optionalClose = "\u{E005}"
+
+    /// The text with each fill-in and `{{app}}` swapped for a marker the preview can read back, so the rest of the
+    /// template is expanded as usual and the fields stay visible. Markers use private-use characters.
+    static func markingFields(in text: String) -> String {
+        guard let regex = tokenRegex else { return text }
+        let ns = text as NSString
+        var result = ""
+        var cursor = 0
+        for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            let body = ns.substring(with: match.range(at: 1))
+            var marker: String?
+            if body == "app" {
+                marker = fieldStart + "context" + fieldSeparator + "app" + fieldSeparator + fieldEnd
+            } else if body == "/optional" {
+                marker = optionalClose
+            } else if let field = field(fromToken: body) {
+                switch field.kind {
+                case .text:
+                    marker = fieldStart + "input" + fieldSeparator + field.label + fieldSeparator
+                        + (field.defaultValue ?? "") + fieldEnd
+                case let .choice(options):
+                    marker = fieldStart + "choice" + fieldSeparator + field.label + fieldSeparator
+                        + options.joined(separator: " / ") + fieldEnd
+                case .optional:
+                    marker = optionalOpen + field.label + optionalOpenEnd
+                }
+            }
+            guard let marker else { continue }
+            result += ns.substring(with: NSRange(location: cursor, length: match.range.location - cursor)) + marker
+            cursor = match.range.upperBound
+        }
+        return result + ns.substring(from: cursor)
+    }
+
     /// The fields of several snippets together, each label once, so a stack asks everything up front.
     public static func fields(inAll texts: [String]) -> [SnippetField] {
         var seen = Set<String>()

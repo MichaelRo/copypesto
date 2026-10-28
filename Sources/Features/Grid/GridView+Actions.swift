@@ -524,9 +524,11 @@ extension GridView {
 
         guard stackItems.count > 1 else { return }
 
-        let isSnippet = chosen.map(\.isTemplate)
+        let sources = chosen.map {
+            StackSnippetSource(id: $0.id, isSnippet: $0.isTemplate, remembered: $0.metadata.fieldMemory ?? [:])
+        }
         Task {
-            guard let ready = await appState.expandedStackItems(stackItems, isSnippet: isSnippet) else { return }
+            guard let ready = await appState.expandedStackItems(stackItems, sources: sources) else { return }
             let stack = PasteStack(items: ready)
             selection.clear()
 

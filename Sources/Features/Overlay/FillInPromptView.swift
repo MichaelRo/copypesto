@@ -50,7 +50,12 @@ struct FillInPromptView: View {
         .background { shape.fill(Color.opaqueSurface.opacity(0.94)).adaptiveMaterialBackground(in: shape) }
         .overlay { shape.strokeBorder(.primary.opacity(0.14), lineWidth: 1) }
         .shadow(color: .black.opacity(0.25), radius: 14, y: 5)
-        .onAppear { focused = model.fields.first(where: { isTyped($0) })?.label }
+        .defaultFocus($focused, model.fields.first(where: { isTyped($0) })?.label)
+        .task {
+            // The panel becomes key a moment after the view appears, so the first request alone does not stick.
+            try? await Task.sleep(for: .milliseconds(80))
+            focused = model.fields.first(where: { isTyped($0) })?.label
+        }
     }
 
     private func isTyped(_ field: SnippetField) -> Bool {

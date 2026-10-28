@@ -33,7 +33,7 @@ struct DocsAgreeWithToolingTests {
     @Test("the full gate is described with one duration everywhere")
     func gateDurationAgrees() throws {
         for file in ["AGENTS.md", "Makefile", "docs/testing.md"] {
-            #expect(try text(file).contains("about 40 minutes"), "\(file) gives another duration for the full gate")
+            #expect(try text(file).contains("about an hour"), "\(file) gives another duration for the full gate")
         }
     }
 }

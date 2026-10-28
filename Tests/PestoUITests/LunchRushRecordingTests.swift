@@ -40,13 +40,17 @@ final class LunchRushRecordingTests: PestoUITestCase {
         return lines.map { $0.replacingOccurrences(of: "\\/", with: "/") }
     }
 
-    /// The masked card: arrow to it, Show and Hide are not needed; Return pastes the real number.
+    /// The masked card: Show reveals the number for a moment, and Return pastes the real one.
     func test_a_maskedCardPastesTheRealNumber() {
         beat()
         let masked = card(containing: "4242")
         XCTAssertTrue(masked.waitForExistence(timeout: 10))
         XCTAssertFalse((masked.value as? String ?? "").contains("4242 4242 4242 4242"), "the card must stay masked")
         masked.click()
+        pause(1.5)
+        masked.rightClick()
+        pause(1.0)
+        app.menuItems["Show"].click()
         pause(2.0)
         overlay.typeKey(.return, modifierFlags: [])
         pause(1.5)

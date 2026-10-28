@@ -47,9 +47,10 @@ private struct ToastView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        // Card material like the hover card, at 92%, so the text holds 4.5:1 over a white or a black window behind it.
+        // An opaque card surface: the text holds 4.5:1 over a white or a black window behind it, and the accessibility
+        // audit measures the surface, not whatever shows through a translucent one.
         .background {
-            shape.fill(Color.opaqueSurface.opacity(0.92)).adaptiveMaterialBackground(in: shape)
+            shape.fill(Color.opaqueSurface).adaptiveMaterialBackground(in: shape)
         }
         .overlay {
             if toast.isClickable, isHovered {

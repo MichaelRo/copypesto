@@ -21,6 +21,8 @@ public enum SeedProfile: String, Equatable, Sendable {
     case latency
     /// Only large pictures, for measuring memory over a shelf scrolled through to its end (`MixedSeed`).
     case pictures
+    /// Three text clips, one of them pasted often enough for a shortcut offer (`SeedFixtures.suggestionClipID`).
+    case suggestion
 }
 
 public enum AccessibilityStub: String, Equatable, Sendable {
@@ -84,6 +86,9 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     /// UI-test
     /// mode only.
     public var aiFixture: Bool
+    /// Makes the shelf-suggestion policy see global hotkeys as live, which a UI-test launch never registers. Nothing is
+    /// registered by it. UI-test mode only.
+    public var suggestionsLive: Bool
 
     static let defaultOverridePrefix = "PESTO_UITEST_DEFAULT_"
 
@@ -102,7 +107,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         usesRealDevice: Bool = false,
         importFixture: String? = nil,
         keyLossFixture: Bool = false,
-        aiFixture: Bool = false
+        aiFixture: Bool = false,
+        suggestionsLive: Bool = false
     ) {
         self.mode = mode
         self.session = session
@@ -117,6 +123,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         self.importFixture = importFixture
         self.keyLossFixture = keyLossFixture
         self.aiFixture = aiFixture
+        self.suggestionsLive = suggestionsLive
     }
 
     public static let current = parse(
@@ -150,7 +157,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             usesRealDevice: environment["PESTO_UITEST_REAL_DEVICE"] == "1",
             importFixture: environment["PESTO_UITEST_IMPORT_FIXTURE"].flatMap { $0.isEmpty ? nil : $0 },
             keyLossFixture: environment["PESTO_UITEST_KEYLOSS"] == "1",
-            aiFixture: environment["PESTO_UITEST_AI_FIXTURE"] == "1"
+            aiFixture: environment["PESTO_UITEST_AI_FIXTURE"] == "1",
+            suggestionsLive: environment["PESTO_UITEST_SUGGESTIONS_LIVE"] == "1"
         )
     }
 

@@ -56,9 +56,13 @@ extension AppDelegate {
         guard let service = storageService else { return 0 }
         let captures = SeedFixtures.captures(for: profile)
         var seeded = 0
-        for capture in captures {
+        for (index, capture) in captures.enumerated() {
             do {
-                try await service.ingest(capture)
+                let isSuggestionClip = profile == .suggestion && index == 0
+                try await service.ingest(
+                    capture,
+                    preferredItemID: isSuggestionClip ? SeedFixtures.suggestionClipID : nil
+                )
                 seeded += 1
             } catch {
                 Self.logger.error("UI-test seed ingest failed: \(error.localizedDescription, privacy: .public)")
@@ -67,6 +71,11 @@ extension AppDelegate {
         // Pictures are judged after they are saved; a test must not start while a card is still covered.
         await service.waitForBackgroundWork()
         if profile == .marketing { await seedMarketingCollections() }
+        if profile == .suggestion {
+            for _ in 0..<SeedFixtures.suggestionPasteCount {
+                _ = try? await service.notePasted(id: SeedFixtures.suggestionClipID)
+            }
+        }
         return seeded
     }
 

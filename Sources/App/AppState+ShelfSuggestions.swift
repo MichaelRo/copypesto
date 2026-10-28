@@ -129,7 +129,8 @@ extension AppState {
             hasOnboarded: AppDefaults.store.value(for: Setting.hasOnboarded),
             armedAt: armedAt,
             lastShownAt: lastShownAt,
-            hotkeysLive: LaunchMode.current.usesSystemIntegrations || LaunchMode.current == .hostedTests,
+            hotkeysLive: LaunchMode.current.usesSystemIntegrations || LaunchMode.current == .hostedTests
+                || RuntimeConfiguration.current.suggestionsLive,
             hasAccessibility: hasAccessibilityPermission,
             isHistoryLocked: isHistoryLocked,
             isContentCovered: isContentCovered(screenSharingPrivacy: AppDefaults.store

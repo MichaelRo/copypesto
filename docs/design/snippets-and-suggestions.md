@@ -24,6 +24,13 @@ lists them.
   through `AppDelegate.expandedPayload` (shelf, `⌃N`, quick paste, AppleScript); a stack asks for all its snippets' fields
   when it starts (`AppState.expandedStackItems`). The last answers are kept as `ItemMetadata.fieldMemory` (sealed), unless a
   value looks like a secret or Settings → Snippets → Remember fill-in values is off.
+- **Look-alike suggestion** (ADR 0017): each ordinary text clip of 40 to 2,000 characters gets a `TextSignature` (64-position
+  MinHash of its word shingles, digits read as one mark) after its card is shown, sealed in `ItemMetadata.signature`; a
+  `SimilarityIndex` in memory (banded, ~2 MB at 5,000 clips) finds clips that are at least half alike. A family of three or more
+  over two or more days, with one of them just pasted from the shelf, is offered as one snippet; `TemplateInferrer` aligns
+  their words and turns what differs into fields. Exact repeats get a shortcut offer (pasted on three different days of
+  the last thirty, `ItemMetadata.pasteDays`), never a snippet. Signatures are not in a backup and are rebuilt after a restore. Only a snippet is expanded, so Helm, Jinja or
+  Handlebars text that happens to contain double braces pastes as copied.
 - Expansion happens in the paste flow before the write (`AppDelegate.expandedPayload`), through
   `AppState.writeText(_:protected:)`, so all three paste tiers (ADR 0009) see the same expanded text and a secret stays
   protected. `{{cursor}}` is removed and the caret is moved back over the text that followed it

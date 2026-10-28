@@ -48,7 +48,7 @@ public enum LunchRushSeed {
     ]
 
     public static func sensitivePicture() -> Data {
-        ShowcaseArt.pestoBowl()
+        ShowcaseArt.pestoSpoon()
     }
 
     private static let notes = "com.apple.Notes"

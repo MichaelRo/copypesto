@@ -127,6 +127,88 @@ enum ShowcaseArt {
         }
     }
 
+    /// A slow, glossy spoonful of pesto with oil running off it, a leaf and a slice of bread: the covered clip of the
+    /// Lunch Rush shelf, cheeky in the way food photography is.
+    static func pestoSpoon() -> Data {
+        render { context in
+            fill(context, hex: "2B2420")
+            context.setFillColor(color(hex: "6B4A2B", alpha: 0.55))
+            context.fillEllipse(in: CGRect(x: 40, y: 30, width: 400, height: 280))
+            context.setFillColor(color(hex: "C98F4F", alpha: 0.35))
+            context.fillEllipse(in: CGRect(x: 110, y: 70, width: 260, height: 190))
+            drawBread(context)
+            drawSpoon(context)
+            drawLeaf(context, at: CGPoint(x: 92, y: 96), angle: 0.7, scale: 0.55, hex: "3F8F5B")
+            drawLeaf(context, at: CGPoint(x: 70, y: 150), angle: -0.4, scale: 0.4, hex: "6DBE85")
+            context.setFillColor(color(hex: "F2C14E", alpha: 0.85))
+            for (x, y, w, h) in [(238.0, 96.0, 10.0, 16.0), (214.0, 70.0, 7.0, 11.0), (262.0, 58.0, 6.0, 9.0)] {
+                context.fillEllipse(in: CGRect(x: x, y: y, width: w, height: h))
+            }
+        }
+    }
+
+    private static func drawBread(_ context: CGContext) {
+        context.saveGState()
+        context.translateBy(x: 372, y: 82)
+        context.rotate(by: -0.25)
+        context.setFillColor(color(hex: "B7793A"))
+        context.addPath(CGPath(
+            roundedRect: CGRect(x: -62, y: -48, width: 124, height: 96),
+            cornerWidth: 34,
+            cornerHeight: 30,
+            transform: nil
+        ))
+        context.fillPath()
+        context.setFillColor(color(hex: "F1D9A8"))
+        context.addPath(CGPath(
+            roundedRect: CGRect(x: -52, y: -38, width: 104, height: 76),
+            cornerWidth: 28,
+            cornerHeight: 24,
+            transform: nil
+        ))
+        context.fillPath()
+        context.restoreGState()
+    }
+
+    private static func drawSpoon(_ context: CGContext) {
+        context.saveGState()
+        context.translateBy(x: 235, y: 190)
+        context.rotate(by: -0.55)
+        context.setFillColor(color(hex: "8A5A2E"))
+        context.addPath(CGPath(
+            roundedRect: CGRect(x: -230, y: -14, width: 230, height: 28),
+            cornerWidth: 14,
+            cornerHeight: 14,
+            transform: nil
+        ))
+        context.fillPath()
+        context.setFillColor(color(hex: "A8743F"))
+        context.fillEllipse(in: CGRect(x: -26, y: -62, width: 150, height: 124))
+        context.setFillColor(color(hex: "2F7A49"))
+        context.fillEllipse(in: CGRect(x: -14, y: -50, width: 126, height: 100))
+        context.setFillColor(color(hex: "3F8F5B"))
+        context.fillEllipse(in: CGRect(x: 6, y: -34, width: 84, height: 72))
+        let drip = CGMutablePath()
+        drip.move(to: CGPoint(x: 84, y: -46))
+        drip.addCurve(to: CGPoint(x: 92, y: -116), control1: CGPoint(x: 100, y: -70), control2: CGPoint(x: 80, y: -92))
+        drip.addCurve(to: CGPoint(x: 66, y: -48), control1: CGPoint(x: 106, y: -96), control2: CGPoint(x: 78, y: -70))
+        context.addPath(drip)
+        context.setFillColor(color(hex: "2F7A49"))
+        context.fillPath()
+        context.setFillColor(color(hex: "FFFFFF", alpha: 0.55))
+        context.fillEllipse(in: CGRect(x: 14, y: 8, width: 44, height: 18))
+        context.restoreGState()
+    }
+
+    private static func drawLeaf(_ context: CGContext, at point: CGPoint, angle: CGFloat, scale: CGFloat, hex: String) {
+        context.saveGState()
+        context.translateBy(x: point.x, y: point.y)
+        context.rotate(by: angle)
+        context.scaleBy(x: scale, y: scale)
+        drawLeaf(context, hex: hex)
+        context.restoreGState()
+    }
+
     private static func drawLeaf(_ context: CGContext, hex: String) {
         let path = CGMutablePath()
         path.move(to: CGPoint(x: 0, y: -70))

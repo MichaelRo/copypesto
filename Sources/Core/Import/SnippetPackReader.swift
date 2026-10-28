@@ -56,7 +56,7 @@ public enum SnippetPackReader {
             }
             let name = (entry["name"] as? String).flatMap { $0.isEmpty ? nil : $0 }
             if usesUnsupportedToken(raw) { unsupported += 1 }
-            let text = convertingPlaceholders(raw)
+            let text = convertingPlaceholders(FillInImport.convert(raw))
             let imported = ImportedSnippet(name: name, text: text)
             if SnippetDraft.evaluate(text) == .ready { snippets.append(imported) } else { plain.append(imported) }
         }

@@ -109,6 +109,9 @@ struct SnippetEditorView: View {
     private var placeholderChips: some View {
         PlaceholderFlowLayout(spacing: 6) {
             Text("Insert").pestoCaption()
+            SnippetFieldMenu { token in
+                pendingInsertion = SnippetInsertionRequest(token: token)
+            }
             ForEach(SnippetDraft.placeholders, id: \.token) { placeholder in
                 Button(placeholder.token) {
                     pendingInsertion = SnippetInsertionRequest(token: placeholder.token)

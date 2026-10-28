@@ -76,7 +76,7 @@ struct SuggestionLedgerTests {
         let later = first.addingTimeInterval(60 * 86_400)
         ledger.resolve(.shortcutOffer, id, as: .declined(atPasteCount: 6), now: first)
         ledger.resolve(.shortcutOffer, id, as: .declined(atPasteCount: 12), now: later)
-        #expect(ledger.isBlocked(.shortcutOffer, id, pastes: 1_000, now: later.addingTimeInterval(365 * 86_400)))
+        #expect(ledger.isBlocked(.shortcutOffer, id, pastes: 1000, now: later.addingTimeInterval(365 * 86_400)))
     }
 
     @Test("a decline of one kind does not block another kind for the clip")

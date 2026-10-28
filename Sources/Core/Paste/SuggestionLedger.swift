@@ -85,7 +85,9 @@ public struct SuggestionLedger: Equatable, Sendable {
         }.joined(separator: "\n")
     }
 
-    public var clipIDs: Set<UUID> { Set(entries.map(\.clipID)) }
+    public var clipIDs: Set<UUID> {
+        Set(entries.map(\.clipID))
+    }
 
     public func shows(_ kind: ShelfSuggestionKind, _ clip: UUID) -> Int {
         entries.last(where: { $0.kind == kind && $0.clipID == clip })?.shows ?? 0
@@ -105,7 +107,8 @@ public struct SuggestionLedger: Equatable, Sendable {
         if let idx = entries.lastIndex(where: { $0.kind == kind && $0.clipID == clip }) {
             entries[idx].shows += 1
             if entries[idx].outcome == nil,
-               entries[idx].shows >= ShelfSuggestionPolicy.Thresholds.ignoredShowsBeforeMute {
+               entries[idx].shows >= ShelfSuggestionPolicy.Thresholds.ignoredShowsBeforeMute
+            {
                 entries[idx].outcome = .declined(atPasteCount: pastes)
                 entries[idx].declinedOn = now
                 entries[idx].declines = 1

@@ -69,7 +69,7 @@ extension HostedGlobals {
             #expect(state.shelfSuggestionFacts == nil)
 
             state.shelfDidOpen()
-            try await Task.sleep(for: .milliseconds(1_900))
+            try await Task.sleep(for: .milliseconds(1900))
 
             #expect(state.shelfSuggestion?.suggestion?.clipID == clipID)
         }

@@ -70,7 +70,7 @@ struct SnippetsView: View {
             } footer: {
                 Text(
                     "Use these inside a snippet. They are filled in when you paste it. "
-                        + "\u{201C}Ask for\u{2026}\u{201D} in the editor asks a question instead."
+                        + "\u{201C}Add Question\u{2026}\u{201D} in the editor asks one instead."
                 )
                 .pestoCaption()
             }

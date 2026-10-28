@@ -94,7 +94,7 @@ picture clip and pastes back as the original file type. PDFs and SVGs get a prev
 A snippet is a pinned clip whose text holds a `{{token}}`. Pesto fills the tokens in when you paste it, in any app.
 Make one in *Settings → Snippets*, or from a suggestion.
 
-![The snippet editor with a text that asks two questions: field chips under the text, and a checkbox to claim a shortcut.](../images/settings-snippet-fields.png)
+![The snippet editor with a text that asks two questions: the questions tinted in the text and listed under When you paste, and a checkbox to claim a shortcut.](../images/settings-snippet-fields.png)
 
 **Fills from the Mac** (no question asked): `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`,
 `{{date+3d}}` and `{{date-1d}}`, `{{clipboard}}`, `{{uuid}}`, `{{app}}` (the app you paste into) and `{{cursor}}` (where the
@@ -113,7 +113,7 @@ caret lands afterwards).
 ![The prompt a snippet shows when it asks for a name, a choice, a note and an optional paragraph.](../images/fill-in-prompt.png)
 
 A label used twice asks once. Return pastes, **⌘Return** pastes from a box of several lines, Esc cancels, and Tab moves between rows.
-The *Ask for…* menu in the snippet editor writes these tokens for you, the questions show as chips under *Asks for* (click one to rename it), and a new snippet can claim the next free `⌃1`–`⌃9` shortcut with one checkbox. A snippet pasted one by one with a stack asks everything
+The *Add Question…* menu in the snippet editor writes these tokens for you. Questions are tinted in the text and listed under *When you paste*, where each one can be renamed, given a starting value or options, or removed, while *Fill From Mac…* inserts the dates, the clipboard and the app name. A new snippet can claim the next free `⌃1`–`⌃9` shortcut with one checkbox. A snippet pasted one by one with a stack asks everything
 before the first clip. If a token is misspelled or has no label it pastes as typed.
 
 Pesto starts a field with what you typed last time. That is kept with the snippet, encrypted like its text, and turned off

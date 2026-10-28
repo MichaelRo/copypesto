@@ -29,6 +29,7 @@ Run them from the repository root. `make help` lists the `make` targets that wra
 |---|---|
 | `export-doc-images.sh` | Copies the documentation screenshots from the newest gate run into `docs/images`. |
 | `export-marketing-images.sh` | Copies the website pictures out of the newest UI-test result (`make marketing-images`). |
+| `record-lunch-rush.sh` | Screen-records one beat of the website demo video (`LunchRushRecordingTests`) with ffmpeg; needs Screen Recording for the terminal and a person at an unlocked Mac. |
 | `clean-test-defaults.sh` | Removes throwaway preferences files that old test runs left in `~/Library/Preferences` (`--dry-run` lists them). |
 
 ## Developer tools (`dev/`)

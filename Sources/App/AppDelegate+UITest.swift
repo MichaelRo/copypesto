@@ -71,6 +71,7 @@ extension AppDelegate {
         // Pictures are judged after they are saved; a test must not start while a card is still covered.
         await service.waitForBackgroundWork()
         if profile == .marketing { await seedMarketingCollections() }
+        if profile == .lunchRush { await seedLunchRush() }
         if profile == .suggestion {
             for daysAgo in (0..<SeedFixtures.suggestionPasteCount).reversed() {
                 _ = try? await service.notePasted(

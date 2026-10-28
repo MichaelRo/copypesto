@@ -109,6 +109,24 @@ enum ShowcaseArt {
         }
     }
 
+    static func pestoBowl() -> Data {
+        render { context in
+            fill(context, hex: "F6EFD9")
+            context.setFillColor(color(hex: "E7DFC6"))
+            context.fillEllipse(in: CGRect(x: 70, y: 20, width: 340, height: 280))
+            context.setFillColor(color(hex: "2F7A49"))
+            context.fillEllipse(in: CGRect(x: 95, y: 45, width: 290, height: 230))
+            context.setFillColor(color(hex: "3F8F5B"))
+            context.fillEllipse(in: CGRect(x: 125, y: 90, width: 200, height: 150))
+            context.setFillColor(color(hex: "FFFFFF", alpha: 0.35))
+            context.fillEllipse(in: CGRect(x: 150, y: 180, width: 90, height: 38))
+            context.setFillColor(color(hex: "EBD9B4"))
+            for (x, y) in [(210, 120), (260, 150), (180, 140), (290, 110)] {
+                context.fillEllipse(in: CGRect(x: x, y: y, width: 18, height: 10))
+            }
+        }
+    }
+
     private static func drawLeaf(_ context: CGContext, hex: String) {
         let path = CGMutablePath()
         path.move(to: CGPoint(x: 0, y: -70))

@@ -56,6 +56,41 @@ extension AppDelegate {
         // missing snippet left every collection on the generic tray.
         try? context.saveOrRollback()
     }
+
+    /// The Lunch Rush profile: the three snippets pinned with their ⌃ shortcuts, the supplier links gathered by a
+    /// smart collection, and the pesto picture marked sensitive.
+    func seedLunchRush() async {
+        guard let container = appState.historyContainer else { return }
+        let then = Date.now.addingTimeInterval(-3600)
+        let records = LunchRushSeed.snippets.enumerated().map { index, snippet in
+            PasteImportRecord(
+                pinboard: nil, title: snippet.title, timestamp: then.addingTimeInterval(Double(-index) * 60),
+                sourceBundleID: "com.apple.Notes",
+                representations: [.init(
+                    uti: "public.utf8-plain-text",
+                    dataBase64: Data(snippet.text.utf8).base64EncodedString()
+                )]
+            )
+        }
+        _ = try? await PasteMigrator(modelContainer: container).migrate(records: records)
+        let context = ModelContext(container)
+        let items = (try? context.fetch(FetchDescriptor<ClipboardItem>())) ?? []
+        for snippet in LunchRushSeed.snippets {
+            guard let item = items.first(where: { $0.customTitle == snippet.title }) else { continue }
+            item.isPinned = true
+            item.pinnedHotkeyIndex = snippet.shortcut
+        }
+        items.first(where: { $0.type == .image })?.isNSFW = true
+        let rule = PredicateRule(field: .contentShape, op: .equals, value: .string("link"))
+        let ruleSet = PredicateRuleSet(combinator: .and, groups: [.init(combinator: .and, rules: [rule])])
+        if let data = try? SmartCollectionPredicate.encodeRuleSet(ruleSet) {
+            context.insert(Pinboard(
+                name: LunchRushSeed.supplierCollection, symbolName: "link", colorHex: "#5B8DEF", sortOrder: 0,
+                isSmart: true, smartPredicateData: data
+            ))
+        }
+        try? context.saveOrRollback()
+    }
 }
 
 /// Keeps the backdrop window alive; the delegate is at its size limit, so the property cannot live there.

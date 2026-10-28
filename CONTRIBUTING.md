@@ -58,7 +58,7 @@ your Keychain password again; "Always Allow" lets that build alone read the key.
 
 ### The tests
 `make test-core` and `make test` write a few real Keychain items under unique names and remove them again; an unsigned
-test process may ask for your login password once. The UI tests and `scripts/verify.sh` (about 40 minutes, they drive
+test process may ask for your login password once. The UI tests and `scripts/verify.sh` (about an hour, they drive
 real windows and need system settings changed with `sudo`: see `docs/testing.md`) are the maintainers' gate. You do not
 need to run them to open a pull request.
 

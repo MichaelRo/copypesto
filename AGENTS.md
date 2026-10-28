@@ -186,7 +186,7 @@ These hold everywhere. **Subsystem-specific pitfalls live in that subtree's `CLA
 
 **`swift test` prints two "Test run with" lines** (the regression target, then Core); `tail -1` hides a failure, so read three lines or let `scripts/verify_judge.py` judge. An `xcodebuild` without the `test` action only builds and exits 0.
 
-**Run `scripts/verify.sh` (`make verify`, about 40 minutes with the UI tests) before claiming any task done and paste its summary.** Start it in the background and read only `SUMMARY.txt` and `failures.txt` in its log folder; re-run just the failed tests with `scripts/verify-rerun-failed.sh` (`docs/testing.md`, "Running the gate cheaply"). It runs lint, the Core tests, a Debug
+**Run `scripts/verify.sh` (`make verify`, about an hour with the UI tests) before claiming any task done and paste its summary.** Start it in the background and read only `SUMMARY.txt` and `failures.txt` in its log folder; re-run just the failed tests with `scripts/verify-rerun-failed.sh` (`docs/testing.md`, "Running the gate cheaply"). It runs lint, the Core tests, a Debug
 build with warnings as errors, the hosted and UI tests, and exports screenshots of the real UI to
 `.build/ui-screenshots/`; it exits non-zero on any failure (`--fast` skips the UI tests). Setup, how the UI-test mode
 works, how to write a UI test and the manual checklist for what cannot be automated are in `docs/testing.md`.

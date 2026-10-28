@@ -72,6 +72,8 @@ The full list of what is stored and sent, including what encryption does *not* p
 
 - **Smart clips.** A date offers *Add to Calendar*, a parcel number offers *Track*, an address opens in Maps, a phone
   number calls.
+- **Snippets that ask.** A snippet can ask for a name, a choice or an optional paragraph when you paste it, in a small
+  panel over the app you are in, and starts with what you typed last time. All of it runs on your Mac.
 - **GIFs move.** A GIF copied from Safari, Finder or a chat plays on its card; one copied from Chrome, Arc or Edge plays too,
   because Pesto fetches the GIF the browser pointed to (with Link Previews on; the browser only hands over the first frame).
 - **Files stay together.** Copy five files in Finder and you get one clip that pastes all five back, with icons,

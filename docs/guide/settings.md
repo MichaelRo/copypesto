@@ -19,7 +19,7 @@ The header shows the version and opens **About Pesto**.
   the floating window pastes the clip or only copies it, and *Open a small menu at the cursor* (off by default): on, in a text
   field the shortcut shows your last five copies by the cursor, for the mouse only (arrow keys and Return go to the app you are typing in); off, it always opens the full shelf, which works
   fully from the keyboard. On the shelf a click only focuses a clip; a double click pastes it.
-- **Show suggestions on the shelf** (on by default): Pesto notices clips you paste often and offers a shortcut, suggests snippets for repeated text, and tidies unused shortcuts. It uses paste counts kept on this Mac. If you choose No Thanks, Pesto asks again about that clip only after you have used it twice as much and thirty days have passed, and never after a second No Thanks. Reset Suggestions re-arms all suggestions and clears past declines.
+- **Show suggestions on the shelf** (on by default): Pesto notices clips you paste often and offers a shortcut for a clip you paste on three or more different days, suggests a snippet when clips differ only in a few words, and tidies unused shortcuts. It uses the days a clip was pasted and how alike clips are, kept on this Mac. If you choose No Thanks, Pesto asks again about that clip only after you have used it twice as much and thirty days have passed, and never after a second No Thanks. Reset Suggestions re-arms all suggestions and clears past declines.
 - **Apple Intelligence:** one switch, on by default, over every on-device AI feature: Summarize, Translate and Extract;
   Describe Image; picture screening for the content filter; and sentence understanding in Ask. It shows whether this Mac
   is ready. Off, the AI actions are grayed out. There is no account and no key, and nothing you copy leaves your Mac.
@@ -112,25 +112,13 @@ when you open the pane, so there is nothing to press. *Add Collection* is in the
 
 Text you paste again and again. *Edit* (or a double click) opens the snippet where it sits in the list, and *Add Snippet* opens a new one at the top of the
 list, with the same editor: a name, the text, *Insert* chips for the placeholders, and a card that shows what it pastes as.
-A snippet holds at least one placeholder, which is filled in or removed when you paste it. The editor asks for one before it saves. Esc cancels and ⌘Return saves.
-
-| Placeholder | What it pastes | Example |
-|---|---|---|
-| `{{date}}` | Today's date, in your Mac's short format | 5/15/2026 |
-| `{{time}}` | The current time, in your Mac's short format | 2:30 PM |
-| `{{datetime}}` | The date and the time, with a space between | 5/15/2026 2:30 PM |
-| `{{isodate}}` | Today's date as year-month-day, whatever your region | 2026-05-15 |
-| `{{weekday}}` | The day of the week | Friday |
-| `{{date+Nd}}` | The date N days from now: `{{date+3d}}` | 5/18/2026 |
-| `{{date-Nd}}` | The date N days ago: `{{date-1d}}` | 5/14/2026 |
-| `{{clipboard}}` | The text on the clipboard when you paste | whatever you copied last |
-| `{{uuid}}` | A new random ID each time | 3f2b8c1e-9a47-4d0e-b6a5-1c2d3e4f5a6b |
-| `{{cursor}}` | Nothing: after a plain-text paste, the caret lands here | |
-
-A name Pesto does not know, such as `{{name}}`, pastes as typed. Only a snippet is filled in, so other text that holds double braces pastes as you copied it.
-
-**Starters** are templates to begin with, and **From your clips** offers text you have
-pasted from the shelf more than twice (*Make Snippet*). *Add Snippet* is in the pane's header.
+A snippet holds at least one placeholder, which is filled in or removed when you paste it: `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`, `{{date+3d}}` or `{{date-1d}}` (a day count), `{{clipboard}}` (the text on the clipboard when you paste), `{{uuid}}` and `{{cursor}}`; the editor asks for one before it saves. Esc cancels and ⌘Return saves. After a plain-text paste, the caret lands where `{{cursor}}` was. **Starters** are templates to begin with, and **From your clips** offers text you have
+pasted from the shelf more than twice (*Make Snippet*). *Add Snippet* is in the pane's header. The editor's *Add Question…* menu adds a
+question that is asked when you paste, and *Suggest Names* renames the fields of a snippet made from similar clips with the on-device model.
+All the tokens are in [Using Pesto](using-pesto.md#snippets).
+- **Remember fill-in values** (on by default): a fill-in starts with what you typed last time. The values are kept with the snippet, encrypted
+  like its text. Turning it off erases them.
+- **Suggestion statistics:** how many suggestions the shelf has shown and how you answered them, counted on this Mac from the list it already keeps. *Copy Summary* copies plain numbers you can paste into an issue; nothing is sent anywhere.
 
 ## Data
 ![The Data pane: backup, import from another app, export, and Clear Everything.](../images/settings-data.png)

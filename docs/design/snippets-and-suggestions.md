@@ -14,9 +14,22 @@ do not match what the person copies are noise.
 preview contains `{{`). There is no snippet model and no flag. A badge marks it on the card, and Settings → Snippets
 lists them.
 
-- Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}` and `{{datetime}}` in the person's locale, short style,
-  `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}` and `{{date-Nd}}` (a day offset), `{{clipboard}}`, `{{uuid}}` and
-  `{{cursor}}`. Unknown tokens such as `{{name}}` are left as typed. Only a snippet is expanded, so Helm, Jinja or
+- Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}`, `{{datetime}}` in the person's locale, short style,
+  `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}`/`{{date-Nd}}`, `{{clipboard}}`, `{{uuid}}`, `{{app}}` (the paste target's name)
+  and `{{cursor}}`. Unknown tokens such as `{{name}}` are left as typed.
+- **Fill-ins** (ADR 0017, `FillInParser`, `SnippetField`): `{{input:Label}}` (attributes `default="…"` and `multiline`),
+  `{{choice:Label options="a|b"}}` and `{{optional:Label}}…{{/optional}}` are asked in a small non-activating panel
+  (`FillInPromptWindowController`) inside the paste task; a label used twice asks once; without answers (a path that cannot
+  ask) the defaults are used. A value typed is inserted literally, never expanded again. The panel serves every paste path
+  through `AppDelegate.expandedPayload` (shelf, `⌃N`, quick paste, AppleScript); a stack asks for all its snippets' fields
+  when it starts (`AppState.expandedStackItems`). The last answers are kept as `ItemMetadata.fieldMemory` (sealed), unless a
+  value looks like a secret or Settings → Snippets → Remember fill-in values is off.
+- **Look-alike suggestion** (ADR 0017): each ordinary text clip of 40 to 2,000 characters gets a `TextSignature` (64-position
+  MinHash of its word shingles, digits read as one mark) after its card is shown, sealed in `ItemMetadata.signature`; a
+  `SimilarityIndex` in memory (banded, ~2 MB at 5,000 clips) finds clips that are at least half alike. A family of three or more
+  over two or more days, with one of them just pasted from the shelf, is offered as one snippet; `TemplateInferrer` aligns
+  their words and turns what differs into fields. Exact repeats get a shortcut offer (pasted on three different days of
+  the last thirty, `ItemMetadata.pasteDays`), never a snippet. Signatures are not in a backup and are rebuilt after a restore. Only a snippet is expanded, so Helm, Jinja or
   Handlebars text that happens to contain double braces pastes as copied.
 - Expansion happens in the paste flow before the write (`AppDelegate.expandedPayload`), through
   `AppState.writeText(_:protected:)`, so all three paste tiers (ADR 0009) see the same expanded text and a secret stays
@@ -27,7 +40,7 @@ lists them.
 - Saving and editing a snippet go through `StorageService.ingest` (`addSnippet`, `updateSnippet`), so the text is
   sealed, masked if sensitive, searchable and in every backup (ADR 0002). Text the history already holds is pinned in
   place instead of becoming a second clip. The Add Snippet sheet (`SnippetDraft`) refuses text with no placeholder,
-  because it would be saved and never listed, and offers an Insert Placeholder menu.
+  because it would be saved and never listed, and offers Add Question and Fill From Mac menus; questions are tinted in the text and listed in a When you paste panel (ADR 0017).
 - **Snippet suggestions** (`SnippetSuggester`): `SnippetStarters` (five templates, each with a placeholder and a one-line
   blurb in Pesto's voice) and text pasted from the shelf three or more times. Never offered: a secret, a picture, a
   pinned clip, text under 8 or over 2,000 characters. At most three; a dismissed id is remembered

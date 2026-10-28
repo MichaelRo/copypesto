@@ -90,6 +90,34 @@ deleted, the card says so. Dragging a group of files out of the shelf drags the 
 A PDF or an SVG copied on its own (for example a selection from Preview, or a shape from a vector app) is kept as a
 picture clip and pastes back as the original file type. PDFs and SVGs get a preview.
 
+## Snippets
+A snippet is a pinned clip whose text holds a `{{token}}`. Pesto fills the tokens in when you paste it, in any app.
+Make one in *Settings → Snippets*, or from a suggestion.
+
+**Fills from the Mac** (no question asked): `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`,
+`{{date+3d}}` and `{{date-1d}}`, `{{clipboard}}`, `{{uuid}}`, `{{app}}` (the app you paste into) and `{{cursor}}` (where the
+caret lands afterwards).
+
+**Questions asked when you paste.** A small panel opens over the app you are in, with a row for each:
+
+| Token | What it asks |
+|---|---|
+| `{{input:Customer name}}` | One line of text. |
+| `{{input:Notes multiline}}` | A box for several lines. |
+| `{{input:Customer name default="Acme"}}` | One line, starting with a value. Put a value in quotes, so it can hold `|` or a single `}`. |
+| `{{choice:Greeting options="Hi|Hello|Dear"}}` | A pick from the options, the first to start. |
+| `{{optional:P.S.}}Thanks again!{{/optional}}` | A switch that keeps or drops the text between the tags (off to start). |
+
+A label used twice asks once. Return pastes, **⌘Return** pastes from a box of several lines, Esc cancels, and Tab moves between rows.
+The *Ask for…* menu in the snippet editor writes these tokens for you. A snippet pasted one by one with a stack asks everything
+before the first clip. If a token is misspelled or has no label it pastes as typed.
+
+Pesto starts a field with what you typed last time. That is kept with the snippet, encrypted like its text, and turned off
+(and erased) with *Settings → Snippets → Remember fill-in values*. A value that looks like a secret is never kept.
+
+Snippets come in from Raycast and TextExpander exports: their fill-ins (`{argument}`, `%filltext`, `%fillpopup`, `%fillpart`) become
+the tokens above.
+
 ## Ask Pesto
 Type a sentence in the search field, such as “the invoice link from last week”, and click **Ask**. Pesto turns it into filters (type and date) and keywords, and you can adjust the chips afterwards. With Apple Intelligence on, the on-device model reads the question; without it, Pesto uses simple rules for words like *link*, *picture*, *today* and *last week*. Dates are the same coarse ranges as the filter bar (today, 7 days, 30 days). Nothing leaves your Mac.
 

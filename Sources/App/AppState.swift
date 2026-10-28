@@ -272,6 +272,8 @@ final class AppState {
     /// Called when the user taps the Settings gear button inside the overlay.
     /// Wired by AppDelegate to hide the overlay then open the Settings window.
     @ObservationIgnored var openSettingsFromOverlay: (@MainActor () -> Void)?
+    /// Shows the fill-in prompt for a snippet and answers nil when it is cancelled (set by the delegate).
+    @ObservationIgnored var askFillIns: (@MainActor (String, [SnippetField], SnippetFills) async -> SnippetFills?)?
     /// Floats a notice that does not need the shelf (set by the delegate).
     @ObservationIgnored var showToast: (@MainActor (StatusToast) -> Void)?
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?

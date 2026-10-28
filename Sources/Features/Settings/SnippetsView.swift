@@ -16,6 +16,7 @@ struct SnippetsView: View {
         sort: [SortDescriptor(\ClipboardItem.pasteCount, order: .reverse)]
     ) private var pastedOften: [ClipboardItem]
     @AppStorage(Setting.dismissedSnippetSuggestions) private var dismissedRaw: String
+    @AppStorage(Setting.rememberFillIns) private var remembersFillIns: Bool
 
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState: AppState
@@ -68,6 +69,30 @@ struct SnippetsView: View {
                 Text("Placeholders")
             } footer: {
                 Text("Use these inside a snippet. They are filled in when you paste it.").pestoCaption()
+            }
+
+            Section {
+                Toggle(isOn: $remembersFillIns) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Remember fill-in values")
+                        Text(
+                            remembersFillIns
+                                ? "A snippet starts with what you typed last time. It is kept with the snippet, "
+                                + "sealed like its text."
+                                : "A snippet starts empty every time. What was remembered is erased."
+                        )
+                        .pestoCaption()
+                    }
+                }
+                .settingsRow("Remember fill-in values")
+                .onChange(of: remembersFillIns) { _, remembers in
+                    guard !remembers else { return }
+                    Task {
+                        await appState.attempt("Couldn\u{2019}t erase the remembered values") {
+                            try await appState.storageService?.forgetAllFillIns()
+                        }
+                    }
+                }
             }
 
             Section {

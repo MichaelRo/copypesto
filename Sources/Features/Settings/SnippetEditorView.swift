@@ -43,14 +43,38 @@ struct SnippetEditorView: View {
     }
 
     private var preview: AttributedString {
-        let parts = SnippetPreview.make(from: draft.text)
-        var result = AttributedString(parts.before)
-        if parts.hasCaret {
-            var caret = AttributedString("\u{258F}")
-            caret.foregroundColor = accent
-            result += caret
+        var result = AttributedString()
+        var inOptional = false
+        for piece in SnippetPreview.pieces(from: draft.text) {
+            switch piece {
+            case let .text(text):
+                var run = AttributedString(text)
+                if inOptional { run.foregroundColor = .secondary }
+                result += run
+            case let .field(label, hint, kind):
+                var name = "\u{2009}\(label)"
+                if kind == .input, let hint { name += ": \(hint)" }
+                if kind == .choice { name += " \u{25BE}" }
+                name += "\u{2009}"
+                var chip = AttributedString(name)
+                let tint = kind == .context ? Color.secondary : accent
+                chip.foregroundColor = tint
+                chip.backgroundColor = tint.opacity(0.18)
+                result += chip
+            case let .optionalStart(label):
+                var tag = AttributedString("\u{2039}\(label)\u{203A} ")
+                tag.foregroundColor = .secondary
+                result += tag
+                inOptional = true
+            case .optionalEnd:
+                inOptional = false
+            case .caret:
+                var caret = AttributedString("\u{258F}")
+                caret.foregroundColor = accent
+                result += caret
+            }
         }
-        return result + AttributedString(parts.after)
+        return result
     }
 
     var body: some View {
@@ -86,8 +110,11 @@ struct SnippetEditorView: View {
             row("Pastes as", alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
                     previewCard
-                    Text("The caret lands where {{cursor}} is, in apps that let Pesto move it. The first one counts.")
-                        .pestoCaption()
+                    Text(
+                        "Highlighted names are asked for when you paste. A dimmed part is optional. "
+                            + "The caret lands where {{cursor}} is, in apps that let Pesto move it."
+                    )
+                    .pestoCaption()
                 }
             }
             HStack(spacing: 8) {
@@ -109,6 +136,9 @@ struct SnippetEditorView: View {
     private var placeholderChips: some View {
         PlaceholderFlowLayout(spacing: 6) {
             Text("Insert").pestoCaption()
+            SnippetFieldMenu { token in
+                pendingInsertion = SnippetInsertionRequest(token: token)
+            }
             ForEach(SnippetDraft.placeholders, id: \.token) { placeholder in
                 Button(placeholder.token) {
                     pendingInsertion = SnippetInsertionRequest(token: placeholder.token)

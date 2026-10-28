@@ -41,6 +41,11 @@ public final class FocusRestoration {
         self.now = now
     }
 
+    /// The name of the app being pasted into, for `{{app}}`.
+    public var targetName: String {
+        capturedTarget?.localizedName ?? ""
+    }
+
     /// Pesto is never the target: a paste into Pesto's own window would land in Pesto's own field.
     public func capture() {
         let front = frontmostApplication()

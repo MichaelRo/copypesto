@@ -166,7 +166,7 @@ struct SnippetsView: View {
                     if let texts = await appState.storageService?.familyTexts(of: seedID),
                        let proposal = TemplateInferrer.propose(from: texts)
                     {
-                        editor = .new(text: proposal.template, anchorID: seedID.uuidString)
+                        editor = .new(text: proposal.template)
                         return
                     }
                     seedFromClip(seedID)
@@ -211,7 +211,7 @@ struct SnippetsView: View {
         } else if let item = try? modelContext
             .fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == seedID })).first
         {
-            editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+            editor = .new(text: item.displayPreviewText)
         }
     }
 

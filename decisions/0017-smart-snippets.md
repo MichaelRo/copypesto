@@ -93,7 +93,7 @@ Not done: continuous or scheduled detection (option 3), reading keystrokes, a sn
 ## Docs affected
 - `README.md` (Features: fill-in snippets, finding snippets)
 - `ROADMAP.md` (Smart / Dynamic Snippets moves from Next to shipped, by stage)
-- `docs/guide/snippets.md` or the matching guide page, `docs/guide/using-pesto.md`, `docs/guide/settings.md`
+- `docs/guide/using-pesto.md`, `docs/guide/settings.md`
 - `docs/guide/privacy-and-security.md` (what inference reads, and that it stays on the Mac)
 - `docs/design/snippets-and-suggestions.md` (placeholder list, which is already behind the code, and the new tokens)
 - `decisions/0014-shelf-suggestions.md` status line, to point here for the snippet suggestion

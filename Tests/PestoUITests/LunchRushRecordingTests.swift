@@ -219,4 +219,15 @@ final class LunchRushRecordingTests: PestoUITestCase {
             capture("lunch-rush-theme-\(theme)")
         }
     }
+
+    /// The simple snippet: no questions, so it pastes at once, with no window.
+    func test_j_quickSnippetPastesAtOnce() {
+        beat()
+        search("quick thanks")
+        pause(1.5)
+        overlay.typeKey(.return, modifierFlags: [])
+        pause(1.5)
+        XCTAssertTrue(pastes.joined().contains("Thanks, I\u{2019}ll get back to you today."), "\(pastes)")
+        XCTAssertFalse(fillInSheet.exists, "a snippet without questions asks nothing")
+    }
 }

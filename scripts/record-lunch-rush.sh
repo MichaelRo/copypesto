@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
 # Records one beat of the website's demo video ("The Lunch Rush", LunchRushRecordingTests) with ffmpeg's screen capture:
-#   scripts/record-lunch-rush.sh a|b|c|d|e|f|g|h|i|all [light|dark]
+#   scripts/record-lunch-rush.sh a|b|c|d|e|f|g|h|i|j|all [light|dark]
 # writes .build/lunch-rush/<beat>-<mode>.mov, cropped to the bottom 16:9 of the brand backdrop.
 # It changes no system setting. The run needs a person at the Mac: the terminal that runs this script must already have
 # Screen Recording permission (System Settings > Privacy & Security > Screen & System Audio Recording), the Mac must be
@@ -14,7 +14,7 @@ cd "$(dirname "$0")/.."
 BEAT=${1:-}
 MODE=${2:-light}
 case "$BEAT" in a | b | c | d | e | f | g | h | all) ;; *)
-  echo "usage: $0 a|b|c|d|e|f|g|h|i|all [light|dark]" >&2
+  echo "usage: $0 a|b|c|d|e|f|g|h|i|j|all [light|dark]" >&2
   exit 2
   ;;
 esac
@@ -63,6 +63,7 @@ record_beat() {
     g) name=test_g_pasteAllJoinsTheIngredients ;;
     h) name=test_h_sensitivePictureShowAndHide ;;
     i) name=test_i_fourThemes ;;
+    j) name=test_j_quickSnippetPastesAtOnce ;;
   esac
   test="PestoUITests/LunchRushRecordingTests/$name"
   local file="$OUT/$letter-$MODE.mov"
@@ -81,7 +82,7 @@ record_beat() {
 }
 
 if [ "$BEAT" = all ]; then
-  for letter in a b c d e f g h i; do record_beat "$letter"; done
+  for letter in a b c d e f g h i j; do record_beat "$letter"; done
 else
   record_beat "$BEAT"
 fi

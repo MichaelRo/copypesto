@@ -94,6 +94,8 @@ picture clip and pastes back as the original file type. PDFs and SVGs get a prev
 A snippet is a pinned clip whose text holds a `{{token}}`. Pesto fills the tokens in when you paste it, in any app.
 Make one in *Settings → Snippets*, or from a suggestion.
 
+![The snippet editor with a text that asks two questions: field chips under the text, and a checkbox to claim a shortcut.](../images/settings-snippet-fields.png)
+
 **Fills from the Mac** (no question asked): `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`,
 `{{date+3d}}` and `{{date-1d}}`, `{{clipboard}}`, `{{uuid}}`, `{{app}}` (the app you paste into) and `{{cursor}}` (where the
 caret lands afterwards).
@@ -107,6 +109,8 @@ caret lands afterwards).
 | `{{input:Customer name default="Acme"}}` | One line, starting with a value. Put a value in quotes, so it can hold `|` or a single `}`. |
 | `{{choice:Greeting options="Hi|Hello|Dear"}}` | A pick from the options, the first to start. |
 | `{{optional:P.S.}}Thanks again!{{/optional}}` | A switch that keeps or drops the text between the tags (off to start). |
+
+![The prompt a snippet shows when it asks for a name, a choice, a note and an optional paragraph.](../images/fill-in-prompt.png)
 
 A label used twice asks once. Return pastes, **⌘Return** pastes from a box of several lines, Esc cancels, and Tab moves between rows.
 The *Ask for…* menu in the snippet editor writes these tokens for you, the fields show as chips under the text (click one to rename it), and a new snippet can claim the next free `⌃1`–`⌃9` shortcut with one checkbox. A snippet pasted one by one with a stack asks everything

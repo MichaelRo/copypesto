@@ -27,6 +27,21 @@ final class SnippetSuggestionsTests: PestoUITestCase {
         )
     }
 
+    func test_questions_showAsFieldChips_andANewSnippetCanClaimAShortcut() {
+        openSnippets()
+        settingsWindow.buttons["Add Snippet"].click()
+        let editor = element(AccessibilityID.snippetTextEditor)
+        XCTAssertTrue(editor.waitForExistence(timeout: 5))
+        editor.click()
+        editor.typeText(#"Hi {{input:Name}}, thanks for {{input:Topic default="your note"}}!"#)
+
+        XCTAssertTrue(settingsWindow.buttons["Name"].waitForExistence(timeout: 5), "no chip for the Name field")
+        XCTAssertTrue(settingsWindow.buttons["Topic"].exists, "no chip for the Topic field")
+        let shortcut = settingsWindow.checkBoxes.matching(NSPredicate(format: "label BEGINSWITH 'Also paste it with'"))
+        XCTAssertTrue(shortcut.firstMatch.waitForExistence(timeout: 5), "no shortcut checkbox")
+        capture("settings-snippet-fields", of: settingsWindow)
+    }
+
     func test_text_withNoPlaceholder_cannotBeSaved_untilOneIsInserted() {
         openSnippets()
         settingsWindow.buttons["Add Snippet"].click()

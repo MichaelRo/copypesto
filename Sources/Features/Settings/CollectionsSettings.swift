@@ -45,7 +45,7 @@ struct CollectionsSettings: View {
     }
 }
 
-/// Settings → Snippets: text you paste again and again, with the date and time filled in.
+/// Settings → Snippets: text you paste again and again, with the date, a name or a choice filled in.
 struct SnippetsSettings: View {
     @Environment(AppState.self) private var appState: AppState
     @State private var addRequest = 0
@@ -58,7 +58,7 @@ struct SnippetsSettings: View {
         VStack(spacing: 0) {
             SettingsPaneHeader(
                 symbol: "curlybraces", title: "Snippets",
-                subtitle: Text("Text you paste again and again, with the date and time filled in.")
+                subtitle: Text("Text you paste again and again, with the date, a name or a choice filled in.")
             ) {
                 Button("Add Snippet", systemImage: "plus") { addRequest += 1 }
                     .buttonStyle(.pestoProminent)

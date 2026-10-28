@@ -68,40 +68,11 @@ struct SnippetsView: View {
             } header: {
                 Text("Placeholders")
             } footer: {
-                Text("Use these inside a snippet. They are filled in when you paste it.").pestoCaption()
-            }
-
-            Section {
-                Toggle(isOn: $remembersFillIns) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Remember fill-in values")
-                        Text(
-                            remembersFillIns
-                                ? "A snippet starts with what you typed last time. It is kept with the snippet, "
-                                + "sealed like its text."
-                                : "A snippet starts empty every time. What was remembered is erased."
-                        )
-                        .pestoCaption()
-                    }
-                }
-                .settingsRow("Remember fill-in values")
-                .onChange(of: remembersFillIns) { _, remembers in
-                    guard !remembers else { return }
-                    Task {
-                        await appState.attempt("Couldn\u{2019}t erase the remembered values") {
-                            try await appState.storageService?.forgetAllFillIns()
-                        }
-                    }
-                }
-            }
-
-            Section {
-                suggestionStatistics
-            } header: {
-                Text("Suggestion statistics")
-            } footer: {
-                Text("Kept on this Mac, from the suggestions the shelf has shown. Nothing is sent anywhere.")
-                    .pestoCaption()
+                Text(
+                    "Use these inside a snippet. They are filled in when you paste it. "
+                        + "\u{201C}Ask for\u{2026}\u{201D} in the editor asks a question instead."
+                )
+                .pestoCaption()
             }
 
             Section {
@@ -151,6 +122,39 @@ struct SnippetsView: View {
                     Text("Text you have pasted from the shelf more than twice. Make a snippet to keep it handy.")
                         .pestoCaption()
                 }
+            }
+
+            Section {
+                Toggle(isOn: $remembersFillIns) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Remember fill-in values")
+                        Text(
+                            remembersFillIns
+                                ? "A snippet starts with what you typed last time. It is kept with the snippet, "
+                                + "sealed like its text."
+                                : "A snippet starts empty every time. What was remembered is erased."
+                        )
+                        .pestoCaption()
+                    }
+                }
+                .settingsRow("Remember fill-in values")
+                .onChange(of: remembersFillIns) { _, remembers in
+                    guard !remembers else { return }
+                    Task {
+                        await appState.attempt("Couldn\u{2019}t erase the remembered values") {
+                            try await appState.storageService?.forgetAllFillIns()
+                        }
+                    }
+                }
+            }
+
+            Section {
+                suggestionStatistics
+            } header: {
+                Text("Suggestion statistics")
+            } footer: {
+                Text("Kept on this Mac, from the suggestions the shelf has shown. Nothing is sent anywhere.")
+                    .pestoCaption()
             }
         }
         .formStyle(.grouped)

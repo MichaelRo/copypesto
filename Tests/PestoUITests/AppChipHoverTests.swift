@@ -27,6 +27,10 @@ final class AppChipHoverTests: PestoUITestCase {
         point(x: x, y: y, in: chip).hover()
     }
 
+    private func pointerIsOnTheOpenChips(_ x: CGFloat, _ current: [XCUIElement]) -> Bool {
+        openChips(current).allSatisfy { current[$0].frame.minX - 6 <= x && x <= current[$0].frame.maxX + 6 }
+    }
+
     private func prepare() -> [XCUIElement] {
         launch(seed: "marketing", defaults: ["hasOnboarded": "true"])
         showOverlay()
@@ -73,10 +77,6 @@ final class AppChipHoverTests: PestoUITestCase {
         let found = prepare()
         let rest = found.map(\.frame)
         let y = rest[0].height / 2
-        func chipsNear(_ x: CGFloat) -> Set<Int> {
-            Set(rest.indices.filter { rest[$0].minX - 5 <= x && x <= rest[$0].maxX + 5 })
-        }
-
         for direction in [1.0, -1.0] {
             var x = direction > 0 ? rest[0].midX : rest[rest.count - 1].midX
             let stop = direction > 0 ? rest[rest.count - 1].midX : rest[0].midX
@@ -84,15 +84,17 @@ final class AppChipHoverTests: PestoUITestCase {
             while direction > 0 ? x <= stop : x >= stop {
                 point(x: x, y: y, in: found[0]).hover()
                 RunLoop.current.run(until: Date().addingTimeInterval(0.25))
-                let near = chipsNear(x)
-                let current = chips
-                for index in openChips(current) {
-                    XCTAssertTrue(near.contains(index), "x=\(x): chip \(index) is open but the pointer is on \(near)")
-                    XCTAssertTrue(
-                        current[index].frame.minX - 6 <= x && x <= current[index].frame.maxX + 6,
-                        "x=\(x) is outside the open chip \(index)"
-                    )
+                // Each element's frame is read separately, so a read that lands mid-switch can mix two moments: look
+                // again.
+                var current = chips
+                if !pointerIsOnTheOpenChips(x, current) {
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+                    current = chips
                 }
+                XCTAssertTrue(
+                    pointerIsOnTheOpenChips(x, current),
+                    "x=\(x) is outside the open chip; frames \(current.map { [$0.frame.minX, $0.frame.width] })"
+                )
                 assertNoOverlap("during the sweep at x=\(x)")
                 if step.isMultiple(of: 8) { capture("chip-sweep-\(direction > 0 ? "right" : "left")-\(step)") }
                 x += 7 * direction

@@ -148,6 +148,22 @@ The runner is sandboxed and cannot post distributed notifications, which is why 
 The test app runs as a regular app (Dock icon, a second menu-bar item) so XCUITest can drive it. It registers no hotkeys,
 so it does not collide with a Pesto you are running.
 
+## Interaction tests: a real pointer, frames, and what you can look at
+Anything that depends on where the pointer is or how a layout moves (hover reveals, chips that grow, drag, resize, focus
+rings) gets a UI test that drives a real pointer and asserts on frames, not only on state. `AppChipHoverTests` is the
+model: it hovers each chip and sweeps across the row in small steps, and checks which chip is open, that chips never
+overlap and that the pointer is on the chip that is open.
+- Assert what a person would see (frames from the accessibility tree), and name the failure with the numbers (`x=…`,
+  `frames […]`). Each element's frame is read separately, so a read that lands mid-change can mix two moments: look again
+  once before failing.
+- `hover()` is sometimes not delivered when the pointer re-enters a window: move twice (`AppChipHoverTests.hover`).
+- Every UI-test run keeps screenshots (`capture(...)`) and a screen recording in its result bundle. Run with
+  `-resultBundlePath .build/x.xcresult`, then `xcrun xcresulttool export attachments --path .build/x.xcresult
+  --output-path .build/att` and open `manifest.json` for the names. Look at the pictures before saying a layout is right.
+- Check flakiness before trusting a new one: `-test-iterations 5 -retry-tests-on-failure`.
+- Timing rules (dwell, grace, ease) live in a pure Core type with an injected clock (`ChipHoverIntent`,
+  `CardStripDrift`) so they are unit tested; the UI test covers the wiring.
+
 ## Writing a UI test
 
 Subclass `PestoUITestCase` (`Tests/PestoUITests/PestoUITestCase.swift`):

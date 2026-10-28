@@ -75,18 +75,27 @@ public enum ChipSlots {
         }
     }
 
+    /// How far into an open name the pointer may travel before the next chip takes over, as a share of what the name
+    /// added to the chip. The chips after the open one are matched that much farther along, so the pointer is on the
+    /// name it is reading and still lands on the neighbor it is heading for.
+    public static let reachShare: CGFloat = 0.6
+
     public static func target(x: CGFloat, restWidths: [CGFloat], spacing: CGFloat, expanded: Expanded?) -> Int? {
         guard !restWidths.isEmpty, x >= 0 else { return nil }
-        var start: CGFloat = 0
+        var edge: CGFloat = 0
         for (index, width) in restWidths.enumerated() {
             let isLast = index == restWidths.count - 1
-            let end = isLast ? start + width : start + width + spacing / 2
+            edge += isLast ? width : width + spacing
+            var end = isLast ? edge : edge - spacing / 2
+            if let expanded {
+                if index >= expanded.index, index < restWidths.count {
+                    end += reachShare * max(0, expanded.width - restWidths[expanded.index])
+                }
+                if isLast, index == expanded.index {
+                    end = max(end, edge - width + expanded.width)
+                }
+            }
             if x < end { return index }
-            start += width + spacing
-        }
-        if let expanded, expanded.index == restWidths.count - 1 {
-            let lastStart = restWidths.dropLast().reduce(CGFloat(0)) { $0 + $1 + spacing }
-            if x < lastStart + expanded.width { return expanded.index }
         }
         return nil
     }

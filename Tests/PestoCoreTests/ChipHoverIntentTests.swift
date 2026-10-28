@@ -139,6 +139,33 @@ struct ChipSlotsTests {
         #expect(ChipSlots.target(x: 134, restWidths: widths, spacing: 8, expanded: nil) == 2)
     }
 
+    @Test("the pointer may go well into an open name before the next chip takes over")
+    func whenANameIsOpen_thenThePointerKeepsItFarIntoTheName() {
+        let open = ChipSlots.Expanded(index: 0, width: 100)
+        let reach = 24 + 4 + ChipSlots.reachShare * 76
+
+        #expect(ChipSlots.target(x: 28, restWidths: rest, spacing: 8, expanded: nil) == 1)
+        #expect(ChipSlots.target(x: 28, restWidths: rest, spacing: 8, expanded: open) == 0)
+        #expect(ChipSlots.target(x: reach - 1, restWidths: rest, spacing: 8, expanded: open) == 0)
+        #expect(ChipSlots.target(x: reach + 1, restWidths: rest, spacing: 8, expanded: open) == 1)
+    }
+
+    @Test("every chip after the open one is matched the same distance farther, so none is skipped")
+    func whenANameIsOpen_thenLaterChipsKeepTheirOrderAndSize() {
+        let open = ChipSlots.Expanded(index: 0, width: 100)
+        let reach = ChipSlots.reachShare * 76
+        var seen: [Int] = []
+        var x: CGFloat = 0
+        while x < 24 + 3 * 32 + reach {
+            if let index = ChipSlots.target(x: x, restWidths: rest, spacing: 8, expanded: open), seen.last != index {
+                seen.append(index)
+            }
+            x += 1
+        }
+
+        #expect(seen == [0, 1, 2, 3])
+    }
+
     @Test("no chips, no target")
     func whenEmpty_thenNil() {
         #expect(ChipSlots.target(x: 5, restWidths: [], spacing: 8, expanded: nil) == nil)

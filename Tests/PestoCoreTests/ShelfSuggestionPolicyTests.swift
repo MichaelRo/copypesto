@@ -53,7 +53,11 @@ struct ShelfSuggestionPolicyTests {
         isNSFW: Bool = false,
         analysisPending: Bool = false,
         expires: Bool = false,
-        shelfPastesThisRun: Int = 1
+        shelfPastesThisRun: Int = 1,
+        pasteDays: Int = 3,
+        familySize: Int = 1,
+        familyDays: Int = 1,
+        representative: UUID? = nil
     )
     -> ShelfClipFacts {
         let lastUsedAt = calendar.date(byAdding: .day, value: -daysAgoUsed, to: now) ?? now
@@ -71,12 +75,16 @@ struct ShelfSuggestionPolicyTests {
             isNSFW: isNSFW,
             analysisPending: analysisPending,
             expires: expires,
-            shelfPastesThisRun: shelfPastesThisRun
+            shelfPastesThisRun: shelfPastesThisRun,
+            pasteDaysInWindow: pasteDays,
+            familySize: familySize,
+            familyDays: familyDays,
+            familyRepresentative: representative
         )
     }
 
-    @Test("when clip pasted at least 6 times recently with a shelf paste this run, offers lowest free shortcut")
-    func whenClipPastedSixTimesRecently_thenOffersLowestFreeShortcut() {
+    @Test("a clip pasted on three different days with a shelf paste this run is offered the lowest free shortcut")
+    func whenClipPastedOnThreeDays_thenOffersLowestFreeShortcut() {
         let clip = makeClip(pasteCount: 6, daysAgoUsed: 2, shelfPastesThisRun: 1)
         let facts = ShelfSuggestionFacts(clips: [clip], assignedSlots: [], unavailableSlots: [])
         let result = ShelfSuggestionPolicy.next(
@@ -88,17 +96,12 @@ struct ShelfSuggestionPolicyTests {
         #expect(result == .shortcutOffer(clip: clip.id, slot: 1, pasteCount: 6, isPinned: false))
     }
 
-    @Test("when under 6 pastes or last use older than 14 days, no offer")
+    @Test("two days is not a habit, and a paste only elsewhere than the shelf this run is not offered")
     func whenUnderThreshold_thenNoOffer() {
-        let lowCount = makeClip(pasteCount: 5)
-        let facts1 = ShelfSuggestionFacts(clips: [lowCount], assignedSlots: [], unavailableSlots: [])
+        let twoDays = makeClip(pasteCount: 9, pasteDays: 2)
+        let facts1 = ShelfSuggestionFacts(clips: [twoDays], assignedSlots: [], unavailableSlots: [])
         #expect(ShelfSuggestionPolicy
             .next(context: context(), facts: facts1, ledger: SuggestionLedger(serialized: "")) == nil)
-
-        let stale = makeClip(pasteCount: 6, daysAgoUsed: 15)
-        let facts2 = ShelfSuggestionFacts(clips: [stale], assignedSlots: [], unavailableSlots: [])
-        #expect(ShelfSuggestionPolicy
-            .next(context: context(), facts: facts2, ledger: SuggestionLedger(serialized: "")) == nil)
 
         let noShelfPasteThisRun = makeClip(pasteCount: 6, daysAgoUsed: 2, shelfPastesThisRun: 0)
         let facts3 = ShelfSuggestionFacts(clips: [noShelfPasteThisRun], assignedSlots: [], unavailableSlots: [])
@@ -262,15 +265,55 @@ struct ShelfSuggestionPolicyTests {
         #expect(res == .shortcutReminder(clip: clip.id, slot: 3))
     }
 
-    @Test("when snippet eligible (pasteCount >= 8, unpinned, no slot), snippet suggested")
-    func whenSnippetEligible_thenSnippetSuggested() {
-        let clip = makeClip(pasteCount: 8, isPinned: false, shortcutSlot: nil, shelfPastesThisRun: 0)
-        let facts = ShelfSuggestionFacts(
-            clips: [clip],
-            assignedSlots: Set(1...9),
-            unavailableSlots: []
-        ) // No free shortcuts!
+    @Test("a family of look-alikes from two days is a snippet suggestion, standing for its representative")
+    func whenFamilyOfThreeOnTwoDays_thenSnippetSuggested() {
+        let representative = UUID()
+        let clip = makeClip(pasteDays: 0, familySize: 3, familyDays: 2, representative: representative)
+        let facts = ShelfSuggestionFacts(clips: [clip], assignedSlots: [], unavailableSlots: [])
+
         let res = ShelfSuggestionPolicy.next(context: context(), facts: facts, ledger: SuggestionLedger(serialized: ""))
-        #expect(res == .snippet(clip: clip.id, pasteCount: 8))
+
+        #expect(res == .snippet(clip: representative, familySize: 3))
+    }
+
+    @Test("two look-alikes, one day, no paste from the shelf or an answered family are not suggested")
+    func whenFamilyTooSmallOrAnswered_thenNothing() {
+        let representative = UUID()
+        var ledger = SuggestionLedger(serialized: "")
+        ledger.resolve(.snippet, representative, as: .declined(atPasteCount: 1))
+        let cases: [(ShelfClipFacts, SuggestionLedger)] = [
+            (
+                makeClip(pasteDays: 0, familySize: 2, familyDays: 2, representative: representative),
+                SuggestionLedger(serialized: "")
+            ),
+            (
+                makeClip(pasteDays: 0, familySize: 4, familyDays: 1, representative: representative),
+                SuggestionLedger(serialized: "")
+            ),
+            (
+                makeClip(
+                    shelfPastesThisRun: 0,
+                    pasteDays: 0,
+                    familySize: 4,
+                    familyDays: 3,
+                    representative: representative
+                ),
+                SuggestionLedger(serialized: "")
+            ),
+            (makeClip(pasteDays: 0, familySize: 4, familyDays: 3, representative: representative), ledger)
+        ]
+        for (clip, ledger) in cases {
+            let facts = ShelfSuggestionFacts(clips: [clip], assignedSlots: [], unavailableSlots: [])
+            #expect(ShelfSuggestionPolicy.next(context: context(), facts: facts, ledger: ledger) == nil)
+        }
+    }
+
+    @Test("text that repeats exactly gets a shortcut, never a snippet")
+    func whenExactRepeatWithNoFreeSlot_thenNoSnippet() {
+        let clip = makeClip(pasteCount: 30, pasteDays: 9)
+        let facts = ShelfSuggestionFacts(clips: [clip], assignedSlots: Set(1...9), unavailableSlots: [])
+
+        #expect(ShelfSuggestionPolicy
+            .next(context: context(), facts: facts, ledger: SuggestionLedger(serialized: "")) == nil)
     }
 }

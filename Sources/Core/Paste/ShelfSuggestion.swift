@@ -9,7 +9,7 @@ public enum ShelfSuggestion: Equatable, Sendable {
     case shortcutOffer(clip: UUID, slot: Int, pasteCount: Int, isPinned: Bool)
     case shortcutReminder(clip: UUID, slot: Int)
     case shortcutRelease(clip: UUID, slot: Int, idleWeeks: Int)
-    case snippet(clip: UUID, pasteCount: Int)
+    case snippet(clip: UUID, familySize: Int)
 
     public var clipID: UUID {
         switch self {

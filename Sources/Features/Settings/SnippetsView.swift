@@ -96,6 +96,15 @@ struct SnippetsView: View {
             }
 
             Section {
+                suggestionStatistics
+            } header: {
+                Text("Suggestion statistics")
+            } footer: {
+                Text("Kept on this Mac, from the suggestions the shelf has shown. Nothing is sent anywhere.")
+                    .pestoCaption()
+            }
+
+            Section {
                 if let editor, editor.clipID == nil, editor.anchorID == nil { editorView(editor) }
                 if snippets.isEmpty, editor == nil {
                     emptyState
@@ -149,14 +158,12 @@ struct SnippetsView: View {
         .onAppear {
             if let seedID = appState.pendingSnippetSeed {
                 appState.pendingSnippetSeed = nil
-                if let item = pastedOften.first(where: { $0.id == seedID }) ?? pinnedItems
-                    .first(where: { $0.id == seedID })
-                {
-                    editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
-                } else if let item = try? modelContext
-                    .fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == seedID })).first
-                {
-                    editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+                Task {
+                    if let proposal = await appState.storageService?.snippetProposal(forFamilyOf: seedID) {
+                        editor = .new(text: proposal.template, anchorID: seedID.uuidString)
+                        return
+                    }
+                    seedFromClip(seedID)
                 }
             }
         }
@@ -173,6 +180,32 @@ struct SnippetsView: View {
             .accessibilityIdentifier(AccessibilityID.deleteSnippetConfirmButton)
         } message: {
             Text("It is removed from your history too. A backup made earlier can still bring it back.")
+        }
+    }
+
+    private var suggestionStatistics: some View {
+        let summary = SuggestionStats(
+            ledger: SuggestionLedger(serialized: AppDefaults.store.value(for: Setting.shelfSuggestionLedger))
+        ).summary
+        return HStack(alignment: .top, spacing: 12) {
+            Text(verbatim: summary)
+                .scaledFont(size: 11.5, design: .monospaced)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button("Copy Summary") { appState.writeText(summary, protected: false) }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+        }
+        .settingsRow("Suggestion statistics")
+    }
+
+    private func seedFromClip(_ seedID: UUID) {
+        if let item = pastedOften.first(where: { $0.id == seedID }) ?? pinnedItems.first(where: { $0.id == seedID }) {
+            editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+        } else if let item = try? modelContext
+            .fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == seedID })).first
+        {
+            editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
         }
     }
 

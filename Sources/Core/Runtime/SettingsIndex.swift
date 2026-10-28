@@ -339,6 +339,10 @@ public enum SettingsIndex {
             "fill-in", "input", "field", "last value", "remember", "prefill", "name"
         ),
         entry(
+            "Suggestion statistics", "Snippets", "Suggestion statistics",
+            "suggestions", "accepted", "declined", "summary", "numbers", "copy"
+        ),
+        entry(
             "Apple Intelligence", "General", "Apple Intelligence",
             "on-device", "model", "summarize", "translate", "extract", "describe image", "ask pesto", "ai", "turn off"
         ),

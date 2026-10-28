@@ -3,8 +3,10 @@ import Foundation
 
 public enum ShelfSuggestionPolicy {
     public enum Thresholds {
-        public static let offerMinimumPastes = 6
-        public static let offerRecencyDays = 14
+        public static let habitMinimumDays = 3
+        public static let habitWindowDays = ItemMetadata.pasteDayWindow
+        public static let familyMinimumSize = 3
+        public static let familyMinimumDays = 2
         public static let offerTextLengths = 1...20_000
         public static let quietDaysAfterArming = 3
         public static let minimumHoursBetween = 24
@@ -12,7 +14,6 @@ public enum ShelfSuggestionPolicy {
         public static let releaseRecentUseDays = 14
         public static let reminderShelfPastes = 5
         public static let reminderQuietDays = 14
-        public static let snippetMinimumPastes = 8
         public static let declinesBeforeOff = 4
         public static let ignoredShowsBeforeMute = 3
     }
@@ -116,19 +117,17 @@ public enum ShelfSuggestionPolicy {
     private static func nextShortcutOffer(
         eligible: [ShelfClipFacts],
         facts: ShelfSuggestionFacts,
-        context: ShelfSuggestionContext,
+        context _: ShelfSuggestionContext,
         ledger: SuggestionLedger,
-        calendar: Calendar
+        calendar _: Calendar
     )
     -> ShelfSuggestion? {
         guard let slot = freeSlot(assigned: facts.assignedSlots, unavailable: facts.unavailableSlots) else {
             return nil
         }
-        let cutoff = calendar.date(byAdding: .day, value: -Thresholds.offerRecencyDays, to: context.now) ?? .distantPast
         let candidates = eligible.filter { clip in
             clip.shortcutSlot == nil
-                && clip.pasteCount >= Thresholds.offerMinimumPastes
-                && clip.lastUsedAt >= cutoff
+                && clip.pasteDaysInWindow >= Thresholds.habitMinimumDays
                 && clip.shelfPastesThisRun >= 1
                 && !ledger.isResolved(.shortcutOffer, clip.id)
         }.sorted {
@@ -208,32 +207,27 @@ public enum ShelfSuggestionPolicy {
 
     private static func nextSnippet(
         eligible: [ShelfClipFacts],
-        context: ShelfSuggestionContext,
+        context _: ShelfSuggestionContext,
         ledger: SuggestionLedger,
-        calendar: Calendar
+        calendar _: Calendar
     )
     -> ShelfSuggestion? {
-        let cutoff = calendar.date(byAdding: .day, value: -Thresholds.offerRecencyDays, to: context.now) ?? .distantPast
         let candidates = eligible.filter { clip in
-            clip.shortcutSlot == nil
+            guard let representative = clip.familyRepresentative else { return false }
+            return clip.shortcutSlot == nil
                 && !clip.isPinned
-                && clip.pasteCount >= Thresholds.snippetMinimumPastes
-                && clip.lastUsedAt >= cutoff
-                && SnippetSuggester.isEligible(
-                    pasteCount: clip.pasteCount,
-                    isPinned: clip.isPinned,
-                    isTextual: clip.kind == .text || clip.kind == .code,
-                    isSecret: clip.isSensitive,
-                    length: clip.textLength
-                )
-                && !ledger.isResolved(.snippet, clip.id)
+                && (clip.kind == .text || clip.kind == .code)
+                && clip.familySize >= Thresholds.familyMinimumSize
+                && clip.familyDays >= Thresholds.familyMinimumDays
+                && clip.shelfPastesThisRun >= 1
+                && !ledger.isResolved(.snippet, representative)
         }.sorted {
-            if $0.pasteCount != $1.pasteCount { return $0.pasteCount > $1.pasteCount }
+            if $0.familySize != $1.familySize { return $0.familySize > $1.familySize }
             if $0.lastUsedAt != $1.lastUsedAt { return $0.lastUsedAt > $1.lastUsedAt }
             return $0.id.uuidString < $1.id.uuidString
         }
 
-        guard let best = candidates.first else { return nil }
-        return .snippet(clip: best.id, pasteCount: best.pasteCount)
+        guard let best = candidates.first, let representative = best.familyRepresentative else { return nil }
+        return .snippet(clip: representative, familySize: best.familySize)
     }
 }

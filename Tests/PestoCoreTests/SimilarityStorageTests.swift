@@ -64,6 +64,25 @@ struct SimilarityStorageTests {
         #expect(await service.lookalikes(of: first).isEmpty)
     }
 
+    @Test("pastes on different days are counted as days, once each, and a family reaches the suggestion facts")
+    func whenPastedOnDays_thenHabitAndFamilyInFacts() async throws {
+        let service = StorageService(modelContainer: container)
+        let ids = try await (0..<3).asyncMap { try await self.ingest(service, self.message("P\($0)", $0)) }
+        let day = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        for offset in [0, 0, 1, 2] {
+            try await service.notePasted(id: ids[0], at: day.addingTimeInterval(Double(offset) * 86_400))
+        }
+
+        let facts = try await service.shelfSuggestionFacts(unavailableSlots: [])
+
+        let clip = try #require(facts.clips.first { $0.id == ids[0] })
+        #expect(clip.familySize == 3)
+        #expect(clip.familyRepresentative == ids.min { $0.uuidString < $1.uuidString })
+        let item = try #require(try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+            .first { $0.id == ids[0] })
+        #expect(item.metadata.pasteDays?.count == 3)
+    }
+
     @Test("a secret, a short text and a clip that expires are never signed")
     func whenNotEligible_thenNoSignature() {
         #expect(!TextSignature.isEligible(isTextual: true, isSensitive: true, expires: false, length: 100))

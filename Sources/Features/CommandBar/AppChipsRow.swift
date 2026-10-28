@@ -13,8 +13,7 @@ struct AppChipsRow: View {
     var collapsesLabels = true
 
     @State private var intent = ChipHoverIntent()
-    @State private var activeWidths: [String: CGFloat] = [:]
-    @State private var openedWidth: CGFloat = 80
+    @State private var measuredWidths: [String: CGFloat] = [:]
     @State private var pointerX: CGFloat?
 
     static let spacing: CGFloat = 8
@@ -46,12 +45,10 @@ struct AppChipsRow: View {
                 intent.pointerMoved(over: nil, at: Self.now)
             }
         }
-        .onPreferenceChange(ChipWidthKey.self) { widths in
-            activeWidths = widths.filter { appState.appChipFilter.contains($0.key) }
-            if let open = intent.expanded, chips.indices.contains(open), let width = widths[chips[open].bundleID] {
-                openedWidth = width
-            }
-        }
+        .contentShape(Rectangle())
+        .onPreferenceChange(ChipWidthKey.self) { measuredWidths = $0 }
+        .onChange(of: appState.isOverlayVisible) { resetPointer() }
+        .onDisappear { resetPointer() }
         .onChange(of: chips.map(\.bundleID)) {
             // The apps behind the chips changed under a resting pointer: start over, and decide again where it is.
             intent = ChipHoverIntent()
@@ -92,9 +89,21 @@ struct AppChipsRow: View {
     /// changes which chip it is on.
     private func slot(at x: CGFloat) -> Int? {
         guard collapsesLabels else { return nil }
-        let restWidths = chips.map { activeWidths[$0.bundleID] ?? Self.restWidth }
-        let expanded = intent.expanded.map { ChipSlots.Expanded(index: $0, width: openedWidth) }
+        let restWidths = chips.map { app in
+            appState.appChipFilter.contains(app.bundleID) ? measuredWidths[app.bundleID] ?? Self.restWidth : Self
+                .restWidth
+        }
+        let expanded = intent.expanded.flatMap { open -> ChipSlots.Expanded? in
+            guard chips.indices.contains(open), let width = measuredWidths[chips[open].bundleID] else { return nil }
+            return ChipSlots.Expanded(index: open, width: width)
+        }
         return ChipSlots.target(x: x, restWidths: restWidths, spacing: Self.spacing, expanded: expanded)
+    }
+
+    /// The shelf closing or the row leaving the screen can swallow the pointer's exit; nothing may stay open from it.
+    private func resetPointer() {
+        intent = ChipHoverIntent()
+        pointerX = nil
     }
 
     private static var now: Double {

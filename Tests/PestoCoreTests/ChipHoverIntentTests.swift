@@ -131,14 +131,12 @@ struct ChipSlotsTests {
         #expect(ChipSlots.target(x: 200, restWidths: rest, spacing: 8, expanded: open) == nil)
     }
 
-    @Test("the pointer on a chip's own opened name keeps that chip, not the one after next")
-    func whenPointerIsOnTheOpenName_thenItStaysOnThatChip() {
-        let open = ChipSlots.Expanded(index: 0, width: 80)
+    @Test("a chip that is wider at rest, such as an active one, keeps its own wider slot")
+    func whenAChipIsWiderAtRest_thenItsSlotIsWider() {
+        let widths: [CGFloat] = [24, 90, 24]
 
-        // Rest slot of chip 1 starts at 32; the pointer at 20 is still inside chip 0's slot.
-        #expect(ChipSlots.target(x: 20, restWidths: rest, spacing: 8, expanded: open) == 0)
-        // Past chip 1's rest slot start the pointer belongs to chip 1, however wide chip 0's name is.
-        #expect(ChipSlots.target(x: 40, restWidths: rest, spacing: 8, expanded: open) == 1)
+        #expect(ChipSlots.target(x: 100, restWidths: widths, spacing: 8, expanded: nil) == 1)
+        #expect(ChipSlots.target(x: 134, restWidths: widths, spacing: 8, expanded: nil) == 2)
     }
 
     @Test("no chips, no target")

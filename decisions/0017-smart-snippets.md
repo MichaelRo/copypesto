@@ -95,7 +95,18 @@ dependency, not release scope):
    field labels for that one proposal (`AIActionCoordinator`); greyed out with `AIAvailability.message`; never a secret;
    never automatic. Without the model, labels are rule-based (the word before the value).
 
+### Learning and knowing whether it works
+No telemetry (security invariant 5), so the evidence is on the Mac. `SuggestionLedger` already records shown, declined and
+resolved; the plan adds an on-device summary (acceptance rate per suggestion kind, how often a family proposal was
+dismissed) that a person can copy from Settings → Advanced into an issue if they choose, and that the maintainer reads on
+their own Mac while dogfooding. Thresholds stay fixed constants in `ShelfSuggestionPolicy.Thresholds`. No self-tuning
+at first: the existing rule (a decline doubles the bar; four declines turn suggestions off) already adapts per person, and
+a learned threshold would be untestable and hard to explain. Revisit only if the summary shows a kind accepted under
+about 20% or declined most of the time.
+
 ### The performance gate for step 4 and the suggestion that depends on it
+A measurement-only spike (signature and lookup against a 5,000-clip store, nothing wired to the UI) runs before steps 4
+and 5 are built, because its result can change them; the full gate runs again at the end on the finished code.
 Measured on a developer Mac with the existing suites (`CopyLatencyPerformanceTests`, `IngestPipelinePerformanceTests`,
 `WatcherPerformanceTests`, `HistoryMemoryTests`, `LargeHistoryPerformanceTests`) plus a new one for the signature and
 the lookup, and on `make bench-latency`. Ship the noticing only if all hold; otherwise ship option 2.
@@ -132,7 +143,8 @@ permission), phrase detection across unrelated clips (weak signal, highest cost)
 ## Docs affected
 - `README.md` (Features: fill-in snippets, finding snippets)
 - `ROADMAP.md` (Smart / Dynamic Snippets moves from Next to shipped)
-- `docs/guide/using-pesto.md`, `docs/guide/settings.md` (snippets, remembered values switch), `docs/guide/shortcuts.md`
+- `docs/guide/using-pesto.md` (a snippet syntax reference with every token), `docs/guide/settings.md` (snippets, remembered values switch), `docs/guide/shortcuts.md`, `docs/feature-reference.md`
+- The website (a separate repository, which takes what it needs from this one, `docs/release.md`): the snippets and features pages and the syntax reference
 - `docs/guide/privacy-and-security.md` (what is indexed and sealed, what inference reads)
 - `docs/design/snippets-and-suggestions.md` (placeholder list, already behind the code, and the new tokens)
 - `decisions/0002-clip-data-is-sealed-at-rest.md` is not edited; this record adds the sealed fields

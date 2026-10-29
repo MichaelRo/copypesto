@@ -23,7 +23,7 @@ Use one page, two sections, in this order: a one-line summary at the top, then B
 | Backup toggle | **Save a Backup Automatically** — "Writes one encrypted file for this Mac after you copy. Your other Macs never read it." |
 | Backup "is not" | "A backup is a copy you can restore from. It never changes another Mac." |
 | Sync toggle | **Sync Clips with iCloud Drive** — "Keeps the Macs where you turn this on matching." |
-| Sync "is not" | "Sync keeps your Macs matching, so deleting a clip on one deletes it on all. It is not a backup." (adapted from Dropbox and Apple; verify against ADR 0018 that deletes do propagate) |
+| Sync "is not" | "Sync keeps your Macs matching, so deleting a clip on one deletes it on all. It is not a backup." (adapted from Dropbox and Apple; verify against the sync design (Proposed) that deletes do propagate) |
 | Backup states | Off · Up to Date · Saving… · Folder Missing · Waiting for the Folder (name the cause) |
 | Sync states | Off · Up to Date · Receiving N of M · Nothing New Since 14:32 · Waiting for the Folder · Folder Missing · iCloud Keychain Is Off · Not Signed In to iCloud · Refused |
 | Actions | **Pause** while on; **Leave Sync** (this Mac only, clips stay); **Reset Sync** (destructive, states that other Macs stop until set up again) |

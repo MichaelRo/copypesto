@@ -198,6 +198,8 @@ final class LunchRushRecordingTests: PestoUITestCase {
     func test_i_fourThemes() {
         for theme in ["basil", "parmesan", "pineNut", "mortar"] {
             if theme != "basil" { app.terminate() }
+            // A launch waits for the ready marker, and the one the previous launch left would end that wait at once.
+            try? FileManager.default.removeItem(at: workDirectory.appendingPathComponent(UITestSupport.readyFileName))
             launch(
                 seed: "lunchRush",
                 defaults: [

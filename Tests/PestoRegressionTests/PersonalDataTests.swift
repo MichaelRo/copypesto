@@ -26,7 +26,12 @@ struct PersonalDataTests {
         let top = try FileManager.default.contentsOfDirectory(
             at: SourceTree.repositoryRoot, includingPropertiesForKeys: nil
         )
-        files += top.filter { Self.extensions.contains($0.pathExtension) || $0.lastPathComponent == "Makefile" }
+        // In a git worktree `.git` is a file holding the path of the main checkout: not a tracked file.
+        files += top.filter {
+            $0
+                .lastPathComponent != ".git" &&
+                (Self.extensions.contains($0.pathExtension) || $0.lastPathComponent == "Makefile")
+        }
 
         var offenders: [String] = []
         for file in files {

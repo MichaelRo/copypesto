@@ -72,7 +72,10 @@ public enum SeedFixtures {
     }
 
     private static func storyCaptures(for profile: SeedProfile) -> [PasteboardCapture] {
-        profile == .lunchRush ? LunchRushSeed.captures() : MarketingSeed.captures()
+        #if DEBUG
+            if profile == .lunchRush { return LunchRushSeed.captures() }
+        #endif
+        return MarketingSeed.captures()
     }
 
     private static func age(ofCapture index: Int, of count: Int, in profile: SeedProfile) -> Double {

@@ -6,6 +6,7 @@ enum AccessibilityID {
     static let quickMenuPanel = "pesto-quick-menu"
     static let toast = "pesto-toast"
     static let pinnedPanel = "pesto-pinned"
+    static let setUpBackupButton = "set-up-backup"
     static let backupSwitch = "backup-switch"
     static let backupChangeFolderButton = "backup-change-folder"
     static let backupIncludesSecretsToggle = "backup-includes-secrets"

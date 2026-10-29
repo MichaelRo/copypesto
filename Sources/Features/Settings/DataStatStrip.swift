@@ -17,7 +17,10 @@ struct DataStatStrip: View {
             SettingsStat(id: "clips", value: clipsText, label: "Clips"),
             SettingsStat(id: "disk", value: bytes.map(Self.sizeText) ?? "…", label: "On disk"),
             SettingsStat(id: "oldest", value: oldestText, label: "Oldest clip"),
-            SettingsStat(id: "backup", value: chip.tileValue(), label: LocalizedStringKey(chip.tileLabel))
+            SettingsStat(
+                id: "backup", value: chip.tileValue(), label: LocalizedStringKey(chip.tileLabel),
+                tint: chip.tileTint
+            )
         ])
         .task { await refresh() }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in

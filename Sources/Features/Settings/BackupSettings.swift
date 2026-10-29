@@ -44,34 +44,28 @@ struct BackupSettings: View {
     private let settings = AutoBackupSettings()
 
     var body: some View {
-        Section {
-            BackupSummaryRow(chip: chip, now: now)
-            backupSwitch
-            if isConfigured {
-                BackupStatusLine(
-                    chip: chip, lastBytes: settings.lastBytes, lastMessage: status, isWorking: working, pulse: pulse,
-                    onBackUpNow: { Task { await backUpNow() } },
-                    onResume: { confirmsReplacement = true }
-                )
-                if automatic, lastBackup != nil, let nextText { Text(nextText).pestoCaption() }
-                if !automatic { Text("Only when you choose Back Up Now.").pestoCaption() }
-                configured
-            } else {
-                if let status { Text(status).pestoCaption() }
-                if hasRecoveryKey { recoveryKeyRow }
+        Group {
+            Section { BackupSummaryRow(chip: chip, now: now) }
+            Section {
+                backupSwitch
+                if isConfigured {
+                    configured
+                } else {
+                    offActions
+                    if hasRecoveryKey { recoveryKeyRow }
+                }
+                if unreadableCount > 0 {
+                    Button("Delete Unreadable Clips\u{2026}", role: .destructive) { confirmsDeletingUnreadable = true }
+                        .accessibilityIdentifier(AccessibilityID.deleteUnreadableClipsButton)
+                }
+                if hasRecoveryKey, let explanation = appState.authenticationAvailability.explanation {
+                    Text(explanation).pestoCaption()
+                }
+            } header: {
+                Text("Backup").settingsRow("Backup")
+            } footer: {
+                Text(footerText)
             }
-            restoreRow
-            if unreadableCount > 0 {
-                Button("Delete Unreadable Clips\u{2026}", role: .destructive) { confirmsDeletingUnreadable = true }
-                    .accessibilityIdentifier(AccessibilityID.deleteUnreadableClipsButton)
-            }
-            if hasRecoveryKey, let explanation = appState.authenticationAvailability.explanation {
-                Text(explanation).pestoCaption()
-            }
-        } header: {
-            Text("Backup").settingsRow("Backup")
-        } footer: {
-            Text(footerText)
         }
         .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { now = $0 }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
@@ -128,13 +122,11 @@ struct BackupSettings: View {
     }
 
     private var footerText: String {
-        let place = AutoBackupSettings.iCloudDriveFolder() == nil
-            ? "a folder you choose"
-            : "iCloud Drive or a folder you choose"
-        return "Keeps one encrypted file for this Mac in \(place). It is encrypted here before it is saved, so the " +
-            "folder's provider sees only scrambled bytes; without your passphrase or recovery key it cannot be read. " +
-            "Your other Macs' files are never read or changed, and restoring stays up to you. Remove it on a Mac you " +
-            "do not want backed up, such as a work laptop."
+        if !isConfigured {
+            return "Nothing leaves this Mac until you set this up. Clips with secrets stay out unless you choose."
+        }
+        return "To use these clips on another Mac, restore the file there. Restoring adds to that Mac; it never " +
+            "replaces its clips."
     }
 
     private var backupStatus: BackupStatus {
@@ -146,7 +138,7 @@ struct BackupSettings: View {
     }
 
     private var backupSwitch: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 4) {
             Toggle("Back up this Mac", isOn: Binding(
                 get: { isConfigured },
                 set: { on in
@@ -155,16 +147,31 @@ struct BackupSettings: View {
             ))
             .accessibilityIdentifier(AccessibilityID.backupSwitch)
             Text(
-                "Keeps one encrypted file of your clips, collections, snippets and settings. Restore it on any Mac. " +
-                    "A backup never changes another Mac."
+                isConfigured
+                    ? "One encrypted file, rewritten about an hour after the last change. A backup never changes " +
+                    "another Mac."
+                    : "Keeps one encrypted file of your clips, collections, snippets and settings. Restore it on " +
+                    "any Mac. A backup never changes another Mac."
             )
             .pestoCaption()
+            if isConfigured {
+                BackupStatusLine(
+                    chip: chip, lastBytes: settings.lastBytes, lastMessage: status, pulse: pulse,
+                    automatic: automatic, nextText: nextText
+                )
+            }
         }
     }
 
-    private var restoreRow: some View {
-        Button("Restore from Backup\u{2026}") { show(.restore) }
-            .accessibilityIdentifier(AccessibilityID.restoreBackupButton)
+    private var offActions: some View {
+        HStack(spacing: 8) {
+            Button("Set Up Backup\u{2026}") { show(.setUp) }
+                .buttonStyle(.pestoProminent)
+                .accessibilityIdentifier(AccessibilityID.setUpBackupButton)
+            Button("Restore from Backup\u{2026}") { show(.restore) }
+                .accessibilityIdentifier(AccessibilityID.restoreBackupButton)
+            Spacer()
+        }
     }
 
     private var recoveryKeyRow: some View {
@@ -176,49 +183,51 @@ struct BackupSettings: View {
     @ViewBuilder
     private var configured: some View {
         if let folder = settings.folder {
-            LabeledContent("Where your copies live") {
-                HStack {
-                    Text(folder.lastPathComponent).pestoQuiet().lineLimit(1).truncationMode(.middle)
-                    Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
-                    Button("Change\u{2026}", action: changeFolder)
-                        .disabled(working)
-                        .accessibilityIdentifier(AccessibilityID.backupChangeFolderButton)
-                }
+            HStack(spacing: 8) {
+                Text("Where your copies live")
+                Spacer(minLength: 12)
+                Text(folder.lastPathComponent).pestoQuiet().lineLimit(1).truncationMode(.middle)
+                Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
+                Button("Change\u{2026}", action: changeFolder)
+                    .disabled(working)
+                    .accessibilityIdentifier(AccessibilityID.backupChangeFolderButton)
             }
         }
-        if let protection = settings.protection {
-            LabeledContent("Protected by") {
-                HStack {
-                    Text(protection == .recoveryKey ? "Recovery key" : "Passphrase").pestoQuiet()
-                    recoveryKeyRow
-                }
+        HStack(spacing: 8) {
+            Text("Protected by")
+            Spacer(minLength: 12)
+            if let protection = settings.protection {
+                Text(protection == .recoveryKey ? "Recovery key" : "Passphrase").pestoQuiet()
             }
-        } else {
             recoveryKeyRow
         }
-        Toggle("Include clips with secrets", isOn: Binding(
+        BackupContentsTable(includesSecrets: Binding(
             get: { includesSecrets },
             set: { on in Task { await setIncludesSecrets(on) } }
         ))
-        .accessibilityIdentifier(AccessibilityID.backupIncludesSecretsToggle)
-        Text(
-            "Card numbers, keys and tokens. Left out unless you turn this on. Copies kept from a password manager " +
-                "are never included."
-        )
-        .pestoCaption()
-        Text("In your backup: clips with their pins, snippets, collections and this Mac\u{2019}s settings.")
-            .pestoCaption()
         if settings.lastSkippedLarge > 0 {
             Text("\(settings.lastSkippedLarge) clips over 10 MB, such as large pictures, are left out.")
                 .pestoCaption()
+        }
+        HStack(spacing: 8) {
+            if case .paused = chip {
+                Button("Resume Backup\u{2026}") { confirmsReplacement = true }
+                    .accessibilityIdentifier(AccessibilityID.resumeBackupButton)
+            } else {
+                Button("Back Up Now") { Task { await backUpNow() } }
+                    .disabled(working)
+                    .accessibilityIdentifier(AccessibilityID.autoBackupNowButton)
+            }
+            Button("Restore from Backup\u{2026}") { show(.restore) }
+                .accessibilityIdentifier(AccessibilityID.restoreBackupButton)
+            Spacer()
+            Button("Remove Backup\u{2026}", role: .destructive) { confirmsTurningOff = true }
         }
     }
 
     private var nextText: String? {
         _ = now
-        guard let next = AutoBackupHolder.service?.nextBackup else {
-            return "Up to date: nothing has changed since the last backup."
-        }
+        guard let next = AutoBackupHolder.service?.nextBackup else { return nil }
         return "Next backup around \(next.formatted(date: .omitted, time: .shortened))."
     }
 

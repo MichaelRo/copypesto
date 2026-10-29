@@ -131,7 +131,7 @@ final class LunchRushRecordingTests: PestoUITestCase {
         XCTAssertTrue(chip.waitForExistence(timeout: 10), "no Supplier links chip")
         chip.click()
         pause(2.0)
-        XCTAssertEqual(cards.count, 4, "the collection holds the four links")
+        XCTAssertEqual(cards.count, 5, "the collection holds the four supplier links and the olive oil link")
         overlay.typeKey(.rightArrow, modifierFlags: [])
         pause(1.2)
         overlay.typeKey(.rightArrow, modifierFlags: [])

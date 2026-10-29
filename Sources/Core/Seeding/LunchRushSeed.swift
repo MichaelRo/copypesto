@@ -85,24 +85,26 @@ public enum LunchRushSeed {
         return captures
     }
 
-    /// Newest first, as the shelf shows them: the masked card and the covered picture open it, then a GIF, a video, a
-    /// PDF
-    /// and the rest of the kinds. The six ingredients are not here: the finale copies them live.
+    /// Newest first, as the shelf shows them: the masked card and the covered picture open it, then the six clips of
+    /// the finale side by side (a photo, a GIF, a colour, a link, a line of code and a PDF), then the rest of the
+    /// kinds.
     private static func richClips() -> [PasteboardCapture] {
         let gif = LunchRushMedia.pestoGIF
         var clips: [PasteboardCapture] = [
             SeedFixtures.textCapture(cardNumber, app: safari),
             SeedFixtures.pictureCapture(sensitivePicture()),
+            SeedFixtures.pictureCapture(ShowcaseArt.basilLeaves()),
             PasteboardCapture(
                 typeIdentifier: "com.compuserve.gif", payload: gif, frontmostBundleID: safari,
                 contentHash: SeedFixtures.hash(of: gif)
-            )
+            ),
+            SeedFixtures.textCapture("#EBD9B4", app: "com.apple.ColorSyncUtility"),
+            SeedFixtures.textCapture(oilLink, app: safari),
+            SeedFixtures.textCapture(garlicLine, app: "com.apple.dt.Xcode")
         ]
-        if let video = LunchRushMedia.bowlVideo { clips.append(SeedFixtures.fileCapture([video.path])) }
         if let pdf = LunchRushMedia.recipePDF { clips.append(SeedFixtures.fileCapture([pdf.path])) }
+        if let video = LunchRushMedia.bowlVideo { clips.append(SeedFixtures.fileCapture([video.path])) }
         clips += [
-            SeedFixtures.pictureCapture(ShowcaseArt.basilLeaves()),
-            SeedFixtures.textCapture("#2F7A49", app: "com.apple.ColorSyncUtility"),
             SeedFixtures.textCapture("\u{1F33F}\u{1F9C4}\u{1F9C0} Pesto night!", app: messages),
             SeedFixtures.textCapture(
                 "## Pesto for four\n\n- **60 g** basil\n- **50 g** pine nuts\n- 1 clove garlic\n\n"
@@ -114,11 +116,9 @@ public enum LunchRushSeed {
                 "func scale(_ grams: Double, by servings: Int) -> Double {\n    grams * Double(servings) / 4\n}",
                 app: "com.apple.dt.Xcode"
             ),
-            SeedFixtures.textCapture(oilLink, app: safari),
-            SeedFixtures.textCapture(garlicLine, app: "com.apple.dt.Xcode"),
             SeedFixtures.textCapture("{ \"recipe\": \"pesto\",\n  \"servings\": 4 }", app: "com.apple.Terminal"),
             SeedFixtures.pictureCapture(ShowcaseArt.pineNuts()),
-            SeedFixtures.textCapture("#EBD9B4", app: "com.apple.ColorSyncUtility")
+            SeedFixtures.textCapture("#2F7A49", app: "com.apple.ColorSyncUtility")
         ]
         return clips
     }

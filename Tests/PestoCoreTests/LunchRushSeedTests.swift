@@ -79,13 +79,18 @@ struct LunchRushSeedTests {
         #expect(LunchRushSeed.snippets.contains { $0.title == "Quick thanks" && !$0.text.contains("{{") })
     }
 
-    @Test("the shelf opens on the masked card, then the covered picture, then the GIF")
-    func whenProfileBuilt_thenRichClipsAreNewest() {
-        let captures = SeedFixtures.captures(for: .lunchRush)
+    @Test("the shelf opens on the masked card and the covered picture, then the six finale clips side by side")
+    func whenProfileBuilt_thenFinaleClipsFollowTheCoveredPicture() {
+        let newestFirst = Array(SeedFixtures.captures(for: .lunchRush).reversed())
 
-        #expect(captures.last?.payloadString == LunchRushSeed.cardNumber)
-        #expect(captures.dropLast().last?.payload == LunchRushSeed.sensitivePicture())
-        #expect(captures.dropLast(2).last?.typeIdentifier == "com.compuserve.gif")
+        #expect(newestFirst[0].payloadString == LunchRushSeed.cardNumber)
+        #expect(newestFirst[1].payload == LunchRushSeed.sensitivePicture())
+        #expect(newestFirst[2].payload == ShowcaseArt.basilLeaves())
+        #expect(newestFirst[3].typeIdentifier == "com.compuserve.gif")
+        #expect(newestFirst[4].payloadString == "#EBD9B4")
+        #expect(newestFirst[5].payloadString == LunchRushSeed.oilLink)
+        #expect(newestFirst[6].payloadString == LunchRushSeed.garlicLine)
+        #expect(newestFirst[7].payloadString?.contains(".pdf") == true)
     }
 
     @Test("exactly one clip answers a search for flight")

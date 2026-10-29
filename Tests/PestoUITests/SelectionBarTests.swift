@@ -33,7 +33,7 @@ final class SelectionBarTests: PestoUITestCase {
 
     func test_selectionBar_ofTextClips_offersPasteAllPasteOneByOneAndDelete() {
         inBothAppearances { mode in
-            pick([0, 1, 3])
+            pick([8, 10, 11])
             XCTAssertTrue(element(AccessibilityID.pasteAllButton).waitForExistence(timeout: 5))
             XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).exists)
             XCTAssertTrue(element(AccessibilityID.deleteSelectedButton).exists)
@@ -44,7 +44,7 @@ final class SelectionBarTests: PestoUITestCase {
 
     func test_selectionBar_ofMixedClips_offersNoPasteAll() {
         inBothAppearances { mode in
-            pick([1, 2])
+            pick([1, 8])
             XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitForExistence(timeout: 5))
             XCTAssertFalse(
                 element(AccessibilityID.pasteAllButton).exists,

@@ -9,13 +9,14 @@ struct MarketingSeedTests {
         MarketingSeed.captures().compactMap(\.payloadString)
     }
 
-    @Test("the shelf has the 22 planned clips, the newest being the message about pesto night")
+    @Test("the shelf has the film's 8 clips on top of the 20 earlier ones, the masked card newest")
     func whenBuilt_thenPlannedClipsInOrder() {
         let captures = SeedFixtures.captures(for: .marketing)
 
-        #expect(captures.count == 22)
-        #expect(captures.last?.payloadString?.hasPrefix("Pesto night at Dana's") == true)
-        #expect(captures.last?.frontmostBundleID == "com.apple.MobileSMS")
+        #expect(captures.count == 28)
+        #expect(captures.last?.payloadString == LunchRushSeed.cardNumber)
+        #expect(captures.last?.frontmostBundleID == "com.apple.Safari")
+        #expect(captures.dropLast(8).last?.payloadString?.hasPrefix("Pesto night at Dana's") == true)
         #expect(captures.last?.timestamp ?? .distantPast > captures.first?.timestamp ?? .distantFuture)
     }
 

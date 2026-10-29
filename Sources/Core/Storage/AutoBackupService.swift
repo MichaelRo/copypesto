@@ -141,7 +141,20 @@ public final class AutoBackupService {
         inFlight = run
         let outcome = await run.value
         if inFlight == run { inFlight = nil }
+        rememberProblem(of: outcome)
         return outcome
+    }
+
+    /// Keeps what went wrong where Settings can read it without the Keychain; a written backup clears it, and a run
+    /// that was never set up leaves it alone.
+    private func rememberProblem(of outcome: Outcome) {
+        switch outcome {
+        case .written: settings.problem = nil
+        case .folderUnavailable: settings.problem = .folderMissing
+        case .failed: settings.problem = .failed
+        case .refused: settings.problem = .refused
+        case .needsSetup: break
+        }
     }
 
     private func writeBackup(allowShrink: Bool) async -> Outcome {

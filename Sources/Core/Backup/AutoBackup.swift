@@ -35,6 +35,7 @@ public struct AutoBackupSettings {
     public static let pausedAfterClearKey = "autoBackupPausedAfterClear"
     public static let automaticKey = "autoBackupRunsAutomatically"
     public static let protectionKey = "autoBackupProtection"
+    public static let problemKey = "autoBackupProblem"
     public static let largestClipBytes = 10 * 1024 * 1024
 
     private let defaults: UserDefaults
@@ -87,6 +88,17 @@ public struct AutoBackupSettings {
     /// Set when the person cleared everything and chose to keep the backup: automatic backup leaves the file alone
     /// until
     /// they confirm a new one with Back Up Now.
+    /// What the last run could not do, kept so a pane can say "Needs you" without opening the Keychain or waiting for
+    /// the next run. Nil after a backup is written.
+    public var problem: BackupProblem? {
+        get { defaults.string(forKey: Self.problemKey).flatMap(BackupProblem.init(rawValue:)) }
+        nonmutating set {
+            if let newValue { defaults.set(newValue.rawValue, forKey: Self.problemKey) } else {
+                defaults.removeObject(forKey: Self.problemKey)
+            }
+        }
+    }
+
     public var pausedAfterClear: Bool {
         get { defaults.bool(forKey: Self.pausedAfterClearKey) }
         nonmutating set { defaults.set(newValue, forKey: Self.pausedAfterClearKey) }
@@ -159,5 +171,6 @@ public struct AutoBackupSettings {
         defaults.removeObject(forKey: Self.protectionKey)
         defaults.removeObject(forKey: Self.lastClipCountKey)
         defaults.removeObject(forKey: Self.pausedAfterClearKey)
+        defaults.removeObject(forKey: Self.problemKey)
     }
 }

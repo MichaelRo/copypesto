@@ -18,6 +18,10 @@ public enum LunchRushSeed {
 
     public static let cardNumber = "4242 4242 4242 4242"
     public static let supplierCollection = "Supplier links"
+    public static let trackingNumber = "1Z999AA10123456784"
+    public static let flightClip = "Flight PS 142 \u{00B7} Gate B7 \u{00B7} boards 14:05"
+    public static let oilLink = "https://example.com/oil/cold-pressed"
+    public static let garlicLine = "garlic.cloves = 2"
 
     public static let ingredients = [
         "2 cups basil", "1 cup parmesan", "1/2 cup pine nuts", "1/2 cup olive oil", "2 cloves garlic", "a pinch of salt"
@@ -30,6 +34,11 @@ public enum LunchRushSeed {
             text: #"Thanks {{input:Name}}, your order of {{input:Jars}} jars ships "#
                 + #"{{choice:Day options="Thursday|Friday"}}."#,
             shortcut: 2
+        ),
+        Snippet(
+            title: "Order update",
+            text: "Your pesto ships {{date+3d}}. Tracking: {{clipboard}}{{cursor}}",
+            shortcut: 5
         ),
         Snippet(title: "Quick thanks", text: "Thanks, I\u{2019}ll get back to you today.", shortcut: 4),
         Snippet(
@@ -67,6 +76,7 @@ public enum LunchRushSeed {
             ("Order #4417: one jar, no questions", messages),
             ("Does it keep? Ask the jar.", messages),
             ("Yes. The pine nut supplier passed the September audit.", messages),
+            (flightClip, messages),
             ("Standup is at 9:15, bring basil.", messages)
         ]
         captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
@@ -104,6 +114,8 @@ public enum LunchRushSeed {
                 "func scale(_ grams: Double, by servings: Int) -> Double {\n    grams * Double(servings) / 4\n}",
                 app: "com.apple.dt.Xcode"
             ),
+            SeedFixtures.textCapture(oilLink, app: safari),
+            SeedFixtures.textCapture(garlicLine, app: "com.apple.dt.Xcode"),
             SeedFixtures.textCapture("{ \"recipe\": \"pesto\",\n  \"servings\": 4 }", app: "com.apple.Terminal"),
             SeedFixtures.pictureCapture(ShowcaseArt.pineNuts()),
             SeedFixtures.textCapture("#EBD9B4", app: "com.apple.ColorSyncUtility")

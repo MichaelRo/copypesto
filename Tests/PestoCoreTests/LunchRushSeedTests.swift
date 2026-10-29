@@ -87,4 +87,35 @@ struct LunchRushSeedTests {
         #expect(captures.dropLast().last?.payload == LunchRushSeed.sensitivePicture())
         #expect(captures.dropLast(2).last?.typeIdentifier == "com.compuserve.gif")
     }
+
+    @Test("exactly one clip answers a search for flight")
+    func whenSearchedForFlight_thenOneClip() {
+        let matches = texts.filter { $0.lowercased().contains("flight") }
+
+        #expect(matches == [LunchRushSeed.flightClip])
+    }
+
+    @Test("the order update snippet fills itself in from the date, the clipboard and the cursor, with no questions")
+    func whenOrderUpdateBuilt_thenItAsksNothing() {
+        let update = LunchRushSeed.snippets.first { $0.title == "Order update" }
+
+        #expect(update?.text == "Your pesto ships {{date+3d}}. Tracking: {{clipboard}}{{cursor}}")
+        #expect(update?.text.contains("{{input") == false)
+        #expect(update?.text.contains("{{choice") == false)
+    }
+
+    @Test("the tracking number is a carrier example number, copied live and not seeded")
+    func whenBuilt_thenTrackingNumberIsNotSeeded() {
+        #expect(LunchRushSeed.trackingNumber == "1Z999AA10123456784")
+        #expect(!texts.contains(LunchRushSeed.trackingNumber))
+    }
+
+    @Test("the finale kinds: a link and a line of code are seeded")
+    func whenBuilt_thenFinaleKindsAreSeeded() {
+        let texts = LunchRushSeed.captures().compactMap(\.payloadString)
+
+        #expect(texts.contains(LunchRushSeed.oilLink))
+        #expect(texts.contains(LunchRushSeed.garlicLine))
+        #expect(LunchRushSeed.oilLink.hasPrefix("https://example.com/"))
+    }
 }

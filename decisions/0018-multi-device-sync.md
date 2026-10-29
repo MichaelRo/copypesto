@@ -90,8 +90,8 @@ not sync. A synced secret stays masked on the other Mac and Show asks there as u
 
 **Rollback, replay, tampering.** Each Mac stores, sealed in its own store, the highest sequence and chain hash it applied
 from every other Mac. A head or segment below that, a broken chain, a fork (two segments for one sequence), a bad
-signature or a wrong epoch is refused, and Settings names the Mac. A provider can withhold files
-but cannot forge or roll back undetected; withholding shows as "last heard from <Mac> <time> ago".
+signature or a wrong epoch is refused, and Settings says why without listing Macs. A provider can withhold files
+but cannot forge or roll back undetected; withholding shows as "Nothing new from your other Macs since <time>".
 
 **A lost Mac and Reset Sync.** Pesto has no list of Macs and no per-Mac action anywhere in the UI. A lost or stolen Mac
 is removed from the Apple ID by Apple (Find My, the Apple ID's device list); in the target mode that stops it receiving
@@ -112,8 +112,7 @@ Pesto's own share is bounded at 2 s from the judged copy to a renamed segment on
 card on B. The end-to-end budget (p50 and p95, A's copy to B's shelf) is the measured iCloud Drive figure plus those 4 s,
 asserted by `make bench-sync` on two Macs. Capture, paste and the shelf never wait for sync. When the folder is slow,
 offline or unmounted, the outbox is "own records above the last segment written", derived from the store, so nothing
-extra is kept. Settings shows the real state (Up to Date, Waiting for the Folder, Offline, Folder Missing, a Mac Not Heard
-From, Refused with the reason), never "Connected" by default. A locked history pauses both directions.
+extra is kept. Settings shows the real state (Up to Date, Waiting for the Folder, Offline, Folder Missing, Nothing New Since a Time, Refused with the reason), never "Connected" by default. A locked history pauses both directions.
 
 **Migration.** New fields are optional (`changeClock`, `syncOrigin`), so the SwiftData migration is lightweight. Joining
 never replaces: the first Mac writes a snapshot of its history; a joining Mac shows the counts, then merges both ways

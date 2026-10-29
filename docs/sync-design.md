@@ -22,6 +22,8 @@ folder the person picks, merged by content hash, clocks and tombstones; a separa
 Team ID and keychain access group, joined by recovery key or approval from another Mac until then); Reset Sync as the only
 management action, no list of Macs; no server of ours and an unchanged `NetworkGuardTests` allowlist.
 
+Sync is off by default, per Mac, and never nudged on (ADR 0018). Prior art for the experience is in the ADR.
+
 ## Phased plan
 One PR per phase, tests green in each, the full gate once before merging the last.
 0. **Measure iCloud Drive** (`scripts/sync-latency/`, not shipped; needs two Macs): A writes a small and a 5 MB file every
@@ -40,7 +42,7 @@ One PR per phase, tests green in each, the full gate once before merging the las
 5. **Transport** (`SyncFolderService` actor): writer with a 2 s batch window, FSEvents reader with a poll fallback,
    compaction, status states; starts only when `LaunchMode.current.usesSystemIntegrations`; tests use a temp folder.
 6. **UI and pairing**: Settings → Data → Sync (set up, join, sensitive opt-in, Reset Sync, real
-   state), `SettingsIndex` entries, approval with the six-word code. No Mac list; Reset Sync is the one action. UI and snapshot tests first.
+   state), `SettingsIndex` entries, `Setting.syncEnabled` (default false, added to `Setting.allNames`, not in the export), first-sync progress that never blocks the shelf, approval with the six-word code. No Mac list; Reset Sync is the one action. UI and snapshot tests first.
 7. **Ship**: two-Mac check, `make bench-sync` within budget, flip `SyncAvailability.isAvailable` with its test, ADR to
    Accepted, README, guide and website.
 

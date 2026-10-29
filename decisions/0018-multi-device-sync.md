@@ -82,6 +82,19 @@ format change.
 invariant 2 for every clip, including ones that never sync. Only the sync key, which opens only what the person chose to
 put in the folder, takes that trade.
 
+**Off by default, per Mac, and never nudged on.** Sync is a `Setting` (`syncEnabled`, default false) that only the person
+turns on, in Settings → Data → Sync; it is per Mac, not carried by the settings backup or export, and it is not switched
+on by an update, by onboarding, by joining a folder that holds a vault, or by a banner. Until it is on, Pesto writes no
+sync file, creates no sync key and reads no sync folder. Turning it off stops reading and writing at once and leaves the
+folder alone; Leave Sync removes this Mac's own directory and its key (the others keep theirs). Setup shows in plain
+words what leaves this Mac (encrypted files in the chosen folder), what does not (sensitive clips unless opted in), and
+that the provider's account can see sizes and timing.
+
+**The experience (from how other Mac apps do it, below).** Second Mac: sign in, turn Sync on, history arrives in the
+background with a visible "Receiving 1,240 of 5,000 clips" progress that never blocks the shelf, newest first. Status is
+one line with a real state. No Mac list, no conflicts dialog, no merge prompts. Sensitive clips and clips over 10 MB are
+named in a quiet count ("12 clips stay on this Mac"), not hidden. A paste never waits.
+
 **Secrets.** A clip with a sensitivity category (masked in the grid, ADR 0003) is not written to the log unless the person
 turns on "Sync clips marked sensitive" (off, separate from the backup's choice). A credential (an allowance's concealed
 copy, ADR 0004) never syncs. The writer emits a clip only after its judgment finishes (ADR 0006), so a secret is never
@@ -121,6 +134,23 @@ flips with the last phase.
 
 **Network.** The provider's own client is the transport. Sync code links no networking API (a scan test enforces it); the
 `NetworkGuardTests` allowlist is unchanged.
+
+## Prior art
+Researched 2026-10-29 from vendors' own pages; encryption details of the CloudKit apps are mostly unstated.
+- **Paste** syncs history and Pinboards through the person's private iCloud account, off until enabled, per device (a
+  work Mac can stay off); first sync on a new Mac downloads in the background and can take minutes; it says sync is not a
+  backup. Closest to what Pesto wants; Pesto adds client-side encryption with a key of its own and a provider choice.
+- **Raycast Cloud Sync** (Pro, alpha) deliberately excludes clipboard history because it may be sensitive; history stays
+  encrypted on the Mac and moving it is a manual database-and-key copy.
+- **Alfred** syncs preferences through a person-chosen folder (Dropbox, iCloud) but not the clipboard database, and
+  documents provider pitfalls: an unmounted volume at launch is an error, iCloud/Dropbox can cause glitches, and the
+  Dropbox Apps folder is unsupported. Lessons: pick any folder, survive an unmounted one, say what is not synced.
+- **CloudKit clipboard apps** (Copied, kopyPasta, Clipster, Copier, PasteNow, CloudClip) sync over the private database;
+  Copied offers a manual resync that compares local and cloud; a user review of CloudClip reports clips silently
+  stopping. Lessons: offer a resync and show real state rather than failing quietly.
+- **Maccy** and most open-source managers have no sync.
+Pesto's difference to state in the guide: nothing is readable by us or the provider, the sync key never lives in the
+history database, and sensitive clips stay home by default.
 
 ## Consequences
 - The provider learns that Pesto sync exists in the folder, the number of Macs, file sizes and write counts and timing.

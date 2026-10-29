@@ -100,7 +100,7 @@ new key and starts a new epoch (`vault-<epoch>.pestosync`, a rekey record, a new
 other Mac picks the new epoch up on its next launch (and when it next notices the new vault file), fetches the new key
 (iCloud Keychain, or the recovery key in the interim mode), writes new segments under it and compacts the old ones. A
 Mac that has not launched yet keeps working on the old epoch until it does. **What a stolen, still-enrolled Mac keeps:**
-everything it already has (its store is sealed under its own key; FileHandle protection is FileVault and the History
+everything it already has (its store is sealed under its own key; FileVault and the History
 Lock, ADR 0003) and the old sync key, so it can still read the old epoch's files. **What it loses:** every clip copied
 after the reset, as long as it does not get the new key, which in the target mode means it is off the Apple ID. Reset Sync
 without removing the Mac from the Apple ID does not shut it out, because it would receive the new key too; the guide says

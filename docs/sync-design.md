@@ -18,8 +18,9 @@ start from evidence.
 
 ## Direction
 Decided in [ADR 0018](../decisions/0018-multi-device-sync.md) (proposed): one encrypted, append-only log per Mac in a
-folder the person picks, merged by content hash, clocks and tombstones; a separate sync key enrolled by recovery key or
-approval from another Mac; no server of ours and an unchanged `NetworkGuardTests` allowlist.
+folder the person picks, merged by content hash, clocks and tombstones; a separate sync key (in iCloud Keychain once Pesto has a
+Team ID and keychain access group, joined by recovery key or approval from another Mac until then); Reset Sync as the only
+management action, no list of Macs; no server of ours and an unchanged `NetworkGuardTests` allowlist.
 
 ## Phased plan
 One PR per phase, tests green in each, the full gate once before merging the last.
@@ -34,11 +35,12 @@ One PR per phase, tests green in each, the full gate once before merging the las
    `StorageService`, `ClipEditor` and `CollectionStore`; emit after judgment; secrets and credentials filtered; migration
    test on a 1.1.0 store.
 3. **Merge engine**: pure merge functions and `StorageService.applySync(_:)` through ingest; convergence property tests.
-4. **Keys**: sync key, vault file, recovery-key create and join, Keychain items, revoke and rekey epochs.
+4. **Keys**: sync key, vault file, interim recovery-key create and join, this-device Keychain items, epochs and Reset Sync.
+   The `kSecAttrSynchronizable` mode is added when Developer ID and the access group exist (no format change).
 5. **Transport** (`SyncFolderService` actor): writer with a 2 s batch window, FSEvents reader with a poll fallback,
    compaction, status states; starts only when `LaunchMode.current.usesSystemIntegrations`; tests use a temp folder.
-6. **UI and pairing**: Settings → Data → Sync (set up, join, sensitive opt-in, Macs with last heard, Remove Mac, real
-   state), `SettingsIndex` entries, approval with the six-word code. UI and snapshot tests first.
+6. **UI and pairing**: Settings → Data → Sync (set up, join, sensitive opt-in, Reset Sync, real
+   state), `SettingsIndex` entries, approval with the six-word code. No Mac list; Reset Sync is the one action. UI and snapshot tests first.
 7. **Ship**: two-Mac check, `make bench-sync` within budget, flip `SyncAvailability.isAvailable` with its test, ADR to
    Accepted, README, guide and website.
 

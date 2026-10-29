@@ -1,4 +1,4 @@
-# 0018. Macs sync through an encrypted, append-only log per Mac in a folder the person picks; the sync key is a separate key enrolled by hand and never stored with the provider
+# 0018. Macs sync through an encrypted, append-only log per Mac in a folder the person picks; the sync key is a separate key that travels in iCloud Keychain once Pesto can use it, and by hand until then
 
 Status: Proposed
 
@@ -33,7 +33,7 @@ signature by the device key. AEAD stops the provider; the signature stops one me
 revocation needs.
 
 **Records** extend the backup's kinds: item (as `BackupItemMetadata`, plain SHA-256 inside the ciphertext), curation
-update, collection, tombstone (id **and** plain hash; the backup's are by id only), device enroll, device revoke, rekey.
+update, collection, tombstone (id **and** plain hash; the backup's are by id only), device enroll (interim pairing only), rekey.
 Every record carries a hybrid logical clock `(wall time, counter, device id)`; the sort triple stays
 `(timestamp, sequenceNumber, deviceID)`. A device's next sequence number is `max(counter, own head on disk) + 1`, so a
 number is never reused after a crash.
@@ -53,23 +53,34 @@ a pure function in Core:
 - Not synced: link-preview images and search vectors (each Mac makes its own under its own settings), per-Mac state, the
   settings record (a later decision may add it).
 
-**The sync key is separate and enrolled by hand.** A random 256-bit sync key encrypts the folder. The history key of ADR
-0002 is untouched and still never leaves the Mac. Each Mac keeps the sync key and its device keys as generic passwords in
-the login Keychain, `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, not synchronizable. Nothing in the folder opens
-without a credential the person holds. A further Mac joins one of two ways:
-- **Recovery key** (the default; the only way when no other Mac is at hand): the sync key itself, shown once in the
-  backup's base32-with-checksum form behind a `ProtectedAction`. The vault holds only a check value of a 256-bit key, so
-  the provider has nothing to guess and no slow derivation is needed.
-- **Approve from another Mac**: the new Mac writes a join request with its X25519 key into its own directory. An enrolled
-  Mac shows the request; both show a six-word code derived from both public keys; on a match the enrolled Mac seals the
-  sync key to the new Mac with HPKE (CryptoKit) and signs an enroll record. The code defeats a provider that swaps keys.
-- A passphrase is not offered for sync. It would leave an offline-guessable wrapped key with the provider; the backup
-  accepts that only because it is one file the person chose to make, and PBKDF2 at 600,000 rounds is the cost there.
+**The sync key is separate from the history key.** A random 256-bit sync key encrypts the folder. The per-install history
+key of ADR 0002 is untouched: it stays this-device-only and not synchronizable, and invariant 2 keeps saying so for it.
+Nothing in the folder opens without the sync key.
 
-**Why not iCloud Keychain** (`kSecAttrSynchronizable`): it needs a keychain access group and a Team ID, which a
-self-signed build does not have (the CloudKit blocker again); it puts the folder and the key under one Apple ID recovery;
-it works only when the folder is iCloud too, which breaks provider choice; and it contradicts invariant 2 ("not
-synchronizable"). It may return as an opt-in convenience after Developer ID, in its own decision.
+**Target: the sync key lives in iCloud Keychain.** It is a generic password with `kSecAttrSynchronizable` (account
+`sync-key.<vault id>.<epoch>`), so a second Mac signed in to the same Apple ID gets it with no passphrase, recovery key
+or pairing screen. This is **blocked until Pesto has a Team ID and a keychain access group** (Developer ID, the same
+prerequisite as notarization): a self-signed build cannot use a synchronizable item reliably. If iCloud Keychain is off
+or the Mac is signed out, sync shows the real state ("iCloud Keychain Is Off", "Not Signed In to iCloud") and stays off;
+it never falls back to a weaker key. **Trust shift, stated plainly:** the sync key's safety then rests on the Apple ID
+and on iCloud Keychain's end-to-end encryption, not on a credential only the person holds. Someone who takes over the
+Apple ID and its Keychain recovery gets the key, and the same Apple ID usually also holds the iCloud Drive folder. The
+history key, the backup key and the backup's passphrase are unaffected.
+
+**Interim, and the choice for any other provider or a person who prefers it: join by hand.** Until the access group
+exists, each Mac keeps the sync key as a this-device-only login Keychain item, and a further Mac joins by one of:
+- **Recovery key:** the sync key itself, shown once in the backup's base32-with-checksum form behind a
+  `ProtectedAction`. The vault holds only a check value of a 256-bit key, so the provider has nothing to guess.
+- **Approve from another Mac:** the new Mac writes a join request with its X25519 key into its own directory; an enrolled
+  Mac shows it; both show a six-word code derived from both public keys; on a match the enrolled Mac seals the sync key
+  to the new Mac with HPKE (CryptoKit) and signs an enroll record. The code defeats a provider that swaps keys.
+- A passphrase is not offered: it would leave an offline-guessable wrapped key with the provider.
+The two modes share the format; only where the key comes from differs, and the Keychain mode can be added without a
+format change.
+
+**Why not iCloud Keychain for the history key:** that would put the data's own key under the Apple ID and break
+invariant 2 for every clip, including ones that never sync. Only the sync key, which opens only what the person chose to
+put in the folder, takes that trade.
 
 **Secrets.** A clip with a sensitivity category (masked in the grid, ADR 0003) is not written to the log unless the person
 turns on "Sync clips marked sensitive" (off, separate from the backup's choice). A credential (an allowance's concealed
@@ -79,14 +90,22 @@ not sync. A synced secret stays masked on the other Mac and Show asks there as u
 
 **Rollback, replay, tampering.** Each Mac stores, sealed in its own store, the highest sequence and chain hash it applied
 from every other Mac. A head or segment below that, a broken chain, a fork (two segments for one sequence), a bad
-signature, a wrong epoch or an unenrolled device is refused, and Settings names the Mac. A provider can withhold files
+signature or a wrong epoch is refused, and Settings names the Mac. A provider can withhold files
 but cannot forge or roll back undetected; withholding shows as "last heard from <Mac> <time> ago".
 
-**A lost Mac.** From any enrolled Mac, Remove Mac (a `ProtectedAction`) writes a signed revoke record and a rekey: a new
-epoch, with the new sync key sealed by HPKE to each remaining Mac's X25519 key, and a new recovery key. Remaining Macs
-write new segments under the new epoch and compact the old ones. The removed Mac keeps what it already had (its store is
-sealed under its own key) and, sharing the provider account, can still delete files in the folder; Pesto cannot stop that,
-and the guide says to also remove the Mac from the Apple ID. The backup remains the way back.
+**A lost Mac and Reset Sync.** Pesto has no list of Macs and no per-Mac action anywhere in the UI. A lost or stolen Mac
+is removed from the Apple ID by Apple (Find My, the Apple ID's device list); in the target mode that stops it receiving
+any new sync key. Pesto offers one action, **Reset Sync** (a `ProtectedAction`, Settings → Data → Sync): it generates a
+new key and starts a new epoch (`vault-<epoch>.pestosync`, a rekey record, a new recovery key in the interim mode). Every
+other Mac picks the new epoch up on its next launch (and when it next notices the new vault file), fetches the new key
+(iCloud Keychain, or the recovery key in the interim mode), writes new segments under it and compacts the old ones. A
+Mac that has not launched yet keeps working on the old epoch until it does. **What a stolen, still-enrolled Mac keeps:**
+everything it already has (its store is sealed under its own key; FileHandle protection is FileVault and the History
+Lock, ADR 0003) and the old sync key, so it can still read the old epoch's files. **What it loses:** every clip copied
+after the reset, as long as it does not get the new key, which in the target mode means it is off the Apple ID. Reset Sync
+without removing the Mac from the Apple ID does not shut it out, because it would receive the new key too; the guide says
+to do both. The thief can also delete files in the shared folder while they share the provider account; the backup
+remains the way back.
 
 **Latency and a slow provider.** The target comes from measurement, not guesses (phase 0, `docs/perf/sync-latency-*.md`).
 Pesto's own share is bounded at 2 s from the judged copy to a renamed segment on A and 2 s from a file's arrival to the
@@ -108,16 +127,18 @@ flips with the last phase.
 - The provider learns that Pesto sync exists in the folder, the number of Macs, file sizes and write counts and timing.
   Not names, content or which clip is which (blob names are keyed HMACs).
 - The folder grows with history until compaction; a Mac compacts only what every enrolled Mac's cursor has passed.
-- Losing every Mac and the recovery key loses the sync group (not the backup, which has its own key).
+- In the interim mode, losing every Mac and the recovery key loses the sync group (not the backup, which has its own key).
 - Concurrent edits of different curation fields keep only the later edit.
-- A revoked Mac cannot read anything new but can vandalize the folder.
-- Two secrets now leave a Mac only by the person's hand: the backup key and the sync key.
+- Until Reset Sync, a lost Mac off the Apple ID can read what was synced under the old key but nothing new after a reset; one still on the Apple ID is not shut out by a reset.
+- In the target mode a second Mac needs no user step, and the sync key's safety rests on the Apple ID and iCloud Keychain.
+- Reset Sync is the only management action; there is no Mac list to keep correct or to attack.
+- The backup key still leaves a Mac only by the person's hand. The sync key does too in the interim mode; in the target mode iCloud Keychain carries it.
 - Tests: format (flip every byte, truncate, splice segments across devices and epochs), chain and rollback, merge
   convergence (random operations on three simulated Macs, any delivery order, same result), secrets never in a segment
   (scan like `OnDiskEncryptionTests`), migration from a 1.1.0 store, a two-Mac test on a temp folder, `make bench-sync`.
 
 ## Docs affected
-`AGENTS.md` (security invariant 2 gets a sync-key sentence; a pitfall line for "every sync file has one writer"),
+`AGENTS.md`: in security invariant 2, after "it is **not** Secure Enclave wrapped)" add "The history key never syncs. A separate sync key (ADR 0018) opens only the sync folder: in iCloud Keychain (`kSecAttrSynchronizable`) once Pesto has a Team ID and keychain access group, until then a this-device-only item joined by recovery key or pairing"; and a pitfall line "every sync file has one writer; no UI lists or manages Macs, Reset Sync is the only action",
 `Sources/Core/Sync/CLAUDE.md`, `Sources/Core/Backup/CLAUDE.md`, `docs/sync-design.md`, `docs/guide/privacy-and-security.md`,
 `docs/guide/faq.md`, `docs/guide/moving-from.md`, `docs/guide/settings.md`, `README.md`, `ROADMAP.md`, the website guide
 copies and `claim-text.ts`.

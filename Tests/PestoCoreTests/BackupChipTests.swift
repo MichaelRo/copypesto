@@ -7,19 +7,20 @@ import Testing
 struct BackupChipTests {
     private let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC")!
+        calendar.timeZone = TimeZone.gmt
         return calendar
     }()
 
     private func date(_ day: Int, _ hour: Int, _ minute: Int) -> Date {
-        calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute))!
+        calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute)) ?? .distantPast
     }
 
     private func chip(
         _ status: BackupStatus,
         last: Date? = nil,
         problem: BackupProblem? = nil
-    ) -> BackupChip {
+    )
+    -> BackupChip {
         BackupChip(status: status, lastBackup: last, problem: problem)
     }
 
@@ -77,7 +78,9 @@ struct BackupChipTests {
     func summaryText() {
         let now = date(29, 15, 0)
         let locale = Locale(identifier: "en_GB")
-        func text(_ chip: BackupChip) -> String { chip.summaryText(now: now, calendar: calendar, locale: locale) }
+        func text(_ chip: BackupChip) -> String {
+            chip.summaryText(now: now, calendar: calendar, locale: locale)
+        }
         #expect(text(chip(.off)) == "Backup: Off")
         #expect(text(chip(.on)) == "Backup: Not written yet")
         #expect(text(chip(.on, last: date(29, 12, 40))) == "Backup: Up to date, saved at 12:40")

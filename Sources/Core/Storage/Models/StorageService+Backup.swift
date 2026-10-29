@@ -295,7 +295,7 @@ extension StorageService {
 
     private static let restoreLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "BackupRestore")
 
-    private func alreadyHas(itemID: UUID, plainHash: String) throws -> Bool {
+    func alreadyHas(itemID: UUID, plainHash: String) throws -> Bool {
         let forms = ContentHash.candidates(for: plainHash, key: try? encryption.loadOrCreateKey())
         let byID = try modelContext
             .fetchCount(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID }))

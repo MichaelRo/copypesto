@@ -31,7 +31,12 @@ public enum BackupChip: Equatable, Sendable {
         }
     }
 
-    public func tileValue(now: Date = .now, calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+    public func tileValue(
+        now: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent,
+        locale: Locale = .autoupdatingCurrent
+    )
+    -> String {
         switch self {
         case .off: "Off"
         case .waiting: "Not yet"
@@ -46,7 +51,12 @@ public enum BackupChip: Equatable, Sendable {
         return "Backup"
     }
 
-    public func summaryText(now: Date = .now, calendar: Calendar = .autoupdatingCurrent, locale: Locale = .autoupdatingCurrent) -> String {
+    public func summaryText(
+        now _: Date = .now,
+        calendar: Calendar = .autoupdatingCurrent,
+        locale: Locale = .autoupdatingCurrent
+    )
+    -> String {
         switch self {
         case .off: "Backup: Off"
         case .waiting: "Backup: Not written yet"

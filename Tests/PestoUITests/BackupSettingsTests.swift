@@ -93,4 +93,30 @@ final class BackupSettingsTests: PestoUITestCase {
         )
         capture("backup-sheet-passphrase", of: settingsWindow)
     }
+
+    /// A backup that is on, seeded into the throwaway preferences of the test run. The folder does not exist, so
+    /// nothing can ever be written, and the real iCloud Drive is never touched.
+    func test_aBackupThatIsOn_showsItsFolderItsProtectionAndWhatToDo() {
+        launch(defaults: [
+            "hasOnboarded": "true", "autoBackupEnabled": "true",
+            "autoBackupFolder": "/private/tmp/pesto-ui-test-no-such-folder",
+            "autoBackupProtection": "Recovery key only"
+        ])
+        send(.openSettings)
+        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        element(AccessibilityID.settingsSidebar("Data")).click()
+
+        XCTAssertTrue(
+            element(AccessibilityID.backupChangeFolderButton).waitForExistence(timeout: 5),
+            "no Change… button"
+        )
+        XCTAssertTrue(element(AccessibilityID.autoBackupNowButton).exists, "no Back Up Now button")
+        XCTAssertTrue(element(AccessibilityID.backupIncludesSecretsToggle).exists, "no secrets choice")
+        XCTAssertTrue(element(AccessibilityID.showRecoveryKeyButton).exists, "no Show Recovery Key button")
+        XCTAssertFalse(
+            element(AccessibilityID.backupStatus).label.contains("Backup: Off"),
+            "a backup that is on must not say it is off"
+        )
+        capture("settings-data-backup-on", of: settingsWindow)
+    }
 }

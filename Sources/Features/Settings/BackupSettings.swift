@@ -53,7 +53,7 @@ struct BackupSettings: View {
                     onBackUpNow: { Task { await backUpNow() } },
                     onResume: { confirmsReplacement = true }
                 )
-                if automatic, let nextText { Text(nextText).pestoCaption() }
+                if automatic, lastBackup != nil, let nextText { Text(nextText).pestoCaption() }
                 if !automatic { Text("Only when you choose Back Up Now.").pestoCaption() }
                 configured
             } else {
@@ -177,17 +177,21 @@ struct BackupSettings: View {
     private var configured: some View {
         if let folder = settings.folder {
             LabeledContent("Where your copies live") {
-                Text(folder.lastPathComponent).pestoQuiet()
-                Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
-                Button("Change\u{2026}", action: changeFolder)
-                    .disabled(working)
-                    .accessibilityIdentifier(AccessibilityID.backupChangeFolderButton)
+                HStack {
+                    Text(folder.lastPathComponent).pestoQuiet().lineLimit(1).truncationMode(.middle)
+                    Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
+                    Button("Change\u{2026}", action: changeFolder)
+                        .disabled(working)
+                        .accessibilityIdentifier(AccessibilityID.backupChangeFolderButton)
+                }
             }
         }
         if let protection = settings.protection {
             LabeledContent("Protected by") {
-                Text(protection == .recoveryKey ? "Recovery key" : "Passphrase").pestoQuiet()
-                recoveryKeyRow
+                HStack {
+                    Text(protection == .recoveryKey ? "Recovery key" : "Passphrase").pestoQuiet()
+                    recoveryKeyRow
+                }
             }
         } else {
             recoveryKeyRow

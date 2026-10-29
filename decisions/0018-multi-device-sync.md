@@ -135,6 +135,15 @@ flips with the last phase.
 **Network.** The provider's own client is the transport. Sync code links no networking API (a scan test enforces it); the
 `NetworkGuardTests` allowlist is unchanged.
 
+## Decided while building
+Details the first draft left open, settled in the build (phase 1 on).
+- **Code layout:** pure value types and the segment format in `Core/Sync` (CryptoKit only, no Storage types, no networking: a scan test enforces it); everything that touches SwiftData in `Core/Storage/Sync`. The segment framing follows the backup's design and shares no code with it, so the directory graph gains no edge.
+- **Clock:** a hybrid logical clock `(wall milliseconds, counter, device id)`; receiving a remote stamp makes the local clock later than both, and a stamp more than 7 days ahead of this Mac is refused. The record `sequence` is a separate per-device number, contiguous inside a segment.
+- **Crypto:** per-file subkey `HKDF(syncKey, salt: file id, info: "pesto.sync.file.v1")`; chunk associated data is `SHA256(magic|file id)|index|isManifest`; blob names are `HMAC(HKDF(syncKey, "pesto.sync.blobname.v1"), plain SHA-256)`. The manifest names the vault, device, epoch, sequence range, a digest of the chunk tags, the hash of the previous manifest and the signer's key id, and is signed with Ed25519. The head is sealed under a key derived per device and signed; the vault file is signed by its creator and carries `HMAC(syncKey, "pesto.sync.check.v1"|vault id|epoch)`.
+- **High-water marks** decide each segment: apply, duplicate, gap (wait) or refuse (rollback, fork, broken chain, wrong epoch).
+- **Pairing words (interim mode):** six words from a committed 1,024-word list, taken from `SHA256("pesto-pair-v1" | vault id | the two agreement public keys in sorted order)`: sixty bits, the same on both Macs.
+- **Recovery key:** the sync key in base32 with a two-byte checksum, groups of four, as the backup's key reads.
+
 ## Prior art
 Researched 2026-10-29 from vendors' own pages; encryption details of the CloudKit apps are mostly unstated.
 - **Paste** syncs history and Pinboards through the person's private iCloud account, off until enabled, per device (a

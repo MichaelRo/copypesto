@@ -84,11 +84,11 @@ struct LunchRushSeedTests {
         let newestFirst = Array(SeedFixtures.captures(for: .lunchRush).reversed())
 
         #expect(newestFirst[0].payloadString == LunchRushSeed.cardNumber)
-        #expect(newestFirst[1].payload == ShowcaseArt.basilLeaves())
+        #expect(newestFirst[1].payload == ShowcaseArt.basilInSunglasses())
         #expect(newestFirst[2].typeIdentifier == "com.compuserve.gif")
-        #expect(newestFirst[3].payloadString == "#EBD9B4")
-        #expect(newestFirst[4].payloadString == LunchRushSeed.oilLink)
-        #expect(newestFirst[5].payloadString == LunchRushSeed.garlicLine)
+        #expect(newestFirst[3].payloadString == "#C9A227")
+        #expect(newestFirst[4].payloadString == LunchRushSeed.debateLink)
+        #expect(newestFirst[5].payloadString == LunchRushSeed.codeLine)
         #expect(newestFirst[6].payloadString?.contains(".pdf") == true)
     }
 
@@ -114,12 +114,17 @@ struct LunchRushSeedTests {
         #expect(!texts.contains(LunchRushSeed.trackingNumber))
     }
 
+    @Test("the PDF is Grandma's recipe, the fifth version of it")
+    func whenBuilt_thenThePDFIsGrandmas() {
+        #expect(LunchRushMedia.recipePDF?.lastPathComponent == "grandmas-recipe-final-FINAL-v3.pdf")
+    }
+
     @Test("the finale kinds: a link and a line of code are seeded")
     func whenBuilt_thenFinaleKindsAreSeeded() {
         let texts = LunchRushSeed.captures().compactMap(\.payloadString)
 
-        #expect(texts.contains(LunchRushSeed.oilLink))
-        #expect(texts.contains(LunchRushSeed.garlicLine))
-        #expect(LunchRushSeed.oilLink.hasPrefix("https://example.com/"))
+        #expect(texts.contains(LunchRushSeed.debateLink))
+        #expect(texts.contains(LunchRushSeed.codeLine))
+        #expect(LunchRushSeed.debateLink.hasPrefix("https://example.com/"))
     }
 }

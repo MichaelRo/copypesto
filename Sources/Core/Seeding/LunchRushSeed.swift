@@ -20,8 +20,8 @@ public enum LunchRushSeed {
     public static let supplierCollection = "Supplier links"
     public static let trackingNumber = "1Z999AA10123456784"
     public static let flightClip = "Flight PS 142 \u{00B7} Gate B7 \u{00B7} boards 14:05"
-    public static let oilLink = "https://example.com/oil/cold-pressed"
-    public static let garlicLine = "garlic.cloves = 2"
+    public static let debateLink = "https://example.com/is-it-pesto-without-basil"
+    public static let codeLine = #"let pesto = blend(basil, nuts, oil) // never "pestos""#
 
     public static let ingredients = [
         "2 cups basil", "1 cup parmesan", "1/2 cup pine nuts", "1/2 cup olive oil", "2 cloves garlic", "a pinch of salt"
@@ -88,17 +88,17 @@ public enum LunchRushSeed {
         let gif = LunchRushMedia.pestoGIF
         var clips: [PasteboardCapture] = [
             SeedFixtures.textCapture(cardNumber, app: safari),
-            SeedFixtures.pictureCapture(ShowcaseArt.basilLeaves()),
+            SeedFixtures.pictureCapture(ShowcaseArt.basilInSunglasses()),
             PasteboardCapture(
                 typeIdentifier: "com.compuserve.gif", payload: gif, frontmostBundleID: safari,
                 contentHash: SeedFixtures.hash(of: gif)
             ),
-            SeedFixtures.textCapture("#EBD9B4", app: "com.apple.ColorSyncUtility"),
-            SeedFixtures.textCapture(oilLink, app: safari),
-            SeedFixtures.textCapture(garlicLine, app: "com.apple.dt.Xcode")
+            SeedFixtures.textCapture("#C9A227", app: "com.apple.ColorSyncUtility"),
+            SeedFixtures.textCapture(debateLink, app: safari),
+            SeedFixtures.textCapture(codeLine, app: "com.apple.dt.Xcode")
         ]
         if let pdf = LunchRushMedia.recipePDF { clips.append(SeedFixtures.fileCapture([pdf.path])) }
-        if let video = LunchRushMedia.bowlVideo { clips.append(SeedFixtures.fileCapture([video.path])) }
+        if let video = LunchRushMedia.jarVideo { clips.append(SeedFixtures.fileCapture([video.path])) }
         clips += [
             SeedFixtures.textCapture("\u{1F33F}\u{1F9C4}\u{1F9C0} Pesto night!", app: messages),
             SeedFixtures.textCapture(

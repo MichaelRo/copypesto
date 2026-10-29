@@ -79,7 +79,7 @@ struct LunchRushSeedTests {
 
         #expect(types.contains("com.compuserve.gif"))
         #expect(captures
-            .contains { $0.payloadString?.hasSuffix(".pdf") == true || $0.payloadString?.contains(".pdf") == true })
+            .contains { $0.payloadString?.contains(".pdf") == true })
         #expect(captures.contains { $0.payloadString?.contains(".mp4") == true })
         #expect(captures.contains { $0.payloadString?.hasPrefix("#2F7A49") == true })
         #expect(captures.contains { $0.payloadString?.unicodeScalars.contains { $0.value > 0x1F000 } == true })

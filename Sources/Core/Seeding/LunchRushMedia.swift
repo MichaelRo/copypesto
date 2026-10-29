@@ -55,17 +55,20 @@ enum LunchRushMedia {
         context.setFillColor(ShowcaseArt.color(hex: BrandPalette.accentLight))
         context.fill(CGRect(x: 0, y: 700, width: 612, height: 92))
         ShowcaseArt.leftText(
-            context, "Grandma\u{2019}s pesto", fontName: "HelveticaNeue-Bold", size: 44, hex: BrandPalette.garlic,
+            context, "Grandma\u{2019}s pesto",
+            style: .init(fontName: "HelveticaNeue-Bold", size: 44, hex: BrandPalette.garlic),
             at: CGPoint(x: 56, y: 730)
         )
         ShowcaseArt.leftText(
-            context, "FINAL v3 (v2 was better)", fontName: "HelveticaNeue-Italic", size: 20, hex: BrandPalette.stone,
+            context, "FINAL v3 (v2 was better)",
+            style: .init(fontName: "HelveticaNeue-Italic", size: 20, hex: BrandPalette.stone),
             at: CGPoint(x: 56, y: 660)
         )
         var baseline: CGFloat = 590
         for line in recipeLines {
             ShowcaseArt.leftText(
-                context, line, fontName: "HelveticaNeue", size: 26, hex: BrandPalette.mortar, at: CGPoint(x: 56, y: baseline)
+                context, line, style: .init(fontName: "HelveticaNeue", size: 26, hex: BrandPalette.mortar),
+                at: CGPoint(x: 56, y: baseline)
             )
             baseline -= 56
         }
@@ -107,8 +110,11 @@ enum LunchRushMedia {
         writer.startSession(atSourceTime: .zero)
         let total = 48
         for index in 0..<total {
+            var waited = 0.0
             while !input.isReadyForMoreMediaData {
+                guard writer.status == .writing, waited < 10 else { return nil }
                 Thread.sleep(forTimeInterval: 0.005)
+                waited += 0.005
             }
             guard let pool = adaptor.pixelBufferPool else { return nil }
             var buffer: CVPixelBuffer?
@@ -124,7 +130,9 @@ enum LunchRushMedia {
                 context.draw(picture, in: CGRect(origin: .zero, size: size))
             }
             CVPixelBufferUnlockBaseAddress(buffer, [])
-            adaptor.append(buffer, withPresentationTime: CMTime(value: CMTimeValue(index), timescale: 24))
+            guard adaptor.append(buffer, withPresentationTime: CMTime(value: CMTimeValue(index), timescale: 24)) else {
+                return nil
+            }
         }
         input.markAsFinished()
         let finished = DispatchSemaphore(value: 0)

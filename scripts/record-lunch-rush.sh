@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Records one beat of the website's demo video ("The Lunch Rush", LunchRushRecordingTests) with a ScreenCaptureKit window recorder:
 #   scripts/record-lunch-rush.sh a|b|c|d|e|f|g|i|j|all [light|dark]
-# writes .build/lunch-rush/<beat>-<mode>.mov: Pesto's own windows only (the brand backdrop, shelf and sheets), 3024x1898.
+# writes .build/lunch-rush/<beat>-<mode>.mov: Pesto's own windows only (the brand backdrop, shelf and sheets), at the display's pixel scale.
 # It changes no system setting. The run needs a person at the Mac: the terminal that runs this script must already have
 # Screen Recording permission (System Settings > Privacy & Security > Screen & System Audio Recording), the Mac must be
 # unlocked and left alone while it runs. Only Pesto's own windows are recorded, so other apps, the Dock and the notice macOS
@@ -13,6 +13,7 @@ cd "$(dirname "$0")/.."
 
 BEAT=${1:-}
 MODE=${2:-light}
+case "$MODE" in light|dark) ;; *) echo "mode must be light or dark, not $MODE" >&2; exit 2 ;; esac
 case "$BEAT" in a | b | c | d | e | f | g | i | j | all) ;; *)
   echo "usage: $0 a|b|c|d|e|f|g|i|j|all [light|dark]" >&2
   exit 2

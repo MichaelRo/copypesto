@@ -18,7 +18,8 @@ extension ShowcaseArt {
             context.rotate(by: 0.028 * sin(turn))
             context.translateBy(x: -320, y: -70)
             let body = CGPath(
-                roundedRect: CGRect(x: 205, y: 70, width: 230, height: 232), cornerWidth: 46, cornerHeight: 46, transform: nil
+                roundedRect: CGRect(x: 205, y: 70, width: 230, height: 232), cornerWidth: 46, cornerHeight: 46,
+                transform: nil
             )
             drawJarContents(context, body: body, turn: turn)
             drawJarGlass(context, body: body)
@@ -55,9 +56,14 @@ extension ShowcaseArt {
         context.translateBy(x: 112, y: 100)
         context.rotate(by: 0.1)
         let lid = CGPath(
-            roundedRect: CGRect(x: -78, y: -22, width: 156, height: 44), cornerWidth: 12, cornerHeight: 12, transform: nil
+            roundedRect: CGRect(x: -78, y: -22, width: 156, height: 44), cornerWidth: 12, cornerHeight: 12,
+            transform: nil
         )
-        context.setShadow(offset: CGSize(width: 0, height: -6), blur: 10, color: color(hex: BrandPalette.mortar, alpha: 0.3))
+        context.setShadow(
+            offset: CGSize(width: 0, height: -6),
+            blur: 10,
+            color: color(hex: BrandPalette.mortar, alpha: 0.3)
+        )
         context.addPath(lid)
         context.setFillColor(color(hex: BrandPalette.goldFill))
         context.fillPath()
@@ -111,7 +117,12 @@ extension ShowcaseArt {
             context.saveGState()
             context.addEllipse(in: surface)
             context.clip()
-            context.drawLinearGradient(top, start: CGPoint(x: 220, y: level - 26), end: CGPoint(x: 420, y: level + 26), options: [])
+            context.drawLinearGradient(
+                top,
+                start: CGPoint(x: 220, y: level - 26),
+                end: CGPoint(x: 420, y: level + 26),
+                options: []
+            )
             context.restoreGState()
         }
         drawSwirl(context, center: CGPoint(x: 320, y: level), turn: turn)
@@ -192,7 +203,12 @@ extension ShowcaseArt {
         context.setLineWidth(4)
         context.strokePath()
         for streak in [CGRect(x: 222, y: 116, width: 13, height: 150), CGRect(x: 408, y: 150, width: 7, height: 80)] {
-            context.addPath(CGPath(roundedRect: streak, cornerWidth: streak.width / 2, cornerHeight: streak.width / 2, transform: nil))
+            context.addPath(CGPath(
+                roundedRect: streak,
+                cornerWidth: streak.width / 2,
+                cornerHeight: streak.width / 2,
+                transform: nil
+            ))
             context.setFillColor(color(hex: "FFFFFF", alpha: streak.width > 10 ? 0.55 : 0.3))
             context.fillPath()
         }
@@ -201,10 +217,15 @@ extension ShowcaseArt {
 
     private static func drawJarLabel(_ context: CGContext) {
         let label = CGPath(
-            roundedRect: CGRect(x: 238, y: 104, width: 164, height: 108), cornerWidth: 12, cornerHeight: 12, transform: nil
+            roundedRect: CGRect(x: 238, y: 104, width: 164, height: 108), cornerWidth: 12, cornerHeight: 12,
+            transform: nil
         )
         context.saveGState()
-        context.setShadow(offset: CGSize(width: 0, height: -2), blur: 5, color: color(hex: BrandPalette.mortar, alpha: 0.25))
+        context.setShadow(
+            offset: CGSize(width: 0, height: -2),
+            blur: 5,
+            color: color(hex: BrandPalette.mortar, alpha: 0.25)
+        )
         context.addPath(label)
         context.setFillColor(color(hex: BrandPalette.garlic))
         context.fillPath()
@@ -213,32 +234,48 @@ extension ShowcaseArt {
         context.setStrokeColor(color(hex: BrandPalette.goldFill))
         context.setLineWidth(3)
         context.strokePath()
-        centeredText(context, "PESTO", fontName: "HelveticaNeue-Bold", size: 42, hex: BrandPalette.accentLight, at: CGPoint(x: 320, y: 152))
-        centeredText(context, "best before: tonight", fontName: "HelveticaNeue-Italic", size: 15, hex: BrandPalette.stone, at: CGPoint(x: 320, y: 126))
+        centeredText(
+            context, "PESTO", style: TextStyle(fontName: "HelveticaNeue-Bold", size: 42, hex: BrandPalette.accentLight),
+            at: CGPoint(x: 320, y: 152)
+        )
+        centeredText(
+            context, "best before: tonight",
+            style: TextStyle(fontName: "HelveticaNeue-Italic", size: 15, hex: BrandPalette.stone),
+            at: CGPoint(x: 320, y: 126)
+        )
         sparkle(context, at: CGPoint(x: 320, y: 192), radius: 9, hex: BrandPalette.goldFill)
     }
 
-    static func centeredText(
-        _ context: CGContext, _ text: String, fontName: String, size: CGFloat, hex: String, at center: CGPoint
-    ) {
+    struct TextStyle {
+        let fontName: String
+        let size: CGFloat
+        let hex: String
+    }
+
+    private static func line(_ text: String, _ style: TextStyle) -> CTLine {
         let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key(kCTFontAttributeName as String): CTFontCreateWithName(fontName as CFString, size, nil),
-            NSAttributedString.Key(kCTForegroundColorAttributeName as String): color(hex: hex)
+            NSAttributedString.Key(kCTFontAttributeName as String): CTFontCreateWithName(
+                style.fontName as CFString,
+                style.size,
+                nil
+            ),
+            NSAttributedString.Key(kCTForegroundColorAttributeName as String): color(hex: style.hex)
         ]
-        let line = CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: attributes))
+        return CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: attributes))
+    }
+
+    static func centeredText(_ context: CGContext, _ text: String, style: TextStyle, at center: CGPoint) {
+        let line = line(text, style)
         let bounds = CTLineGetBoundsWithOptions(line, [])
-        context.textPosition = CGPoint(x: center.x - bounds.width / 2 - bounds.minX, y: center.y - bounds.height / 2 - bounds.minY)
+        context.textPosition = CGPoint(
+            x: center.x - bounds.width / 2 - bounds.minX,
+            y: center.y - bounds.height / 2 - bounds.minY
+        )
         CTLineDraw(line, context)
     }
 
-    static func leftText(
-        _ context: CGContext, _ text: String, fontName: String, size: CGFloat, hex: String, at origin: CGPoint
-    ) {
-        let attributes: [NSAttributedString.Key: Any] = [
-            NSAttributedString.Key(kCTFontAttributeName as String): CTFontCreateWithName(fontName as CFString, size, nil),
-            NSAttributedString.Key(kCTForegroundColorAttributeName as String): color(hex: hex)
-        ]
+    static func leftText(_ context: CGContext, _ text: String, style: TextStyle, at origin: CGPoint) {
         context.textPosition = origin
-        CTLineDraw(CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: attributes)), context)
+        CTLineDraw(line(text, style), context)
     }
 }

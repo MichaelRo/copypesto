@@ -6,14 +6,14 @@ import XCTest
 /// beat still works. A beat starts from a fresh launch of the `lunchRush` seed, so beats can be recorded in any order.
 @MainActor
 final class LunchRushRecordingTests: PestoUITestCase {
-    private func beat(authenticationGranted: Bool = true) {
+    private func beat() {
         let dark = ProcessInfo.processInfo.environment["PESTO_LUNCH_RUSH_MODE"] == "dark"
         launch(
             seed: "lunchRush",
             defaults: [
                 "hasOnboarded": "true", "cardSize": "large", "accentColorHex": "brand",
                 "linkPreviewsEnabled": "false", "appearanceMode": dark ? "dark" : "light",
-                "uitestAuthenticationGranted": authenticationGranted ? "true" : "false"
+                "uitestAuthenticationGranted": "true"
             ],
             backdrop: "plain",
             motion: true
@@ -35,9 +35,7 @@ final class LunchRushRecordingTests: PestoUITestCase {
     }
 
     private var pastes: [String] {
-        let log = workDirectory.appendingPathComponent("paste-log.jsonl")
-        let lines = ((try? String(contentsOf: log, encoding: .utf8)) ?? "").split(separator: "\n")
-        return lines.map { $0.replacingOccurrences(of: "\\/", with: "/") }
+        pastedTexts()
     }
 
     /// The masked card: Show reveals the number for a moment, and Return pastes the real one.
@@ -131,7 +129,7 @@ final class LunchRushRecordingTests: PestoUITestCase {
         XCTAssertTrue(chip.waitForExistence(timeout: 10), "no Supplier links chip")
         chip.click()
         pause(2.0)
-        XCTAssertEqual(cards.count, 5, "the collection holds the four supplier links and the olive oil link")
+        XCTAssertEqual(cards.count, 5, "the collection holds the four supplier links and the debate link")
         overlay.typeKey(.rightArrow, modifierFlags: [])
         pause(1.2)
         overlay.typeKey(.rightArrow, modifierFlags: [])

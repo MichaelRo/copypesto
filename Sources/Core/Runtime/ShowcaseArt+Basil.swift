@@ -119,7 +119,11 @@ extension ShowcaseArt {
         context.fillPath()
 
         context.saveGState()
-        context.setShadow(offset: CGSize(width: 0, height: -22), blur: 34, color: color(hex: BrandPalette.mortar, alpha: 0.32))
+        context.setShadow(
+            offset: CGSize(width: 0, height: -22),
+            blur: 34,
+            color: color(hex: BrandPalette.mortar, alpha: 0.32)
+        )
         context.addPath(path)
         context.setFillColor(color(hex: BrandPalette.accentLight))
         context.fillPath()
@@ -187,7 +191,12 @@ extension ShowcaseArt {
         }
         for center in centers {
             let lens = CGPath(
-                roundedRect: CGRect(x: center.x - lensWidth / 2, y: center.y - lensHeight / 2, width: lensWidth, height: lensHeight),
+                roundedRect: CGRect(
+                    x: center.x - lensWidth / 2,
+                    y: center.y - lensHeight / 2,
+                    width: lensWidth,
+                    height: lensHeight
+                ),
                 cornerWidth: 46, cornerHeight: 46, transform: nil
             )
             context.saveGState()
@@ -203,27 +212,36 @@ extension ShowcaseArt {
                 )
             }
             context.setFillColor(color(hex: BrandPalette.accentDark, alpha: 0.18))
-            context.fill(CGRect(x: center.x - lensWidth / 2, y: center.y - lensHeight / 2, width: lensWidth, height: lensHeight * 0.4))
-            let glare = CGMutablePath()
-            glare.move(to: CGPoint(x: center.x - 52, y: center.y + 44))
-            glare.addLine(to: CGPoint(x: center.x - 22, y: center.y + 44))
-            glare.addLine(to: CGPoint(x: center.x - 62, y: center.y - 30))
-            glare.addLine(to: CGPoint(x: center.x - 80, y: center.y - 30))
-            glare.closeSubpath()
-            context.addPath(glare)
-            context.setFillColor(color(hex: "FFFFFF", alpha: 0.3))
-            context.fillPath()
-            context.setStrokeColor(color(hex: BrandPalette.goldTextDark, alpha: 0.55))
-            context.setLineWidth(5)
-            context.move(to: CGPoint(x: center.x + 4, y: center.y + 30))
-            context.addLine(to: CGPoint(x: center.x + 34, y: center.y + 30))
-            context.strokePath()
+            context.fill(CGRect(
+                x: center.x - lensWidth / 2,
+                y: center.y - lensHeight / 2,
+                width: lensWidth,
+                height: lensHeight * 0.4
+            ))
+            drawLensGlare(context, center: center)
             context.restoreGState()
             context.addPath(lens)
             context.setStrokeColor(frame)
             context.setLineWidth(11)
             context.strokePath()
         }
+    }
+
+    private static func drawLensGlare(_ context: CGContext, center: CGPoint) {
+        let glare = CGMutablePath()
+        glare.move(to: CGPoint(x: center.x - 52, y: center.y + 44))
+        glare.addLine(to: CGPoint(x: center.x - 22, y: center.y + 44))
+        glare.addLine(to: CGPoint(x: center.x - 62, y: center.y - 30))
+        glare.addLine(to: CGPoint(x: center.x - 80, y: center.y - 30))
+        glare.closeSubpath()
+        context.addPath(glare)
+        context.setFillColor(color(hex: "FFFFFF", alpha: 0.3))
+        context.fillPath()
+        context.setStrokeColor(color(hex: BrandPalette.goldTextDark, alpha: 0.55))
+        context.setLineWidth(5)
+        context.move(to: CGPoint(x: center.x + 4, y: center.y + 30))
+        context.addLine(to: CGPoint(x: center.x + 34, y: center.y + 30))
+        context.strokePath()
     }
 
     private static func drawSmirk(_ context: CGContext) {

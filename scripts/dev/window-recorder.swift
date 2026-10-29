@@ -97,8 +97,12 @@ Task {
     let filter = SCContentFilter(display: display, including: [app], exceptingWindows: [])
     let stream = SCStream(filter: filter, configuration: configuration, delegate: nil)
     guard let recorder = try? Recorder(url: output, width: configuration.width, height: configuration.height) else { fail("cannot write \(output.path)") }
-    try stream.addStreamOutput(recorder, type: .screen, sampleHandlerQueue: DispatchQueue(label: "frames"))
-    try await stream.startCapture()
+    do {
+        try stream.addStreamOutput(recorder, type: .screen, sampleHandlerQueue: DispatchQueue(label: "frames"))
+        try await stream.startCapture()
+    } catch {
+        fail("cannot start the capture: \(error.localizedDescription)")
+    }
     print("recording \(Int(region.width) * scale)x\(Int(region.height) * scale)")
 
     let stop = DispatchSemaphore(value: 0)

@@ -4,7 +4,8 @@ import XCTest
 
 /// The pictures behind the website teaser: settled states of the real shelf on the plain backdrop, one scene per
 /// method, attached at 2x as `teaser-<scene>-<nn>@2x` and exported from the result bundle like the marketing pictures.
-/// `TEST_RUNNER_PESTO_TEASER_MODE=dark` takes them in dark. Motion is off, so a run gives the same pictures every time; the edit animates between them. What a paste wrote is
+/// `TEST_RUNNER_PESTO_TEASER_MODE=dark` takes them in dark. Motion is off, so a run gives the same pictures every time;
+/// the edit animates between them. What a paste wrote is
 /// attached as `teaser-<scene>-paste`, because a paste target cannot be a real app in a UI-test launch.
 @MainActor
 final class TeaserFramesTests: PestoUITestCase {

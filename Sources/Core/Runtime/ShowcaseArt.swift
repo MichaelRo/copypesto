@@ -141,7 +141,8 @@ enum ShowcaseArt {
 
     static func render(
         width: Int = ShowcaseArt.width, height: Int = ShowcaseArt.height, _ draw: (CGContext) -> Void
-    ) -> Data {
+    )
+    -> Data {
         guard let image = renderImage(width: width, height: height, draw) else { return Data() }
         let output = NSMutableData()
         let png = UTType.png.identifier as CFString

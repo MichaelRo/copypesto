@@ -71,13 +71,17 @@ struct ShowcaseArtTests {
     }
 
     private func pixels(_ image: CGImage) -> [UInt8] {
-        var bytes = [UInt8](repeating: 0, count: image.width * image.height * 4)
-        guard let context = CGContext(
-            data: &bytes, width: image.width, height: image.height, bitsPerComponent: 8, bytesPerRow: image.width * 4,
-            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return bytes }
-        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
-        return bytes
+        let count = image.width * image.height * 4
+        return [UInt8](unsafeUninitializedCapacity: count) { buffer, initialized in
+            buffer.initialize(repeating: 0)
+            initialized = count
+            guard let context = CGContext(
+                data: buffer.baseAddress, width: image.width, height: image.height, bitsPerComponent: 8,
+                bytesPerRow: image.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        }
     }
 
     private func meanDifference(_ first: CGImage, _ second: CGImage) -> Double {

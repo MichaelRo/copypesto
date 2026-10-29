@@ -66,6 +66,7 @@ class PestoUITestCase: XCTestCase {
         if suggestionsLive { environment["PESTO_UITEST_SUGGESTIONS_LIVE"] = "1" }
         if recordsPerfTimeline { environment["PESTO_UITEST_PERF_TIMELINE"] = "1" }
         app.launchEnvironment = environment
+        try? FileManager.default.removeItem(at: workDirectory.appendingPathComponent(UITestSupport.readyFileName))
         app.launch()
         // The lost-key alert (`keyLoss`) is modal, and the ready marker comes when it is answered.
         if !keyLoss { waitUntilReady(timeout: timeout) }

@@ -26,6 +26,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0015](0015-a-declined-suggestion-comes-back-once.md) | A declined suggestion comes back once, after the clip is used twice as much and thirty days pass |
 | [0016](0016-search-arrows-move-cards.md) | In search, the arrow keys move between result cards and Return pastes; supersedes the key handling of 0009 |
 | [0017](0017-smart-snippets.md) | Snippets ask for fill-in fields at paste time, and Pesto offers them for clips that differ in a few words |
+| [0018](0018-multi-device-sync.md) | Macs sync through an encrypted, append-only log per Mac in a folder the person picks, with a separate sync key enrolled by hand (proposed) |
 
 ## Template
 

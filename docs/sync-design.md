@@ -16,24 +16,35 @@ start from evidence.
   local-only, so any UI must show the real tier.
 - A CloudKit entitlement needs a Team ID and a provisioning profile; `Pesto.entitlements` is empty for that reason.
 
-## Direction: a provider-agnostic encrypted folder
-Safety and privacy come first, and the design must not tie Pesto to one provider (iCloud Drive, Dropbox, a plain
-folder). That points away from CloudKit mirroring and toward the encrypted backup format that already exists:
-- The provider only ever stores opaque files. Pesto encrypts on the Mac with authenticated encryption, so the provider
-  and anyone with its account cannot read history, and a modified file is rejected.
-- The key comes from a passphrase (slow salted key derivation) or a recovery key shown once. No key is stored with the
-  provider; losing it makes the backup unrecoverable, and the UI says so.
-- A versioned format with per-item records and tombstones makes restore deterministic. Merge by `contentHash` and
-  tombstones; the sort triple stays in `SequenceCounter` and `DeviceIdentity`.
-- Sensitive items are excluded by default, with an explicit opt-in.
-- Multi-device then means several Macs reading and writing the same encrypted folder with the same merge rules: no
-  server of ours and no endpoint beyond the folder the person picks (`NetworkGuardTests` allowlist unchanged).
-- Threats to cover: a stolen backup file, a malicious provider, a replayed old backup (rollback), a compromised device,
-  passphrase guessing and restore of tampered data.
+## Direction
+Decided in [ADR 0018](../decisions/0018-multi-device-sync.md) (proposed): one encrypted, append-only log per Mac in a
+folder the person picks, merged by content hash, clocks and tombstones; a separate sync key enrolled by recovery key or
+approval from another Mac; no server of ours and an unchanged `NetworkGuardTests` allowlist.
+
+## Phased plan
+One PR per phase, tests green in each, the full gate once before merging the last.
+0. **Measure iCloud Drive** (`scripts/sync-latency/`, not shipped; needs two Macs): A writes a small and a 5 MB file every
+   30 s for an hour, B records arrival by FSEvents and a 5 s poll, clocks corrected with `sntp`. Conditions: awake on
+   Wi-Fi, B after sleep, Low Power Mode, Optimize Mac Storage (dataless files). Also check that FSEvents fires on a
+   download into `com~apple~CloudDocs`, that `startDownloadingUbiquitousItem` works outside an app container, and what
+   `pread` does on a dataless file. Output `docs/perf/sync-latency-2026-11.md` with p50 and p95; it sets the budget.
+1. **Format** (`Core/Sync`): `SyncSegment` on the `BackupFile` framing, records, hash chain, Ed25519 signatures, high-water
+   marks. Make `SequenceCounter` use `AppDefaults.store` and never reuse a number; refuse to start on device id `unknown`.
+2. **Change journal** (`Core/Storage`): hybrid logical clock, `changeClock` on items and collections set only in
+   `StorageService`, `ClipEditor` and `CollectionStore`; emit after judgment; secrets and credentials filtered; migration
+   test on a 1.1.0 store.
+3. **Merge engine**: pure merge functions and `StorageService.applySync(_:)` through ingest; convergence property tests.
+4. **Keys**: sync key, vault file, recovery-key create and join, Keychain items, revoke and rekey epochs.
+5. **Transport** (`SyncFolderService` actor): writer with a 2 s batch window, FSEvents reader with a poll fallback,
+   compaction, status states; starts only when `LaunchMode.current.usesSystemIntegrations`; tests use a temp folder.
+6. **UI and pairing**: Settings → Data → Sync (set up, join, sensitive opt-in, Macs with last heard, Remove Mac, real
+   state), `SettingsIndex` entries, approval with the six-word code. UI and snapshot tests first.
+7. **Ship**: two-Mac check, `make bench-sync` within budget, flip `SyncAvailability.isAvailable` with its test, ADR to
+   Accepted, README, guide and website.
 
 ## Done when
 1. A two-device test shows an item written on Mac A decrypting on Mac B.
 2. Deleting on A removes it on B and a re-import does not resurrect it.
-3. Settings shows the real state (connected, signed out, restricted, error), never "Connected" by default.
+3. Settings shows the real state, never "Connected" by default.
 4. `SyncAvailability.isAvailable` flips to `true` with its test.
 5. Existing local stores migrate without loss (test on a store made by the current build).

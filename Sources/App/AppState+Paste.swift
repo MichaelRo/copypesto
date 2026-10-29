@@ -76,6 +76,17 @@ extension AppState {
         if protected { scheduleSecretClear() }
     }
 
+    /// Copy Result in the AI panel. An answer made from a shown secret is written protected, like a paste of it; an
+    /// ordinary one stays off the write gate so the watcher records it as a copy.
+    func copyAIResult(_ result: AIResult) {
+        if result.isProtected {
+            writeText(result.result, protected: true)
+        } else {
+            AppPasteboard.general.clearContents()
+            AppPasteboard.general.setString(result.result, forType: .string)
+        }
+    }
+
     /// Writes an image back to the pasteboard through the write gate, keeping the protection the source had.
     func writeImage(_ image: NSImage, protected: Bool) {
         writeToPasteboard { pb in

@@ -38,6 +38,12 @@ final class LunchRushRecordingTests: PestoUITestCase {
         pastedTexts()
     }
 
+    /// Every paste, a link or a picture included: the log keeps no text for those, so `pastedTexts()` drops them.
+    private var pasteCount: Int {
+        let log = workDirectory.appendingPathComponent("paste-log.jsonl")
+        return ((try? String(contentsOf: log, encoding: .utf8)) ?? "").split(separator: "\n").count
+    }
+
     /// The masked card: Show reveals the number for a moment, and Return pastes the real one.
     func test_a_maskedCardPastesTheRealNumber() {
         beat()
@@ -136,7 +142,7 @@ final class LunchRushRecordingTests: PestoUITestCase {
         pause(2.0)
         overlay.typeKey(.return, modifierFlags: [])
         pause(1.5)
-        XCTAssertFalse(pastes.isEmpty, "a link should have been pasted")
+        XCTAssertGreaterThan(pasteCount, 0, "a link should have been pasted")
     }
 
     /// The agent prompt: two fill-ins, one with a starting value that is typed over.

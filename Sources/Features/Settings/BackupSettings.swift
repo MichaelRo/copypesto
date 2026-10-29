@@ -4,9 +4,10 @@ import PestoCore
 import SwiftData
 import SwiftUI
 
-/// Settings → Data → Backup: one encrypted file for this Mac, in a folder the person chose (iCloud Drive is suggested),
-/// protected by a passphrase or a recovery key, kept up to date by itself unless they say otherwise. Off until set up,
-/// and per Mac: removing it here is how a work Mac stays out of it. Restoring is always a deliberate act.
+/// Settings → Data → Backup: a summary of where the clips are, one switch for "Back up this Mac", and what it keeps.
+/// The backup is one encrypted file for this Mac, in a folder the person chose (iCloud Drive is suggested), protected
+/// by a passphrase or a recovery key, kept up to date by itself unless they say otherwise (ADR 0019). Off until set up,
+/// and per Mac: turning it off is how a work Mac stays out of it. Restoring is always a deliberate act.
 struct BackupSettings: View {
     private enum ActiveSheet: Identifiable {
         case setUp
@@ -29,6 +30,10 @@ struct BackupSettings: View {
     @State private var paused = AutoBackupSettings().pausedAfterClear
     @State private var pulse = 0
     @State private var automatic = AutoBackupSettings().runsAutomatically
+    @State private var includesSecrets = AutoBackupSettings().includesSecrets
+    @State private var problem = AutoBackupSettings().problem
+    @State private var lastBackup = AutoBackupSettings().lastBackup
+    @State private var confirmsTurningOff = false
     @State private var hasRecoveryKey = Self.storedKeyExists()
     @State private var status: String?
     @State private var working = false
@@ -40,16 +45,22 @@ struct BackupSettings: View {
 
     var body: some View {
         Section {
-            BackupStatusRow(
-                status: backupStatus, lastBackup: settings.lastBackup, lastBytes: settings.lastBytes,
-                isWorking: working, pulse: pulse,
-                onBackUpNow: { Task { await backUpNow() } },
-                onResume: { confirmsReplacement = true },
-                onSetUp: { show(.setUp) },
-                onRestore: { show(.restore) }
-            )
-            if isConfigured { configured } else if hasRecoveryKey { recoveryKeyRow }
-            if let status { Text(status).pestoCaption() }
+            BackupSummaryRow(chip: chip, now: now)
+            backupSwitch
+            if isConfigured {
+                BackupStatusLine(
+                    chip: chip, lastBytes: settings.lastBytes, lastMessage: status, isWorking: working, pulse: pulse,
+                    onBackUpNow: { Task { await backUpNow() } },
+                    onResume: { confirmsReplacement = true }
+                )
+                if automatic, let nextText { Text(nextText).pestoCaption() }
+                if !automatic { Text("Only when you choose Back Up Now.").pestoCaption() }
+                configured
+            } else {
+                if let status { Text(status).pestoCaption() }
+                if hasRecoveryKey { recoveryKeyRow }
+            }
+            restoreRow
             if unreadableCount > 0 {
                 Button("Delete Unreadable Clips\u{2026}", role: .destructive) { confirmsDeletingUnreadable = true }
                     .accessibilityIdentifier(AccessibilityID.deleteUnreadableClipsButton)
@@ -68,6 +79,18 @@ struct BackupSettings: View {
             if paused != nowPaused { paused = nowPaused }
             let nowConfigured = settings.isEnabled
             if isConfigured != nowConfigured { isConfigured = nowConfigured }
+            if problem != settings.problem { problem = settings.problem }
+            if lastBackup != settings.lastBackup { lastBackup = settings.lastBackup }
+        }
+        .confirmationDialog(
+            "Turn off backup on this Mac?", isPresented: $confirmsTurningOff, titleVisibility: .visible
+        ) {
+            Button("Turn Off Backup", role: .destructive, action: removeBackup)
+        } message: {
+            Text(
+                "The file stays in its folder; delete it in Finder if you no longer want it. " +
+                    "Your other Macs\u{2019} files are never changed."
+            )
         }
         .confirmationDialog(
             "Delete the clips that cannot be opened?", isPresented: $confirmsDeletingUnreadable,
@@ -118,6 +141,32 @@ struct BackupSettings: View {
         BackupStatus(isEnabled: isConfigured, pausedAfterClear: paused)
     }
 
+    private var chip: BackupChip {
+        BackupChip(status: backupStatus, lastBackup: lastBackup, problem: problem)
+    }
+
+    private var backupSwitch: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Toggle("Back up this Mac", isOn: Binding(
+                get: { isConfigured },
+                set: { on in
+                    if on { show(.setUp) } else { confirmsTurningOff = true }
+                }
+            ))
+            .accessibilityIdentifier(AccessibilityID.backupSwitch)
+            Text(
+                "Keeps one encrypted file of your clips, collections, snippets and settings. Restore it on any Mac. " +
+                    "A backup never changes another Mac."
+            )
+            .pestoCaption()
+        }
+    }
+
+    private var restoreRow: some View {
+        Button("Restore from Backup\u{2026}") { show(.restore) }
+            .accessibilityIdentifier(AccessibilityID.restoreBackupButton)
+    }
+
     private var recoveryKeyRow: some View {
         Button("Show Recovery Key\u{2026}") { Task { await showRecoveryKey() } }
             .disabled(appState.authenticationAvailability == .unavailable)
@@ -127,33 +176,37 @@ struct BackupSettings: View {
     @ViewBuilder
     private var configured: some View {
         if let folder = settings.folder {
-            LabeledContent("Folder") {
+            LabeledContent("Where your copies live") {
                 Text(folder.lastPathComponent).pestoQuiet()
                 Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([folder]) }
+                Button("Change\u{2026}", action: changeFolder)
+                    .disabled(working)
+                    .accessibilityIdentifier(AccessibilityID.backupChangeFolderButton)
             }
         }
         if let protection = settings.protection {
             LabeledContent("Protected by") {
                 Text(protection == .recoveryKey ? "Recovery key" : "Passphrase").pestoQuiet()
+                recoveryKeyRow
             }
+        } else {
+            recoveryKeyRow
         }
-        Toggle("Keep it up to date automatically", isOn: Binding(
-            get: { automatic },
-            set: { on in
-                automatic = on
-                AutoBackupHolder.service?.setAutomatic(on)
-                if !on { settings.runsAutomatically = false }
-            }
+        Toggle("Include clips with secrets", isOn: Binding(
+            get: { includesSecrets },
+            set: { on in Task { await setIncludesSecrets(on) } }
         ))
-        .accessibilityIdentifier(AccessibilityID.autoBackupToggle)
-        if automatic, let nextText { Text(nextText).pestoCaption() }
+        .accessibilityIdentifier(AccessibilityID.backupIncludesSecretsToggle)
+        Text(
+            "Card numbers, keys and tokens. Left out unless you turn this on. Copies kept from a password manager " +
+                "are never included."
+        )
+        .pestoCaption()
+        Text("In your backup: clips with their pins, snippets, collections and this Mac\u{2019}s settings.")
+            .pestoCaption()
         if settings.lastSkippedLarge > 0 {
             Text("\(settings.lastSkippedLarge) clips over 10 MB, such as large pictures, are left out.")
                 .pestoCaption()
-        }
-        HStack {
-            recoveryKeyRow
-            Button("Remove Backup\u{2026}", role: .destructive, action: removeBackup)
         }
     }
 
@@ -175,7 +228,17 @@ struct BackupSettings: View {
         paused = settings.pausedAfterClear
         isConfigured = settings.isEnabled
         automatic = settings.runsAutomatically
+        includesSecrets = settings.includesSecrets
+        problem = settings.problem
+        lastBackup = settings.lastBackup
         hasRecoveryKey = Self.storedKeyExists()
+    }
+
+    private func setIncludesSecrets(_ on: Bool) async {
+        guard await ProtectedAction.permitted(reason: "Change what your Pesto backup includes") else { return }
+        settings.includesSecrets = on
+        includesSecrets = on
+        AutoBackupHolder.service?.noteChange()
     }
 
     private func show(_ which: ActiveSheet) {
@@ -198,7 +261,7 @@ struct BackupSettings: View {
         AutoBackupHolder.service?.disable()
         settings.turnOff()
         refreshState()
-        status = "Backup removed. The file stays in its folder; delete it in Finder if you no longer want it."
+        status = "Backup is off. The file stays in its folder; delete it in Finder if you no longer want it."
     }
 
     private func backUpNow(allowShrink: Bool = false) async {
@@ -207,19 +270,46 @@ struct BackupSettings: View {
         defer { working = false }
         let service = AutoBackupHolder.service ?? AutoBackupService(container: modelContext.container)
         AutoBackupHolder.service = service
-        switch await service.backUpNow(allowShrink: allowShrink) {
+        await report(service.backUpNow(allowShrink: allowShrink), written: "Backed up.")
+        refreshState()
+    }
+
+    private func report(_ outcome: AutoBackupService.Outcome, written: String) {
+        switch outcome {
         case .written:
-            status = "Backed up."
+            status = written
             pulse += 1
-        case .needsSetup: status = "Remove the backup and set it up again."
-        case .folderUnavailable: status = "The folder is not available. Is the drive or iCloud Drive connected?"
+        case .needsSetup: status = "Turn the backup off and set it up again."
+        case .folderUnavailable:
+            status = "The folder is not available. Is the drive or iCloud Drive connected? You can choose another."
         case .failed: status = "The backup could not be written."
         case let .refused(refusal):
             status = BackupMessages.text(for: refusal)
             if refusal.needsConfirmation { confirmsReplacement = true }
             if case let .unreadableClips(count) = refusal { unreadableCount = count }
         }
-        refreshState()
+    }
+
+    private func changeFolder() {
+        Task {
+            guard await ProtectedAction.permitted(reason: "Move your Pesto backup to another folder") else { return }
+            let panel = NSOpenPanel()
+            panel.canChooseFiles = false
+            panel.canChooseDirectories = true
+            panel.canCreateDirectories = true
+            panel.prompt = "Choose"
+            panel.message = "Choose the folder for the backup file"
+            guard panel.runModal() == .OK, let folder = panel.url else { return }
+            working = true
+            defer { working = false }
+            let service = AutoBackupHolder.service ?? AutoBackupService(container: modelContext.container)
+            AutoBackupHolder.service = service
+            await report(
+                service.changeFolder(to: folder),
+                written: "Backup moved. The old file stays in its folder; delete it in Finder if you no longer want it."
+            )
+            refreshState()
+        }
     }
 
     private func deleteUnreadableClips() async {

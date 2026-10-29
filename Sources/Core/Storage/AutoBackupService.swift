@@ -375,6 +375,22 @@ public final class AutoBackupService {
         return (isNew || passphrase == nil ? key.recoveryKey : nil, outcome)
     }
 
+    /// Moves the backup to another folder: the file is written there now, and the old one is left for the person to
+    /// delete. The folder is remembered only when the write was accepted, so a folder that is missing or holds a
+    /// backup this Mac's key does not open leaves the old one in place.
+    @discardableResult
+    public func changeFolder(to folder: URL) async -> Outcome {
+        guard settings.isEnabled, let previous = settings.folder else { return .needsSetup }
+        guard folder != previous else { return await backUpNow() }
+        let problemBefore = settings.problem
+        settings.folder = folder
+        let outcome = await backUpNow()
+        if case .written = outcome { return outcome }
+        settings.folder = previous
+        settings.problem = problemBefore
+        return outcome
+    }
+
     private func backupExists(in folder: URL) -> Bool {
         [backupFile(in: folder), folder.appendingPathComponent(AutoBackupSettings.legacyFileName(forMac: macName()))]
             .contains { FileManager.default.fileExists(atPath: $0.path) }

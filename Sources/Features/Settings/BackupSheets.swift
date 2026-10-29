@@ -120,6 +120,7 @@ struct RestoreSheet: View {
     @State private var secret = ""
     @State private var phase = Phase.choose
     @State private var restoresSettings = true
+    @State private var counts: BackupRestorePreview?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -179,6 +180,7 @@ struct RestoreSheet: View {
     private func previewView(_ preview: BackupPreview) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("\(contents(of: preview)), saved \(saved(preview)).")
+            if let counts { countsView(counts) }
             if replacing != nil {
                 Text("Your current history cannot be opened on this Mac. Restoring replaces it with this backup.")
                     .font(.callout)
@@ -212,6 +214,22 @@ struct RestoreSheet: View {
                 Button("Restore") { restore(preview) }.keyboardShortcut(.defaultAction)
             }
         }
+    }
+
+    private func countsView(_ counts: BackupRestorePreview) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(
+                "Up to \(CountText.clips(counts.wouldAdd)) would be added. \(CountText.alreadyHere(counts.alreadyHere))"
+            )
+            if counts.deletedHere > 0 {
+                Text("\(CountText.clips(counts.deletedHere)) you deleted stay deleted.").pestoCaption()
+            }
+            if counts.wouldRemove > 0 {
+                let removed = CountText.clips(counts.wouldRemove)
+                Text("\(removed) here were deleted where this backup was made, and would be removed.").pestoCaption()
+            }
+        }
+        .accessibilityIdentifier(AccessibilityID.restoreCounts)
     }
 
     private func contents(of preview: BackupPreview) -> String {
@@ -299,7 +317,9 @@ struct RestoreSheet: View {
             do {
                 let credential: BackupCredential = try kind == .passphrase
                     ? .passphrase(secret) : .recoveryKey(BackupKey(recoveryKey: secret))
-                phase = try await .preview(coordinator.open(file, credential: credential))
+                let found = try await coordinator.open(file, credential: credential)
+                counts = replacing == nil ? try? await coordinator.restorePreview(found) : nil
+                phase = .preview(found)
             } catch {
                 phase = .failed(BackupMessages.text(for: error))
             }

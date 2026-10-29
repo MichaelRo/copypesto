@@ -87,8 +87,9 @@ The full list of what is stored and sent, including what encryption does *not* p
 - **On-device AI** (needs Apple Intelligence on macOS 26 or later; Describe Image needs macOS 27): summarize,
   translate (into English, or English into Spanish), extract, describe a picture. Grayed out with the reason when your Mac cannot.
 - **Encrypted backup.** One encrypted file for this Mac in iCloud Drive or a folder you choose, protected by a
-  passphrase or a recovery key you can show again later. Automatic backup is off until you set it up, and per Mac.
-  Restoring on another Mac is a manual step. Pesto has no server that receives the file.
+  passphrase or a recovery key you can show again later. The *Back up this Mac* switch is off until you turn it on, and
+  per Mac. Restoring on another Mac is a manual step that counts what it would add before you confirm it. Pesto has no
+  server that receives the file.
 - **Collections**, paste as plain text, and drag a clip into any app or onto the Desktop. A click picks a clip and a
   double click pastes it.
 - **Undo history.** The last 20 actions are kept in memory, encrypted, and forgotten when you lock, clear or quit.

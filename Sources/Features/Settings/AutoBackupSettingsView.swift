@@ -113,7 +113,12 @@ struct AutoBackupSheet: View {
                     "backup behind, so a clip you delete stays in it until the next backup."
             )
             .pestoCaption()
-            Toggle("Keep it up to date automatically", isOn: $automatic)
+            Toggle("Back up automatically", isOn: $automatic)
+            Text(
+                "A few minutes after you copy, and at most once an hour. Off, the file changes only when you choose " +
+                    "Back Up Now."
+            )
+            .pestoCaption()
             Text(
                 "The file is encrypted on this Mac before it is saved, so the folder's provider sees only scrambled " +
                     "bytes. Pesto remembers how to write it, so it does not ask again; you need the " +

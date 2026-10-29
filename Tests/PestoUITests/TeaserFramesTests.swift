@@ -82,7 +82,7 @@ final class TeaserFramesTests: PestoUITestCase {
         settle()
         frame("snippet", 0)
         search("order update", frames: "snippet", from: 1)
-        frame("snippet", 4)
+        frame("snippet", 7)
         overlay.typeKey(.return, modifierFlags: [])
         settle(1.5)
         XCTAssertFalse(app.windows["Fill in snippet"].exists, "this snippet asks nothing")

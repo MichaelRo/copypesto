@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import ImageIO
 import Testing
 @testable import PestoCore
 
 @Suite("Lunch Rush seed")
 struct LunchRushSeedTests {
+    private func pictureWidth(_ data: Data?) -> Int? {
+        guard let data, let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
+        return image.width
+    }
+
     private var texts: [String] {
         LunchRushSeed.captures().compactMap(\.payloadString) + LunchRushSeed.snippets.map(\.text)
     }
@@ -84,7 +91,7 @@ struct LunchRushSeedTests {
         let newestFirst = Array(SeedFixtures.captures(for: .lunchRush).reversed())
 
         #expect(newestFirst[0].payloadString == LunchRushSeed.cardNumber)
-        #expect(newestFirst[1].payload == ShowcaseArt.basilInSunglasses())
+        #expect(pictureWidth(newestFirst[1].payload) == 960)
         #expect(newestFirst[2].typeIdentifier == "com.compuserve.gif")
         #expect(newestFirst[3].payloadString == "#C9A227")
         #expect(newestFirst[4].payloadString == LunchRushSeed.debateLink)
@@ -112,6 +119,15 @@ struct LunchRushSeedTests {
     func whenBuilt_thenTrackingNumberIsNotSeeded() {
         #expect(LunchRushSeed.trackingNumber == "1Z999AA10123456784")
         #expect(!texts.contains(LunchRushSeed.trackingNumber))
+    }
+
+    @Test("the GIF is twelve frames at card size, so the shelf shows the whole jar and not its middle")
+    func whenBuilt_thenTheGIFIsCardSized() throws {
+        let source = try #require(CGImageSourceCreateWithData(LunchRushMedia.pestoGIF as CFData, nil))
+        let first = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+
+        #expect(CGImageSourceGetCount(source) == 12)
+        #expect(first.width == 320 && first.height == 214)
     }
 
     @Test("the PDF is Grandma's recipe, the fifth version of it")

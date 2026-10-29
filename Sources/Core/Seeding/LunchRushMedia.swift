@@ -17,6 +17,9 @@ enum LunchRushMedia {
     static let recipePDF = makePDF()
     static let jarVideo = makeVideo()
 
+    /// The shelf shows a GIF at its own size, cropped to the middle, so it is made about as large as a card.
+    private static let gifSize = (width: 320, height: 214)
+
     /// Twelve frames of a jar of pesto being stirred, looping.
     private static func makeGIF() -> Data {
         let frames = 12
@@ -27,7 +30,11 @@ enum LunchRushMedia {
             destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary
         )
         for step in 0..<frames {
-            guard let frame = ShowcaseArt.pestoJarFrame(progress: Double(step) / Double(frames)) else { return Data() }
+            guard let drawn = ShowcaseArt.pestoJarFrame(progress: Double(step) / Double(frames)),
+                  let frame = ShowcaseArt.renderImage(width: gifSize.width, height: gifSize.height, { context in
+                      context.interpolationQuality = .high
+                      context.draw(drawn, in: CGRect(x: 0, y: 0, width: gifSize.width, height: gifSize.height))
+                  }) else { return Data() }
             CGImageDestinationAddImage(
                 destination, frame,
                 [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.08]] as CFDictionary

@@ -83,6 +83,13 @@
             return captures
         }
 
+        /// The film's first eight clips, newest first: the masked card, a photo, a GIF, a colour, a link, a line of
+        /// code, a
+        /// PDF and a video. The website's screenshots start with them (`MarketingSeed`).
+        static func filmClips() -> [PasteboardCapture] {
+            Array(richClips().prefix(8))
+        }
+
         /// Newest first, as the shelf shows them: the masked card opens it, then the six clips of the finale
         /// side by side (a photo, a GIF, a colour, a link, a line of code and a PDF), then the rest of the
         /// kinds.

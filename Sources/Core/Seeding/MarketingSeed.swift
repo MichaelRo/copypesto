@@ -2,8 +2,8 @@
 import Foundation
 
 /// The clips behind the website screenshots. Newest first here, as the shelf shows them.
-/// The first ten are the ones the website's demo shelf shows, in the same order
-/// (copypesto-website, src/lib/shelf-demo.ts).
+/// In a Debug build (the one the screenshots are taken from) the film's first eight clips come first, as on the
+/// website's demo shelf (copypesto-website, src/lib/shelf-demo.ts); a Release build keeps only the earlier set.
 /// Every source is one of Apple's own apps, every address is example.com, and nothing is a real person, a real
 /// secret or a parcel number (the Track action would name a real carrier).
 public enum MarketingSeed {
@@ -37,7 +37,6 @@ public enum MarketingSeed {
             ),
             .text("https://copypesto.net/docs/shortcuts/", app: safari),
             .picture(ShowcaseArt.recipeCard()),
-            .text("Rosa's Deli, 123 Basil Lane. Call (555) 010-0142.", app: notes),
             .text("export PESTO_API_KEY=test_0000_not_a_real_key", app: terminal),
             .text(
                 ":root {\n  --basil: #2F7A49;\n  --pine-nut: #EBD9B4;\n  --parmesan: #F6EFD9;\n  --mortar: #1F2320;\n}",
@@ -61,12 +60,19 @@ public enum MarketingSeed {
 
     /// Oldest first, which is the order `SeedFixtures` ingests in.
     public static func captures() -> [PasteboardCapture] {
-        newestFirst().reversed().map { clip in
+        let earlier = newestFirst().reversed().map { clip in
             switch clip {
             case let .text(text, app): SeedFixtures.textCapture(text, app: app)
             case let .picture(data): SeedFixtures.pictureCapture(data)
             }
         }
+        #if DEBUG
+            // The film opens with the masked card, so the earlier set's own copy of that number is left out.
+            let kept = earlier.filter { $0.payloadString != LunchRushSeed.cardNumber }
+            return kept + LunchRushSeed.filmClips().reversed()
+        #else
+            return earlier
+        #endif
     }
 
     /// The icon and colour of each seeded collection, so the shelf's chips tell the two apart.

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Records one beat of the website's demo video ("The Lunch Rush", LunchRushRecordingTests) with ffmpeg's screen capture:
 #   scripts/record-lunch-rush.sh a|b|c|d|e|f|g|h|i|j|all [light|dark]
-# writes .build/lunch-rush/<beat>-<mode>.mov, cropped to the bottom 16:9 of the brand backdrop.
+# writes .build/lunch-rush/<beat>-<mode>.mov, cropped to the bottom strip of the brand backdrop.
 # It changes no system setting. The run needs a person at the Mac: the terminal that runs this script must already have
 # Screen Recording permission (System Settings > Privacy & Security > Screen & System Audio Recording), the Mac must be
 # unlocked, Do Not Disturb on, and every other app and desktop clutter out of the way (the backdrop covers the desktop
@@ -29,7 +29,9 @@ export DEVELOPER_DIR
 OUT=.build/lunch-rush
 mkdir -p "$OUT"
 
-SCREEN=$(ffmpeg -hide_banner -f avfoundation -list_devices true -i "" 2>&1 | sed -n 's/.*\[\([0-9]*\)\] Capture screen 0.*/\1/p' | head -1)
+# `-list_devices` always ends with an error exit, so it is read into a variable first and its status ignored.
+devices=$(ffmpeg -hide_banner -f avfoundation -list_devices true -i "" 2>&1 || true)
+SCREEN=$(sed -n 's/.*\[\([0-9]*\)\] Capture screen 0.*/\1/p' <<< "$devices" | head -1)
 [ -n "$SCREEN" ] || { echo "ffmpeg sees no screen to capture" >&2; exit 1; }
 
 # A one-second probe: without Screen Recording permission macOS hands ffmpeg black frames or an error.
@@ -48,8 +50,9 @@ XCB=(xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Debug -des
 [ -f Pesto.xcodeproj/project.pbxproj ] || make generate
 "${XCB[@]}" build-for-testing > "$OUT/build.log" 2>&1 || { echo "build failed; see $OUT/build.log" >&2; exit 1; }
 
-# Crop: the bottom 16:9 of the backdrop window. Override with PESTO_CROP="w:h:x:y" in pixels for another display.
-CROP=${PESTO_CROP:-3024:1700:0:264}
+# Crop: the bottom strip of the backdrop, which holds the shelf and the fill-in sheet but not the "Automation Running" notice
+# macOS draws in the middle of the screen during a UI test. Override with PESTO_CROP="w:h:x:y" in pixels for another display.
+CROP=${PESTO_CROP:-3024:1224:0:740}
 
 record_beat() {
   local letter=$1 name test

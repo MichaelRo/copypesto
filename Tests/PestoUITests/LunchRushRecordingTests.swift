@@ -189,20 +189,6 @@ final class LunchRushRecordingTests: PestoUITestCase {
         }
     }
 
-    /// The optional beat: a sensitive picture stays covered until Show, then covers itself again after a few seconds.
-    func test_h_sensitivePictureShowAndHide() {
-        beat()
-        overlay.typeKey(.rightArrow, modifierFlags: [])
-        pause(0.8)
-        let picture = cards.matching(NSPredicate(format: "label CONTAINS %@", "sensitive content")).firstMatch
-        XCTAssertTrue(picture.waitForExistence(timeout: 10))
-        let center = picture.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        center.rightClick()
-        pause(1.2)
-        app.menuItems["Show"].click()
-        pause(6.0)
-    }
-
     /// The theme flip: the same shelf in Basil, Parmesan, Pine nut and Mortar, a couple of seconds each. The app
     /// relaunches for each, so the take is cut from the settled shelves.
     func test_i_fourThemes() {

@@ -56,10 +56,6 @@ public enum LunchRushSeed {
         Link(title: "Lunch rota", url: "https://example.com/team/lunch-rota")
     ]
 
-    public static func sensitivePicture() -> Data {
-        ShowcaseArt.pestoSpoon()
-    }
-
     private static let notes = "com.apple.Notes"
     private static let safari = "com.apple.Safari"
     private static let messages = "com.apple.MobileSMS"
@@ -85,14 +81,13 @@ public enum LunchRushSeed {
         return captures
     }
 
-    /// Newest first, as the shelf shows them: the masked card and the covered picture open it, then the six clips of
-    /// the finale side by side (a photo, a GIF, a colour, a link, a line of code and a PDF), then the rest of the
+    /// Newest first, as the shelf shows them: the masked card opens it, then the six clips of the finale
+    /// side by side (a photo, a GIF, a colour, a link, a line of code and a PDF), then the rest of the
     /// kinds.
     private static func richClips() -> [PasteboardCapture] {
         let gif = LunchRushMedia.pestoGIF
         var clips: [PasteboardCapture] = [
             SeedFixtures.textCapture(cardNumber, app: safari),
-            SeedFixtures.pictureCapture(sensitivePicture()),
             SeedFixtures.pictureCapture(ShowcaseArt.basilLeaves()),
             PasteboardCapture(
                 typeIdentifier: "com.compuserve.gif", payload: gif, frontmostBundleID: safari,

@@ -111,3 +111,34 @@ struct AutoBackupTests {
         #expect(settings.protection == nil)
     }
 }
+
+@Suite("AutoBackupSettings: the last problem")
+struct AutoBackupProblemTests {
+    @Test("a problem is stored as a word, read back, and cleared with nil")
+    func whenAProblemIsStored_thenItIsReadBack() {
+        let defaults = ThrowawayDefaults.make()
+        let settings = AutoBackupSettings(defaults: defaults)
+        #expect(settings.problem == nil)
+        settings.problem = .folderMissing
+        #expect(settings.problem == .folderMissing)
+        settings.problem = nil
+        #expect(settings.problem == nil)
+    }
+
+    @Test("an unknown stored word is no problem, so an old or edited preference cannot show a wrong chip")
+    func whenTheStoredWordIsUnknown_thenNoProblem() {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set("exploded", forKey: AutoBackupSettings.problemKey)
+        #expect(AutoBackupSettings(defaults: defaults).problem == nil)
+    }
+
+    @Test("turning the backup off forgets the problem")
+    func whenTurnedOff_thenTheProblemIsForgotten() {
+        let defaults = ThrowawayDefaults.make()
+        let settings = AutoBackupSettings(defaults: defaults)
+        settings.isEnabled = true
+        settings.problem = .failed
+        settings.turnOff()
+        #expect(settings.problem == nil)
+    }
+}

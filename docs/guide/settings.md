@@ -139,29 +139,37 @@ All the tokens are in [Using Pesto](using-pesto.md#snippets).
 - **Suggestion statistics:** how many suggestions the shelf has shown and how you answered them, counted on this Mac from the list it already keeps. *Copy Summary* copies plain numbers you can paste into an issue; nothing is sent anywhere.
 
 ## Data
-![The Data pane: backup, import from another app, export, and Clear Everything.](../images/settings-data.png)
+![The Data pane: where your clips are, backup, import from another app, export, and Clear Everything.](../images/settings-data.png)
 
-Four tiles at the top: how many clips, how much disk they take, the oldest clip and the state of the backup.
+Four tiles at the top: how many clips, how much disk they take, the oldest clip and the state of the backup (*Off*, *Not yet*, the time of the last backup, *Paused* or *Needs you*). Under them, *Your clips stay on this Mac.* and one chip saying what the backup is doing.
 
 - **History:** how long to keep clips (1 day to forever; default 1 month) and how many (default 5,000); pinned clips are
   never removed. Clear history when the screen locks, or on quit.
 - **Clean up copied text:** strip tracking parameters (so a link you paste can differ from the one you copied: the
   `utm_` and ad-click tags are removed), normalize line endings, trim whitespace, collapse duplicate spaces. Each is a
   switch, and they apply as the text is stored.
-- **Backup:** a status line says whether backup is on, paused after a clear (with *Resume Backup…*) or off. It is one encrypted file for this Mac, set up once with *Set Up Backup…* and off until then (and per Mac).
-  Choose where it goes (iCloud Drive is suggested, or any folder), how it is protected (a passphrase, or a recovery key
-  only, which needs no passphrase to remember but must be kept safe) and whether it *keeps itself up to date*: then
-  Pesto rewrites the file a few minutes after your history changes, at most once an hour (the pane says when the next
-  one is due), and with that off it writes only when you press *Back Up Now*. *Show Recovery Key…* shows the key again
-  (after Touch ID or your password) so you can copy it or save it as a file. Clips that hold secrets are left out
-  unless you include them at set-up (a copy kept from a password manager under an allowance is never included), and so are clips over 10 MB, such as large pictures. Each backup keeps the file it replaces as a previous copy beside it, so a clip you delete stays in that copy until the next backup. The backup also carries your
-  settings (never the history lock, the screen-sharing blur or the excluded apps). *Restore…* (any backup
-  file, with the passphrase or the recovery key) shows what the file holds first, adds only what you do not already
-  have, never reorders your history, and warns you if the file is older than your last backup. *Restore settings too*
-  is on by default; settings that would delete history or keep less of it are not applied until you press *Apply These
-  Too* when the restore is done. Other Macs' files are never read or changed. *Remove Backup…* stops it on a Mac you do
-  not want backed up, such as a work laptop; the file stays in its folder until you delete it. There is no separate
-  settings file: the backup is how your preferences move to another Mac.
+- **Backup:** the switch *Back up this Mac* is off until you turn it on, and it is per Mac. It keeps one encrypted file
+  of your clips (with their pins), snippets, collections and settings, which you can restore on any Mac. A backup never
+  changes another Mac, and it is not sync: a clip you delete on this Mac stays in the file until the next backup, and
+  another Mac gets it only if you restore the file there. Turning the switch on opens a short set-up: choose where the
+  file goes (iCloud Drive is suggested, or any folder), how it is protected (a passphrase, or a recovery key only, which
+  needs no passphrase to remember but must be kept safe), whether clips that hold secrets are included, and whether it
+  *backs up automatically*: then Pesto rewrites the file a few minutes after your history changes, at most once an
+  hour, and with that off it writes only when you press *Back Up Now*. Once it is on, a status line says when it last
+  ran and, if something is wrong (the folder is gone, the history looks smaller than the backup), says so and what to
+  do. After *Clear Everything* with the backup kept, it is paused until you press *Resume Backup…*. *Show Recovery
+  Key…* shows the key again (after Touch ID or your password) so you can copy it or save it as a file. *Change…* beside the folder writes the backup in another folder (and is the fix when the folder is gone); the old file stays where it was until you delete it, and a folder that holds a backup this Mac cannot open is refused. *Include
+  clips with secrets* can be turned on or off later; a copy kept from a password manager under an allowance is never
+  included, and neither are clips over 10 MB, such as large pictures. Each backup keeps the file it replaces as a
+  previous copy beside it. The backup carries your settings too (never the history lock, the screen-sharing blur or
+  the excluded apps). *Restore from Backup…* (any backup file, with the passphrase or the recovery key) shows what
+  the file holds first and counts what it would do ("Up to 40 clips would be added. 12 were already here."), adds only
+  what you do not already have, never reorders your history, and warns you if the file is older than your last
+  backup. *Restore settings too* is on by default; settings that would delete history or keep less of it are not
+  applied until you press *Apply These Too* when the restore is done. Other Macs' files are never read or changed.
+  Turning the switch off asks first and stops the backup on a Mac you do not want backed up, such as a work laptop; the
+  file stays in its folder until you delete it. There is no separate settings file: the backup is how your preferences
+  move to another Mac.
 - **Found on this Mac** (shown when another clipboard manager is installed): one row per app with its own *Import…*; it reads nothing until you choose that app's file and confirm. The same imports are under *Another app's library* below, for apps Pesto cannot find.
 - **Import and export:** your text clips as a JSON file (the first 500 characters of each; unencrypted, secrets masked, no pictures) and back. *Import…*
   under **Another app's library** brings in clips from Paste (see [Moving from another app](moving-from.md#moving-from-paste)), Maccy, Alfred,

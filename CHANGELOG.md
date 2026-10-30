@@ -7,6 +7,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Settings → Data: backup is a switch, *Back up this Mac*, under a line that says your clips stay on this Mac and what the
+  backup is doing. The fourth tile shows the time of the last backup, or *Needs you* when the last run could not save.
+  *Restore from Backup…* counts what it would add before you confirm. ([ADR 0019](decisions/0019-backup-and-sync-group.md))
+
 ## [1.0.0] - 2026-10-23
 
 The first release. Nothing has shipped before, so this lists what Pesto does, not edits to earlier drafts. The early

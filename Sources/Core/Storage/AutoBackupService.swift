@@ -141,7 +141,20 @@ public final class AutoBackupService {
         inFlight = run
         let outcome = await run.value
         if inFlight == run { inFlight = nil }
+        rememberProblem(of: outcome)
         return outcome
+    }
+
+    /// Keeps what went wrong where Settings can read it without the Keychain; a written backup clears it, and a run
+    /// that was never set up leaves it alone.
+    private func rememberProblem(of outcome: Outcome) {
+        switch outcome {
+        case .written: settings.problem = nil
+        case .folderUnavailable: settings.problem = .folderMissing
+        case .failed: settings.problem = .failed
+        case .refused: settings.problem = .refused
+        case .needsSetup: break
+        }
     }
 
     private func writeBackup(allowShrink: Bool) async -> Outcome {
@@ -360,6 +373,22 @@ public final class AutoBackupService {
         refresh()
         let outcome = await backUpNow()
         return (isNew || passphrase == nil ? key.recoveryKey : nil, outcome)
+    }
+
+    /// Moves the backup to another folder: the file is written there now, and the old one is left for the person to
+    /// delete. The folder is remembered only when the write was accepted, so a folder that is missing or holds a
+    /// backup this Mac's key does not open leaves the old one in place.
+    @discardableResult
+    public func changeFolder(to folder: URL) async -> Outcome {
+        guard settings.isEnabled, let previous = settings.folder else { return .needsSetup }
+        guard folder != previous else { return await backUpNow() }
+        let problemBefore = settings.problem
+        settings.folder = folder
+        let outcome = await backUpNow()
+        if case .written = outcome { return outcome }
+        settings.folder = previous
+        settings.problem = problemBefore
+        return outcome
     }
 
     private func backupExists(in folder: URL) -> Bool {

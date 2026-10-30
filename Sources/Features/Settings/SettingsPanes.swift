@@ -75,9 +75,9 @@ struct DataPane: View {
 
     var body: some View {
         Form {
+            BackupSettings()
             GeneralSettings(part: .retention)
             CaptureSettings(part: .rules)
-            BackupSettings()
             FoundOnThisMacSection()
             DataSettings(part: .importExport)
             DataSettings(part: .maintenance)

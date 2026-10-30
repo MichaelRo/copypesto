@@ -23,7 +23,7 @@ extension SyncStatus {
 
     var detail: String {
         switch self {
-        case .off: String(localized: "Turn it on to keep your Macs alike.")
+        case .off: SyncCopy.offDetail
         case .paused: String(localized: "Your history is locked. Sync resumes when you unlock it.")
         case let .upToDate(date): String(localized: "Checked at \(time(date)).")
         case let .receiving(done, total): String(localized: "\(done) of \(total) files. The shelf stays usable.")

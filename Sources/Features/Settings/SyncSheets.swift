@@ -9,10 +9,10 @@ struct SyncSetUpSheet: View {
 
     var body: some View {
         SyncSheetFrame(title: "Sync with iCloud Drive") {
-            Text("Pesto keeps your clips alike on every Mac signed in to your Apple Account.")
+            Text(verbatim: SyncCopy.intro)
             VStack(alignment: .leading, spacing: 6) {
                 bullet("Encrypted files go to a folder in iCloud Drive: **\(controller.folderDisplayName)**.")
-                bullet("The key lives in iCloud Keychain, so a new Mac needs nothing typed.")
+                bullet(verbatim: SyncCopy.keyLine(controller.keyMode))
                 bullet(secretsLine)
                 bullet("Deleting a clip on one Mac deletes it on all. Sync is not a backup.")
                 bullet("iCloud can see how many Macs you have, file sizes and when files change, not your clips.")
@@ -33,6 +33,13 @@ struct SyncSetUpSheet: View {
         controller.keepsHere == 0
             ? "Clips with secrets stay on this Mac unless you choose."
             : "Clips with secrets stay on this Mac unless you choose: **\(controller.keepsHere) clips stay here**."
+    }
+
+    private func bullet(verbatim text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("\u{2022}")
+            Text(verbatim: text)
+        }
     }
 
     private func bullet(_ text: LocalizedStringKey) -> some View {

@@ -30,10 +30,7 @@ struct SyncRows: View {
         .confirmationDialog("Reset Sync?", isPresented: $confirmsReset, titleVisibility: .visible) {
             Button("Reset Sync", role: .destructive) { Task { await controller.reset() } }
         } message: {
-            Text(
-                "Every Mac gets a new key. A Mac you removed from your Apple Account stops receiving clips. This Mac " +
-                    "keeps everything it has, and your other Macs join again on their next launch."
-            )
+            Text(verbatim: SyncCopy.resetMessage(controller.keyMode))
         }
         .confirmationDialog("Leave Sync on this Mac?", isPresented: $confirmsLeave, titleVisibility: .visible) {
             Button("Leave Sync", role: .destructive) { controller.leave() }

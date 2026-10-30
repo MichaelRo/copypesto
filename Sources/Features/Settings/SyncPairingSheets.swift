@@ -51,10 +51,7 @@ struct SyncRecoveryKeySheet: View {
 
     var body: some View {
         SyncSheetFrame(title: "Your recovery key") {
-            Text(
-                "This key opens your sync folder if iCloud Keychain is unavailable. Keep it in your password " +
-                    "manager. Pesto cannot recover it for you."
-            )
+            Text(verbatim: SyncCopy.recoveryKeyLead(controller.keyMode))
             Text(key)
                 .font(.system(.body, design: .monospaced))
                 .textSelection(.enabled)

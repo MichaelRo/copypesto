@@ -10,11 +10,11 @@ Yes, if you turn it on, per Mac (*Settings → Data → Sync with my other Macs*
 
 ## How does a second Mac get the key?
 
-When the build carries Apple's iCloud Keychain entitlement, the key travels in iCloud Keychain and a new Mac needs nothing typed. Otherwise the second Mac asks for the recovery key shown when you set sync up, or you press *Ask Another Mac* and approve it from a Mac that is already syncing after checking that both show the same six words.
+When the build carries Apple's iCloud Keychain entitlement, the key travels in iCloud Keychain and a new Mac needs nothing typed. Otherwise the second Mac asks for the recovery key shown when you set sync up, or you press *Ask Another Mac…* and approve it from a Mac that is already syncing after checking that both show the same six words.
 
 ## I lost a Mac or want to start over. What do I do?
 
-There is no list of Macs to manage. *Reset Sync* gives every Mac a new key: a Mac you no longer have stops receiving clips, and your other Macs join again with the new key. *Leave Sync* stops sync on one Mac and removes only its own files from the folder; its clips stay.
+There is no list of Macs to manage. *Reset Sync* gives every Mac a new key: a Mac you no longer have stops receiving clips, and your other Macs join again with the new key, through iCloud Keychain or with the new recovery key. *Leave Sync* stops sync on one Mac and removes only its own files from the folder; its clips stay.
 
 ## Can I hide Pesto's icon from the menu bar?
 

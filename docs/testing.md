@@ -440,9 +440,9 @@ Run once at the end, on two Macs signed in to the same Apple Account with iCloud
 
 **Secrets.** Copy a password-manager entry, a card number and a JWT on A: none reach B. Turn on *Also sync clips with secrets*: they do, hidden, and need Touch ID on B. Turn it off: they leave B.
 
-**Repairs.** Pause on B, copy on A, Resume: B catches up. Change… the folder on B to a local folder: sync stops, the old folder is untouched, set-up opens. Reset Sync on A: B shows *Needs the key* (or rejoins with iCloud Keychain) and both converge on the new key. Leave Sync on B: only B's files go from the folder, B's clips stay, A keeps everything. Quit and relaunch both: sync resumes with no sheet.
+**Repairs.** Pause on B, copy on A, Resume: B catches up. Change… the folder on B to a local folder: sync stops, the old folder is untouched, set-up opens. Reset Sync on A: B shows *New key needed* (or rejoins with iCloud Keychain) and both converge on the new key. Leave Sync on B: only B's files go from the folder, B's clips stay, A keeps everything. Quit and relaunch both: sync resumes with no sheet.
 
-**Health.** The status line says what is true: *Receiving N of M* while files download, *Waiting for the folder* with the folder offline, *iCloud Keychain is off* after turning it off in System Settings, *Refused* with a reason after changing a byte of a `.pestolog`. Idle CPU stays under 0.5% and memory under 150 MB. System Settings → Network shows no connection from Pesto.
+**Health.** The status line says what is true: *Receiving from your other Macs* while files download, *Waiting for the Folder* while a file is still arriving, *Folder Missing* with the folder moved, the *iCloud Keychain Is Off* sheet after turning it off in System Settings, *Refused* with a reason after changing a byte of a `.pestolog`. Idle CPU stays under 0.5% and memory under 150 MB. System Settings → Network shows no connection from Pesto.
 
 ## Lessons from the test suite
 

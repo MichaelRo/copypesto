@@ -8,7 +8,7 @@ struct SyncKeychainOffSheet: View {
 
     var body: some View {
         SyncSheetFrame(title: "iCloud Keychain Is Off") {
-            Text("Sync needs iCloud Keychain to share its key between your Macs. Nothing has been sent.")
+            Text(verbatim: SyncCopy.keychainOffLead)
             Text("Turn it on in System Settings, or join with a recovery key instead.").pestoCaption()
         } actions: {
             Button("Enter Recovery Key\u{2026}") { controller.beginRecoveryKeyEntry() }
@@ -25,7 +25,7 @@ struct SyncNeedsKeySheet: View {
 
     var body: some View {
         SyncSheetFrame(title: "This Mac needs the key") {
-            Text("This Mac cannot get the key from iCloud Keychain, so another Mac has to hand it over.")
+            Text(verbatim: SyncCopy.needsKeyLead(controller.keyMode))
             option("Ask another Mac", "It shows a request, and you check that six words match.")
             option("Enter a recovery key", "The key you saved when sync was turned on.")
         } actions: {

@@ -29,7 +29,7 @@ final class SyncSite {
     let service: SyncFolderService
     var locked = false
 
-    init(name: String, layout: SyncFolderLayout, time: TimeBox) throws {
+    init(name: String, layout: SyncFolderLayout, time: TimeBox, timing custom: SyncFolderService.Timing? = nil) throws {
         self.name = name
         container = try ModelContainerSetup.makeInMemory().synced
         storage = StorageService(modelContainer: container)
@@ -39,7 +39,7 @@ final class SyncSite {
             for: container,
             clock: SyncClock(deviceID: name, defaults: ThrowawayDefaults.make(), now: { time.now })
         )
-        var timing = SyncFolderService.Timing()
+        var timing = custom ?? SyncFolderService.Timing()
         timing.batchWindow = .milliseconds(50)
         let flag = LockedFlag()
         service = SyncFolderService(

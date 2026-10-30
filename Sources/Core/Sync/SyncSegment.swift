@@ -60,10 +60,11 @@ public final class SyncSegmentWriter {
         public var deviceID: String
         public var device: SyncDeviceKeys
         public var previousManifestHash: String
+        public var isSnapshot: Bool
 
         public init(
             syncKey: SyncKey, vaultID: Data, epoch: UInt32, deviceID: String, device: SyncDeviceKeys,
-            previousManifestHash: String = SyncManifest.zeroHash
+            previousManifestHash: String = SyncManifest.zeroHash, isSnapshot: Bool = false
         ) {
             self.syncKey = syncKey
             self.vaultID = vaultID
@@ -71,6 +72,7 @@ public final class SyncSegmentWriter {
             self.deviceID = deviceID
             self.device = device
             self.previousManifestHash = previousManifestHash
+            self.isSnapshot = isSnapshot
         }
     }
 
@@ -123,7 +125,8 @@ public final class SyncSegmentWriter {
             vaultID: context.vaultID.hexString, deviceID: context.deviceID, epoch: context.epoch,
             firstSequence: first, lastSequence: lastSequence, recordCount: count,
             bodyDigest: Data(digest.finalize()).hexString, previousManifestHash: context.previousManifestHash,
-            createdAt: now, signerKeyID: context.device.publicKeys.keyID
+            createdAt: now, signerKeyID: context.device.publicKeys.keyID,
+            snapshot: context.isSnapshot ? true : nil
         ).signed(by: context.device)
         let sealed = try SyncSegmentFormat.seal(
             SyncManifest.canonical(manifest), key: key, fileID: fileID, index: UInt32(count), isManifest: true

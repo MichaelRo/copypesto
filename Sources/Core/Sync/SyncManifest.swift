@@ -19,6 +19,7 @@ public struct SyncManifest: Codable, Equatable, Sendable {
     public var previousManifestHash: String
     public var createdAt: Date
     public var signerKeyID: String
+    public var snapshot: Bool?
     public var signature: String = ""
 
     public func signingBytes() throws -> Data {

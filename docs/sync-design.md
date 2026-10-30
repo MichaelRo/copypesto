@@ -2,7 +2,7 @@
 
 Sync is **built** (ADR 0018, Accepted): `SyncAvailability.isAvailable` is `true`, the feature is off on every Mac until its person turns it
 on in Settings → Data, and CloudKit is never started. These notes keep the reasons and the plan; the decisions are in the ADR.
-Still open: compaction and snapshots, `make bench-sync`, the measured iCloud latency, the provisioning profile for the iCloud Keychain key
+Compaction and snapshots are built. Still open: `make bench-sync`, the measured iCloud latency, the provisioning profile for the iCloud Keychain key
 (`docs/release.md`), and the two-Mac check (`docs/testing.md`, "Two Macs: sync").
 
 ## Why CloudKit-mirrored SwiftData does not work today

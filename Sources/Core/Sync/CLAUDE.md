@@ -21,4 +21,5 @@ touches the store lives in `Core/Storage/Sync/` (journal, outbox, `applySync`, `
 
 - **Slices crash CryptoKit and HPKE** when `startIndex` is not zero: copy with `Data(...)` before sealing, opening or indexing.
 - **A clip is its plain SHA-256 across Macs**, not its id; a deletion is a tombstone by id and hash and only the same id's tombstone is removed by a re-copy.
+- **A snapshot is a segment whose manifest says so** (`snapshot`): a reader that is behind applies it despite the gap. Compaction (`SyncFolderService+Compaction.swift`) re-sends only what this Mac last wrote, never what it received.
 - **A segment the Mac refuses is not recorded as read**: it is read again once the cause (a key, a clock, a damaged file) is fixed.

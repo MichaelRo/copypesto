@@ -36,7 +36,7 @@ public struct SyncHighWater: Codable, Equatable, Sendable {
             return .duplicate
         }
         if manifest.firstSequence <= mark.sequence { throw SyncError.fork }
-        if manifest.firstSequence > mark.sequence + 1 { return .gap }
+        if manifest.firstSequence > mark.sequence + 1 { return manifest.snapshot == true ? .apply : .gap }
         guard manifest.previousManifestHash == mark.manifestHash else { throw SyncError.brokenChain }
         return .apply
     }

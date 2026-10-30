@@ -13,30 +13,32 @@ public final class SyncFolderService {
         public var batchWindow: Duration = .seconds(1)
         public var pollInterval: Duration = .seconds(30)
         public var quietAfter: TimeInterval = 6 * 3600
+        public var compactAfterSegments = 100
 
         public init() {}
     }
 
     private let container: ModelContainer
-    private let storage: StorageService
-    private let layout: SyncFolderLayout
-    private let identity: SyncIdentity
+    let storage: StorageService
+    let layout: SyncFolderLayout
+    let identity: SyncIdentity
     private let keyStore: SyncKeyStoring
     private let highWaterStore: SyncHighWaterStoring
-    private let includeSensitive: @MainActor () -> Bool
+    let includeSensitive: @MainActor () -> Bool
     private let isLocked: @MainActor () -> Bool
-    private let now: @Sendable () -> Date
-    private let timing: Timing
+    let now: @Sendable () -> Date
+    let timing: Timing
 
     public private(set) var status: SyncStatus = .off
     public var onStatusChange: (@MainActor (SyncStatus) -> Void)?
 
     private var group: SyncGroup?
     private var water: SyncHighWater
-    private var ownLast: (sequence: UInt64, hash: String) = (0, SyncManifest.zeroHash)
+    var ownLast: (sequence: UInt64, hash: String) = (0, SyncManifest.zeroHash)
     private var ownLogRecovered = false
     private var lastReceived: Date?
     private var current: Task<Void, Never>?
+    var segmentsAfterCompaction = 0
     private var again = false
     private var pending: Task<Void, Never>?
     private var loop: Task<Void, Never>?
@@ -140,6 +142,7 @@ public final class SyncFolderService {
             let current = group ?? opened
             try recoverOwnLogIfNeeded(current)
             try await write(current)
+            try await compactIfNeeded(current)
             try await read(current)
         } catch let error as SyncError {
             set(.refused(Self.reason(error)))
@@ -209,10 +212,12 @@ public final class SyncFolderService {
         return (first, last)
     }
 
-    private func write(_ found: SyncGroup) async throws {
+    func write(_ found: SyncGroup, snapshot: Bool = false) async throws {
         var wrote = false
-        for _ in 0..<20 {
-            let outbox = try await storage.buildOutbox(includeSensitive: includeSensitive(), syncKey: found.key)
+        for _ in 0..<(snapshot ? Int.max : 20) {
+            let outbox = try await storage.buildOutbox(
+                includeSensitive: includeSensitive(), syncKey: found.key, limit: snapshot ? 500 : 200
+            )
             guard !outbox.records.isEmpty else {
                 if !outbox.settled.isEmpty { try await storage.commitOutbox(outbox) }
                 break
@@ -227,7 +232,7 @@ public final class SyncFolderService {
             )
             let writer = try SyncSegmentWriter(partialURL: url.appendingPathExtension("partial"), context: .init(
                 syncKey: found.key, vaultID: found.vault.vaultID, epoch: found.epoch, deviceID: identity.deviceID,
-                device: identity.keys, previousManifestHash: ownLast.hash
+                device: identity.keys, previousManifestHash: ownLast.hash, isSnapshot: snapshot
             ))
             do {
                 for (offset, record) in outbox.records.enumerated() {
@@ -247,7 +252,7 @@ public final class SyncFolderService {
         if wrote { try writeHead(found) }
     }
 
-    private func writeBlobs(_ blobs: [String: Data], _ found: SyncGroup) throws {
+    func writeBlobs(_ blobs: [String: Data], _ found: SyncGroup) throws {
         guard !blobs.isEmpty else { return }
         try FileManager.default.createDirectory(at: layout.blobs(identity.deviceID), withIntermediateDirectories: true)
         for (name, payload) in blobs {
@@ -257,7 +262,7 @@ public final class SyncFolderService {
         }
     }
 
-    private func writeHead(_ found: SyncGroup) throws {
+    func writeHead(_ found: SyncGroup) throws {
         let head = SyncHead(
             deviceID: identity.deviceID, epoch: found.epoch, lastSequence: ownLast.sequence,
             lastManifestHash: ownLast.hash, cursors: water.marks.mapValues(\.sequence), writtenAt: now(),

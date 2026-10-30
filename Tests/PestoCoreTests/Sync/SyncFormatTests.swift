@@ -34,14 +34,14 @@ struct SyncFormatTests {
     /// A finished segment with `count` records, returned as its bytes and manifest.
     private func segment(
         count: Int = 3, firstSequence: UInt64 = 1, deviceID: String = "mac-a", keys: SyncDeviceKeys? = nil,
-        epoch: UInt32 = 1, previous: String = SyncManifest.zeroHash, syncKey: SyncKey? = nil
+        epoch: UInt32 = 1, previous: String = SyncManifest.zeroHash, syncKey: SyncKey? = nil, snapshot: Bool = false
     ) throws
     -> (data: Data, manifest: SyncManifest) {
         let partial = temp(), final = temp()
         defer { try? FileManager.default.removeItem(at: final) }
         let writer = try SyncSegmentWriter(partialURL: partial, context: .init(
             syncKey: syncKey ?? key, vaultID: vaultID, epoch: epoch, deviceID: deviceID, device: keys ?? device,
-            previousManifestHash: previous
+            previousManifestHash: previous, isSnapshot: snapshot
         ))
         for offset in 0..<count {
             try writer.append(record(firstSequence + UInt64(offset), device: deviceID))
@@ -261,6 +261,27 @@ struct SyncFormatTests {
         try other.record(first.manifest)
         #expect(throws: SyncError.brokenChain) { try other.decide(broken.manifest, currentEpoch: 1) }
         #expect(throws: SyncError.wrongEpoch) { try water.decide(second.manifest, currentEpoch: 2) }
+    }
+
+    @Test(
+        "a snapshot after a gap applies, an ordinary segment after a gap waits, old manifests are unchanged"
+    )
+    func snapshotAfterGap() throws {
+        let first = try segment(count: 2)
+        let snapshot = try segment(count: 3, firstSequence: 9, previous: SyncManifest.zeroHash, snapshot: true)
+        let later = try segment(count: 1, firstSequence: 12, previous: snapshot.manifest.hash())
+        let plain = try segment(count: 1, firstSequence: 9, previous: SyncManifest.zeroHash)
+
+        var water = SyncHighWater()
+        try water.record(first.manifest)
+        #expect(try water.decide(plain.manifest, currentEpoch: 1) == .gap)
+        #expect(try water.decide(snapshot.manifest, currentEpoch: 1) == .apply)
+        try water.record(snapshot.manifest)
+        #expect(try water.decide(later.manifest, currentEpoch: 1) == .apply)
+        #expect(first.manifest.snapshot == nil)
+        #expect(try verify(snapshot.data).manifest.snapshot == true)
+        var fresh = SyncHighWater()
+        #expect(try fresh.decide(snapshot.manifest, currentEpoch: 1) == .apply)
     }
 
     // MARK: Pairing words

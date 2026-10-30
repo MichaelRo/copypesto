@@ -23,7 +23,7 @@ public final class SyncFolderService {
     private let identity: SyncIdentity
     private let keyStore: SyncKeyStoring
     private let highWaterStore: SyncHighWaterStoring
-    private let includeSensitive: @Sendable () -> Bool
+    private let includeSensitive: @MainActor () -> Bool
     private let isLocked: @MainActor () -> Bool
     private let now: @Sendable () -> Date
     private let timing: Timing
@@ -36,7 +36,7 @@ public final class SyncFolderService {
     private var ownLast: (sequence: UInt64, hash: String) = (0, SyncManifest.zeroHash)
     private var ownLogRecovered = false
     private var lastReceived: Date?
-    private var running = false
+    private var current: Task<Void, Never>?
     private var again = false
     private var pending: Task<Void, Never>?
     private var loop: Task<Void, Never>?
@@ -46,7 +46,7 @@ public final class SyncFolderService {
     public init(
         container: ModelContainer, storage: StorageService, layout: SyncFolderLayout, identity: SyncIdentity,
         keyStore: SyncKeyStoring, highWater: SyncHighWaterStoring, timing: Timing = Timing(),
-        includeSensitive: @escaping @Sendable () -> Bool = { false },
+        includeSensitive: @escaping @MainActor () -> Bool = { false },
         isLocked: @escaping @MainActor () -> Bool = { false },
         now: @escaping @Sendable () -> Date = { .now }
     ) {
@@ -113,16 +113,21 @@ public final class SyncFolderService {
     /// Writes what is waiting, then reads what arrived. Returns the state it ended in.
     @discardableResult
     public func syncNow() async -> SyncStatus {
-        if running {
+        if let current {
+            // A pass is running: ask for one more after it, and wait for the whole run so the caller sees its result.
             again = true
+            await current.value
             return status
         }
-        running = true
-        defer { running = false }
-        repeat {
-            again = false
-            await pass()
-        } while again
+        let run = Task { @MainActor in
+            repeat {
+                again = false
+                await pass()
+            } while again
+        }
+        current = run
+        await run.value
+        current = nil
         return status
     }
 

@@ -38,6 +38,10 @@ public struct SyncFolderLayout: Sendable, Equatable {
         device(id).appendingPathComponent("head.pestohead")
     }
 
+    public func identity(_ id: String) -> URL {
+        device(id).appendingPathComponent("identity.pestokey")
+    }
+
     public func joinRequest(_ id: String) -> URL {
         device(id).appendingPathComponent("join.pestojoin")
     }

@@ -11,11 +11,18 @@ public struct SyncJoinRequest: Codable, Equatable, Sendable {
     public var name: String
     public var keys: SyncDevicePublicKeys
     public var vaultID: String
+    /// The Mac this request is addressed to (the others ignore it), so only the Mac whose six words the person compares
+    /// can allow it.
+    public var approverKeyID: String
     public var createdAt: Date
     public var signature: String = ""
 
-    public init(deviceID: String, name: String, keys: SyncDevicePublicKeys, vaultID: Data, createdAt: Date) {
+    public init(
+        deviceID: String, name: String, keys: SyncDevicePublicKeys, vaultID: Data, approverKeyID: String = "",
+        createdAt: Date
+    ) {
         self.deviceID = deviceID
+        self.approverKeyID = approverKeyID
         self.name = name
         self.keys = keys
         self.vaultID = vaultID.hexString

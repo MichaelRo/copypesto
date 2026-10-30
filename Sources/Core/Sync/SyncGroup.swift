@@ -97,6 +97,8 @@ public enum SyncGroupManager {
         try FileManager.default.createDirectory(at: layout.device(identity.deviceID), withIntermediateDirectories: true)
         try record.sealed(syncKey: key, vaultID: vault.vaultID, signedBy: identity.keys)
             .write(to: layout.deviceRecord(identity.deviceID), options: .atomic)
+        try SyncPublicIdentity(deviceID: identity.deviceID, name: identity.name, keys: identity.keys.publicKeys)
+            .serialized(signedBy: identity.keys).write(to: layout.identity(identity.deviceID), options: .atomic)
         return record
     }
 

@@ -35,11 +35,13 @@ final class SnippetSuggestionsTests: PestoUITestCase {
         editor.click()
         editor.typeText(#"Hi {{input:Name}}, thanks for {{input:Topic default="your note"}}!"#)
 
-        XCTAssertTrue(settingsWindow.buttons["Name"].waitForExistence(timeout: 5), "no chip for the Name field")
-        XCTAssertTrue(settingsWindow.buttons["Topic"].exists, "no chip for the Topic field")
+        let firstQuestion = element(AccessibilityID.snippetQuestionName)
+        capture("settings-snippet-fields-top", of: settingsWindow)
+        settingsWindow.scrollViews.firstMatch.scroll(byDeltaX: 0, deltaY: -500)
+        XCTAssertTrue(firstQuestion.waitForExistence(timeout: 5), "no row for the first question")
+        capture("settings-snippet-fields", of: settingsWindow)
         let shortcut = settingsWindow.checkBoxes.matching(NSPredicate(format: "label BEGINSWITH 'Also paste it with'"))
         XCTAssertTrue(shortcut.firstMatch.waitForExistence(timeout: 5), "no shortcut checkbox")
-        capture("settings-snippet-fields", of: settingsWindow)
     }
 
     func test_text_withNoPlaceholder_cannotBeSaved_untilOneIsInserted() {
@@ -54,7 +56,10 @@ final class SnippetSuggestionsTests: PestoUITestCase {
         XCTAssertFalse(element(AccessibilityID.snippetSaveButton).isEnabled)
         capture("settings-snippet-needs-placeholder", of: settingsWindow)
 
-        settingsWindow.buttons["{{date}}"].click()
+        settingsWindow.buttons["Fill From Mac\u{2026}"].click()
+        let dateItem = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH '{{date}}'")).firstMatch
+        XCTAssertTrue(dateItem.waitForExistence(timeout: 5), "Fill From Mac offers no {{date}}")
+        dateItem.click()
 
         XCTAssertTrue(element(AccessibilityID.snippetSaveButton).waitForExistence(timeout: 5))
         expectation(

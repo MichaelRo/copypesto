@@ -113,7 +113,7 @@ when you open the pane, so there is nothing to press. *Add Collection* is in the
 Text you paste again and again. *Edit* (or a double click) opens the snippet where it sits in the list, and *Add Snippet* opens a new one at the top of the
 list, with the same editor: a name, the text, *Insert* chips for the placeholders, and a card that shows what it pastes as.
 A snippet holds at least one placeholder, which is filled in or removed when you paste it: `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`, `{{date+3d}}` or `{{date-1d}}` (a day count), `{{clipboard}}` (the text on the clipboard when you paste), `{{uuid}}` and `{{cursor}}`; the editor asks for one before it saves. Esc cancels and ⌘Return saves. After a plain-text paste, the caret lands where `{{cursor}}` was. **Starters** are templates to begin with, and **From your clips** offers text you have
-pasted from the shelf more than twice (*Make Snippet*). *Add Snippet* is in the pane's header. The editor's *Ask for…* menu adds a
+pasted from the shelf more than twice (*Make Snippet*). *Add Snippet* is in the pane's header. The editor's *Add Question…* menu adds a
 question that is asked when you paste, and *Suggest Names* renames the fields of a snippet made from similar clips with the on-device model.
 All the tokens are in [Using Pesto](using-pesto.md#snippets).
 - **Remember fill-in values** (on by default): a fill-in starts with what you typed last time. The values are kept with the snippet, encrypted

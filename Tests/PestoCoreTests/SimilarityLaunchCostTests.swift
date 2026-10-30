@@ -43,7 +43,8 @@ struct SimilarityLaunchCostTests {
 
         let loadText = String(format: "%.1f", milliseconds(load))
         let factsText = String(format: "%.1f", milliseconds(facts))
-        let line = "PERF similarity load of \(clipCount) signatures: \(loadText) ms; suggestion facts: \(factsText) ms\n"
+        let line = "PERF similarity load of \(clipCount) signatures: \(loadText) ms; "
+            + "suggestion facts: \(factsText) ms\n"
         FileHandle.standardError.write(Data(line.utf8))
         #expect(milliseconds(load) < 4000)
         #expect(milliseconds(facts) < 1000)

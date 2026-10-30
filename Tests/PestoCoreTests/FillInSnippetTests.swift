@@ -340,3 +340,42 @@ struct SnippetRichPreviewTests {
         if case let .text(text) = dated[0] { #expect(!text.contains("{{")) }
     }
 }
+
+@Suite("Editing questions in a snippet's text")
+struct FillInEditTests {
+    @Test("a question's default, options and kind are changed in every place it is used")
+    func whenUpdated_thenEveryUseFollows() {
+        let text = "Hi {{input:Name}}, bye {{input:Name}}"
+        let changed = SnippetField(label: "Name", kind: .text(multiline: false), defaultValue: "Ana")
+
+        #expect(FillInParser
+            .updating("Name", to: changed, in: text) ==
+            #"Hi {{input:Name default="Ana"}}, bye {{input:Name default="Ana"}}"#)
+
+        let choice = SnippetField(label: "Name", kind: .choice(["Ana", "Bo"]), defaultValue: "Ana")
+        #expect(FillInParser
+            .updating("Name", to: choice, in: text) ==
+            #"Hi {{choice:Name options="Ana|Bo"}}, bye {{choice:Name options="Ana|Bo"}}"#)
+    }
+
+    @Test("removing a question takes out its tokens, and for an optional section only the two tags")
+    func whenRemoved_thenTokensGoAndSectionTextStays() {
+        #expect(FillInParser.removing("Name", from: "Hi {{input:Name}}!") == "Hi !")
+        let text = "A{{optional:X}}b{{optional:Y}}c{{/optional}}d{{/optional}}e"
+
+        #expect(FillInParser.removing("X", from: text) == "Ab{{optional:Y}}c{{/optional}}de")
+        #expect(FillInParser.removing("Y", from: text) == "A{{optional:X}}bcd{{/optional}}e")
+    }
+
+    @Test("every token is classified as a question or a fill, with where it is, so the editor can tint it")
+    func whenHighlighted_thenQuestionsAndFillsAreTold() {
+        let text = "Hi {{input:Name}} on {{date}} {{app}} {{/optional}} {{nope}}"
+
+        let kinds = FillInParser.highlights(in: text).map(\.kind)
+
+        #expect(kinds == [.question, .fill, .fill, .question])
+        let first = FillInParser.highlights(in: text)[0]
+        #expect((text as NSString).substring(with: first.range) == "{{input:Name}}")
+        #expect(first.label == "Name")
+    }
+}

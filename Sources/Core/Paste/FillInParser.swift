@@ -96,6 +96,93 @@ public enum FillInParser {
         return result + ns.substring(from: cursor)
     }
 
+    /// The text with every use of the question `label` changed to `field` (its default, options or kind), or nil when
+    /// the question is not there.
+    public static func updating(_ label: String, to field: SnippetField, in text: String) -> String? {
+        guard fields(in: text).contains(where: { $0.label == label }) else { return nil }
+        if field.kind == .optional { return field.label == label ? text : renaming(label, to: field.label, in: text) }
+        return rewritingTokens(in: text) { current in
+            guard current.label == label, current.kind != .optional else { return .keep }
+            return .replace(field.token)
+        }
+    }
+
+    /// The text without the question `label`: its tokens are removed, and for an optional section the two tags go and
+    /// the text between them stays.
+    public static func removing(_ label: String, from text: String) -> String? {
+        guard fields(in: text).contains(where: { $0.label == label }) else { return nil }
+        var open: [String] = []
+        return rewritingTokens(in: text, includeClosers: true) { current in
+            if current.isCloser {
+                let closed = open.popLast()
+                return closed == label ? .replace("") : .keep
+            }
+            if current.kind == .optional {
+                open.append(current.label)
+                return current.label == label ? .replace("") : .keep
+            }
+            return current.label == label ? .replace("") : .keep
+        }
+    }
+
+    public struct Highlight: Equatable, Sendable {
+        public let range: NSRange
+        public let kind: FillInHighlightKind
+        public let label: String
+    }
+
+    /// Where the tokens are and what each is: a question the paste asks, or a fill from the Mac. Unknown tokens are
+    /// left out, since they paste as typed.
+    public static func highlights(in text: String) -> [Highlight] {
+        guard let regex = tokenRegex else { return [] }
+        let ns = text as NSString
+        return regex.matches(in: text, range: NSRange(location: 0, length: ns.length)).compactMap { match in
+            let body = ns.substring(with: match.range(at: 1))
+            if body == "/optional" { return Highlight(range: match.range, kind: .question, label: "") }
+            if let field = field(fromToken: body) {
+                return Highlight(range: match.range, kind: .question, label: field.label)
+            }
+            return TemplateExpander.isFill(body) ? Highlight(range: match.range, kind: .fill, label: body) : nil
+        }
+    }
+
+    private struct TokenView {
+        let label: String
+        let kind: SnippetField.Kind
+        let isCloser: Bool
+    }
+
+    private enum Rewrite {
+        case keep
+        case replace(String)
+    }
+
+    private static func rewritingTokens(
+        in text: String, includeClosers: Bool = false, _ decide: (TokenView) -> Rewrite
+    )
+    -> String? {
+        guard let regex = tokenRegex else { return nil }
+        let ns = text as NSString
+        var result = ""
+        var cursor = 0
+        for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            let body = ns.substring(with: match.range(at: 1))
+            let view: TokenView
+            if body == "/optional" {
+                guard includeClosers else { continue }
+                view = TokenView(label: "", kind: .optional, isCloser: true)
+            } else if let field = field(fromToken: body) {
+                view = TokenView(label: field.label, kind: field.kind, isCloser: false)
+            } else {
+                continue
+            }
+            guard case let .replace(replacement) = decide(view) else { continue }
+            result += ns.substring(with: NSRange(location: cursor, length: match.range.location - cursor)) + replacement
+            cursor = match.range.upperBound
+        }
+        return result + ns.substring(from: cursor)
+    }
+
     /// The fields of several snippets together, each label once, so a stack asks everything up front.
     public static func fields(inAll texts: [String]) -> [SnippetField] {
         var seen = Set<String>()
@@ -176,4 +263,9 @@ public enum FillInParser {
         let tail = NSRange(location: range.upperBound, length: text.length - range.upperBound)
         return text.range(of: "{{/optional}}", range: tail).location != NSNotFound
     }
+}
+
+/// What a token in a snippet's text is: a question asked at paste time, or a fill Pesto makes by itself.
+public enum FillInHighlightKind: Equatable, Sendable {
+    case question, fill
 }

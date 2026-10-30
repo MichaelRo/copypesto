@@ -16,13 +16,13 @@ public enum SyncKeyStoreError: Error, Equatable {
 /// keychain, readable after first unlock. A second Mac on the same Apple Account finds it with nothing to type. It
 /// needs the application-identifier entitlement, which a Developer ID provisioning profile grants.
 public struct ICloudSyncKeyStore: SyncKeyStoring {
-    private let client: KeychainItemClient
+    private let client: any KeychainItemClient
 
     public var mode: SyncKeyMode {
         .iCloudKeychain
     }
 
-    public init(client: KeychainItemClient = SystemKeychainClient()) {
+    public init(client: any KeychainItemClient = SystemKeychainClient()) {
         self.client = client
     }
 

@@ -43,7 +43,7 @@ public enum SyncGroupManager {
     /// Makes a new sync group in an empty folder: the vault, a new key (kept in `keyStore`), this Mac's device record.
     /// Returns the recovery key, which is the sync key itself.
     public static func create(
-        layout: SyncFolderLayout, identity: SyncIdentity, keyStore: SyncKeyStoring, now: Date = .now
+        layout: SyncFolderLayout, identity: SyncIdentity, keyStore: any SyncKeyStoring, now: Date = .now
     ) throws
     -> (group: SyncGroup, recoveryKey: String) {
         try startEpoch(
@@ -53,7 +53,7 @@ public enum SyncGroupManager {
 
     /// Starts a new epoch with a new key (Reset Sync). The others find the new vault file and switch.
     public static func reset(
-        layout: SyncFolderLayout, from group: SyncGroup, identity: SyncIdentity, keyStore: SyncKeyStoring,
+        layout: SyncFolderLayout, from group: SyncGroup, identity: SyncIdentity, keyStore: any SyncKeyStoring,
         now: Date = .now
     ) throws
     -> (group: SyncGroup, recoveryKey: String) {
@@ -65,7 +65,7 @@ public enum SyncGroupManager {
 
     private static func startEpoch(
         layout: SyncFolderLayout, start: (epoch: UInt32, vaultID: Data?), identity: SyncIdentity,
-        keyStore: SyncKeyStoring,
+        keyStore: any SyncKeyStoring,
         now: Date
     ) throws
     -> (group: SyncGroup, recoveryKey: String) {
@@ -105,7 +105,7 @@ public enum SyncGroupManager {
     /// Finds the group a folder holds: the newest epoch whose vault file is validly signed by a device of that epoch,
     /// and the key for it if this Mac has one. Two vaults of the same epoch (two resets that raced) resolve to the one
     /// with the smaller file hash, the same on every Mac.
-    public static func open(layout: SyncFolderLayout, keyStore: SyncKeyStoring) throws -> SyncGroupOpening {
+    public static func open(layout: SyncFolderLayout, keyStore: any SyncKeyStoring) throws -> SyncGroupOpening {
         var candidates: [(vault: SyncVault, hash: String)] = []
         for url in layout.vaultFiles() {
             guard let data = try? Data(contentsOf: url), let vault = try? SyncVault.parse(data) else { continue }
@@ -132,7 +132,7 @@ public enum SyncGroupManager {
     }
 
     /// The group as it stands now, or nil when the folder holds none this Mac can open.
-    public static func openGroup(layout: SyncFolderLayout, keyStore: SyncKeyStoring) throws -> SyncGroup? {
+    public static func openGroup(layout: SyncFolderLayout, keyStore: any SyncKeyStoring) throws -> SyncGroup? {
         if case let .ready(group) = try open(layout: layout, keyStore: keyStore) { return group }
         return nil
     }

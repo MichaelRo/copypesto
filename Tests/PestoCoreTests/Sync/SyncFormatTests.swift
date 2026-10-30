@@ -280,7 +280,7 @@ struct SyncFormatTests {
         #expect(try water.decide(later.manifest, currentEpoch: 1) == .apply)
         #expect(first.manifest.snapshot == nil)
         #expect(try verify(snapshot.data).manifest.snapshot == true)
-        var fresh = SyncHighWater()
+        let fresh = SyncHighWater()
         #expect(try fresh.decide(snapshot.manifest, currentEpoch: 1) == .apply)
     }
 

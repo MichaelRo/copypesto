@@ -36,9 +36,9 @@ public final class SyncController {
         public var container: ModelContainer
         public var storage: StorageService
         public var folder: URL
-        public var keyStore: SyncKeyStoring
-        public var deviceKeys: SyncDeviceKeyStoring
-        public var highWater: SyncHighWaterStoring
+        public var keyStore: any SyncKeyStoring
+        public var deviceKeys: any SyncDeviceKeyStoring
+        public var highWater: any SyncHighWaterStoring
         public var defaults: UserDefaults
         public var deviceID: String
         public var deviceName: String
@@ -47,8 +47,8 @@ public final class SyncController {
         public var timing = SyncFolderService.Timing()
 
         public init(
-            container: ModelContainer, storage: StorageService, folder: URL, keyStore: SyncKeyStoring,
-            deviceKeys: SyncDeviceKeyStoring, highWater: SyncHighWaterStoring, defaults: UserDefaults,
+            container: ModelContainer, storage: StorageService, folder: URL, keyStore: any SyncKeyStoring,
+            deviceKeys: any SyncDeviceKeyStoring, highWater: any SyncHighWaterStoring, defaults: UserDefaults,
             deviceID: String, deviceName: String
         ) {
             self.container = container
@@ -212,7 +212,6 @@ public final class SyncController {
     public func useRecoveryKey(_ text: String) async {
         do {
             let key = try SyncKey(recoveryKey: text)
-            let layout = SyncFolderLayout(root: env.folder)
             guard case let .needsKey(vault) = try openGroup() else {
                 flow = .failed("There is no sync group in the folder.")
                 return
@@ -327,7 +326,6 @@ public final class SyncController {
     }
 
     public func showRecoveryKey() -> String? {
-        let layout = SyncFolderLayout(root: env.folder)
         guard case let .ready(group) = try? openGroup() else { return nil }
         return group.key.recoveryKey
     }
@@ -401,7 +399,7 @@ public final class SyncController {
         }
     }
 
-    static func describe(_ error: Error) -> String {
+    static func describe(_ error: any Error) -> String {
         switch error {
         case SyncKeyStoreError.entitlementMissing: "This build cannot use iCloud Keychain. Use a recovery key instead."
         case SyncKeyStoreError.locked: "The Keychain is locked. Unlock the Mac and try again."

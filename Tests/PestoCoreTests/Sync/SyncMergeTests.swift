@@ -122,7 +122,7 @@ struct SyncMergeTests {
         let world = try SyncWorld()
         let (a, b) = (world.macs[0], world.macs[1])
         try await world.copy("hello", on: a)
-        try await world.setTitle("Greeting", of: "hello", on: a)
+        try world.setTitle("Greeting", of: "hello", on: a)
         let records = try await world.publish(from: a)
 
         try await world.apply(records, on: b)
@@ -168,11 +168,11 @@ struct SyncMergeTests {
         try await world.copy("contested", on: a)
         let created = try await world.publish(from: a)
         try await world.apply(created, on: b)
-        try await world.setTitle("old edit", of: "contested", on: a)
+        try world.setTitle("old edit", of: "contested", on: a)
         let oldEdit = try await world.publish(from: a)
         try await world.delete("contested", on: b)
         let removal = try await world.publish(from: b)
-        try await world.setTitle("late edit", of: "contested", on: a)
+        try world.setTitle("late edit", of: "contested", on: a)
         let lateEdit = try await world.publish(from: a)
 
         for mac in [a, b] {

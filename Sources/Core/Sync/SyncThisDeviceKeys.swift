@@ -5,13 +5,13 @@ import Security
 /// The sync key as a this-device item: what a self-signed build and every other folder provider use. The key is joined
 /// by hand (recovery key or pairing).
 public struct ThisDeviceSyncKeyStore: SyncKeyStoring {
-    private let secrets: SecretStoring
+    private let secrets: any SecretStoring
 
     public var mode: SyncKeyMode {
         .thisDevice
     }
 
-    public init(secrets: SecretStoring = KeychainSecretStore()) {
+    public init(secrets: any SecretStoring = KeychainSecretStore()) {
         self.secrets = secrets
     }
 
@@ -37,10 +37,10 @@ public struct ThisDeviceSyncKeyStore: SyncKeyStoring {
 
 /// This Mac's signing and pairing keys: this-device items, never synchronized.
 public struct KeychainDeviceKeyStore: SyncDeviceKeyStoring {
-    private let secrets: SecretStoring
+    private let secrets: any SecretStoring
     private static let account = "\(AppIdentity.bundleID).syncDeviceKeys"
 
-    public init(secrets: SecretStoring = KeychainSecretStore()) {
+    public init(secrets: any SecretStoring = KeychainSecretStore()) {
         self.secrets = secrets
     }
 
@@ -67,10 +67,10 @@ public enum SyncEntitlement {
     }
 
     public static func keyStore(
-        hasEntitlement: Bool = isPresent, client: KeychainItemClient = SystemKeychainClient(),
-        secrets: SecretStoring = KeychainSecretStore()
+        hasEntitlement: Bool = isPresent, client: any KeychainItemClient = SystemKeychainClient(),
+        secrets: any SecretStoring = KeychainSecretStore()
     )
-    -> SyncKeyStoring {
+    -> any SyncKeyStoring {
         hasEntitlement ? ICloudSyncKeyStore(client: client) : ThisDeviceSyncKeyStore(secrets: secrets)
     }
 }

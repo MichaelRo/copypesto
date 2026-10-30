@@ -23,8 +23,8 @@ public final class SyncFolderService {
     let storage: StorageService
     let layout: SyncFolderLayout
     let identity: SyncIdentity
-    private let keyStore: SyncKeyStoring
-    private let highWaterStore: SyncHighWaterStoring
+    private let keyStore: any SyncKeyStoring
+    private let highWaterStore: any SyncHighWaterStoring
     let includeSensitive: @MainActor () -> Bool
     private let isLocked: @MainActor () -> Bool
     let now: @Sendable () -> Date
@@ -48,7 +48,7 @@ public final class SyncFolderService {
 
     public init(
         container: ModelContainer, storage: StorageService, layout: SyncFolderLayout, identity: SyncIdentity,
-        keyStore: SyncKeyStoring, highWater: SyncHighWaterStoring, timing: Timing = Timing(),
+        keyStore: any SyncKeyStoring, highWater: any SyncHighWaterStoring, timing: Timing = Timing(),
         includeSensitive: @escaping @MainActor () -> Bool = { false },
         isLocked: @escaping @MainActor () -> Bool = { false },
         now: @escaping @Sendable () -> Date = { .now }

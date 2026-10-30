@@ -57,11 +57,11 @@ struct SyncJoinSheet: View {
     let group: Int
 
     var body: some View {
-        SyncSheetFrame(title: "Join your sync group") {
-            Text("Pesto found a sync group in \(controller.folderDisplayName).")
+        SyncSheetFrame(title: "Join sync on your other Macs") {
+            Text("Pesto found sync from your other Macs in \(controller.folderDisplayName).")
             HStack(spacing: 12) {
                 count(thisMac, "clips on this Mac")
-                count(group, "clips in the group")
+                count(group, "clips already synced")
             }
             Text("Nothing is deleted. Clips are merged both ways, and the shelf stays usable while it runs.")
                 .pestoCaption()

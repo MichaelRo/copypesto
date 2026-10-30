@@ -354,10 +354,10 @@ public final class SyncFolderService {
     static func reason(_ error: SyncError) -> String {
         switch error {
         case .badSignature: "A file from another Mac did not match its signature. Nothing was changed."
-        case .unknownSigner: "A file came from a Mac that is not in this sync group. Nothing was changed."
+        case .unknownSigner: "A file came from a Mac this sync does not know. Nothing was changed."
         case .fork, .rollback, .brokenChain: "Another Mac's log went backwards or was changed. Nothing was changed."
         case .clockFarAhead: "Another Mac's clock is far ahead, so its changes were not applied."
-        case .wrongVault, .wrongEpoch, .wrongKey: "The sync group changed. Sync will pick up the new key."
+        case .wrongVault, .wrongEpoch, .wrongKey: "Sync was reset. It will pick up the new key."
         default: "A file from another Mac is damaged. Nothing was changed."
         }
     }

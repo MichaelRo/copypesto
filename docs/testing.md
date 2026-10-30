@@ -159,6 +159,7 @@ overlap and that the pointer is on the chip that is open.
 - Assert what a person would see (frames from the accessibility tree), and name the failure with the numbers (`x=…`,
   `frames […]`). Each element's frame is read separately, so a read that lands mid-change can mix two moments: look again
   once before failing.
+- `PointerInteractionTests` covers the card side: rest on a card and its detail opens after a dwell and closes when the pointer leaves, a single click only picks a card (nothing is pasted, the shelf stays), and a fast sweep across the row leaves no detail open. Still to add in this pattern: collection chip drag-reorder and the shelf resize.
 - `hover()` is sometimes not delivered when the pointer re-enters a window: move twice (`AppChipHoverTests.hover`).
 - Every UI-test run keeps screenshots (`capture(...)`) and a screen recording in its result bundle. Run with
   `-resultBundlePath .build/x.xcresult`, then `xcrun xcresulttool export attachments --path .build/x.xcresult

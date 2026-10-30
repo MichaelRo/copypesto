@@ -14,6 +14,7 @@ public final class SyncFolderService {
         public var pollInterval: Duration = .seconds(30)
         public var quietAfter: TimeInterval = 6 * 3600
         public var compactAfterSegments = 100
+        public var batchesPerPass = 20
 
         public init() {}
     }
@@ -214,12 +215,14 @@ public final class SyncFolderService {
 
     func write(_ found: SyncGroup, snapshot: Bool = false) async throws {
         var wrote = false
-        for _ in 0..<(snapshot ? Int.max : 20) {
+        var drained = snapshot
+        for _ in 0..<(snapshot ? Int.max : timing.batchesPerPass) {
             let outbox = try await storage.buildOutbox(
                 includeSensitive: includeSensitive(), syncKey: found.key, limit: snapshot ? 500 : 200
             )
             guard !outbox.records.isEmpty else {
                 if !outbox.settled.isEmpty { try await storage.commitOutbox(outbox) }
+                drained = true
                 break
             }
             try writeBlobs(outbox.blobs, found)
@@ -250,6 +253,7 @@ public final class SyncFolderService {
             wrote = true
         }
         if wrote { try writeHead(found) }
+        if !drained { again = true }
     }
 
     func writeBlobs(_ blobs: [String: Data], _ found: SyncGroup) throws {

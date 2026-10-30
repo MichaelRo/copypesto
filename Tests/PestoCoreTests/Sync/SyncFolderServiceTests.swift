@@ -166,6 +166,28 @@ struct SyncFolderServiceTests {
         #expect(try b.texts() == [big])
     }
 
+    @Test("a history bigger than one pass is sent by the same sync, not left for the next poll")
+    func bigHistoryInOnePass() async throws {
+        var timing = SyncFolderService.Timing()
+        timing.batchesPerPass = 2
+        let a = try SyncSite(name: "mac-a", layout: layout, time: time, timing: timing)
+        let b = try SyncSite(name: "mac-b", layout: layout, time: time)
+        let made = try SyncGroupManager.create(
+            layout: layout, identity: a.identity, keyStore: a.keyStore, now: time.now
+        )
+        try b.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
+        for index in 0..<450 {
+            try await a.copy("history \(index)")
+        }
+
+        time.advance()
+        await a.service.syncNow()
+        time.advance()
+        await b.service.syncNow()
+
+        #expect(try b.texts().count == 450)
+    }
+
     @Test("a segment that was changed is refused, nothing is applied, and the Mac says so")
     func tamperedSegment() async throws {
         let (a, b) = try pair()

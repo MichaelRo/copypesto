@@ -4,8 +4,9 @@ import Testing
 
 @Suite("SyncAvailability")
 struct SyncAvailabilityTests {
-    @Test("sync stays off in v1, whatever an old preference says")
-    func whenSyncUnavailable_thenOff() {
-        #expect(SyncAvailability.isAvailable == false)
+    @Test("sync is available, and still off on every Mac until its person turns it on")
+    func whenSyncAvailable_thenOffUntilTurnedOn() {
+        #expect(SyncAvailability.isAvailable)
+        #expect(Setting.syncEnabled.defaultValue == false)
     }
 }

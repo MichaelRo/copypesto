@@ -115,6 +115,16 @@ public final class SyncController {
 
     public func chooseFolder(_ url: URL) {
         env.folder = url
+        env.defaults.set(url.path, for: Setting.syncFolderPath)
+    }
+
+    /// Moves this Mac to another folder: sync stops here, the old folder is left exactly as it is, and the set-up sheet
+    /// opens for the new one (a new group there, or an offer to join the one that is).
+    public func changeFolder(to url: URL) {
+        pause()
+        env.highWater.save(SyncHighWater())
+        chooseFolder(url)
+        flow = .setUp
     }
 
     /// Looks at the folder: makes a new group when it is empty, offers to join one that is there, or says why the key

@@ -50,6 +50,30 @@ struct SyncControllerTests {
         }
     }
 
+    @Test(
+        "changing the folder pauses sync, remembers it and offers set-up there; the old folder is left alone"
+    )
+    func changingTheFolder() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        try await a.site.copy("stays")
+        await a.controller.turnOn()
+        #expect(a.controller.isEnabled)
+        let elsewhere = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-elsewhere-\(UUID().uuidString)")
+        let before = try FileManager.default.contentsOfDirectory(atPath: folder.path).sorted()
+
+        a.controller.changeFolder(to: elsewhere)
+
+        #expect(!a.controller.isEnabled)
+        #expect(a.controller.flow == .setUp)
+        #expect(a.controller.folderURL == elsewhere)
+        #expect(a.defaults.value(for: Setting.syncFolderPath) == elsewhere.path)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: folder.path).sorted() == before)
+        await a.controller.turnOn()
+        #expect(a.controller.isEnabled)
+        #expect(FileManager.default.fileExists(atPath: elsewhere.path))
+    }
+
     @Test("the first Mac makes the group, is shown the recovery key, and its clips reach a Mac that joins with the key")
     func firstMacAndJoin() async throws {
         let a = try SyncMac(name: "mac-a", folder: folder, time: time)

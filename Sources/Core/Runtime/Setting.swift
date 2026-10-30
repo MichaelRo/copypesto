@@ -43,6 +43,7 @@ public enum Setting {
     /// Sync (ADR 0018): off until the person turns it on, per Mac, and never carried by the settings backup or export.
     public static let syncEnabled = SettingKey("syncEnabled", default: false)
     public static let syncIncludesSecrets = SettingKey("syncIncludesSecrets", default: false)
+    public static let syncFolderPath = SettingKey("syncFolderPath", default: "")
     public static let opensQuickMenuAtCursor = SettingKey("opensQuickMenuAtCursor", default: false)
     public static let screenSharingPrivacy = SettingKey("screenSharingPrivacy", default: false)
     public static let biometricLockEnabled = SettingKey("biometricLockEnabled", default: false)
@@ -125,7 +126,8 @@ public enum Setting {
         retentionDays.name, retentionMaxItems.name, clearOnScreenLock.name, clearOnQuit.name,
         ruleStripTracking.name, ruleTrimWhitespace.name, ruleNormalizeLineEndings.name,
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,
-        nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, opensQuickMenuAtCursor.name,
+        nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
+        opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,
         biometricLockTimeoutMinutes.name,

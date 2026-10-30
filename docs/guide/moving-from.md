@@ -3,8 +3,9 @@
 Bring your clipboard history, pinned clips or snippets into Pesto from other apps.
 
 ## Before you switch
-- **There is no sync and no iPhone or iPad app.** History stays on the Mac that made it. You can keep one encrypted backup
-  file per Mac and restore it on another by hand, but pinboards you share between devices in Paste will not stay shared.
+- **There is no iPhone or iPad app.** Pesto can keep your Macs in step through iCloud Drive (*Settings → Data → Sync with my
+  other Macs*, off until you turn it on), but not a phone or tablet, so pinboards you share with an iPhone in Paste will not
+  stay shared there. You can also keep one encrypted backup file per Mac and restore it by hand.
 - **⌘⇧V may collide with your old app.** Paste also uses it. Quit the old app first, or record another shortcut in
   *Settings → Shortcuts*; the second app to start loses the key. Maccy's default is ⇧⌘C. Some apps use ⇧⌘V for "paste
   without formatting".

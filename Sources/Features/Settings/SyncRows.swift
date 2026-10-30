@@ -17,6 +17,7 @@ struct SyncRows: View {
                     set: { on in if on { controller.beginSetUp() } else { controller.pause() } }
                 ))
                 .accessibilityIdentifier(AccessibilityID.syncSwitch)
+                .settingsRow("Sync with my other Macs")
                 Text(
                     "Keeps the Macs where you turn this on matching. Deleting a clip on one deletes it on all. " +
                         "Sync is not a backup."
@@ -61,6 +62,8 @@ struct SyncRows: View {
             Spacer(minLength: 12)
             Text(controller.folderURL.lastPathComponent).pestoQuiet().lineLimit(1).truncationMode(.middle)
             Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([controller.folderURL]) }
+            Button("Change\u{2026}") { Task { await changeFolder() } }
+                .accessibilityIdentifier(AccessibilityID.syncChangeFolderButton)
         }
         HStack(spacing: 8) {
             Text("Sync key")
@@ -81,6 +84,19 @@ struct SyncRows: View {
     private func ask(reset: Bool) async {
         guard await ProtectedAction.permitted(reason: "Reset or leave Pesto sync") else { return }
         if reset { confirmsReset = true } else { confirmsLeave = true }
+    }
+
+    private func changeFolder() async {
+        guard await ProtectedAction.permitted(reason: "Move Pesto sync to another folder") else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.directoryURL = controller.folderURL.deletingLastPathComponent()
+        panel.prompt = "Choose"
+        panel.message = "Choose the folder for the sync files"
+        guard panel.runModal() == .OK, let folder = panel.url else { return }
+        controller.changeFolder(to: folder)
     }
 
     private func showRecoveryKey() async {

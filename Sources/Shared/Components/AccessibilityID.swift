@@ -21,6 +21,7 @@ enum AccessibilityID {
     static let syncDenyButton = "sync-deny"
     static let syncResetButton = "sync-reset"
     static let syncLeaveButton = "sync-leave"
+    static let syncChangeFolderButton = "sync-change-folder"
     static let syncPauseButton = "sync-pause"
     static let backupChangeFolderButton = "backup-change-folder"
     static let backupIncludesSecretsToggle = "backup-includes-secrets"

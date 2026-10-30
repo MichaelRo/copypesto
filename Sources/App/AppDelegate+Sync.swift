@@ -10,8 +10,11 @@ extension AppDelegate {
               let container = appState.historyContainer, let storage = appState.storageService else { return }
         let deviceID = DeviceIdentity.current()
         guard deviceID != "unknown" else { return }
-        let folder = (AutoBackupSettings.iCloudDriveFolder() ?? AppPaths.supportDirectory)
+        let saved: String = AppDefaults.store.value(for: Setting.syncFolderPath)
+        let folder = saved.isEmpty
+            ? (AutoBackupSettings.iCloudDriveFolder() ?? AppPaths.supportDirectory)
             .appendingPathComponent("Pesto Sync", isDirectory: true)
+            : URL(fileURLWithPath: saved, isDirectory: true)
         var environment = SyncController.Environment(
             container: container, storage: storage, folder: folder, keyStore: SyncEntitlement.keyStore(),
             deviceKeys: KeychainDeviceKeyStore(),

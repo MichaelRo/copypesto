@@ -92,6 +92,11 @@ The full list of what is stored and sent, including what encryption does *not* p
   passphrase or a recovery key you can show again later. The *Back up this Mac* switch is off until you turn it on, and
   per Mac. Restoring on another Mac is a manual step that counts what it would add before you confirm it. Pesto has no
   server that receives the file.
+- **Sync between your Macs.** *Sync with my other Macs* is off until you turn it on, and per Mac. Each Mac writes its
+  own encrypted files into a folder in iCloud Drive and merges the others', with a key separate from the one that
+  protects your history, no list of Macs to manage, *Reset Sync* if one is lost, and secrets staying on the Mac that
+  copied them unless you choose. Deleting a clip on one Mac deletes it on all, so it is not a backup. Pesto has no
+  server that receives the files.
 - **Collections**, paste as plain text, and drag a clip into any app or onto the Desktop. A click picks a clip and a
   double click pastes it.
 - **Undo history.** The last 20 actions are kept in memory, encrypted, and forgotten when you lock, clear or quit.

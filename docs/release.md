@@ -92,7 +92,12 @@ makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is u
    access group `<Team ID>.net.copypesto.pesto`. `scripts/check-sync-signing.sh` is what proves the profile carries it.
 2. Profiles, Distribution, **Developer ID** (macOS), App ID `net.copypesto.pesto`, your Developer ID Application
    certificate. Download it and double-click it to install. Note its exact name.
-3. `make release SYNC_PROFILE="<profile name>"`. The archive then carries `PestoSync.entitlements` (the application
+3. `make export SYNC_PROFILE="<profile name>"` checks the signing without notarizing; `make release SYNC_PROFILE="<profile name>"`
+   does the whole release. Only the app target takes the profile and `PestoSync.entitlements` (`PESTO_PROFILE` and
+   `PESTO_ENTITLEMENTS` in `Pesto.yml`); the Controls extension is signed with the Developer ID certificate alone. The first
+   check on 2026-10-30 passed (`sync signing ok: NBD55BZ3N4.net.copypesto.pesto`, strict `codesign` verify ok). It was not
+   launched: a Developer ID build would read the same Keychain item as the daily build under another signature.
+   Also: The archive then carries `PestoSync.entitlements` (the application
    identifier and the team), and the export signs manually with the profile (`scripts/render-export-options.sh`).
 4. `scripts/check-sync-signing.sh <exported Pesto.app>` checks the embedded profile, the entitlement and the identifier.
    Then launch the stapled app once: an `AMFI ... No matching profile found` in the log means the profile does not match.

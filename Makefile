@@ -262,7 +262,7 @@ archive: check-release-placeholders require-team generate ## [Release] Build a r
 		-destination 'platform=macOS' \
 		-archivePath $(ARCHIVE_PATH) \
 		DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) \
-		$(if $(SYNC_PROFILE),CODE_SIGN_ENTITLEMENTS=$(SYNC_ENTITLEMENTS) -allowProvisioningUpdates,) \
+		$(if $(SYNC_PROFILE),PESTO_ENTITLEMENTS=$(SYNC_ENTITLEMENTS) PESTO_PROFILE="$(SYNC_PROFILE)" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application",) \
 		archive
 
 .PHONY: export

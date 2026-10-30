@@ -68,6 +68,7 @@ private struct AIResultView: View {
     let result: AIResult
     var onClose: () -> Void
     var onPaste: () -> Void
+    var onCopy: () -> Void
     var onReadNext: () -> Void = {}
     var onCancelPart: () -> Void = {}
     var onCombine: () -> Void = {}
@@ -193,8 +194,7 @@ private struct AIResultView: View {
                 }
                 if !result.isError {
                     Button {
-                        AppPasteboard.general.clearContents()
-                        AppPasteboard.general.setString(result.result, forType: .string)
+                        onCopy()
                         copied = true
                         Task {
                             try? await Task.sleep(for: .seconds(1.5))
@@ -264,11 +264,12 @@ final class AIResultPanelController {
 
     func showResult(
         _ result: AIResult, onClose: @escaping () -> Void, onPaste: @escaping () -> Void,
+        onCopy: @escaping () -> Void,
         onReadNext: @escaping () -> Void = {}, onCancelPart: @escaping () -> Void = {},
         onCombine: @escaping () -> Void = {}
     ) {
         let view = AIResultView(
-            result: result, onClose: onClose, onPaste: onPaste,
+            result: result, onClose: onClose, onPaste: onPaste, onCopy: onCopy,
             onReadNext: onReadNext, onCancelPart: onCancelPart, onCombine: onCombine
         )
         let width = AIResultLayout.panelWidth

@@ -316,6 +316,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.aiResultController.hide()
                 },
                 onPaste: { [weak self] in self?.pasteAIResult(result) },
+                onCopy: { [weak self] in self?.appState.copyAIResult(result) },
                 onReadNext: { [weak self] in self?.appState.readNextAIPart() },
                 onCancelPart: { [weak self] in self?.appState.cancelAIPart() },
                 onCombine: { [weak self] in self?.appState.combineAIParts() }

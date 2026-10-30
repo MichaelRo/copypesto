@@ -10,15 +10,22 @@ struct DataStatStrip: View {
     @Environment(\.modelContext) private var modelContext
     @State private var snapshot: PrivacySnapshot?
     @State private var bytes: Int?
+    @State private var backupTick = 0
 
     var body: some View {
         SettingsStatStrip(stats: [
             SettingsStat(id: "clips", value: clipsText, label: "Clips"),
             SettingsStat(id: "disk", value: bytes.map(Self.sizeText) ?? "…", label: "On disk"),
             SettingsStat(id: "oldest", value: oldestText, label: "Oldest clip"),
-            SettingsStat(id: "backup", value: backupText, label: "Backup")
+            SettingsStat(
+                id: "backup", value: chip.tileValue(), label: LocalizedStringKey(chip.tileLabel),
+                tint: chip.tileTint
+            )
         ])
         .task { await refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            backupTick += 1
+        }
     }
 
     private var clipsText: String {
@@ -30,9 +37,13 @@ struct DataStatStrip: View {
         return snapshot.oldest.map { $0.formatted(date: .abbreviated, time: .omitted) } ?? "None"
     }
 
-    private var backupText: String {
+    private var chip: BackupChip {
+        _ = backupTick
         let settings = AutoBackupSettings()
-        return BackupStatus(isEnabled: settings.isEnabled, pausedAfterClear: settings.pausedAfterClear).word
+        return BackupChip(
+            status: BackupStatus(isEnabled: settings.isEnabled, pausedAfterClear: settings.pausedAfterClear),
+            lastBackup: settings.lastBackup, problem: settings.problem
+        )
     }
 
     private static func sizeText(_ bytes: Int) -> String {

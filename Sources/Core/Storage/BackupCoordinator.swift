@@ -58,6 +58,11 @@ public final class BackupCoordinator {
         return BackupPreview(backup: backup, warning: warning)
     }
 
+    /// What `restore` would do, counted without writing anything.
+    public func restorePreview(_ preview: BackupPreview) async throws -> BackupRestorePreview {
+        try await StorageService(modelContainer: container).previewRestore(preview.backup)
+    }
+
     public func restore(_ preview: BackupPreview) async throws -> BackupRestoreSummary {
         try await StorageService(modelContainer: container).restore(preview.backup)
     }

@@ -41,3 +41,4 @@ Status: Accepted
 ## Consequences
 ## Docs affected
 ```
+| [0019](0019-backup-and-sync-group.md) | Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live; supersedes the Settings wording of 0010 and 0012 |

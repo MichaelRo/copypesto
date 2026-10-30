@@ -6,6 +6,7 @@ struct SettingsStat: Identifiable {
     let id: String
     let value: String
     let label: LocalizedStringKey
+    var tint: Color?
 }
 
 /// A row of tiles that heads a pane with the facts it is about (Data: how many clips, how much disk, how old).
@@ -18,6 +19,7 @@ struct SettingsStatStrip: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: stat.value)
                         .font(.title3.weight(.semibold))
+                        .foregroundStyle(stat.tint ?? Color.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Text(stat.label)

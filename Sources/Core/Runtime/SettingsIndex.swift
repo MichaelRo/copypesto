@@ -359,8 +359,9 @@ public enum SettingsIndex {
         ),
         entry(
             "Backup", "Data", "Set Up Backup",
-            "encrypted", "restore", "recovery key", "passphrase", "icloud", "icloud drive", "automatic", "keep updated",
-            "work mac", "turn off", "folder", "move to another mac", "back up now"
+            "encrypted", "restore", "restore from backup", "recovery key", "passphrase", "icloud", "icloud drive",
+            "automatic", "keep updated", "work mac", "turn off", "back up this mac", "folder", "where your copies live",
+            "move to another mac", "back up now", "secrets"
         ),
         entry("Rebuild search index", "Data", "Rebuild search index", "semantic", "search", "embeddings"),
         entry("Activity insights", "Data", "Insights", "statistics", "charts", "most pasted", "sources")

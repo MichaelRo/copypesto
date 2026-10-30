@@ -25,7 +25,7 @@ enum PestoMigrationPlan: SchemaMigrationPlan {
 /// Opens the SwiftData stores used at runtime.
 ///
 /// - **clips.store** (`ClipboardItem`, `ClipboardBlob`, `DeletedItemTombstone`, `Pinboard`): the history. CloudKit is
-///   off while `SyncAvailability.isAvailable` is false. Lives at
+///   never used: sync is the encrypted folder (ADR 0018). Lives at
 ///   `~/Library/Application Support/net.copypesto.pesto/clips.store`.
 /// - **local.store**: kept for forward-compatibility; nothing reads it, so `StorageBoot` treats it as best effort.
 ///

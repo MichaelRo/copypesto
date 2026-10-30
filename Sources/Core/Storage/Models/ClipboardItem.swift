@@ -111,6 +111,17 @@ public final class ClipboardItem {
     /// True when the item arrived via Universal Clipboard (com.apple.is-remote-clipboard marker).
     public var isRemote: Bool = false
 
+    /// Sync (ADR 0018). All optional and nil until sync is on, so nothing changes for a Mac that never uses it.
+    /// `changeClock` is the `SyncStamp.encoded` of the last synced change (a local edit, or the remote one that was
+    /// applied); `syncFingerprint` says which synced fields that stamp covered, so a write to anything else (an
+    /// embedding, a signature, a GIF upgrade) stamps nothing; `syncDirty` marks what is waiting to be written to the
+    /// log; `syncEmittedClock` is what was last written; `syncOrigin` is the device a clip arrived from.
+    public var changeClock: String?
+    public var syncOrigin: String?
+    public var syncFingerprint: String?
+    public var syncDirty: Bool?
+    public var syncEmittedClock: String?
+
     public init(
         id: UUID = UUID(),
         timestamp: Date = .now,

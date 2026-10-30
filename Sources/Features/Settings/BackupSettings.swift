@@ -45,8 +45,9 @@ struct BackupSettings: View {
 
     var body: some View {
         Group {
-            Section { BackupSummaryRow(chip: chip, now: now) }
+            Section { BackupSummaryRow(chip: chip, now: now, sync: sync?.status) }
             Section {
+                if let sync { SyncRows(controller: sync) }
                 backupSwitch
                 if isConfigured {
                     configured
@@ -54,6 +55,7 @@ struct BackupSettings: View {
                     offActions
                     if hasRecoveryKey { recoveryKeyRow }
                 }
+                if isConfigured || sync?.isEnabled == true { contentsTable }
                 if unreadableCount > 0 {
                     Button("Delete Unreadable Clips\u{2026}", role: .destructive) { confirmsDeletingUnreadable = true }
                         .accessibilityIdentifier(AccessibilityID.deleteUnreadableClipsButton)
@@ -62,11 +64,12 @@ struct BackupSettings: View {
                     Text(explanation).pestoCaption()
                 }
             } header: {
-                Text("Backup").settingsRow("Backup")
+                Text(sync == nil ? "Backup" : "Backup and Sync").settingsRow("Backup")
             } footer: {
                 Text(footerText)
             }
         }
+        .syncSheets(sync)
         .onReceive(Timer.publish(every: 30, on: .main, in: .common).autoconnect()) { now = $0 }
         .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
             let nowPaused = settings.pausedAfterClear
@@ -163,6 +166,28 @@ struct BackupSettings: View {
         }
     }
 
+    private var sync: SyncController? {
+        SyncAvailability.isAvailable ? appState.syncController : nil
+    }
+
+    private var contentsTable: some View {
+        BackupContentsTable(
+            backupOn: isConfigured,
+            backupSecrets: Binding(
+                get: { includesSecrets },
+                set: { on in Task { await setIncludesSecrets(on) } }
+            ),
+            syncOn: sync?.isEnabled == true,
+            syncSecrets: sync.map { controller in
+                Binding(
+                    get: { controller.includesSecrets },
+                    set: { on in Task { await controller.setIncludesSecrets(on) } }
+                )
+            },
+            keepsHere: sync?.keepsHere ?? 0
+        )
+    }
+
     private var offActions: some View {
         HStack(spacing: 8) {
             Button("Set Up Backup\u{2026}") { show(.setUp) }
@@ -201,10 +226,6 @@ struct BackupSettings: View {
             }
             recoveryKeyRow
         }
-        BackupContentsTable(includesSecrets: Binding(
-            get: { includesSecrets },
-            set: { on in Task { await setIncludesSecrets(on) } }
-        ))
         if settings.lastSkippedLarge > 0 {
             Text("\(settings.lastSkippedLarge) clips over 10 MB, such as large pictures, are left out.")
                 .pestoCaption()

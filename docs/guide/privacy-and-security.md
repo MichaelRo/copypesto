@@ -61,6 +61,8 @@ backup (off by default, per Mac), the file goes to iCloud Drive or a folder you 
 sees only encrypted bytes. Pesto has no server of its own that receives it. The recovery key is kept in this Mac's
 Keychain so it can be shown again, only after Touch ID or your password.
 
+Sync (off by default, per Mac) works the same way: each Mac writes its own encrypted files into a folder in iCloud Drive and reads the others', and iCloud sees file names, sizes and when they change, never your clips. Each file is sealed with a sync key that is separate from the key that protects your history here; the history key never leaves this Mac. The sync key lives in iCloud Keychain when the app carries Apple's entitlement for it, and otherwise in this Mac's Keychain, joined by a recovery key or by approval from another Mac that shows the same six words. Files are signed, chained and checked, so a changed, replayed or cut-off file is refused and shown as such. Clips that hold secrets, and everything from an app on the exclusion list, are not sent unless you choose *Also sync clips with secrets*. Your settings, shortcuts and ignored apps never sync. *Reset Sync* replaces the key on every Mac; *Leave Sync* removes this Mac's own files from the folder.
+
 What that protects: someone who copies your database file or your disk. What it does not protect: someone who is
 logged in to your unlocked Mac as you, because your Mac can decrypt the history for you. If you lose the Keychain item
 (for example by erasing the Mac), the old history cannot be recovered. Pesto then offers to start with an empty history

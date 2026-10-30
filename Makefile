@@ -21,6 +21,10 @@ APP              = $(BUILD_DIR)/Build/Products/Debug/Pesto.app
 DEV_SIGN_IDENTITY = Pesto Development
 RELEASE_SIGN_IDENTITY = Pesto Release
 ENTITLEMENTS      = Sources/Resources/Pesto.entitlements
+# Set SYNC_PROFILE to the name of the Developer ID provisioning profile to sign the release for the iCloud Keychain sync
+# key (docs/release.md). Unset, nothing about the release changes.
+SYNC_ENTITLEMENTS = Sources/Resources/PestoSync.entitlements
+SYNC_PROFILE     ?=
 
 .DEFAULT_GOAL := help
 
@@ -258,11 +262,12 @@ archive: check-release-placeholders require-team generate ## [Release] Build a r
 		-destination 'platform=macOS' \
 		-archivePath $(ARCHIVE_PATH) \
 		DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) \
+		$(if $(SYNC_PROFILE),PESTO_ENTITLEMENTS=$(SYNC_ENTITLEMENTS) PESTO_PROFILE="$(SYNC_PROFILE)" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application",) \
 		archive
 
 .PHONY: export
 export: archive ## [Release] Export and sign the archive for Developer ID distribution
-	scripts/render-export-options.sh "$(APPLE_TEAM_ID)" $(BUILD_DIR)/exportOptions.plist
+	scripts/render-export-options.sh "$(APPLE_TEAM_ID)" $(BUILD_DIR)/exportOptions.plist "$(SYNC_PROFILE)"
 	DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 		-exportArchive \
 		-archivePath $(ARCHIVE_PATH) \
@@ -311,6 +316,11 @@ bench-undo: generate ## [Benchmarks] Measure what Undo costs over a 5,000-clip s
 		-only-testing:PestoTests/UndoPerformanceTests \
 		-only-testing:PestoTests/UndoHistoryMemoryTests \
 		test 2>&1 | tee $(BUILD_DIR)/bench-undo.log | grep -E "PERF|error:|Test Case .*(passed|failed)|TEST (SUCCEEDED|FAILED)"
+
+.PHONY: bench-sync
+bench-sync: ## [Benchmarks] Measure what sync costs over 5,000 clips (a copy with it off and on, the first send and receive, an idle pass); prints PERF lines and fails over budget
+	@mkdir -p $(BUILD_DIR)
+	DEVELOPER_DIR=$(DEVELOPER_DIR) PESTO_SYNC_PERF_CLIPS=5000 swift test --filter SyncPerformanceTests 2>&1 | tee $(BUILD_DIR)/bench-sync.log | grep -E "PERF|error:|Test run with|✘"
 
 .PHONY: bench-scroll
 bench-scroll: ## [Benchmarks] Measure shelf scrolling (hitches) on a mixed history and a long text history; the Mac must be unlocked

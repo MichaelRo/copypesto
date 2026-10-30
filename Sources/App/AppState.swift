@@ -148,6 +148,8 @@ final class AppState {
 
     /// Set by AppDelegate after containers are initialized.
     @ObservationIgnored var historyContainer: ModelContainer?
+    /// Sync (ADR 0018): nil until it is built, and not shown at all while `SyncAvailability.isAvailable` is false.
+    var syncController: SyncController?
     /// The single writer for deleting and clearing history. Set once storage is up.
     @ObservationIgnored var storageService: StorageService?
     @ObservationIgnored var localContainer: ModelContainer?

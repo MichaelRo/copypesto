@@ -6,8 +6,15 @@ Yes. There are no paid tiers and every feature is available to everyone.
 
 ## Does it sync between my Macs?
 
-No. Your history stays on the Mac it was copied on. You can back it up to one
-encrypted file and restore that file on another Mac (*Settings → Data → Backup*).
+Yes, if you turn it on, per Mac (*Settings → Data → Sync with my other Macs*). It is off until you do. Pesto keeps encrypted files in a folder in iCloud Drive and merges them on each Mac, so there is no Pesto server and iCloud sees only encrypted bytes. Deleting a clip on one Mac deletes it on all, so sync is not a backup; keep the backup on too. Clips that hold secrets stay on the Mac that copied them unless you choose *Also sync clips with secrets*. Your settings, shortcuts and ignored apps stay per Mac. See [Settings](settings.md#data) and [Privacy and security](privacy-and-security.md).
+
+## How does a second Mac get the key?
+
+When the build carries Apple's iCloud Keychain entitlement, the key travels in iCloud Keychain and a new Mac needs nothing typed. Otherwise the second Mac asks for the recovery key shown when you set sync up, or you press *Ask Another Mac* and approve it from a Mac that is already syncing after checking that both show the same six words.
+
+## I lost a Mac or want to start over. What do I do?
+
+There is no list of Macs to manage. *Reset Sync* gives every Mac a new key: a Mac you no longer have stops receiving clips, and your other Macs join again with the new key. *Leave Sync* stops sync on one Mac and removes only its own files from the folder; its clips stay.
 
 ## Can I hide Pesto's icon from the menu bar?
 

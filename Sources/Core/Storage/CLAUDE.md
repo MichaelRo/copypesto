@@ -1,6 +1,6 @@
 # Core/Storage — notes
 
-SwiftData models, blob encryption, retention. Sync is off in v1 (`AGENTS.md`), but the model shape is kept CloudKit-mirror-compatible, which the CloudKit lines below describe. See `AGENTS.md` for the encryption-at-rest security invariant and module boundaries.
+SwiftData models, blob encryption, retention. Sync is folder-based and never CloudKit (`AGENTS.md`, ADR 0018): its journal, outbox, `applySync`, folder service and controller are in `Storage/Sync/` (read `Core/Sync/CLAUDE.md` first). The CloudKit lines below describe an abandoned idea and stay only as history. See `AGENTS.md` for the encryption-at-rest security invariant and module boundaries.
 
 ## High-Risk Zones
 

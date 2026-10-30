@@ -13,6 +13,8 @@ What is planned for Pesto, grouped into **Now**, **Next** and **Later**. For shi
 
 ## Next: distribution and everyday use
 
+- **End-to-end encrypted multi-device Mac sync.** Built ([ADR 0018](decisions/0018-multi-device-sync.md)): off until you turn it on, per Mac, through encrypted files in iCloud Drive, with no Pesto server. Awaiting its release, the key in iCloud Keychain once release builds carry the Developer ID provisioning profile, and a two-Mac check.
+
 - **Apple Developer ID signing and notarization.** Signing release builds with a Developer ID certificate and notarizing with Apple so macOS opens Pesto without the first-launch Gatekeeper confirmation and keeps Keychain and Accessibility permissions across updates without re-prompting.
 - **Homebrew Cask.** Publishing an official Cask once builds are Developer ID notarized.
 - **Additional clipboard importers.** Expanding Settings → Data → Import to cover more macOS clipboard managers alongside the 11 already supported.
@@ -20,6 +22,5 @@ What is planned for Pesto, grouped into **Now**, **Next** and **Later**. For shi
 
 ## Later: under consideration
 
-- **End-to-end encrypted multi-device Mac sync.** Building on the encrypted backup format ([ADR 0010](decisions/0010-backup.md)) so two Macs you own can keep their shelves in step through iCloud Drive without Pesto running a server or reading your clips.
 - **Desktop widgets.** A macOS WidgetKit extension showing recent non-sensitive clips while respecting the History Lock and secret masking rules.
 - **Expanded smart collection rules.** More rules for smart collections, evaluated on your Mac.

@@ -211,6 +211,7 @@ extension StorageService {
                 continue
             }
             if deleted.insert(tombstone.id).inserted {
+                applyMayHaveTombstones = true
                 modelContext.insert(DeletedItemTombstone(id: tombstone.id, deletedAt: tombstone.deletedAt))
             }
             let present = try modelContext.fetch(FetchDescriptor<ClipboardItem>(

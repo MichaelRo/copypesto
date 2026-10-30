@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Only for a release signed with a Developer ID provisioning profile (docs/release.md, "The sync key in iCloud
+         Keychain"). Claiming these without that profile makes macOS refuse to launch the app, so the development
+         build and every release made without SYNC_PROFILE keep the empty Pesto.entitlements. They let Pesto keep the
+         sync key as a synchronizable Keychain item (ADR 0018). -->
+    <key>com.apple.application-identifier</key>
+    <string>$(DEVELOPMENT_TEAM).net.copypesto.pesto</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>$(DEVELOPMENT_TEAM)</string>
+</dict>
+</plist>

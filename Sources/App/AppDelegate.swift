@@ -106,6 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         startPasteboardWatcher()
         startAutoBackupIfNeeded()
+        startSyncIfNeeded()
         setupObservers()
         startPinnedHotkeyTracking()
         applyOnboardingGate()
@@ -194,9 +195,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func bootStorage() {
-        // Tier 1: the disk store (CloudKit-backed only when sync is available). Tier 2: the same store without sync.
+        // Tier 1: the disk store (never CloudKit: sync is the encrypted folder, ADR 0018). Tier 2: the same store
+        // without sync.
         // Tier 3: in-memory (disk full or a schema conflict), so the history is lost on relaunch and the shelf says so.
-        let cloudKitEnabled = SyncAvailability.isAvailable
+        let cloudKitEnabled = false
         let boot = StorageBoot.run(
             openers: .init(
                 synced: { try ModelContainerSetup.openSynced(cloudKitEnabled: cloudKitEnabled) },

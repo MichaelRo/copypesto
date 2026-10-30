@@ -117,6 +117,7 @@ extension StorageService {
     public func deleteCollection(id: UUID) throws -> Bool {
         guard let board = try pinboard(id: id) else { return false }
         let snapshot = PinboardSnapshot(board)
+        modelContext.insert(syncCollectionTombstone(id: id))
         modelContext.delete(board)
         try saveOrRollback()
         undoHistory.record(UndoEntry(.collectionDeleted(snapshot)))

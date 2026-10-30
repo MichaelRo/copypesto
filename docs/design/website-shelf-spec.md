@@ -56,6 +56,9 @@ The three tint wash rules appear in three places (`.sc`, `.sc:has(input:checked)
 `tokens.css`); search for `3.1rem` and `2.75rem` to find every one. The flat theme wash under the app color (the theme
 accent at 8%) is unchanged.
 
+## A lone glyph
+A text clip that is exactly one emoji or symbol (`CardPreviewText.isSingleGlyph`: one character, emoji presentation or Unicode category So, Sm or Sc) is centered in the body at 64 pt (scaled by `CardTextScale`) with no margins; header and footer are unchanged. Secrets and hidden clips never take this layout. References: `test_singleEmojiCard.{1,light}.png`, `test_singleSymbolCard.{1,light}.png`.
+
 ## Whitespace (`card-whitespace.md`)
 The app compacts a clip for display (a pure function, `CardPreviewText.display`); hand-written samples can follow the same
 rules by writing them that way:

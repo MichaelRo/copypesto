@@ -206,6 +206,22 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item))
     }
 
+    // MARK: - Glyph
+
+    func test_singleEmojiCard() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .text, preview: "🍝")
+        snapshotCard(ClipboardCard(item: item))
+        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
+    }
+
+    func test_singleSymbolCard() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .text, preview: "→")
+        snapshotCard(ClipboardCard(item: item))
+        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
+    }
+
     // MARK: - Image
 
     func test_imagePlaceholderCard() throws {

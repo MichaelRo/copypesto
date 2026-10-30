@@ -129,6 +129,12 @@ public enum SyncGroupManager {
         return .needsKey(newest)
     }
 
+    /// The group as it stands now, or nil when the folder holds none this Mac can open.
+    public static func openGroup(layout: SyncFolderLayout, keyStore: SyncKeyStoring) throws -> SyncGroup? {
+        if case let .ready(group) = try open(layout: layout, keyStore: keyStore) { return group }
+        return nil
+    }
+
     static func devices(layout: SyncFolderLayout, vault: SyncVault, key: SyncKey) -> [SyncDeviceRecord] {
         layout.deviceIDs().compactMap { id in
             guard let data = try? Data(contentsOf: layout.deviceRecord(id)) else { return nil }

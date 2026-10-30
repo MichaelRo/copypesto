@@ -9,6 +9,9 @@ import Foundation
 enum SyncSegmentFormat {
     static let magic = Data("PSTOSEG1".utf8)
     static let fileIDLength = 16
+    /// `PSTOSEG1`, the file id, then the epoch in the clear: a hint that lets a Mac skip a segment from an older epoch
+    /// (written under a key it no longer uses) without calling it damaged. The signed manifest holds the real epoch.
+    static let headerLength = 8 + fileIDLength + 4
     static let maximumChunk = 64 << 20
 
     static func key(_ syncKey: SyncKey, fileID: Data) -> SymmetricKey {
@@ -93,7 +96,9 @@ public final class SyncSegmentWriter {
         handle = try FileHandle(forWritingTo: partialURL)
         fileID = Data((0..<SyncSegmentFormat.fileIDLength).map { _ in UInt8.random(in: 0...255) })
         key = SyncSegmentFormat.key(context.syncKey, fileID: fileID)
-        try handle.write(contentsOf: SyncSegmentFormat.magic + fileID)
+        var epochHint = Data()
+        epochHint.appendBigEndian(context.epoch)
+        try handle.write(contentsOf: SyncSegmentFormat.magic + fileID + epochHint)
     }
 
     public func append(_ record: SyncRecord) throws {
@@ -167,11 +172,14 @@ public enum SyncSegmentReader {
         _ data: Data, syncKey: SyncKey, trust: SyncTrust, vaultID: Data, epoch: UInt32
     ) throws
     -> VerifiedSyncSegment {
-        let header = SyncSegmentFormat.magic.count + SyncSegmentFormat.fileIDLength
+        let header = SyncSegmentFormat.headerLength
         guard data.count > header, data.prefix(SyncSegmentFormat.magic.count) == SyncSegmentFormat.magic else {
             throw SyncError.malformed("not a segment")
         }
-        let fileID = data.subdata(in: SyncSegmentFormat.magic.count..<header)
+        let fileID = data
+            .subdata(in: SyncSegmentFormat.magic.count..<SyncSegmentFormat.magic.count + SyncSegmentFormat.fileIDLength)
+        var hint = ByteReader(data.subdata(in: header - 4..<header))
+        guard try hint.u32() == epoch else { throw SyncError.wrongEpoch }
         let key = SyncSegmentFormat.key(syncKey, fileID: fileID)
         var reader = ByteReader(data.suffix(from: data.startIndex + header))
         var bodies: [Data] = []

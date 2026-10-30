@@ -160,7 +160,7 @@ struct SyncFormatTests {
     func splicedChunk() throws {
         let first = try segment(count: 3)
         let second = try segment(count: 3)
-        let header = SyncSegmentFormat.magic.count + SyncSegmentFormat.fileIDLength
+        let header = SyncSegmentFormat.headerLength
         var spliced = first.data
         let length = Int(first.data.subdata(in: header..<header + 4).reduce(0) { $0 << 8 | UInt32($1) }) + 4
         let range = header..<header + length

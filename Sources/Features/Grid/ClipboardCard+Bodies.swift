@@ -41,7 +41,7 @@ extension ClipboardCard {
 
     var glyphBody: some View {
         Text(CardPreviewText.display(item.gridPreview))
-            .font(.system(size: bodySize(64)))
+            .scaledFont(size: bodySize(64), maxScale: 1.3)
             .minimumScaleFactor(0.5)
             .lineLimit(1)
             .frame(maxWidth: .infinity, maxHeight: .infinity)

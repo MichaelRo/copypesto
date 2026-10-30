@@ -5,7 +5,7 @@ Run them from the repository root. `make help` lists the `make` targets that wra
 ## The gate
 | Script | What it does |
 |---|---|
-| `verify.sh` | The full gate: lint, Core tests, Debug build with warnings as errors, hosted and UI tests, screenshots. About 40 minutes (`make verify`; `--fast` skips the UI tests). |
+| `verify.sh` | The full gate: lint, Core tests, Debug build with warnings as errors, hosted and UI tests, screenshots. About an hour (`make verify`; `--fast` skips the UI tests). |
 | `verify-changed.sh` | Lint, Core and hosted tests, plus only the UI suites the changed files can affect. |
 | `verify-rerun-failed.sh` | Re-runs just the tests that failed in a gate run. |
 | `verify_judge.py`, `verify_failures.py`, `verify-allowed-skips.txt` | Judge a run (test counts, allowed skips) and list failures. Used by the scripts above. |

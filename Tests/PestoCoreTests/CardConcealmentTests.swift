@@ -70,4 +70,31 @@ struct CardConcealmentTests {
         #expect(card.isConcealed)
         #expect(!card.allowsHoverDetail && !card.allowsQuickLook && !card.allowsAIActions && !card.allowsDrag)
     }
+
+    @Test("Decode is offered on a masked secret that has not been shown")
+    func decodeOnMaskedSecret() {
+        let card = CardConcealment(screenShareBlur: false, nsfwBlurred: false, maskedSecret: true, secretShown: false)
+        #expect(card.allowsDecode)
+    }
+
+    @Test("Decode is not offered under a screen share or Hide Clip Contents, even when the secret is masked")
+    func decodeNotUnderScreenShare() {
+        let card = CardConcealment(screenShareBlur: true, nsfwBlurred: false, maskedSecret: true, secretShown: false)
+        #expect(!card.allowsDecode)
+    }
+
+    @Test("Decode is not offered on a card covered by the content filter or a pending analysis")
+    func decodeNotUnderOtherCovers() {
+        #expect(!CardConcealment(screenShareBlur: false, nsfwBlurred: true, maskedSecret: true, secretShown: false)
+            .allowsDecode)
+        #expect(!CardConcealment(
+            screenShareBlur: false, nsfwBlurred: false, maskedSecret: true, secretShown: false, pendingAnalysis: true
+        ).allowsDecode)
+    }
+
+    @Test("the plain initializer never offers Decode")
+    func decodeNotFromPlainInit() {
+        #expect(!CardConcealment(screenShareBlur: false, sensitiveBlur: true).allowsDecode)
+        #expect(!CardConcealment(screenShareBlur: false, sensitiveBlur: false).allowsDecode)
+    }
 }

@@ -18,6 +18,13 @@ struct CardActions {
     var quickLook: (@MainActor (ClipboardItem) -> Void)?
     /// Asks the person to authenticate inside the shelf; nil falls back to the system dialog.
     var authenticate: (@MainActor (String) async -> Bool)?
+    /// Decode JWT on a hidden token: authenticates like Show, then reads the header and payload (ADR 0020). Nil when
+    /// the person did not authenticate.
+    var decodeJWT: (@MainActor (ClipboardItem) async -> JWTDecodeResult?)?
+    /// Copy Payload: puts text read from a hidden clip on the pasteboard, concealed.
+    /// The Decode JWT popover opened (its keys) or closed (nil), so Escape closes it and Return copies the payload.
+    var decodePopoverKeys: (@MainActor (DecodePopoverKeys?) -> Void)?
+    var copyProtectedText: (@MainActor (String) -> Void)?
     var pasteAs: (@MainActor (ClipboardItem, TextTransform) -> Void)?
     /// Writes the transformed text to the pasteboard without closing the shelf or pasting.
     var copyTransformed: (@MainActor (ClipboardItem, TextTransform) -> Void)?

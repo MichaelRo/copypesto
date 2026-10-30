@@ -34,6 +34,19 @@ extension ClipboardCard {
             .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.white.opacity(0.18), lineWidth: 0.5))
     }
 
+    var isGlyphCard: Bool {
+        item.type == .text && !isRenamingTitle && item.sensitivity == nil
+            && CardPreviewText.isSingleGlyph(CardPreviewText.display(item.gridPreview))
+    }
+
+    var glyphBody: some View {
+        Text(CardPreviewText.display(item.gridPreview))
+            .scaledFont(size: bodySize(64), maxScale: 1.3)
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     var urlImageBody: some View {
         ZStack(alignment: .bottomLeading) {
             Color.clear

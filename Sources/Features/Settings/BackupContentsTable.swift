@@ -51,7 +51,7 @@ struct BackupContentsTable: View {
         RoundedRectangle(cornerRadius: 5, style: .continuous)
             .fill(accent)
             .frame(width: 18, height: 18)
-            .overlay(Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.white))
+            .overlay(Image(systemName: "checkmark").font(.caption2.weight(.bold)).foregroundStyle(.white))
             .frame(width: 90)
             .accessibilityLabel("Always included")
     }

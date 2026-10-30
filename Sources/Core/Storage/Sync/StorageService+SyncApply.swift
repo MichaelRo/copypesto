@@ -26,6 +26,7 @@ extension StorageService {
         nil
     }) async throws -> SyncApplySummary {
         var summary = SyncApplySummary()
+        applyMayHaveTombstones = ((try? modelContext.fetchCount(FetchDescriptor<DeletedItemTombstone>())) ?? 1) > 0
         let clock = SyncJournal.clock(for: modelContainer)
         try await SyncJournal.$isApplyingRemote.withValue(true) {
             for record in records.sorted(by: { $0.stamp < $1.stamp }) {
@@ -50,6 +51,7 @@ extension StorageService {
     }
 
     private func tombstones(id: UUID, plainHash: String?) throws -> [DeletedItemTombstone] {
+        guard applyMayHaveTombstones else { return [] }
         var found = try modelContext.fetch(FetchDescriptor<DeletedItemTombstone>(predicate: #Predicate { $0.id == id }))
         if let plainHash {
             found += try modelContext.fetch(FetchDescriptor<DeletedItemTombstone>(
@@ -219,6 +221,7 @@ extension StorageService {
             known.kindRaw = meta.kind.rawValue
             known.syncDirty = false
         } else {
+            applyMayHaveTombstones = true
             let row = DeletedItemTombstone(id: meta.id)
             row.changeClock = stampT.encoded
             row.plainHash = meta.plainHash

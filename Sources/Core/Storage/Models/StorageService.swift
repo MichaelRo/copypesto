@@ -57,6 +57,7 @@ public actor StorageService: ModelActor {
     /// fall through to the contentHash dedup branch so its timestamp is bumped and it rises
     /// back to the top of history.
     var lastIngestedHash: (hash: String, seenAt: Date)?
+    var applyMayHaveTombstones = true
     /// The clip the last ingest created (not one it re-dated), which a double ⌘C appends away (`appendToLatest`).
     var lastInsertedClip: (id: UUID, at: Date)?
 

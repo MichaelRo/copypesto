@@ -123,6 +123,11 @@ A development build signed "Pesto Development" can never use the iCloud key, so 
    releases only after one full update from build N to N+1 has worked: assets cannot be replaced afterwards and a tag
    name cannot be reused, so a bad 1.0.0 becomes 1.0.1.
 
+7. Homebrew: once the site is deployed and `/appcast.xml` offers the version, `make release-cask` runs the tap's bump workflow
+   at once (it polls every six hours anyway) and prints its pull request. The tap checks the disk image's hash, size,
+   signature and notarization before it proposes anything. Merge that pull request, then try
+   `brew upgrade --cask --greedy pesto`. The cask is not done until this pull request is merged.
+
 ## Later, once enrolled: checks that prove the artifact is right
 ```bash
 codesign -dvvv Pesto.app          # Developer ID, your team, hardened runtime

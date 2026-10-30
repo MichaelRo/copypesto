@@ -27,8 +27,8 @@ xcodebuild_test() {
 
 # A failing test must not stop the pictures that were taken from being exported; the run still ends with its status.
 status=0
-doc_suites=(DocScreenshotTests SnippetSuggestionsTests ShortcutRecordingTests SettingsFlowTests AboutWindowTests
-  HistoryLockTests OnboardingAndStatesTests ThemeSettingsTests)
+doc_suites=(DocScreenshotTests SnippetSuggestionsTests SettingsFlowTests AboutWindowTests
+  HistoryLockTests OnboardingAndStatesTests ThemeSettingsTests ThemeShelfTests SettingsReorganisationTests)
 only=()
 for suite in "${doc_suites[@]}"; do only+=("-only-testing:PestoUITests/$suite"); done
 TEST_RUNNER_PESTO_SCREENSHOT_DIR="$PWD/$shots" xcodebuild_test "${only[@]}" -resultBundlePath "$result" \

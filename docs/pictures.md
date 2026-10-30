@@ -24,15 +24,15 @@ pair of pull requests.
 | `settings-privacy-light.png`, `settings-privacy-dark.png` | `DocScreenshotTests` | guide (`settings.md`, light) |
 | `settings-snippets.png`, `settings-data.png` | `SettingsFlowTests` | guide (`settings.md`) |
 | `settings-snippet-fields.png` | `SnippetSuggestionsTests` | guide (`using-pesto.md`) |
-| `settings-shortcuts.png` | `ShortcutRecordingTests` | guide (`settings.md`) |
+| `settings-shortcuts.png` | `SettingsReorganisationTests` | guide (`settings.md`) |
 | `fill-in-prompt.png` | snapshot baseline `FillInPromptTests/test_allKindsOfField_light` (record snapshots to retake) | guide (`using-pesto.md`) |
 | `about.png` | `AboutWindowTests` | guide (`settings.md`) |
 | `history-locked.png` | `HistoryLockTests` | guide (`privacy-and-security.md`), `docs/testing.md` |
 | `onboarding.png`, `onboarding-welcome.png`, `onboarding-ready.png` | `OnboardingAndStatesTests` | guide (`getting-started.md`) |
-| `theme-basil-light.png`, `theme-basil-dark.png` | `ThemeSettingsTests` | README |
-| `theme-parmesan-light.png`, `theme-parmesan-dark.png` | `ThemeSettingsTests` | README, guide (`settings.md`, light) |
-| `theme-pine-nut-light.png`, `theme-pine-nut-dark.png` | `ThemeSettingsTests` | README |
-| `theme-mortar-light.png`, `theme-mortar-dark.png` | `ThemeSettingsTests` | README, guide (`settings.md`, light) |
+| `theme-basil-light.png`, `theme-basil-dark.png` | `ThemeShelfTests` | README |
+| `theme-parmesan-light.png`, `theme-parmesan-dark.png` | `ThemeShelfTests` | README, guide (`settings.md`, light) |
+| `theme-pine-nut-light.png`, `theme-pine-nut-dark.png` | `ThemeShelfTests` | README |
+| `theme-mortar-light.png`, `theme-mortar-dark.png` | `ThemeShelfTests` | README, guide (`settings.md`, light) |
 | `installer.png` | `scripts/make-installer-image.swift` | guide (`getting-started.md`) |
 
 `scripts/export-doc-images.sh` copies them out of the UI-test screenshots and renames them. The website syncs this folder

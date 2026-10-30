@@ -5,7 +5,11 @@ import SwiftData
 import Testing
 @testable import PestoCore
 
-@Suite("Sync journal: what is stamped, what is held back, what a deletion remembers", .serialized)
+@Suite(
+    "Sync journal: what is stamped, what is held back, what a deletion remembers",
+    .serialized,
+    .timeLimit(.minutes(1))
+)
 struct SyncJournalTests {
     let container: ModelContainer
     let service: StorageService

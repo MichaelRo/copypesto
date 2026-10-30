@@ -3,7 +3,11 @@ import Foundation
 import Testing
 @testable import PestoCore
 
-@Suite("Sync folder service: files that are late, half written, damaged or from a wrong clock", .serialized)
+@Suite(
+    "Sync folder service: files that are late, half written, damaged or from a wrong clock",
+    .serialized,
+    .timeLimit(.minutes(1))
+)
 @MainActor
 struct SyncFailureTests {
     let layout = SyncFolderLayout(

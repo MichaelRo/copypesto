@@ -35,7 +35,7 @@ final class SyncMac {
     }
 }
 
-@Suite("Sync controller: turning on, joining, pairing, reset and leave", .serialized)
+@Suite("Sync controller: turning on, joining, pairing, reset and leave", .serialized, .timeLimit(.minutes(1)))
 @MainActor
 struct SyncControllerTests {
     let folder = FileManager.default.temporaryDirectory.appendingPathComponent("pesto-controller-\(UUID().uuidString)")

@@ -10,6 +10,9 @@ final class KeyNavCoordinator {
     var isLocked = false
     /// While the shelf asks before deleting, Return answers yes and Escape no; no other key reaches the grid.
     var isConfirming = false
+    /// Set while the Decode JWT popover is open: Escape closes it and Return copies the payload, before the grid
+    /// closes the shelf or pastes.
+    var decodePopoverKeys: (() -> DecodePopoverKeys?)?
     /// The window this grid lives in. The monitor sees every key in the app, so keys typed anywhere else
     /// (Settings, a rename field) must pass through untouched.
     weak var hostWindow: NSWindow?
@@ -102,6 +105,17 @@ final class KeyNavCoordinator {
         let flags = event.modifierFlags.intersection([.command, .control])
         // Cmd+[ / Cmd+], and the toolbar shortcuts below, work even while search is active.
         if isLocked { return handleLocked(event) }
+        if let keys = decodePopoverKeys?(), flags.isEmpty, !event.modifierFlags.contains(.option) {
+            switch event.keyCode {
+            case 53:
+                MainActor.assumeIsolated { keys.close() }
+                return nil
+            case 36, 76:
+                MainActor.assumeIsolated { keys.copy() }
+                return nil
+            default: break
+            }
+        }
         if isConfirming { return handleConfirming(event) }
         if flags == .command, consumeCommandShortcut(event) { return nil }
         if isSearchActive {

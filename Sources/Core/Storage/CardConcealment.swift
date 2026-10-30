@@ -5,9 +5,13 @@
 /// drag, each of which shows or hands out what the cover hides.
 public struct CardConcealment: Equatable, Sendable {
     public let isConcealed: Bool
+    /// Decode JWT reads a hidden token after the same authentication as Show (ADR 0020), so it is the one way in a
+    /// masked cover allows; a screen share, Hide Clip Contents or a content filter cover does not.
+    public let allowsDecode: Bool
 
     public init(screenShareBlur: Bool, sensitiveBlur: Bool) {
         isConcealed = screenShareBlur || sensitiveBlur
+        allowsDecode = false
     }
 
     /// `nsfwBlurred` is a picture or clip blurred by the content filter; `maskedSecret` is a clip whose preview is a
@@ -18,10 +22,8 @@ public struct CardConcealment: Equatable, Sendable {
     public init(
         screenShareBlur: Bool, nsfwBlurred: Bool, maskedSecret: Bool, secretShown: Bool, pendingAnalysis: Bool = false
     ) {
-        self.init(
-            screenShareBlur: screenShareBlur,
-            sensitiveBlur: pendingAnalysis || nsfwBlurred || (maskedSecret && !secretShown)
-        )
+        isConcealed = screenShareBlur || pendingAnalysis || nsfwBlurred || (maskedSecret && !secretShown)
+        allowsDecode = !screenShareBlur && !nsfwBlurred && !pendingAnalysis
     }
 
     public var allowsHoverDetail: Bool {

@@ -11,6 +11,8 @@ public enum SeedProfile: String, Equatable, Sendable {
     case showcase
     /// The website screenshots: Apple-app sources only, two collections and a snippet (`MarketingSeed`).
     case marketing
+    /// The demo video's clips, collection, snippets and shortcuts (`LunchRushSeed`).
+    case lunchRush
     /// A long, varied history with large pictures, for measuring scrolling (`MixedSeed`).
     case mixed
     /// A copied animated GIF between two text clips, to check that the shelf plays it (`SeedFixtures`).

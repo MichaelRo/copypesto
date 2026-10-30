@@ -42,6 +42,23 @@ public enum CardPreviewText {
         return shown.joined(separator: "\n")
     }
 
+    /// True when the trimmed text is exactly one emoji or symbol (general category So, Sm or Sc), which a card draws
+    /// large and centered.
+    public static func isSingleGlyph(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count == 1, let character = trimmed.first else { return false }
+        let scalars = character.unicodeScalars
+        guard let first = scalars.first else { return false }
+        if scalars.contains(where: \.properties.isEmojiPresentation) { return true }
+        if first.properties.isEmoji, scalars.contains(where: { $0.value == 0xFE0F || $0.value == 0x20E3 }) {
+            return true
+        }
+        switch first.properties.generalCategory {
+        case .otherSymbol, .mathSymbol, .currencySymbol: return true
+        default: return false
+        }
+    }
+
     /// The runs of text between blank lines, from the compacted preview.
     public static func paragraphs(_ text: String) -> [String] {
         let shown = display(text)

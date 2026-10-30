@@ -98,6 +98,7 @@ struct KeyboardNavigationWrapper<Content: View>: View {
     }
 
     private func bindFilterChips() {
+        coordinator.decodePopoverKeys = { [appState] in appState.decodePopoverKeys }
         coordinator.onFilterChipMove = { [appState] delta in
             MainActor.assumeIsolated { appState.moveFilterChipCursor(by: delta) }
         }

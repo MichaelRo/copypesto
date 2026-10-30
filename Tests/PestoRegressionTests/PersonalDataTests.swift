@@ -26,7 +26,7 @@ struct PersonalDataTests {
         let top = try FileManager.default.contentsOfDirectory(
             at: SourceTree.repositoryRoot, includingPropertiesForKeys: nil
         )
-        // A git worktree keeps a `.git` file there that names the checkout's home folder; it is not tracked content.
+        // In a git worktree `.git` is a file holding the path of the main checkout: not a tracked file.
         files += top.filter {
             $0
                 .lastPathComponent != ".git" &&

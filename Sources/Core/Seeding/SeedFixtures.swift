@@ -57,7 +57,7 @@ public enum SeedFixtures {
         case .large: largeCaptures()
         case .files: fileCaptures()
         case .showcase: showcaseCaptures()
-        case .marketing: MarketingSeed.captures()
+        case .marketing, .lunchRush: storyCaptures(for: profile)
         case .mixed: MixedSeed.captures()
         case .animated: animatedCaptures()
         case .remote: remoteCaptures()
@@ -69,6 +69,13 @@ public enum SeedFixtures {
             let age = age(ofCapture: index, of: captures.count, in: profile)
             return capture.with(timestamp: now.addingTimeInterval(-age))
         }
+    }
+
+    private static func storyCaptures(for profile: SeedProfile) -> [PasteboardCapture] {
+        #if DEBUG
+            if profile == .lunchRush { return LunchRushSeed.captures() }
+        #endif
+        return MarketingSeed.captures()
     }
 
     private static func age(ofCapture index: Int, of count: Int, in profile: SeedProfile) -> Double {
@@ -290,7 +297,7 @@ public enum SeedFixtures {
         ]
     }
 
-    private static func fileCapture(_ paths: [String]) -> PasteboardCapture {
+    static func fileCapture(_ paths: [String]) -> PasteboardCapture {
         let text = FileClip.encode(paths.map { URL(fileURLWithPath: $0) })
         let payload = Data(text.utf8)
         return PasteboardCapture(

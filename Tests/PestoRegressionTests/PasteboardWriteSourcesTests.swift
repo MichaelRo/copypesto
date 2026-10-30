@@ -11,7 +11,6 @@ import Testing
 struct PasteboardWriteSourcesTests {
     private static let allowed: Set<String> = [
         "AppState+Paste.swift",
-        "AIResultPanelController.swift",
         "CopyItemCommand.swift",
         "CopyToPestoIntent.swift",
         "PasteFromPestoIntent.swift"

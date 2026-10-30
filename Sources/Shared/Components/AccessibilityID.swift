@@ -11,6 +11,7 @@ enum AccessibilityID {
     static let authenticationUnavailable = "authentication-unavailable"
     static let applyHeldBackSettings = "apply-held-back-settings"
     static let revealHiddenClip = "reveal-hidden-clip"
+    static let decodeJWTCopyPayload = "decode-jwt-copy-payload"
     static let shelfAuthenticationPrompt = "shelf-authentication-prompt"
     static let autoBackupToggle = "auto-backup-toggle"
     static let autoBackupNowButton = "auto-backup-now"

@@ -400,7 +400,8 @@ public final class SyncController {
             if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) }
             return nil
         } catch {
-            return "Pesto could not remove this Mac's files from the folder, so sync is still on. \(error.localizedDescription)"
+            return "Pesto could not remove this Mac's files from the folder, so sync is still on. " +
+                error.localizedDescription
         }
     }
 

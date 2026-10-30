@@ -230,7 +230,7 @@ struct SyncControllerTests {
     }
 
     @Test(
-        "a Mac that left and turns sync on again gets a new device id, so its new clips reach a Mac that read the old ones"
+        "a Mac that left and turns sync on again is a new device, so its clips reach a Mac that read the old ones"
     )
     func leaveThenRejoin() async throws {
         let a = try SyncMac(name: "mac-a", folder: folder, time: time)
@@ -262,7 +262,7 @@ struct SyncControllerTests {
         let sent = try a.clips()
         #expect(
             received.contains("after the rejoin"),
-            "B never received it: A \(a.controller.status) \(a.controller.flow), B \(b.controller.status), A has \(sent)"
+            "B never received it: A \(a.controller.status), B \(b.controller.status), A has \(sent)"
         )
         if case let .refused(reason) = b.controller.status { Issue.record("B refuses A's log: \(reason)") }
     }

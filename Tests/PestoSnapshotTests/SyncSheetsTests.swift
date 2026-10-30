@@ -106,7 +106,7 @@ final class SyncSheetsTests: XCTestCase {
         try snapshot(
             SyncFailedSheet(
                 controller: makeController(),
-                message: "That recovery key does not open this sync group."
+                message: "That recovery key does not open the sync in this folder."
             ),
             size: CGSize(width: 520, height: 200)
         )

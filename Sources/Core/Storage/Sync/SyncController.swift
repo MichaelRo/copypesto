@@ -213,11 +213,11 @@ public final class SyncController {
         do {
             let key = try SyncKey(recoveryKey: text)
             guard case let .needsKey(vault) = try openGroup() else {
-                flow = .failed("There is no sync group in the folder.")
+                flow = .failed("There is no Pesto sync in this folder.")
                 return
             }
             guard vault.accepts(key) else {
-                flow = .failed("That recovery key does not open this sync group. Check it for a typo.")
+                flow = .failed("That recovery key does not open the sync in this folder. Check it for a typo.")
                 return
             }
             try env.keyStore.saveSyncKey(key, vaultID: vault.vaultID, epoch: vault.epoch)
@@ -403,7 +403,7 @@ public final class SyncController {
         switch error {
         case SyncKeyStoreError.entitlementMissing: "This build cannot use iCloud Keychain. Use a recovery key instead."
         case SyncKeyStoreError.locked: "The Keychain is locked. Unlock the Mac and try again."
-        case SyncKeyStoreError.conflict: "A different key is already stored for this sync group."
+        case SyncKeyStoreError.conflict: "A different key is already stored for this sync."
         default: "Sync could not continue: \(error.localizedDescription)"
         }
     }

@@ -434,7 +434,7 @@ Run once at the end, on two Macs signed in to the same Apple Account with iCloud
 
 **Measure first** (`scripts/sync-latency/`, once written): a small and a 5 MB file written on A arrive on B (p50 and p95 in `docs/perf/sync-latency-2026-11.md`), awake, after sleep, in Low Power Mode, with Optimize Mac Storage on. It sets the poll interval.
 
-**Set up.** On A: Settings → Data → Sync with my other Macs → Turn On Sync. Pass: the sheet names the folder and what leaves the Mac; the recovery key is shown once and can be shown again behind Touch ID. On B: the same switch. Pass with the profile build: B finds the group and offers to join with both counts and no key typed. Pass with the self-signed build: B asks for the key; the recovery key joins it; *Ask Another Mac* shows six words on both Macs and A allows it.
+**Set up.** On A: Settings → Data → Sync with my other Macs → Turn On Sync. Pass: the sheet names the folder and what leaves the Mac; the recovery key is shown once and can be shown again behind Touch ID. On B: the same switch. Pass with the profile build: B finds the sync and offers to join with both counts and no key typed. Pass with the self-signed build: B asks for the key; the recovery key joins it; *Ask Another Mac* shows six words on both Macs and A allows it.
 
 **Flow.** Copy text on A: it appears on B (time it). Copy a picture, a link, a file, a color. Pin a clip and rename a title on A: B follows. Delete on A: it is gone on B and a restore of an old backup on B does not bring it back. Copy the same words on both: one clip. Edit a snippet on both at nearly the same time: the later edit wins on both. Turn B's Wi-Fi off, copy on both, turn it on: both converge and nothing is lost.
 

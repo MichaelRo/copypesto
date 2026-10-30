@@ -53,7 +53,9 @@ let logHandle: FileHandle = {
     return FileHandle(forWritingAtPath: options.log)!
 }()
 
-func now() -> Double { Date().timeIntervalSince1970 + options.offset }
+func now() -> Double {
+    Date().timeIntervalSince1970 + options.offset
+}
 
 func write(_ object: [String: Any]) {
     guard let data = try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]) else { return }
@@ -71,7 +73,9 @@ func probe(_ path: String, name: String) {
     let started = now()
     if dataless, options.hydrateByDownload {
         try? FileManager.default.startDownloadingUbiquitousItem(at: URL(fileURLWithPath: path))
-        while isDataless(path), now() - started < 120 { usleep(100_000) }
+        while isDataless(path), now() - started < 120 {
+            usleep(100_000)
+        }
     }
     let fd = open(path, O_RDONLY)
     var header = [UInt8](repeating: 0, count: 24)
@@ -81,8 +85,15 @@ func probe(_ path: String, name: String) {
         close(fd)
     }
     let done = now()
-    write(["file": name, "event": "probe", "dataless": dataless, "bytesRead": count, "readMs": (done - started) * 1000,
-           "at": done, "headerOk": count == 24 && header.starts(with: Array("PSTOLAT1".utf8))])
+    write([
+        "file": name,
+        "event": "probe",
+        "dataless": dataless,
+        "bytesRead": count,
+        "readMs": (done - started) * 1000,
+        "at": done,
+        "headerOk": count == 24 && header.starts(with: Array("PSTOLAT1".utf8))
+    ])
 }
 
 func sighting(_ name: String, via: String) {
@@ -113,11 +124,14 @@ FSEventStreamStart(stream)
 let timer = DispatchSource.makeTimerSource(queue: queue)
 timer.schedule(deadline: .now(), repeating: options.poll)
 timer.setEventHandler {
-    for name in (try? FileManager.default.contentsOfDirectory(atPath: options.folder)) ?? [] where name.hasSuffix(".lat") {
+    for name in (try? FileManager.default.contentsOfDirectory(atPath: options.folder)) ?? []
+        where name.hasSuffix(".lat")
+    {
         write(["file": name, "event": "seen", "via": "poll", "at": now()])
         if seen.insert(name).inserted { probe(options.folder + "/" + name, name: name) }
     }
 }
+
 timer.resume()
 
 DispatchQueue.main.asyncAfter(deadline: .now() + options.duration) {
@@ -126,4 +140,5 @@ DispatchQueue.main.asyncAfter(deadline: .now() + options.duration) {
     try? logHandle.close()
     exit(0)
 }
+
 dispatchMain()

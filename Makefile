@@ -126,6 +126,10 @@ marketing-images: generate ## [Maintenance] Take the website screenshots into .b
 	scripts/export-marketing-images.sh; \
 	exit $$status
 
+.PHONY: pictures
+pictures: generate ## [Maintenance] Retake every picture of the README, guide and website from one build (docs/pictures.md); quit other apps first
+	scripts/take-pictures.sh
+
 .PHONY: marketing-loops
 marketing-loops: generate ## [Maintenance] Take the frames of the website's scenes into .build/marketing/loops/ and make the MP4, WebM and GIF for the README and launch posts in .build/marketing/video/ (needs ffmpeg and gifski); quit other apps first
 	@status=0; \

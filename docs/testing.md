@@ -42,6 +42,9 @@ step and the summary. Reading the logs is what costs time and tokens, so don't.
 - Read only the summary: `.build/verify/<run>/SUMMARY.txt`, or the last 15 lines of the output.
 - On a failure, read `.build/verify/<run>/failures.txt`: one line per failing test (`target/Suite/test: message`),
   from the result bundle. Open a log only for a failure whose line does not explain it.
+- Start exactly one gate, and look first: `pgrep -f verify.sh`. A second `verify.sh` (or a `-only-testing` run) next to a running one locks the shared build database ("database is locked") and every step after it fails for no reason.
+- To abandon a gate, kill the script, `caffeinate`, `xcodebuild` and `swift-frontend`, **and the test host it left running** (`pkill -f "xcode-profile.*Pesto.app/Contents/MacOS/Pesto"`); the next `verify.sh` refuses to start next to any running Pesto.
+- The first step that fails (Core tests) ends the useful part of a run: read `failures.txt` at once, not at the end of the hour. A timing test ("a cancelled wait returns at once") fails when the Mac is busy with something else (a browser tab or a music player at 100% CPU); start the gate again before blaming code.
 - The first UI run after an unlock often fails with "Timed out while enabling automation mode". Re-run just the failed
   tests with `scripts/verify-rerun-failed.sh` (Pesto quit, as for the gate). It prints the same kind of summary and
   says it is a partial run: only a full `scripts/verify.sh` counts as the gate.
@@ -442,6 +445,10 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - **"Timed out while enabling automation mode" is a macOS stall**, not a test failure; a re-run clears it. If `automationmodetool` says the device requires user authentication, repeat the one-time setup above after an OS update.
 - **Fixtures come from the real world.** A bench that presses ⌘N for the Nth card must track the shelf's order (a paste moves the clip to the front); a target app needs an Edit menu or ⌘V does nothing; posting ⌘ through flags on the digit's events can leave ⌘ held in the system, so send ⌘ down and up.
 - **Measure the path the user takes** (copy, then open; key press, then text in the app) with a real target app and `make bench-latency`, not one stage on its own: the search budget test measured the preview alone at 19 ms while the shelf took 79.
+- **A test that picks a clip by its position on the shelf breaks whenever the seed changes** (three times in one afternoon). The shelf's order is not the seed's order: a clip that appears twice in a seed is saved once and jumps to the front, and Return/Space picks follow what is on screen. Print the real order before editing a position (a temporary test that walks the shelf and prints each card's label) instead of guessing; prefer picking by content.
+- **A change to a shared test helper (`PestoUITestCase.launch`) reaches every UI test**, including ones the change was not written for: a "stale ready marker" cleanup made each launch wait for real readiness and broke an unrelated selection-bar test that only passed because it started early. Keep a fix local to the test that needs it, or run the suites that use the helper before committing.
+- **`PasteRecorder` writes no text for a link or a picture** (`kind: nonText`), so `pastedTexts()` drops those pastes. Count lines of `paste-log.jsonl` when a test pastes something other than text.
+- **A git worktree has a `.git` *file* holding the path of the main checkout**, which a scan of top-level files (`PersonalDataTests`) used to flag as the owner's home folder.
 - **A recompile can surface old warnings.** The gate counts warnings as failures, and an incremental build had hidden three for weeks.
 
 ## Test hooks, warnings and entitlements

@@ -8,8 +8,8 @@ import UniformTypeIdentifiers
 /// Small pictures drawn in code for the demo clips, so screenshots show pictures that belong to the sample story
 /// without shipping or borrowing any artwork.
 enum ShowcaseArt {
-    private static let width = 480
-    private static let height = 320
+    static let width = 480
+    static let height = 320
 
     static func basilLeaves() -> Data {
         render { context in
@@ -124,12 +124,12 @@ enum ShowcaseArt {
         context.strokePath()
     }
 
-    private static func fill(_ context: CGContext, hex: String) {
+    static func fill(_ context: CGContext, hex: String) {
         context.setFillColor(color(hex: hex))
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
     }
 
-    private static func color(hex: String, alpha: CGFloat = 1) -> CGColor {
+    static func color(hex: String, alpha: CGFloat = 1) -> CGColor {
         let parsed = HexColorParser.parse(hex) ?? HexColorComponents(red: 0, green: 0, blue: 0)
         return CGColor(
             srgbRed: CGFloat(parsed.red),
@@ -139,17 +139,24 @@ enum ShowcaseArt {
         )
     }
 
-    private static func render(_ draw: (CGContext) -> Void) -> Data {
-        guard let context = CGContext(
-            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return Data() }
-        draw(context)
-        guard let image = context.makeImage() else { return Data() }
+    static func render(
+        width: Int = ShowcaseArt.width, height: Int = ShowcaseArt.height, _ draw: (CGContext) -> Void
+    )
+    -> Data {
+        guard let image = renderImage(width: width, height: height, draw) else { return Data() }
         let output = NSMutableData()
         let png = UTType.png.identifier as CFString
         guard let destination = CGImageDestinationCreateWithData(output, png, 1, nil) else { return Data() }
         CGImageDestinationAddImage(destination, image, nil)
         return CGImageDestinationFinalize(destination) ? output as Data : Data()
+    }
+
+    static func renderImage(width: Int, height: Int, _ draw: (CGContext) -> Void) -> CGImage? {
+        guard let context = CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        draw(context)
+        return context.makeImage()
     }
 }

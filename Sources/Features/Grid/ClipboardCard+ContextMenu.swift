@@ -62,6 +62,13 @@ extension ClipboardCard {
                     )
                 }
                 .keyboardShortcut("e", modifiers: .command)
+                if item.sensitivity == .jwt, concealment.allowsDecode, actions.decodeJWT != nil {
+                    Button {
+                        decodeJWT()
+                    } label: {
+                        Label("Decode JWT", systemImage: "curlybraces")
+                    }
+                }
             }
         }
 

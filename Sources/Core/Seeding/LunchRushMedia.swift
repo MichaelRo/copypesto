@@ -5,6 +5,7 @@
     import CoreText
     import Foundation
     import ImageIO
+    import Synchronization
 
     /// The GIF, the PDF and the short video of the Lunch Rush shelf, drawn in code by `ShowcaseArt`, so the demo shows
     /// every
@@ -101,13 +102,13 @@
         /// tests
         /// waiting for this very file) would otherwise leave the writer's completion no thread to run on, and hang.
         private static func makeVideo() -> URL? {
-            var made: URL?
+            let made = Mutex<URL?>(nil)
             let finished = DispatchSemaphore(value: 0)
             DispatchQueue.global(qos: .userInitiated).async {
-                made = writeVideo()
+                made.withLock { $0 = writeVideo() }
                 finished.signal()
             }
-            return finished.wait(timeout: .now() + 60) == .success ? made : nil
+            return finished.wait(timeout: .now() + 60) == .success ? made.withLock { $0 } : nil
         }
 
         private static func writeVideo() -> URL? {

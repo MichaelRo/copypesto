@@ -26,6 +26,14 @@ struct EntitlementsTests {
         #expect(!entitlements.keys.contains { $0.contains("icloud") })
     }
 
+    @Test("the sync entitlements are only the two a Developer ID profile grants, and the default ones stay empty")
+    func syncEntitlements_areTheTwoAProfileGrants() throws {
+        let sync = try plist("Sources/Resources/PestoSync.entitlements")
+
+        #expect(Set(sync.keys) == ["com.apple.application-identifier", "com.apple.developer.team-identifier"])
+        #expect(try plist("Sources/Resources/Pesto.entitlements").isEmpty, "a build without the profile claims nothing")
+    }
+
     @Test("Info.plist has no Apple Events purpose string, since nothing sends Apple Events")
     func infoPlist_hasNoAppleEventsPurpose() throws {
         let info = try plist("Sources/Resources/Info.plist")

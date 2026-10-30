@@ -78,8 +78,28 @@ imply a 1.1.1 nobody got).
 4. **Where the appcast lives.** `SUFeedURL` points at `https://copypesto.net/appcast.xml`, which returns 404 until the
    website is deployed: it builds `/appcast.xml` from its release notes (`src/content/releases/`). Every shipped copy polls this URL forever, so it must be live and
    must not move after the first public release. If it ever has to, keep a redirect on the old host.
-5. **iCloud is not part of v1**: `Pesto.entitlements` is empty, so no provisioning profile is needed. Backup and
-   multi-device sync are a later feature (`docs/sync-design.md`).
+5. **Without sync, no profile is needed**: `Pesto.entitlements` is empty. Backup is a file in a folder and needs nothing.
+   Multi-device sync is described in ADR 0018 and below.
+
+## The sync key in iCloud Keychain (optional; needs a provisioning profile)
+Sync works without this: a Mac that is not signed for it keeps the sync key as a this-device item and joins another Mac
+by recovery key or by approving it (six words). With this, a second Mac signed in to the same Apple Account finds the key
+by itself and sync needs no typing. It needs the data protection keychain, which needs `com.apple.application-identifier`,
+a restricted entitlement that only a provisioning profile can authorize (Apple TN3137). Claiming it without the profile
+makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is used only when `SYNC_PROFILE` is set.
+1. In the Apple Developer portal, Identifiers: the explicit App ID `net.copypesto.pesto`, with the **Keychain Sharing**
+   capability. Check that the capability is offered for Developer ID distribution (the "Developer ID" column of
+   Supported capabilities, macOS); this is the one step not confirmed from Apple's pages.
+2. Profiles, Distribution, **Developer ID** (macOS), App ID `net.copypesto.pesto`, your Developer ID Application
+   certificate. Download it and double-click it to install. Note its exact name.
+3. `make release SYNC_PROFILE="<profile name>"`. The archive then carries `PestoSync.entitlements` (the application
+   identifier and the team), and the export signs manually with the profile (`scripts/render-export-options.sh`).
+4. `scripts/check-sync-signing.sh <exported Pesto.app>` checks the embedded profile, the entitlement and the identifier.
+   Then launch the stapled app once: an `AMFI ... No matching profile found` in the log means the profile does not match.
+5. Two Macs, same Apple Account, iCloud Keychain on: turn on sync on one, then on the other; the second must join without
+   any key typed. Also try it with iCloud Keychain off (Settings must say so) and with a second Apple Account (it must
+   not find the key). Nothing here can be proved on one Mac.
+A development build signed "Pesto Development" can never use the iCloud key, so it always takes the this-device path.
 
 ## Later, once enrolled: each release
 1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`.

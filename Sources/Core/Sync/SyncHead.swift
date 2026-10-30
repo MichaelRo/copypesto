@@ -69,7 +69,7 @@ public struct SyncHead: Codable, Equatable, Sendable {
         let plain: Data
         do {
             plain = try AES.GCM.open(
-                AES.GCM.SealedBox(combined: data.dropFirst(magic.count)),
+                AES.GCM.SealedBox(combined: Data(data.dropFirst(magic.count))),
                 using: key(syncKey, deviceID: deviceID), authenticating: associatedData(
                     deviceID: deviceID,
                     epoch: epoch

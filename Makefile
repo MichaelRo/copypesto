@@ -21,6 +21,10 @@ APP              = $(BUILD_DIR)/Build/Products/Debug/Pesto.app
 DEV_SIGN_IDENTITY = Pesto Development
 RELEASE_SIGN_IDENTITY = Pesto Release
 ENTITLEMENTS      = Sources/Resources/Pesto.entitlements
+# Set SYNC_PROFILE to the name of the Developer ID provisioning profile to sign the release for the iCloud Keychain sync
+# key (docs/release.md). Unset, nothing about the release changes.
+SYNC_ENTITLEMENTS = Sources/Resources/PestoSync.entitlements
+SYNC_PROFILE     ?=
 
 .DEFAULT_GOAL := help
 
@@ -254,11 +258,12 @@ archive: check-release-placeholders require-team generate ## [Release] Build a r
 		-destination 'platform=macOS' \
 		-archivePath $(ARCHIVE_PATH) \
 		DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) \
+		$(if $(SYNC_PROFILE),CODE_SIGN_ENTITLEMENTS=$(SYNC_ENTITLEMENTS) -allowProvisioningUpdates,) \
 		archive
 
 .PHONY: export
 export: archive ## [Release] Export and sign the archive for Developer ID distribution
-	scripts/render-export-options.sh "$(APPLE_TEAM_ID)" $(BUILD_DIR)/exportOptions.plist
+	scripts/render-export-options.sh "$(APPLE_TEAM_ID)" $(BUILD_DIR)/exportOptions.plist "$(SYNC_PROFILE)"
 	DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 		-exportArchive \
 		-archivePath $(ARCHIVE_PATH) \

@@ -12,8 +12,8 @@ final class TimeBox: Sendable {
         value.withLock { $0 }
     }
 
-    func advance() {
-        value.withLock { $0 = $0.addingTimeInterval(1) }
+    func advance(by seconds: TimeInterval = 1) {
+        value.withLock { $0 = $0.addingTimeInterval(seconds) }
     }
 }
 

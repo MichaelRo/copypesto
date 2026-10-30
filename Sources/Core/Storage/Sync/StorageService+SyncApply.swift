@@ -10,6 +10,7 @@ public struct SyncApplySummary: Equatable, Sendable {
     public var folded = 0
     public var ignored = 0
     public var failed = 0
+    public var clockRefused = 0
 
     public init() {}
 }
@@ -30,6 +31,7 @@ extension StorageService {
             for record in records.sorted(by: { $0.stamp < $1.stamp }) {
                 do { try clock?.observe(record.stamp) } catch {
                     summary.failed += 1
+                    summary.clockRefused += 1
                     continue
                 }
                 switch record.kind {

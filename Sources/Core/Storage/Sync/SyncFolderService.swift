@@ -318,6 +318,7 @@ public final class SyncFolderService {
             guard let blobs = try blobPayloads(for: verified, device: device, found) else { return (applied, true) }
             let summary = try await storage.applySync(verified.records(), blob: { blobs[$0] })
             applied += summary.added + summary.updated + summary.removed
+            if summary.clockRefused > 0 { throw SyncError.clockFarAhead }
             try water.record(verified.manifest)
             highWaterStore.save(water)
         }

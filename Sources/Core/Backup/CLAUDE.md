@@ -4,6 +4,8 @@ Backup file format, key store, automatic-backup policy. Restore runs in `Core/St
 
 ## Key Invariants
 
+- **A backup is not sync.** Sync (ADR 0018, `Core/Sync`) shares nothing with the backup file but the idea: its own format, its own key, its own folder. A backup never changes another Mac; do not reuse `BackupFile` for sync logs.
+
 - **Hashes and ids do not travel between Macs unless made to.** A Mac's stored content hash is keyed from its own blob key, so a backup carries a plain SHA-256 (`plainHash`) and the receiving Mac derives its own. Restore checks "already have it" (`alreadyHas`, by id or content) before `ingest(_:preferredItemID:)`, because `ingest` pops a duplicate to the top and would reorder the history. Dates in backup metadata are exact numbers, not ISO-8601 seconds (clips copied within one second would collapse).
 - **Tombstones are by id**, so they remove a clip only on a Mac that got it from a backup with the same id; two Macs that copied the same text merge by content.
 - **A later automatic backup reuses the file's header** (the key wrapped by the passphrase), so the passphrase is never kept; `BackupFile.write(records:origin:key:header:)` checks the header against the key first. Automatic backup is off by default and per Mac (`AutoBackupSettings.enabledKey`, not in the settings export); a UI test must never turn it on, because the suggested folder is the real iCloud Drive.

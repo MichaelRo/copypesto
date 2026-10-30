@@ -429,6 +429,21 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - ⌘Z in the shelf's search field. Pass: it undoes typing while there is text, and the shelf's last action when the field
   is empty.
 
+## Two Macs: sync
+Run once at the end, on two Macs signed in to the same Apple Account with iCloud Drive on, with a build from `make release SYNC_PROFILE=…` (iCloud Keychain key) and, separately, with the daily self-signed build (this-device key). Never use a Mac whose history matters: turn sync on only after a backup. Pass means every line holds.
+
+**Measure first** (`scripts/sync-latency/`, once written): a small and a 5 MB file written on A arrive on B (p50 and p95 in `docs/perf/sync-latency-2026-11.md`), awake, after sleep, in Low Power Mode, with Optimize Mac Storage on. It sets the poll interval.
+
+**Set up.** On A: Settings → Data → Sync with my other Macs → Turn On Sync. Pass: the sheet names the folder and what leaves the Mac; the recovery key is shown once and can be shown again behind Touch ID. On B: the same switch. Pass with the profile build: B finds the group and offers to join with both counts and no key typed. Pass with the self-signed build: B asks for the key; the recovery key joins it; *Ask Another Mac* shows six words on both Macs and A allows it.
+
+**Flow.** Copy text on A: it appears on B (time it). Copy a picture, a link, a file, a color. Pin a clip and rename a title on A: B follows. Delete on A: it is gone on B and a restore of an old backup on B does not bring it back. Copy the same words on both: one clip. Edit a snippet on both at nearly the same time: the later edit wins on both. Turn B's Wi-Fi off, copy on both, turn it on: both converge and nothing is lost.
+
+**Secrets.** Copy a password-manager entry, a card number and a JWT on A: none reach B. Turn on *Also sync clips with secrets*: they do, hidden, and need Touch ID on B. Turn it off: they leave B.
+
+**Repairs.** Pause on B, copy on A, Resume: B catches up. Change… the folder on B to a local folder: sync stops, the old folder is untouched, set-up opens. Reset Sync on A: B shows *Needs the key* (or rejoins with iCloud Keychain) and both converge on the new key. Leave Sync on B: only B's files go from the folder, B's clips stay, A keeps everything. Quit and relaunch both: sync resumes with no sheet.
+
+**Health.** The status line says what is true: *Receiving N of M* while files download, *Waiting for the folder* with the folder offline, *iCloud Keychain is off* after turning it off in System Settings, *Refused* with a reason after changing a byte of a `.pestolog`. Idle CPU stays under 0.5% and memory under 150 MB. System Settings → Network shows no connection from Pesto.
+
 ## Lessons from the test suite
 
 - **A longer line of text in the setup window can fail the accessibility audit on a label you did not touch** (2026-10-16): the audit samples pixels at each element's frame, and a callout that wrapped to two lines moved the encryption-key label to a position it flagged, as a two-line toggle caption did on the last step. After any copy change in `OnboardingView`, run `test_onboarding_passesTheAccessibilityAudit` and `test_onboardingLastStep_passesTheAccessibilityAudit`.

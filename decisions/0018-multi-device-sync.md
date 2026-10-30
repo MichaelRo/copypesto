@@ -1,6 +1,6 @@
 # 0018. Macs sync through an encrypted, append-only log per Mac in a folder the person picks; the sync key is a separate key that travels in iCloud Keychain once Pesto can use it, and by hand until then
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 ADR 0010 gives one backup file per Mac. Restoring one adds what is missing; it is a way back, not a way to keep two Macs
@@ -144,6 +144,8 @@ Details the first draft left open, settled in the build (phase 1 on).
 - **Every change is a whole item record** (metadata, payload inline up to 256 KB, else a named blob file) with a later stamp; the later stamp wins per clip and per collection. A deletion (or a withdrawal) is a tombstone with the stamp and the plain hash; it beats an older record and loses to a later one. Only a clip's own deletion is undone by a later record; a deletion of the same text under another id stays, so an older record cannot bring it back. Verified by seeded property tests: three Macs, random copies, edits, pins and deletions, every record delivered one at a time in any order and twice, ending with the same clips and titles on all.
 - **High-water marks** decide each segment: apply, duplicate, gap (wait) or refuse (rollback, fork, broken chain, wrong epoch).
 - **Pairing words (interim mode):** six words from a committed 1,024-word list, taken from `SHA256("pesto-pair-v1" | vault id | the two agreement public keys in sorted order)`: sixty bits, the same on both Macs.
+- **Not built yet:** compaction and snapshots (logs only grow), `make bench-sync`, and the measured iCloud latency (the poll interval is a safe default until both Macs measure it).
+- **The sync folder is remembered** (`Setting.syncFolderPath`) and *Change…* on the enabled row stops sync, leaves the old folder as it is and sets up in the new one.
 - **Recovery key:** the sync key in base32 with a two-byte checksum, groups of four, as the backup's key reads.
 
 ## Prior art

@@ -1,9 +1,9 @@
 # Multi-device sync: design notes
 
-Sync is **not built**. `SyncAvailability.isAvailable` is `false` (`Sources/Core/Sync/SyncAvailability.swift`), Settings
-says so, and CloudKit is never started. What exists is a per-Mac encrypted backup file and restore from any backup file
-(see the backup decisions in `decisions/`). These notes record what a sync feature has to solve so that the work can
-start from evidence.
+Sync is **built** (ADR 0018, Accepted): `SyncAvailability.isAvailable` is `true`, the feature is off on every Mac until its person turns it
+on in Settings → Data, and CloudKit is never started. These notes keep the reasons and the plan; the decisions are in the ADR.
+Still open: compaction and snapshots, `make bench-sync`, the measured iCloud latency, the provisioning profile for the iCloud Keychain key
+(`docs/release.md`), and the two-Mac check (`docs/testing.md`, "Two Macs: sync").
 
 ## Why CloudKit-mirrored SwiftData does not work today
 - The store fails to load with CloudKit on (Core Data error 134060): several non-optional attributes have no default,

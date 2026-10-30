@@ -19,6 +19,11 @@ public enum SyncFlow: Equatable, Sendable {
 public struct SyncPendingJoin: Equatable, Sendable {
     public let request: SyncJoinRequest
     public let words: [String]
+
+    public init(request: SyncJoinRequest, words: [String]) {
+        self.request = request
+        self.words = words
+    }
 }
 
 /// Everything the Settings UI asks of sync, in one place that can be tested without a window: turning it on, joining
@@ -70,6 +75,12 @@ public final class SyncController {
     private var approverID: String?
     private var ignored: Set<String> = []
 
+    /// "Pesto \u{203A} Pesto Sync": the last two parts of the folder, how a person would say where it is.
+    public var folderDisplayName: String {
+        [env.folder.deletingLastPathComponent().lastPathComponent, env.folder.lastPathComponent]
+            .joined(separator: " \u{203A} ")
+    }
+
     public var keyMode: SyncKeyMode {
         env.keyStore.mode
     }
@@ -91,6 +102,10 @@ public final class SyncController {
 
     public func beginSetUp() {
         flow = .setUp
+    }
+
+    public func beginRecoveryKeyEntry() {
+        flow = .enterRecoveryKey
     }
 
     public func cancelFlow() {
@@ -305,6 +320,11 @@ public final class SyncController {
         let layout = SyncFolderLayout(root: env.folder)
         guard case let .ready(group) = try? openGroup() else { return nil }
         return group.key.recoveryKey
+    }
+
+    /// Shows the recovery key again (the caller has asked for fresh authentication first).
+    public func presentRecoveryKey() {
+        if let key = showRecoveryKey() { flow = .recoveryKey(key) }
     }
 
     public func reset() async {

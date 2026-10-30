@@ -6,23 +6,33 @@ import SwiftUI
 struct BackupSummaryRow: View {
     let chip: BackupChip
     let now: Date
+    var sync: SyncStatus?
 
     var body: some View {
         HStack(spacing: 12) {
             Text("Your clips stay on this Mac.").font(.headline)
             Spacer(minLength: 12)
-            HStack(spacing: 7) {
-                Circle().fill(chip.dotColor).frame(width: 8, height: 8).accessibilityHidden(true)
-                Text(chip.summaryText(now: now)).font(.callout)
+            HStack(spacing: 8) {
+                chipView(color: chip.dotColor, text: chip.summaryText(now: now))
+                if let sync { chipView(color: sync.dotColor, text: sync.chipText) }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(Color.primary.opacity(0.08)))
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Your clips stay on this Mac. \(chip.summaryText(now: now)).")
+        .accessibilityLabel(
+            "Your clips stay on this Mac. \(chip.summaryText(now: now)).\(sync.map { " \($0.chipText)." } ?? "")"
+        )
         .accessibilityIdentifier(AccessibilityID.backupStatus)
+    }
+
+    private func chipView(color: Color, text: String) -> some View {
+        HStack(spacing: 7) {
+            Circle().fill(color).frame(width: 8, height: 8).accessibilityHidden(true)
+            Text(text).font(.callout)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(Color.primary.opacity(0.08)))
     }
 }
 

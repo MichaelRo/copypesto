@@ -106,6 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         startPasteboardWatcher()
         startAutoBackupIfNeeded()
+        startSyncIfNeeded()
         setupObservers()
         startPinnedHotkeyTracking()
         applyOnboardingGate()

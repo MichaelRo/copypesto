@@ -335,6 +335,10 @@ dmg-preview: generate ## [Release] Build an unsigned installer disk image from a
 	scripts/make-dmg.sh "$(RELEASE_APP)" .build/Pesto-preview.dmg
 	open .build/Pesto-preview.dmg
 
+.PHONY: release-cask
+release-cask: ## [Release] After the appcast is live: run the Homebrew tap's bump workflow now and print its pull request (scripts/bump-cask.sh)
+	scripts/bump-cask.sh
+
 .PHONY: release
 release: dmg ## [Release] Full release pipeline: archive → export → notarize app → DMG → notarize + staple DMG
 	@echo "✓ $(DMG) ready. Next: docs/release.md (sign the appcast item, publish)."

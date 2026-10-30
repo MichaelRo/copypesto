@@ -61,6 +61,7 @@ final class AppState {
     )
     /// The Touch ID request the shelf is showing, if any (`AppState+ShelfAuthentication.swift`).
     var shelfAuthentication: ShelfAuthenticationRequest?
+    @ObservationIgnored var decodePopoverKeys: DecodePopoverKeys?
     @ObservationIgnored var shelfAuthenticationContinuation: CheckedContinuation<Bool, Never>?
     /// How many system authentication dialogs (the password) are up for something the shelf asked for.
     @ObservationIgnored var systemAuthenticationDialogs = 0

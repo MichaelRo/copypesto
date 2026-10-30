@@ -77,6 +77,15 @@ extension GridView {
                 }
             },
             authenticate: { reason in await appState.authenticateInShelf(reason: reason) },
+            decodeJWT: { item in
+                guard await appState.authenticateInShelf(reason: "Decode a token that is hidden on the shelf") else {
+                    return nil
+                }
+                guard let decoding = JWTDecoder.decode(ClipText.full(of: item)) else { return .unreadable }
+                return .decoded(decoding)
+            },
+            decodePopoverKeys: { appState.decodePopoverKeys = $0 },
+            copyProtectedText: { appState.writeText($0, protected: true) },
             pasteAs: { selectItemWithTransform($0, transform: $1) },
             copyTransformed: { copyItemWithTransform($0, transform: $1) },
             entityAction: { entity in

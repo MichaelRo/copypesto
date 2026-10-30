@@ -10,6 +10,12 @@ import SwiftData
 public final class DeletedItemTombstone {
     @Attribute(.unique) public var id: UUID
     public var deletedAt: Date
+    /// Sync (ADR 0018): the plain SHA-256 of what was deleted (read before the clip went), so another Mac can remove
+    /// its own copy of the same text under a different id; the stamp of the deletion; "item" or "collection".
+    public var plainHash: String?
+    public var changeClock: String?
+    public var kindRaw: String?
+    public var syncDirty: Bool?
 
     public init(id: UUID, deletedAt: Date = .now) {
         self.id = id

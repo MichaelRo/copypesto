@@ -31,6 +31,12 @@ public final class Pinboard {
     /// Nil means no workspace trigger (default). Only one collection should claim a given bundle ID.
     public var triggerBundleID: String?
 
+    /// Sync (ADR 0018); see `ClipboardItem.changeClock`.
+    public var changeClock: String?
+    public var syncOrigin: String?
+    public var syncFingerprint: String?
+    public var syncDirty: Bool?
+
     public init(
         id: UUID = UUID(),
         name: String,

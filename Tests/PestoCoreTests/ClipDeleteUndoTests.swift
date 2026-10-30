@@ -112,7 +112,7 @@ struct ClipDeleteUndoTests {
         let entity = try #require(Schema([ClipboardItem.self, ClipboardBlob.self]).entities
             .first { $0.name == "ClipboardItem" })
         let stored = Set(entity.storedProperties.map(\.name))
-        #expect(stored == ClipSnapshot.coveredColumns)
+        #expect(stored == ClipSnapshot.coveredColumns.union(ClipSnapshot.syncColumns))
     }
 
     @Test("only a deletion the person made can be undone")

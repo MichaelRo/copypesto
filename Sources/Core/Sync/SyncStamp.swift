@@ -59,6 +59,18 @@ public struct SyncStamp: Hashable, Comparable, Codable, Sendable {
         return SyncStamp(wallMillis: wall, counter: counter, deviceID: deviceID)
     }
 
+    /// Fixed-width hex, so the strings sort the way the stamps do: `wall(16)-counter(8)-device`.
+    public var encoded: String {
+        String(format: "%016llx-%08x-%@", wallMillis, counter, deviceID)
+    }
+
+    public init?(encoded: String) {
+        let parts = encoded.split(separator: "-", maxSplits: 2, omittingEmptySubsequences: false)
+        guard parts.count == 3, parts[0].count == 16, parts[1].count == 8,
+              let wall = UInt64(parts[0], radix: 16), let counter = UInt32(parts[1], radix: 16) else { return nil }
+        self.init(wallMillis: wall, counter: counter, deviceID: String(parts[2]))
+    }
+
     public static func millis(_ date: Date) -> UInt64 {
         UInt64(max(0, date.timeIntervalSince1970 * 1000))
     }

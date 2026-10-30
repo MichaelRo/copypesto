@@ -17,6 +17,11 @@ public struct ClipSnapshot: Sendable {
         "legacyTagsRaw", "metadataCiphertext", "metadataNonce", "isNSFW", "analysisPending", "isRemote"
     ]
 
+    /// Columns that sync owns. A restored clip is stamped again by the journal as a new change, so they are not copied.
+    static let syncColumns: Set<String> = [
+        "changeClock", "syncOrigin", "syncFingerprint", "syncDirty", "syncEmittedClock"
+    ]
+
     public struct Blob: Sendable {
         let id: UUID
         let encryptedData: Data

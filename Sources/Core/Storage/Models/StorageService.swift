@@ -433,7 +433,7 @@ public actor StorageService: ModelActor {
             .compactMap { URL(string: $0.displayPreviewText.trimmingCharacters(in: .whitespacesAndNewlines)) }
             .flatMap { [$0, LinkPreviewEligibility.fetchTarget(for: $0)].compactMap(\.self) }
         for item in doomed {
-            if reason == .user { modelContext.insert(DeletedItemTombstone(id: item.id)) }
+            if reason == .user { modelContext.insert(syncTombstone(for: item)) }
             modelContext.delete(item)
         }
         if reason == .retention { try pruneOldTombstones() }

@@ -6,6 +6,8 @@
 Press **⌘⇧V** to open the shelf. Each card is one clip: text, code, a link, a picture, a file, or a color. A card shows
 a preview, the app it came from, and when.
 
+A text clip that is exactly one emoji or symbol (🍝, a flag, →, ©, ✓, €) is drawn large and centered on its card; two glyphs, a letter or a digit stay ordinary text.
+
 A text clip shows its paragraphs, with a slim dotted gap for a blank line. When the whole clip is shown, the footer adds its size, such as "64 characters · 8 lines". A card shows 4, 5 or 6 lines at the Small, Medium and Large sizes.
 
 - **← →** move between clips, **Return** pastes the selected clip, **Esc** closes the shelf.

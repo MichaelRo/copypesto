@@ -113,6 +113,8 @@ extension ClipboardCard {
             renameOverlay
         } else if item.sensitivity != nil {
             sensitiveBody
+        } else if isGlyphCard {
+            glyphBody
         } else if item.type == .url, item.ogTitle != nil || item.ogSiteName != nil || urlFavicon != nil {
             urlRichBody
         } else if item.type == .file {

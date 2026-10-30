@@ -535,7 +535,7 @@ struct ClipboardCard: View {
     /// Pictures, colours and link pictures fill the space between header and footer; text keeps its own margins.
     private var hasFullWidthBody: Bool {
         item.type == .image || item.type == .color || (item.type == .url && urlOGImage != nil)
-            || (item.isSVGSource && shownThumbnail != nil)
+            || (item.isSVGSource && shownThumbnail != nil) || isGlyphCard
     }
 
     @ViewBuilder
@@ -544,6 +544,7 @@ struct ClipboardCard: View {
         case .image: imageBody
         case .code where item.isSVGSource && shownThumbnail != nil: imageBody
         case .color: colorBody
+        case .text where isGlyphCard: glyphBody
         case .url where urlOGImage != nil: urlImageBody
         default: cardBody
         }

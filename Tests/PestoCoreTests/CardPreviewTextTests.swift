@@ -93,4 +93,18 @@ struct CardPreviewTextTests {
             #expect(CardPreviewText.footerLineCount(of: full, textLength: 0) == nil)
         }
     }
+
+    @Test("one emoji or symbol is a glyph", arguments: [
+        "🍝", "🇮🇹", "👨‍👩‍👧‍👦", "👍🏽", "→", "©", "✓", "€", "  🍝\n", "❤️", "1️⃣"
+    ])
+    func whenOneGlyph_thenSingleGlyph(text: String) {
+        #expect(CardPreviewText.isSingleGlyph(text))
+    }
+
+    @Test("letters, digits, punctuation, whitespace, nothing and several glyphs are not", arguments: [
+        "a", "Z", "7", ".", "#", "é", " ", "", "\n", "🍝🍝", "→→", "🍝 a", "ab", "日"
+    ])
+    func whenNotOneGlyph_thenNotSingleGlyph(text: String) {
+        #expect(!CardPreviewText.isSingleGlyph(text))
+    }
 }

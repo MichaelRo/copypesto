@@ -412,7 +412,7 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   made while the shelf was closed; `OverlayPerformanceTests` has none of them). Pass: the median is under 100 ms each time.
 - `make bench-scroll`. Pass: it prints `shelf scroll travel` of at least 300 points for both histories (a run in which
   the shelf did not move fails) and stays within the scroll budget.
-- `make bench-latency all 7`, and `make bench-undo` after a change to Undo. Pass: both stay within budget.
+- `make bench-latency all 7`, `make bench-undo` after a change to Undo, and `make bench-sync` after a change to sync. Pass: both stay within budget.
 - A store fixture from the shipped build is added before each release. Pass: the fixture opens in the next build.
 
 **Undo** (ADR 0008; `make bench-undo` for the numbers)

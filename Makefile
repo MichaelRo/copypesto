@@ -317,6 +317,11 @@ bench-undo: generate ## [Benchmarks] Measure what Undo costs over a 5,000-clip s
 		-only-testing:PestoTests/UndoHistoryMemoryTests \
 		test 2>&1 | tee $(BUILD_DIR)/bench-undo.log | grep -E "PERF|error:|Test Case .*(passed|failed)|TEST (SUCCEEDED|FAILED)"
 
+.PHONY: bench-sync
+bench-sync: ## [Benchmarks] Measure what sync costs over 5,000 clips (a copy with it off and on, the first send and receive, an idle pass); prints PERF lines and fails over budget
+	@mkdir -p $(BUILD_DIR)
+	DEVELOPER_DIR=$(DEVELOPER_DIR) PESTO_SYNC_PERF_CLIPS=5000 swift test --filter SyncPerformanceTests 2>&1 | tee $(BUILD_DIR)/bench-sync.log | grep -E "PERF|error:|Test run with|✘"
+
 .PHONY: bench-scroll
 bench-scroll: ## [Benchmarks] Measure shelf scrolling (hitches) on a mixed history and a long text history; the Mac must be unlocked
 	scripts/bench-scroll.sh

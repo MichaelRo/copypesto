@@ -79,6 +79,7 @@ struct ClipboardCard: View {
     @State var showRemoveTagConfirmation = false
     @State var isNSFWRevealed = false
     @State var revealedSecret: String?
+    @State var decodedJWT: JWTDecodeResult?
     @AppStorage(Setting.nsfwMode) var nsfwModeRaw: String
     @Environment(\.modelContext) var modelContext
     @Environment(\.clipEditor) var clipEditor: ClipEditor?
@@ -200,6 +201,22 @@ struct ClipboardCard: View {
             // Anchored here, not to the context-menu buttons: the menu closes when an item is chosen, taking a
             // popover
             // attached to it along.
+                .popover(isPresented: Binding(
+                    get: { decodedJWT != nil && concealment.allowsDecode },
+                    set: { if !$0 { decodedJWT = nil } }
+                ), arrowEdge: .top) {
+                    if let decodedJWT {
+                        JWTDecodePopover(result: decodedJWT) { copyDecodedPayload($0) }
+                            .onAppear {
+                                actions.decodePopoverKeys?(DecodePopoverKeys(
+                                    close: { self.decodedJWT = nil },
+                                    copy: { copyDecodedPayload() }
+                                ))
+                            }
+                            .onDisappear { actions.decodePopoverKeys?(nil) }
+                            .onExitCommand { self.decodedJWT = nil }
+                    }
+                }
                 .popover(isPresented: $showNotePopover, arrowEdge: .top) {
                     NotePopover(noteText: $noteText) {
                         let trimmed = noteText.trimmingCharacters(in: .whitespaces)

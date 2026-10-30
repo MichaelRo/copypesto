@@ -84,6 +84,8 @@ on the card (or right-click it and choose *Show*): after Touch ID or your passwo
 for 1, 5, 15 or 60 minutes, as you choose in Settings → Privacy) the text shows until you choose *Hide*, close the shelf, lock the history or cover the clips. Pasting a
 clip always pastes the real text.
 
+**Decode JWT.** A masked JWT (a login token) also has *Decode JWT* in its menu, under *Show*. It asks for Touch ID or your password the same way, then opens a popover on the card with the token's header and payload as readable JSON, its issue and expiry times as dates and whether it has expired. It never shows the signature and never checks it: the popover says *Not verified*. *Copy Payload* (or Return) copies the payload as a concealed copy, and Escape, hiding, closing the shelf, locking the history or covering the clips closes it. Nothing decoded is stored or sent anywhere, and the AI never sees it.
+
 ## Locking your history
 ![The shelf blurred behind a "History locked" panel with an Unlock with Touch ID button.](../images/history-locked.png)
 

@@ -260,6 +260,23 @@ extension ClipboardCard {
 
     func hideSecret() {
         revealedSecret = nil
+        decodedJWT = nil
+    }
+
+    /// Copy Payload, from the button or Return: the payload goes out concealed and the popover closes.
+    func copyDecodedPayload(_ text: String? = nil) {
+        guard case let .decoded(decoding)? = decodedJWT else { return }
+        actions.copyProtectedText?(text ?? decoding.payloadJSON)
+        decodedJWT = nil
+    }
+
+    /// Decode JWT: the same authentication as Show, and the popover goes where Show goes (ADR 0020).
+    func decodeJWT() {
+        guard let decode = actions.decodeJWT else { return }
+        Task {
+            guard let result = await decode(item) else { return }
+            decodedJWT = result
+        }
     }
 
     var cardFooter: some View {

@@ -229,6 +229,151 @@ struct SyncControllerTests {
         #expect(try a.clips() == ["mine"])
     }
 
+    @Test(
+        "a Mac that left and turns sync on again gets a new device id, so its new clips reach a Mac that read the old ones"
+    )
+    func leaveThenRejoin() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        guard case let .recoveryKey(key) = a.controller.flow else {
+            Issue.record("expected the recovery key")
+            return
+        }
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        await b.controller.useRecoveryKey(key)
+        b.controller.confirmJoin()
+        for text in ["first", "second", "third"] {
+            try await a.site.copy(text)
+            await settle(a, b)
+        }
+        #expect(try b.clips().contains("third"))
+
+        a.controller.leave()
+        await settle(b)
+        let afterLeave = b.controller.status
+        if case .needsKey = afterLeave { Issue.record("B lost the group when the Mac that made it left") }
+        await a.controller.turnOn()
+        a.controller.confirmJoin()
+        try await a.site.copy("after the rejoin")
+        await settle(a, b, a, b)
+
+        let received = try b.clips()
+        let sent = try a.clips()
+        #expect(
+            received.contains("after the rejoin"),
+            "B never received it: A \(a.controller.status) \(a.controller.flow), B \(b.controller.status), A has \(sent)"
+        )
+        if case let .refused(reason) = b.controller.status { Issue.record("B refuses A's log: \(reason)") }
+    }
+
+    @Test("the Mac that made the group can leave: the others keep syncing and a new Mac still gets every clip")
+    func theCreatorLeaves() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        guard case let .recoveryKey(key) = a.controller.flow else {
+            Issue.record("expected the recovery key")
+            return
+        }
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        await b.controller.useRecoveryKey(key)
+        b.controller.confirmJoin()
+        try await a.site.copy("written on A")
+        await settle(a, b)
+        try await b.site.copy("written on B")
+        await settle(b, a)
+
+        a.controller.leave()
+        await settle(b)
+        try await b.site.copy("written on B after A left")
+        await settle(b)
+        if case .needsKey = b.controller.status { Issue.record("B lost the group when the Mac that made it left") }
+
+        let c = try SyncMac(name: "mac-c", folder: folder, time: time)
+        await c.controller.turnOn()
+        await c.controller.useRecoveryKey(key)
+        c.controller.confirmJoin()
+        await settle(b, c, b, c)
+
+        let got = try c.clips()
+        #expect(got.contains("written on A"), "a Mac that left took its clips with it: \(got)")
+        #expect(got.contains("written on B"))
+        #expect(got.contains("written on B after A left"))
+    }
+
+    @Test("a Mac whose folder is merely missing, with no left marker, is not taken over")
+    func aMissingFolderAloneAdoptsNothing() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        guard case let .recoveryKey(key) = a.controller.flow else {
+            Issue.record("expected the recovery key")
+            return
+        }
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        await b.controller.useRecoveryKey(key)
+        b.controller.confirmJoin()
+        try await a.site.copy("written on A")
+        await settle(a, b)
+        let layout = SyncFolderLayout(root: folder)
+        try FileManager.default.removeItem(at: layout.device("mac-a"))
+        let before = try b.site.item("written on A")?.changeClock
+
+        await settle(b, b)
+
+        #expect(
+            try b.site.item("written on A")?.changeClock == before,
+            "B restamped A's clip on a missing folder alone"
+        )
+    }
+
+    @Test("leaving and joining again twice still delivers every clip")
+    func leavingTwice() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        guard case let .recoveryKey(key) = a.controller.flow else {
+            Issue.record("expected the recovery key")
+            return
+        }
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        await b.controller.useRecoveryKey(key)
+        b.controller.confirmJoin()
+        for round in 1...2 {
+            try await a.site.copy("round \(round) before leaving")
+            await settle(a, b)
+            a.controller.leave()
+            await settle(b)
+            await a.controller.turnOn()
+            a.controller.confirmJoin()
+            try await a.site.copy("round \(round) after rejoining")
+            await settle(a, b, a, b)
+        }
+        let got = try b.clips()
+        for text in ["round 1 after rejoining", "round 2 before leaving", "round 2 after rejoining"] {
+            #expect(got.contains(text), "missing \(text): \(got)")
+        }
+    }
+
+    @Test("when the folder will not let this Mac remove its files, Leave says so and sync stays on")
+    func leaveThatCannotRemove() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        a.controller.cancelFlow()
+        let devices = SyncFolderLayout(root: folder).device("mac-a").deletingLastPathComponent()
+        try FileManager.default.setAttributes([.posixPermissions: 0o555], ofItemAtPath: devices.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: devices.path) }
+
+        a.controller.leave()
+
+        guard case .failed = a.controller.flow else {
+            Issue.record("expected a failure, got \(a.controller.flow)")
+            return
+        }
+        #expect(a.controller.isEnabled, "sync was turned off though the files are still in the folder")
+    }
+
     @Test("clips that stay on this Mac are counted, and the count follows the choice about secrets")
     func heldCount() async throws {
         let a = try SyncMac(name: "mac-a", folder: folder, time: time)

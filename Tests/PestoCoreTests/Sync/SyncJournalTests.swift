@@ -13,6 +13,9 @@ struct SyncJournalTests {
 
     init() throws {
         container = try ModelContainerSetup.makeInMemory()
+        // The journal is found by the container's identity, and a container an earlier test left enabled can be
+        // freed and its address reused by this one.
+        SyncJournal.disable(for: container)
         service = StorageService(modelContainer: container)
     }
 
@@ -58,6 +61,35 @@ struct SyncJournalTests {
         let secondStamp = try #require(second.changeClock.flatMap(SyncStamp.init(encoded:)))
         #expect(firstStamp < secondStamp && firstStamp.deviceID == "mac-a")
         #expect(first.syncDirty == true && first.syncFingerprint != nil && first.syncEmittedClock == nil)
+    }
+
+    @Test("restamping for a new key keeps this Mac's own stamps; a clip with none, or from another Mac, gets one")
+    func whenRestampedForANewKey_thenOwnStampsStay() async throws {
+        enable()
+        try await ingest("stamped before")
+        let before = try item("stamped before").changeClock
+        try await ingest("second")
+        try await service.restampForSync(.notFrom(deviceID: "mac-a"))
+
+        #expect(try item("stamped before").changeClock == before)
+        #expect(try item("stamped before").syncDirty == true, "it is sent again under the new key")
+        #expect(try item("second").changeClock != nil)
+    }
+
+    @Test("restamping for the secrets switch touches only clips that hold secrets")
+    func whenSecretsSwitchChanges_thenOnlySensitiveClipsAreRestamped() async throws {
+        enable()
+        try await ingest("plain note")
+        try await ingest("4111 1111 1111 1111")
+        let secret = try #require(items().first { $0.sensitivityRaw != nil })
+        let secretID = secret.id
+        let plainBefore = try item("plain note").changeClock
+        let secretBefore = secret.changeClock
+
+        try await service.restampForSync(.sensitive)
+
+        #expect(try item("plain note").changeClock == plainBefore)
+        #expect(try items().first { $0.id == secretID }?.changeClock != secretBefore)
     }
 
     @Test("a change to a synced field stamps again; a write to something only this Mac cares about does not")

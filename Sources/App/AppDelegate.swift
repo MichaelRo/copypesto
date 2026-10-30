@@ -197,6 +197,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func bootStorage() {
         // The disk store (never CloudKit: sync is the encrypted folder, ADR 0018), or, when the disk is full or the
         // schema conflicts, an in-memory copy: the history is lost on relaunch and the shelf says so.
+        ModelContainerSetup.removeRetiredStores()
         let boot = StorageBoot.run(
             openers: .init(
                 clips: { try ModelContainerSetup.openClips() },

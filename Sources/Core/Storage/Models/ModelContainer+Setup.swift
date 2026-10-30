@@ -42,6 +42,14 @@ public enum ModelContainerSetup {
         )
     }
 
+    /// Earlier versions made a `local.store` that nothing ever read; it is removed so it does not sit in Application
+    /// Support for good.
+    public static func removeRetiredStores(in directory: URL = AppPaths.supportDirectory) {
+        for suffix in ["", "-shm", "-wal"] {
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent("local.store\(suffix)"))
+        }
+    }
+
     /// An in-memory container for unit and integration tests. Does not touch disk.
     public static func makeInMemory() throws -> ModelContainer {
         try ModelContainer(

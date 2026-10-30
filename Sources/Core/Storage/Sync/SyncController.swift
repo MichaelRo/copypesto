@@ -70,6 +70,7 @@ public final class SyncController {
     public private(set) var pendingJoin: SyncPendingJoin?
 
     private var env: Environment
+    private let baseDeviceID: String
     private var service: SyncFolderService?
     private var identity: SyncIdentity?
     private var approverID: String?
@@ -95,7 +96,18 @@ public final class SyncController {
 
     public init(_ environment: Environment) {
         env = environment
+        baseDeviceID = environment.deviceID
         isEnabled = environment.defaults.value(for: Setting.syncEnabled)
+        env.deviceID = Self.syncDeviceID(
+            base: baseDeviceID,
+            serial: environment.defaults.value(for: Setting.syncDeviceSerial)
+        )
+    }
+
+    /// A Mac that leaves and joins again is a new device to the others: the log it wrote before is gone, and its new
+    /// sequence numbers would otherwise fall below the marks they hold for the old one.
+    private static func syncDeviceID(base: String, serial: Int) -> String {
+        serial == 0 ? base : "\(base)-\(serial)"
     }
 
     // MARK: Turning on
@@ -320,7 +332,7 @@ public final class SyncController {
     public func setIncludesSecrets(_ on: Bool) async {
         env.defaults.set(on, for: Setting.syncIncludesSecrets)
         // What may leave this Mac changed: write everything that now may, or withdraw what no longer may.
-        _ = try? await env.storage.restampForSync()
+        _ = try? await env.storage.restampForSync(.sensitive)
         refreshHeldCount()
         await syncNow()
     }
@@ -353,17 +365,43 @@ public final class SyncController {
     /// Turns sync off and leaves the group: this Mac's own files go from the folder and its marks are forgotten. The
     /// other Macs keep everything, and clips already on this Mac stay.
     public func leave() {
+        if let me = identity ?? (try? loadIdentity()) {
+            if let message = removeThisMacFromFolder(me.deviceID) {
+                flow = .failed(message)
+                return
+            }
+        }
         service?.stop()
         service = nil
         SyncJournal.disable(for: env.container)
-        if let me = identity ?? (try? loadIdentity()) {
-            try? FileManager.default.removeItem(at: SyncFolderLayout(root: env.folder).device(me.deviceID))
-        }
         env.highWater.save(SyncHighWater())
+        let serial: Int = env.defaults.value(for: Setting.syncDeviceSerial) + 1
+        env.defaults.set(serial, for: Setting.syncDeviceSerial)
+        env.deviceID = Self.syncDeviceID(base: baseDeviceID, serial: serial)
+        identity = nil
         env.defaults.set(false, for: Setting.syncEnabled)
         isEnabled = false
         status = .off
         flow = .idle
+    }
+
+    /// Says in the folder that this Mac left (so the others take over its clips), then removes its folder. Returns what
+    /// went wrong, in words, or nil.
+    private func removeThisMacFromFolder(_ deviceID: String) -> String? {
+        let layout = SyncFolderLayout(root: env.folder)
+        let folder = layout.device(deviceID)
+        do {
+            let marker = layout.leftMarker(deviceID)
+            try FileManager.default.createDirectory(
+                at: marker.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try Data().write(to: marker, options: .atomic)
+            if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) }
+            return nil
+        } catch {
+            return "Pesto could not remove this Mac's files from the folder, so sync is still on. \(error.localizedDescription)"
+        }
     }
 
     /// Stops reading and writing now and leaves the folder alone.

@@ -59,7 +59,7 @@ public struct SyncTrust: Sendable, Equatable {
     public var signers: [String: SyncDevicePublicKeys]
 
     public init(_ keys: [SyncDevicePublicKeys] = []) {
-        signers = Dictionary(uniqueKeysWithValues: keys.map { ($0.keyID, $0) })
+        signers = Dictionary(keys.map { ($0.keyID, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
     public mutating func add(_ keys: SyncDevicePublicKeys) {

@@ -21,6 +21,15 @@ struct SyncFailureTests {
         return (a, b)
     }
 
+    private func settle(_ sites: SyncSite...) async {
+        for _ in 0..<2 {
+            for site in sites {
+                time.advance()
+                await site.service.syncNow()
+            }
+        }
+    }
+
     private func logFile(_ device: String) throws -> URL {
         let name = try #require(
             FileManager.default.contentsOfDirectory(atPath: layout.log(device).path)
@@ -143,5 +152,65 @@ struct SyncFailureTests {
         await a.service.syncNow()
         await b.service.syncNow()
         #expect(try b.texts() == ["first", "second, after the clock moved back"])
+    }
+
+    @Test("one Mac's damaged file is reported, and the other Macs' clips still arrive")
+    func oneBadDeviceDoesNotBlockTheOthers() async throws {
+        let (a, b) = try pair()
+        let c = try SyncSite(name: "mac-c", layout: layout, time: time)
+        guard case let .ready(group) = try SyncGroupManager.open(layout: layout, keyStore: a.keyStore) else {
+            Issue.record("no group")
+            return
+        }
+        try c.keyStore.saveSyncKey(group.key, vaultID: group.vault.vaultID, epoch: 1)
+        try await a.copy("from the damaged Mac")
+        await settle(a, b)
+        try await c.copy("from the healthy Mac")
+        await settle(c, a, b)
+        try await a.copy("a second clip so there is a second file")
+        time.advance()
+        await a.service.syncNow()
+        let files = try FileManager.default.contentsOfDirectory(atPath: layout.log("mac-a").path)
+            .filter { $0.hasSuffix(".pestolog") }.sorted()
+        let newest = try layout.log("mac-a").appendingPathComponent(#require(files.last))
+        var data = try Data(contentsOf: newest)
+        data[data.count / 2] ^= 1
+        try data.write(to: newest)
+        try await c.copy("written after the damage")
+
+        await settle(c)
+        await b.service.syncNow()
+
+        #expect(try b.texts().contains("written after the damage"), "a damaged file from A blocked C's clips")
+        guard case .refused = b.service.status else {
+            Issue.record("B should still say what is wrong, got \(b.service.status)")
+            return
+        }
+    }
+
+    @Test("a damaged last segment of this Mac's own log stops writing instead of chaining from a zero hash")
+    func damagedOwnLogDoesNotBreakTheChain() async throws {
+        let (a, _) = try pair()
+        try await a.copy("one")
+        time.advance()
+        await a.service.syncNow()
+        let url = try logFile("mac-a")
+        let before = try FileManager.default.contentsOfDirectory(atPath: layout.log("mac-a").path).count
+        try Data(Data(contentsOf: url).prefix(40)).write(to: url)
+        try await a.copy("two")
+        let restarted = SyncFolderService(
+            container: a.container, storage: a.storage, layout: layout, identity: a.identity, keyStore: a.keyStore,
+            highWater: MemoryHighWater(), now: { time.now }
+        )
+
+        time.advance()
+        await restarted.syncNow()
+
+        let after = try FileManager.default.contentsOfDirectory(atPath: layout.log("mac-a").path).count
+        #expect(after == before, "a segment was written after a damaged one, with no way to chain it")
+        guard case .refused = restarted.status else {
+            Issue.record("expected a refusal, got \(restarted.status)")
+            return
+        }
     }
 }

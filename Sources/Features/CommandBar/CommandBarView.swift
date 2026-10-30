@@ -295,7 +295,7 @@ struct CommandBarView: View {
 
     private var filterBar: some View {
         let entries = allFilterEntries
-        let indexOf = Dictionary(uniqueKeysWithValues: entries.enumerated().map { ($1.id, $0) })
+        let indexOf = Dictionary(entries.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
         func group(_ caption: LocalizedStringKey, id: String, _ group: [FilterEntry]) -> some View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(caption)

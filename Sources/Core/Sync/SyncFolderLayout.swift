@@ -60,6 +60,18 @@ public struct SyncFolderLayout: Sendable, Equatable {
             .map { root.appendingPathComponent($0) }
     }
 
+    /// `left/<device id>`: written by a Mac that used Leave Sync before it removes its own folder. An absent folder
+    /// alone says nothing (it may not have finished downloading), so the others act on this marker only.
+    public func leftMarker(_ id: String) -> URL {
+        root.appendingPathComponent("left", isDirectory: true).appendingPathComponent(id)
+    }
+
+    public func leftDeviceIDs() -> Set<String> {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: root.appendingPathComponent("left").path)) ??
+            []
+        return Set(names.filter { !$0.hasPrefix(".") })
+    }
+
     public func deviceIDs() -> [String] {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: devices.path)) ?? []
         return names.filter { !$0.hasPrefix(".") }.sorted()

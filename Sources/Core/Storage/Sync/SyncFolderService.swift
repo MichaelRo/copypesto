@@ -141,7 +141,8 @@ public final class SyncFolderService {
             guard let opened = try openGroup() else { return }
             try await switchEpochIfNeeded(opened)
             let current = group ?? opened
-            try recoverOwnLogIfNeeded(current)
+            try await adoptClipsOfMacsThatLeft()
+            guard try recoverOwnLogIfNeeded(current) else { return set(.waitingForFolder) }
             try await write(current)
             try await compactIfNeeded(current)
             try await read(current)
@@ -185,26 +186,52 @@ public final class SyncFolderService {
             highWaterStore.save(water)
             ownLogRecovered = false
         }
-        if !announced || epochChanged { _ = try await storage.restampForSync() }
+        if !announced || epochChanged { _ = try await storage.restampForSync(.notFrom(deviceID: identity.deviceID)) }
         group = try SyncGroupManager.openGroup(layout: layout, keyStore: keyStore) ?? found
+    }
+
+    /// A Mac that used Leave Sync takes its folder, and so its log, with it, but its clips are still here: this Mac
+    /// takes them over so that the Macs that join later get them. Only a Mac that says it left counts (its `left`
+    /// marker) and whose folder is gone: a folder that has not finished downloading says nothing. The mark kept for
+    /// that Mac goes, so one that comes back starts afresh.
+    private func adoptClipsOfMacsThatLeft() async throws {
+        let present = Set(layout.deviceIDs())
+        let gone = Set(water.marks.keys).intersection(layout.leftDeviceIDs()).subtracting(present)
+        guard !gone.isEmpty else { return }
+        try await storage.adoptClips(fromDevices: gone)
+        for device in gone {
+            water.forget(device)
+        }
+        highWaterStore.save(water)
     }
 
     // MARK: Writing
 
-    private func recoverOwnLogIfNeeded(_ found: SyncGroup) throws {
-        guard !ownLogRecovered else { return }
-        ownLogRecovered = true
+    /// Finds where this Mac's own log ends, so the next segment chains from it. Returns false while the last file
+    /// cannot be read yet (iCloud has it as a placeholder): writing now would chain from nothing and every other Mac
+    /// would refuse the log. A file that is damaged is a refusal; one from an older epoch starts the new chain.
+    private func recoverOwnLogIfNeeded(_ found: SyncGroup) throws -> Bool {
+        guard !ownLogRecovered else { return true }
         let names = ((try? FileManager.default.contentsOfDirectory(atPath: layout.log(identity.deviceID).path)) ?? [])
             .filter { $0.hasSuffix(".pestolog") }.sorted()
-        guard let last = names.last, let range = Self.sequenceRange(of: last) else { return }
+        guard let last = names.last, let range = Self.sequenceRange(of: last) else {
+            ownLogRecovered = true
+            return true
+        }
         let url = layout.log(identity.deviceID).appendingPathComponent(last)
+        guard SyncFileAvailability.isReadable(url), let data = try? Data(contentsOf: url) else { return false }
         var hash = SyncManifest.zeroHash
-        if let data = try? Data(contentsOf: url), let verified = try? SyncSegmentReader.verify(
-            data, syncKey: found.key, trust: found.trust, vaultID: found.vault.vaultID, epoch: found.epoch
-        ) {
-            hash = (try? verified.manifest.hash()) ?? hash
+        do {
+            let verified = try SyncSegmentReader.verify(
+                data, syncKey: found.key, trust: found.trust, vaultID: found.vault.vaultID, epoch: found.epoch
+            )
+            hash = try verified.manifest.hash()
+        } catch SyncError.wrongEpoch {
+            hash = SyncManifest.zeroHash
         }
         ownLast = (range.last, hash)
+        ownLogRecovered = true
+        return true
     }
 
     static func sequenceRange(of name: String) -> (first: UInt64, last: UInt64)? {
@@ -284,12 +311,19 @@ public final class SyncFolderService {
         let others = found.devices.filter { $0.deviceID != identity.deviceID }.map(\.deviceID)
         var waiting = false
         var received = 0
+        var firstFailure: (any Error)?
         for device in others {
-            let outcome = try await readDevice(device, found)
-            waiting = waiting || outcome.waiting
-            received += outcome.applied
+            do {
+                let outcome = try await readDevice(device, found)
+                waiting = waiting || outcome.waiting
+                received += outcome.applied
+            } catch {
+                // One Mac's damaged or refused file must not stop the others from being read.
+                firstFailure = firstFailure ?? error
+            }
         }
         if received > 0 { lastReceived = now() }
+        if let firstFailure { throw firstFailure }
         if waiting { return set(.waitingForFolder) }
         if !others.isEmpty, let since = lastReceived ?? group?.devices.map(\.createdAt).max(),
            now().timeIntervalSince(since) > timing.quietAfter
@@ -324,8 +358,9 @@ public final class SyncFolderService {
             case .gap: return (applied, true)
             case .apply: break
             }
-            guard let blobs = try blobPayloads(for: verified, device: device, found) else { return (applied, true) }
-            let summary = try await storage.applySync(verified.records(), blob: { blobs[$0] })
+            let records = try verified.records()
+            guard let blobs = try blobPayloads(for: records, device: device, found) else { return (applied, true) }
+            let summary = try await storage.applySync(records, blob: { blobs[$0] })
             applied += summary.added + summary.updated + summary.removed
             if summary.clockRefused > 0 { throw SyncError.clockFarAhead }
             try water.record(verified.manifest)
@@ -336,13 +371,13 @@ public final class SyncFolderService {
 
     /// The payload files the segment points to, opened; nil when one has not arrived yet.
     private func blobPayloads(
-        for segment: VerifiedSyncSegment,
+        for records: [SyncRecord],
         device: String,
         _ found: SyncGroup
     ) throws
     -> [String: Data]? {
         var out: [String: Data] = [:]
-        for record in try segment.records() where record.kind == .item {
+        for record in records where record.kind == .item {
             guard let name = try record.decodeMetadata(SyncItemRecord.self).blobName else { continue }
             let url = layout.blobs(device).appendingPathComponent(SyncBlobFile.fileName(name))
             guard SyncFileAvailability.isReadable(url), let data = try? Data(contentsOf: url) else { return nil }

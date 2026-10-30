@@ -24,8 +24,7 @@ extension HostedGlobals {
             let directory = FileManager.default.temporaryDirectory
                 .appendingPathComponent("pesto-copy-latency-\(UUID().uuidString)", isDirectory: true)
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let container = try ModelContainerSetup.openSynced(
-                cloudKitEnabled: false, storeURL: directory.appendingPathComponent("clips.store")
+            let container = try ModelContainerSetup.openClips(storeURL: directory.appendingPathComponent("clips.store")
             )
             let context = ModelContext(container)
             let encryption = BlobEncryption()

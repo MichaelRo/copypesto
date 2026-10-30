@@ -62,7 +62,7 @@ extension HostedGlobals {
 
         @Test("the hover card opens within its budget for text, code and a picture, and does not grow memory")
         func open_perKind() async throws {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let kinds: [(String, PasteboardCapture)] = [
                 ("short text", ClipKindFixtures.text("Dinner is at 7:30. Bring the basil from the balcony.")),
                 (

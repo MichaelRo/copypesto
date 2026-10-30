@@ -15,8 +15,8 @@ struct BackupRoundTripTests {
     private let base = Date(timeIntervalSince1970: 1_800_000_000)
 
     init() async throws {
-        source = try ModelContainerSetup.makeInMemory().synced
-        target = try ModelContainerSetup.makeInMemory().synced
+        source = try ModelContainerSetup.makeInMemory()
+        target = try ModelContainerSetup.makeInMemory()
         sourceService = StorageService(modelContainer: source)
         targetService = StorageService(modelContainer: target)
     }
@@ -87,7 +87,7 @@ struct BackupRoundTripTests {
         let summary = try await targetService.restore(backup)
 
         let expected = try await {
-            let other = try ModelContainerSetup.makeInMemory().synced
+            let other = try ModelContainerSetup.makeInMemory()
             let service = StorageService(modelContainer: other)
             return try await service.restore(roundTrip(includeSensitive: false))
         }()

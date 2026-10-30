@@ -39,8 +39,7 @@ final class BackupRestorePerformanceTests: XCTestCase {
         let key = BackupKey.generate()
         let file = directory.appendingPathComponent("backup.pestobackup")
         try writeBackup(clips: clipCount, to: file, key: key)
-        let container = try ModelContainerSetup.openSynced(
-            cloudKitEnabled: false, storeURL: directory.appendingPathComponent("clips.store")
+        let container = try ModelContainerSetup.openClips(storeURL: directory.appendingPathComponent("clips.store")
         )
         let service = StorageService(modelContainer: container)
 

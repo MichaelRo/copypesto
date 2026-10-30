@@ -12,7 +12,7 @@ struct SyncJournalTests {
     let defaults = ThrowawayDefaults.make()
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container)
     }
 
@@ -207,7 +207,7 @@ struct SyncJournalTests {
             try FileManager.default.copyItem(atPath: fixture.path + suffix, toPath: copy.path + suffix)
         }
 
-        let opened = try ModelContainerSetup.openSynced(cloudKitEnabled: false, storeURL: copy)
+        let opened = try ModelContainerSetup.openClips(storeURL: copy)
         let context = ModelContext(opened)
         let clips = try context.fetch(FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.sequenceNumber)]))
         #expect(clips.count == 3 && clips.first?.previewText == "1.1.0 clip 1" && clips.first?.pinnedHotkeyIndex == 3)

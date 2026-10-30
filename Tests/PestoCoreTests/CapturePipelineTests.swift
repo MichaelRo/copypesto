@@ -35,7 +35,7 @@ struct CapturePipelineTests {
     private let outlets = Outlets()
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container, environment: .testing())
     }
 

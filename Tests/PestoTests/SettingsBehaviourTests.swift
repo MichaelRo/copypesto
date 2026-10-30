@@ -111,7 +111,7 @@ extension HostedGlobals {
         @Test("Paste from Pesto finds an item by its text, instead of always reporting the app as not ready")
         @MainActor
         func whenItemExists_thenIntentReturnsIt() async throws {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let state = AppState()
             state.historyContainer = container
             let previous = ScriptingContext.appState

@@ -195,22 +195,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func bootStorage() {
-        // Tier 1: the disk store (never CloudKit: sync is the encrypted folder, ADR 0018). Tier 2: the same store
-        // without sync.
-        // Tier 3: in-memory (disk full or a schema conflict), so the history is lost on relaunch and the shelf says so.
-        let cloudKitEnabled = false
+        // The disk store (never CloudKit: sync is the encrypted folder, ADR 0018), or, when the disk is full or the
+        // schema conflicts, an in-memory copy: the history is lost on relaunch and the shelf says so.
         let boot = StorageBoot.run(
             openers: .init(
-                synced: { try ModelContainerSetup.openSynced(cloudKitEnabled: cloudKitEnabled) },
-                syncedLocalOnly: { try ModelContainerSetup.openSynced(cloudKitEnabled: false) },
-                local: { try ModelContainerSetup.openLocal() },
-                inMemory: { try ModelContainerSetup.makeInMemory().synced }
-            ),
-            cloudKitEnabled: cloudKitEnabled
+                clips: { try ModelContainerSetup.openClips() },
+                inMemory: { try ModelContainerSetup.makeInMemory() }
+            )
         )
-        appState.historyContainer = boot.synced
-        appState.historyStore = boot.synced.map { HistoryStore(container: $0) }
-        appState.localContainer = boot.local
+        appState.historyContainer = boot.container
+        appState.historyStore = boot.container.map { HistoryStore(container: $0) }
         appState.storeIsOnDisk = boot.isOnDisk
 
         // Expose stable references for NSScriptCommand subclasses (NSApp.delegate cast fails

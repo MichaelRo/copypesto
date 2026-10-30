@@ -9,7 +9,7 @@ import SwiftUI
         _ type: ClipboardType, text: String, sensitivity: SensitivityCategory? = nil, mask: String? = nil
     )
     -> some View {
-        if let container = try? ModelContainerSetup.makeInMemory().synced {
+        if let container = try? ModelContainerSetup.makeInMemory() {
             ClipboardCard(item: ClipboardItem(
                 type: type, previewText: mask ?? text, sensitivity: sensitivity, sensitivityMaskedPreview: mask,
                 contentHash: UUID().uuidString, byteSize: text.utf8.count, deviceID: "preview", sequenceNumber: 1

@@ -12,7 +12,7 @@ import XCTest
 @MainActor
 final class SyncSheetsTests: XCTestCase {
     private func makeController(folder: URL? = nil) throws -> SyncController {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         // A fixed path, so the folder name in the pictures does not change from run to run; nothing is written there.
         let root = folder ?? URL(fileURLWithPath: "/Users/Shared/Pesto Snapshots/Pesto/Pesto Sync")
         let secrets = SnapshotSecrets()

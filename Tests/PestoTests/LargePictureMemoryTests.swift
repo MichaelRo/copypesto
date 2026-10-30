@@ -46,8 +46,7 @@ final class LargePictureMemoryTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: folder) }
         // An in-memory store keeps the blob several times over and measured 570 MB for this picture; the real store
         // writes it to a file next to the database.
-        let container = try ModelContainerSetup.openSynced(
-            cloudKitEnabled: false, storeURL: folder.appendingPathComponent("clips.store")
+        let container = try ModelContainerSetup.openClips(storeURL: folder.appendingPathComponent("clips.store")
         )
         let service = StorageService(modelContainer: container)
         let capture = PasteboardCapture(

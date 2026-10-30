@@ -28,11 +28,4 @@ public enum ShelfSuggestion: Equatable, Sendable {
         case .snippet: .snippet
         }
     }
-
-    public var hasDecline: Bool {
-        switch self {
-        case .shortcutReminder: false
-        default: true
-        }
-    }
 }

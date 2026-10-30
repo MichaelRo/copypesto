@@ -27,7 +27,7 @@ extension HostedGlobals {
         private let watcher: PasteboardWatcher
 
         init() async throws {
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             service = StorageService(modelContainer: container)
             watcher = PasteboardWatcher(
                 pasteboard: AppPasteboard.reader, frontmostProvider: EditorFrontmost(), ownWrites: state.ownWrites
@@ -237,7 +237,7 @@ extension HostedGlobals {
         @Test("thirty copies while the main actor reads the store all arrive")
         @MainActor
         func whenBurst_thenAllIngested() async throws {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let service = StorageService(modelContainer: container)
             let observer = ModelSaveObserver
                 .observe { _ = try? ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()) }

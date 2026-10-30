@@ -32,7 +32,7 @@ struct PasteMigratorTests {
 
     @Test("imports a text record, pins it, and creates the target collection")
     func migrate_textRecord_pinsAndCreatesCollection() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         let summary = try await migrator.migrate(
@@ -52,7 +52,7 @@ struct PasteMigratorTests {
 
     @Test("one Undo takes an import back with the collections it made, and Redo brings both back")
     func migrate_withHistory_isOneUndoableAction() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let history = UndoHistory()
         let service = StorageService(modelContainer: container, environment: .testing { $0.undoHistory = history })
 
@@ -89,7 +89,7 @@ struct PasteMigratorTests {
 
     @Test("a rich-text record with a plain-text copy imports the plain text, as a live copy does")
     func migrate_richTextWithPlainText_importsThePlainText() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         _ = try await migrator.migrate(records: [record([
@@ -137,7 +137,7 @@ struct PasteMigratorTests {
         "org.nspasteboard.ConcealedType", "org.nspasteboard.TransientType", "com.apple.is-sensitive"
     ])
     func migrate_concealedRecord_isSkipped(marker: String) async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         let summary = try await migrator.migrate(records: [record([
@@ -151,7 +151,7 @@ struct PasteMigratorTests {
 
     @Test("a rich-text record with no plain-text copy is flattened to its text")
     func migrate_richTextOnly_isFlattened() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         _ = try await migrator.migrate(records: [record([("public.rtf", #"{\rtf1\ansi Meter reading}"#)])])
@@ -162,7 +162,7 @@ struct PasteMigratorTests {
 
     @Test("a rich-text record that holds no text is skipped, not imported empty")
     func migrate_richTextWithoutText_isSkipped() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         let summary = try await migrator.migrate(records: [record([("public.rtf", #"{\rtf1\ansi }"#)])])
@@ -173,7 +173,7 @@ struct PasteMigratorTests {
 
     @Test("a link record is classified as a URL item")
     func migrate_linkRecord_classifiesAsURL() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
         let record = PasteImportRecord(
             pinboard: "Useful Links",
@@ -197,7 +197,7 @@ struct PasteMigratorTests {
 
     @Test("a record copied from an excluded app is not imported, and is counted as skipped")
     func migrate_recordFromAnExcludedApp_isSkipped() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
         let excluded = try #require(ExclusionRules.defaultExcludedBundleIDs.min())
         let record = PasteImportRecord(
@@ -217,7 +217,7 @@ struct PasteMigratorTests {
 
     @Test("an app the person added to the exclusion list is skipped too")
     func migrate_recordFromAUserExcludedApp_isSkipped() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         let summary = try await migrator.migrate(
@@ -231,7 +231,7 @@ struct PasteMigratorTests {
 
     @Test("sensitive content is masked on import (routes through ingest)")
     func migrate_sensitiveContent_isMasked() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         _ = try await migrator.migrate(
@@ -245,7 +245,7 @@ struct PasteMigratorTests {
 
     @Test("re-running the same records does not duplicate items")
     func migrate_idempotent_noDuplicateItems() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
         let records = [textRecord(pinboard: "Commands", text: "same content")]
 
@@ -257,7 +257,7 @@ struct PasteMigratorTests {
 
     @Test("duplicate content within one run is imported once")
     func migrate_duplicateWithinRun_importedOnce() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         let summary = try await migrator.migrate(records: [
@@ -272,7 +272,7 @@ struct PasteMigratorTests {
 
     @Test("a collection is reused across records, not duplicated")
     func migrate_reusesCollection() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         _ = try await migrator.migrate(records: [
@@ -285,7 +285,7 @@ struct PasteMigratorTests {
 
     @Test("a history record (no pinboard) is imported unpinned and in no collection")
     func migrate_historyRecord_isNotPinnedOrFiled() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
         let record = PasteImportRecord(
             pinboard: nil, title: nil, timestamp: Date(timeIntervalSinceReferenceDate: 1000),
@@ -307,7 +307,7 @@ struct PasteMigratorTests {
 
     @Test("the first-run samples land as an unpinned welcome note and a pinned snippet without a Snippets collection")
     func migrate_firstRunSamples_areFiledAsDesigned() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
         let summary = try await migrator.migrate(records: FirstRunSamples.records(shortcut: "\u{2318}\u{21E7}V"))

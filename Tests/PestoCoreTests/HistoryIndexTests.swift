@@ -11,7 +11,7 @@ struct HistoryIndexTests {
         let context: ModelContext
 
         init() throws {
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             context = ModelContext(container)
         }
 
@@ -190,7 +190,7 @@ struct HistorySaveChangeTests {
 
     @Test("a save reports the clips it inserted, updated and deleted, not the blobs or collections")
     func whenSaved_thenOnlyClipsAreReported() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let collector = Collector()
         let token = NotificationCenter.default.addObserver(forName: ModelContext.didSave, object: context, queue: nil) {

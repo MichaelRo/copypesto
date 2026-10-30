@@ -10,7 +10,7 @@ struct RemoteCopyTests {
     private let service: StorageService
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container)
     }
 
@@ -81,8 +81,8 @@ struct RemoteCopyTests {
 struct RemoteCopyBackupTests {
     @Test("a restored clip from another device is still marked remote and has no Mac source app")
     func restore_remoteClip_staysRemote() async throws {
-        let source = try ModelContainerSetup.makeInMemory().synced
-        let target = try ModelContainerSetup.makeInMemory().synced
+        let source = try ModelContainerSetup.makeInMemory()
+        let target = try ModelContainerSetup.makeInMemory()
         let sourceService = StorageService(modelContainer: source)
         let targetService = StorageService(modelContainer: target)
         let payload = Data("https://example.com/from-phone".utf8)

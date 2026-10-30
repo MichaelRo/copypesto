@@ -21,7 +21,7 @@ struct StorageServiceWipeSuggestionTests {
 
     @Test("clearNonPinned in range all invokes wipeSuggestionLedger")
     func clearNonPinnedAll_invokesWipeSuggestionLedger() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let tracker = WipeTracker()
         let service = StorageService(modelContainer: container, environment: .testing {
             $0.wipeSuggestionLedger = { tracker.record() }
@@ -32,7 +32,7 @@ struct StorageServiceWipeSuggestionTests {
 
     @Test("clearNonPinned in non-all range does not invoke wipeSuggestionLedger")
     func clearNonPinnedRecent_doesNotInvokeWipeSuggestionLedger() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let tracker = WipeTracker()
         let service = StorageService(modelContainer: container, environment: .testing {
             $0.wipeSuggestionLedger = { tracker.record() }

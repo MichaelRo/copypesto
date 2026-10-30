@@ -28,7 +28,7 @@ final class SyncWorld {
 
         init(name: String, time: TimeBox) throws {
             self.name = name
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             service = StorageService(modelContainer: container)
             clock = SyncClock(deviceID: name, defaults: ThrowawayDefaults.make(), now: { time.now })
             SyncJournal.enable(for: container, clock: clock)

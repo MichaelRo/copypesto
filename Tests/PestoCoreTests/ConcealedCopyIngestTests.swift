@@ -9,7 +9,7 @@ import Testing
 struct ConcealedCopyIngestTests {
     @Test("is hidden as a credential, because it may be a username or a password")
     func whenKeptConcealedCopy_thenHiddenAsACredential() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(modelContainer: container)
 
         try await service.ingest(PasteboardCapture(
@@ -30,7 +30,7 @@ struct ConcealedCopyIngestTests {
 
     @Test("is removed by itself after a day, so a password does not sit in the history")
     func whenKeptConcealedCopy_thenItExpires() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(modelContainer: container)
         let now = Date()
 

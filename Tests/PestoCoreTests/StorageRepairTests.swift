@@ -9,7 +9,7 @@ struct StorageRepairTests {
     private let container: ModelContainer
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
     }
 
     private func insertColorClip(_ text: String) throws -> UUID {

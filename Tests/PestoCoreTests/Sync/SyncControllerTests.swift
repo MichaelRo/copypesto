@@ -74,6 +74,13 @@ struct SyncControllerTests {
         #expect(FileManager.default.fileExists(atPath: elsewhere.path))
     }
 
+    @Test("sync is off on every Mac until its person turns it on")
+    func offByDefault() {
+        #expect(Setting.syncEnabled.defaultValue == false)
+        #expect(Setting.syncIncludesSecrets.defaultValue == false)
+        #expect(Setting.syncFolderPath.defaultValue.isEmpty)
+    }
+
     @Test("the first Mac makes the group, is shown the recovery key, and its clips reach a Mac that joins with the key")
     func firstMacAndJoin() async throws {
         let a = try SyncMac(name: "mac-a", folder: folder, time: time)

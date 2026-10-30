@@ -10,7 +10,7 @@ struct SimilarityStorageTests {
     private let container: ModelContainer
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
     }
 
     private func message(_ name: String, _ order: Int) -> String {

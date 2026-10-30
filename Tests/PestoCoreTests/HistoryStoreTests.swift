@@ -12,7 +12,7 @@ struct HistoryStoreTests {
     private let service: StorageService
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container)
     }
 
@@ -30,7 +30,7 @@ struct HistoryStoreTests {
         let store = HistoryStore(container: container)
         store.setVisible(true)
         let fetches = store.fetchCount
-        let elsewhere = try ModelContext(ModelContainerSetup.makeInMemory().synced)
+        let elsewhere = try ModelContext(ModelContainerSetup.makeInMemory())
 
         NotificationCenter.default.post(name: ModelContext.didSave, object: elsewhere)
         try await Task.sleep(for: .milliseconds(250))

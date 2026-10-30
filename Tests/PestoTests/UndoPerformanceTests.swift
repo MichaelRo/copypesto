@@ -14,8 +14,7 @@ private func makeFileBackedContainer(for test: XCTestCase, seededWith count: Int
         .appendingPathComponent("pesto-undo-perf-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     test.addTeardownBlock { try? FileManager.default.removeItem(at: directory) }
-    let container = try ModelContainerSetup.openSynced(
-        cloudKitEnabled: false, storeURL: directory.appendingPathComponent("clips.store")
+    let container = try ModelContainerSetup.openClips(storeURL: directory.appendingPathComponent("clips.store")
     )
     let context = ModelContext(container)
     let encryption = BlobEncryption()

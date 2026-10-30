@@ -12,7 +12,7 @@ struct ClipEditAndCollectionUndoTests {
     private let history = UndoHistory()
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container, environment: .testing { [history] in
             $0.undoHistory = history
         })

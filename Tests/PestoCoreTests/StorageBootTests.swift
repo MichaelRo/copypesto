@@ -11,71 +11,58 @@ private struct Broken: LocalizedError {
 @Suite("Storage boot")
 struct StorageBootTests {
     private func container() throws -> ModelContainer {
-        try ModelContainerSetup.makeInMemory().synced
+        try ModelContainerSetup.makeInMemory()
     }
 
     private func result(
-        synced: @escaping () throws -> ModelContainer,
-        local: @escaping () throws -> ModelContainer,
-        cloudKitEnabled: Bool = false,
+        clips: @escaping () throws -> ModelContainer,
         inMemory: @escaping () throws -> ModelContainer,
         log: @escaping (String) -> Void = { _ in }
     )
         -> StorageBoot.Result
     {
-        StorageBoot.run(
-            openers: .init(synced: synced, syncedLocalOnly: synced, local: local, inMemory: inMemory),
-            cloudKitEnabled: cloudKitEnabled, log: log
-        )
+        StorageBoot.run(openers: .init(clips: clips, inMemory: inMemory), log: log)
     }
 
-    @Test("an unreadable local.store does not take the clips store down with it")
-    func whenLocalStoreIsBroken_thenTheClipsStoreStillOpensOnDisk() throws {
+    @Test("a readable clips store opens on disk and the memory copy is never made")
+    func whenTheClipsStoreOpens_thenItIsOnDisk() throws {
         let clips = try container()
-        let boot = result(
-            synced: { clips }, local: { throw Broken(errorDescription: "local.store is locked") },
-            inMemory: { try container() }
-        )
+        var memoryOpened = false
 
-        #expect(boot.synced === clips)
-        #expect(boot.local == nil)
+        let boot = result(clips: { clips }, inMemory: {
+            memoryOpened = true
+            return try container()
+        })
+
+        #expect(boot.container === clips)
         #expect(boot.isOnDisk)
+        #expect(!memoryOpened)
     }
 
-    @Test("every tier's failure is logged with its reason")
-    func whenTiersFail_thenEachReasonIsLogged() {
+    @Test("when the disk store fails, its reason is logged and the in-memory copy opens, said not to be on disk")
+    func whenTheClipsStoreFails_thenTheReasonIsLoggedAndMemoryOpens() {
         var lines: [String] = []
 
         let boot = result(
-            synced: { throw Broken(errorDescription: "the model changed") },
-            local: { try container() },
-            cloudKitEnabled: true,
+            clips: { throw Broken(errorDescription: "the model changed") },
             inMemory: { try container() },
             log: { lines.append($0) }
         )
 
         #expect(!boot.isOnDisk, "the person is running on the in-memory copy")
-        #expect(boot.synced != nil)
-        #expect(lines.count(where: { $0.contains("the model changed") }) == 2, "\(lines)")
+        #expect(boot.container != nil)
+        #expect(lines.count(where: { $0.contains("the model changed") }) == 1, "\(lines)")
         #expect(lines.contains { $0.localizedCaseInsensitiveContains("in memory") }, "\(lines)")
     }
 
-    @Test("with sync off the second disk attempt is the same as the first, so it is not repeated")
-    func whenSyncIsOff_thenDiskIsTriedOnce() {
+    @Test("the disk is tried once")
+    func whenTheDiskFails_thenItIsTriedOnce() {
         var attempts = 0
 
-        _ = StorageBoot.run(
-            openers: .init(
-                synced: { attempts += 1
-                    throw Broken(errorDescription: "x")
-                },
-                syncedLocalOnly: { attempts += 1
-                    throw Broken(errorDescription: "x")
-                },
-                local: { try container() }, inMemory: { try container() }
-            ),
-            cloudKitEnabled: false, log: { _ in }
-        )
+        _ = result(clips: {
+            attempts += 1
+            throw Broken(errorDescription: "x")
+        }, inMemory: { try container() })
 
         #expect(attempts == 1)
     }
@@ -83,11 +70,10 @@ struct StorageBootTests {
     @Test("when nothing opens, the result says so and nothing is on disk")
     func whenEverythingFails_thenNothingIsOpen() {
         let boot = result(
-            synced: { throw Broken(errorDescription: "a") }, local: { throw Broken(errorDescription: "b") },
-            inMemory: { throw Broken(errorDescription: "c") }
+            clips: { throw Broken(errorDescription: "a") }, inMemory: { throw Broken(errorDescription: "c") }
         )
 
-        #expect(boot.synced == nil)
+        #expect(boot.container == nil)
         #expect(!boot.isOnDisk)
     }
 
@@ -110,7 +96,7 @@ struct StorageBootTests {
             try context.save()
         }
 
-        let reopened = try ModelContainerSetup.openSynced(cloudKitEnabled: false, storeURL: store)
+        let reopened = try ModelContainerSetup.openClips(storeURL: store)
 
         let items = try ModelContext(reopened).fetch(FetchDescriptor<ClipboardItem>())
         #expect(items.map(\.previewText) == ["kept"])

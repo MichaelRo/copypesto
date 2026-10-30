@@ -113,7 +113,7 @@ struct SecretMaskMigrationTests {
 
     @Test("an old mask becomes the new one in both columns; a new one and a clip with none are untouched")
     func whenMigrated_thenOldMasksAreRewritten() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let old = try insert("API key •••• (45 characters hidden)", category: .apiKey, in: context)
         let current = try insert("•••• (45 characters hidden)", category: .apiKey, in: context)
@@ -141,7 +141,7 @@ struct SecretMaskMigrationTests {
 
     @Test("running it twice changes nothing the second time")
     func whenMigratedTwice_thenNothingChanges() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         _ = try insert("•••-••-•••• (SSN)", category: .ssn, in: context)
         let service = StorageService(modelContainer: container)
@@ -152,7 +152,7 @@ struct SecretMaskMigrationTests {
 
     @Test("the standard list runs it once, under its own version key")
     func whenStandardList_thenItHasTheMaskMigration() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let names = LaunchMigration.standard(service: StorageService(modelContainer: container)).map(\.name)
 
         #expect(names.contains("Secret masks"))
@@ -166,7 +166,7 @@ struct SecretSearchTermsTests {
         (.oauthToken, "oauth"), (.privateKey, "private key"), (.creditCard, "card")
     ])
     func whenSecret_thenCategoryNameIsSearched(category: SensitivityCategory, term: String) throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let item = ClipboardItem(
             type: .text, previewText: "••••", sensitivity: category, sensitivityMaskedPreview: "••••",

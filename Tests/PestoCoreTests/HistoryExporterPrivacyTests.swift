@@ -28,7 +28,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("an export never contains the text of a sensitive item")
     func export_masksSensitiveItems() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         try await ingest(cardNumber, into: container)
         try await ingest("just a note", into: container)
 
@@ -42,7 +42,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("importing a card number restores its sensitivity so it stays masked")
     func import_redetectsSensitivity() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let record = HistoryExporter.HistoryRecord(
             id: UUID(),
             timestamp: .now,
@@ -67,7 +67,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("an imported text item gets the same content hash a live copy would, so it dedupes")
     func import_usesContentHash() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let text = "hello import"
         let record = HistoryExporter.HistoryRecord(
             id: UUID(), timestamp: .now, type: "text", previewText: text, sourceApp: nil, sourceBundleID: nil,
@@ -86,7 +86,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("an imported text clip keeps its text in an encrypted blob, so it pastes whole and is backed up")
     func import_givesATextClipABlob() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let text = "imported words \(UUID().uuidString)"
         let record = HistoryExporter.HistoryRecord(
             id: UUID(), timestamp: .now, type: "text", previewText: text, sourceApp: nil, sourceBundleID: nil,
@@ -110,7 +110,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("an export holds text, code, links and colors only: no picture text and no file paths")
     func export_leavesOutPicturesAndFiles() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         clip(.text, preview: "a note", in: context)
         clip(.code, preview: "let x = 1", in: context)
@@ -131,7 +131,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("importing skips picture and file records, which would become payload-less cards")
     func import_skipsPicturesAndFiles() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         func record(_ type: String, _ text: String) -> HistoryExporter.HistoryRecord {
             HistoryExporter.HistoryRecord(
                 id: UUID(), timestamp: .now, type: type, previewText: text, sourceApp: nil, sourceBundleID: nil,
@@ -160,7 +160,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("a record typed color that holds a sentence is sealed, not kept in the clear (R-02)")
     func import_colourRecordWithSentence_isSealed() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let sentence = "call the gas company about the invoice"
         let payload = try encode([record(type: "color", preview: sentence)])
 
@@ -175,7 +175,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("a record typed color that holds a card number is masked")
     func import_colourRecordWithCard_isMasked() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let payload = try encode([record(type: "color", preview: "\(cardNumber)")])
 
         try await HistoryExporter(modelContainer: destination).importRecords(from: payload)
@@ -187,7 +187,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("a real colour record is kept as a colour")
     func import_realColour_staysAColour() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let payload = try encode([record(type: "color", preview: "#2F7A49")])
 
         try await HistoryExporter(modelContainer: destination).importRecords(from: payload)
@@ -200,7 +200,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("when a preview cannot be sealed the record is skipped, never stored in plaintext")
     func import_sealFailure_importsNothingInPlaintext() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let exporter = HistoryExporter(modelContainer: destination)
         await exporter.useSealer { _, _ in throw SealFailure() }
         let payload = try encode([record(preview: "a note that must not land in the clear")])
@@ -213,7 +213,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("a record longer than a preview can be is skipped")
     func import_oversizedRecord_isSkipped() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let huge = String(repeating: "x", count: HistoryExporter.maxRecordCharacters + 1)
         let payload = try encode([record(preview: huge), record(preview: "fine")])
 
@@ -224,7 +224,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("a file with more records than the cap imports nothing")
     func import_tooManyRecords_isRefused() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let records = (0...HistoryExporter.maxRecords).map { record(preview: "n\($0)") }
         let payload = try encode(records)
 
@@ -236,7 +236,7 @@ struct HistoryExporterPrivacyTests {
 
     @Test("a file over the size cap is refused before it is read")
     func import_oversizedFile_isRefused() async throws {
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let file = FileManager.default.temporaryDirectory.appendingPathComponent("big-\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: file) }
         FileManager.default.createFile(atPath: file.path, contents: nil)

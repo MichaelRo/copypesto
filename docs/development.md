@@ -21,7 +21,7 @@ Sources/
 │   ├── Security/     — History Lock, authentication
 │   ├── AI/           — on-device model access (Apple Intelligence only)
 │   ├── Intelligence/, Search/ — suggestions and search by meaning
-│   ├── Sync/         — device identity, sequence counter, `SyncAvailability` (sync is off)
+│   ├── Sync/         — the sync format, keys and pairing, device identity and the sequence counter (sync is off until turned on)
 │   ├── Paste/        — focus restoration, AX direct-write, CGEvent fallback
 │   └── Predicate/    — smart-pinboard DSL
 ├── Features/     — SwiftUI views (may import Core, never the reverse); `Marketing/` draws the documentation pictures

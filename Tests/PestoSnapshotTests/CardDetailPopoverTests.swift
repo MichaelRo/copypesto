@@ -11,7 +11,7 @@ import XCTest
 @MainActor
 final class CardDetailPopoverTests: XCTestCase {
     private func makeItem(_ type: ClipboardType, preview: String, language: String? = nil) throws -> ClipboardItem {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let ctx = ModelContext(container)
         let item = ClipboardItem(
             type: type, sourceAppName: "Xcode", previewText: preview, contentHash: UUID().uuidString,
@@ -88,7 +88,7 @@ final class CardDetailPopoverTests: XCTestCase {
     }
 
     func test_secret() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let ctx = ModelContext(container)
         let item = ClipboardItem(
             type: .text, sourceAppName: "Terminal", previewText: "API key •••• (40 characters hidden)",

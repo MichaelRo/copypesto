@@ -56,10 +56,10 @@ struct SyncPerformanceTests {
 
     @Test("a copy costs the same with sync off, and little more with it on")
     func ingestCost() async throws {
-        let off = try ModelContainerSetup.makeInMemory().synced
+        let off = try ModelContainerSetup.makeInMemory()
         let offMs = try await ingest(StorageService(modelContainer: off), count: clipCount, prefix: "off") /
             Double(clipCount)
-        let on = try ModelContainerSetup.makeInMemory().synced
+        let on = try ModelContainerSetup.makeInMemory()
         SyncJournal.enable(for: on, clock: SyncClock(deviceID: "mac-a", defaults: ThrowawayDefaults.make()))
         defer { SyncJournal.disable(for: on) }
         let onMs = try await ingest(StorageService(modelContainer: on), count: clipCount, prefix: "on") /

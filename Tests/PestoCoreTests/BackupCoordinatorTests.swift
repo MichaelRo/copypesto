@@ -15,8 +15,8 @@ struct BackupCoordinatorTests {
         .appendingPathComponent("test-\(UUID().uuidString).pestobackup")
 
     init() throws {
-        source = try ModelContainerSetup.makeInMemory().synced
-        target = try ModelContainerSetup.makeInMemory().synced
+        source = try ModelContainerSetup.makeInMemory()
+        target = try ModelContainerSetup.makeInMemory()
     }
 
     private func coordinator(_ container: ModelContainer, device: String = "mac-a") -> BackupCoordinator {

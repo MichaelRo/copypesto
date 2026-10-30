@@ -55,7 +55,7 @@ struct AutomationURLHandlerTests {
     }
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container)
         host.historyContainer = container
         handler = AutomationURLHandler(host: host, now: { [clock] in clock.now })

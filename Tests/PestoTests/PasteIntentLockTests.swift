@@ -13,7 +13,7 @@ extension HostedGlobals {
         private let service: StorageService
 
         init() async throws {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             state.historyContainer = container
             service = StorageService(modelContainer: container)
             ScriptingContext.appState = state

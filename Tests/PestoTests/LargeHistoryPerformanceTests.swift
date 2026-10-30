@@ -8,7 +8,7 @@ import XCTest
 /// Budget: filtering a 5,000-item history while typing must stay under 16 ms per keystroke (one frame).
 final class LargeHistoryPerformanceTests: XCTestCase {
     private func makeContext(count: Int) throws -> ModelContext {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let encryption = BlobEncryption()
         for index in 0..<count {

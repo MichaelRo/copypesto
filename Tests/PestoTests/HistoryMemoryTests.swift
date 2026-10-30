@@ -35,7 +35,7 @@ final class HistoryMemoryTests: XCTestCase {
     @MainActor
     private func fetchAll(count: Int, budgetMB: Double) throws {
         try XCTSkipIf(RunEnvironment.isCI, "resident-memory deltas are only meaningful on a developer Mac")
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         for index in 0..<count {
             let item = ClipboardItem(

@@ -118,7 +118,7 @@ struct SampleCardStrip: View {
 
         @MainActor
         static func make(kinds: [Kind], now: Date = .now) -> Samples? {
-            guard let container = try? ModelContainerSetup.makeInMemory().synced else { return nil }
+            guard let container = try? ModelContainerSetup.makeInMemory() else { return nil }
             let context = container.mainContext
             let items = kinds.enumerated().map { index, kind -> ClipboardItem in
                 let spec = spec(for: kind)

@@ -37,7 +37,7 @@ struct GIFUpgradeTests {
     private let address = URL(string: "https://media.example.com/cats/dance.gif")
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = Self.makeService(container: container, fetching: nil)
     }
 

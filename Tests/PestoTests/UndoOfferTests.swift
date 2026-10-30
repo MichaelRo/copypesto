@@ -15,7 +15,7 @@ extension HostedGlobals {
         private let service: StorageService
 
         init() throws {
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             service = StorageService(modelContainer: container, environment: .testing { [history] in
                 $0.undoHistory = history
             })

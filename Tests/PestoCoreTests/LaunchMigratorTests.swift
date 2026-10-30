@@ -104,7 +104,7 @@ struct LaunchMigratorTests {
 
     @Test("the standard list is the seven migrations, in the order the data depends on, each with its own version key")
     func standardList_isDeclaredInOrder() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let migrations = LaunchMigration.standard(service: StorageService(modelContainer: container))
 
         #expect(migrations.map(\.name) == [

@@ -111,7 +111,7 @@ extension HostedGlobals {
             AppDefaults.store.set(true, forKey: key)
             defer { AppDefaults.store.removeObject(forKey: key) }
             let history = UndoHistory()
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let service = StorageService(modelContainer: container, environment: .testing { $0.undoHistory = history })
             try await service.ingest(PasteboardCapture(
                 typeIdentifier: "public.utf8-plain-text", payload: Data("a".utf8), payloadString: "a",
@@ -137,7 +137,7 @@ extension HostedGlobals {
             AppDefaults.store.set(true, forKey: key)
             defer { AppDefaults.store.removeObject(forKey: key) }
             let history = UndoHistory()
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let service = StorageService(modelContainer: container, environment: .testing { $0.undoHistory = history })
             try await service.ingest(PasteboardCapture(
                 typeIdentifier: "public.utf8-plain-text", payload: Data("a".utf8), payloadString: "a",

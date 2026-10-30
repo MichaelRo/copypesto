@@ -13,14 +13,6 @@ public enum ShelfSuggestionCopy {
         }
     }
 
-    public static func shortcutOfferButton(isPinned: Bool, keyString: String) -> String {
-        if isPinned {
-            String(localized: "Use \(keyString)")
-        } else {
-            String(localized: "Pin with \(keyString)")
-        }
-    }
-
     public static func dormantTitle(keyString: String, weeks: Int) -> String {
         String(
             localized: "You have not used \(keyString) in \(weeks) weeks. Remove the shortcut? The clip stays pinned."

@@ -11,7 +11,7 @@ struct AppendToLatestTests {
     private let service: StorageService
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container)
     }
 

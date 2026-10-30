@@ -41,7 +41,7 @@ struct StorageServiceImageScreeningTests {
     private let mode = ModeHolder()
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         let screener = screener
         let mode = mode
         service = StorageService(modelContainer: container, environment: .testing {

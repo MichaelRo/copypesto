@@ -156,9 +156,3 @@ public actor SmartCollectionSuggestions {
         return data.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
     }
 }
-
-private extension String {
-    func ifEmpty(_ fallback: String) -> String {
-        isEmpty ? fallback : self
-    }
-}

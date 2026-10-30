@@ -15,7 +15,7 @@ struct AutoBackupServiceTests {
         .appendingPathComponent("pesto-autobackup-\(UUID().uuidString)", isDirectory: true)
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
 

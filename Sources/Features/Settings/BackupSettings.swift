@@ -167,7 +167,7 @@ struct BackupSettings: View {
     }
 
     private var sync: SyncController? {
-        SyncAvailability.isAvailable ? appState.syncController : nil
+        appState.syncController
     }
 
     private var contentsTable: some View {

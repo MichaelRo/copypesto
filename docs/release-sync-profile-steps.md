@@ -6,7 +6,7 @@ Needed only for the invisible iCloud Keychain key. Without it, sync works with t
 1. Open https://developer.apple.com/account → **Certificates, Identifiers & Profiles** → **Identifiers** → the blue **+**.
 2. Choose **App IDs** → Continue → **App** → Continue.
 3. Description: `Pesto`. Bundle ID: select **Explicit** and enter `net.copypesto.pesto`.
-4. Under Capabilities, tick **Keychain Sharing**. If it is not in the list, stop: Developer ID may not offer it, and the plan changes.
+4. Leave Capabilities as they are. Keychain Sharing is not a portal capability (it is an Xcode entitlement); an explicit App ID already authorizes the keychain access group `<Team ID>.net.copypesto.pesto`.
 5. Continue → **Register**.
 
 ## 2. Create the Developer ID profile

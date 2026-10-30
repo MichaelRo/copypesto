@@ -87,9 +87,9 @@ by recovery key or by approving it (six words). With this, a second Mac signed i
 by itself and sync needs no typing. It needs the data protection keychain, which needs `com.apple.application-identifier`,
 a restricted entitlement that only a provisioning profile can authorize (Apple TN3137). Claiming it without the profile
 makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is used only when `SYNC_PROFILE` is set.
-1. In the Apple Developer portal, Identifiers: the explicit App ID `net.copypesto.pesto`, with the **Keychain Sharing**
-   capability. Check that the capability is offered for Developer ID distribution (the "Developer ID" column of
-   Supported capabilities, macOS); this is the one step not confirmed from Apple's pages.
+1. In the Apple Developer portal, Identifiers: register the explicit App ID `net.copypesto.pesto`. There is no Keychain
+   Sharing capability to tick (it is an Xcode entitlement, not a portal one); the App ID already authorizes the keychain
+   access group `<Team ID>.net.copypesto.pesto`. `scripts/check-sync-signing.sh` is what proves the profile carries it.
 2. Profiles, Distribution, **Developer ID** (macOS), App ID `net.copypesto.pesto`, your Developer ID Application
    certificate. Download it and double-click it to install. Note its exact name.
 3. `make release SYNC_PROFILE="<profile name>"`. The archive then carries `PestoSync.entitlements` (the application

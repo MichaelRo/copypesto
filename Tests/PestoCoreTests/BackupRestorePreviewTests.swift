@@ -14,8 +14,8 @@ struct BackupRestorePreviewTests {
     private let base = Date(timeIntervalSince1970: 1_800_000_000)
 
     init() async throws {
-        source = try ModelContainerSetup.makeInMemory().synced
-        target = try ModelContainerSetup.makeInMemory().synced
+        source = try ModelContainerSetup.makeInMemory()
+        target = try ModelContainerSetup.makeInMemory()
         sourceService = StorageService(modelContainer: source)
         targetService = StorageService(modelContainer: target)
     }

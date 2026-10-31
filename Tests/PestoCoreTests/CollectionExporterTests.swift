@@ -8,7 +8,7 @@ import Testing
 @MainActor
 struct CollectionExporterTests {
     private func setupContainer() throws -> ModelContainer {
-        try ModelContainerSetup.makeInMemory().synced
+        try ModelContainerSetup.makeInMemory()
     }
 
     @Test("exporting and importing a collection preserves metadata and items")

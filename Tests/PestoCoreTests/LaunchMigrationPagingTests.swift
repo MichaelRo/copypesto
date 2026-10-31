@@ -56,7 +56,7 @@ struct LaunchMigrationPagingTests {
 
     @Test("a copy made during a migration is stored before the migration ends, and every clip is still visited")
     func whenACopyArrivesMidPass_thenItIsNotHeldUntilTheEnd() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let log = EventLog()
         let service = StorageService(
             modelContainer: container, environment: .testing { $0.lastItemStore = LoggingLastItemStore(log: log) }
@@ -95,7 +95,7 @@ struct LaunchMigrationPagingTests {
 
     @Test("a page is saved before the next one starts, so an interrupted pass keeps what it finished")
     func whenThePassIsInterrupted_thenEarlierPagesAreKept() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(
             modelContainer: container,
             environment: .testing { $0.lastItemStore = LoggingLastItemStore(log: EventLog()) }

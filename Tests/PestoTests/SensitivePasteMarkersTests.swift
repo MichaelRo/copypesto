@@ -15,7 +15,7 @@ extension HostedGlobals {
         private let concealed = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
 
         init() async throws {
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             service = StorageService(modelContainer: container)
         }
 

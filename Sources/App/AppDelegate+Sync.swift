@@ -8,7 +8,7 @@ extension AppDelegate {
     /// never the Keychain or iCloud Drive.
     func startSyncIfNeeded() {
         let isUITest = LaunchMode.current == .uiTest
-        guard SyncAvailability.isAvailable, LaunchMode.current.usesSystemIntegrations || isUITest,
+        guard LaunchMode.current.usesSystemIntegrations || isUITest,
               let container = appState.historyContainer, let storage = appState.storageService else { return }
         let deviceID = isUITest ? "ui-test-mac" : DeviceIdentity.current()
         guard deviceID != "unknown" else { return }

@@ -27,7 +27,7 @@ struct SimilarityLaunchCostTests {
 
     @Test("opening 2,000 stored signatures and asking for the suggestion facts stay far below a frame budget each")
     func whenManyClips_thenLoadAndFactsAreCheap() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(modelContainer: container)
         for index in 0..<clipCount {
             let family = index % 40

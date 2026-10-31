@@ -29,7 +29,7 @@ struct StorageServiceAppendTests {
     private let lastItem = SpyLastItemStore()
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         let spy = lastItem
         service = StorageService(modelContainer: container, environment: .testing { $0.lastItemStore = spy })
     }

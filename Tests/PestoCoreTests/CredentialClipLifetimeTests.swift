@@ -73,7 +73,7 @@ struct CredentialClipLifetimeRuleTests {
 @MainActor
 struct CredentialClipLifetimeStoreTests {
     private func makeService() async throws -> (StorageService, ModelContainer) {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(modelContainer: container)
         return (service, container)
     }

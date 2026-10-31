@@ -16,7 +16,7 @@ struct ShortcutColumnMigrationTests {
     func whenOpeningStore_thenClipsLoad() throws {
         let fixture = Self.fixtureURL
         if !FileManager.default.fileExists(atPath: fixture.path) {
-            let container = try ModelContainerSetup.openSynced(cloudKitEnabled: false, storeURL: fixture)
+            let container = try ModelContainerSetup.openClips(storeURL: fixture)
             let context = ModelContext(container)
             let item = ClipboardItem(
                 type: .text,
@@ -50,7 +50,7 @@ struct ShortcutColumnMigrationTests {
             try FileManager.default.copyItem(atPath: shm, toPath: testStore.path + "-shm")
         }
 
-        let reopened = try ModelContainerSetup.openSynced(cloudKitEnabled: false, storeURL: testStore)
+        let reopened = try ModelContainerSetup.openClips(storeURL: testStore)
         let items = try ModelContext(reopened).fetch(FetchDescriptor<ClipboardItem>())
         #expect(items.count == 1)
         #expect(items.first?.previewText == "1.0.0 clip")

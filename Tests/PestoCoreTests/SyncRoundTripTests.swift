@@ -40,7 +40,7 @@ struct SyncRoundTripTests {
 
     @Test("export then import on a fresh store re-creates every record")
     func exportImport_roundtrip_preservesItems() async throws {
-        let source = try ModelContainerSetup.makeInMemory().synced
+        let source = try ModelContainerSetup.makeInMemory()
         let sourceCtx = ModelContext(source)
         for i in 0..<5 {
             sourceCtx.insert(Self.makeItem(
@@ -55,7 +55,7 @@ struct SyncRoundTripTests {
         let exporter = HistoryExporter(modelContainer: source)
         let payload = try await exporter.export()
 
-        let destination = try ModelContainerSetup.makeInMemory().synced
+        let destination = try ModelContainerSetup.makeInMemory()
         let destImporter = HistoryExporter(modelContainer: destination)
         let inserted = try await destImporter.importRecords(from: payload)
         #expect(inserted == 5)
@@ -69,13 +69,13 @@ struct SyncRoundTripTests {
 
     @Test("re-importing the same payload is idempotent — second import inserts 0 records")
     func exportImport_idempotent() async throws {
-        let source = try ModelContainerSetup.makeInMemory().synced
+        let source = try ModelContainerSetup.makeInMemory()
         let sourceCtx = ModelContext(source)
         sourceCtx.insert(Self.makeItem(deviceID: "A", seq: 1, timestamp: .now))
         try sourceCtx.save()
 
         let payload = try await HistoryExporter(modelContainer: source).export()
-        let dest = try ModelContainerSetup.makeInMemory().synced
+        let dest = try ModelContainerSetup.makeInMemory()
         let destImporter = HistoryExporter(modelContainer: dest)
 
         let first = try await destImporter.importRecords(from: payload)
@@ -88,7 +88,7 @@ struct SyncRoundTripTests {
 
     @Test("encrypted blob attached via @Attribute(.externalStorage) round-trips through SwiftData")
     func blob_roundTrip_throughSwiftData() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let ctx = ModelContext(container)
 
         // Use the test-friendly encryption variant so the test never touches the Keychain.
@@ -127,7 +127,7 @@ struct SyncRoundTripTests {
 
     @Test("deleting an item then re-importing does not resurrect it (tombstone prevents re-import)")
     func deletion_doesNotResurrectAfterImport() async throws {
-        let source = try ModelContainerSetup.makeInMemory().synced
+        let source = try ModelContainerSetup.makeInMemory()
         let sourceCtx = ModelContext(source)
         sourceCtx.insert(Self.makeItem(
             deviceID: "A",
@@ -138,7 +138,7 @@ struct SyncRoundTripTests {
         ))
         try sourceCtx.save()
 
-        let dest = try ModelContainerSetup.makeInMemory().synced
+        let dest = try ModelContainerSetup.makeInMemory()
         let destImporter = HistoryExporter(modelContainer: dest)
         let payload = try await HistoryExporter(modelContainer: source).export()
         _ = try await destImporter.importRecords(from: payload)

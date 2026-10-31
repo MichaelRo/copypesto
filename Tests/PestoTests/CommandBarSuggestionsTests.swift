@@ -13,7 +13,7 @@ struct CommandBarSuggestionsTests {
     private let base = Date(timeIntervalSince1970: 1_800_000_000)
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container)
     }
 

@@ -27,7 +27,7 @@ extension HostedGlobals {
         private let timestamps = SpacedTimestamps()
 
         init() async throws {
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             service = StorageService(modelContainer: container)
         }
 

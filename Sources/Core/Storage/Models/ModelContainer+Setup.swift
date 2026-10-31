@@ -22,14 +22,10 @@ enum PestoMigrationPlan: SchemaMigrationPlan {
     }
 }
 
-/// Opens the SwiftData stores used at runtime.
-///
-/// - **clips.store** (`ClipboardItem`, `ClipboardBlob`, `DeletedItemTombstone`, `Pinboard`): the history. CloudKit is
-///   never used: sync is the encrypted folder (ADR 0018). Lives at
-///   `~/Library/Application Support/net.copypesto.pesto/clips.store`.
-/// - **local.store**: kept for forward-compatibility; nothing reads it, so `StorageBoot` treats it as best effort.
-///
-/// `StorageBoot.run` decides what happens when one of them will not open.
+/// Opens the SwiftData store used at runtime: **clips.store** (`ClipboardItem`, `ClipboardBlob`,
+/// `DeletedItemTombstone`, `Pinboard`), the history, at
+/// `~/Library/Application Support/net.copypesto.pesto/clips.store`. CloudKit is never used: sync is the encrypted
+/// folder (ADR 0018). `StorageBoot.run` decides what happens when it will not open.
 public enum ModelContainerSetup {
     private static func supportDirectory() throws -> URL {
         let appSupport = AppPaths.supportDirectory
@@ -37,36 +33,28 @@ public enum ModelContainerSetup {
         return appSupport
     }
 
-    public static func openSynced(cloudKitEnabled: Bool, storeURL: URL? = nil) throws -> ModelContainer {
+    public static func openClips(storeURL: URL? = nil) throws -> ModelContainer {
         let url = try storeURL ?? supportDirectory().appendingPathComponent("clips.store")
-        let useCloudKit = cloudKitEnabled && RuntimeConfiguration.current.mode.usesSystemIntegrations
-        let configuration = ModelConfiguration(
-            "clips", url: url, cloudKitDatabase: useCloudKit ? .private("iCloud.\(AppIdentity.bundleID)") : .none
-        )
         return try ModelContainer(
             for: Schema(versionedSchema: PestoSchemaV1.self),
             migrationPlan: PestoMigrationPlan.self,
-            configurations: configuration
+            configurations: ModelConfiguration("clips", url: url, cloudKitDatabase: .none)
         )
     }
 
-    public static func openLocal(storeURL: URL? = nil) throws -> ModelContainer {
-        let url = try storeURL ?? supportDirectory().appendingPathComponent("local.store")
-        return try ModelContainer(
-            for: Pinboard.self, configurations: ModelConfiguration("local", url: url, cloudKitDatabase: .none)
-        )
+    /// Earlier versions made a `local.store` that nothing ever read; it is removed so it does not sit in Application
+    /// Support for good.
+    public static func removeRetiredStores(in directory: URL = AppPaths.supportDirectory) {
+        for suffix in ["", "-shm", "-wal"] {
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent("local.store\(suffix)"))
+        }
     }
 
-    /// In-memory containers for unit/integration tests. Does not touch disk or CloudKit.
-    public static func makeInMemory() throws -> (synced: ModelContainer, local: ModelContainer) {
-        let synced = try ModelContainer(
+    /// An in-memory container for unit and integration tests. Does not touch disk.
+    public static func makeInMemory() throws -> ModelContainer {
+        try ModelContainer(
             for: ClipboardItem.self, ClipboardBlob.self, DeletedItemTombstone.self, Pinboard.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
-        let local = try ModelContainer(
-            for: Pinboard.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-        )
-        return (synced, local)
     }
 }

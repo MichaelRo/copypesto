@@ -9,7 +9,7 @@ struct HotkeySlotStorageTests {
     private let container: ModelContainer
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
     }
 
     private func service() async -> StorageService {

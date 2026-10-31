@@ -5,7 +5,7 @@ import SwiftData
 /// User-curated organizational container — shown as a **Collection** in the UI.
 ///
 /// The SwiftData entity name is kept as `Pinboard` (historical) so existing local
-/// stores and CloudKit records load without migration. New code may use the
+/// stores load without migration. New code may use the
 /// `ClipCollection` typealias for clarity. See ADR 0007 for the naming rationale.
 ///
 /// Static collections are referenced by `ClipboardItem.collectionID` (scalar FK).

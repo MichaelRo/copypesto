@@ -22,7 +22,7 @@ struct QuickMenuTests {
 
     @Test("it fetches five clips, newest first, not the whole history")
     func fetchesFive() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         insert(40, hiddenNewest: false, into: context)
         try context.save()
@@ -35,7 +35,7 @@ struct QuickMenuTests {
 
     @Test("a sensitive clip the shelf hides is not the newest card in the quick menu")
     func hiddenClipIsNotOffered() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         insert(8, hiddenNewest: true, into: context)
         try context.save()
@@ -50,7 +50,7 @@ struct QuickMenuTests {
     @Test("a paste counts and moves the clip to the front, in the quick menu as on the shelf")
     @MainActor
     func pasteIsRecorded() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let item = ClipboardItem(
             timestamp: Date(timeIntervalSince1970: 1000), type: .text, previewText: "x",
@@ -67,7 +67,7 @@ struct QuickMenuTests {
     @Test("with no storage service a background paste note is still written, so a first run loses nothing")
     @MainActor
     func backgroundPasteNote_fallsBackToTheMainContext() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let item = ClipboardItem(
             timestamp: Date(timeIntervalSince1970: 1000), type: .text, previewText: "x",

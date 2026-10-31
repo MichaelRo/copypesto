@@ -12,7 +12,6 @@ touches the store lives in `Core/Storage/Sync/` (journal, outbox, `applySync`, `
 | `SyncSegment.swift`, `SyncManifest.swift`, `SyncHighWater.swift` | The wire format; a change needs a version bump and a reader for the old one. Every byte is tested (flip, truncate, splice). |
 | `SyncKey*.swift`, `SyncThisDeviceKeys.swift`, `SyncKeychain.swift` | Where the sync key lives; a change can strand a Mac outside its group. |
 | `SyncStamp.swift` | The clock that decides every conflict; a stamp more than 7 days ahead is refused, never trusted. |
-| `SyncAvailability.swift` | The switch for the whole feature; the person still turns sync on per Mac. |
 | `SequenceCounter.swift`, `DeviceIdentity.swift` | Device id (`unknown` refuses to start sync) and the sort tie-breaker. |
 
 ## Key invariants

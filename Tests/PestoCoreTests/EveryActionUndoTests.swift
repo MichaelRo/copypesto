@@ -12,7 +12,7 @@ struct EveryActionUndoTests {
     private let history = UndoHistory()
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         service = StorageService(modelContainer: container, environment: .testing { [history] in
             $0.undoHistory = history
         })
@@ -221,7 +221,7 @@ struct EveryActionUndoTests {
 
     @Test("an imported collection takes its clips and its collection back together")
     func whenCollectionImported_thenUndoRemovesBoth() async throws {
-        let source = try ModelContainerSetup.makeInMemory().synced
+        let source = try ModelContainerSetup.makeInMemory()
         let sourceService = StorageService(modelContainer: source, environment: .testing())
         try await sourceService.ingest(PasteboardCapture(
             typeIdentifier: "public.utf8-plain-text", payload: Data("shared".utf8), payloadString: "shared",

@@ -2,7 +2,8 @@
 #if DEBUG
     import Foundation
 
-    /// The clips behind the website's demo video, "The Lunch Rush". Nothing is real: Apple's own apps are the sources,
+    /// The clips behind the website's pictures and the teaser's shelf frames (first made for the retired film
+    /// "The Lunch Rush"). Nothing is real: Apple's own apps are the sources,
     /// every
     /// address is example.com, the card is the published test number and no clip says anything about health.
     public enum LunchRushSeed {

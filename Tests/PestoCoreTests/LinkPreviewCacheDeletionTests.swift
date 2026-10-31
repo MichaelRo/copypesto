@@ -20,7 +20,7 @@ struct LinkPreviewCacheDeletionTests {
     }
 
     private func service(cache: LinkPreviewCache) throws -> (StorageService, ModelContainer) {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let environment = StorageEnvironment.testing { $0.linkPreviewCache = cache }
         return (StorageService(modelContainer: container, environment: environment), container)
     }

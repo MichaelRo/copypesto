@@ -48,7 +48,7 @@ struct AnimatedThumbnailTests {
     @Test("a big copied GIF is shown from a smaller animated copy; the stored original is untouched")
     func whenBigGIF_thenCardGetsASmallerAnimatedCopy() async throws {
         let original = try gif(frames: 120, side: 900)
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(modelContainer: container)
         try await service.ingest(PasteboardCapture(
             typeIdentifier: "com.compuserve.gif", payload: original, payloadString: nil,

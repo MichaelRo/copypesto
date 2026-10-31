@@ -28,7 +28,7 @@ final class SyncWorld {
 
         init(name: String, time: TimeBox) throws {
             self.name = name
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             service = StorageService(modelContainer: container)
             clock = SyncClock(deviceID: name, defaults: ThrowawayDefaults.make(), now: { time.now })
             SyncJournal.enable(for: container, clock: clock)
@@ -235,13 +235,13 @@ struct SyncMergeTests {
         #expect(held.count == 1, "only the plain clip went")
 
         try await world.apply(held, on: b)
-        _ = try await a.service.restampForSync()
+        _ = try await a.service.restampForSync(.sensitive)
         let both = try await world.publish(from: a, includeSensitive: true)
-        #expect(both.count == 2)
+        #expect(both.count == 1, "only the clip that was held back goes now; the plain one went before")
         try await world.apply(both, on: b)
         #expect(try world.clips(on: b).count == 2)
 
-        _ = try await a.service.restampForSync()
+        _ = try await a.service.restampForSync(.sensitive)
         let withdrawn = try await world.publish(from: a, includeSensitive: false)
         try await world.apply(withdrawn, on: b)
         #expect(try world.clips(on: b).count == 1, "the secret was withdrawn from the other Mac")

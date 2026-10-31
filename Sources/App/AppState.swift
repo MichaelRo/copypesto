@@ -148,11 +148,10 @@ final class AppState {
 
     /// Set by AppDelegate after containers are initialized.
     @ObservationIgnored var historyContainer: ModelContainer?
-    /// Sync (ADR 0018): nil until it is built, and not shown at all while `SyncAvailability.isAvailable` is false.
+    /// Sync (ADR 0018): built at launch by `startSyncIfNeeded`; nil in a launch that uses no system integrations.
     var syncController: SyncController?
     /// The single writer for deleting and clearing history. Set once storage is up.
     @ObservationIgnored var storageService: StorageService?
-    @ObservationIgnored var localContainer: ModelContainer?
     /// The version of a scheduled update Sparkle found while nobody was looking (shown in the status menu).
     @ObservationIgnored var availableUpdateVersion: String?
     /// Sparkle holds its user-driver delegate weakly, so the app state keeps this one.

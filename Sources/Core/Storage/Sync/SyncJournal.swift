@@ -8,13 +8,20 @@ import Synchronization
 /// signature, a picture upgraded to GIF) stamps nothing, because it does not change the fingerprint. Off, and for a
 /// store that is not enabled, it does nothing at all. A change applied from another Mac is not stamped again.
 public enum SyncJournal {
-    private static let clocks = Mutex<[ObjectIdentifier: SyncClock]>([:])
+    /// A container is found by its identity, and the entry holds it weakly: once it is freed, a new container at the
+    /// same address must not inherit its clock (and so start stamping and holding clips back by accident).
+    private struct Entry {
+        weak var container: ModelContainer?
+        let clock: SyncClock
+    }
+
+    private static let clocks = Mutex<[ObjectIdentifier: Entry]>([:])
 
     /// True while `StorageService.applySync` writes what another Mac said, so those saves keep the remote stamps.
     @TaskLocal public static var isApplyingRemote = false
 
     public static func enable(for container: ModelContainer, clock: SyncClock) {
-        clocks.withLock { $0[ObjectIdentifier(container)] = clock }
+        clocks.withLock { $0[ObjectIdentifier(container)] = Entry(container: container, clock: clock) }
     }
 
     public static func disable(for container: ModelContainer) {
@@ -22,7 +29,14 @@ public enum SyncJournal {
     }
 
     public static func clock(for container: ModelContainer) -> SyncClock? {
-        clocks.withLock { $0[ObjectIdentifier(container)] }
+        clocks.withLock { entries in
+            guard let entry = entries[ObjectIdentifier(container)] else { return nil }
+            guard entry.container === container else {
+                entries.removeValue(forKey: ObjectIdentifier(container))
+                return nil
+            }
+            return entry.clock
+        }
     }
 
     static func stamp(in context: ModelContext) {

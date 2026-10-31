@@ -28,7 +28,7 @@ struct PreviewSealingFailsClosedTests {
     private let sealer = SwitchableSealer()
 
     init() async throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         let sealer = sealer
         service = StorageService(modelContainer: container, environment: .testing { $0.previewSealer = sealer.seal })
     }

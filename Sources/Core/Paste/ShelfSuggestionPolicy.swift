@@ -4,7 +4,6 @@ import Foundation
 public enum ShelfSuggestionPolicy {
     public enum Thresholds {
         public static let habitMinimumDays = 3
-        public static let habitWindowDays = ItemMetadata.pasteDayWindow
         public static let familyMinimumSize = 3
         public static let familyMinimumDays = 2
         public static let offerTextLengths = 1...20_000

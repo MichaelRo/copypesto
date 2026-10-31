@@ -15,7 +15,7 @@ struct AutoBackupServiceTests {
         .appendingPathComponent("pesto-autobackup-\(UUID().uuidString)", isDirectory: true)
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     }
 
@@ -160,6 +160,30 @@ struct AutoBackupServiceTests {
         #expect(service.isRunning)
         service.setAutomatic(false)
         #expect(!service.isRunning)
+    }
+
+    private static func finished(_ semaphore: DispatchSemaphore) -> Bool {
+        semaphore.wait(timeout: .now() + 10) == .success
+    }
+
+    @Test("a preference written from another thread never waits for the main thread")
+    func whenAPreferenceIsWrittenOffMain_thenTheWriterIsNotHeldByTheMainThread() async throws {
+        let (service, defaults) = try service()
+        defer { clean(defaults) }
+        _ = try await service.enable(
+            passphrase: nil, folder: folder, includeSensitive: false, automatic: true, iterations: 1000
+        )
+        #expect(service.isRunning)
+
+        let written = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) let writer = defaults
+        DispatchQueue.global().async {
+            writer.set(UUID().uuidString, forKey: "pesto.test.offMainWrite")
+            written.signal()
+        }
+
+        #expect(Self.finished(written), "the write waited for the main thread")
+        service.stop()
     }
 
     @Test("the Keychain is asked for the backup key once, not for every backup")

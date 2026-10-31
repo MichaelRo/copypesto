@@ -13,7 +13,7 @@ extension HostedGlobals {
     struct PasteWritePerformanceTests {
         @Test("each kind of clip is written to the pasteboard within its budget")
         func writeItem_perKind() async throws {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let service = StorageService(modelContainer: container)
             let state = AppState()
             let context = ModelContext(container)

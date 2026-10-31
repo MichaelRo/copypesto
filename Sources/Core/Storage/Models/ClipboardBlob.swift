@@ -4,7 +4,7 @@ import SwiftData
 
 /// The heavy payload sibling to `ClipboardItem`. Always encrypted at rest (ADR 0002).
 /// `@Attribute(.externalStorage)` causes SwiftData to write the data to a file alongside
-/// the SQLite store, and CloudKit mirrors it as a `CKAsset` — streamed, lazy, large-payload-safe.
+/// the SQLite store, so a large payload is read lazily.
 @Model
 public final class ClipboardBlob {
     @Attribute(.unique) public var id: UUID

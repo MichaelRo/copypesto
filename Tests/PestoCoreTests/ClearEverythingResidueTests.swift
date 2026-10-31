@@ -122,7 +122,7 @@ struct ClearEverythingResidueTests {
     @Test("a key that cannot be replaced does not undo the clear")
     func whenTheKeyCannotBeReplaced_thenTheClipsAreStillGone() async throws {
         struct Refused: Error {}
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(modelContainer: container, environment: .testing {
             $0.keyRotator = { throw Refused() }
         })
@@ -136,7 +136,7 @@ struct ClearEverythingResidueTests {
 
     @Test("clearEverything invokes wipeSuggestionLedger")
     func clearEverything_invokesWipeSuggestionLedger() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let tracker = WipeTracker()
         let service = StorageService(modelContainer: container, environment: .testing {
             $0.wipeSuggestionLedger = { tracker.markWiped() }
@@ -148,7 +148,7 @@ struct ClearEverythingResidueTests {
 
     @Test("clearNonPinned in range all invokes wipeSuggestionLedger")
     func clearNonPinnedAll_invokesWipeSuggestionLedger() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let tracker = WipeTracker()
         let service = StorageService(modelContainer: container, environment: .testing {
             $0.wipeSuggestionLedger = { tracker.markWiped() }

@@ -11,7 +11,7 @@ extension HostedGlobals {
     struct TogglePinnedTests {
         @Test("toggling pins an unpinned clip, then unpins it, and says which; an unknown id says nothing")
         func whenToggled_thenPinnedStateFlipsAndIsReported() async throws {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let service = StorageService(modelContainer: container)
             let payload = Data("pin me".utf8)
             try await service.ingest(PasteboardCapture(

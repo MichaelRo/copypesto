@@ -14,7 +14,7 @@ extension HostedGlobals {
         private let vector = Data((0..<256).map { UInt8(truncatingIfNeeded: $0 &* 7 &+ 3) })
 
         init() async throws {
-            container = try ModelContainerSetup.makeInMemory().synced
+            container = try ModelContainerSetup.makeInMemory()
             service = StorageService(modelContainer: container)
         }
 

@@ -18,7 +18,7 @@ extension HostedGlobals {
     struct IngestConcurrencyTests {
         @Test("a second copy that arrives while the first is being read is the same clip, not a new one")
         func whenTheSameCopyArrivesTwiceWhileTheFirstIsInOCR_thenOneClipIsStored() async throws {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let service = StorageService(
                 modelContainer: container, environment: .testing { $0.textRecognizer = SlowRecognizer() }
             )

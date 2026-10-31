@@ -9,8 +9,10 @@ public struct SyncGroup: Sendable {
     public let key: SyncKey
     public let devices: [SyncDeviceRecord]
 
+    /// The vault's creator is trusted whether or not its device record is still in the folder: a Mac that made the
+    /// group and then left (Leave Sync removes its record) must not take the group away from the others.
     public var trust: SyncTrust {
-        SyncTrust(devices.map(\.keys))
+        SyncTrust(devices.map(\.keys) + [vault.creator])
     }
 
     public var epoch: UInt32 {
@@ -102,8 +104,9 @@ public enum SyncGroupManager {
         return record
     }
 
-    /// Finds the group a folder holds: the newest epoch whose vault file is validly signed by a device of that epoch,
-    /// and the key for it if this Mac has one. Two vaults of the same epoch (two resets that raced) resolve to the one
+    /// Finds the group a folder holds: the newest epoch whose vault file is validly signed by its creator and opens
+    /// with a key this Mac has, and the key for it if this Mac has one. Two vaults of the same epoch (two resets that
+    /// raced) resolve to the one
     /// with the smaller file hash, the same on every Mac.
     public static func open(layout: SyncFolderLayout, keyStore: any SyncKeyStoring) throws -> SyncGroupOpening {
         var candidates: [(vault: SyncVault, hash: String)] = []
@@ -125,7 +128,6 @@ public enum SyncGroupManager {
                 continue
             }
             let devices = devices(layout: layout, vault: candidate, key: key)
-            guard devices.contains(where: { $0.keys == candidate.creator }) else { continue }
             return .ready(SyncGroup(vault: candidate, key: key, devices: devices))
         }
         return .needsKey(newest)

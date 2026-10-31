@@ -52,7 +52,7 @@ struct HistoryIndexParityTests {
     ]
 
     init() throws {
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         context = ModelContext(container)
         var built: [ClipboardItem] = []
         for (offset, sample) in Self.samples.enumerated() {

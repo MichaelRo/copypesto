@@ -29,23 +29,47 @@ public extension StorageService {
     /// Payloads up to this size travel inside the log; bigger ones are named files beside it (`blobName`).
     static let inlinePayloadLimit = 256 * 1024
 
-    /// Gives every clip and collection a stamp and marks it dirty: the first write of a history, or a change of what
-    /// may leave this Mac (for example the person turned on syncing clips that hold secrets).
+    enum RestampScope {
+        /// Everything is sent again (a new key, a first announcement, a new device id). A Mac may only write records
+        /// stamped with its own id, so a clip with no stamp or one from another Mac gets a new stamp here, and a clip
+        /// this Mac stamped keeps its own: nothing it last changed is overridden.
+        case notFrom(deviceID: String)
+        /// Clips that hold secrets get a fresh stamp and are sent again: the person changed what may leave this Mac,
+        /// and a stamp later than any withdrawal is what lets a clip come back. Everything else is left alone.
+        case sensitive
+    }
+
     @discardableResult
-    func restampForSync() async throws -> Int {
+    func restampForSync(_ scope: RestampScope) async throws -> Int {
         guard let clock = SyncJournal.clock(for: modelContainer) else { return 0 }
         var count = 0
+        func isMine(_ encoded: String?, _ deviceID: String) -> Bool {
+            encoded.flatMap(SyncStamp.init(encoded:))?.deviceID == deviceID
+        }
         try await forEachClip { item in
-            item.syncFingerprint = item.syncFingerprintValue()
-            item.changeClock = clock.next().encoded
+            switch scope {
+            case let .notFrom(deviceID):
+                if !isMine(item.changeClock, deviceID) {
+                    item.syncFingerprint = item.syncFingerprintValue()
+                    item.changeClock = clock.next().encoded
+                }
+            case .sensitive:
+                guard item.sensitivityRaw != nil else { return }
+                item.syncFingerprint = item.syncFingerprintValue()
+                item.changeClock = clock.next().encoded
+            }
             item.syncDirty = true
             count += 1
         }
-        for board in try modelContext.fetch(FetchDescriptor<Pinboard>()) {
-            board.syncFingerprint = board.syncFingerprintValue()
-            board.changeClock = clock.next().encoded
-            board.syncDirty = true
-            count += 1
+        if case let .notFrom(deviceID) = scope {
+            for board in try modelContext.fetch(FetchDescriptor<Pinboard>()) {
+                if !isMine(board.changeClock, deviceID) {
+                    board.syncFingerprint = board.syncFingerprintValue()
+                    board.changeClock = clock.next().encoded
+                }
+                board.syncDirty = true
+                count += 1
+            }
         }
         try saveOrRollback()
         return count

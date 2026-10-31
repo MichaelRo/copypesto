@@ -31,7 +31,7 @@ final class SyncSite {
 
     init(name: String, layout: SyncFolderLayout, time: TimeBox, timing custom: SyncFolderService.Timing? = nil) throws {
         self.name = name
-        container = try ModelContainerSetup.makeInMemory().synced
+        container = try ModelContainerSetup.makeInMemory()
         storage = StorageService(modelContainer: container)
         identity = SyncIdentity(deviceID: name, name: name, keys: .generate())
         keyStore = ThisDeviceSyncKeyStore(secrets: secrets)

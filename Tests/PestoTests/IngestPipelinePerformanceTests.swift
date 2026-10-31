@@ -14,7 +14,7 @@ import XCTest
 /// Each iteration uses a fresh in-memory ModelContainer so dedup state is clean.
 final class IngestPipelinePerformanceTests: XCTestCase {
     func test_ingestText_pipelineUnder50ms() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(modelContainer: container)
         let capture = PasteboardCapture(
             typeIdentifier: "public.utf8-plain-text",
@@ -30,7 +30,7 @@ final class IngestPipelinePerformanceTests: XCTestCase {
 
     func test_ingestText_pipelineMeasured() {
         measure(metrics: [XCTClockMetric()]) {
-            guard let container = try? ModelContainerSetup.makeInMemory().synced else {
+            guard let container = try? ModelContainerSetup.makeInMemory() else {
                 XCTFail("Failed to create in-memory container")
                 return
             }

@@ -136,7 +136,7 @@ extension StorageService {
         }
         let newPreview = String(combined.prefix(500))
         // Mirror the ingest-path policy: re-encrypt the preview so the appended text
-        // doesn't leak to CloudKit as plaintext.
+        // is never stored as plaintext.
         if let previewData = newPreview.data(using: .utf8) {
             let previewEnvelope = try sealPreview(previewData, itemID: target.id)
             target.previewText = ""

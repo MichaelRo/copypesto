@@ -17,7 +17,7 @@ final class ClipboardCardTests: XCTestCase {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         return ModelContext(container)
     }
 

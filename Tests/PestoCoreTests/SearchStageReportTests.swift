@@ -19,7 +19,7 @@ final class SearchStageReportTests: XCTestCase {
     }
 
     private func makeShelfItems(count: Int) throws -> [ClipboardItem] {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let encryption = BlobEncryption()
         for index in 0..<count {

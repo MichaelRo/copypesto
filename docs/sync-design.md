@@ -1,6 +1,6 @@
 # Multi-device sync: design notes
 
-Sync is **built** (ADR 0018, Accepted): `SyncAvailability.isAvailable` is `true`, the feature is off on every Mac until its person turns it
+Sync is **built** (ADR 0018, Accepted): the feature is off on every Mac until its person turns it
 on in Settings → Data, and CloudKit is never started. These notes keep the reasons and the plan; the decisions are in the ADR.
 Compaction and snapshots are built. Still open: `make bench-sync`, the measured iCloud latency, the provisioning profile for the iCloud Keychain key
 (`docs/release.md`), and the two-Mac check (`docs/testing.md`, "Two Macs: sync").
@@ -12,7 +12,7 @@ Compaction and snapshots are built. Still open: `make bench-sync`, the measured 
   hint.
 - The blob key is per-install and `ThisDeviceOnly`, so a second Mac cannot decrypt synced blobs or previews. Options: a
   key shared through iCloud Keychain, or key wrapping per device.
-- Deletions must sync too (tombstones), and `ModelContainerSetup.make(cloudKitEnabled:)` silently falls back to
+- Deletions must sync too (tombstones), and a CloudKit-backed `ModelContainerSetup` (removed) silently fell back to
   local-only, so any UI must show the real tier.
 - A CloudKit entitlement needs a Team ID and a provisioning profile; `Pesto.entitlements` is empty for that reason.
 
@@ -43,12 +43,12 @@ One PR per phase, tests green in each, the full gate once before merging the las
    compaction, status states; starts only when `LaunchMode.current.usesSystemIntegrations`; tests use a temp folder.
 6. **UI and pairing**: Settings → Data → Sync (set up, join, sensitive opt-in, Reset Sync, real
    state), `SettingsIndex` entries, `Setting.syncEnabled` (default false, added to `Setting.allNames`, not in the export), first-sync progress that never blocks the shelf, approval with the six-word code. No Mac list; Reset Sync is the one action. UI and snapshot tests first.
-7. **Ship**: two-Mac check, `make bench-sync` within budget, flip `SyncAvailability.isAvailable` with its test, ADR to
+7. **Ship**: two-Mac check, `make bench-sync` within budget, ADR to
    Accepted, README, guide and website.
 
 ## Done when
 1. A two-device test shows an item written on Mac A decrypting on Mac B.
 2. Deleting on A removes it on B and a re-import does not resurrect it.
 3. Settings shows the real state, never "Connected" by default.
-4. `SyncAvailability.isAvailable` flips to `true` with its test.
+4. Sync is off until a person turns it on, on each Mac (`Setting.syncEnabled`).
 5. Existing local stores migrate without loss (test on a store made by the current build).

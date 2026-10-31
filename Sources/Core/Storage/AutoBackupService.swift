@@ -83,9 +83,9 @@ public final class AutoBackupService {
         observer = ModelSaveObserver.observe { [weak self] in self?.noteChange() }
         settingsFingerprint = SettingsBackupManager.fingerprint(in: defaults)
         settingsObserver = NotificationCenter.default.addObserver(
-            forName: UserDefaults.didChangeNotification, object: nil, queue: .main
+            forName: UserDefaults.didChangeNotification, object: nil, queue: nil
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.settingsMayHaveChanged() }
+            Task { @MainActor in self?.settingsMayHaveChanged() }
         }
         if settings.lastBackup == nil { noteChange() }
     }

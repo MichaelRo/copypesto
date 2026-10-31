@@ -10,7 +10,7 @@ struct ShelfCopyTests {
     @Test("copying moves the clip to the front but does not count as a paste, which Pesto did not make")
     @MainActor
     func copyIsRecorded() throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let item = ClipboardItem(
             timestamp: Date(timeIntervalSince1970: 1000), type: .text, previewText: "x",

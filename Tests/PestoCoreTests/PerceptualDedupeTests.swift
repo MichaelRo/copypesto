@@ -45,7 +45,7 @@ struct PerceptualDedupeTests {
 
     @Test("the same picture in another encoding pops the existing item instead of vanishing")
     func ingest_perceptualDuplicate_popsExistingItem() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(
             modelContainer: container, environment: .testing { $0.textRecognizer = NoTextRecognizer() }
         )
@@ -67,7 +67,7 @@ struct PerceptualDedupeTests {
 
     @Test("a different picture with a similar coarse hash is stored, not swallowed")
     func ingest_similarButDifferentImage_isStored() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let service = StorageService(
             modelContainer: container, environment: .testing { $0.textRecognizer = NoTextRecognizer() }
         )
@@ -88,8 +88,8 @@ struct PerceptualDedupeTests {
         "restoring a picture that looks like one already here counts as already had, and leaves that clip where it is"
     )
     func restore_lookAlikePicture_isNotCountedAndDoesNotMoveTheExisting() async throws {
-        let source = try ModelContainerSetup.makeInMemory().synced
-        let target = try ModelContainerSetup.makeInMemory().synced
+        let source = try ModelContainerSetup.makeInMemory()
+        let target = try ModelContainerSetup.makeInMemory()
         let sourceService = StorageService(
             modelContainer: source, environment: .testing { $0.textRecognizer = NoTextRecognizer() }
         )

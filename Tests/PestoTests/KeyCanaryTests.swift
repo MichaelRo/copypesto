@@ -10,7 +10,7 @@ extension HostedGlobals {
     @Suite("The key canary opens a few small clips")
     struct KeyCanaryTests {
         private func store(_ texts: [String]) async throws -> ModelContainer {
-            let container = try ModelContainerSetup.makeInMemory().synced
+            let container = try ModelContainerSetup.makeInMemory()
             let service = StorageService(modelContainer: container)
             for text in texts {
                 let payload = Data(text.utf8)

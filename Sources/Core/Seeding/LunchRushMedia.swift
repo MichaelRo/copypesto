@@ -5,6 +5,7 @@
     import CoreText
     import Foundation
     import ImageIO
+    import Synchronization
 
     /// The GIF, the PDF and the short video of the Lunch Rush shelf, drawn in code by `ShowcaseArt`, so the demo shows
     /// every
@@ -95,8 +96,22 @@
             "A pinch of salt, her pinch"
         ]
 
-        /// Two seconds of the jar being stirred, as an H.264 file.
+        /// Two seconds of the jar being stirred, as an H.264 file. The writer runs on a queue of its own and the wait
+        /// has an
+        /// end: a test that asks for the video from a Swift-concurrency thread (the test runner fills that pool with
+        /// tests
+        /// waiting for this very file) would otherwise leave the writer's completion no thread to run on, and hang.
         private static func makeVideo() -> URL? {
+            let made = Mutex<URL?>(nil)
+            let finished = DispatchSemaphore(value: 0)
+            DispatchQueue.global(qos: .userInitiated).async {
+                made.withLock { $0 = writeVideo() }
+                finished.signal()
+            }
+            return finished.wait(timeout: .now() + 60) == .success ? made.withLock { $0 } : nil
+        }
+
+        private static func writeVideo() -> URL? {
             let url = folder.appendingPathComponent("pesto-spoon.mp4")
             try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             try? FileManager.default.removeItem(at: url)
@@ -143,7 +158,7 @@
             input.markAsFinished()
             let finished = DispatchSemaphore(value: 0)
             writer.finishWriting { finished.signal() }
-            finished.wait()
+            guard finished.wait(timeout: .now() + 30) == .success else { return nil }
             return writer.status == .completed ? url : nil
         }
     }

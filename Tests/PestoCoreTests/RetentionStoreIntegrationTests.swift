@@ -52,7 +52,7 @@ struct RetentionStoreIntegrationTests {
 
     @Test("an expired pinned item is never reported as expired")
     func whenPinnedItemPastTTL_thenNotExpired() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let pinned = makeItem(pinned: true, expiresAt: .now - 60, sequence: 1)
         let loose = makeItem(pinned: false, expiresAt: .now - 60, sequence: 2)
@@ -68,7 +68,7 @@ struct RetentionStoreIntegrationTests {
 
     @Test("deleting an item removes its blob row too")
     func whenItemDeleted_thenBlobCascades() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let item = makeItem(pinned: false, sequence: 1, withBlob: true)
         context.insert(item)
@@ -83,7 +83,7 @@ struct RetentionStoreIntegrationTests {
 
     @Test("a sweep keeps pinned items through age, count and TTL")
     func whenSweeping_thenPinnedItemsSurvive() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let old = Date.now - 90 * 86_400
         let pinned = makeItem(pinned: true, expiresAt: .now - 60, sequence: 1)
@@ -108,7 +108,7 @@ struct RetentionStoreIntegrationTests {
         "a sweep that deletes an expired item clears its last-item file and leaves no tombstone"
     )
     func whenSweepDeletesExpiredItem_thenNoPlaintextLeftBehind() async throws {
-        let container = try ModelContainerSetup.makeInMemory().synced
+        let container = try ModelContainerSetup.makeInMemory()
         let context = ModelContext(container)
         let expired = makeItem(pinned: false, expiresAt: .now - 60, sequence: 1, withBlob: true)
         context.insert(expired)

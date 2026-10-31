@@ -176,8 +176,9 @@ struct AutoBackupServiceTests {
         #expect(service.isRunning)
 
         let written = DispatchSemaphore(value: 0)
+        nonisolated(unsafe) let writer = defaults
         DispatchQueue.global().async {
-            defaults.set(UUID().uuidString, forKey: "pesto.test.offMainWrite")
+            writer.set(UUID().uuidString, forKey: "pesto.test.offMainWrite")
             written.signal()
         }
 

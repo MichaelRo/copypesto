@@ -18,7 +18,10 @@ XCODEBUILD = DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 	CODE_SIGNING_REQUIRED=NO
 
 APP              = $(BUILD_DIR)/Build/Products/Debug/Pesto.app
-DEV_SIGN_IDENTITY = Pesto Development
+SELF_SIGNED_IDENTITY = Pesto Development
+# A Developer ID certificate in the keychain signs development builds too: its designated requirement is the team, so a
+# rebuild keeps the Accessibility grant and the Keychain "Always Allow" that a self-signed build loses after every install.
+DEV_SIGN_IDENTITY ?= $(or $(shell security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -1),$(SELF_SIGNED_IDENTITY))
 RELEASE_SIGN_IDENTITY = Pesto Release
 ENTITLEMENTS      = Sources/Resources/Pesto.entitlements
 # Set SYNC_PROFILE to the name of the Developer ID provisioning profile to sign the release for the iCloud Keychain sync
@@ -151,7 +154,7 @@ capture-real: generate ## [Maintenance] Retake the Touch ID lock and the Ask pic
 
 .PHONY: setup-signing
 setup-signing: ## [Develop] Create a local dev signing cert so Accessibility permission survives rebuilds (run once; says what it changes)
-	@DEV_SIGN_IDENTITY="$(DEV_SIGN_IDENTITY)" scripts/setup-signing.sh
+	@DEV_SIGN_IDENTITY="$(SELF_SIGNED_IDENTITY)" scripts/setup-signing.sh
 
 .PHONY: setup-release-signing
 setup-release-signing: ## [Release] Create the self-signed "Pesto Release" identity that signs the unsigned 1.0 disk image (run once; says what it changes)

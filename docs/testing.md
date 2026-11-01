@@ -42,6 +42,8 @@ step and the summary. Reading the logs is what costs time and tokens, so don't.
 - Read only the summary: `.build/verify/<run>/SUMMARY.txt`, or the last 15 lines of the output.
 - On a failure, read `.build/verify/<run>/failures.txt`: one line per failing test (`target/Suite/test: message`),
   from the result bundle. Open a log only for a failure whose line does not explain it.
+- The gate skips the three suites that only draw pictures (`MarketingScreenshotTests`, `DocScreenshotTests`, `TeaserFramesTests`, about 8 minutes): `make pictures` runs them, and the teaser frames with `-only-testing:PestoUITests/TeaserFramesTests`. They judge no behavior.
+- Run the gate on a quiet desktop. XCUITest checks every open app's windows for interruptions on each query, so with an editor, terminals and chat windows open a status-menu test took 130 s instead of 17 s.
 - Start exactly one gate, and look first: `pgrep -f verify.sh`. A second `verify.sh` (or a `-only-testing` run) next to a running one locks the shared build database ("database is locked") and every step after it fails for no reason.
 - To abandon a gate, kill the script, `caffeinate`, `xcodebuild` and `swift-frontend`, **and the test host it left running** (`pkill -f "xcode-profile.*Pesto.app/Contents/MacOS/Pesto"`); the next `verify.sh` refuses to start next to any running Pesto.
 - The first step that fails (Core tests) ends the useful part of a run: read `failures.txt` at once, not at the end of the hour. A timing test ("a cancelled wait returns at once") fails when the Mac is busy with something else (a browser tab or a music player at 100% CPU); start the gate again before blaming code.

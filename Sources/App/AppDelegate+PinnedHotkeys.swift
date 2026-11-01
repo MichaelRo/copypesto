@@ -4,7 +4,7 @@ import PestoCore
 import SwiftData
 
 extension AppDelegate {
-    func promptForAccessibilityOncePerVersion() {
+    func showAccessibilityStepOncePerVersion() {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
         let store = AppDefaults.store
         guard AccessibilityPromptPolicy.shouldPrompt(
@@ -12,7 +12,7 @@ extension AppDelegate {
             currentVersion: version
         ) else { return }
         store.set(version, forKey: AccessibilityPromptPolicy.defaultsKey)
-        AccessibilityPermission.requestWithPrompt()
+        showOnboarding()
     }
 
     func startPinnedHotkeyTracking() {

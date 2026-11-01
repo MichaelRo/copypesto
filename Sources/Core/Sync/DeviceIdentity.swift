@@ -3,8 +3,8 @@ import Foundation
 import Security
 
 /// Stable per-install device identifier. Used as a tiebreaker in cross-device ordering.
-/// Stored in the Keychain so it survives app reinstall
-/// (Keychain items persist across app deletion when accessibleWhenUnlockedThisDeviceOnly).
+/// Kept in the preferences, which survive deleting the app as the Keychain does, so reading it never asks for a
+/// Keychain password; `loadOrCreate` is the legacy home an older install is read from once.
 public struct DeviceIdentity: Sendable {
     public let service: String
     public let account: String
@@ -27,11 +27,19 @@ public struct DeviceIdentity: Sendable {
     /// must not read the login Keychain (an item made by another build blocks the reader on an access prompt, as the
     /// restore window of the key-loss UI test did).
     public static func current(
-        configuration: RuntimeConfiguration = .current, identity: DeviceIdentity = DeviceIdentity()
+        configuration: RuntimeConfiguration = .current,
+        identity: DeviceIdentity = DeviceIdentity(),
+        defaults: UserDefaults = AppDefaults.store
     )
     -> String {
         guard configuration.mode.usesSystemIntegrations else { return "uitest-device-\(configuration.session)" }
-        return (try? identity.loadOrCreate()) ?? "unknown"
+        let saved: String = defaults.value(for: Setting.deviceID)
+        if !saved.isEmpty { return saved }
+        // An install from before the identity moved to the preferences reads the Keychain item once (one access prompt)
+        // and never again; a new install never touches the Keychain for it.
+        let id = (try? identity.load()) ?? UUID().uuidString
+        defaults.set(id, for: Setting.deviceID)
+        return id
     }
 
     func load() throws -> String? {

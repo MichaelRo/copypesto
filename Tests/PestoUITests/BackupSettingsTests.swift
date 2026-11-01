@@ -9,6 +9,11 @@ final class BackupSettingsTests: PestoUITestCase {
         element(AccessibilityID.settingsSidebar("Data")).click()
     }
 
+    /// A static text keeps its words in `value`; a group keeps them in `label`.
+    private static func words(of element: XCUIElement) -> String {
+        element.label + " " + ((element.value as? String) ?? "")
+    }
+
     /// A person could not tell whether backup was on: the answer was only which buttons were showing.
     func test_theDataPane_saysWhetherBackupIsOn() {
         openDataPane()
@@ -16,8 +21,9 @@ final class BackupSettingsTests: PestoUITestCase {
         let summary = element(AccessibilityID.backupStatus)
         XCTAssertTrue(summary.waitForExistence(timeout: 5), "no backup summary row")
         XCTAssertTrue(
-            summary.label.contains("Your clips stay on this Mac") && summary.label.contains("Backup: Off"),
-            "the Data pane should say, in words, that the clips stay here and backup is off: \(summary.label)"
+            Self.words(of: summary).contains("Your clips stay on this Mac") && Self.words(of: summary)
+                .contains("Backup: Off"),
+            "the Data pane should say, in words, that the clips stay here and backup is off: \(Self.words(of: summary))"
         )
         XCTAssertTrue(element(AccessibilityID.backupSwitch).exists, "no switch for backing up this Mac")
         capture("settings-data-backup-off", of: settingsWindow)
@@ -55,7 +61,7 @@ final class BackupSettingsTests: PestoUITestCase {
         XCTAssertFalse(confirm.waitForExistence(timeout: 2), "Cancel left the sheet open")
         XCTAssertTrue(setUp.exists, "cancelling must leave the backup not set up")
         XCTAssertTrue(
-            element(AccessibilityID.backupStatus).label.contains("Backup: Off"),
+            Self.words(of: element(AccessibilityID.backupStatus)).contains("Backup: Off"),
             "cancelling must leave the backup off"
         )
         XCTAssertFalse(element(AccessibilityID.autoBackupNowButton).exists)
@@ -114,7 +120,7 @@ final class BackupSettingsTests: PestoUITestCase {
         XCTAssertTrue(element(AccessibilityID.backupIncludesSecretsToggle).exists, "no secrets choice")
         XCTAssertTrue(element(AccessibilityID.showRecoveryKeyButton).exists, "no Show Recovery Key button")
         XCTAssertFalse(
-            element(AccessibilityID.backupStatus).label.contains("Backup: Off"),
+            Self.words(of: element(AccessibilityID.backupStatus)).contains("Backup: Off"),
             "a backup that is on must not say it is off"
         )
         capture("settings-data-backup-on", of: settingsWindow)

@@ -22,6 +22,7 @@ struct BackupSummaryRow: View {
         .accessibilityLabel(
             "Your clips stay on this Mac. \(chip.summaryText(now: now)).\(sync.map { " \($0.chipText)." } ?? "")"
         )
+        .accessibilityAddTraits(.isStaticText)
         .accessibilityIdentifier(AccessibilityID.backupStatus)
     }
 

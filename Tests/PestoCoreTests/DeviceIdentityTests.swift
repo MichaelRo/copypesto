@@ -96,4 +96,39 @@ struct DeviceIdentityTests {
         #expect(DeviceIdentity.current(configuration: configuration, identity: untouched) == "uitest-device-abc")
         #expect(!Self.exists(untouched), "a test launch must not create a Keychain item")
     }
+
+    private static let appLaunch = RuntimeConfiguration(
+        mode: .normal,
+        session: "app",
+        seed: .empty,
+        accessibility: .trusted
+    )
+
+    @Test("a new install keeps its identity in the preferences and never writes to the Keychain")
+    func whenANewInstallStarts_thenTheIdentityIsInThePreferencesOnly() {
+        let defaults = ThrowawayDefaults.make()
+        let untouched = DeviceIdentity(service: "io.pesto.app.tests.\(UUID())", account: "never-created")
+
+        let first = DeviceIdentity.current(configuration: Self.appLaunch, identity: untouched, defaults: defaults)
+
+        #expect(first != "unknown" && !first.isEmpty)
+        #expect(!Self.exists(untouched), "a new install must not create a Keychain item")
+        #expect(DeviceIdentity.current(configuration: Self.appLaunch, identity: untouched, defaults: defaults) == first)
+    }
+
+    @Test("an older install brings its Keychain identity into the preferences once, then never reads the Keychain")
+    func whenAnOlderInstallStarts_thenItsIdentityIsKeptAndTheKeychainIsReadOnce() throws {
+        let defaults = ThrowawayDefaults.make()
+        try withIdentity { identity in
+            let old = try identity.loadOrCreate()
+
+            #expect(DeviceIdentity
+                .current(configuration: Self.appLaunch, identity: identity, defaults: defaults) == old)
+            Self.delete(identity)
+
+            #expect(DeviceIdentity
+                .current(configuration: Self.appLaunch, identity: identity, defaults: defaults) == old)
+            #expect(!Self.exists(identity))
+        }
+    }
 }

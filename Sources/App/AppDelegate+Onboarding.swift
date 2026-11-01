@@ -18,9 +18,9 @@ extension AppDelegate {
         case .showOnboarding:
             showOnboarding()
         case .promptForAccessibility:
-            // Already onboarded but AX was revoked / CDHash changed: surface the system prompt without forcing
-            // them back through the full onboarding flow.
-            promptForAccessibilityOncePerVersion()
+            // Already onboarded but Accessibility was revoked or the signature changed: onboarding shows only the steps
+            // still open (the Keychain key is ready), so the system dialog comes after the explanation, not cold.
+            showAccessibilityStepOncePerVersion()
         case .nothing:
             break
         }

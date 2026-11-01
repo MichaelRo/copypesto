@@ -45,6 +45,7 @@ public enum Setting {
     public static let syncIncludesSecrets = SettingKey("syncIncludesSecrets", default: false)
     public static let syncFolderPath = SettingKey("syncFolderPath", default: "")
     public static let syncDeviceSerial = SettingKey("syncDeviceSerial", default: 0)
+    public static let deviceID = SettingKey("deviceID", default: "")
     public static let opensQuickMenuAtCursor = SettingKey("opensQuickMenuAtCursor", default: false)
     public static let screenSharingPrivacy = SettingKey("screenSharingPrivacy", default: false)
     public static let biometricLockEnabled = SettingKey("biometricLockEnabled", default: false)
@@ -128,7 +129,7 @@ public enum Setting {
         ruleStripTracking.name, ruleTrimWhitespace.name, ruleNormalizeLineEndings.name,
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
-        syncDeviceSerial.name,
+        syncDeviceSerial.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,

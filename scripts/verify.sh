@@ -152,7 +152,12 @@ retry_host_crashes() {
 }
 
 step_hosted_and_ui() {
-  UI_SKIP_ARGS=()
+  # The suites that only draw pictures (make pictures, make teaser-frames) judge no behavior and take 8 minutes.
+  UI_SKIP_ARGS=(
+    -skip-testing:PestoUITests/MarketingScreenshotTests
+    -skip-testing:PestoUITests/DocScreenshotTests
+    -skip-testing:PestoUITests/TeaserFramesTests
+  )
   TEST_LABEL="hosted + UI tests"
   if [[ $SKIP_UI -eq 1 ]]; then
     UI_SKIP_ARGS=(-skip-testing:PestoUITests)

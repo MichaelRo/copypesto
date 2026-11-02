@@ -37,4 +37,21 @@ struct DefaultsChangeObserverTests {
         #expect(runs.withLock { $0 } == 2)
         withExtendedLifetime(observer) {}
     }
+
+    @Test("a preference write on another thread never waits for the main thread (SyncClock deadlock guard)")
+    func whenAWriteHappensOnAnotherThread_thenItNeverWaitsForTheMainThread() {
+        let observer = DefaultsChangeObserver(delay: .milliseconds(40)) {}
+        let posted = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: nil)
+            posted.signal()
+        }
+
+        // The main thread is blocked here, as it is when it waits for the storage actor while SyncClock.next() or
+        // LaunchMigrator writes to UserDefaults on the storage actor's context queue.
+        let result = posted.wait(timeout: .now() + 3)
+
+        #expect(result == .success, "UserDefaults.didChangeNotification waited for the blocked main thread")
+        withExtendedLifetime(observer) {}
+    }
 }

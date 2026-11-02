@@ -16,8 +16,12 @@ final class DefaultsChangeObserver {
     init(delay: Duration = .milliseconds(150), onChange: @escaping @MainActor () async -> Void) {
         self.delay = delay
         self.onChange = onChange
+        // Observe with `queue: nil` on the posting thread and hop to the main actor asynchronously. Registering with
+        // `queue: .main` makes `NSNotificationCenter` block the poster in `-[NSOperation waitUntilFinished]`, which
+        // deadlocks launch when `SyncClock.next()` or `LaunchMigrator` writes to `UserDefaults` inside a storage save
+        // while the main thread waits for the storage context.
         tokens = [UserDefaults.didChangeNotification, ExclusionAllowances.didChange].map { name in
-            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
                 Task { @MainActor in self?.schedule() }
             }
         }

@@ -16,7 +16,7 @@ Bring your clipboard history, pinned clips or snippets into Pesto from other app
 - **Pesto keeps a month of clips by default** (*Settings → Data*). Imported history keeps its original dates, so the
   older part of a big import is removed at the next cleanup. The import tells you how many clips that is.
 
-## Moving from Paste
+## How Pesto finds and imports your history
 If another supported clipboard manager is installed when you finish setup, the shelf shows a one-time line offering to bring its history
 over. With one app, *Import…* opens *Settings → Data* at that app's import. With several ("You have Paste and Maccy"), *Choose…* opens
 *Settings → Data* at **Found on this Mac**, a card with a row for each app and its own *Import…* button; you import them one at a
@@ -24,6 +24,9 @@ time, and each asks for Touch ID and a file of its own, so nothing is merged bli
 finds the apps by asking macOS where they are installed; it opens none of their data until you choose to import. The card stays in
 *Settings → Data* whenever one is installed, and a row says how many clips it brought in until you quit Pesto.
 
+Every import reads a copy of your library read-only and leaves the original app untouched. Your clips are encrypted on disk under your own Mac's key, and Touch ID or your account password is required before reading any files.
+
+## Moving from Paste
 *Settings → Data → Another app's library → Import… → From Paste…* reads a copy of your Paste library and leaves Paste unchanged. Each of its
 pinboards becomes a collection, and those clips are pinned. You can also bring in its clipboard history; those clips
 are not pinned, so your retention setting may remove the older ones. Clips you already have are skipped. Formatting
@@ -39,7 +42,7 @@ The import tells you how many clips came in and how many were left out.
 
 ## Moving from Maccy or Alfred
 
-If Maccy or Alfred is installed on your Mac, Pesto detects it after setup and offers to bring your history over with one click. You can also import at any time in *Settings → Data → Another app's library → Import…*.
+*Settings → Data → Another app's library → Import…* has dedicated importers for Maccy and Alfred, and detects them automatically if installed.
 
 ### Maccy
 *Settings → Data → Another app's library → Import… → From Maccy…* opens Maccy's library file (`Storage.sqlite` in `~/Library/Containers/org.p0deje.Maccy/Data/Library/Application Support/Maccy/`). The file chooser opens directly in Maccy's folder.

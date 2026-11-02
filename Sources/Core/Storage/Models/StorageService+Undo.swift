@@ -60,7 +60,9 @@ extension StorageService {
             }
             return entry
         case let .collectionDeleted(snapshot):
-            return try (undoing ? restoreCollection(snapshot) : removeCollection(id: snapshot.id)) ? entry : nil
+            return try (
+                undoing ? restoreCollection(snapshot) : removeCollection(id: snapshot.id, recordsTombstone: true)
+            ) ? entry : nil
         case let .clipsEdited(edits):
             return try applyEdits(edits, undoing: undoing) ? entry : nil
         case let .collectionsChanged(_, changes):
@@ -93,8 +95,9 @@ extension StorageService {
         try modelContext.fetch(FetchDescriptor<DeletedItemTombstone>(
             predicate: #Predicate { restoredIDs.contains($0.id) }
         )).forEach(modelContext.delete)
-        try saveOrRollback()
         PreviewTextCache.shared.clear()
+        try ensureSnippetsCollection()
+        try saveOrRollback()
         for snapshot in restored {
             if let file = snapshot.linkPreviewFile { try? linkPreviews.restoreSealedFile(file, for: snapshot.id) }
         }
@@ -124,8 +127,9 @@ extension StorageService {
         return true
     }
 
-    private func removeCollection(id: UUID) throws -> Bool {
+    private func removeCollection(id: UUID, recordsTombstone: Bool = false) throws -> Bool {
         guard let board = try pinboard(id: id) else { return false }
+        if recordsTombstone { modelContext.insert(syncCollectionTombstone(id: id)) }
         modelContext.delete(board)
         try saveOrRollback()
         return true
@@ -133,6 +137,10 @@ extension StorageService {
 
     private func restoreCollection(_ snapshot: PinboardSnapshot) throws -> Bool {
         guard try pinboard(id: snapshot.id) == nil else { return false }
+        let targetID = snapshot.id
+        try modelContext.fetch(FetchDescriptor<DeletedItemTombstone>(
+            predicate: #Predicate { $0.id == targetID }
+        )).forEach(modelContext.delete)
         let names = try modelContext.fetch(FetchDescriptor<Pinboard>()).map(\.name)
         modelContext.insert(snapshot.makeBoard(named: CollectionNaming.uniqueName(snapshot.name, existing: names)))
         try saveOrRollback()
@@ -228,8 +236,8 @@ extension StorageService {
             applied = true
         }
         if applied {
-            try saveOrRollback()
             PreviewTextCache.shared.clear()
+            try saveOrRollback()
         }
         return applied
     }

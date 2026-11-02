@@ -75,7 +75,12 @@ public struct HistoryRow: Sendable {
         collectionID = item.collectionID
         let metadata = item.metadata
         let tags = metadata.tags
-        tagsLowercased = tags.map { $0.lowercased() }
+        let isTemplate = item.isTemplate
+        var loweredTags = tags.map { $0.lowercased() }
+        if isTemplate, !loweredTags.contains("snippets") {
+            loweredTags.append("snippets")
+        }
+        tagsLowercased = loweredTags
         languageLowercased = item.detectedLanguage?.lowercased()
         guard includingText else {
             haystack = []
@@ -85,6 +90,9 @@ public struct HistoryRow: Sendable {
         parts.append(metadata.customTitle.map(SearchMatching.fold) ?? "")
         parts.append(metadata.userNote.map(SearchMatching.fold) ?? "")
         parts.append(contentsOf: tags.map(SearchMatching.fold))
+        if isTemplate {
+            parts.append("snippets")
+        }
         var bytes: [UInt8] = []
         for (position, part) in parts.enumerated() {
             if position > 0 { bytes.append(Self.separator) }

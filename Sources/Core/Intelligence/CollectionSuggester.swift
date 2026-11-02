@@ -26,6 +26,19 @@ public struct CollectionSuggestion: Equatable, Sendable, Identifiable {
 /// it fills itself, and creating one never moves a clip out of the collection it is in.
 public enum CollectionSuggester {
     public static let thinHistory = 30
+    public static let snippetsSuggestionID = "snippets"
+    // swiftlint:disable:next force_unwrapping
+    public static let snippetsCollectionID = UUID(uuidString: "00000000-0000-0000-0000-0000534E4950")!
+    public static let snippetsRuleSet = PredicateRuleSet(
+        combinator: .and,
+        groups: [PredicateRuleSet.Group(
+            combinator: .and,
+            rules: [
+                PredicateRule(field: .isPinned, op: .isTrue, value: .none),
+                PredicateRule(field: .previewText, op: .contains, value: .string("{{"))
+            ]
+        )]
+    )
     private static let minimumForShape = 5
     private static let minimumForRareShape = 3
     private static let minimumForApp = 8
@@ -65,6 +78,14 @@ public enum CollectionSuggester {
 
     private static func fromClips(_ clips: [some PredicateEvaluatable]) -> [CollectionSuggestion] {
         var found: [CollectionSuggestion] = []
+        let snippetsCount = clips.count(where: { snippetsRuleSet.matches($0) })
+        if snippetsCount >= 1 {
+            found.append(CollectionSuggestion(
+                id: snippetsSuggestionID, group: .fromYourClips, name: "Snippets", symbol: "curlybraces",
+                colorHex: "#2F8B4C", matchCount: snippetsCount, blurb: nil,
+                ruleSet: snippetsRuleSet
+            ))
+        }
         for shape in Shape.allCases {
             let ruleSet = shape.ruleSet
             let count = clips.count(where: { ruleSet.matches($0) })

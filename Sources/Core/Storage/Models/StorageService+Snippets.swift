@@ -54,6 +54,8 @@ public extension StorageService {
         item.blob?.encryptedRichData = nil
         item.blob?.richNonceData = nil
         if let title, item.customTitle == nil { item.customTitle = title }
+        PreviewTextCache.shared.clear()
+        try ensureSnippetsCollection()
         try saveOrRollback()
         if let before, recordsEdit { recordEdits([(item, before)]) }
         return (item.id, before == nil)
@@ -97,9 +99,10 @@ public extension StorageService {
         try applySnippetText(text, payload: payload, to: item)
         let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
         item.customTitle = trimmedTitle?.isEmpty == false ? trimmedTitle : nil
+        PreviewTextCache.shared.clear()
+        try ensureSnippetsCollection()
         try saveOrRollback()
         recordReplacement(of: item, before: before)
-        PreviewTextCache.shared.clear()
         lastItemStore.clear(ifItemID: id)
         return true
     }
@@ -139,10 +142,63 @@ public extension StorageService {
         guard let item = try modelContext.fetch(descriptor).first else { return nil }
         let before = ClipFieldState(item)
         item.isPinned.toggle()
-        if !item.isPinned { item.setShortcut(nil) }
+        if !item.isPinned {
+            item.setShortcut(nil)
+            try pruneEmptySnippetsCollectionIfNeeded()
+        } else {
+            try ensureSnippetsCollection()
+        }
         try saveOrRollback()
         recordEdits([(item, before)])
         return item.isPinned
+    }
+
+    /// Ensures the smart `Snippets` collection exists when at least one snippet is configured and the user has not
+    /// explicitly deleted the `Snippets` collection.
+    func ensureSnippetsCollection() throws {
+        let pinned = try modelContext.fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.isPinned }))
+        guard pinned.contains(where: \.isTemplate) else { return }
+        let targetID = CollectionSuggester.snippetsCollectionID
+        let tombstones = try modelContext.fetchCount(FetchDescriptor<DeletedItemTombstone>(
+            predicate: #Predicate { $0.id == targetID }
+        ))
+        guard tombstones == 0 else { return }
+        let existing = try modelContext.fetch(FetchDescriptor<Pinboard>())
+        guard !existing.contains(where: { $0.id == targetID || Self.isSnippetsSmartCollection($0) }) else { return }
+        let nextOrder = (existing.map(\.sortOrder).max() ?? -1) + 1
+        let data = try SmartCollectionPredicate.encodeRuleSet(CollectionSuggester.snippetsRuleSet)
+        let board = Pinboard(
+            id: targetID,
+            name: CollectionNaming.uniqueName(FirstRunSamples.collectionName, existing: existing.map(\.name)),
+            symbolName: "curlybraces",
+            colorHex: "#2F8B4C",
+            sortOrder: nextOrder,
+            isSmart: true,
+            smartPredicateData: data
+        )
+        modelContext.insert(board)
+        if modelContext.hasChanges {
+            try saveOrRollback()
+        }
+    }
+
+    /// Removes the auto-created `Snippets` smart collection (without recording a deletion tombstone) when no snippets
+    /// remain, provided the user has not renamed or edited its rule.
+    func pruneEmptySnippetsCollectionIfNeeded() throws {
+        let pinned = try modelContext.fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.isPinned }))
+        guard !pinned.contains(where: \.isTemplate) else { return }
+        let targetID = CollectionSuggester.snippetsCollectionID
+        guard let board = try modelContext.fetch(FetchDescriptor<Pinboard>(
+            predicate: #Predicate { $0.id == targetID }
+        )).first else { return }
+        guard board.name == FirstRunSamples.collectionName, Self.isSnippetsSmartCollection(board) else { return }
+        modelContext.delete(board)
+    }
+
+    static func isSnippetsSmartCollection(_ board: Pinboard) -> Bool {
+        guard board.isSmart, let data = board.smartPredicateData,
+              let ruleSet = try? SmartCollectionPredicate.decodeRuleSet(data) else { return false }
+        return ruleSet == CollectionSuggester.snippetsRuleSet
     }
 
     /// Gives the clip the shortcut ⌃`slot` (1 to 9), or takes its shortcut away with nil. The shortcut belongs to one

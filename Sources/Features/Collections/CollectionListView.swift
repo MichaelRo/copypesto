@@ -185,7 +185,10 @@ struct CollectionListView: View {
     private func createCollection(from suggestion: CollectionSuggestion) {
         guard let data = try? SmartCollectionPredicate.encodeRuleSet(suggestion.ruleSet) else { return }
         let next = (pinboards.map(\.sortOrder).max() ?? -1) + 1
+        let id = suggestion.id == CollectionSuggester.snippetsSuggestionID
+            ? CollectionSuggester.snippetsCollectionID : UUID()
         let board = Pinboard(
+            id: id,
             name: CollectionNaming.uniqueName(suggestion.name, existing: pinboards.map(\.name)),
             symbolName: suggestion.symbol,
             colorHex: suggestion.colorHex,
@@ -195,6 +198,9 @@ struct CollectionListView: View {
             triggerBundleID: nil
         )
         appState.attempt("Couldn\u{2019}t add the collection") {
+            try modelContext.fetch(FetchDescriptor<DeletedItemTombstone>(
+                predicate: #Predicate { $0.id == id }
+            )).forEach(modelContext.delete)
             try appState.collectionStore(context: modelContext).insert(.create, [board])
         }
         suggestions.removeAll { $0.id == suggestion.id }

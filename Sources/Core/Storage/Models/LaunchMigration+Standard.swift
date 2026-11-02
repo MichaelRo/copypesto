@@ -29,7 +29,7 @@ public extension LaunchMigration {
                 let summary = "\(result.sealed) sealed, \(result.failed) kept"
                 return result.failed == 0 ? .done(summary) : .incomplete(summary)
             },
-            LaunchMigration(name: "Clip repair", version: Setting.clipRepairVersion, currentVersion: 2) {
+            LaunchMigration(name: "Clip repair", version: Setting.clipRepairVersion, currentVersion: 3) {
                 let result = try await service.repairMisreadClips()
                 return .done("\(result.reclassified) reclassified, \(result.rebuilt) rebuilt")
             },

@@ -185,4 +185,106 @@ struct SnippetStorageTests {
         try await service.updateSnippet(id: other.id, title: "Updated", text: "Updated {{date}}")
         #expect(try item(other.id).blob?.decryptedRichPayload() == nil)
     }
+
+    @Test(
+        "adding a snippet with placeholders creates the Snippets smart collection, and deleting the last removes it"
+    )
+    func snippetsCollection_autoCreatedWhenSnippetExistsAndRemovedWhenLastSnippetDeleted() async throws {
+        let service = await service()
+        let firstID = try #require(await service.addSnippet("Hello {{input:Name}}", title: "Greeting"))
+
+        var boards = try ModelContext(container).fetch(FetchDescriptor<Pinboard>())
+        #expect(boards.count == 1)
+        let snippetsBoard = try #require(boards.first)
+        #expect(snippetsBoard.id == CollectionSuggester.snippetsCollectionID)
+        #expect(snippetsBoard.name == "Snippets")
+        #expect(snippetsBoard.symbolName == "curlybraces")
+        #expect(snippetsBoard.isSmart)
+        let ruleSet = try #require(snippetsBoard.smartPredicateData.flatMap {
+            try? SmartCollectionPredicate.decodeRuleSet($0)
+        })
+        #expect(ruleSet == CollectionSuggester.snippetsRuleSet)
+        #expect(try ruleSet.matches(item(firstID)))
+
+        try await service.deleteItems(ids: [firstID], reason: .user)
+        boards = try ModelContext(container).fetch(FetchDescriptor<Pinboard>())
+        #expect(boards.isEmpty, "the unmodified Snippets collection should go away when no snippets remain")
+
+        let secondID = try #require(await service.addSnippet("Thanks {{date}}", title: "Thanks"))
+        boards = try ModelContext(container).fetch(FetchDescriptor<Pinboard>())
+        #expect(boards.count == 1, "adding a snippet again should bring the Snippets collection back")
+        #expect(try ruleSet.matches(item(secondID)))
+    }
+
+    @Test(
+        "deleting the Snippets collection keeps it deleted when new snippets are added, and Undo brings it back"
+    )
+    func snippetsCollection_userDeleteSuppressesAutoCreationUntilUndone() async throws {
+        let undoHistory = UndoHistory()
+        let service = StorageService(modelContainer: container, environment: .testing {
+            $0.undoHistory = undoHistory
+        })
+        _ = try #require(await service.addSnippet("First {{date}}", title: "First"))
+        let boardID = try #require(ModelContext(container).fetch(FetchDescriptor<Pinboard>()).first?.id)
+
+        #expect(try await service.deleteCollection(id: boardID))
+        #expect(try ModelContext(container).fetch(FetchDescriptor<Pinboard>()).isEmpty)
+
+        _ = try #require(await service.addSnippet("Second {{input:Name}}", title: "Second"))
+        #expect(
+            try ModelContext(container).fetch(FetchDescriptor<Pinboard>()).isEmpty,
+            "explicitly deleting the Snippets collection must not recreate it behind the user's back"
+        )
+
+        _ = try await service.undo() // undoes adding "Second"
+        _ = try await service.undo() // undoes deleting "Snippets" collection
+        #expect(
+            try ModelContext(container).fetch(FetchDescriptor<Pinboard>()).map(\.name) == ["Snippets"],
+            "undoing the collection deletion should restore the Snippets collection"
+        )
+    }
+
+    @Test("reordering or renaming the Snippets collection is preserved when more snippets are added")
+    func snippetsCollection_preservesUserReorderingAndCustomization() async throws {
+        let service = await service()
+        _ = try #require(await service.addSnippet("One {{date}}", title: "One"))
+
+        let context = ModelContext(container)
+        let snippetsBoard = try #require(context.fetch(FetchDescriptor<Pinboard>()).first)
+        snippetsBoard.sortOrder = 5
+        snippetsBoard.name = "My Templates"
+        try context.save()
+
+        _ = try #require(await service.addSnippet("Two {{time}}", title: "Two"))
+
+        let boards = try ModelContext(container).fetch(FetchDescriptor<Pinboard>())
+        #expect(boards.count == 1)
+        #expect(boards.first?.name == "My Templates")
+        #expect(boards.first?.sortOrder == 5)
+    }
+
+    @Test("editing a snippet updates HistoryStore's search index immediately")
+    @MainActor
+    func updateSnippet_refreshesHistoryStoreSearchIndexImmediately() async throws {
+        let store = HistoryStore(container: container)
+        store.setVisible(true)
+        store.refresh()
+
+        let service = StorageService(modelContainer: container)
+        let id = try #require(await service.addSnippet("Initial {{input:Client}} body", title: "AlphaTitle"))
+        try await store.waitForRefresh()
+
+        var index = try #require(store.searchIndex())
+        #expect(index.matching(HistoryCriteria(query: "alphatitle")) == [id])
+        #expect(index.matching(HistoryCriteria(query: "snippet")) == [id])
+        #expect(index.matching(HistoryCriteria(query: "@snippet")) == [id])
+
+        try await service.updateSnippet(id: id, title: "OmegaTitle", text: "Revised {{input:Partner}} text")
+        try await store.waitForRefresh()
+
+        index = try #require(store.searchIndex())
+        #expect(index.matching(HistoryCriteria(query: "omegatitle")) == [id])
+        #expect(index.matching(HistoryCriteria(query: "revised")) == [id])
+        #expect(index.matching(HistoryCriteria(query: "alphatitle")).isEmpty)
+    }
 }

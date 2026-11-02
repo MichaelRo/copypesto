@@ -48,7 +48,8 @@ struct HistoryIndexParityTests {
         Sample("Naïve résumé draft", .text, "com.apple.TextEdit"),
         Sample("hidden thing", .text, "com.apple.Safari"),
         Sample("remote note", .text, nil),
-        Sample("another plain line", .text, "com.apple.Notes", title: "Notes to self", tags: ["inv"])
+        Sample("another plain line", .text, "com.apple.Notes", title: "Notes to self", tags: ["inv"]),
+        Sample("Hi {{input:Name}}, thanks!", .text, "com.apple.Notes", title: "Follow-up")
     ]
 
     init() throws {
@@ -63,6 +64,7 @@ struct HistoryIndexParityTests {
             )
             item.timestamp = Date(timeIntervalSinceNow: -Double(Self.samples.count - offset) * 86_400 * 4)
             item.detectedLanguage = sample.language
+            item.isPinned = sample.text.contains("{{")
             item.isNSFW = offset == 7
             item.isRemote = offset == 8
             context.insert(item)
@@ -84,8 +86,9 @@ struct HistoryIndexParityTests {
         if query.hasPrefix("@") {
             let suffix = String(query.dropFirst()).lowercased()
             return items.filter { item in
-                item.tags.contains { $0.lowercased().hasPrefix(suffix) } || item.detectedLanguage?
-                    .lowercased() == suffix
+                item.tags.contains { $0.lowercased().hasPrefix(suffix) }
+                    || item.detectedLanguage?.lowercased() == suffix
+                    || (item.isTemplate && "snippets".hasPrefix(suffix))
             }
         }
         let foldedQuery = SearchMatching.fold(query)
@@ -94,13 +97,16 @@ struct HistoryIndexParityTests {
                 || (item.customTitle.map { SearchMatching.matches($0, query: query) } == true)
                 || (item.userNote.map { SearchMatching.matches($0, query: query) } == true)
                 || item.tags.contains { SearchMatching.matches($0, query: query) }
+                || (item.isTemplate && SearchMatching.matches("snippets", query: query))
         }
     }
 
     @Test("the index filters exactly as the old shelf pipeline did, over every combination of scope, chips and text")
     func indexAgreesWithShelfFilter() {
         let index = HistoryIndex(items: items)
-        let queries = ["", "cafe", "REPORT", "résumé", "naive", "@python", "@w", "@swift", "inv", "zzz", "e"]
+        let queries = [
+            "", "cafe", "REPORT", "résumé", "naive", "@python", "@w", "@swift", "@snippet", "snippet", "inv", "zzz", "e"
+        ]
         var checked = 0
         for query in queries {
             for hides in [false, true] {
@@ -147,6 +153,6 @@ struct HistoryIndexParityTests {
                 }
             }
         }
-        #expect(checked == 11 * 2 * 2 * 2 * 2 * 6)
+        #expect(checked == queries.count * 2 * 2 * 2 * 2 * 6)
     }
 }

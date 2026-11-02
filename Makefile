@@ -256,8 +256,12 @@ require-team:
 		exit 1; \
 	}
 
+.PHONY: check-verify-receipt
+check-verify-receipt:
+	scripts/check-verify-receipt.sh
+
 .PHONY: archive
-archive: check-release-placeholders require-team generate ## [Release] Build a release archive (requires Developer ID certificate)
+archive: check-verify-receipt check-release-placeholders require-team generate ## [Release] Build a release archive (requires Developer ID certificate and a passing 'make verify' receipt)
 	DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 		-project Pesto.xcodeproj \
 		-scheme Pesto \

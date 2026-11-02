@@ -26,6 +26,9 @@ public struct CollectionSuggestion: Equatable, Sendable, Identifiable {
 /// it fills itself, and creating one never moves a clip out of the collection it is in.
 public enum CollectionSuggester {
     public static let thinHistory = 30
+    public static let snippetsSuggestionID = "snippets"
+    public static let snippetsCollectionID = PredicateRuleSet.snippetsCollectionID
+    public static let snippetsRuleSet = PredicateRuleSet.snippets
     private static let minimumForShape = 5
     private static let minimumForRareShape = 3
     private static let minimumForApp = 8
@@ -65,6 +68,14 @@ public enum CollectionSuggester {
 
     private static func fromClips(_ clips: [some PredicateEvaluatable]) -> [CollectionSuggestion] {
         var found: [CollectionSuggestion] = []
+        let snippetsCount = clips.count(where: { snippetsRuleSet.matches($0) })
+        if snippetsCount >= 1 {
+            found.append(CollectionSuggestion(
+                id: snippetsSuggestionID, group: .fromYourClips, name: "Snippets", symbol: "curlybraces",
+                colorHex: "#2F8B4C", matchCount: snippetsCount, blurb: nil,
+                ruleSet: snippetsRuleSet
+            ))
+        }
         for shape in Shape.allCases {
             let ruleSet = shape.ruleSet
             let count = clips.count(where: { ruleSet.matches($0) })

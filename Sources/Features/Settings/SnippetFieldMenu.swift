@@ -41,13 +41,25 @@ struct SnippetFieldMenu: View {
 
     private var form: some View {
         VStack(alignment: .leading, spacing: 10) {
-            TextField("Label", text: $label, prompt: Text("Customer name"))
-                .textFieldStyle(.roundedBorder)
-                .onSubmit(commit)
-            if let detailTitle {
-                TextField(detailTitle, text: $detail, prompt: Text(detailPrompt))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Question name")
+                    .scaledFont(size: 11, weight: .semibold)
+                    .pestoQuiet()
+                TextField("Question name", text: $label, prompt: Text("e.g. Customer name"))
+                    .labelsHidden()
                     .textFieldStyle(.roundedBorder)
                     .onSubmit(commit)
+            }
+            if let detailTitle {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(detailTitle)
+                        .scaledFont(size: 11, weight: .semibold)
+                        .pestoQuiet()
+                    TextField(detailTitle, text: $detail, prompt: Text(detailPrompt))
+                        .labelsHidden()
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit(commit)
+                }
             }
             HStack {
                 Spacer()
@@ -65,14 +77,14 @@ struct SnippetFieldMenu: View {
 
     private var detailTitle: LocalizedStringKey? {
         switch choice {
-        case .text, .multiline: "Default"
-        case .choice: "Options"
+        case .text, .multiline: "Default value (optional)"
+        case .choice: "Choices, separated by commas"
         default: nil
         }
     }
 
     private var detailPrompt: String {
-        choice == .choice ? "Hi, Hello, Dear" : "Optional"
+        choice == .choice ? "e.g. Hi, Hello, Dear" : "Leave empty to ask blank"
     }
 
     private var field: SnippetField? {

@@ -6,6 +6,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+echo "==> Checking full-gate verification receipt..."
+scripts/check-verify-receipt.sh
+
 echo "==> Running release checks..."
 make release-check
 

@@ -230,4 +230,25 @@ struct CollectionSuggesterTests {
         #expect(offered.first?.name == "Docker & Kubectl")
         #expect(offered.first?.matchCount == 5)
     }
+
+    @Test("when snippets exist and the Snippets collection is absent, Snippets is offered with its match count")
+    func whenSnippetsExist_thenSnippetsCollectionIsOffered() throws {
+        var history = clips(35) { Clip(previewText: "ordinary note \($0)") }
+        history.append(Clip(isPinned: true, previewText: "Hi {{input:Name}}"))
+        history.append(Clip(isPinned: true, previewText: "Meeting on {{date}}"))
+
+        let suggestions = CollectionSuggester.suggest(clips: history, id: \.id, existing: [])
+
+        let snippets = try #require(suggestions.first { $0.id == CollectionSuggester.snippetsSuggestionID })
+        #expect(snippets.name == "Snippets")
+        #expect(snippets.symbol == "curlybraces")
+        #expect(snippets.matchCount == 2)
+        #expect(snippets.group == .fromYourClips)
+        #expect(snippets.ruleSet == CollectionSuggester.snippetsRuleSet)
+
+        let whenAlreadyPresent = CollectionSuggester.suggest(
+            clips: history, id: \.id, existing: [CollectionSuggester.snippetsRuleSet]
+        )
+        #expect(!whenAlreadyPresent.contains { $0.id == CollectionSuggester.snippetsSuggestionID })
+    }
 }

@@ -7,10 +7,15 @@ final class PopoverPlacementTests: PestoUITestCase {
     func test_hoverCard_restsAboveItsClipInsideTheShelf() {
         launch()
         showOverlay()
+        parkPointer()
         let target = card(containing: "Quarterly report draft")
         XCTAssertTrue(target.waitForExistence(timeout: 5))
 
         target.hover()
+        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+            cards.element(boundBy: 1).hover()
+            target.hover()
+        }
         XCTAssertTrue(
             element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 5), "no hover card appeared"
         )
@@ -33,10 +38,15 @@ final class PopoverPlacementTests: PestoUITestCase {
     func test_hoverCard_onTheTopShelf_restsBelowItsClipInsideTheShelf() {
         launch(defaults: ["hasOnboarded": "true", "shelfPosition": "underNotch"])
         showOverlay()
+        parkPointer()
         let target = card(containing: "Quarterly report draft")
         XCTAssertTrue(target.waitForExistence(timeout: 5))
 
         target.hover()
+        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+            cards.element(boundBy: 1).hover()
+            target.hover()
+        }
         XCTAssertTrue(
             element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 5), "no hover card appeared"
         )

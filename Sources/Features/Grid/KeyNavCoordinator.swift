@@ -284,11 +284,13 @@ final class KeyNavCoordinator {
         }
     }
 
-    /// ⌘Q and ⌘M belong to the app and the system (⌘W and ⌘H dismiss the shelf in the grid); every other ⌘ or ⌃ key the
+    /// ⌘Q, ⌃⌘Q and ⌘M belong to the app and the system (⌘W and ⌘H dismiss the shelf in the grid); every other ⌘ or ⌃
+    /// key the
     /// grid does not own is swallowed,
     /// because AppKit beeps for a key nothing takes (A-05).
     private func swallowsUnownedKey(_ event: NSEvent, flags: NSEvent.ModifierFlags) -> Bool {
         guard !flags.isEmpty else { return false }
+        if flags == [.command, .control], event.keyCode == 12 { return false }
         let appCommands: Set<UInt16> = [12, 13, 4, 46, 50] // Q W H M `
         return !(flags == .command && appCommands.contains(event.keyCode))
     }

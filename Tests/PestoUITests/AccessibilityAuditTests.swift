@@ -351,6 +351,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
             KnownAuditFinding(
                 .contrast, "Contrast failed", on: .staticText, identifier: AccessibilityID.backupStatus
             ),
+            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText),
             KnownAuditFinding(.contrast, "Contrast nearly passed", on: .staticText)
         ])
     }

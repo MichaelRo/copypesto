@@ -6,6 +6,7 @@ import SwiftUI
 /// where the key lives, and Reset Sync and Leave Sync. There is no list of Macs here or anywhere.
 struct SyncRows: View {
     let controller: SyncController
+    var sharesBackupFolder = false
     @State private var confirmsReset = false
     @State private var confirmsLeave = false
 
@@ -54,13 +55,15 @@ struct SyncRows: View {
 
     @ViewBuilder
     private var details: some View {
-        HStack(spacing: 8) {
-            Text("Where your copies live")
-            Spacer(minLength: 12)
-            Text(controller.folderURL.lastPathComponent).pestoQuiet().lineLimit(1).truncationMode(.middle)
-            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([controller.folderURL]) }
-            Button("Change\u{2026}") { Task { await changeFolder() } }
-                .accessibilityIdentifier(AccessibilityID.syncChangeFolderButton)
+        if !sharesBackupFolder {
+            HStack(spacing: 8) {
+                Text("Where your copies live")
+                Spacer(minLength: 12)
+                Text(controller.folderURL.lastPathComponent).pestoQuiet().lineLimit(1).truncationMode(.middle)
+                Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([controller.folderURL]) }
+                Button("Change\u{2026}") { Task { await changeFolder() } }
+                    .accessibilityIdentifier(AccessibilityID.syncChangeFolderButton)
+            }
         }
         HStack(spacing: 8) {
             Text("Sync key")

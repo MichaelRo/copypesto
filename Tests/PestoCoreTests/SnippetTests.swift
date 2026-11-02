@@ -8,8 +8,10 @@ struct SnippetDraftTests {
     @Test("text with no placeholder is not a snippet yet, because it would be saved and never listed")
     func whenNoPlaceholder_thenNeedsOne() {
         #expect(SnippetDraft.evaluate("Best regards") == .needsPlaceholder)
+        #expect(SnippetDraft.evaluate("Hello {{nope}}") == .needsPlaceholder)
         #expect(SnippetDraft.evaluate("   \n ") == .empty)
         #expect(SnippetDraft.evaluate("Hello {{cursor}}") == .ready)
+        #expect(SnippetDraft.evaluate("Hello {{input:Name}}") == .ready)
     }
 
     @Test("every placeholder the sheet offers is one the expander fills in")

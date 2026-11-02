@@ -35,7 +35,11 @@ extension AppState {
 
     private func rememberStackAnswers(_ fills: SnippetFills, items: [PasteStack.Item], sources: [StackSnippetSource]) {
         for (item, source) in zip(items, sources) where source.isSnippet {
-            guard case let .text(text) = item.payloadKind else { continue }
+            let text: String
+            switch item.payloadKind {
+            case let .text(str), let .richText(str): text = str
+            case .nonText: continue
+            }
             let memory = FillInMemory.remembered(from: fills, fields: FillInParser.fields(in: text))
             guard !memory.isEmpty else { continue }
             let id = source.id

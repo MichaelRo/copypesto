@@ -325,5 +325,40 @@ FAILED=0
 for i in "${!NAMES[@]}"; do
   [[ "${STATUS[$i]}" == "FAIL" ]] && FAILED=1
 done
+
+write_receipt() {
+  local receipt=".build/verify-receipt.json"
+  local full_gate="false"
+  [[ $FAST -eq 0 && $SKIP_UI -eq 0 ]] && full_gate="true"
+  local dirty="false"
+  [[ -n "$(git status --porcelain 2>/dev/null)" ]] && dirty="true"
+  local tree commit timestamp result_str
+  tree="$(git rev-parse 'HEAD^{tree}' 2>/dev/null || echo "")"
+  commit="$(git rev-parse HEAD 2>/dev/null || echo "")"
+  timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  result_str="FAIL"
+  [[ $FAILED -eq 0 ]] && result_str="PASS"
+  python3 - "$receipt" "$tree" "$commit" "$dirty" "$full_gate" "$result_str" "$RUN" "$timestamp" <<'PY'
+import json, sys
+path, tree, commit, dirty, full_gate, result, run, ts = sys.argv[1:9]
+payload = {
+    "tree": tree,
+    "commit": commit,
+    "dirty": dirty == "true",
+    "full_gate": full_gate == "true",
+    "result": result,
+    "run": run,
+    "timestamp": ts,
+}
+with open(path, "w") as f:
+    json.dump(payload, f, indent=2)
+    f.write("\n")
+PY
+  if [[ "$result_str" == "PASS" && "$full_gate" == "true" && "$dirty" == "false" && -n "$commit" ]]; then
+    git notes --ref=verify add -f -F "$receipt" HEAD 2>/dev/null || true
+  fi
+}
+
+write_receipt
 summarize | tee "$LOGS/SUMMARY.txt"
 exit $FAILED

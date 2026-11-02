@@ -76,6 +76,15 @@ extension AppState {
         if protected { scheduleSecretClear() }
     }
 
+    func writeRichText(_ text: String, richPayload: RichTextPayload, protected: Bool) {
+        writeToPasteboard { pb in
+            Self.beginWrite(on: pb, protected: protected)
+            richPayload.write(to: pb)
+            pb.setString(text, forType: .string)
+        }
+        if protected { scheduleSecretClear() }
+    }
+
     /// Copy Result in the AI panel. An answer made from a shown secret is written protected, like a paste of it; an
     /// ordinary one stays off the write gate so the watcher records it as a copy.
     func copyAIResult(_ result: AIResult) {

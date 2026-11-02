@@ -12,6 +12,7 @@ public extension StorageService {
         let reclassified = try await reclassifyNumbersStoredAsColours()
         let rebuilt = try await rebuildEmptyRichTextClips()
         try removeSampleSnippetsPinboard()
+        try ensureSnippetsCollection()
         return (reclassified, rebuilt)
     }
 

@@ -30,7 +30,7 @@ public enum SnippetDraft: Equatable, Sendable {
     public static func evaluate(_ text: String) -> SnippetDraft {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return .empty }
-        return TemplateExpander.containsPlaceholders(trimmed) ? .ready : .needsPlaceholder
+        return !FillInParser.highlights(in: trimmed).isEmpty ? .ready : .needsPlaceholder
     }
 
     public struct InsertionStep: Equatable, Sendable {

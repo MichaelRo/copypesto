@@ -11,8 +11,10 @@ do not match what the person copies are noise.
 
 ## Decision
 **A snippet is a pinned clip whose text holds a `{{placeholder}}`** (`ClipboardItem.isTemplate`: pinned and the
-preview contains `{{`). There is no snippet model and no flag. A badge marks it on the card, and Settings → Snippets
-lists them.
+preview contains `{{`). There is no snippet model and no flag. A badge marks it on the card, Settings → Snippets
+lists them, a smart `Snippets` collection (`CollectionSuggester.snippetsRuleSet`) is created automatically while
+snippets exist (reorderable, deletable without re-spawning, and re-offered in Settings → Collections), and searching
+`snippet` or `@snippet` on the shelf finds them.
 
 - Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}`, `{{datetime}}` in the person's locale, short style,
   `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}`/`{{date-Nd}}`, `{{clipboard}}`, `{{uuid}}`, `{{app}}` (the paste target's name)

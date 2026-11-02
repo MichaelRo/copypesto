@@ -115,7 +115,19 @@ extension AppDelegate {
         let title = item.metadata.customTitle ?? String(localized: "Snippet")
         let priorClipboard = appState.clipboardBeforeLastItemWrite
         appState.clipboardBeforeLastItemWrite = ""
-        guard case let .text(str) = payload, isSnippet, TemplateExpander.containsPlaceholders(str) else {
+        let str: String
+        let wasRichText: Bool
+        switch payload {
+        case let .text(raw):
+            str = raw
+            wasRichText = false
+        case let .richText(raw):
+            str = raw
+            wasRichText = true
+        case .nonText:
+            return (payload, nil)
+        }
+        guard isSnippet, TemplateExpander.containsPlaceholders(str) else {
             return (payload, nil)
         }
         let fields = FillInParser.fields(in: str)
@@ -130,16 +142,27 @@ extension AppDelegate {
             appState.pasteCoordinator.focusRestoration.markHidden()
             if remembers { rememberFillIns(fills, fields: fields, in: item) }
         }
+        let targetApp = appState.pasteCoordinator.focusRestoration.targetName
         guard let expanded = TemplateExpander.expansionWithCaret(
             of: str,
             isSnippet: true,
             fills: fills,
-            targetApp: appState.pasteCoordinator.focusRestoration.targetName,
+            targetApp: targetApp,
             clipboardProvider: { priorClipboard }
         ) else {
             return (payload, nil)
         }
-        appState.writeText(expanded.text, protected: AppState.isProtected(AppPasteboard.general))
+        let isProtected = AppState.isProtected(AppPasteboard.general)
+        if wasRichText, item.type != .code,
+           let rich = item.blob?.decryptedRichPayload(),
+           let expandedRich = TemplateExpander.expandRichPayload(
+               rich, fills: fills, targetApp: targetApp, clipboardProvider: { priorClipboard }
+           )
+        {
+            appState.writeRichText(expanded.text, richPayload: expandedRich, protected: isProtected)
+            return (.richText(expanded.text), expanded.charactersAfterCursor)
+        }
+        appState.writeText(expanded.text, protected: isProtected)
         return (.text(expanded.text), expanded.charactersAfterCursor)
     }
 }

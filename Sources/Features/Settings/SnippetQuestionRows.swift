@@ -6,19 +6,61 @@ import SwiftUI
 /// changes and removes its question everywhere it appears in the text.
 struct SnippetQuestionRows: View {
     @Binding var text: String
+    @Environment(\.pestoAccent) private var accent
 
     var body: some View {
         let questions = FillInParser.fields(in: text)
+        let detected = FillInParser.detectedVariables(in: text)
         VStack(alignment: .leading, spacing: 8) {
-            if questions.isEmpty {
+            if questions.isEmpty, detected.isEmpty {
                 Text("Nothing is asked yet. Add a question, and Pesto asks for it when you paste.")
                     .pestoCaption()
             } else {
                 ForEach(questions) { question in
                     QuestionRow(question: question, text: $text)
                 }
+                if !detected.isEmpty {
+                    detectedSection(detected)
+                }
             }
             fills
+        }
+    }
+
+    private func detectedSection(_ detected: [FillInParser.DetectedVariable]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Detected placeholders in your text").pestoCaption()
+                Spacer()
+                if detected.count > 1 {
+                    Button("Turn All into Questions") {
+                        text = FillInParser.convertingAllVariables(in: text)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+            ForEach(detected) { variable in
+                HStack(spacing: 8) {
+                    Text(verbatim: variable.rawToken)
+                        .scaledFont(size: 11.5, design: .monospaced)
+                        .foregroundStyle(accent)
+                    Spacer(minLength: 4)
+                    Button(variable.isFill ? "Use Fill" : "Turn into Question") {
+                        text = FillInParser.convertingVariable(variable, in: text)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.primary.opacity(0.04)))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                        .foregroundStyle(Color.secondary.opacity(0.4))
+                }
+            }
         }
     }
 
@@ -90,17 +132,22 @@ private struct QuestionRow: View {
                     .onChange(of: nameFocused) { _, focused in if !focused { commitName() } }
                     .accessibilityLabel("Question name")
                     .accessibilityIdentifier(AccessibilityID.snippetQuestionName)
-                Text(kindName).pestoCaption()
                 Spacer(minLength: 4)
                 if question.kind != .optional {
                     Button {
                         isOpen.toggle()
                     } label: {
-                        Image(systemName: isOpen ? "chevron.up" : "chevron.down")
+                        HStack(spacing: 4) {
+                            Text(kindName).pestoCaption()
+                            Image(systemName: isOpen ? "chevron.up" : "chevron.down")
+                        }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .help("Default value and options")
                     .accessibilityLabel(isOpen ? "Hide details" : "Show details")
+                } else {
+                    Text(kindName).pestoCaption()
                 }
                 Button {
                     if let removed = FillInParser.removing(question.label, from: text) { text = removed }
@@ -127,7 +174,7 @@ private struct QuestionRow: View {
                 .labelsHidden()
                 .textFieldStyle(.roundedBorder)
                 .accessibilityLabel("Starts with")
-            Toggle("A box for several lines", isOn: Binding(
+            Toggle("Multiple lines", isOn: Binding(
                 get: { multiline },
                 set: { change(SnippetField(
                     label: question.label,

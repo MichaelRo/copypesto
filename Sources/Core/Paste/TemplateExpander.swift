@@ -84,6 +84,102 @@ public enum TemplateExpander {
         return (result.text, result.charactersAfterCursor)
     }
 
+    /// Expands tokens inside a rich-text payload, keeping proportional prose styling (bold, italic, links, colors) and
+    /// dropping purely monospaced formatting so a template copied from a code editor never pastes as a code block.
+    @MainActor
+    public static func expandRichPayload(
+        _ rich: RichTextPayload,
+        at date: Date = .now,
+        fills: SnippetFills = SnippetFills(),
+        targetApp: String = "",
+        clipboardProvider: () -> String = liveClipboardText
+    )
+    -> RichTextPayload? {
+        guard let regex = tokenRegex else { return nil }
+        let attributed: NSAttributedString? = if let rtfd = rich.rtfd {
+            NSAttributedString(rtfd: rtfd, documentAttributes: nil)
+        } else if let rtf = rich.rtf {
+            NSAttributedString(rtf: rtf, documentAttributes: nil)
+        } else {
+            nil
+        }
+        guard let attributed, attributed.length > 0, !isMonospacedOnly(attributed) else { return nil }
+        let mutable = NSMutableAttributedString(attributedString: attributed)
+        resolveOptionalSections(in: mutable, included: fills.included)
+        let nsText = mutable.string as NSString
+        let matches = regex.matches(in: mutable.string, range: NSRange(location: 0, length: nsText.length))
+        var cachedClipboard: String?
+        for match in matches.reversed() {
+            let token = (mutable.string as NSString).substring(with: match.range(at: 1))
+            if token == "cursor" {
+                mutable.deleteCharacters(in: match.range)
+            } else if let replaced = replacement(
+                for: token,
+                at: date,
+                fills: fills,
+                targetApp: targetApp,
+                clipboard: {
+                    if let cachedClipboard { return cachedClipboard }
+                    let value = clipboardProvider()
+                    cachedClipboard = value
+                    return value
+                }
+            ) {
+                mutable.replaceCharacters(in: match.range, with: replaced)
+            }
+        }
+        let fullRange = NSRange(location: 0, length: mutable.length)
+        if rich.rtfd != nil, let rtfd = mutable.rtfd(from: fullRange, documentAttributes: [:]) {
+            let rtf = rich.rtf != nil ? mutable.rtf(from: fullRange, documentAttributes: [:]) : nil
+            return RichTextPayload(rtf: rtf, rtfd: rtfd, html: nil)
+        }
+        guard let rtf = mutable.rtf(from: fullRange, documentAttributes: [:]) else { return nil }
+        return RichTextPayload(rtf: rtf, rtfd: nil, html: nil)
+    }
+
+    private static func isMonospacedOnly(_ attributed: NSAttributedString) -> Bool {
+        var sawFont = false
+        var hasProportionalFont = false
+        let full = NSRange(location: 0, length: attributed.length)
+        attributed.enumerateAttribute(.font, in: full) { value, _, stop in
+            guard let font = value as? NSFont else { return }
+            sawFont = true
+            let name = font.fontName
+            let family = font.familyName ?? ""
+            let isMono = font.isFixedPitch
+                || font.fontDescriptor.symbolicTraits.contains(.monoSpace)
+                || name.localizedCaseInsensitiveContains("mono")
+                || name.localizedCaseInsensitiveContains("menlo")
+                || name.localizedCaseInsensitiveContains("courier")
+                || name.localizedCaseInsensitiveContains("consolas")
+                || family.localizedCaseInsensitiveContains("mono")
+            if !isMono {
+                hasProportionalFont = true
+                stop.pointee = true
+            }
+        }
+        return sawFont && !hasProportionalFont
+    }
+
+    private static func resolveOptionalSections(in mutable: NSMutableAttributedString, included: Set<String>) {
+        guard mutable.string.contains("{{optional:"), let opener = optionalOpen else { return }
+        while true {
+            let ns = mutable.string as NSString
+            let closer = ns.range(of: "{{/optional}}")
+            guard closer.location != NSNotFound else { return }
+            let before = NSRange(location: 0, length: closer.location)
+            guard let open = opener.matches(in: mutable.string, range: before).last else { return }
+            let label = ns.substring(with: open.range(at: 1)).trimmingCharacters(in: .whitespaces)
+            if included.contains(label) {
+                mutable.deleteCharacters(in: closer)
+                mutable.deleteCharacters(in: open.range)
+            } else {
+                let whole = NSRange(location: open.range.location, length: closer.upperBound - open.range.location)
+                mutable.deleteCharacters(in: whole)
+            }
+        }
+    }
+
     /// Returns `text` with all known `{{placeholder}}` tokens replaced.
     /// Unknown tokens (e.g. `{{name}}`) are left untouched.
     public static func expand(

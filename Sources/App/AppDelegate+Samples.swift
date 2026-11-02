@@ -19,6 +19,7 @@ extension AppDelegate {
         Task {
             do {
                 let summary = try await PasteMigrator(modelContainer: container).migrate(records: records)
+                try await self.appState.storageService?.ensureSnippetsCollection()
                 Self.logger.info("First-run samples added: \(summary.imported)")
             } catch {
                 Self.logger.error("First-run samples failed: \(error.localizedDescription, privacy: .public)")

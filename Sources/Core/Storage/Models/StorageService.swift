@@ -438,9 +438,10 @@ public actor StorageService: ModelActor {
             modelContext.delete(item)
         }
         if reason == .retention { try pruneOldTombstones() }
+        try pruneEmptySnippetsCollectionIfNeeded()
+        PreviewTextCache.shared.clear()
         try saveOrRollback()
         if let undoable { undoHistory.record(UndoEntry(.clipsDeleted(undoable))) }
-        PreviewTextCache.shared.clear()
         let deletedIDs = doomed.map(\.id)
         deletedIDs.forEach { similarity.remove($0) }
         linkPreviews.delete(ids: deletedIDs)

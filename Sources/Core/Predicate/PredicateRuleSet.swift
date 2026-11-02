@@ -22,6 +22,22 @@ public struct PredicateRuleSet: Codable, Sendable, Equatable {
     public var combinator: Combinator
     public var groups: [Group]
 
+    public static let snippetsCollectionID = UUID(uuid: (
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x53, 0x4E, 0x49, 0x50
+    ))
+
+    public static let snippets = PredicateRuleSet(
+        combinator: .and,
+        groups: [Group(
+            combinator: .and,
+            rules: [
+                PredicateRule(field: .isPinned, op: .isTrue, value: .none),
+                PredicateRule(field: .previewText, op: .contains, value: .string("{{"))
+            ]
+        )]
+    )
+
     public init(combinator: Combinator, groups: [Group]) {
         self.combinator = combinator
         self.groups = groups

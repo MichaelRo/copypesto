@@ -187,4 +187,30 @@ struct StorageRepairTests {
         #expect(keptSample.isPinned)
         #expect(keptSample.collectionID == nil)
     }
+
+    @Test("repairing when a template snippet exists creates the smart Snippets collection")
+    func repair_whenSnippetExists_createsSmartSnippetsCollection() async throws {
+        let context = ModelContext(container)
+        let sample = ClipboardItem(
+            type: .text,
+            previewText: FirstRunSamples.snippetText,
+            contentHash: UUID().uuidString,
+            byteSize: FirstRunSamples.snippetText.utf8.count,
+            deviceID: "test",
+            sequenceNumber: 1,
+            isPinned: true
+        )
+        sample.customTitle = FirstRunSamples.snippetTitle
+        context.insert(sample)
+        try context.save()
+
+        _ = try await StorageService(modelContainer: container).repairMisreadClips()
+
+        let boards = try ModelContext(container).fetch(FetchDescriptor<Pinboard>())
+        #expect(boards.count == 1)
+        let board = try #require(boards.first)
+        #expect(board.name == "Snippets")
+        #expect(board.isSmart)
+        #expect(board.symbolName == "curlybraces")
+    }
 }

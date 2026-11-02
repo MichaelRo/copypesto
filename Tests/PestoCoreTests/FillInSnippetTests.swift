@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import AppKit
 import Foundation
 import SwiftData
 import Testing
@@ -230,6 +231,7 @@ struct StackSnippetTests {
     }
 
     @Test("an item is expanded with the answers, and its bytes follow its text")
+    @MainActor
     func whenExpanded_thenTextAndBytesAgree() {
         let result = item("Hi {{input:A}} in {{app}}").expandingSnippet(
             fills: SnippetFills(values: ["A": "Ana"]), targetApp: "Mail", clipboard: ""
@@ -238,6 +240,36 @@ struct StackSnippetTests {
         #expect(result.payloadKind == .text("Hi Ana in Mail"))
         #expect(result.pasteboardData == Data("Hi Ana in Mail".utf8))
         #expect(result.richPayload == nil)
+    }
+
+    @Test("a rich-text snippet keeps proportional styling when expanded and drops monospaced code-block RTF")
+    @MainActor
+    func whenRichTextExpanded_thenProportionalKeptAndMonospacedDropped() throws {
+        let styled = NSMutableAttributedString(
+            string: "Hi {{input:Name}}!",
+            attributes: [.font: NSFont.boldSystemFont(ofSize: 14)]
+        )
+        let styledRTF = try #require(styled.rtf(
+            from: NSRange(location: 0, length: styled.length), documentAttributes: [:]
+        ))
+        let expandedRich = try #require(TemplateExpander.expandRichPayload(
+            RichTextPayload(rtf: styledRTF),
+            fills: SnippetFills(values: ["Name": "Ana"])
+        ))
+        let decoded = try #require(expandedRich.rtf.flatMap { NSAttributedString(rtf: $0, documentAttributes: nil) })
+        #expect(decoded.string == "Hi Ana!")
+
+        let mono = NSMutableAttributedString(
+            string: "Hi {{input:Name}}!",
+            attributes: [.font: NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)]
+        )
+        let monoRTF = try #require(mono.rtf(
+            from: NSRange(location: 0, length: mono.length), documentAttributes: [:]
+        ))
+        #expect(TemplateExpander.expandRichPayload(
+            RichTextPayload(rtf: monoRTF),
+            fills: SnippetFills(values: ["Name": "Ana"])
+        ) == nil)
     }
 }
 
@@ -377,5 +409,21 @@ struct FillInEditTests {
         let first = FillInParser.highlights(in: text)[0]
         #expect((text as NSString).substring(with: first.range) == "{{input:Name}}")
         #expect(first.label == "Name")
+    }
+
+    @Test("simple {variable} and bare {{variable}} placeholders are detected and converted into questions or fills")
+    func whenSimpleVariablesDetected_thenConverted() {
+        let raw = "Hi {Customer name}, order {{order_id}} ships on {date}. Already {{input:Ready}} and {{isodate}}."
+        let detected = FillInParser.detectedVariables(in: raw)
+
+        #expect(detected.map(\.rawToken) == ["{Customer name}", "{{order_id}}", "{date}"])
+        #expect(detected.map(\.isFill) == [false, false, true])
+
+        let converted = FillInParser.convertingAllVariables(in: raw)
+        #expect(
+            converted ==
+                "Hi {{input:Customer name}}, order {{input:order_id}} ships on {{date}}. "
+                + "Already {{input:Ready}} and {{isodate}}."
+        )
     }
 }

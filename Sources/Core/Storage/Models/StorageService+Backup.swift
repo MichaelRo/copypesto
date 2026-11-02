@@ -23,6 +23,8 @@ public struct BackupRestoreSummary: Sendable, Equatable {
     public var removedByTombstone = 0
     public var collections = 0
     public var failed = 0
+
+    public init() {}
 }
 
 extension StorageService {

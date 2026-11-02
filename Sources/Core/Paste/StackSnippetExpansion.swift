@@ -6,25 +6,39 @@ public extension PasteStack {
     /// waits for a person.
     static func fields(of items: [Item], isSnippet: [Bool]) -> [SnippetField] {
         FillInParser.fields(inAll: zip(items, isSnippet).compactMap { item, snippet in
-            guard snippet, case let .text(text) = item.payloadKind else { return nil }
-            return text
+            guard snippet else { return nil }
+            switch item.payloadKind {
+            case let .text(text), let .richText(text): return text
+            case .nonText: return nil
+            }
         })
     }
 }
 
 public extension PasteStack.Item {
-    /// This item with a snippet's tokens filled in. Formatting is dropped because the text under it changed.
+    /// This item with a snippet's tokens filled in. Genuine rich-text styling is kept; code-block formatting is
+    /// dropped.
+    @MainActor
     func expandingSnippet(fills: SnippetFills, targetApp: String, clipboard: String) -> PasteStack.Item {
-        guard case let .text(text) = payloadKind,
-              let expanded = TemplateExpander.expansion(
-                  of: text, isSnippet: true, fills: fills, targetApp: targetApp, clipboardProvider: { clipboard }
-              ) else { return self }
+        let text: String
+        switch payloadKind {
+        case let .text(str), let .richText(str): text = str
+        case .nonText: return self
+        }
+        guard let expanded = TemplateExpander.expansion(
+            of: text, isSnippet: true, fills: fills, targetApp: targetApp, clipboardProvider: { clipboard }
+        ) else { return self }
+        let expandedRich = richPayload.flatMap {
+            TemplateExpander.expandRichPayload(
+                $0, fills: fills, targetApp: targetApp, clipboardProvider: { clipboard }
+            )
+        }
         return PasteStack.Item(
             previewText: previewText.contains("{{") ? expanded : previewText,
-            payloadKind: .text(expanded),
+            payloadKind: expandedRich != nil ? .richText(expanded) : .text(expanded),
             pasteboardData: Data(expanded.utf8),
-            pasteboardType: pasteboardType,
-            richPayload: nil,
+            pasteboardType: "public.utf8-plain-text",
+            richPayload: expandedRich,
             isProtected: isProtected
         )
     }

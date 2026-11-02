@@ -209,6 +209,9 @@ struct RestoreSheet: View {
                 .font(.callout).foregroundStyle(Color.statusWarning)
             }
             HStack {
+                if preview.settingsData != nil, replacing == nil {
+                    Button("Restore Settings Only") { restoreSettingsOnly(preview) }
+                }
                 Spacer()
                 Button("Cancel", role: .cancel, action: onClose).keyboardShortcut(.cancelAction)
                 Button("Restore") { restore(preview) }.keyboardShortcut(.defaultAction)
@@ -249,7 +252,9 @@ struct RestoreSheet: View {
 
     private func done(_ summary: BackupRestoreSummary, settings: SettingsOutcome?) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Restored \(restoredWords(summary)). \(CountText.alreadyHere(summary.alreadyHad))")
+            if summary.restored > 0 || summary.alreadyHad > 0 || summary.collections > 0 || settings == nil {
+                Text("Restored \(restoredWords(summary)). \(CountText.alreadyHere(summary.alreadyHad))")
+            }
             if let settings {
                 Text(settings.note).pestoCaption()
                 if !settings.heldBack.isEmpty { heldBackView(summary, settings) }
@@ -328,7 +333,12 @@ struct RestoreSheet: View {
 
     /// What to tell the person about the settings, or nil when there is nothing to say.
     private func restoreSettingsIfAsked(from preview: BackupPreview) -> SettingsOutcome? {
-        guard restoresSettings, let data = preview.settingsData else { return nil }
+        guard restoresSettings else { return nil }
+        return restoreSettings(from: preview.settingsData)
+    }
+
+    private func restoreSettings(from data: Data?) -> SettingsOutcome? {
+        guard let data else { return nil }
         guard let result = try? SettingsBackupManager.restore(from: data) else {
             return SettingsOutcome(
                 note: String(localized: "The settings in the backup could not be read, so they were left as they are.")
@@ -340,6 +350,13 @@ struct RestoreSheet: View {
             note: String(localized: "Settings restored, except \(held) that would delete history or keep less of it."),
             heldBack: result.heldBack, data: data
         )
+    }
+
+    private func restoreSettingsOnly(_ preview: BackupPreview) {
+        let outcome = restoreSettings(from: preview.settingsData) ?? SettingsOutcome(
+            note: String(localized: "The settings in the backup could not be read, so they were left as they are.")
+        )
+        phase = .done(BackupRestoreSummary(), settings: outcome)
     }
 
     private func restore(_ preview: BackupPreview) {

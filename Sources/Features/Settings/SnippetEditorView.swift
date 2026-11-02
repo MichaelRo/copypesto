@@ -48,6 +48,14 @@ struct SnippetEditorView: View {
         SnippetDraft.evaluate(draft.text)
     }
 
+    private var hasConvertibleVariables: Bool {
+        !FillInParser.detectedVariables(in: draft.text).isEmpty
+    }
+
+    private var canSave: Bool {
+        state == .ready || hasConvertibleVariables
+    }
+
     private var preview: AttributedString {
         var result = AttributedString()
         var inOptional = false
@@ -129,7 +137,7 @@ struct SnippetEditorView: View {
                 SnippetFieldMenu { token in pendingInsertion = SnippetInsertionRequest(token: token) }
                 FillFromMacMenu { token in pendingInsertion = SnippetInsertionRequest(token: token) }
             }
-            if state == .needsPlaceholder {
+            if state == .needsPlaceholder, !hasConvertibleVariables {
                 Text("Add a question or a fill, like {{date}}, so Pesto can fill it in when you paste.")
                     .pestoCaption()
                     .accessibilityIdentifier(AccessibilityID.snippetNeedsPlaceholder)
@@ -161,7 +169,7 @@ struct SnippetEditorView: View {
             Button("Save", action: save)
                 .keyboardShortcut(.return, modifiers: .command)
                 .buttonStyle(.pestoProminent)
-                .disabled(state != .ready)
+                .disabled(!canSave)
                 .accessibilityIdentifier(AccessibilityID.snippetSaveButton)
         }
     }
@@ -233,7 +241,7 @@ struct SnippetEditorView: View {
             ScrollView(.vertical, showsIndicators: true) {
                 Text(preview)
                     .id(draft.text)
-                    .scaledFont(size: 11.5, design: .monospaced)
+                    .scaledFont(size: 11.5)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .accessibilityIdentifier(AccessibilityID.snippetPreview)
@@ -262,7 +270,10 @@ struct SnippetEditorView: View {
     }
 
     private func save() {
-        guard state == .ready else { return }
+        if state != .ready, hasConvertibleVariables {
+            draft.text = FillInParser.convertingAllVariables(in: draft.text)
+        }
+        guard SnippetDraft.evaluate(draft.text) == .ready else { return }
         onSave(draft)
     }
 }

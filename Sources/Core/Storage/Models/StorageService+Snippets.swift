@@ -51,6 +51,8 @@ public extension StorageService {
         ))
         guard let item = try modelContext.fetch(descriptor).first else { return nil }
         item.isPinned = true
+        item.blob?.encryptedRichData = nil
+        item.blob?.richNonceData = nil
         if let title, item.customTitle == nil { item.customTitle = title }
         try saveOrRollback()
         if let before, recordsEdit { recordEdits([(item, before)]) }
@@ -85,6 +87,8 @@ public extension StorageService {
         blob.encryptedData = envelope.ciphertext
         blob.nonceData = envelope.nonce
         blob.mimeType = typeIdentifier
+        blob.encryptedRichData = nil
+        blob.richNonceData = nil
         blob.aadBound = true
         if item.blob == nil {
             item.blob = blob

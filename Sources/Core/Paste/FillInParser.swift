@@ -15,6 +15,71 @@ public enum FillInParser {
     private static let attributeStart: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"\s+(?:default=|options=|multiline(?:\s|$))"#
     )
+    private static let candidateVariableRegex: NSRegularExpression? = try? NSRegularExpression(
+        pattern: #"\{\{([A-Za-z_][A-Za-z0-9 _-]{0,59})\}\}|(?<!\{)\{([A-Za-z_][A-Za-z0-9 _-]{0,59})\}(?!\})"#
+    )
+
+    public struct DetectedVariable: Equatable, Identifiable, Sendable {
+        public let rawToken: String
+        public let label: String
+        public let isFill: Bool
+
+        public var id: String {
+            rawToken
+        }
+
+        public var replacementToken: String {
+            isFill ? "{{\(label)}}" : SnippetField(label: label, kind: .text(multiline: false), defaultValue: nil).token
+        }
+    }
+
+    /// Simple `{variable}` or bare `{{variable}}` placeholders in `text` that can be turned into Pesto questions or
+    /// fills with one click.
+    public static func detectedVariables(in text: String) -> [DetectedVariable] {
+        guard text.contains("{"), let regex = candidateVariableRegex else { return [] }
+        let ns = text as NSString
+        var seen = Set<String>()
+        var result: [DetectedVariable] = []
+        for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            let rawToken = ns.substring(with: match.range)
+            let isDoubleBrace = match.range(at: 1).location != NSNotFound
+            let rawBody = ns.substring(with: isDoubleBrace ? match.range(at: 1) : match.range(at: 2))
+            let label = rawBody.trimmingCharacters(in: .whitespaces)
+            guard validLabel(label), label != "selection", label != "selected text" else { continue }
+            if isDoubleBrace {
+                if TemplateExpander.isFill(rawBody) || field(fromToken: rawBody) != nil || rawBody == "/optional" {
+                    continue
+                }
+            }
+            if seen.insert(rawToken).inserted {
+                result.append(DetectedVariable(
+                    rawToken: rawToken,
+                    label: label,
+                    isFill: TemplateExpander.isFill(label)
+                ))
+            }
+        }
+        return result
+    }
+
+    public static func convertingVariable(_ variable: DetectedVariable, in text: String) -> String {
+        if variable.rawToken.hasPrefix("{{") {
+            return text.replacingOccurrences(of: variable.rawToken, with: variable.replacementToken)
+        }
+        let escaped = NSRegularExpression.escapedPattern(for: variable.rawToken)
+        guard let regex = try? NSRegularExpression(pattern: #"(?<!\{)"# + escaped + #"(?!\})"#) else {
+            return text
+        }
+        let range = NSRange(location: 0, length: (text as NSString).length)
+        let template = NSRegularExpression.escapedTemplate(for: variable.replacementToken)
+        return regex.stringByReplacingMatches(in: text, range: range, withTemplate: template)
+    }
+
+    public static func convertingAllVariables(in text: String) -> String {
+        detectedVariables(in: text).reduce(text) { current, variable in
+            convertingVariable(variable, in: current)
+        }
+    }
 
     /// The fields a snippet asks for, in order of first appearance, each label once.
     public static func fields(in text: String) -> [SnippetField] {

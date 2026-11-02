@@ -147,4 +147,42 @@ struct SnippetStorageTests {
         #expect(try await service.updateSnippet(id: id, title: nil, text: "   ") == false)
         #expect(try item(id).blob?.decryptedText() == "keep me")
     }
+
+    @Test(
+        "saving or editing a snippet in the plain-text builder clears stale rich-text formatting from an earlier copy"
+    )
+    func snippetBuilder_clearsStaleRichPayload() async throws {
+        let service = await service()
+        let text = "Hello {{input:Name}}"
+        let payload = Data(text.utf8)
+        let rich = RichTextPayload(rtf: Data("{\\rtf1\\ansi Hello}".utf8))
+        try await service.ingest(PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: payload,
+            payloadString: text,
+            contentHash: payload.sha256Hex,
+            richPayload: rich
+        ))
+        let copied = try #require(ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).first)
+        #expect(copied.blob?.decryptedRichPayload() == rich)
+
+        let addedID = try #require(await service.addSnippet(text, title: "Greeting"))
+        #expect(addedID == copied.id)
+        #expect(try item(addedID).blob?.decryptedRichPayload() == nil)
+
+        try await service.ingest(PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("Other".utf8),
+            payloadString: "Other",
+            contentHash: Data("Other".utf8).sha256Hex,
+            richPayload: rich
+        ))
+        let other = try #require(ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).first {
+            $0.id != addedID
+        })
+        #expect(other.blob?.decryptedRichPayload() == rich)
+
+        try await service.updateSnippet(id: other.id, title: "Updated", text: "Updated {{date}}")
+        #expect(try item(other.id).blob?.decryptedRichPayload() == nil)
+    }
 }

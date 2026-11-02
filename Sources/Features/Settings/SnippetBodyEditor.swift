@@ -130,6 +130,10 @@ struct SnippetBodyEditor: NSViewRepresentable {
 private final class UndoableSnippetTextView: NSTextView {
     var focusOnFirstWindowMove = false
 
+    override var writablePasteboardTypes: [NSPasteboard.PasteboardType] {
+        [.string]
+    }
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if focusOnFirstWindowMove, let window {

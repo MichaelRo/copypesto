@@ -70,6 +70,13 @@ struct KeyNavUnownedKeysTests {
         #expect(coordinator.handle(event) === event)
     }
 
+    @Test("⌃⌘Q still reaches the system, so Lock Screen keeps working while the shelf is open")
+    func lockScreenShortcut_passesThrough() throws {
+        let (coordinator, window) = rig()
+        let event = try press(12, [.command, .control], in: window)
+        #expect(coordinator.handle(event) === event)
+    }
+
     @Test("text editing keys in the search field still reach the field", arguments: [8, 9, 7, 6])
     func searchEditingKeys_passThrough(code: Int) throws {
         let (coordinator, window) = rig(search: true)

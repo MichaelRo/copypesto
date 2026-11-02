@@ -47,7 +47,6 @@ struct BackupSettings: View {
         Group {
             Section { BackupSummaryRow(chip: chip, now: now, sync: sync?.status) }
             Section {
-                if let sync { SyncRows(controller: sync) }
                 backupSwitch
                 if isConfigured {
                     configured
@@ -55,6 +54,7 @@ struct BackupSettings: View {
                     offActions
                     if hasRecoveryKey { recoveryKeyRow }
                 }
+                if let sync { SyncRows(controller: sync, sharesBackupFolder: sharesBackupFolder) }
                 if isConfigured || sync?.isEnabled == true { contentsTable }
                 if unreadableCount > 0 {
                     Button("Delete Unreadable Clips\u{2026}", role: .destructive) { confirmsDeletingUnreadable = true }
@@ -168,6 +168,12 @@ struct BackupSettings: View {
 
     private var sync: SyncController? {
         appState.syncController
+    }
+
+    private var sharesBackupFolder: Bool {
+        guard isConfigured, let backupFolder = settings.folder?.standardizedFileURL,
+              let sync, sync.isEnabled else { return false }
+        return sync.folderURL.deletingLastPathComponent().standardizedFileURL == backupFolder
     }
 
     private var contentsTable: some View {

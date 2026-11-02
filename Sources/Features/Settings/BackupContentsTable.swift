@@ -19,7 +19,11 @@ struct BackupContentsTable: View {
             row("Collections")
             row("Snippets")
             secretsRow
-            row("This Mac\u{2019}s settings", detail: "Shortcuts, ignored apps", syncAlways: false)
+            row(
+                "This Mac\u{2019}s settings",
+                detail: "Shortcuts, ignored apps (restored from backup)",
+                syncAlways: false
+            )
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .contain)

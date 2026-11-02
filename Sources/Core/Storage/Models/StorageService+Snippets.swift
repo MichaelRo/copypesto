@@ -158,7 +158,7 @@ public extension StorageService {
     func ensureSnippetsCollection() throws {
         let pinned = try modelContext.fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.isPinned }))
         guard pinned.contains(where: \.isTemplate) else { return }
-        let targetID = CollectionSuggester.snippetsCollectionID
+        let targetID = PredicateRuleSet.snippetsCollectionID
         let tombstones = try modelContext.fetchCount(FetchDescriptor<DeletedItemTombstone>(
             predicate: #Predicate { $0.id == targetID }
         ))
@@ -166,7 +166,7 @@ public extension StorageService {
         let existing = try modelContext.fetch(FetchDescriptor<Pinboard>())
         guard !existing.contains(where: { $0.id == targetID || Self.isSnippetsSmartCollection($0) }) else { return }
         let nextOrder = (existing.map(\.sortOrder).max() ?? -1) + 1
-        let data = try SmartCollectionPredicate.encodeRuleSet(CollectionSuggester.snippetsRuleSet)
+        let data = try SmartCollectionPredicate.encodeRuleSet(PredicateRuleSet.snippets)
         let board = Pinboard(
             id: targetID,
             name: CollectionNaming.uniqueName(FirstRunSamples.collectionName, existing: existing.map(\.name)),
@@ -187,7 +187,7 @@ public extension StorageService {
     func pruneEmptySnippetsCollectionIfNeeded() throws {
         let pinned = try modelContext.fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.isPinned }))
         guard !pinned.contains(where: \.isTemplate) else { return }
-        let targetID = CollectionSuggester.snippetsCollectionID
+        let targetID = PredicateRuleSet.snippetsCollectionID
         guard let board = try modelContext.fetch(FetchDescriptor<Pinboard>(
             predicate: #Predicate { $0.id == targetID }
         )).first else { return }
@@ -198,7 +198,7 @@ public extension StorageService {
     static func isSnippetsSmartCollection(_ board: Pinboard) -> Bool {
         guard board.isSmart, let data = board.smartPredicateData,
               let ruleSet = try? SmartCollectionPredicate.decodeRuleSet(data) else { return false }
-        return ruleSet == CollectionSuggester.snippetsRuleSet
+        return ruleSet == PredicateRuleSet.snippets
     }
 
     /// Gives the clip the shortcut ⌃`slot` (1 to 9), or takes its shortcut away with nil. The shortcut belongs to one

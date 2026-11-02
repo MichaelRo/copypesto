@@ -27,18 +27,8 @@ public struct CollectionSuggestion: Equatable, Sendable, Identifiable {
 public enum CollectionSuggester {
     public static let thinHistory = 30
     public static let snippetsSuggestionID = "snippets"
-    // swiftlint:disable:next force_unwrapping
-    public static let snippetsCollectionID = UUID(uuidString: "00000000-0000-0000-0000-0000534E4950")!
-    public static let snippetsRuleSet = PredicateRuleSet(
-        combinator: .and,
-        groups: [PredicateRuleSet.Group(
-            combinator: .and,
-            rules: [
-                PredicateRule(field: .isPinned, op: .isTrue, value: .none),
-                PredicateRule(field: .previewText, op: .contains, value: .string("{{"))
-            ]
-        )]
-    )
+    public static let snippetsCollectionID = PredicateRuleSet.snippetsCollectionID
+    public static let snippetsRuleSet = PredicateRuleSet.snippets
     private static let minimumForShape = 5
     private static let minimumForRareShape = 3
     private static let minimumForApp = 8

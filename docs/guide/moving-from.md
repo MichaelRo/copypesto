@@ -24,7 +24,7 @@ time, and each asks for Touch ID and a file of its own, so nothing is merged bli
 finds the apps by asking macOS where they are installed; it opens none of their data until you choose to import. The card stays in
 *Settings → Data* whenever one is installed, and a row says how many clips it brought in until you quit Pesto.
 
-Every import reads a copy of your library read-only and leaves the original app untouched. Your clips are encrypted on disk under your own Mac's key, and Touch ID or your account password is required before reading any files.
+Every import copies the database to a temporary folder that Pesto removes afterwards, opens the copy read-only and leaves the original app untouched. Before anything is saved, a preview sheet shows the counts of pinned clips, history clips, skipped clips and clips older than your retention setting, and waits for your confirmation. Clips you already have are skipped, Pesto's exclusion and secret-masking rules apply as on a live copy, and every imported clip is encrypted on disk under your Mac's key.
 
 ## Moving from Paste
 *Settings → Data → Another app's library → Import… → From Paste…* reads a copy of your Paste library and leaves Paste unchanged. Each of its
@@ -42,55 +42,65 @@ The import tells you how many clips came in and how many were left out.
 
 ## Moving from Maccy or Alfred
 
-*Settings → Data → Another app's library → Import…* has dedicated importers for Maccy and Alfred, and detects them automatically if installed.
+*Settings → Data → Another app's library → Import…* has dedicated importers for Maccy and Alfred, and detects both automatically if installed.
 
 ### Maccy
-*Settings → Data → Another app's library → Import… → From Maccy…* opens Maccy's library file (`Storage.sqlite` in `~/Library/Containers/org.p0deje.Maccy/Data/Library/Application Support/Maccy/`). The file chooser opens directly in Maccy's folder.
-
-Pesto copies the file to a sandbox and reads it read-only; Maccy's original file is never opened for writing and stays untouched.
-- **What comes over:** Full clipboard history, rich text (RTF and HTML), web links, source application names, and original copy timestamps.
-- **Pinned clips:** Pinned clips in Maccy are preserved and imported into a dedicated collection named **Pinned in Maccy**.
-- **What is skipped:** Clips you already have in Pesto, copies marked concealed or transient (such as passwords from a password manager), and items older than your retention setting in *Settings → Data*.
-- **Confirmation:** Before anything is written, a preview sheet shows the count of history clips, pinned items, and any clips that will be skipped.
+*Settings → Data → Another app's library → Import… → From Maccy…* opens Maccy's library file (`Storage.sqlite` in `~/Library/Containers/org.p0deje.Maccy/Data/Library/Application Support/Maccy/`). The file chooser starts in Maccy's folder, and Maccy can stay running while you import.
+- **What comes over:** All stored pasteboard types (plain text, rich text, HTML, links and pictures), source apps and original copy times.
+- **Pinned clips:** Pinned clips go to a collection called "Pinned in Maccy".
+- **What is skipped:** Clips you already have, copies marked concealed or transient, and clips with no readable content.
 
 ### Alfred
-*Settings → Data → Another app's library → Import… → From Alfred…* opens Alfred's clipboard database (`clipboard.alfdb` in `~/Library/Application Support/Alfred/Databases/`). The file chooser starts in Alfred's database folder.
-
-Pesto reads a copy of the database read-only. Alfred can stay running while you import.
-- **What comes over:** Text clips and copied file paths, along with their source application and original timestamps.
-- **What is skipped:** Picture clips (Alfred stores images as transient thumbnail caches), duplicates, and concealed copies.
-- **Snippets:** Alfred snippets use separate `.alfredsnippets` files; see *Moving snippets from another app* below to import snippets via JSON.
-- **Confirmation:** The preview sheet reports how many clips were found before you confirm the import.
+*Settings → Data → Another app's library → Import… → From Alfred…* opens Alfred's clipboard database (`clipboard.alfdb` in `~/Library/Application Support/Alfred/Databases/`). The file chooser starts in Alfred's database folder, and Alfred can stay running while you import.
+- **What comes over:** Text clips and copied file paths, with their source apps and original copy times.
+- **What is skipped:** Pictures (which Alfred stores outside the table), clips you already have and concealed copies.
+- **Snippets:** Alfred snippets use separate `.alfredsnippets` files; see *Moving snippets from another app* below to import snippets from a JSON file.
 
 ## Moving from other clipboard apps
-*Settings → Data → Another app's library → Import…* also includes dedicated importers for eight other macOS clipboard managers. For each app, the file chooser opens directly in its default storage location, reads a copy read-only without modifying the original, and asks for Touch ID or your password before importing.
+*Settings → Data → Another app's library → Import…* also includes dedicated importers for eight other macOS clipboard managers. For each app, the file chooser starts in its default folder, Pesto reads a copy read-only and leaves the original untouched, and the preview sheet shows what was found before you confirm.
 
 ### CleanClip
-Reads CleanClip's database (`CleanClip.sqlite`). Imports history with custom titles, source apps, and timestamps. Pinned clips are automatically organized into a collection named **Pinned in CleanClip**.
+Reads CleanClip's database (`Storage.sqlite` in `~/Library/Application Support/CleanClip/`). Brings in stored clip types, custom titles, source apps and copy times. Pinned clips go to a collection called "Pinned in CleanClip".
 
 ### PasteNow
-Reads PasteNow's store. Imports plain text, rich text, and web links. Each Pastelist list becomes its own Pesto collection, preserving your categorization.
+Reads PasteNow's database (`PasteNow.sqlite`). Brings in plain text, rich text, links, titles, source apps and copy times. Each Pastelist list becomes its own collection.
 
 ### CopyClip
-Reads CopyClip's SQLite database (`library.sqlite`). Imports plain-text history with original timestamps and source application bundle identifiers.
+Reads CopyClip's database (`copyclip.sqlite` or `CopyClip.sqlite`). Brings in plain-text clips with their original copy times.
 
 ### PastePal
-Reads PastePal's database. Imports history items, and pinned clips go into a dedicated collection called **Pinned in PastePal**.
+Reads PastePal's database (`PastePal2.sqlite` or `PastePal.sqlite`). Brings in plain-text clips, source apps and copy times. Pinned clips go to a collection called "Pinned in PastePal".
 
 ### Pastebot
-Reads Pastebot's database. Imports plain text, rich text, web links, and source app metadata.
+Reads Pastebot's database (`Pastebot.sqlite`). Brings in stored pasteboard types, custom titles, source apps and copy times.
 
 ### Clipy
-Reads clips from Clipy's database, bringing across copied text and snippet items.
+Reads Clipy's database (`sqlite.db` in `~/Library/Application Support/com.clipy-app.Clipy/`). Brings in stored pasteboard types, titles and copy times.
 
 ### Flycut
-Reads Flycut's preferences store. All clip history is preserved, and marked favorites go into a collection called **Favorites in Flycut**.
+Reads Flycut's preferences store (`com.generalarcade.flycut.plist`). Brings in plain-text clips, source apps and copy times. Favorites go to a collection called "Favorites in Flycut".
 
 ### Unclutter
-Reads clips and favorites from Unclutter's clipboard storage folder. Saved favorites become a **Favorites in Unclutter** collection.
+Reads Unclutter's clipboard folder (`history.plist` and `favorites.plist`). Brings in text and PNG picture clips with their source apps and copy times. Favorites go to a collection called "Favorites in Unclutter".
+
+## Moving from an app that is not listed
+*Settings → Data → Another app's library → Import… → Other File…* reads a CSV, JSON or text file of clips, which most clipboard
+managers can export. Pesto asks for Touch ID, then for the file, then shows what it found: for a CSV or a JSON list, which
+column is the clip's text, when it was copied and whether it is pinned (it picks them by name when it can; a column you
+do not choose is never read); for a text file, whether one clip is a block between blank lines, a line, or a block between
+lines of dashes. *Continue* shows the usual import preview with its counts, and nothing comes in until you press *Import*.
+Rows with no date keep the file's order and are dated now; pictures and files are not imported, secrets are masked as on a copy,
+and clips you already have are skipped.
+
+## Moving snippets from another app
+*Settings → Data → Another app's library → Import… → Snippets File…* reads the JSON file Raycast exports (Pesto does not
+read Alfred's own `.alfredsnippets` file or TextExpander's directly, and has no abbreviation expansion: a snippet is a pinned
+clip you paste from the shelf). Single-brace placeholders such as `{date}`, `{clipboard}` and `{uuid}` become Pesto's `{{date}}`, `{{clipboard}}` and `{{uuid}}`. Raycast `{argument}` placeholders and TextExpander `%filltext`, `%fillarea`, `%fillpopup` and `%fillpart` fill-ins become snippets that ask when you paste.
+A snippet with no placeholder is pinned as an ordinary clip, and one that uses something Pesto does not fill in, such as
+`{selection}`, keeps that text as typed; the sheet counts both.
 
 ## Raycast
-Raycast encrypts its local clipboard database with SQLCipher using a key stored in your login Keychain, so Pesto cannot read its database directly. You can import Raycast snippets via JSON export: see *Moving snippets from another app* below.
+Raycast encrypts its local clipboard database with SQLCipher using a key stored in your login Keychain, so Pesto cannot read its clipboard history directly. You can import Raycast snippets via JSON export: see *Moving snippets from another app* above.
 
 ## Moving anything else
 Try *Other File…* first (see above). If your app's export does not fit, Pesto also reads the JSON that its own *Export History* writes, so a script can build one. The file is a JSON array of clips:
@@ -114,20 +124,3 @@ Try *Other File…* first (see above). If your app's export does not fit, Pesto 
 `type` is `text`, `code`, `url` or `color`; only text can be imported this way, and only its first 500 characters.
 Dates are ISO 8601 and `id` is a new UUID for each clip. To bring in a library with pictures or full text, ask for an
 importer for that app (`SUPPORT.md` says where) and attach a small sample file.
-
-## Moving snippets from another app
-*Settings → Data → Another app's library → Import… → Snippets File…* reads the JSON file Raycast exports (Pesto does not
-read Alfred's own `.alfredsnippets` file or TextExpander's, and has no abbreviation expansion: a snippet is a pinned
-clip you paste from the shelf). Single-brace placeholders such as `{date}`, `{clipboard}` and `{uuid}` become Pesto's `{{date}}`, `{{clipboard}}` and `{{uuid}}`.
-A snippet with no placeholder is pinned as an ordinary clip, and one that uses something Pesto does not fill in, such as
-`{selection}`, keeps that text as typed; the sheet counts both.
-
-## Moving from an app that is not listed
-*Settings → Data → Another app's library → Import… → Other File…* reads a CSV, JSON or text file of clips, which most clipboard
-managers can export. Pesto asks for Touch ID, then for the file, then shows what it found: for a CSV or a JSON list, which
-column is the clip's text, when it was copied and whether it is pinned (it picks them by name when it can; a column you
-do not choose is never read); for a text file, whether one clip is a block between blank lines, a line, or a block between
-lines of dashes. *Continue* shows the usual import preview with its counts, and nothing comes in until you press *Import*.
-Rows with no date keep the file's order and are dated now; pictures and files are not imported, secrets are masked as on a copy,
-and clips you already have are skipped.
-

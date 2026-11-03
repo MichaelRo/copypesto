@@ -41,7 +41,7 @@ struct SyncWordingTests {
     @Test("the README and the guide do not call sync a group either")
     func documents() throws {
         let root = SourceTree.repositoryRoot
-        var files = [root.appendingPathComponent("README.md"), root.appendingPathComponent("ROADMAP.md")]
+        var files = [root.appendingPathComponent("README.md")]
         let guide = root.appendingPathComponent("docs/guide")
         files += try FileManager.default.contentsOfDirectory(at: guide, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "md" }

@@ -197,7 +197,13 @@ struct ShelfSuggestionPolicyTests {
         let armedStandardContext = context(armedDaysAgo: 10, fastSuggestions: false)
 
         #expect(ShelfSuggestionPolicy.next(context: armedStandardContext, facts: oneDayFacts, ledger: ledger) == nil)
-        #expect(ShelfSuggestionPolicy.next(context: armedFastContext, facts: oneDayFacts, ledger: ledger) == .shortcutOffer(clip: oneDayClip.id, slot: 1, pasteCount: 6, isPinned: false))
+        #expect(ShelfSuggestionPolicy
+            .next(context: armedFastContext, facts: oneDayFacts, ledger: ledger) == .shortcutOffer(
+                clip: oneDayClip.id,
+                slot: 1,
+                pasteCount: 6,
+                isPinned: false
+            ))
 
         // 3. Accessibility / lock suppression still respected under fastSuggestions
         #expect(ShelfSuggestionPolicy.isSuppressed(context(hasAccessibility: false, fastSuggestions: true)))

@@ -20,6 +20,45 @@ concurrency:
 # Actions are pinned to commit SHAs (tags can move). Bump with `gh api repos/<owner>/<repo>/git/ref/tags/<tag>`.
 
 jobs:
+  # Check if code or build configurations changed before spinning up the heavy macOS runner.
+  detect-changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Detect code changes
+        id: filter
+        run: |
+          set -e
+          # On a push to main, always run verification.
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Compare against the PR base branch.
+          base_ref="origin/${{ github.base_ref }}"
+          diff_files=$(git diff --name-only "$base_ref"...HEAD || true)
+
+          # If git diff fails or is empty, fall back to running verify.
+          if [ -z "$diff_files" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Check if any changed file matches code, test, project config, or CI scripts.
+          code_pattern='^(Sources/|Tests/|Package\.|Pesto\.yml|Pesto\.resolved|scripts/|Makefile|\.github/workflows/|tool-versions\.env)'
+          if echo "$diff_files" | grep -qE "$code_pattern"; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Only non-code files changed (docs, markdown, designs). Skipping macOS verify."
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # A text search, so a Linux runner does it (macOS minutes cost several times as much).
   no-analytics:
     runs-on: ubuntu-24.04
@@ -43,7 +82,8 @@ jobs:
   # The same gate as `scripts/verify.sh` on a developer machine, minus the UI tests (they drive real windows and need
   # a Mac that has granted the runner automation permission; run them locally, see docs/testing.md).
   verify:
-    if: github.event_name != 'push'
+    needs: [detect-changes]
+    if: github.event_name != 'push' && needs.detect-changes.outputs.code == 'true'
     runs-on: xcode-27
     timeout-minutes: 45
     env:

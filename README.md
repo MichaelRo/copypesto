@@ -7,9 +7,11 @@ Pesto is a native clipboard manager for the Mac. It remembers the text, code, li
 </p>
 
 <p align="center">
+  <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-2F7A49">
   <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-2F7A49">
   <img alt="Free" src="https://img.shields.io/badge/price-free-2F7A49">
   <img alt="No analytics" src="https://img.shields.io/badge/analytics-none-2F7A49">
+  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-2F7A49">
 </p>
 
 <p align="center">
@@ -177,7 +179,7 @@ make test-core       # the fast tests, no Xcode project needed
 
 Architecture, how to build and test it, the security invariants and the project's working agreements are in
 [docs/development.md](docs/development.md) and [CONTRIBUTING.md](CONTRIBUTING.md). Every important decision has an
-[ADR](decisions/). Planned directions live in [ROADMAP.md](ROADMAP.md). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
+[ADR](decisions/). Security reports: [SECURITY.md](SECURITY.md). Help: [SUPPORT.md](SUPPORT.md).
 
 Pesto is written with AI coding tools (Claude and Gemini) under human design, architecture records ([decisions/](decisions/)) and a verification suite that checks the security and privacy rules on every change.
 

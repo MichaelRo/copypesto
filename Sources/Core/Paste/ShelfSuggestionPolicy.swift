@@ -30,7 +30,8 @@ public enum ShelfSuggestionPolicy {
               !context.otherBannerVisible else { return true }
 
         let calendar = Calendar.current
-        if let quietEnd = calendar.date(byAdding: .day, value: Thresholds.quietDaysAfterArming, to: armedAt),
+        if !context.fastSuggestions,
+           let quietEnd = calendar.date(byAdding: .day, value: Thresholds.quietDaysAfterArming, to: armedAt),
            context.now < quietEnd
         {
             return true
@@ -124,9 +125,10 @@ public enum ShelfSuggestionPolicy {
         guard let slot = freeSlot(assigned: facts.assignedSlots, unavailable: facts.unavailableSlots) else {
             return nil
         }
+        let requiredHabitDays = context.fastSuggestions ? 1 : Thresholds.habitMinimumDays
         let candidates = eligible.filter { clip in
             clip.shortcutSlot == nil
-                && clip.pasteDaysInWindow >= Thresholds.habitMinimumDays
+                && clip.pasteDaysInWindow >= requiredHabitDays
                 && clip.shelfPastesThisRun >= 1
                 && !ledger.isBlocked(.shortcutOffer, clip.id, pastes: clip.pasteCount, now: context.now)
         }.sorted {

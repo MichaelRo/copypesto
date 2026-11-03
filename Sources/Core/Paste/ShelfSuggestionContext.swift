@@ -14,6 +14,7 @@ public struct ShelfSuggestionContext: Equatable, Sendable {
     public var isStackActive: Bool
     public var isSearching: Bool
     public var otherBannerVisible: Bool
+    public var fastSuggestions: Bool
 
     public init(
         now: Date = .now,
@@ -27,7 +28,8 @@ public struct ShelfSuggestionContext: Equatable, Sendable {
         isContentCovered: Bool = false,
         isStackActive: Bool = false,
         isSearching: Bool = false,
-        otherBannerVisible: Bool = false
+        otherBannerVisible: Bool = false,
+        fastSuggestions: Bool = CommandLine.arguments.contains("-PESTO_FAST_SUGGESTIONS")
     ) {
         self.now = now
         self.isEnabled = isEnabled
@@ -41,5 +43,6 @@ public struct ShelfSuggestionContext: Equatable, Sendable {
         self.isStackActive = isStackActive
         self.isSearching = isSearching
         self.otherBannerVisible = otherBannerVisible
+        self.fastSuggestions = fastSuggestions
     }
 }

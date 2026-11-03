@@ -1,5 +1,13 @@
 # FAQ
 
+## How to see clipboard history on a Mac
+
+Press **⌘⇧V** to open Pesto's shelf along the bottom of the screen. You can scroll through your recent clips with the arrow keys, swipe with the trackpad, or search by typing immediately. Press **Return** or click a card to paste it into your active app.
+
+## What is the Mac clipboard history shortcut?
+
+The default shortcut is **⌘⇧V** (Command-Shift-V). Pressing it opens the shelf wherever you are. You can change this shortcut to any key combination in *Settings → Shortcuts*.
+
 ## Is Pesto free?
 
 Yes. There are no paid tiers and every feature is available to everyone.

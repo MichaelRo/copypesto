@@ -111,6 +111,25 @@ These are non-negotiable. Tests enforce them; reviewers reject changes that weak
 
 ---
 
+## Spec-Driven Development (SDD) Workflow
+
+For every non-trivial task, feature, or bug fix, agents must internally adhere to the following sequence before modifying production code:
+
+1. **Specify (Criteria & Invariants)**:
+   - Identify explicit acceptance criteria, edge cases, and non-goals.
+   - Enforce hard platform invariants: macOS 15+, zero third-party analytics/telemetry, no unauthorized network endpoints (`NetworkGuardTests`), on-disk AES-256 encryption (`OnDiskEncryptionTests`), and strict append-only exclusion rules.
+2. **Plan (Architecture & Boundaries)**:
+   - Enforce module boundaries: `Core/` must never import `SwiftUI`; `Features/` imports `Core/`; `Core/` directory cycle constraints are strictly preserved.
+   - Ground changes in existing types and patterns (`CLAUDE.md`, ADRs in `decisions/`). No guesswork on Apple private APIs or undocumented behavior.
+3. **Tasks (TDD & Staging)**:
+   - Write failing test first (`test_whenX_thenY` in XCTest, `@Test("…") func whenX_thenY()` in Swift Testing) reproducing the bug or asserting the new capability.
+   - Implement production-quality code to turn tests green. No temporary hacks or aspirational TODOs.
+4. **Converge (Verification & Completeness)**:
+   - Audit git diff against the original acceptance criteria: check for missed edge cases, doc drift (`README.md`, `docs/guide/`, `decisions/`), or vocabulary violations (`docs/copy-guide.md`).
+   - Run the full verification suite (`scripts/verify.sh`) before marking any task complete.
+
+---
+
 ## TDD discipline
 
 Every `Core/` bug fix starts with a failing test that reproduces the bug. No exceptions.

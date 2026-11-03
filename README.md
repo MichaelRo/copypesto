@@ -7,9 +7,11 @@ Pesto is a native clipboard manager for the Mac. It remembers the text, code, li
 </p>
 
 <p align="center">
+  <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-2F7A49">
   <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-2F7A49">
   <img alt="Free" src="https://img.shields.io/badge/price-free-2F7A49">
   <img alt="No analytics" src="https://img.shields.io/badge/analytics-none-2F7A49">
+  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-2F7A49">
 </p>
 
 <p align="center">

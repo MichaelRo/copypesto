@@ -130,6 +130,22 @@ struct AppThemeTests {
         }
     }
 
+    @Test("BannerFill 10% accent wash over the ground provides accessible text contrast and glyph contrast")
+    func whenAnyTheme_thenBannerFillContrastIsAccessible() {
+        for theme in AppTheme.allCases {
+            for dark in [false, true] {
+                let ground = theme.groundHex(dark: dark)
+                let accent = theme.accentHex(dark: dark)
+                let bannerFill = ContrastRatio.blend(accent, over: ground, alpha: 0.10)
+                let text = dark ? BrandPalette.parmesan : BrandPalette.mortar
+                let textRatio = ContrastRatio.between(text, bannerFill)
+                let glyphRatio = ContrastRatio.between(accent, bannerFill)
+                #expect(textRatio >= 4.5, "\(theme) \(dark ? "dark" : "light") text on banner: \(textRatio)")
+                #expect(glyphRatio >= 3.0, "\(theme) \(dark ? "dark" : "light") accent glyph on banner: \(glyphRatio)")
+            }
+        }
+    }
+
     @Test("every theme names the icon that goes with it, and the names are distinct")
     func whenAnyTheme_thenHasAPairedIconAndAName() {
         #expect(AppTheme.basil.pairedIcon == .basil)

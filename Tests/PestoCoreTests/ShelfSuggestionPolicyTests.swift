@@ -19,7 +19,8 @@ struct ShelfSuggestionPolicyTests {
         isContentCovered: Bool = false,
         isStackActive: Bool = false,
         isSearching: Bool = false,
-        otherBannerVisible: Bool = false
+        otherBannerVisible: Bool = false,
+        fastSuggestions: Bool = false
     )
     -> ShelfSuggestionContext {
         let armedAt = calendar.date(byAdding: .day, value: -armedDaysAgo, to: now)
@@ -36,7 +37,8 @@ struct ShelfSuggestionPolicyTests {
             isContentCovered: isContentCovered,
             isStackActive: isStackActive,
             isSearching: isSearching,
-            otherBannerVisible: otherBannerVisible
+            otherBannerVisible: otherBannerVisible,
+            fastSuggestions: fastSuggestions
         )
     }
 
@@ -172,6 +174,34 @@ struct ShelfSuggestionPolicyTests {
         if case .shortcutOffer = res {
             Issue.record("Expected no shortcut offer for clip with shortcut")
         }
+    }
+
+    @Test("when fastSuggestions flag is set, quiet period after arming and 3-day habit requirement are bypassed")
+    func whenFastSuggestions_thenBypassesArmingQuietDaysAndRequiresOneDayHabit() {
+        // 1. Arming quiet period bypassed: armed 1 day ago (< 3 days), standard suppresses, fastSuggestions passes
+        let clip = makeClip(pasteCount: 6, shelfPastesThisRun: 1, pasteDays: 3)
+        let facts = ShelfSuggestionFacts(clips: [clip], assignedSlots: [], unavailableSlots: [])
+        let ledger = SuggestionLedger(serialized: "")
+        let standardContext = context(armedDaysAgo: 1, fastSuggestions: false)
+        let fastContext = context(armedDaysAgo: 1, fastSuggestions: true)
+
+        #expect(ShelfSuggestionPolicy.isSuppressed(standardContext))
+        #expect(!ShelfSuggestionPolicy.isSuppressed(fastContext))
+        #expect(ShelfSuggestionPolicy.next(context: standardContext, facts: facts, ledger: ledger) == nil)
+        #expect(ShelfSuggestionPolicy.next(context: fastContext, facts: facts, ledger: ledger) != nil)
+
+        // 2. Habit requirement reduced to 1 day: pasteDays = 1, standard gives nil, fastSuggestions offers shortcut
+        let oneDayClip = makeClip(pasteCount: 6, shelfPastesThisRun: 1, pasteDays: 1)
+        let oneDayFacts = ShelfSuggestionFacts(clips: [oneDayClip], assignedSlots: [], unavailableSlots: [])
+        let armedFastContext = context(armedDaysAgo: 10, fastSuggestions: true)
+        let armedStandardContext = context(armedDaysAgo: 10, fastSuggestions: false)
+
+        #expect(ShelfSuggestionPolicy.next(context: armedStandardContext, facts: oneDayFacts, ledger: ledger) == nil)
+        #expect(ShelfSuggestionPolicy.next(context: armedFastContext, facts: oneDayFacts, ledger: ledger) == .shortcutOffer(clip: oneDayClip.id, slot: 1, pasteCount: 6, isPinned: false))
+
+        // 3. Accessibility / lock suppression still respected under fastSuggestions
+        #expect(ShelfSuggestionPolicy.isSuppressed(context(hasAccessibility: false, fastSuggestions: true)))
+        #expect(ShelfSuggestionPolicy.isSuppressed(context(isHistoryLocked: true, fastSuggestions: true)))
     }
 
     @Test("suppression rules: disabled, not onboarded, un-armed, arming quiet period, cooldown")

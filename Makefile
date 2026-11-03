@@ -444,6 +444,10 @@ doctor: ## [Develop] Print dev-environment diagnostics — signing identity, CDH
 	@echo ""
 	@echo "If something looks wrong, run 'PESTO_DEV_RESET=1 make reset-dev-state' (it deletes this Mac's Pesto preferences)."
 
+.PHONY: audit-converge
+audit-converge: ## [Test] Audit working tree and git diff against SDD invariants (scripts/audit-converge.py)
+	scripts/audit-converge.py
+
 .PHONY: verify
 verify: ## [Test] Full gate: lint, Core tests, build, hosted + UI tests, screenshots (scripts/verify.sh; about an hour with the UI tests)
 	scripts/verify.sh

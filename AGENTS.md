@@ -117,6 +117,7 @@ For every non-trivial task, feature, or bug fix, agents must internally adhere t
 
 1. **Specify (Criteria & Invariants)**:
    - Identify explicit acceptance criteria, edge cases, and non-goals.
+   - For UX/delight passes, audits, or major refactors, check and apply the protocols in `10-Projects/Pesto/Pesto Perspective-Shift Audit Protocols.md` in the Brain vault automatically (evaluating across the 3 distinct lenses: muscle memory / 50ms habit, native Apple HIG craft, and ruthless subtraction).
    - Enforce hard platform invariants: macOS 15+, zero third-party analytics/telemetry, no unauthorized network endpoints (`NetworkGuardTests`), on-disk AES-256 encryption (`OnDiskEncryptionTests`), and strict append-only exclusion rules.
 2. **Plan (Architecture & Boundaries)**:
    - Enforce module boundaries: `Core/` must never import `SwiftUI`; `Features/` imports `Core/`; `Core/` directory cycle constraints are strictly preserved.

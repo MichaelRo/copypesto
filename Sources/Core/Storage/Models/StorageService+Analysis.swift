@@ -68,10 +68,16 @@ extension StorageService {
         return analysis
     }
 
+    /// A UI-test launch skips text recognition (it is slow and judges nothing), except for the film's seed, whose
+    /// boarding pass must be findable by the words inside it.
+    nonisolated static func readsImages(in configuration: RuntimeConfiguration) -> Bool {
+        configuration.mode != .uiTest || configuration.seed == .lunchRush
+    }
+
     func input(for clipType: ClipboardType, image: Data?, text: String, link: String?) -> IngestAnalysisInput {
         IngestAnalysisInput(
             clipType: clipType, image: image, text: text, link: link,
-            readsImages: RuntimeConfiguration.current.mode != .uiTest,
+            readsImages: Self.readsImages(in: RuntimeConfiguration.current),
             screensContent: nsfwModeProvider().detectsContent
         )
     }

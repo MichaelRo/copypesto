@@ -128,7 +128,7 @@ struct RestoreSheet: View {
             Group {
                 switch phase {
                 case .choose: choose
-                case .working: ProgressView("Working\u{2026}")
+                case .working: SheetWorkingIndicator()
                 case let .preview(found): previewView(found)
                 case let .done(summary, settings): done(summary, settings: settings)
                 case let .failed(message): failure(message)

@@ -371,7 +371,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         appState.openSettingsFromOverlay = { [weak self] in
             guard let self else { return }
-            self.appState.close(.afterHide { [weak self] in self?.openSettingsWindow() })
+            let shelfFrame = self.overlayWindowController?.overlayWindow.frame
+            self.appState.close(.afterHide { [weak self] in self?.openSettingsWindow(shelfFrame: shelfFrame) })
         }
 
         NotificationCenter.default.addObserver(

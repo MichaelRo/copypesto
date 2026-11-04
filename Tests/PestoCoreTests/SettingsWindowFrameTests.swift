@@ -39,4 +39,41 @@ struct SettingsWindowFrameTests {
         ))
         #expect(kept == CGRect(x: 100, y: 100, width: 800, height: 720))
     }
+
+    private let external = CGRect(x: 1512, y: 0, width: 2560, height: 1415)
+
+    @Test("a frame saved on the display the person is using reopens where it was")
+    func whenSavedOnTarget_thenRestoredInPlace() {
+        let saved = CGRect(x: 100, y: 100, width: 800, height: 720)
+        let frame = SettingsWindowFrame.placed(saved: saved, target: display, displays: [display, external])
+        #expect(frame == saved)
+    }
+
+    @Test("a frame saved on another display moves to the display the person is using, keeping its size")
+    func whenSavedOnOtherDisplay_thenCenteredOnTarget() {
+        let saved = CGRect(x: 100, y: 100, width: 840, height: 720)
+        let frame = SettingsWindowFrame.placed(saved: saved, target: external, displays: [display, external])
+        #expect(frame.size == saved.size)
+        #expect(frame.midX == external.midX)
+        #expect(frame.midY == external.midY)
+    }
+
+    @Test("with no usable saved frame the default size is centered on the display the person is using")
+    func whenNothingSaved_thenDefaultCenteredOnTarget() {
+        for saved in [CGRect?.none, .some(.zero), .some(CGRect(x: 9000, y: 0, width: 800, height: 700))] {
+            let frame = SettingsWindowFrame.placed(saved: saved, target: external, displays: [display, external])
+            #expect(frame.size == SettingsWindowFrame.defaultSize)
+            #expect(frame.midX == external.midX)
+            #expect(frame.midY == external.midY)
+        }
+    }
+
+    @Test("a frame moved to a short display is cut to fit it")
+    func whenMovedToShortDisplay_thenFits() {
+        let short = CGRect(x: 1512, y: 0, width: 1280, height: 720)
+        let saved = CGRect(x: 100, y: 100, width: 800, height: 740)
+        let frame = SettingsWindowFrame.placed(saved: saved, target: short, displays: [display, short])
+        #expect(frame.height == 680)
+        #expect(short.contains(frame))
+    }
 }

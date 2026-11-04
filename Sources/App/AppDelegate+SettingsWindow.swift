@@ -9,7 +9,8 @@ import SwiftUI
 
 @MainActor
 extension AppDelegate {
-    func openSettingsWindow() {
+    /// `shelfFrame` is where the shelf was when Settings was asked for from it; the shelf closes first.
+    func openSettingsWindow(shelfFrame: CGRect? = nil) {
         Self.logger.notice("[settings] open requested")
 
         let overlayRef = overlayWindowController?.overlayWindow
@@ -41,7 +42,6 @@ extension AppDelegate {
         win.title = String(localized: "Settings")
         win.standardWindowButton(.zoomButton)?.isEnabled = false
         win.identifier = NSUserInterfaceItemIdentifier(AccessibilityID.settingsWindow)
-        win.center()
         let rootView: AnyView = appState.historyContainer.map {
             AnyView(SettingsView().environment(appState).environment(\.shelfActions, appState.asShelfActions)
                 .modelContainer($0))
@@ -53,7 +53,7 @@ extension AppDelegate {
             settingsWindowObserver = nil
         }
 
-        restoreSettingsFrame(win)
+        restoreSettingsFrame(win, shelfFrame: shelfFrame)
         settingsWindow = win // retain so the window isn't deallocated after this scope
         // Change activation policy AFTER the window is ready to show, not before.
         // This ensures .regular doesn't leak if window creation somehow fails.
@@ -109,21 +109,29 @@ extension AppDelegate {
         return window.identifier?.rawValue == AccessibilityID.settingsWindow
     }
 
-    private func restoreSettingsFrame(_ window: NSWindow) {
-        let str = AppDefaults.store.value(for: Setting.settingsWindowFrame)
+    /// Settings opens on the display the person is using: the shelf's while it is up, otherwise the one under the
+    /// pointer (a menu-bar click). A frame saved on another display used to bring it back there.
+    private func restoreSettingsFrame(_ window: NSWindow, shelfFrame: CGRect?) {
+        let screens = NSScreen.screens
+        guard !screens.isEmpty else { return }
+        let visibleShelf = overlayWindowController?.overlayWindow.isVisible == true
+            ? overlayWindowController?.overlayWindow.frame : nil
+        let shelfCenter = (shelfFrame ?? visibleShelf).map { CGPoint(x: $0.midX, y: $0.midY) }
+        let index = TargetScreenChoice.index(
+            windowCenter: shelfCenter, pointer: NSEvent.mouseLocation, screenFrames: screens.map(\.frame)
+        ) ?? 0
+        let saved = AppDefaults.store.value(for: Setting.settingsWindowFrame)
+        let defaultSize = window.frameRect(forContentRect: CGRect(origin: .zero, size: SettingsWindowFrame.defaultSize))
+            .size
         // The redesigned panes open with a header and want room: a frame saved by an older, smaller window is ignored,
         // and one saved by an older, taller window is cut to a height that suits the panes.
-        if !str.isEmpty,
-           let frame = SettingsWindowFrame.restored(
-               saved: NSRectFromString(str), displays: NSScreen.screens.map(\.visibleFrame)
-           )
-        {
-            window.setFrame(frame, display: true)
-        } else {
-            // Center at a comfortable default size.
-            window.setContentSize(NSSize(width: 800, height: 720))
-            window.center()
-        }
+        let frame = SettingsWindowFrame.placed(
+            saved: saved.isEmpty ? nil : NSRectFromString(saved),
+            target: screens[index].visibleFrame,
+            displays: screens.map(\.visibleFrame),
+            defaultSize: defaultSize
+        )
+        window.setFrame(frame, display: true)
     }
 
     private func saveSettingsFrame(_ window: NSWindow) {

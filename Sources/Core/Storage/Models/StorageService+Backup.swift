@@ -330,8 +330,10 @@ extension StorageService {
         item.expiresAt = meta.expiresAt
         item.pasteCount = meta.pasteCount
         if meta.isNSFW { item.isNSFW = true }
-        if let board = meta.collectionID, collectionIDs.contains(board) { item.collectionID = board }
-        if let order = meta.collectionOrder { item.collectionOrder = order }
+        if let board = meta.collectionID, collectionIDs.contains(board) {
+            item.collectionID = board
+            if let order = meta.collectionOrder { item.collectionOrder = order }
+        }
         item.adoptFirstCopy(meta.copiedAt)
         if let slot = meta.pinnedHotkeyIndex, try !slotIsTaken(slot) {
             item.pinnedHotkeyIndex = slot

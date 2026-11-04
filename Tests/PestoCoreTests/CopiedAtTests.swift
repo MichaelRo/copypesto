@@ -110,4 +110,22 @@ struct CopiedAtTests {
         item.adoptFirstCopy(Date(timeIntervalSince1970: 200))
         #expect(item.copiedAt == Date(timeIntervalSince1970: 10))
     }
+
+    @Test("a use dated before the clip's own timestamp (an import) never leaves the first copy after the last use")
+    func whenUsedWithAnEarlierDate_thenFirstCopyIsNotAfterTheTimestamp() {
+        let item = clip("a", at: 100)
+        item.bringToFront(at: Date(timeIntervalSince1970: 40))
+        #expect(item.timestamp == Date(timeIntervalSince1970: 40))
+        #expect(item.copiedAt <= item.timestamp)
+        #expect(item.metadata.copiedAt == nil)
+    }
+
+    @Test("a remembered first copy is lowered when a use is dated before it")
+    func whenRememberedFirstCopyIsLater_thenLowered() {
+        let item = clip("a", at: 100)
+        item.bringToFront(at: Date(timeIntervalSince1970: 500))
+        item.bringToFront(at: Date(timeIntervalSince1970: 30))
+        #expect(item.copiedAt == Date(timeIntervalSince1970: 30))
+        #expect(item.copiedAt <= item.timestamp)
+    }
 }

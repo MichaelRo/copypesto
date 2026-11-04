@@ -52,4 +52,12 @@ struct CollectionOrderTests {
     func whenEmpty_thenEmpty() {
         #expect(CollectionOrder.sorted([]).isEmpty)
     }
+
+    @Test("clips that tie on everything keep one order, whatever order they arrive in")
+    func whenTied_thenSameOrderForAnyInput() {
+        let clips = (0..<6).map { clip("tie\($0)", at: 5) }
+        let forward = CollectionOrder.sorted(clips).map(\.id)
+        let backward = CollectionOrder.sorted(clips.reversed()).map(\.id)
+        #expect(forward == backward)
+    }
 }

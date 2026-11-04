@@ -30,6 +30,8 @@ struct SyncCopiedAtTests {
         let arrived = try #require(try world.clip("hello", on: b))
         #expect(arrived.timestamp == lastUse)
         #expect(arrived.copiedAt == firstCopy)
+        let echo = try await b.service.buildOutbox(includeSensitive: false, syncKey: world.key)
+        #expect(echo.records.isEmpty, "taking the first copy time from a record writes nothing back")
     }
 
     @Test("a clip never used travels without a first-copy time, and nothing is sealed for it on the other Mac")

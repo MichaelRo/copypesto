@@ -129,11 +129,13 @@ public extension ClipboardItem {
     }
 
     /// Records a use of the clip (a paste, a copy, a re-copy): it moves to the front of the history, and the time it
-    /// was first copied is kept the first time that happens.
+    /// was first copied is kept the first time that happens. The first copy is never after the use, so a use dated
+    /// before the clip's own time (an import of older clips) lowers it rather than leaving it later.
     func bringToFront(at date: Date) {
-        if metadata.copiedAt == nil, !metadataIsUnreadable {
-            let first = timestamp
-            updateMetadata { $0.copiedAt = first }
+        let stored = metadata.copiedAt
+        let earliest = min(stored ?? timestamp, date)
+        if earliest != stored, stored != nil || earliest < date, !metadataIsUnreadable {
+            updateMetadata { $0.copiedAt = earliest }
         }
         timestamp = date
     }

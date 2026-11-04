@@ -14,9 +14,17 @@ public enum CollectionOrder {
 
     public static func sorted(_ items: [ClipboardItem]) -> [ClipboardItem] {
         items
-            .map { Keyed(item: $0, order: $0.collectionOrder ?? Int.max, copiedAt: $0.copiedAt) }
+            .map { item in
+                let metadata = item.metadata
+                return Keyed(
+                    item: item, order: metadata.collectionOrder ?? Int.max,
+                    copiedAt: metadata.copiedAt ?? item.timestamp
+                )
+            }
             .sorted { a, b in
-                a.order != b.order ? a.order < b.order : a.copiedAt > b.copiedAt
+                if a.order != b.order { return a.order < b.order }
+                if a.copiedAt != b.copiedAt { return a.copiedAt > b.copiedAt }
+                return a.item.id.uuidString < b.item.id.uuidString
             }
             .map(\.item)
     }

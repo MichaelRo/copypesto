@@ -385,6 +385,22 @@ struct BackupRoundTripTests {
         #expect(restored.collectionOrder == 3)
     }
 
+    @Test("a hand order is restored only for a clip that lands in a restored collection")
+    func whenCollectionIsNotInTheBackup_thenNoStrayOrder() async throws {
+        try await ingest("orphan", minutesAgo: 10)
+        let context = ModelContext(source)
+        let clip = try #require(try context.fetch(FetchDescriptor<ClipboardItem>()).first)
+        clip.collectionID = UUID()
+        clip.collectionOrder = 4
+        try context.save()
+
+        _ = try await targetService.restore(roundTrip(includeSensitive: false))
+
+        let restored = try #require(try items(in: target).first)
+        #expect(restored.collectionID == nil)
+        #expect(restored.collectionOrder == nil)
+    }
+
     @Test("a backup made before these fields existed restores with neither")
     func whenOldBackup_thenFieldsAbsent() throws {
         let json = Data("""

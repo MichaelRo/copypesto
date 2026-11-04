@@ -35,6 +35,18 @@ final class TeaserFramesTests: PestoUITestCase {
         RunLoop.current.run(until: Date().addingTimeInterval(seconds))
     }
 
+    /// The shelf's glass takes a moment after it opens to reach its resting tint: a frame taken sooner is yellower than
+    /// the ones that follow, and the film would show the shift.
+    private func settleGlass() {
+        settle(2.6)
+    }
+
+    /// The app the next copy is shown as made in (the card on the shelf prints it).
+    private func copyFrom(_ bundleID: String, _ text: String) {
+        try? bundleID.write(to: workDirectory.appendingPathComponent("copy-source"), atomically: true, encoding: .utf8)
+        copyToClipboard(text)
+    }
+
     private func frame(_ scene: String, _ number: Int) {
         let image = backdropWindow.screenshot().image
         let attachment = XCTAttachment(image: image)
@@ -71,6 +83,20 @@ final class TeaserFramesTests: PestoUITestCase {
         settle()
     }
 
+    /// The shelf's first frame on its own: the glass is yellower until the focus has moved once (the story's
+    /// later frames all follow a move), so the focus goes one card along and back and the frame matches the ones that
+    /// follow.
+    func test_shelfFirstFrameMatchesTheRest() {
+        start()
+        showOverlay()
+        settleGlass()
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        settle(0.6)
+        overlay.typeKey(.leftArrow, modifierFlags: [])
+        settle(1.4)
+        frame("shelf", 1)
+    }
+
     /// The whole story in order. Mamma Mia asks what time she lands; the flight time and the tracking number were
     /// copied, the tracking number last (the seed). Each scene ends with its clip pasted or copied, and the next one
     /// opens on a shelf with that clip first.
@@ -86,7 +112,7 @@ final class TeaserFramesTests: PestoUITestCase {
     private func shelfScene() {
         frame("shelf", 0)
         showOverlay()
-        settle()
+        settleGlass()
         frame("shelf", 1)
         overlay.typeKey(.rightArrow, modifierFlags: [])
         settle(0.7)
@@ -95,7 +121,7 @@ final class TeaserFramesTests: PestoUITestCase {
         settle(1.5)
         attachPaste("shelf")
         showOverlay()
-        settle()
+        settleGlass()
         frame("shelf", 3)
     }
 
@@ -106,17 +132,17 @@ final class TeaserFramesTests: PestoUITestCase {
         settle(1.5)
         attachPaste("gate")
         showOverlay()
-        settle()
+        settleGlass()
         frame("gate", 10)
         overlay.typeKey(.escape, modifierFlags: [])
         settle(0.8)
     }
 
     private func snippetScene() {
-        copyToClipboard("1Z999AA10123456784")
+        copyFrom("com.apple.mail", "1Z999AA10123456784")
         settle(2.2)
         showOverlay()
-        settle()
+        settleGlass()
         frame("snippet", 0)
         search("order update", frames: "snippet", from: 1)
         frame("snippet", 7)
@@ -125,32 +151,26 @@ final class TeaserFramesTests: PestoUITestCase {
         XCTAssertFalse(app.windows["Fill in snippet"].exists, "this snippet asks nothing")
         attachPaste("snippet")
         showOverlay()
-        settle()
+        settleGlass()
         frame("snippet", 8)
         overlay.typeKey(.escape, modifierFlags: [])
         settle(0.8)
     }
 
     private func secretScene() {
-        copyToClipboard("4242 4242 4242 4242")
+        copyFrom("com.apple.MobileSMS", "4242 4242 4242 4242")
         settle(2.2)
         showOverlay()
         let masked = card(containing: "4242")
         XCTAssertTrue(masked.waitForExistence(timeout: 10))
         XCTAssertFalse((masked.value as? String ?? "").contains("4242 4242 4242 4242"), "the card must stay masked")
-        settle()
+        settleGlass()
         frame("secret", 0)
-        masked.rightClick()
-        settle(1.0)
-        frame("secret", 1)
-        app.menuItems["Show"].click()
-        settle(1.2)
-        frame("secret", 2)
-        masked.rightClick()
-        settle(1.0)
-        app.menuItems["Hide"].click()
-        settle(1.2)
-        frame("secret", 3)
+        overlay.typeKey(.return, modifierFlags: [])
+        settle(1.5)
+        attachPaste("secret")
+        showOverlay()
+        settleGlass()
     }
 
     private func hideScene() {

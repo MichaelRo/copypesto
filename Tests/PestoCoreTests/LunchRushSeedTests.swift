@@ -171,13 +171,39 @@ struct LunchRushCopySourceTests {
         RuntimeConfiguration(mode: mode, session: "test", seed: seed, accessibility: .trusted)
     }
 
-    @Test("a UI-test copy under the film's seed is attributed to Safari, whatever app is in front")
-    func whenFilmSeed_thenSourceIsSafari() {
-        let source = SystemFrontmostAppProvider.sourceBundleID(
-            frontmost: "com.anthropic.claudefordesktop", configuration: configuration(mode: .uiTest, seed: .lunchRush)
+    private func emptyDirectory() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
+    @Test("a UI-test copy under the film's seed is attributed to Safari when the runner named nothing")
+    func whenFilmSeedNamesNothing_thenSourceIsSafari() throws {
+        let source = try SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.anthropic.claudefordesktop",
+            configuration: configuration(mode: .uiTest, seed: .lunchRush),
+            workDirectory: emptyDirectory()
         )
 
         #expect(source == "com.apple.Safari")
+    }
+
+    @Test("a UI-test copy under the film's seed is attributed to the app the runner wrote down")
+    func whenRunnerNamesAnApp_thenThatIsTheSource() throws {
+        let directory = try emptyDirectory()
+        try "com.apple.mail\n".write(
+            to: directory.appendingPathComponent("copy-source"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let source = SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.anthropic.claudefordesktop",
+            configuration: configuration(mode: .uiTest, seed: .lunchRush),
+            workDirectory: directory
+        )
+
+        #expect(source == "com.apple.mail")
     }
 
     @Test("every other launch keeps the frontmost app as the source")

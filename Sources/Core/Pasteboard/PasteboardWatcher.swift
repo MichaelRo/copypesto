@@ -130,14 +130,19 @@ public final class SystemFrontmostAppProvider: FrontmostAppProviding {
         }
     }
 
-    /// The film's seed shows every live copy as made in Safari (the order page and the checkout): in a UI-test run
-    /// the frontmost app is whatever the developer
-    /// has open (Terminal, Claude), which would be printed on the shelf's card.
+    /// The film's seed names the app a live copy came from: in a UI-test run the frontmost app is whatever the
+    /// developer has open (Terminal, Claude), which would be printed on the shelf's card. The runner writes the app
+    /// into `copy-source` in the shared work directory before each copy (Safari when it has not).
     nonisolated static func sourceBundleID(
-        frontmost: String?, configuration: RuntimeConfiguration = .current
+        frontmost: String?,
+        configuration: RuntimeConfiguration = .current,
+        workDirectory: URL = AppPaths.supportDirectory
     )
     -> String? {
-        configuration.mode == .uiTest && configuration.seed == .lunchRush ? "com.apple.Safari" : frontmost
+        guard configuration.mode == .uiTest, configuration.seed == .lunchRush else { return frontmost }
+        let named = (try? String(contentsOf: workDirectory.appendingPathComponent("copy-source"), encoding: .utf8))?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return named?.isEmpty == false ? named : "com.apple.Safari"
     }
 
     public func recentBundleIDs(within interval: TimeInterval) async -> [String] {

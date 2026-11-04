@@ -86,8 +86,7 @@
                 ("Sorry for the late reply, I was copying.", notes),
                 ("Order #4417: one jar, no questions", messages),
                 ("Does it keep? Ask the jar.", messages),
-                ("Yes. The pine nut supplier passed the September audit.", messages),
-                ("Pine nuts, 2 kg: order confirmed", mail)
+                ("Yes. The pine nut supplier passed the September audit.", messages)
             ]
             captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
             captures.append(SeedFixtures.pictureCapture(ShowcaseArt.boardingPass()))

@@ -8,13 +8,27 @@ struct BackupSummaryRow: View {
     let now: Date
     var sync: SyncStatus?
 
+    private var headline: some View {
+        Text("Your clips stay on this Mac.").font(.headline)
+    }
+
+    private var chips: some View {
+        HStack(spacing: 8) {
+            chipView(color: chip.dotColor, text: chip.summaryText(now: now))
+            if let sync { chipView(color: sync.dotColor, text: sync.chipText) }
+        }
+    }
+
     var body: some View {
-        HStack(spacing: 12) {
-            Text("Your clips stay on this Mac.").font(.headline)
-            Spacer(minLength: 12)
-            HStack(spacing: 8) {
-                chipView(color: chip.dotColor, text: chip.summaryText(now: now))
-                if let sync { chipView(color: sync.dotColor, text: sync.chipText) }
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                headline
+                Spacer(minLength: 12)
+                chips
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                headline
+                chips
             }
         }
         .padding(.vertical, 4)
@@ -29,8 +43,9 @@ struct BackupSummaryRow: View {
     private func chipView(color: Color, text: String) -> some View {
         HStack(spacing: 7) {
             Circle().fill(color).frame(width: 8, height: 8).accessibilityHidden(true)
-            Text(text).font(.callout)
+            Text(text).font(.callout).lineLimit(1)
         }
+        .fixedSize(horizontal: true, vertical: false)
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
         .background(Capsule().fill(Color.primary.opacity(0.08)))

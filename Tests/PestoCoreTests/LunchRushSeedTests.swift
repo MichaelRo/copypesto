@@ -90,8 +90,8 @@ struct LunchRushSeedTests {
     func whenProfileBuilt_thenFinaleClipsFollowTheMaskedCard() {
         let newestFirst = Array(SeedFixtures.captures(for: .lunchRush).reversed())
 
-        #expect(newestFirst[0].payloadString == LunchRushSeed.secondCopy)
-        #expect(newestFirst[1].payloadString == LunchRushSeed.trackingNumber)
+        #expect(newestFirst[0].payloadString == LunchRushSeed.trackingNumber)
+        #expect(newestFirst[1].payloadString == LunchRushSeed.secondCopy)
         #expect(newestFirst[2].payloadString == LunchRushSeed.cardNumber)
         #expect(pictureWidth(newestFirst[3].payload) == 960)
         #expect(newestFirst[4].typeIdentifier == "com.compuserve.gif")

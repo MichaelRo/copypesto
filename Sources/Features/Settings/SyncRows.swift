@@ -7,6 +7,7 @@ import SwiftUI
 struct SyncRows: View {
     let controller: SyncController
     var sharesBackupFolder = false
+    var backupIsOn = false
     @State private var confirmsReset = false
     @State private var confirmsLeave = false
 
@@ -19,14 +20,10 @@ struct SyncRows: View {
                 ))
                 .accessibilityIdentifier(AccessibilityID.syncSwitch)
                 .settingsRow("Sync with my other Macs")
-                Text(
-                    "Keeps the Macs where you turn this on matching. Deleting a clip on one deletes it on all. " +
-                        "Sync is not a backup."
-                )
-                .pestoCaption()
+                warning
                 if controller.isEnabled { statusLine }
             }
-            if controller.isEnabled { details }
+            if controller.isEnabled { details } else { offActions }
         }
         .confirmationDialog("Reset Sync?", isPresented: $confirmsReset, titleVisibility: .visible) {
             Button("Reset Sync", role: .destructive) { Task { await controller.reset() } }
@@ -40,6 +37,35 @@ struct SyncRows: View {
                 "This Mac stops syncing and removes its own files from the folder. Your other Macs keep everything. " +
                     "Clips already on this Mac stay."
             )
+        }
+    }
+
+    private var showsNoBackupNote: Bool {
+        DataCardCopy.showsNoBackupNote(syncOn: controller.isEnabled, backupOn: backupIsOn)
+    }
+
+    private var warning: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(showsNoBackupNote ? Color.statusBad : Color.primary)
+                    .accessibilityHidden(true)
+                Text(DataCardCopy.syncLead).font(.callout.weight(.semibold))
+            }
+            Text(DataCardCopy.syncCaption).pestoCaption().padding(.leading, 24)
+            if showsNoBackupNote {
+                Text(DataCardCopy.noBackupNote).pestoCaption().padding(.leading, 24)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var offActions: some View {
+        HStack(spacing: 8) {
+            Button("Set Up Sync\u{2026}") { controller.beginSetUp() }
+                .buttonStyle(.pestoProminent)
+                .accessibilityIdentifier(AccessibilityID.syncSetUpButton)
+            Spacer()
         }
     }
 

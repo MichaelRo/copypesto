@@ -31,26 +31,6 @@ public enum BackupChip: Equatable, Sendable {
         }
     }
 
-    public func tileValue(
-        now: Date = .now,
-        calendar: Calendar = .autoupdatingCurrent,
-        locale: Locale = .autoupdatingCurrent
-    )
-    -> String {
-        switch self {
-        case .off: "Off"
-        case .waiting: "Not yet"
-        case .paused: "Paused"
-        case .needsYou: "Needs you"
-        case let .upToDate(date): Self.when(date, now: now, calendar: calendar, locale: locale)
-        }
-    }
-
-    public var tileLabel: String {
-        if case .upToDate = self { return "Backed up" }
-        return "Backup"
-    }
-
     public func summaryText(
         now _: Date = .now,
         calendar: Calendar = .autoupdatingCurrent,
@@ -71,13 +51,6 @@ public enum BackupChip: Equatable, Sendable {
         date.formatted(Date.FormatStyle(
             date: .omitted, time: .shortened, locale: locale, calendar: calendar, timeZone: calendar.timeZone
         ))
-    }
-
-    private static func when(_ date: Date, now: Date, calendar: Calendar, locale: Locale) -> String {
-        if calendar.isDate(date, inSameDayAs: now) { return timeText(date, calendar: calendar, locale: locale) }
-        return date.formatted(Date.FormatStyle(
-            date: .omitted, time: .omitted, locale: locale, calendar: calendar, timeZone: calendar.timeZone
-        ).month(.abbreviated).day())
     }
 }
 

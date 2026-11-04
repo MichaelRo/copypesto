@@ -3,29 +3,23 @@ import PestoCore
 import SwiftData
 import SwiftUI
 
-/// What the history amounts to, at the top of Data: how many clips, how much disk, how old the oldest is, and when the
-/// backup last ran. Counts and sizes only, so it needs no unlock.
+/// What the history amounts to, at the top of Data: how many clips, how much disk, how old the oldest is. Counts and
+/// sizes only, so it needs no unlock. Backup state is not here: the chips and the Backup card say it (ADR 0022).
 struct DataStatStrip: View {
     @Environment(AppState.self) private var appState: AppState
     @Environment(\.modelContext) private var modelContext
     @State private var snapshot: PrivacySnapshot?
     @State private var bytes: Int?
-    @State private var backupTick = 0
+
+    static let statIDs = ["clips", "disk", "oldest"]
 
     var body: some View {
         SettingsStatStrip(stats: [
             SettingsStat(id: "clips", value: clipsText, label: "Clips"),
             SettingsStat(id: "disk", value: bytes.map(Self.sizeText) ?? "…", label: "On disk"),
-            SettingsStat(id: "oldest", value: oldestText, label: "Oldest clip"),
-            SettingsStat(
-                id: "backup", value: chip.tileValue(), label: LocalizedStringKey(chip.tileLabel),
-                tint: chip.tileTint
-            )
+            SettingsStat(id: "oldest", value: oldestText, label: "Oldest clip")
         ])
         .task { await refresh() }
-        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
-            backupTick += 1
-        }
     }
 
     private var clipsText: String {
@@ -35,15 +29,6 @@ struct DataStatStrip: View {
     private var oldestText: String {
         guard let snapshot else { return "…" }
         return snapshot.oldest.map { $0.formatted(date: .abbreviated, time: .omitted) } ?? "None"
-    }
-
-    private var chip: BackupChip {
-        _ = backupTick
-        let settings = AutoBackupSettings()
-        return BackupChip(
-            status: BackupStatus(isEnabled: settings.isEnabled, pausedAfterClear: settings.pausedAfterClear),
-            lastBackup: settings.lastBackup, problem: settings.problem
-        )
     }
 
     private static func sizeText(_ bytes: Int) -> String {

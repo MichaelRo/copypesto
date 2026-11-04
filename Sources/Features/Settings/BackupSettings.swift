@@ -54,8 +54,6 @@ struct BackupSettings: View {
                     offActions
                     if hasRecoveryKey { recoveryKeyRow }
                 }
-                if let sync { SyncRows(controller: sync, sharesBackupFolder: sharesBackupFolder) }
-                if isConfigured || sync?.isEnabled == true { contentsTable }
                 if unreadableCount > 0 {
                     Button("Delete Unreadable Clips\u{2026}", role: .destructive) { confirmsDeletingUnreadable = true }
                         .accessibilityIdentifier(AccessibilityID.deleteUnreadableClipsButton)
@@ -64,9 +62,22 @@ struct BackupSettings: View {
                     Text(explanation).pestoCaption()
                 }
             } header: {
-                Text(sync == nil ? "Backup" : "Backup and Sync").settingsRow("Backup")
+                Text("Backup").settingsRow("Backup")
             } footer: {
-                Text(footerText)
+                if sync == nil { Text(footerText) }
+            }
+            if let sync {
+                let showsTable = isConfigured || sync.isEnabled
+                Section {
+                    SyncRows(controller: sync, sharesBackupFolder: sharesBackupFolder, backupIsOn: isConfigured)
+                } header: {
+                    Text("Sync")
+                } footer: {
+                    if !showsTable { Text(footerText) }
+                }
+                if showsTable { Section { contentsTable } footer: { Text(footerText) } }
+            } else if isConfigured {
+                Section { contentsTable }
             }
         }
         .syncSheets(sync)
@@ -126,7 +137,7 @@ struct BackupSettings: View {
 
     private var footerText: String {
         if !isConfigured {
-            return "Nothing leaves this Mac until you set this up. Clips with secrets stay out unless you choose."
+            return DataCardCopy.closingNote
         }
         return "To use these clips on another Mac, restore the file there. Restoring adds to that Mac; it never " +
             "replaces its clips."
@@ -149,14 +160,8 @@ struct BackupSettings: View {
                 }
             ))
             .accessibilityIdentifier(AccessibilityID.backupSwitch)
-            Text(
-                isConfigured
-                    ? "One encrypted file, rewritten about an hour after the last change. A backup never changes " +
-                    "another Mac."
-                    : "Keeps one encrypted file of your clips, collections, snippets and settings. Restore it on " +
-                    "any Mac. A backup never changes another Mac."
-            )
-            .pestoCaption()
+            Text(DataCardCopy.backupSentence(isConfigured: isConfigured))
+                .pestoCaption()
             if isConfigured {
                 BackupStatusLine(
                     chip: chip, lastBytes: settings.lastBytes, lastMessage: status, pulse: pulse,

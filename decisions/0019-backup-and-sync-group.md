@@ -1,6 +1,6 @@
 # 0019. Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live
 
-Status: Accepted
+Status: Accepted (the pane layout and the fourth tile are superseded by [0022](0022-data-pane-backup-and-sync-cards.md))
 
 Supersedes the Settings wording of [0010](0010-backup.md) ("Data opens with the backup status row", the Backup section's buttons) and the pane layout line of [0012](0012-settings-and-shortcuts.md); the backup file, its guards and its keys are unchanged. Sync itself is a separate decision (Proposed on its own branch; not built); nothing here makes it visible.
 

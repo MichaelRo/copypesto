@@ -114,14 +114,6 @@ struct BackupStatusLine: View {
 }
 
 extension BackupChip {
-    var tileTint: Color? {
-        switch self {
-        case .upToDate: .statusGood
-        case .needsYou: .statusBad
-        case .off, .waiting, .paused: nil
-        }
-    }
-
     var dotColor: Color {
         switch self {
         case .upToDate: .statusGood

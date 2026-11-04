@@ -9,6 +9,7 @@ enum AccessibilityID {
     static let setUpBackupButton = "set-up-backup"
     static let backupSwitch = "backup-switch"
     static let syncSwitch = "sync-switch"
+    static let syncSetUpButton = "sync-set-up-button"
     static let syncStatus = "sync-status"
     static let syncPairingWords = "sync-pairing-words"
     static let syncSecretsToggle = "sync-secrets-toggle"

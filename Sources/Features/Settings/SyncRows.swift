@@ -19,14 +19,11 @@ struct SyncRows: View {
                 ))
                 .accessibilityIdentifier(AccessibilityID.syncSwitch)
                 .settingsRow("Sync with my other Macs")
-                Text(
-                    "Keeps the Macs where you turn this on matching. Deleting a clip on one deletes it on all. " +
-                        "Sync is not a backup."
-                )
-                .pestoCaption()
+                Text(DataCardCopy.syncSentence)
+                    .pestoCaption()
                 if controller.isEnabled { statusLine }
             }
-            if controller.isEnabled { details }
+            if controller.isEnabled { details } else { offActions }
         }
         .confirmationDialog("Reset Sync?", isPresented: $confirmsReset, titleVisibility: .visible) {
             Button("Reset Sync", role: .destructive) { Task { await controller.reset() } }
@@ -40,6 +37,15 @@ struct SyncRows: View {
                 "This Mac stops syncing and removes its own files from the folder. Your other Macs keep everything. " +
                     "Clips already on this Mac stay."
             )
+        }
+    }
+
+    private var offActions: some View {
+        HStack(spacing: 8) {
+            Button("Set Up Sync\u{2026}") { controller.beginSetUp() }
+                .buttonStyle(.pestoProminent)
+                .accessibilityIdentifier(AccessibilityID.syncSetUpButton)
+            Spacer()
         }
     }
 

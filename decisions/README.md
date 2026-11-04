@@ -29,6 +29,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0018](0018-multi-device-sync.md) | Macs sync through an encrypted, append-only log per Mac in a folder the person picks, with a separate sync key (iCloud Keychain once Developer ID exists, by hand until then) and one Reset Sync action (proposed) |
 | [0020](0020-decode-jwt-is-a-second-way-into-a-hidden-clip.md) | Decode JWT is a second way into a hidden clip: same authentication, read-only, closes with Show |
 | [0021](0021-a-collection-keeps-a-clip-where-it-was.md) | A collection keeps a clip where it was; only the history moves it on use |
+| [0022](0022-data-pane-backup-and-sync-cards.md) | Settings → Data gives backup and sync a card each and drops the Backup stat tile |
 
 ## Template
 

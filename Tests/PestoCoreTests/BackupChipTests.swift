@@ -53,27 +53,6 @@ struct BackupChipTests {
         #expect(chip(.on, problem: .refused) == .needsYou(.refused))
     }
 
-    @Test("the tile value is the time for a backup written today, the date for an older one")
-    func tileValue() {
-        let now = date(29, 15, 0)
-        let locale = Locale(identifier: "en_GB")
-        #expect(chip(.on, last: date(29, 12, 40)).tileValue(now: now, calendar: calendar, locale: locale) == "12:40")
-        #expect(chip(.on, last: date(27, 9, 5)).tileValue(now: now, calendar: calendar, locale: locale) == "27 Oct")
-        #expect(chip(.off).tileValue(now: now, calendar: calendar, locale: locale) == "Off")
-        #expect(chip(.on).tileValue(now: now, calendar: calendar, locale: locale) == "Not yet")
-        #expect(chip(.paused).tileValue(now: now, calendar: calendar, locale: locale) == "Paused")
-        #expect(chip(.on, problem: .failed).tileValue(now: now, calendar: calendar, locale: locale) == "Needs you")
-    }
-
-    @Test("the tile label says what the value is")
-    func tileLabel() {
-        #expect(chip(.off).tileLabel == "Backup")
-        #expect(chip(.on).tileLabel == "Backup")
-        #expect(chip(.on, last: date(29, 12, 40)).tileLabel == "Backed up")
-        #expect(chip(.paused).tileLabel == "Backup")
-        #expect(chip(.on, problem: .failed).tileLabel == "Backup")
-    }
-
     @Test("the summary chip is a short sentence with the state in it")
     func summaryText() {
         let now = date(29, 15, 0)

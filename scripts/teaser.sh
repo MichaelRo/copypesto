@@ -49,6 +49,10 @@ for mode in light dark; do
   python3 "$website/video/teaser/scripts/import_frames.py" "$result" "$mode"
 done
 
+echo "copying the menu bar icons..."
+cp Sources/Resources/Assets.xcassets/MenuBarIcon.imageset/menubar@2x.png "$website/video/teaser/public/brand/menubar.png"
+cp Sources/Resources/Assets.xcassets/MenuBarIconHidden.imageset/MenuBarIconHidden@2x.png "$website/video/teaser/public/brand/menubar-hidden.png"
+
 echo "drawing the film's pictures..."
 "$website/video/teaser/scripts/render_art.sh" "$PWD"
 

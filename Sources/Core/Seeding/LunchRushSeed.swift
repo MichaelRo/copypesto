@@ -26,6 +26,7 @@
             ("Home", "house", "#7BAE7F")
         ]
         public static let trackingNumber = "1Z999AA10123456784"
+        public static let secondCopy = "bring basil"
         public static let flightClip = "Flight PS 142 \u{00B7} boards 14:05"
         public static let debateLink = "https://example.com/is-it-pesto-without-basil"
         public static let codeLine = #"let pesto = blend(basil, nuts, oil) // never "pestos""#
@@ -87,6 +88,8 @@
             captures.append(SeedFixtures.pictureCapture(ShowcaseArt.boardingPass()))
             captures += supplierLinks.map { SeedFixtures.textCapture($0.url, app: safari) }
             captures += richClips().reversed()
+            // The two clips the film copies in its first scene, newest last: they open the shelf in the next one.
+            captures += [SeedFixtures.textCapture(trackingNumber, app: messages), SeedFixtures.textCapture(secondCopy, app: messages)]
             return captures
         }
 

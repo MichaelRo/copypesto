@@ -86,17 +86,19 @@ struct LunchRushSeedTests {
         #expect(LunchRushSeed.snippets.contains { $0.title == "Quick thanks" && !$0.text.contains("{{") })
     }
 
-    @Test("the shelf opens on the masked card, then the six finale clips side by side, with no covered picture")
+    @Test("the shelf opens on the two clips the film copies first, then the masked card, then the finale clips, with no covered picture")
     func whenProfileBuilt_thenFinaleClipsFollowTheMaskedCard() {
         let newestFirst = Array(SeedFixtures.captures(for: .lunchRush).reversed())
 
-        #expect(newestFirst[0].payloadString == LunchRushSeed.cardNumber)
-        #expect(pictureWidth(newestFirst[1].payload) == 960)
-        #expect(newestFirst[2].typeIdentifier == "com.compuserve.gif")
-        #expect(newestFirst[3].payloadString == "#C9A227")
-        #expect(newestFirst[4].payloadString == LunchRushSeed.debateLink)
-        #expect(newestFirst[5].payloadString == LunchRushSeed.codeLine)
-        #expect(newestFirst[6].payloadString?.contains(".pdf") == true)
+        #expect(newestFirst[0].payloadString == LunchRushSeed.secondCopy)
+        #expect(newestFirst[1].payloadString == LunchRushSeed.trackingNumber)
+        #expect(newestFirst[2].payloadString == LunchRushSeed.cardNumber)
+        #expect(pictureWidth(newestFirst[3].payload) == 960)
+        #expect(newestFirst[4].typeIdentifier == "com.compuserve.gif")
+        #expect(newestFirst[5].payloadString == "#C9A227")
+        #expect(newestFirst[6].payloadString == LunchRushSeed.debateLink)
+        #expect(newestFirst[7].payloadString == LunchRushSeed.codeLine)
+        #expect(newestFirst[8].payloadString?.contains(".pdf") == true)
     }
 
     @Test("exactly one clip answers a search for flight")
@@ -115,10 +117,10 @@ struct LunchRushSeedTests {
         #expect(update?.text.contains("{{choice") == false)
     }
 
-    @Test("the tracking number is a carrier example number, copied live and not seeded")
-    func whenBuilt_thenTrackingNumberIsNotSeeded() {
+    @Test("the tracking number is a carrier example number, seeded once as the film's first copy and copied again live")
+    func whenBuilt_thenTrackingNumberIsSeededOnce() {
         #expect(LunchRushSeed.trackingNumber == "1Z999AA10123456784")
-        #expect(!texts.contains(LunchRushSeed.trackingNumber))
+        #expect(texts.filter { $0 == LunchRushSeed.trackingNumber }.count == 1)
     }
 
     @Test("the GIF is twelve frames at card size, so the shelf shows the whole jar and not its middle")

@@ -58,7 +58,9 @@ struct SyncCopiedAtTests {
         #expect(records.isEmpty)
     }
 
-    @Test("two Macs that copied the same text end with the earlier first copy on both, once the earlier Mac writes a record")
+    @Test(
+        "two Macs that copied the same text end with the earlier first copy on both, once the earlier Mac writes a record"
+    )
     func whenBothCopied_thenEarlierFirstCopyWins() async throws {
         let world = try SyncWorld()
         let (a, b) = (world.macs[0], world.macs[1])

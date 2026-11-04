@@ -113,7 +113,6 @@ final class TeaserFramesTests: PestoUITestCase {
         frame("shelf", 0)
         showOverlay()
         settleGlass()
-        frame("shelf", 1)
         overlay.typeKey(.rightArrow, modifierFlags: [])
         settle(0.7)
         frame("shelf", 2)
@@ -139,22 +138,23 @@ final class TeaserFramesTests: PestoUITestCase {
     }
 
     private func snippetScene() {
-        copyFrom("com.apple.mail", "1Z999AA10123456784")
-        settle(2.2)
         showOverlay()
         settleGlass()
         frame("snippet", 0)
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        settle(0.3)
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        settle(0.8)
+        frame("snippet", 10)
+        overlay.typeKey("c", modifierFlags: .command)
+        settle(1.2)
+        frame("snippet", 11)
         search("order update", frames: "snippet", from: 1)
         frame("snippet", 7)
         overlay.typeKey(.return, modifierFlags: [])
         settle(1.5)
         XCTAssertFalse(app.windows["Fill in snippet"].exists, "this snippet asks nothing")
         attachPaste("snippet")
-        showOverlay()
-        settleGlass()
-        frame("snippet", 8)
-        overlay.typeKey(.escape, modifierFlags: [])
-        settle(0.8)
     }
 
     private func secretScene() {

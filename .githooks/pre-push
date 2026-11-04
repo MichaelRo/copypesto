@@ -19,6 +19,9 @@ if [ -f Package.swift ]; then
   swift test 2>&1 | tail -30 || fail "tests failed"
 fi
 
+# 1b. A reminder, not a check: changes the website film shows (docs/teaser.md)
+scripts/teaser-reminder.sh || true
+
 # 2. Grep for forbidden analytics SDK imports (defense in depth)
 yellow "[pre-push] checking for analytics SDKs..."
 forbidden=(Sentry Mixpanel Amplitude Bugsnag Crashlytics Firebase Datadog Segment GoogleAnalytics PostHog Heap)

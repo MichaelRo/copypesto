@@ -15,7 +15,8 @@ Run them from the repository root. `make help` lists the `make` targets that wra
 | Script | What it does |
 |---|---|
 | `bench-latency.sh` (+ `bench-latency/`) | Paste, copy, shelf-open, hover and memory timings with a real target app (`make bench-latency`). |
-| `bench-scroll.sh`, `profile-scroll.sh` (+ `profile-scroll/`) | Animation Hitches traces of the shelf while a scroll runs (`make bench-scroll`). |
+| `bench-scroll.sh`, `profile-scroll.sh` (+ `profile-scroll/`) | Animation Hitches traces of the shelf while a scroll runs (`make bench-scroll`). A trace that hangs is stopped after two minutes, and `bench-scroll.sh` goes on to the next history. |
+| `run-with-deadline.sh` | Runs a command and stops it, and what it started, after a number of seconds (exit 124); macOS has no `timeout`. |
 
 ## Release
 | Script | What it does |

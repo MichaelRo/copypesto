@@ -276,6 +276,15 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 **Shortcuts and pasting**
 - Copy from the shelf (a card's menu, Copy As…, a color format, or a click in the floating window set to copy). Pass: the
   clip moves to the front, as a paste does, and its paste count does not change.
+- Paste as Plain Text (2026-11-04): right-click a text clip. Pass: *Paste as Plain Text* is above *Paste As…* with
+  ⌃⌥⌘V beside it, it pastes the text without formatting (a UI test covers the paste), the item follows the shortcut
+  after it is changed in Settings → Shortcuts, and shows no shortcut when that one is turned off.
+- ⌘[ and ⌘] (2026-11-04): with a 5,000-clip history and three collections, hold ⌘] across all of them and back, and
+  compare with 1.2.0. Pass: each collection's clips appear in one step, with no flash of the previous collection's
+  clips, and no stutter (`LargeHistoryPerformanceTests` times the filtering; the redraw is only seen by eye).
+- A collection keeps its clips where they are (ADR 0021): paste a clip from a collection by hand, then look at the
+  collection and at All. Pass: the collection's order does not change, All puts the clip first, and the card's detail
+  line shows the first copy time, not the paste.
 - Copy (⌘C) on the shelf. Pass: it copies the focused clip with no beep and the clip moves to the front; in the search
   field it copies the selected text; with a card menu open it still works.
 - Quick Look (⌘Y): copy a GIF from a browser, a page of a PDF and a WebP picture, and two files in Finder. Pass: ⌘Y shows
@@ -363,6 +372,10 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   and the quick menu stay readable, the focus ring is visible (A-14), the card header time in Mortar dark reads (D-07,
   estimated 4.46:1), and the hover card does not scale.
 - Text size: set the largest text size and open the shelf, Settings and setup. Pass: no text is cut off or overlaps.
+- Settings on two displays (2026-11-04; the rule is tested in `SettingsWindowFrameTests`, the displays are not): with
+  the shelf on one display, choose Settings from its gear; with the shelf closed, choose Settings from the menu-bar
+  icon with the pointer on the other display. Pass: Settings opens on the display in use each time, at the size it was
+  closed at, and a window already open is only brought forward, not moved.
 - Import offer with two or more clipboard managers really installed (Paste and Maccy). Pass: the shelf says "You have
   Paste and Maccy", *Choose…* opens Settings → Data scrolled to **Found on this Mac** with each app's own icon, *Import…*
   on a row asks for Touch ID and a file for that app only, and the row then says "Imported N clips".
@@ -416,6 +429,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - `make bench-scroll`. Pass: it prints `shelf scroll travel` of at least 300 points for both histories (a run in which
   the shelf did not move fails) and stays within the scroll budget. A trace that hangs is stopped after two minutes
   (`scripts/run-with-deadline.sh`) and that history fails while the next one still runs.
+  To see it work, quit `xctrace` (`pkill xctrace`) during a pass. Pass: that history fails with *xctrace record
+  failed*, the next history still runs, and `make bench-scroll` exits non-zero.
 - `make bench-latency all 7`, `make bench-undo` after a change to Undo, and `make bench-sync` after a change to sync. Pass: both stay within budget.
 - A store fixture from the shipped build is added before each release. Pass: the fixture opens in the next build.
 
@@ -440,7 +455,8 @@ Run once at the end, on two Macs signed in to the same Apple Account with iCloud
 
 **Set up.** On A: Settings → Data → Sync with my other Macs → Turn On Sync. Pass: the sheet names the folder and what leaves the Mac; the recovery key is shown once and can be shown again behind Touch ID. On B: the same switch. Pass with the profile build: B finds the sync and offers to join with both counts and no key typed. Pass with the self-signed build: B asks for the key; the recovery key joins it; *Ask Another Mac* shows six words on both Macs and A allows it.
 
-**Flow.** Copy text on A: it appears on B (time it). Copy a picture, a link, a file, a color. Pin a clip and rename a title on A: B follows. Delete on A: it is gone on B and a restore of an old backup on B does not bring it back. Copy the same words on both: one clip. Edit a snippet on both at nearly the same time: the later edit wins on both. Turn B's Wi-Fi off, copy on both, turn it on: both converge and nothing is lost.
+**Flow.** Copy text on A: it appears on B (time it). Copy a picture, a link, a file, a color. Pin a clip and rename a title on A: B follows. Delete on A: it is gone on B and a restore of an old backup on B does not bring it back. Copy the same words on both: one clip. Paste a clip from a collection on A before B has joined, then set B up: B lists that collection in A's order, and a
+paste on B does not move the clip inside it (ADR 0021). Edit a snippet on both at nearly the same time: the later edit wins on both. Turn B's Wi-Fi off, copy on both, turn it on: both converge and nothing is lost.
 
 **Secrets.** Copy a password-manager entry, a card number and a JWT on A: none reach B. Turn on *Also sync clips with secrets*: they do, hidden, and need Touch ID on B. Turn it off: they leave B.
 

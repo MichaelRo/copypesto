@@ -91,7 +91,10 @@
             captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
             captures.append(SeedFixtures.pictureCapture(ShowcaseArt.boardingPass()))
             captures += supplierLinks.map { SeedFixtures.textCapture($0.url, app: safari) }
-            captures += richClips().reversed()
+            // The card reaches the shelf as a copy from a message, so the card is a Messages clip in the film.
+            captures += richClips().reversed().map {
+                $0.payloadString == cardNumber ? SeedFixtures.textCapture(cardNumber, app: messages) : $0
+            }
             // The two clips the film copies in its first scene, from the flight email and the order email, the tracking
             // number last so it is the newest: they open the shelf in the next one.
             captures += [

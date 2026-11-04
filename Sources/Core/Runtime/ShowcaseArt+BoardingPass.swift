@@ -39,7 +39,7 @@
                 draw(Line(text: "BOARDING PASS", y: CGFloat(height) - 54, size: 34, bold: true, hex: "FAF7EE"))
                 draw(Line(text: "PS 142  GENOA", y: 176, size: 44, bold: true, hex: "2B2F2A"))
                 draw(Line(text: "GATE B7", y: 112, size: 52, bold: true, hex: "2F7A49"))
-                draw(Line(text: "MAMMA MIA  14:05", y: 52, size: 30, bold: false, hex: "2B2F2A"))
+                draw(Line(text: "MAMMA MIA  2:05 PM", y: 52, size: 30, bold: false, hex: "2B2F2A"))
             }
         }
     }

@@ -59,7 +59,7 @@ struct SyncCopiedAtTests {
     }
 
     @Test(
-        "two Macs that copied the same text end with the earlier first copy on both, once the earlier Mac writes a record"
+        "two Macs that copied the same text agree on the earlier first copy once the earlier Mac writes a record"
     )
     func whenBothCopied_thenEarlierFirstCopyWins() async throws {
         let world = try SyncWorld()

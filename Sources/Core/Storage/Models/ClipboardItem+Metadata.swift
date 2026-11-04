@@ -138,6 +138,16 @@ public extension ClipboardItem {
         timestamp = date
     }
 
+    /// Takes an earlier first-copy time that arrives from another Mac or a backup. The earliest across Macs is the
+    /// first copy, so merging is the same in any order. Nothing is sealed when it is not earlier than what the clip
+    /// already reads as its first copy, which is its own `timestamp` until a use has moved that on.
+    func adoptFirstCopy(_ date: Date?) {
+        guard let date, !metadataIsUnreadable else { return }
+        let earliest = min(copiedAt, date)
+        guard earliest < timestamp, earliest != metadata.copiedAt else { return }
+        updateMetadata { $0.copiedAt = earliest }
+    }
+
     var collectionOrder: Int? {
         get { metadata.collectionOrder }
         set { if metadata.collectionOrder != newValue { updateMetadata { $0.collectionOrder = newValue } } }

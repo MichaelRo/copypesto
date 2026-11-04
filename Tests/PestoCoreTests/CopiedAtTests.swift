@@ -84,4 +84,30 @@ struct CopiedAtTests {
         #expect(decoded.customTitle == "T")
         #expect(decoded.copiedAt == nil)
     }
+
+    @Test("an earlier first-copy time from another Mac or a backup is adopted")
+    func whenEarlierDateArrives_thenAdopted() {
+        let item = clip("a", at: 100)
+        item.adoptFirstCopy(Date(timeIntervalSince1970: 40))
+        #expect(item.copiedAt == Date(timeIntervalSince1970: 40))
+        #expect(item.timestamp == Date(timeIntervalSince1970: 100))
+    }
+
+    @Test("a later, missing or equal date changes nothing, and nothing is sealed for it")
+    func whenNotEarlier_thenIgnored() {
+        let item = clip("a", at: 100)
+        item.adoptFirstCopy(Date(timeIntervalSince1970: 300))
+        item.adoptFirstCopy(nil)
+        item.adoptFirstCopy(Date(timeIntervalSince1970: 100))
+        #expect(item.metadata.copiedAt == nil)
+        #expect(item.metadataCiphertext == nil)
+    }
+
+    @Test("a clip that already remembers an earlier first copy keeps it when a later one arrives")
+    func whenAlreadyEarlier_thenKept() {
+        let item = clip("a", at: 10)
+        item.bringToFront(at: Date(timeIntervalSince1970: 500))
+        item.adoptFirstCopy(Date(timeIntervalSince1970: 200))
+        #expect(item.copiedAt == Date(timeIntervalSince1970: 10))
+    }
 }

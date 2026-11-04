@@ -26,12 +26,18 @@ store size are untouched), and a clip that joins a collection after being pasted
 
 ## Consequences
 - The first paste of a clip seals one small piece of metadata. Nothing new is stored in the clear.
-- Sync does not carry `copiedAt` yet: a Mac that receives a clip orders it in collections by the synced `timestamp`,
-  which moves on a paste on another Mac. Carrying it is a change to the sync record format (ADR 0018) and is left for a
-  later record. Backups do not carry it, as they do not carry `collectionOrder`.
-- Clips used before this change have no `copiedAt`; their first copy time is lost and they order by their last use
-  until the next use, which keeps that value from then on.
+- **Sync** carries it in the clip's record (`SyncCuration.copiedAt`, absent for a clip never used and in older
+  records). It is not part of the sync fingerprint: a paste is this Mac's own business and writes no record, as before,
+  so the value travels with the next record the clip gets (its first one, on a new Mac, carries it). The earliest
+  value wins on every Mac (`ClipboardItem.adoptFirstCopy`), even from a record whose edits lose on the stamp, so the
+  result does not depend on the order records arrive in. A Mac that only received a clip does not write it back, so
+  two Macs that copied the same text independently agree once the earlier one writes a record for it.
+- **Backups** carry it (`BackupItemMetadata.copiedAt`) together with `collectionOrder`, which backups had never kept:
+  a restore used to lose a collection's hand order. Both are absent in older backups and read as none.
+- Clips used before this change have no first-copy time; they order by their last use until the next use, which
+  keeps that value from then on.
 
 ## Docs affected
 - `docs/guide/` (Collections: a paste does not reorder a collection)
+- `docs/guide/settings.md` (Backup: a clip's place in a collection is kept)
 - `decisions/README.md` (this record in the table)

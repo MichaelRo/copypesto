@@ -166,3 +166,29 @@ struct LunchRushSeedTests {
         #expect(!LunchRushSeed.flightClip.lowercased().contains("gate"))
     }
 }
+
+@Suite("Film seed copy source")
+struct LunchRushCopySourceTests {
+    private func configuration(mode: LaunchMode, seed: SeedProfile) -> RuntimeConfiguration {
+        RuntimeConfiguration(mode: mode, session: "test", seed: seed, accessibility: .trusted)
+    }
+
+    @Test("a UI-test copy under the film's seed is attributed to Messages, whatever app is in front")
+    func whenFilmSeed_thenSourceIsMessages() {
+        let source = SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.anthropic.claudefordesktop", configuration: configuration(mode: .uiTest, seed: .lunchRush)
+        )
+
+        #expect(source == "com.apple.MobileSMS")
+    }
+
+    @Test("every other launch keeps the frontmost app as the source")
+    func whenOtherLaunch_thenSourceIsFrontmost() {
+        #expect(SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.apple.Notes", configuration: configuration(mode: .uiTest, seed: .basic)
+        ) == "com.apple.Notes")
+        #expect(SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.apple.Notes", configuration: configuration(mode: .normal, seed: .lunchRush)
+        ) == "com.apple.Notes")
+    }
+}

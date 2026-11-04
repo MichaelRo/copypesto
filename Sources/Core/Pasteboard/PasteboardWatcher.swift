@@ -126,8 +126,16 @@ public final class SystemFrontmostAppProvider: FrontmostAppProviding {
 
     public func frontmostBundleID() async -> String? {
         await MainActor.run {
-            NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+            Self.sourceBundleID(frontmost: NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
         }
+    }
+
+    /// The film's seed shows every copy as made in Messages: in a UI-test run the frontmost app is whatever the developer
+    /// has open (Terminal, Claude), which would be printed on the shelf's card.
+    nonisolated static func sourceBundleID(
+        frontmost: String?, configuration: RuntimeConfiguration = .current
+    ) -> String? {
+        configuration.mode == .uiTest && configuration.seed == .lunchRush ? "com.apple.MobileSMS" : frontmost
     }
 
     public func recentBundleIDs(within interval: TimeInterval) async -> [String] {

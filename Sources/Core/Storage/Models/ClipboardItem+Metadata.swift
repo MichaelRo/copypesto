@@ -122,6 +122,22 @@ public extension ClipboardItem {
         set { if metadata.linkPreviewFetched != newValue { updateMetadata { $0.linkPreviewFetched = newValue } } }
     }
 
+    /// When the clip was first copied. `timestamp` is when it was last used, which is what puts it in front in the
+    /// history; a collection orders by this one so a paste does not move a clip inside it (ADR 0021).
+    var copiedAt: Date {
+        metadata.copiedAt ?? timestamp
+    }
+
+    /// Records a use of the clip (a paste, a copy, a re-copy): it moves to the front of the history, and the time it
+    /// was first copied is kept the first time that happens.
+    func bringToFront(at date: Date) {
+        if metadata.copiedAt == nil, !metadataIsUnreadable {
+            let first = timestamp
+            updateMetadata { $0.copiedAt = first }
+        }
+        timestamp = date
+    }
+
     var collectionOrder: Int? {
         get { metadata.collectionOrder }
         set { if metadata.collectionOrder != newValue { updateMetadata { $0.collectionOrder = newValue } } }

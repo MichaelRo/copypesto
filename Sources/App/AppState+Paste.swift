@@ -15,7 +15,7 @@ extension AppState {
     /// A paste from the shelf or the quick menu counts, and moves the clip to the front of the history.
     func notePasted(_ item: ClipboardItem, in context: ModelContext) {
         item.pasteCount += 1
-        item.timestamp = Date()
+        item.bringToFront(at: Date())
         attempt("Couldn’t save the change") { try context.saveOrRollback() }
     }
 
@@ -37,7 +37,7 @@ extension AppState {
     /// A copy from the shelf is a use of the clip too, so it moves to the front like a paste does. It is not counted as
     /// a paste: the person pastes it later, in an app, without Pesto.
     func noteCopied(_ item: ClipboardItem, in context: ModelContext) {
-        item.timestamp = Date()
+        item.bringToFront(at: Date())
         attempt("Couldn’t save the change") { try context.saveOrRollback() }
     }
 

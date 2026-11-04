@@ -17,7 +17,7 @@ enum DetailFactsText {
             type: item.type,
             secretKind: isRevealed ? nil : item.sensitivity?.badgeLabel,
             isRemote: item.isRemote,
-            copiedAt: item.timestamp,
+            copiedAt: item.copiedAt,
             byteSize: item.byteSize,
             characterCount: item.textLength,
             shownText: shownText,

@@ -18,13 +18,16 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
     public var signature: [UInt32]?
     /// The days (counted from the reference date) on which the clip was pasted, the last thirty at most.
     public var pasteDays: [Int]?
+    /// When the clip was first copied, kept once a paste, a copy or a re-copy moves its `timestamp` to the front, so a
+    /// collection can keep a clip where it was. Absent until the first of those.
+    public var copiedAt: Date?
 
     public init(
         customTitle: String? = nil, userNote: String? = nil, tags: [String] = [],
         customSymbolName: String? = nil, collectionOrder: Int? = nil, ogTitle: String? = nil,
         ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil, fieldMemory: [String: String]? = nil,
         signature: [UInt32]? = nil,
-        pasteDays: [Int]? = nil
+        pasteDays: [Int]? = nil, copiedAt: Date? = nil
     ) {
         self.customTitle = customTitle
         self.userNote = userNote
@@ -37,12 +40,14 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
         self.fieldMemory = fieldMemory
         self.signature = signature
         self.pasteDays = pasteDays
+        self.copiedAt = copiedAt
     }
 
     public var isEmpty: Bool {
         customTitle == nil && userNote == nil && tags.isEmpty && customSymbolName == nil
             && collectionOrder == nil && ogTitle == nil && ogSiteName == nil && linkPreviewFetched != true
             && (fieldMemory ?? [:]).isEmpty && signature == nil && (pasteDays ?? []).isEmpty
+            && copiedAt == nil
     }
 
     public static let pasteDayWindow = 30

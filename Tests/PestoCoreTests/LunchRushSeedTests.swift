@@ -151,4 +151,16 @@ struct LunchRushSeedTests {
         #expect(names == ["Supplier links", "Travel", "Home"])
         #expect(Set(names).count == names.count)
     }
+
+    @Test("the boarding pass picture is seeded and text recognition reads its gate back")
+    func whenBoardingPassSeeded_thenItsGateIsReadable() async throws {
+        let pictures = LunchRushSeed.captures().filter { $0.typeIdentifier == "public.png" }
+        let pass = try #require(pictures.first { $0.payload == ShowcaseArt.boardingPass() })
+        guard !OCRService.isDisabled(environment: ProcessInfo.processInfo.environment) else { return }
+
+        let text = await OCRService().recognize(imageData: pass.payload)
+
+        #expect(text?.uppercased().contains("GATE") == true)
+        #expect(!LunchRushSeed.flightClip.lowercased().contains("gate"))
+    }
 }

@@ -26,7 +26,7 @@
             ("Home", "house", "#7BAE7F")
         ]
         public static let trackingNumber = "1Z999AA10123456784"
-        public static let flightClip = "Flight PS 142 \u{00B7} Gate B7 \u{00B7} boards 14:05"
+        public static let flightClip = "Flight PS 142 \u{00B7} boards 14:05"
         public static let debateLink = "https://example.com/is-it-pesto-without-basil"
         public static let codeLine = #"let pesto = blend(basil, nuts, oil) // never "pestos""#
 
@@ -84,6 +84,7 @@
                 ("Standup is at 9:15, bring basil.", messages)
             ]
             captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
+            captures.append(SeedFixtures.pictureCapture(ShowcaseArt.boardingPass()))
             captures += supplierLinks.map { SeedFixtures.textCapture($0.url, app: safari) }
             captures += richClips().reversed()
             return captures

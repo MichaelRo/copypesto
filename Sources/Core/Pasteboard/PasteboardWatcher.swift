@@ -130,12 +130,14 @@ public final class SystemFrontmostAppProvider: FrontmostAppProviding {
         }
     }
 
-    /// The film's seed shows every copy as made in Messages: in a UI-test run the frontmost app is whatever the developer
+    /// The film's seed shows every live copy as made in Safari (the order page and the checkout): in a UI-test run
+    /// the frontmost app is whatever the developer
     /// has open (Terminal, Claude), which would be printed on the shelf's card.
     nonisolated static func sourceBundleID(
         frontmost: String?, configuration: RuntimeConfiguration = .current
-    ) -> String? {
-        configuration.mode == .uiTest && configuration.seed == .lunchRush ? "com.apple.MobileSMS" : frontmost
+    )
+    -> String? {
+        configuration.mode == .uiTest && configuration.seed == .lunchRush ? "com.apple.Safari" : frontmost
     }
 
     public func recentBundleIDs(within interval: TimeInterval) async -> [String] {

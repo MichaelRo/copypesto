@@ -13,6 +13,12 @@
             public let shortcut: Int
         }
 
+        public struct ExtraCollection: Sendable {
+            public let name: String
+            public let symbol: String
+            public let colorHex: String
+        }
+
         public struct Link: Sendable {
             public let title: String
             public let url: String
@@ -21,13 +27,12 @@
         public static let cardNumber = "4242 4242 4242 4242"
         public static let supplierCollection = "Supplier links"
         /// Two more chips for the shelf's row, so it reads as a life and not a demo (the teaser never opens them).
-        public static let extraCollections: [(name: String, symbol: String, colorHex: String)] = [
-            ("Travel", "airplane", "#E8A33D"),
-            ("Home", "house", "#7BAE7F")
+        public static let extraCollections = [
+            ExtraCollection(name: "Travel", symbol: "airplane", colorHex: "#E8A33D"),
+            ExtraCollection(name: "Home", symbol: "house", colorHex: "#7BAE7F")
         ]
         public static let trackingNumber = "1Z999AA10123456784"
-        public static let secondCopy = "bring basil"
-        public static let flightClip = "Flight PS 142 \u{00B7} boards 14:05"
+        public static let flightTime = "Lands 6:40 pm"
         public static let debateLink = "https://example.com/is-it-pesto-without-basil"
         public static let codeLine = #"let pesto = blend(basil, nuts, oil) // never "pestos""#
 
@@ -68,12 +73,13 @@
         private static let notes = "com.apple.Notes"
         private static let safari = "com.apple.Safari"
         private static let messages = "com.apple.MobileSMS"
+        private static let mail = "com.apple.mail"
 
         /// Oldest first, which is the order `SeedFixtures` ingests in.
         static func captures() -> [PasteboardCapture] {
             var captures: [PasteboardCapture] = []
             let chatter: [(String, String)] = [
-                ("Wi-Fi password: ask Gary", messages),
+                ("Wi-Fi password: ask Mamma Mia", messages),
                 ("Meeting could have been this clip.", notes),
                 ("v2_final_FINAL_use-this-one.docx", notes),
                 ("Reading list: 212 tabs, 3 read", safari),
@@ -81,15 +87,18 @@
                 ("Order #4417: one jar, no questions", messages),
                 ("Does it keep? Ask the jar.", messages),
                 ("Yes. The pine nut supplier passed the September audit.", messages),
-                (flightClip, messages),
-                ("Standup is at 9:15, bring basil.", messages)
+                ("Pine nuts, 2 kg: order confirmed", mail)
             ]
             captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
             captures.append(SeedFixtures.pictureCapture(ShowcaseArt.boardingPass()))
             captures += supplierLinks.map { SeedFixtures.textCapture($0.url, app: safari) }
             captures += richClips().reversed()
-            // The two clips the film copies in its first scene, the tracking number last so it is the newest and the snippet's clipboard: they open the shelf in the next one.
-            captures += [SeedFixtures.textCapture(secondCopy, app: messages), SeedFixtures.textCapture(trackingNumber, app: messages)]
+            // The two clips the film copies in its first scene, from the flight email and the order email, the tracking
+            // number last so it is the newest: they open the shelf in the next one.
+            captures += [
+                SeedFixtures.textCapture(flightTime, app: mail),
+                SeedFixtures.textCapture(trackingNumber, app: mail)
+            ]
             return captures
         }
 

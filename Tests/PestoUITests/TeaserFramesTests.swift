@@ -2,8 +2,10 @@
 import AppKit
 import XCTest
 
-/// The pictures behind the website teaser: settled states of the real shelf on the plain backdrop, one scene per
-/// method, attached at 2x as `teaser-<scene>-<nn>@2x` and exported from the result bundle like the marketing pictures.
+/// The pictures behind the website teaser: settled states of the real shelf on the plain backdrop, taken in the order
+/// the film tells its story (one test, so each scene starts from the shelf the scene before left: a copy or a paste
+/// moves that clip to the front), attached at 2x as `teaser-<scene>-<nn>@2x` and exported from the result bundle like
+/// the marketing pictures.
 /// `TEST_RUNNER_PESTO_TEASER_MODE=dark` takes them in dark. Motion is off, so a run gives the same pictures every time;
 /// the edit animates between them. What a paste wrote is
 /// attached as `teaser-<scene>-paste`, because a paste target cannot be a real app in a UI-test launch.
@@ -69,18 +71,48 @@ final class TeaserFramesTests: PestoUITestCase {
         settle()
     }
 
-    /// Scene 2: the backdrop, then the shelf open on the newest clips.
-    func test_scene2_shelfOpens() {
+    /// The whole story in order. Mamma Mia asks what time she lands; the flight time and the tracking number were
+    /// copied, the tracking number last (the seed). Each scene ends with its clip pasted or copied, and the next one
+    /// opens on a shelf with that clip first.
+    func test_film_story() {
         start()
+        shelfScene()
+        findScene()
+        snippetScene()
+        secretScene()
+        hideScene()
+    }
+
+    private func shelfScene() {
         frame("shelf", 0)
         showOverlay()
         settle()
         frame("shelf", 1)
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        settle(0.7)
+        frame("shelf", 2)
+        overlay.typeKey(.return, modifierFlags: [])
+        settle(1.5)
+        attachPaste("shelf")
+        showOverlay()
+        settle()
+        frame("shelf", 3)
     }
 
-    /// Scene 3: a tracking number is copied, then the order update snippet fills itself in and pastes, with no window.
-    func test_scene3_snippetFillsItself() {
-        start()
+    private func findScene() {
+        search("gate", frames: "gate", from: 0)
+        frame("gate", 9)
+        overlay.typeKey(.return, modifierFlags: [])
+        settle(1.5)
+        attachPaste("gate")
+        showOverlay()
+        settle()
+        frame("gate", 10)
+        overlay.typeKey(.escape, modifierFlags: [])
+        settle(0.8)
+    }
+
+    private func snippetScene() {
         copyToClipboard("1Z999AA10123456784")
         settle(2.2)
         showOverlay()
@@ -92,55 +124,20 @@ final class TeaserFramesTests: PestoUITestCase {
         settle(1.5)
         XCTAssertFalse(app.windows["Fill in snippet"].exists, "this snippet asks nothing")
         attachPaste("snippet")
-    }
-
-    /// Scene 4: a word narrows the shelf to the one clip, and Return pastes it.
-    func test_scene4_searchFindsFlight() {
-        start()
         showOverlay()
         settle()
-        frame("search", 0)
-        search("flight", frames: "search", from: 1)
-        frame("search", 4)
-        overlay.typeKey(.return, modifierFlags: [])
-        settle(1.5)
-        attachPaste("search")
+        frame("snippet", 8)
+        overlay.typeKey(.escape, modifierFlags: [])
+        settle(0.8)
     }
 
-    /// Scene 4b: typing "gate" narrows the shelf to the boarding pass picture, found by the text inside it.
-    func test_scene4b_searchFindsGateInPicture() {
-        start()
-        showOverlay()
-        settle()
-        search("gate", frames: "gate", from: 0)
-        settle()
-        frame("gate", 9)
-    }
-
-    /// Scene 7: Hide Clip Contents covers the shelf, and Show Clip Contents brings it back.
-    func test_scene7_hideClipContents() {
-        start()
-        showOverlay()
-        settle()
-        frame("hide", 0)
-        send(.toggleHideContents)
-        settle(0.35)
-        frame("hide", 1)
-        settle(1.0)
-        frame("hide", 2)
-        send(.toggleHideContents)
-        settle(1.2)
-        frame("hide", 3)
-    }
-
-    /// Scene 5: the masked card, Show, then Hide.
-    func test_scene5_secretShowAndHide() {
-        start()
+    private func secretScene() {
+        copyToClipboard("4242 4242 4242 4242")
+        settle(2.2)
         showOverlay()
         let masked = card(containing: "4242")
         XCTAssertTrue(masked.waitForExistence(timeout: 10))
         XCTAssertFalse((masked.value as? String ?? "").contains("4242 4242 4242 4242"), "the card must stay masked")
-        masked.click()
         settle()
         frame("secret", 0)
         masked.rightClick()
@@ -156,25 +153,15 @@ final class TeaserFramesTests: PestoUITestCase {
         frame("secret", 3)
     }
 
-    /// Scene 6: six clips of six kinds are selected one after the other, ready to paste one by one.
-    func test_scene6_sixKindsSelected() {
-        start()
-        showOverlay()
-        settle()
-        frame("stack", 0)
-        overlay.typeKey(.rightArrow, modifierFlags: [])
-        settle()
-        for index in 0..<6 {
-            overlay.typeKey(.space, modifierFlags: [])
-            settle(0.7)
-            frame("stack", index + 1)
-            if index < 5 { overlay.typeKey(.rightArrow, modifierFlags: []) }
-            settle(0.5)
-        }
-        let oneByOne = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Paste One by One")).firstMatch
-        XCTAssertTrue(oneByOne.waitForExistence(timeout: 5), "no Paste One by One in the selection bar")
-        XCTAssertFalse(element(AccessibilityID.pasteAllButton).exists, "mixed kinds cannot be joined as text")
+    private func hideScene() {
+        frame("hide", 0)
+        send(.toggleHideContents)
+        settle(0.35)
+        frame("hide", 1)
         settle(1.0)
-        frame("stack", 7)
+        frame("hide", 2)
+        send(.toggleHideContents)
+        settle(1.2)
+        frame("hide", 3)
     }
 }

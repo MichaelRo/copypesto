@@ -86,12 +86,12 @@ struct LunchRushSeedTests {
         #expect(LunchRushSeed.snippets.contains { $0.title == "Quick thanks" && !$0.text.contains("{{") })
     }
 
-    @Test("the shelf opens on the two clips the film copies first, then the masked card, then the finale clips, with no covered picture")
+    @Test("the shelf opens on the two clips the film copies, then the masked card and the finale clips")
     func whenProfileBuilt_thenFinaleClipsFollowTheMaskedCard() {
         let newestFirst = Array(SeedFixtures.captures(for: .lunchRush).reversed())
 
         #expect(newestFirst[0].payloadString == LunchRushSeed.trackingNumber)
-        #expect(newestFirst[1].payloadString == LunchRushSeed.secondCopy)
+        #expect(newestFirst[1].payloadString == LunchRushSeed.flightTime)
         #expect(newestFirst[2].payloadString == LunchRushSeed.cardNumber)
         #expect(pictureWidth(newestFirst[3].payload) == 960)
         #expect(newestFirst[4].typeIdentifier == "com.compuserve.gif")
@@ -101,11 +101,9 @@ struct LunchRushSeedTests {
         #expect(newestFirst[8].payloadString?.contains(".pdf") == true)
     }
 
-    @Test("exactly one clip answers a search for flight")
-    func whenSearchedForFlight_thenOneClip() {
-        let matches = texts.filter { $0.lowercased().contains("flight") }
-
-        #expect(matches == [LunchRushSeed.flightClip])
+    @Test("no text clip says gate, so a search for it can only match the picture")
+    func whenSearchedForGate_thenNoTextClipMatches() {
+        #expect(!texts.contains { $0.lowercased().contains("gate") })
     }
 
     @Test("the order update snippet fills itself in from the date, the clipboard and the cursor, with no questions")
@@ -120,7 +118,7 @@ struct LunchRushSeedTests {
     @Test("the tracking number is a carrier example number, seeded once as the film's first copy and copied again live")
     func whenBuilt_thenTrackingNumberIsSeededOnce() {
         #expect(LunchRushSeed.trackingNumber == "1Z999AA10123456784")
-        #expect(texts.filter { $0 == LunchRushSeed.trackingNumber }.count == 1)
+        #expect(texts.count(where: { $0 == LunchRushSeed.trackingNumber }) == 1)
     }
 
     @Test("the GIF is twelve frames at card size, so the shelf shows the whole jar and not its middle")
@@ -163,7 +161,7 @@ struct LunchRushSeedTests {
         let text = await OCRService().recognize(imageData: pass.payload)
 
         #expect(text?.uppercased().contains("GATE") == true)
-        #expect(!LunchRushSeed.flightClip.lowercased().contains("gate"))
+        #expect(!LunchRushSeed.flightTime.lowercased().contains("gate"))
     }
 }
 
@@ -173,13 +171,13 @@ struct LunchRushCopySourceTests {
         RuntimeConfiguration(mode: mode, session: "test", seed: seed, accessibility: .trusted)
     }
 
-    @Test("a UI-test copy under the film's seed is attributed to Messages, whatever app is in front")
-    func whenFilmSeed_thenSourceIsMessages() {
+    @Test("a UI-test copy under the film's seed is attributed to Safari, whatever app is in front")
+    func whenFilmSeed_thenSourceIsSafari() {
         let source = SystemFrontmostAppProvider.sourceBundleID(
             frontmost: "com.anthropic.claudefordesktop", configuration: configuration(mode: .uiTest, seed: .lunchRush)
         )
 
-        #expect(source == "com.apple.MobileSMS")
+        #expect(source == "com.apple.Safari")
     }
 
     @Test("every other launch keeps the frontmost app as the source")

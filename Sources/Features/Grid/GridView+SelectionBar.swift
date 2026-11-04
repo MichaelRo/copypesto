@@ -34,6 +34,11 @@ extension GridView {
         let next = forward
             ? (current + 1) % ids.count
             : (current - 1 + ids.count) % ids.count
+        // Filtered here, in the same step as the switch: left to `onChange` the first frame built the new row from the
+        // previous collection's clips and the right ones replaced them a frame later.
         appState.selectedCollectionID = ids[next]
+        displayLimit = 1000
+        applyFiltered(computeFiltered(), isUpdate: true)
+        appliedFilterKey = filterKey
     }
 }

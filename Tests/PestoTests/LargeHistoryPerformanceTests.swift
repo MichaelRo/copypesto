@@ -75,4 +75,52 @@ final class LargeHistoryPerformanceTests: XCTestCase {
             XCTAssertLessThan(slowest, 4, "a keystroke over 5,000 clips must leave the frame to SwiftUI")
         }
     }
+
+    /// ⌘[ and ⌘] rebuild the shelf for another collection: the history index narrows to the collection, the clips are
+    /// looked up and a plain collection is sorted by its hand order. That work runs on the main thread before the
+    /// first frame of the new collection, so it has to leave the frame to SwiftUI. The first switch also opens each
+    /// clip's sealed metadata (the hand order lives there), later ones read it from `PreviewTextCache`.
+    @MainActor
+    func test_collectionSwitch_over5000Items_leavesTheFrameToSwiftUI() throws {
+        let context = try makeContext(count: 5000)
+        let items = try context.fetch(FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(
+            \.timestamp,
+            order: .reverse
+        )]))
+        let collectionID = UUID()
+        for (position, item) in items.enumerated() where position % 5 == 0 {
+            item.collectionID = collectionID
+            item.collectionOrder = position / 5
+        }
+        let index = HistoryIndex(items: items)
+        let byID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
+        PreviewTextCache.shared.clear()
+
+        func switchTo(_ collection: UUID?) -> Int {
+            let ids = index.matching(HistoryCriteria(collectionID: collection))
+            var result = ids.compactMap { byID[$0] }
+            if collection != nil {
+                result = CollectionOrder.sorted(result)
+            }
+            return result.count
+        }
+        let clock = ContinuousClock()
+        func milliseconds(_ body: () -> Int) -> (ms: Double, count: Int) {
+            let begin = clock.now
+            let count = body()
+            return (Double((clock.now - begin).components.attoseconds) / 1e15, count)
+        }
+        let cold = milliseconds { switchTo(collectionID) }
+        let warm = milliseconds { switchTo(collectionID) }
+        let all = milliseconds { switchTo(nil) }
+        XCTAssertEqual(cold.count, 1000)
+        XCTAssertEqual(all.count, 5000)
+        PerfReport.emit(
+            "collection switch over 5,000 clips: collection of 1,000 cold \(cold.ms) ms, warm \(warm.ms) ms; all \(all.ms) ms"
+        )
+        if !RunEnvironment.isCI {
+            XCTAssertLessThan(warm.ms, 16, "a switch must leave the frame to SwiftUI")
+            XCTAssertLessThan(all.ms, 16, "a switch to All must leave the frame to SwiftUI")
+        }
+    }
 }

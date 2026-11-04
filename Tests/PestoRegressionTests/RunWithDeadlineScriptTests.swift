@@ -6,7 +6,13 @@ import Testing
 /// runs a command and gives up on it after a number of seconds, so a stuck trace fails the pass instead of the run.
 @Suite("run-with-deadline.sh")
 struct RunWithDeadlineScriptTests {
-    private func run(_ arguments: [String]) throws -> (code: Int32, seconds: Double, output: String) {
+    private struct Result {
+        let code: Int32
+        let seconds: Double
+        let output: String
+    }
+
+    private func run(_ arguments: [String]) throws -> Result {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [SourceTree.repositoryRoot.appendingPathComponent("scripts/run-with-deadline.sh").path]
@@ -18,7 +24,10 @@ struct RunWithDeadlineScriptTests {
         try process.run()
         let data = output.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
-        return (process.terminationStatus, Date().timeIntervalSince(start), String(bytes: data, encoding: .utf8) ?? "")
+        return Result(
+            code: process.terminationStatus, seconds: Date().timeIntervalSince(start),
+            output: String(bytes: data, encoding: .utf8) ?? ""
+        )
     }
 
     @Test("a command that finishes in time keeps its own exit code and output")

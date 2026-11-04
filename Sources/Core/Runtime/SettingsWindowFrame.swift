@@ -31,11 +31,7 @@ public enum SettingsWindowFrame {
     -> CGRect {
         let usable = saved.flatMap { restored(saved: $0, displays: displays) }
         if let usable, target.intersects(usable) { return usable }
-        let size = if usable != nil, let saved {
-            CGSize(width: saved.width, height: min(saved.height, maximumHeight))
-        } else {
-            defaultSize
-        }
+        let size = usable?.size ?? defaultSize
         let height = min(size.height, max(minimumHeight, target.height - screenMargin))
         let width = min(size.width, target.width)
         return CGRect(x: target.midX - width / 2, y: target.midY - height / 2, width: width, height: height)

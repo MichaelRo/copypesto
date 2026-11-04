@@ -30,6 +30,11 @@ struct BackupSummaryRow: View {
                 headline
                 chips
             }
+            VStack(alignment: .leading, spacing: 8) {
+                headline
+                chipView(color: chip.dotColor, text: chip.summaryText(now: now))
+                if let sync { chipView(color: sync.dotColor, text: sync.chipText) }
+            }
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .ignore)

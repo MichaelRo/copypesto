@@ -52,6 +52,10 @@ final class BackupSettingsSnapshotTests: XCTestCase {
         snapshot(summary(sync: .upToDate(savedAt)), size: CGSize(width: 520, height: 90))
     }
 
+    func test_summary_withSync_veryNarrow() {
+        snapshot(summary(sync: .upToDate(savedAt)), size: CGSize(width: 360, height: 120))
+    }
+
     func test_restoreWorking() {
         snapshot(
             VStack(alignment: .leading, spacing: 14) {

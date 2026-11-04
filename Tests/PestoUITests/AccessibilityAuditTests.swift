@@ -218,6 +218,9 @@ final class AccessibilityAuditTests: PestoUITestCase {
                 app.menuItems["Mark as Sensitive"].click()
             }
             XCTAssertTrue(hidden.waitForExistence(timeout: 5), "no covered card")
+            // The menu click leaves the pointer wherever the item was, which can be over another card: its hover card
+            // then joins the audit, and that panel has its own audit with its own known findings.
+            parkPointer()
         }
     }
 

@@ -20,6 +20,11 @@
 
         public static let cardNumber = "4242 4242 4242 4242"
         public static let supplierCollection = "Supplier links"
+        /// Two more chips for the shelf's row, so it reads as a life and not a demo (the teaser never opens them).
+        public static let extraCollections: [(name: String, symbol: String, colorHex: String)] = [
+            ("Travel", "airplane", "#E8A33D"),
+            ("Home", "house", "#7BAE7F")
+        ]
         public static let trackingNumber = "1Z999AA10123456784"
         public static let flightClip = "Flight PS 142 \u{00B7} Gate B7 \u{00B7} boards 14:05"
         public static let debateLink = "https://example.com/is-it-pesto-without-basil"

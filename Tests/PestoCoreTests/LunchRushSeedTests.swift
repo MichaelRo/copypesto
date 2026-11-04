@@ -143,4 +143,12 @@ struct LunchRushSeedTests {
         #expect(texts.contains(LunchRushSeed.codeLine))
         #expect(LunchRushSeed.debateLink.hasPrefix("https://example.com/"))
     }
+
+    @Test("the shelf's chip row carries the supplier collection and two more with distinct names")
+    func whenBuilt_thenTheExtraCollectionsAreDistinct() {
+        let names = [LunchRushSeed.supplierCollection] + LunchRushSeed.extraCollections.map(\.name)
+
+        #expect(names == ["Supplier links", "Travel", "Home"])
+        #expect(Set(names).count == names.count)
+    }
 }

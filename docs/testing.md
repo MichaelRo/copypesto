@@ -324,6 +324,10 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   other devices as dead paths): with Other devices on, copy a photo or a PDF on the iPhone, then paste a file clip whose
   file you deleted. Pass: nothing from the phone is kept, "Left out of your history" counts it in Settings → Privacy, ⌘V
   still pastes it in any app, and a toast says nothing was pasted for the deleted file.
+- Settings → Data, the Backup and Sync cards (ADR 0022), on hardware: in a narrow Settings window, in Dark and Light, with
+  sync available and with it unavailable. Pass: Backup and Sync are two separate cards, each with a switch, one sentence
+  and its buttons; no text is cut off; the sync sentence is readable as a warning; the Backup tile is gone from the
+  stat strip; turning either switch on opens its set-up sheet and Cancel leaves it off.
 - The color panel from the shelf, Paste the previous clip after an iPhone copy, and the Other Devices chip with the
   setting off. Pass: the panel opens, the previous clip pastes, and the chip is hidden.
 - A snippet with fill-ins (ADR 0017), on hardware, in Mail, Notes, a browser field and Terminal: paste it from the shelf, from

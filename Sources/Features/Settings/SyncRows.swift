@@ -19,8 +19,14 @@ struct SyncRows: View {
                 ))
                 .accessibilityIdentifier(AccessibilityID.syncSwitch)
                 .settingsRow("Sync with my other Macs")
-                Text(DataCardCopy.syncSentence)
-                    .pestoCaption()
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(Color.statusBad)
+                        .accessibilityHidden(true)
+                    Text(DataCardCopy.syncSentence)
+                        .font(.callout.weight(.semibold))
+                }
+                .accessibilityElement(children: .combine)
                 if controller.isEnabled { statusLine }
             }
             if controller.isEnabled { details } else { offActions }

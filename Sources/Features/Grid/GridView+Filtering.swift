@@ -51,14 +51,7 @@ extension GridView {
         let validIDs = Set(result.map(\.id))
         ids.removeAll { !validIDs.contains($0) }
         if plainCollection != nil {
-            result.sort { a, b in
-                let orderA = a.collectionOrder ?? Int.max
-                let orderB = b.collectionOrder ?? Int.max
-                if orderA != orderB {
-                    return orderA < orderB
-                }
-                return a.timestamp > b.timestamp
-            }
+            result = CollectionOrder.sorted(result)
             ids = result.map(\.id)
         }
         return Filtered(items: result, ids: ids)

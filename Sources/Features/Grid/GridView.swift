@@ -65,12 +65,15 @@ struct GridView: View {
     /// Bumped when a clip is edited in a way the filter reads (sensitive mark, collection, tags), which the other
     /// inputs of `FilterKey` do not show.
     @State var filterEditGeneration = 0
+    /// The key the cached result was computed for, so a switch that already filtered (⌘[ and ⌘]) is not filtered again
+    /// when the key change reaches `onChange`.
+    @State var appliedFilterKey: FilterKey?
 
     // MARK: - Filter inputs key
 
     /// Cheap Hashable snapshot of every value the filter pipeline reads. Computing this in
     /// body is O(1); the expensive filter runs only when the key actually changes.
-    private struct FilterKey: Hashable {
+    struct FilterKey: Hashable {
         let itemCount: Int
         /// Re-copying or pasting an older clip moves it to the front without changing the count.
         let newestItemID: UUID?
@@ -94,7 +97,7 @@ struct GridView: View {
         let collectionRules: Int
     }
 
-    private var filterKey: FilterKey {
+    var filterKey: FilterKey {
         FilterKey(
             itemCount: items.count,
             newestItemID: items.first?.id,
@@ -414,8 +417,13 @@ struct GridView: View {
                 appState.onRestoreKeyFocus?()
             }
             applyFiltered(computeFiltered(), isUpdate: false)
+            appliedFilterKey = filterKey
         }
-        .onChange(of: filterKey) { _, _ in applyFiltered(computeFiltered(), isUpdate: true) }
+        .onChange(of: filterKey) { _, key in
+            guard key != appliedFilterKey else { return }
+            applyFiltered(computeFiltered(), isUpdate: true)
+            appliedFilterKey = key
+        }
     }
 
     // MARK: - Card grid

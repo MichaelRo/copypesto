@@ -12,7 +12,7 @@ public extension StorageService {
         descriptor.fetchLimit = 1
         guard let item = try modelContext.fetch(descriptor).first else { return false }
         item.pasteCount += 1
-        item.timestamp = date
+        item.bringToFront(at: date)
         noteDayOfPaste(on: item, at: date)
         try saveOrRollback()
         return true

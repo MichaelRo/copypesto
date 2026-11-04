@@ -15,7 +15,7 @@ extension StorageService {
     -> Bool {
         guard let existing = try modelContext.fetch(descriptor).first else { return false }
         existing.contentHash = hash // upgrades an item stored under the old plain hash
-        existing.timestamp = now
+        existing.bringToFront(at: now)
         lastIngestedHash = (hash, now)
         lastInsertedClip = nil
         if let isRemote {

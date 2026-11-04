@@ -25,7 +25,11 @@ codesign -f -s "$IDENTITY" --entitlements Sources/Resources/Pesto.entitlements "
 
 FAILED=0
 for seed in ${SEEDS:-mixed large pictures}; do
-  RESULT=$(scripts/profile-scroll.sh "$LABEL-$seed" "$APP" "$seed" | grep -v "^trace and logs")
+  RESULT=$(scripts/profile-scroll.sh "$LABEL-$seed" "$APP" "$seed" | grep -v "^trace and logs") || {
+    echo "== $LABEL-$seed: the pass failed or hung (message above); going on to the next history" >&2
+    FAILED=1
+    continue
+  }
   echo "$RESULT"
   # Fails when the run shows far more hitches than the recorded baseline (docs/perf/budgets-2026-10.md).
   echo "$RESULT" | python3 scripts/profile-scroll/check-budget.py "$seed" || FAILED=1

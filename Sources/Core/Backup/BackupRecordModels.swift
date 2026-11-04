@@ -26,13 +26,19 @@ public struct BackupItemMetadata: Codable, Sendable, Equatable {
     public var isRemote: Bool?
     /// Day the shortcut was last used. Absent in backups made before it existed.
     public var shortcutLastUsedAt: Date?
+    /// The clip's place among the ones its collection was arranged by hand. Absent in backups made before it existed.
+    public var collectionOrder: Int?
+    /// When the clip was first copied, once a use had moved its `timestamp` on (ADR 0021). Absent in backups made
+    /// before it existed and for a clip never used.
+    public var copiedAt: Date?
 
     public init(
         id: UUID, timestamp: Date, typeRaw: String, mimeType: String, plainHash: String,
         sourceBundleID: String? = nil, sourceAppName: String? = nil, customTitle: String? = nil,
         userNote: String? = nil, tags: [String] = [], isPinned: Bool = false, collectionID: UUID? = nil,
         pinnedHotkeyIndex: Int? = nil, expiresAt: Date? = nil, isNSFW: Bool = false, pasteCount: Int = 0,
-        sensitivityRaw: String? = nil, isRemote: Bool? = nil, shortcutLastUsedAt: Date? = nil
+        sensitivityRaw: String? = nil, isRemote: Bool? = nil, shortcutLastUsedAt: Date? = nil,
+        collectionOrder: Int? = nil, copiedAt: Date? = nil
     ) {
         self.id = id
         self.timestamp = timestamp
@@ -53,6 +59,8 @@ public struct BackupItemMetadata: Codable, Sendable, Equatable {
         self.sensitivityRaw = sensitivityRaw
         self.isRemote = isRemote
         self.shortcutLastUsedAt = shortcutLastUsedAt
+        self.collectionOrder = collectionOrder
+        self.copiedAt = copiedAt
     }
 }
 

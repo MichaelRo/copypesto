@@ -23,12 +23,18 @@ for _ in $(seq 1 900); do [ -f "$W/ready.json" ] && break; sleep 1; done
 [ -f "$W/ready.json" ] || { echo "the app never became ready" >&2; exit 1; }
 printf showOverlay > "$W/commands/$(printf '%020d' "$(python3 -c 'import time;print(time.monotonic_ns())')")-$(uuidgen).cmd"
 sleep 6
-xcrun xctrace record --template 'Animation Hitches' --attach "$PID" --time-limit 40s --output "$OUT/$LABEL.trace" \
-  --no-prompt > "$OUT/$LABEL.xctrace.log" 2>&1 &
+# xctrace has hung the second pass with nothing to stop it, so recording and exporting each run under a deadline.
+"$HERE/run-with-deadline.sh" 120 xcrun xctrace record --template 'Animation Hitches' --attach "$PID" \
+  --time-limit 40s --output "$OUT/$LABEL.trace" --no-prompt < /dev/null > "$OUT/$LABEL.xctrace.log" 2>&1 &
 TRACE=$!
 sleep 6
 "$OUT/scroll" 6
-wait "$TRACE"
+TRACE_STATUS=0
+wait "$TRACE" || TRACE_STATUS=$?
+[ "$TRACE_STATUS" -eq 0 ] || {
+  echo "profile-scroll: xctrace record failed (status $TRACE_STATUS, 124 means it hung past 120 s): $OUT/$LABEL.xctrace.log" >&2
+  exit 4
+}
 # Hitches are counted only while frames are produced, so a shelf that never moved would read as a pass: the run fails
 # unless the app reported the shelf's scroll offset travelling at least 300 points (P-06).
 TRAVEL=$(python3 - "$W/perf-timeline.tsv" <<'PY'
@@ -43,8 +49,11 @@ PY
 echo "shelf scroll travel: $TRAVEL points"
 [ "$TRAVEL" -ge 300 ] || { echo "profile-scroll: the shelf did not scroll (travel $TRAVEL points): the hitch numbers prove nothing" >&2; exit 3; }
 for table in hitches hitches-frame-lifetimes; do
-  xcrun xctrace export --input "$OUT/$LABEL.trace" --xpath "/trace-toc/run/data/table[@schema=\"$table\"]" \
-    > "$OUT/$LABEL-$table.xml"
+  "$HERE/run-with-deadline.sh" 180 xcrun xctrace export --input "$OUT/$LABEL.trace" \
+    --xpath "/trace-toc/run/data/table[@schema=\"$table\"]" < /dev/null > "$OUT/$LABEL-$table.xml" || {
+    echo "profile-scroll: exporting $table failed or hung (status $?)" >&2
+    exit 5
+  }
 done
 echo "== $LABEL ($SEED)"
 python3 "$HERE/profile-scroll/hitches.py" "$OUT/$LABEL"

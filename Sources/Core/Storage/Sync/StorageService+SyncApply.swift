@@ -142,7 +142,11 @@ extension StorageService {
         }
 
         if let same = try twins(plainHash: meta.plainHash, except: UUID()).first {
+            // The earliest first copy wins whatever order records arrive in, so it is taken even from a record whose
+            // edits lose to this Mac's.
+            same.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
             guard stampR > stamp(same.changeClock) else {
+                if modelContext.hasChanges { try saveOrRollback() }
                 summary.ignored += 1
                 return
             }
@@ -183,6 +187,7 @@ extension StorageService {
         )
         guard let inserted = try item(id: meta.id) else { return }
         apply(meta.curation, to: inserted)
+        inserted.adoptFirstCopy(meta.curation.copiedAt)
         markApplied(inserted, stamp: stamp)
         try saveOrRollback()
     }

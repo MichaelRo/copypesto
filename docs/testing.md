@@ -414,7 +414,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - `make bench-latency open 7` three times (the only check that has the retention pruner, a 5,000-clip history and a copy
   made while the shelf was closed; `OverlayPerformanceTests` has none of them). Pass: the median is under 100 ms each time.
 - `make bench-scroll`. Pass: it prints `shelf scroll travel` of at least 300 points for both histories (a run in which
-  the shelf did not move fails) and stays within the scroll budget.
+  the shelf did not move fails) and stays within the scroll budget. A trace that hangs is stopped after two minutes
+  (`scripts/run-with-deadline.sh`) and that history fails while the next one still runs.
 - `make bench-latency all 7`, `make bench-undo` after a change to Undo, and `make bench-sync` after a change to sync. Pass: both stay within budget.
 - A store fixture from the shipped build is added before each release. Pass: the fixture opens in the next build.
 

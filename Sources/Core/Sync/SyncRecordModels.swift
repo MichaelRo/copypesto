@@ -9,6 +9,9 @@ public struct SyncCuration: Codable, Equatable, Sendable {
     public var customSymbolName: String?
     public var collectionID: UUID?
     public var collectionOrder: Int?
+    /// When the clip was first copied, once a use has moved its `timestamp` on (ADR 0021). Absent from records
+    /// written before it existed and for a clip never used.
+    public var copiedAt: Date?
     public var isPinned = false
     public var expiresAt: Date?
 

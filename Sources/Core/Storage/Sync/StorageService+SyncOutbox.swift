@@ -163,6 +163,7 @@ public extension StorageService {
         meta.curation.tags = metadata.tags
         meta.curation.customSymbolName = metadata.customSymbolName
         meta.curation.collectionOrder = metadata.collectionOrder
+        meta.curation.copiedAt = metadata.copiedAt
         meta.curation.collectionID = item.collectionID
         meta.curation.isPinned = item.isPinned
         meta.curation.expiresAt = item.expiresAt

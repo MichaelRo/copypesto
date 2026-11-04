@@ -156,7 +156,8 @@ extension StorageService {
                 collectionID: item.collectionID, pinnedHotkeyIndex: item.pinnedHotkeyIndex,
                 expiresAt: item.expiresAt, isNSFW: item.isNSFW, pasteCount: item.pasteCount,
                 sensitivityRaw: item.sensitivityRaw, isRemote: item.isRemote,
-                shortcutLastUsedAt: item.shortcutLastUsedAt
+                shortcutLastUsedAt: item.shortcutLastUsedAt,
+                collectionOrder: item.collectionOrder, copiedAt: item.metadata.copiedAt
             ),
             payload: payload
         )
@@ -329,7 +330,11 @@ extension StorageService {
         item.expiresAt = meta.expiresAt
         item.pasteCount = meta.pasteCount
         if meta.isNSFW { item.isNSFW = true }
-        if let board = meta.collectionID, collectionIDs.contains(board) { item.collectionID = board }
+        if let board = meta.collectionID, collectionIDs.contains(board) {
+            item.collectionID = board
+            if let order = meta.collectionOrder { item.collectionOrder = order }
+        }
+        item.adoptFirstCopy(meta.copiedAt)
         if let slot = meta.pinnedHotkeyIndex, try !slotIsTaken(slot) {
             item.pinnedHotkeyIndex = slot
             item.shortcutLastUsedAt = meta.shortcutLastUsedAt

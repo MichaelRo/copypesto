@@ -149,7 +149,7 @@ Four tiles at the top: how many clips, how much disk they take, the oldest clip 
   `utm_` and ad-click tags are removed), normalize line endings, trim whitespace, collapse duplicate spaces. Each is a
   switch, and they apply as the text is stored.
 - **Backup:** the switch *Back up this Mac* is off until you turn it on, and it is per Mac. It keeps one encrypted file
-  of your clips (with their pins), snippets, collections and settings, which you can restore on any Mac. A backup never
+  of your clips (with their pins and their place in a collection), snippets, collections and settings, which you can restore on any Mac. A backup never
   changes another Mac, and it is not sync: a clip you delete on this Mac stays in the file until the next backup, and
   another Mac gets it only if you restore the file there. Turning the switch on opens a short set-up: choose where the
   file goes (iCloud Drive is suggested, or any folder), how it is protected (a passphrase, or a recovery key only, which

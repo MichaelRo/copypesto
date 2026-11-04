@@ -207,7 +207,7 @@ public actor StorageService: ModelActor {
         }
         if let pHash = perceptualHash, let similar = perceptualDuplicate(of: pHash, payload: capture.payload) {
             if popsLookalikePicture {
-                similar.timestamp = now
+                similar.bringToFront(at: now)
                 try saveOrRollback()
             }
             return

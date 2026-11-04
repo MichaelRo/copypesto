@@ -363,4 +363,51 @@ struct BackupRoundTripTests {
         #expect(ids.count >= 120, "exported \(ids.count) records for \(stored.count) clips")
         #expect(stored.isSubset(of: Set(ids)), "a clip is missing from the export")
     }
+
+    @Test("a restore keeps a clip's first copy time and its place in a collection")
+    func whenRestored_thenFirstCopyAndOrderSurvive() async throws {
+        try await ingest("ordered clip", minutesAgo: 30)
+        let context = ModelContext(source)
+        let board = Pinboard(name: "Ship", symbolName: "shippingbox", colorHex: "#2F7A49", sortOrder: 0)
+        context.insert(board)
+        let clip = try #require(try context.fetch(FetchDescriptor<ClipboardItem>()).first)
+        let firstCopy = clip.timestamp
+        clip.collectionID = board.id
+        clip.collectionOrder = 3
+        clip.bringToFront(at: base)
+        try context.save()
+
+        _ = try await targetService.restore(roundTrip(includeSensitive: false))
+
+        let restored = try #require(try items(in: target).first)
+        #expect(restored.timestamp == base)
+        #expect(restored.copiedAt == firstCopy)
+        #expect(restored.collectionOrder == 3)
+    }
+
+    @Test("a hand order is restored only for a clip that lands in a restored collection")
+    func whenCollectionIsNotInTheBackup_thenNoStrayOrder() async throws {
+        try await ingest("orphan", minutesAgo: 10)
+        let context = ModelContext(source)
+        let clip = try #require(try context.fetch(FetchDescriptor<ClipboardItem>()).first)
+        clip.collectionID = UUID()
+        clip.collectionOrder = 4
+        try context.save()
+
+        _ = try await targetService.restore(roundTrip(includeSensitive: false))
+
+        let restored = try #require(try items(in: target).first)
+        #expect(restored.collectionID == nil)
+        #expect(restored.collectionOrder == nil)
+    }
+
+    @Test("a backup made before these fields existed restores with neither")
+    func whenOldBackup_thenFieldsAbsent() throws {
+        let json = Data("""
+        {"id":"\(UUID().uuidString)","timestamp":0,"typeRaw":"text","mimeType":"public.utf8-plain-text",
+        "plainHash":"x","tags":[],"isPinned":false,"isNSFW":false,"pasteCount":0}
+        """.utf8)
+        let meta = try JSONDecoder().decode(BackupItemMetadata.self, from: json)
+        #expect(meta.copiedAt == nil && meta.collectionOrder == nil)
+    }
 }

@@ -203,6 +203,14 @@ extension ClipboardCard {
         Divider()
 
         let pasteAsTransforms = availableTransforms(for: item.type)
+        if actions.pasteAs != nil, ShelfKeyGate.plainPasteAllowed(for: item.type) {
+            Button {
+                actions.pasteAs?(item, .stripFormatting)
+            } label: {
+                Label("Paste as Plain Text", systemImage: TextTransform.stripFormatting.symbolName)
+            }
+            .keyboardShortcut(plainTextPasteShortcut)
+        }
         if !pasteAsTransforms.isEmpty {
             if actions.copyTransformed != nil {
                 Menu {
@@ -220,7 +228,7 @@ extension ClipboardCard {
 
             if actions.pasteAs != nil {
                 Menu {
-                    ForEach(pasteAsTransforms, id: \.self) { transform in
+                    ForEach(pasteAsTransforms.filter { $0 != .stripFormatting }, id: \.self) { transform in
                         Button {
                             actions.pasteAs?(item, transform)
                         } label: {
@@ -369,5 +377,22 @@ extension ClipboardCard {
         default:
             []
         }
+    }
+}
+
+extension ClipboardCard {
+    /// The plain-text hotkey as the menu item shows it, so the item reads the same shortcut the keyboard uses. Nil when
+    /// the hotkey is turned off or is a key a menu cannot draw as one character.
+    var plainTextPasteShortcut: KeyboardShortcut? {
+        guard let binding = GlobalShortcut.pastePlainText.binding(in: AppDefaults.store),
+              let equivalent = HotkeyDescription.menuKeyEquivalent(
+                  keyCode: UInt32(binding.keyCode), modifiers: binding.modifiers
+              ) else { return nil }
+        var modifiers: EventModifiers = []
+        if equivalent.control { modifiers.insert(.control) }
+        if equivalent.option { modifiers.insert(.option) }
+        if equivalent.shift { modifiers.insert(.shift) }
+        if equivalent.command { modifiers.insert(.command) }
+        return KeyboardShortcut(KeyEquivalent(equivalent.character), modifiers: modifiers)
     }
 }

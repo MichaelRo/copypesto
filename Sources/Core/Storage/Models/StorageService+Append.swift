@@ -67,7 +67,7 @@ extension StorageService {
         let target = plan.target
         let trimmedNew = appendString.trimmingCharacters(in: .whitespacesAndNewlines)
         if plan.existingText.trimmingCharacters(in: .whitespacesAndNewlines) == trimmedNew {
-            target.timestamp = capture.timestamp
+            target.bringToFront(at: capture.timestamp)
             try saveOrRollback()
             return
         }
@@ -95,7 +95,7 @@ extension StorageService {
                 Data(combined.utf8).sha256Hex,
                 key: try? encryption.loadOrCreateKey()
             )
-            target.timestamp = capture.timestamp
+            target.bringToFront(at: capture.timestamp)
             try saveOrRollback()
         } catch {
             modelContext.rollback()

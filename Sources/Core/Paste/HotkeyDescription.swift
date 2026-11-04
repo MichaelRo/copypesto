@@ -1,7 +1,31 @@
 // SPDX-License-Identifier: MIT
 import Carbon.HIToolbox
 
+/// A global shortcut as a menu item can show it: one character and the modifiers held.
+public struct MenuKeyEquivalent: Equatable, Sendable {
+    public let character: Character
+    public let control: Bool
+    public let option: Bool
+    public let shift: Bool
+    public let command: Bool
+}
+
 public enum HotkeyDescription {
+    /// The shortcut for a menu item beside the command it also runs. Only letters and digits qualify; a named key
+    /// (Space, an F key, an arrow) gives nil and the item shows no shortcut.
+    public static func menuKeyEquivalent(keyCode: UInt32, modifiers: UInt32) -> MenuKeyEquivalent? {
+        let name = keyName(for: keyCode)
+        guard name.count == 1, let character = name.lowercased().first,
+              character.isLetter || character.isNumber else { return nil }
+        return MenuKeyEquivalent(
+            character: character,
+            control: modifiers & UInt32(controlKey) != 0,
+            option: modifiers & UInt32(optionKey) != 0,
+            shift: modifiers & UInt32(shiftKey) != 0,
+            command: modifiers & UInt32(cmdKey) != 0
+        )
+    }
+
     public static func string(keyCode: UInt32, modifiers: UInt32) -> String {
         var parts = ""
         if modifiers & UInt32(controlKey) != 0 { parts += "⌃" }

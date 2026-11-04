@@ -122,6 +122,34 @@ public extension ClipboardItem {
         set { if metadata.linkPreviewFetched != newValue { updateMetadata { $0.linkPreviewFetched = newValue } } }
     }
 
+    /// When the clip was first copied. `timestamp` is when it was last used, which is what puts it in front in the
+    /// history; a collection orders by this one so a paste does not move a clip inside it (ADR 0021).
+    var copiedAt: Date {
+        metadata.copiedAt ?? timestamp
+    }
+
+    /// Records a use of the clip (a paste, a copy, a re-copy): it moves to the front of the history, and the time it
+    /// was first copied is kept the first time that happens. The first copy is never after the use, so a use dated
+    /// before the clip's own time (an import of older clips) lowers it rather than leaving it later.
+    func bringToFront(at date: Date) {
+        let stored = metadata.copiedAt
+        let earliest = min(stored ?? timestamp, date)
+        if earliest != stored, stored != nil || earliest < date, !metadataIsUnreadable {
+            updateMetadata { $0.copiedAt = earliest }
+        }
+        timestamp = date
+    }
+
+    /// Takes an earlier first-copy time that arrives from another Mac or a backup. The earliest across Macs is the
+    /// first copy, so merging is the same in any order. Nothing is sealed when it is not earlier than what the clip
+    /// already reads as its first copy, which is its own `timestamp` until a use has moved that on.
+    func adoptFirstCopy(_ date: Date?) {
+        guard let date, !metadataIsUnreadable else { return }
+        let earliest = min(copiedAt, date)
+        guard earliest < timestamp, earliest != metadata.copiedAt else { return }
+        updateMetadata { $0.copiedAt = earliest }
+    }
+
     var collectionOrder: Int? {
         get { metadata.collectionOrder }
         set { if metadata.collectionOrder != newValue { updateMetadata { $0.collectionOrder = newValue } } }

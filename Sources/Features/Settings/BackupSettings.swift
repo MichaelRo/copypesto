@@ -69,7 +69,7 @@ struct BackupSettings: View {
             if let sync {
                 let showsTable = isConfigured || sync.isEnabled
                 Section {
-                    SyncRows(controller: sync, sharesBackupFolder: sharesBackupFolder)
+                    SyncRows(controller: sync, sharesBackupFolder: sharesBackupFolder, backupIsOn: isConfigured)
                 } header: {
                     Text("Sync")
                 } footer: {

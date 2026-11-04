@@ -3,9 +3,13 @@ enum DataCardCopy {
     static let closingNote =
         "Nothing leaves this Mac until you set this up. Clips with secrets stay out unless you choose."
 
-    static let syncSentence =
-        "Keeps the Macs where you turn this on matching, so deleting a clip on one deletes it on all; " +
-        "sync is not a backup."
+    static let syncLead = "Deleting a clip on one Mac deletes it on all."
+    static let syncCaption = "Sync keeps the Macs where you turn it on matching. It is not a backup."
+    static let noBackupNote = "This Mac has no backup. Set Up Backup\u{2026} keeps a copy you can restore from."
+
+    static func showsNoBackupNote(syncOn: Bool, backupOn: Bool) -> Bool {
+        syncOn && !backupOn
+    }
 
     static func backupSentence(isConfigured: Bool) -> String {
         if isConfigured {

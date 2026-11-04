@@ -7,6 +7,7 @@ import SwiftUI
 struct SyncRows: View {
     let controller: SyncController
     var sharesBackupFolder = false
+    var backupIsOn = false
     @State private var confirmsReset = false
     @State private var confirmsLeave = false
 
@@ -19,14 +20,7 @@ struct SyncRows: View {
                 ))
                 .accessibilityIdentifier(AccessibilityID.syncSwitch)
                 .settingsRow("Sync with my other Macs")
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(Color.statusBad)
-                        .accessibilityHidden(true)
-                    Text(DataCardCopy.syncSentence)
-                        .font(.callout.weight(.semibold))
-                }
-                .accessibilityElement(children: .combine)
+                warning
                 if controller.isEnabled { statusLine }
             }
             if controller.isEnabled { details } else { offActions }
@@ -44,6 +38,26 @@ struct SyncRows: View {
                     "Clips already on this Mac stay."
             )
         }
+    }
+
+    private var showsNoBackupNote: Bool {
+        DataCardCopy.showsNoBackupNote(syncOn: controller.isEnabled, backupOn: backupIsOn)
+    }
+
+    private var warning: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(showsNoBackupNote ? Color.statusBad : Color.primary)
+                    .accessibilityHidden(true)
+                Text(DataCardCopy.syncLead).font(.callout.weight(.semibold))
+            }
+            Text(DataCardCopy.syncCaption).pestoCaption().padding(.leading, 24)
+            if showsNoBackupNote {
+                Text(DataCardCopy.noBackupNote).pestoCaption().padding(.leading, 24)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private var offActions: some View {

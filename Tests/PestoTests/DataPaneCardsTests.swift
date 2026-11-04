@@ -21,12 +21,18 @@ struct DataPaneCardsTests {
         #expect(DataCardCopy.backupSentence(isConfigured: true).contains("rewritten about an hour"))
     }
 
-    @Test("the sync card puts the delete consequence and \"not a backup\" in its one sentence")
-    func syncSentence_carriesTheWarning() {
-        let sentence = DataCardCopy.syncSentence
-        #expect(sentence.contains("deletes it on all"))
-        #expect(sentence.contains("not a backup"))
-        #expect(sentence.count(where: { $0 == "." }) == 1)
+    @Test("the sync card leads with the delete consequence and keeps \"not a backup\" in its caption")
+    func syncCopy_leadsWithTheConsequence() {
+        #expect(DataCardCopy.syncLead == "Deleting a clip on one Mac deletes it on all.")
+        #expect(DataCardCopy.syncCaption.contains("not a backup"))
+    }
+
+    @Test("the no-backup note shows only when sync is on and the backup is not")
+    func noBackupNote_onlyWhenSyncIsOnAndBackupIsOff() {
+        #expect(DataCardCopy.showsNoBackupNote(syncOn: true, backupOn: false))
+        #expect(!DataCardCopy.showsNoBackupNote(syncOn: true, backupOn: true))
+        #expect(!DataCardCopy.showsNoBackupNote(syncOn: false, backupOn: false))
+        #expect(!DataCardCopy.showsNoBackupNote(syncOn: false, backupOn: true))
     }
 
     @Test("the closing note stays as agreed")

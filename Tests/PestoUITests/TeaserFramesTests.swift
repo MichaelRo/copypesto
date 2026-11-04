@@ -107,6 +107,32 @@ final class TeaserFramesTests: PestoUITestCase {
         attachPaste("search")
     }
 
+    /// Scene 4b: typing "gate" narrows the shelf to the boarding pass picture, found by the text inside it.
+    func test_scene4b_searchFindsGateInPicture() {
+        start()
+        showOverlay()
+        settle()
+        search("gate", frames: "gate", from: 0)
+        settle()
+        frame("gate", 9)
+    }
+
+    /// Scene 7: Hide Clip Contents covers the shelf, and Show Clip Contents brings it back.
+    func test_scene7_hideClipContents() {
+        start()
+        showOverlay()
+        settle()
+        frame("hide", 0)
+        send(.toggleHideContents)
+        settle(0.35)
+        frame("hide", 1)
+        settle(1.0)
+        frame("hide", 2)
+        send(.toggleHideContents)
+        settle(1.2)
+        frame("hide", 3)
+    }
+
     /// Scene 5: the masked card, Show, then Hide.
     func test_scene5_secretShowAndHide() {
         start()

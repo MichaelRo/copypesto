@@ -5,7 +5,7 @@ import SwiftUI
 
 struct GeneralSettings: View {
     enum Part {
-        case startup, copyPaste, retention
+        case startup, shelf, copyPaste, floatingWindow, retention
     }
 
     let part: Part
@@ -19,13 +19,17 @@ struct GeneralSettings: View {
     @AppStorage(Setting.opensQuickMenuAtCursor) private var opensQuickMenuAtCursor: Bool
     @AppStorage(Setting.showMenuBarIcon) private var showMenuBarIcon: Bool
     @AppStorage(Setting.shelfSuggestionsEnabled) private var shelfSuggestionsEnabled: Bool
+    @AppStorage(Setting.doubleCopyAppend) private var doubleCopyAppend: Bool
+    @State private var isAXTrusted = AccessibilityAccess.isTrusted
     @Environment(AppState.self) private var appState: AppState
     @State private var checksForUpdates = true
 
     var body: some View {
         switch part {
         case .startup: startupSection
+        case .shelf: shelfSection
         case .copyPaste: copyPasteSection
+        case .floatingWindow: floatingWindowSection
         case .retention: retentionSection
         }
     }
@@ -75,40 +79,8 @@ struct GeneralSettings: View {
         }
     }
 
-    private var copyPasteSection: some View {
+    private var shelfSection: some View {
         Section {
-            Toggle("Play sounds on copy and paste", isOn: $soundEffects)
-                .settingsRow("Play sounds on copy and paste")
-            Toggle(isOn: $pinnedWindowAutoPaste) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Paste from the floating window")
-                    Text(
-                        pinnedWindowAutoPaste
-                            ? "Clicking a clip or pressing Return in the floating window pastes it into the active app."
-                            : "Clicking a clip or pressing Return in the floating window copies it without pasting."
-                    )
-                    .pestoCaption()
-                }
-            }
-            .settingsRow("Paste from the floating window")
-            LabeledContent {
-                HStack {
-                    Text(pictureSaveFolder.isEmpty ? "Downloads" : URL(fileURLWithPath: pictureSaveFolder)
-                        .lastPathComponent)
-                        .pestoQuiet()
-                    Button("Choose\u{2026}") { choosePictureFolder() }
-                    if !pictureSaveFolder.isEmpty {
-                        Button("Use Downloads") { pictureSaveFolder = "" }
-                    }
-                }
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Save pictures to")
-                    Text("\u{2318}S on a picture saves it here without asking; a name already there gets a number.")
-                        .pestoCaption()
-                }
-            }
-            .settingsRow("Save pictures to")
             Toggle(isOn: $opensQuickMenuAtCursor) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Open a small menu at the cursor")
@@ -142,7 +114,69 @@ struct GeneralSettings: View {
                 .accessibilityIdentifier(AccessibilityID.resetSuggestionsButton)
             }
         } header: {
+            Text("Shelf")
+        }
+    }
+
+    private var copyPasteSection: some View {
+        Section {
+            Toggle("Play sounds on copy and paste", isOn: $soundEffects)
+                .settingsRow("Play sounds on copy and paste")
+            LabeledContent {
+                HStack {
+                    Text(pictureSaveFolder.isEmpty ? "Downloads" : URL(fileURLWithPath: pictureSaveFolder)
+                        .lastPathComponent)
+                        .pestoQuiet()
+                    Button("Choose\u{2026}") { choosePictureFolder() }
+                    if !pictureSaveFolder.isEmpty {
+                        Button("Use Downloads") { pictureSaveFolder = "" }
+                    }
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Save pictures to")
+                    Text("\u{2318}S on a picture saves it here without asking; a name already there gets a number.")
+                        .pestoCaption()
+                }
+            }
+            .settingsRow("Save pictures to")
+            Toggle("Double-press ⌘C to append to the last clip", isOn: $doubleCopyAppend)
+                .disabled(!isAXTrusted && !doubleCopyAppend)
+                .accessibilityIdentifier(AccessibilityID.doubleCopyToggle)
+                .settingsRow("Double-press ⌘C to append")
+        } header: {
             Text("Copy and paste")
+        } footer: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(
+                    "Double-press is off by default: it watches every \u{2318}C keystroke system-wide and records " +
+                        "only whether \u{2318}C was pressed twice within half a second."
+                )
+                if !isAXTrusted {
+                    Text("It needs Accessibility, which is not granted yet (see Permissions, below).")
+                }
+            }
+            .pestoCaption()
+        }
+        .onAppear { isAXTrusted = AccessibilityAccess.isTrusted }
+    }
+
+    private var floatingWindowSection: some View {
+        Section {
+            Toggle(isOn: $pinnedWindowAutoPaste) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Paste from the floating window")
+                    Text(
+                        pinnedWindowAutoPaste
+                            ? "Clicking a clip or pressing Return in the floating window pastes it into the active app."
+                            : "Clicking a clip or pressing Return in the floating window copies it without pasting."
+                    )
+                    .pestoCaption()
+                }
+            }
+            .settingsRow("Paste from the floating window")
+        } header: {
+            Text("Floating window")
         }
     }
 

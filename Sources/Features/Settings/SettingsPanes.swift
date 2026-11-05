@@ -8,7 +8,9 @@ struct GeneralPane: View {
     var body: some View {
         Form {
             GeneralSettings(part: .startup)
+            GeneralSettings(part: .shelf)
             GeneralSettings(part: .copyPaste)
+            GeneralSettings(part: .floatingWindow)
             AppleIntelligenceSettings()
             CaptureSettings(part: .accessibility)
         }

@@ -307,7 +307,7 @@ public enum SettingsIndex {
             "windows"
         ),
         entry("Collapse duplicate spaces", "Data", "Collapse duplicate spaces", "sanitize", "sanitise", "spaces"),
-        entry("Double-press ⌘C to append", "Shortcuts", "Double-press ⌘C", "merge", "join", "copy twice"),
+        entry("Double-press ⌘C to append", "General", "Double-press ⌘C", "merge", "join", "copy twice"),
         entry("Encryption", "Privacy", "Encryption", "key", "keychain", "secure"),
         entry(
             "What stays on this Mac",

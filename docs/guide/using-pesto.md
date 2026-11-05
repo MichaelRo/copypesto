@@ -50,7 +50,7 @@ Collections keep related clips together.
 
 - Click **+** in the chip bar to create one without leaving the shelf. Pick a name and an icon; Pesto gives it a color you can change later.
 - **⌘[** and **⌘]** switch between collections while the shelf is open.
-- A collection keeps its clips where they are: pasting or copying a clip does not move it inside the collection, only in *All*, which follows what you used last. Drag a card to put it where you want it.
+- A collection keeps its clips where they are: pasting or copying a clip does not move it inside the collection, only in *All*, which follows what you used last. Inside a collection the age under a card's title is when you first copied the clip, so a paste does not change it either. Drag a card to put it where you want it.
 - **⌘1 to ⌘9** paste the first nine clips, the number shown on each card.
 - **⌘K** opens the actions of the clip you have selected with the arrow keys (Copy, Rename, Add Note, Move to Collection and the rest), the menu a right-click shows.
 - *Smart collections* fill themselves from rules you set, for example "all links from Safari this week". Build them

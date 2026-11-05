@@ -41,6 +41,7 @@ struct ClipboardCard: View {
     var isSuggested = false
     /// Ghost shortcut badge shown when a shortcut offer suggestion targets this clip.
     var suggestedHotkeySlot: Int?
+    var showsFirstCopyTime = false
 
     @AppStorage(Setting.cardSize) var cardSizeRaw: String
     @AppStorage(Setting.cardWidth) var cardWidth: Int
@@ -499,7 +500,7 @@ struct ClipboardCard: View {
             tags: item.tags,
             collectionName: item.collectionID.flatMap { id in availableCollections.first { $0.id == id }?.name },
             isRemote: item.isRemote,
-            age: Date.now.timeIntervalSince(item.timestamp),
+            age: CardAge.interval(for: item, inCollection: showsFirstCopyTime),
             isSelected: isSelected,
             title: item.customTitle,
             secretCategory: item.sensitivity

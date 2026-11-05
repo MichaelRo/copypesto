@@ -430,13 +430,7 @@ extension ClipboardCard {
     }
 
     var timeAgo: String {
-        let interval = Date.now.timeIntervalSince(item.timestamp)
-        switch interval {
-        case ..<60: return "just now"
-        case 60..<3600: return "\(Int(interval / 60))m ago"
-        case 3600..<86_400: return "\(Int(interval / 3600))h ago"
-        default: return "\(Int(interval / 86_400))d ago"
-        }
+        CardAge.text(for: item, inCollection: showsFirstCopyTime)
     }
 
     struct BadgeMeta {

@@ -20,7 +20,8 @@ A text clip shows its paragraphs, with a slim dotted gap for a blank line. When 
 - A clip the sensitive-content filter blurs pastes like any other: **Return**, **⌘1** to **⌘9** and a double click paste
   it without showing it, so you can paste a link without seeing the picture that comes with it. Showing it is always
   your choice: the **Show** button on the card, **Show** in its menu (**⌘K** opens it from the keyboard), or the *Show*
-  action for VoiceOver.
+  action for VoiceOver. While the shelf is covered for a screen share, each covered card still shows its **⌘** number,
+  its kind as one word and its age, so you can paste "the third one" without showing anything else.
 - Hover a clip for a moment, or move to it with the arrow keys, to see a larger preview with the whole text, a link's title, a picture's text or a file's path, and one line of facts. It closes when you move away, or on Esc; a long clip scrolls inside it when you move the pointer into it, and Quick Look shows it whole. A click focuses a card; a double click pastes it, and ⌘-click or ⇧-click selects it.
 - Animated GIFs play in the shelf when your Mac allows it (System Settings → Accessibility → Display → Auto-Play Animated Images, and Reduce Motion off); otherwise they show their first frame and play while you hover or focus them.
 - Right-click a clip for its menu: copy, pin, tag, add to a collection, expire it after a while, Quick Look, and any

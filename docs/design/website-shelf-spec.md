@@ -155,3 +155,12 @@ the release step syncs.
   - **Insertion bar:** A `2 × 20` pt `RoundedRectangle(cornerRadius: 1)` in `pestoAccent`, centered in the 8 pt gap between chips, marks where the drop will land (`CollectionReorder.insertionBar`). Hidden when dropping at the pointer's current position would not change the order. Fades in with `Motion.animation(.pestoQuick)`.
   - **Drag preview:** `Color.opaqueSurface` capsule with a 1 pt `pestoAccent` border, `0.9` opacity, `1.04` scale (`1.0` under Reduce Motion), and shadow (`radius: 14, y: 6`, 28% black).
 - **On the website:** Not replicated (collection chips on the marketing shelf are static filter radios, not draggable).
+
+## Part 4: the search rows (filter groups)
+
+Filter groups, in order: Kind, Format, When, From, Other.
+
+- **In the app (`CommandBarView.swift`, ADR 0023):** Kind is any of six kind chips. Format is one labelled menu chip (Markdown, JSON and the languages in the history). When is **Today** and **Yesterday** chips plus a **More** menu chip (Any Time, Last 7 and 30 Days, the last hours, a day). From is one labelled menu chip listing every app. Other holds Sensitive, and Other Devices and Hidden when they apply. The top row (collections, then the apps clips came from) shows the frontmost app and three recent ones: four app chips.
+- **On the website (`Shelf.astro`, `src/lib/shelf-demo.ts`):** the same five groups in the same order (`filterGroups`), pinned by `tests/shelf-filter.test.ts` and `tests/shelf-spec.test.ts`, which read the line above. Format, More and From are `<details>` menus with no script that open upward from the docked shelf; Today and Yesterday are radio chips (the menu's Any Time clears them). The sample clips are all from the last two days, so Last 7 and 30 Days leave them all. Four app chips on the top row. **Intentional differences:** a menu stays open until its chip is pressed again (no script to close it); From is a plain list without the clip counts; Format lists only the formats the sample clips have.
+- **Changing the groups:** edit the line above, `CommandBarView.swift` and the site's `filterGroups` together; `CardSpecDriftTests` fails for the app and the site's test fails for the site.
+

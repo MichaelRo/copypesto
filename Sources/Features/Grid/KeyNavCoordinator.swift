@@ -136,11 +136,59 @@ final class KeyNavCoordinator {
         case .saveImage:
             _ = onSaveImage?()
             return true
+        case .selectAll where isSearchActive && isCommandWithoutOption(event):
+            return selectSearchTextThenClips(event)
         case .selectAll, .undo, .redo: return false
         // In the search field ⌘C belongs to the field: it copies the text the person selected there.
         case .copy where isSearchActive: return false
         default:
             perform(command)
+            return true
+        }
+    }
+
+    /// `flags` in `handle` ignores ⌥, so a branch that must not fire for ⌥⌘ asks here.
+    private func isCommandWithoutOption(_ event: NSEvent) -> Bool {
+        event.modifierFlags.contains(.command) && !event.modifierFlags.contains(.option)
+    }
+
+    @MainActor
+    private static func fieldEditor(of event: NSEvent) -> NSText? {
+        event.window?.firstResponder as? NSText
+    }
+
+    /// The shelf is a non-activating panel that never sees the Edit menu's ⌘A, so the field editor is told directly.
+    /// ⌘A selects the typed text first; with all of it selected (or none typed) it selects the clips shown.
+    private func selectSearchTextThenClips(_ event: NSEvent) -> Bool {
+        nonisolated(unsafe) let unsafeEvent = event
+        let selectsClips = MainActor.assumeIsolated { () -> Bool in
+            guard let editor = Self.fieldEditor(of: unsafeEvent) else { return true }
+            let length = (editor.string as NSString).length
+            guard length > 0, editor.selectedRange != NSRange(location: 0, length: length) else { return true }
+            editor.selectAll(nil)
+            return false
+        }
+        if selectsClips { onSelectAll?() }
+        return true
+    }
+
+    /// Cut, Copy, Paste, Undo and Redo for the same reason: the panel has no Edit menu to route them.
+    private func performFieldEdit(_ event: NSEvent) -> Bool {
+        guard isCommandWithoutOption(event),
+              let command = FieldEditCommand.resolve(
+                  characters: event.charactersIgnoringModifiers, keyCode: event.keyCode,
+                  shift: event.modifierFlags.contains(.shift)
+              ) else { return false }
+        nonisolated(unsafe) let unsafeEvent = event
+        return MainActor.assumeIsolated {
+            guard let editor = Self.fieldEditor(of: unsafeEvent) else { return false }
+            switch command {
+            case .cut: editor.cut(nil)
+            case .copy: editor.copy(nil)
+            case .paste: editor.paste(nil)
+            case .undo: editor.undoManager?.undo()
+            case .redo: editor.undoManager?.redo()
+            }
             return true
         }
     }
@@ -280,7 +328,7 @@ final class KeyNavCoordinator {
         case 29 where event.modifierFlags.contains(.command): // ⌘0 owns nothing
             return nil
         default:
-            return event
+            return performFieldEdit(event) ? nil : event
         }
     }
 

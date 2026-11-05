@@ -66,6 +66,7 @@ struct ShortcutsSettings: View {
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("\(shelfKey.action), \(shelfKey.keys.joined(separator: " "))")
+                .accessibilityAddTraits(.isStaticText)
             }
         } header: {
             Text("On the shelf").settingsRow("Shelf keys")

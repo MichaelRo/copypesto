@@ -45,7 +45,7 @@ struct CoveredCardFace: View {
     private var centre: some View {
         VStack(spacing: 6) {
             Image(systemName: "eye.slash.fill")
-                .font(.system(size: 22))
+                .font(.title)
             Text(facts.kind)
                 .font(.caption2.weight(.medium))
             Button(action: show) {

@@ -45,7 +45,7 @@ struct TypographyTests {
             "Features/Collections/CollectionEditPopover.swift": 2,
             "Features/Collections/InlineCollectionCreator.swift": 4,
             "Features/Collections/CollectionEditor.swift": 2,
-            "Features/Grid/ClipboardCard.swift": 2,
+            "Features/Grid/ClipboardCard.swift": 1,
             "Features/Grid/ClipboardCard+Bodies.swift": 2,
             "Features/Grid/ClipboardCard+Pending.swift": 1,
             "Features/Grid/ClipboardCard+Parts.swift": 6,

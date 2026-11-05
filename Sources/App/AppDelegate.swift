@@ -438,7 +438,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func toggleOverlay(from source: ShelfOpenSource = .internalRoute) {
-        // A stack pasted with ⌘V is ended by opening the shelf; without Accessibility ⌘⇧V pastes its next clip.
+        // A stack pasted with ⌘V is ended by opening the shelf; without Accessibility ⇧⌘V pastes its next clip.
         if appState.activeStack != nil {
             guard stackSession.isWatching else { return pasteNextStackItem() }
             cancelStack()

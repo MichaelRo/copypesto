@@ -21,8 +21,8 @@ A short setup window appears with three steps. It takes about a minute:
 
 ![Pesto's first setup step, Open the shelf from anywhere, showing the shortcut as keys and a Continue button.](../images/onboarding-welcome.png)
 
-1. **Open the shelf.** The window shows your shortcut as keys (⌘⇧V unless you changed it) and invites you to press it
-   to see the shelf, which starts empty; *Change the Shortcut* opens Settings. Some apps use ⌘⇧V for "paste without
+1. **Open the shelf.** The window shows your shortcut as keys (⇧⌘V unless you changed it) and invites you to press it
+   to see the shelf, which starts empty; *Change the Shortcut* opens Settings. Some apps use ⇧⌘V for "paste without
    formatting", so change it there if that is you. *Continue* also creates the encryption key: a random key stored
    in your login Keychain, with which everything you copy is encrypted before it is written to disk. macOS may ask
    you to allow Keychain access: choose *Always Allow*, which lets Pesto itself, and only Pesto, read the key without asking each time.
@@ -42,7 +42,7 @@ Sensitive pictures and links are blurred by default; you can hide or show them i
 
 ## Your first paste
 1. Copy something (⌘C) in any app. Do it a few times.
-2. Press **⌘⇧V**. The shelf slides up from the bottom of the screen with your recent copies.
+2. Press **⇧⌘V**. The shelf slides up from the bottom of the screen with your recent copies.
 3. Use the arrow keys (or the mouse) to pick a clip and press **Return**, or double-click it. Pesto pastes it into the app you were in.
 
 Press **Esc** to close the shelf without pasting.
@@ -50,7 +50,7 @@ Press **Esc** to close the shelf without pasting.
 ## The shortcut to remember
 | Shortcut | What it does |
 |---|---|
-| **⌘⇧V** | Open the shelf. Arrow keys move, Return pastes. (*Settings → General* can open a small mouse-only menu at the cursor instead.) |
+| **⇧⌘V** | Open the shelf. Arrow keys move, Return pastes. (*Settings → General* can open a small mouse-only menu at the cursor instead.) |
 
 You can change it in *Settings → Shortcuts*, where you can also record shortcuts for pasting the previous copy and for the floating window. To paste without formatting, choose *Paste As → Plain Text* in a clip's menu.
 

@@ -4,7 +4,7 @@ import Foundation
 /// An ordered, ephemeral queue of clipboard payloads for sequential pasting.
 ///
 /// The user builds a stack by selecting multiple cards in the overlay.
-/// Each ⌘⇧V press (while a stack is active) pastes `current` and calls `advance()`.
+/// Each ⇧⌘V press (while a stack is active) pastes `current` and calls `advance()`.
 /// When `isComplete`, the stack is discarded and the HUD is dismissed.
 public struct PasteStack: Sendable {
     /// A single entry in the paste queue.

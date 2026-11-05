@@ -60,7 +60,7 @@ final class MarketingLoopTests: PestoUITestCase {
         add(attachment)
     }
 
-    /// Copy, ⌘⇧V, Return: the shelf opens, a few letters narrow it to one clip, Return pastes it and the shelf goes.
+    /// Copy, ⇧⌘V, Return: the shelf opens, a few letters narrow it to one clip, Return pastes it and the shelf goes.
     func test_findAndPaste() throws {
         try inBothAppearances { mode in
             frame("find", mode, 0, holdMilliseconds: 1000)

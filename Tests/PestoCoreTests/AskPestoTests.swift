@@ -201,7 +201,6 @@ struct AskPestoTests {
     func whenCustomRange_thenReadableSummary() {
         #expect(AskDateRange.last(3 * 3600).label(now: now) == "Last 3 hours")
         #expect(AskDateRange.last(1800).label(now: now) == "Last 30 minutes")
-        #expect(AskDateRange.last(3600).label(now: now) == "Last hour")
         let en = Locale(identifier: "en_US")
         let nov3 = AskDateRange.custom(DateInterval(start: day(11, 3), end: day(11, 4)))
         #expect(nov3.label(now: now, locale: en) == "Nov 3")

@@ -55,13 +55,12 @@ public enum SearchDateFilter: Sendable, Hashable {
     }
 
     private static func relativeLabel(_ seconds: TimeInterval) -> String {
-        let wholeHours = seconds >= 3600 && seconds.truncatingRemainder(dividingBy: 3600) == 0
-        if wholeHours {
+        if seconds >= 3600, seconds.truncatingRemainder(dividingBy: 3600) == 0 {
             let hours = Int(seconds / 3600)
-            return hours == 1 ? "Last hour" : "Last \(hours) hours"
+            return String(localized: "Last \(hours) hours")
         }
         let minutes = max(1, Int((seconds / 60).rounded()))
-        return minutes == 1 ? "Last minute" : "Last \(minutes) minutes"
+        return String(localized: "Last \(minutes) minutes")
     }
 
     private static func dayText(_ date: Date, now: Date, calendar: Calendar, locale: Locale) -> String {

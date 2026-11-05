@@ -1390,6 +1390,50 @@
           }
         }
       }
+    },
+    "Last %lld hours": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last %lld hour"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last %lld hours"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Last %lld minutes": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last %lld minute"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Last %lld minutes"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.0"

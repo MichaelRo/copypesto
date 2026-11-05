@@ -5,11 +5,9 @@ import Testing
 @Suite("The Data pane keeps Backup and Sync as two adjacent cards at the top (ADR 0022)")
 struct DataPaneLayoutTests {
     private func source(_ name: String) throws -> String {
-        let root = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        return try String(
-            contentsOf: root.appendingPathComponent("Sources/Features/Settings/\(name)"), encoding: .utf8
-        )
+        let files = try SourceTree.swiftFiles(in: "Features/Settings", minimum: 10)
+        let file = try #require(files.first { $0.lastPathComponent == name }, "\(name) is not in Features/Settings")
+        return try String(contentsOf: file, encoding: .utf8)
     }
 
     private func collapsed(_ text: String) -> String {

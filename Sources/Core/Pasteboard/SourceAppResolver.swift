@@ -2,6 +2,8 @@
 import AppKit
 
 public struct SourceAppRecord: Sendable, Equatable {
+    /// The name of a bundle ID this Mac cannot resolve (an app that is not installed here, as with a synced clip).
+    public static let unknownDisplayName = "Unknown app"
     public let bundleID: String
     public let displayName: String
     /// 48×48 PNG, ≤5 KB. Shared through `SourceIconCache`; ingest does not use it.
@@ -73,10 +75,10 @@ public actor SourceAppResolver {
             // uninstalled — falls back to a plain name rather than the raw identifier, which
             // reads as unlabelled/technical wherever it is shown.
             guard let url = appURL,
-                  let bundle = Bundle(url: url) else { return "Unknown app" }
+                  let bundle = Bundle(url: url) else { return SourceAppRecord.unknownDisplayName }
             return (bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
                 ?? (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String)
-                ?? "Unknown app"
+                ?? SourceAppRecord.unknownDisplayName
         }()
         let raster = rasterized(icon, side: sampleDimension)
         let pngData = raster.flatMap { downscalePNG($0, side: iconPixelDimension) } ?? Data()

@@ -260,11 +260,15 @@ extension AppDelegate {
     }
 
     func updateWorkspacePinboard(for bundleID: String?) {
-        guard let container = appState.historyContainer else { return }
+        guard appState.historyContainer != nil else { return }
+        appState.selectedCollectionID = workspacePinboardID(for: bundleID)
+    }
+
+    func workspacePinboardID(for bundleID: String?) -> UUID? {
+        guard let container = appState.historyContainer else { return nil }
         let ctx = ModelContext(container)
         let all = (try? ctx.fetch(FetchDescriptor<Pinboard>())) ?? []
-        let match = all.first { $0.triggerBundleID == bundleID }
-        appState.selectedCollectionID = match?.id
+        return all.first { $0.triggerBundleID == bundleID }?.id
     }
 }
 

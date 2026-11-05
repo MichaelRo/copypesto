@@ -116,7 +116,7 @@ public struct SuggestionTally: Sendable {
         for tag in tags {
             tagCounts[tag, default: 0] += 1
         }
-        guard let bundleID else { return }
+        guard let bundleID, appName != SourceAppRecord.unknownDisplayName else { return }
         appCounts[bundleID, default: 0] += 1
         if let recentSince, let timestamp, timestamp >= recentSince { recentAppCounts[bundleID, default: 0] += 1 }
         if appNames[bundleID] == nil, let appName { appNames[bundleID] = appName }

@@ -17,11 +17,13 @@ extension AppDelegate: AutomationHost {
     }
 
     func search(for text: String) {
+        appState.noteContextRequested()
         appState.searchText = text
         appState.isSearchActive = true
     }
 
     func selectCollection(_ id: UUID?) {
+        appState.noteContextRequested()
         appState.selectedCollectionID = id
     }
 

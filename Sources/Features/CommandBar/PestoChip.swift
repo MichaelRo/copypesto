@@ -22,6 +22,8 @@ struct PestoChip: View {
     /// The row has decided to show this collapsed chip's name (the pointer rests on it); see `ChipHoverIntent`.
     var isRevealed = false
     var helpText: String?
+    /// A chip that opens a menu instead of acting on a click (the When chip); `action` is then only the keyboard's.
+    var menu: AnyView?
     let action: () -> Void
 
     @State private var isHovered = false
@@ -45,67 +47,84 @@ struct PestoChip: View {
     }
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                // A shape as well as a color: a selected chip must not depend on seeing the tint.
-                if isActive, !collapsesLabel {
-                    Image(systemName: "checkmark").font(.caption2.weight(.bold)).accessibilityHidden(true)
-                }
-                if let iconImage {
-                    Image(nsImage: iconImage)
-                        .resizable()
-                        .frame(width: 14, height: 14)
+        control
+            .focused($isKeyboardFocused)
+            .focusEffectDisabled()
+            .onHover { over in
+                withAnimation(Motion.animation(.pestoQuick)) { isHovered = over }
+            }
+            .help(helpText ?? label)
+            .accessibilityLabel(label)
+            .accessibilityValue(collapsesLabel && isActive ? "selected" : "")
+            .accessibilityAddTraits(isActive ? .isSelected : [])
+            .animation(Motion.animation(.pestoQuick), value: isLabelVisible)
+            .animation(Motion.animation(.pestoQuick), value: isActive)
+    }
+
+    @ViewBuilder
+    private var control: some View {
+        if let menu {
+            Menu { menu } label: { chipContent }
+                .menuStyle(.button)
+                .menuIndicator(.hidden)
+                .buttonStyle(.plain)
+        } else {
+            Button(action: action) { chipContent }
+                .buttonStyle(.plain)
+        }
+    }
+
+    private var chipContent: some View {
+        HStack(spacing: 4) {
+            // A shape as well as a color: a selected chip must not depend on seeing the tint.
+            if isActive, !collapsesLabel {
+                Image(systemName: "checkmark").font(.caption2.weight(.bold)).accessibilityHidden(true)
+            }
+            if let iconImage {
+                Image(nsImage: iconImage)
+                    .resizable()
+                    .frame(width: 14, height: 14)
+                    .accessibilityHidden(true)
+            } else if let icon {
+                Image(systemName: icon)
+            }
+            if isLabelVisible {
+                Text(label)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    // A chip is as wide as its label up to 200 points (a collection named with a sentence no longer
+                    // pushes the row into the toolbar): an active one, with its check mark, was cut to "Any ti…".
+                    .frame(maxWidth: 200)
+                    .fixedSize(horizontal: true, vertical: false)
+                if isActive, collapsesLabel {
+                    Image(systemName: "checkmark")
+                        .font(.caption2.weight(.bold))
                         .accessibilityHidden(true)
-                } else if let icon {
-                    Image(systemName: icon)
-                }
-                if isLabelVisible {
-                    Text(label)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        // A chip is as wide as its label up to 200 points (a collection named with a sentence no longer
-                        // pushes the row into the toolbar): an active one, with its check mark, was cut to "Any ti…".
-                        .frame(maxWidth: 200)
-                        .fixedSize(horizontal: true, vertical: false)
-                    if isActive, collapsesLabel {
-                        Image(systemName: "checkmark")
-                            .font(.caption2.weight(.bold))
-                            .accessibilityHidden(true)
-                    }
                 }
             }
-            .font(.caption.weight(.medium))
-            .padding(.leading, collapsesLabel ? 5 : 9)
-            .padding(.trailing, collapsesLabel && !isLabelVisible ? 5 : 9)
-            .frame(minWidth: 24, minHeight: 24)
-            .fixedSize(horizontal: true, vertical: false)
-            .background(Capsule().fill(color.opacity(fillOpacity)))
-            // At standard contrast the tint alone marks an inactive chip; under
-            // Increase Contrast it also gets a border, and its text goes to full opacity, instead
-            // of leaning only on a low-opacity fill and dimmed text.
-            .overlay(Capsule().strokeBorder(
-                isActive ? color.opacity(0.5) : color.opacity(AdaptiveContrast.inactiveOutlineOpacity(
-                    contrast: contrast, differentiateWithoutColor: differentiateOverride ?? systemDifferentiate
-                )),
-                lineWidth: differentiateOverride ?? systemDifferentiate ? 1 : 0.5
-            ))
-            // Primary text on a light tint of the accent always reads; accent-colored text could not for every accent.
-            .foregroundStyle(isActive || isHovered || hasFocus || contrast == .increased ? Color.primary : Color.primary
-                .opacity(0.75))
-            .contentShape(Capsule())
-            .overlay(Capsule().strokeBorder(accent, lineWidth: hasFocus ? 2 : 0).padding(-2))
+            if menu != nil {
+                Image(systemName: "chevron.down").font(.caption2.weight(.bold)).accessibilityHidden(true)
+            }
         }
-        .buttonStyle(.plain)
-        .focused($isKeyboardFocused)
-        .focusEffectDisabled()
-        .onHover { over in
-            withAnimation(Motion.animation(.pestoQuick)) { isHovered = over }
-        }
-        .help(helpText ?? label)
-        .accessibilityLabel(label)
-        .accessibilityValue(collapsesLabel && isActive ? "selected" : "")
-        .accessibilityAddTraits(isActive ? .isSelected : [])
-        .animation(Motion.animation(.pestoQuick), value: isLabelVisible)
-        .animation(Motion.animation(.pestoQuick), value: isActive)
+        .font(.caption.weight(.medium))
+        .padding(.leading, collapsesLabel ? 5 : 9)
+        .padding(.trailing, collapsesLabel && !isLabelVisible ? 5 : 9)
+        .frame(minWidth: 24, minHeight: 24)
+        .fixedSize(horizontal: true, vertical: false)
+        .background(Capsule().fill(color.opacity(fillOpacity)))
+        // At standard contrast the tint alone marks an inactive chip; under
+        // Increase Contrast it also gets a border, and its text goes to full opacity, instead
+        // of leaning only on a low-opacity fill and dimmed text.
+        .overlay(Capsule().strokeBorder(
+            isActive ? color.opacity(0.5) : color.opacity(AdaptiveContrast.inactiveOutlineOpacity(
+                contrast: contrast, differentiateWithoutColor: differentiateOverride ?? systemDifferentiate
+            )),
+            lineWidth: differentiateOverride ?? systemDifferentiate ? 1 : 0.5
+        ))
+        // Primary text on a light tint of the accent always reads; accent-colored text could not for every accent.
+        .foregroundStyle(isActive || isHovered || hasFocus || contrast == .increased ? Color.primary : Color.primary
+            .opacity(0.75))
+        .contentShape(Capsule())
+        .overlay(Capsule().strokeBorder(accent, lineWidth: hasFocus ? 2 : 0).padding(-2))
     }
 }

@@ -5,13 +5,7 @@ extension AppState {
     func apply(_ query: AskPestoQuery) {
         searchText = query.keywords
         searchTypeFilter = Set(query.types.map(\.rawValue))
-        searchDateFilter = switch query.range {
-        case .all: .all
-        case .today: .today
-        case .yesterday: .yesterday
-        case .week: .week
-        case .month: .month
-        }
+        searchDateFilter = query.range
         isSearchActive = true
         Announcer.announce(query.hasFilters || !query.keywords.isEmpty
             ? "Filters applied: \(query.summary)"

@@ -172,7 +172,28 @@ final class FilterBarLayoutTests: PestoUITestCase {
             )
         }
         let when = element(AccessibilityID.filterGroup("When")).frame
-        XCTAssertTrue(when.contains(element(AccessibilityID.filterChip("Today")).frame), "Today is outside When")
+        XCTAssertTrue(when.contains(element(AccessibilityID.filterChip("Any time")).frame), "Any time is outside When")
+    }
+
+    /// Five time chips made the bar long enough to scroll; When is one chip with a menu, and Ask takes any other date.
+    func test_whenIsOneMenuChip_withPresetsAndRecentRanges() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let chip = element(AccessibilityID.filterChip("Any time"))
+        XCTAssertTrue(chip.waitForExistence(timeout: 5))
+        XCTAssertFalse(element(AccessibilityID.filterChip("Yesterday")).exists, "Yesterday is still its own chip")
+
+        chip.click()
+        for title in ["Today", "Yesterday", "Last 7 days", "Last 30 days", "Last hour", "Last 3 hours"] {
+            XCTAssertTrue(app.menuItems[title].waitForExistence(timeout: 5), "no \(title) in the When menu")
+        }
+        app.menuItems["Last 3 hours"].click()
+
+        let chosen = element(AccessibilityID.filterChip("Last 3 hours"))
+        XCTAssertTrue(chosen.waitForExistence(timeout: 5), "the chip does not name the range")
+        XCTAssertTrue(chosen.isSelected)
+        capture("filter-bar-when-chip")
     }
 
     /// The clear button sat after the field, away from the text it clears.

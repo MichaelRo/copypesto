@@ -290,7 +290,7 @@ struct CommandBarView: View {
 
     /// Every chip in the order Tab walks them.
     private var allFilterEntries: [FilterEntry] {
-        typeEntries + formatEntries + dateEntries + sourceEntries + [sensitiveEntry] + remoteEntries + hiddenEntries
+        typeEntries + formatEntries + [whenEntry] + sourceEntries + [sensitiveEntry] + remoteEntries + hiddenEntries
     }
 
     private var filterBar: some View {
@@ -316,7 +316,7 @@ struct CommandBarView: View {
 
                 group("Format", id: "Format", formatEntries)
 
-                group("When", id: "When", dateEntries)
+                group("When", id: "When", [whenEntry])
 
                 if !sourceEntries.isEmpty {
                     group("From", id: "From", sourceEntries)
@@ -352,7 +352,7 @@ struct CommandBarView: View {
         case "remote": appState.searchRemoteOnly
         case "hidden": appState.showHiddenNSFW
         case let id where id.hasPrefix("type-"): appState.searchTypeFilter.contains(String(id.dropFirst(5)))
-        case let id where id.hasPrefix("date-"): appState.searchDateFilter.rawValue == String(id.dropFirst(5))
+        case Self.whenEntryID: appState.searchDateFilter != .all
         case let id where id.hasPrefix("app-"): appState.searchSourceFilter.contains(String(id.dropFirst(4)))
         default: false
         }
@@ -361,7 +361,8 @@ struct CommandBarView: View {
     private func filterChip(_ entry: FilterEntry, hasCursor: Bool) -> some View {
         PestoChip(
             label: entry.label, icon: entry.icon, iconImage: entry.iconImage, isActive: entry.isActive,
-            hasKeyboardCursor: hasCursor, helpText: entry.help ?? "", action: entry.toggle
+            hasKeyboardCursor: hasCursor, helpText: entry.help ?? "",
+            menu: entry.id == Self.whenEntryID ? AnyView(whenMenu) : nil, action: entry.toggle
         )
         .accessibilityLabel(entry.spoken ?? entry.label)
         .accessibilityIdentifier(AccessibilityID.filterChip(entry.label))

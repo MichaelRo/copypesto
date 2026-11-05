@@ -45,6 +45,7 @@ public struct ShelfFilter {
                 ?? startOfToday.addingTimeInterval(-86_400)
         case .week: now.addingTimeInterval(-7 * 86_400)
         case .month: now.addingTimeInterval(-30 * 86_400)
+        case let .custom(range): range.start
         }
     }
 
@@ -52,6 +53,7 @@ public struct ShelfFilter {
     public var dateBefore: Date? {
         switch date {
         case .yesterday: Calendar.current.startOfDay(for: now)
+        case let .custom(range): range.end
         case .all, .today, .week, .month: nil
         }
     }
@@ -105,7 +107,25 @@ public struct ShelfFilter {
     }
 }
 
-/// The date range chosen in the filter bar.
-public enum SearchDateFilter: String, Sendable {
+/// The date range chosen in the filter bar, or asked for in plain words. `custom` is any other span: a day, a range of
+/// days, or the last few hours.
+public enum SearchDateFilter: Sendable, Hashable {
     case all, today, yesterday, week, month
+    case custom(DateInterval)
+
+    public var id: String {
+        switch self {
+        case .all: "all"
+        case .today: "today"
+        case .yesterday: "yesterday"
+        case .week: "week"
+        case .month: "month"
+        case .custom: "custom"
+        }
+    }
+
+    /// A preset the model or a person named, or nil.
+    public static func preset(named name: String) -> SearchDateFilter? {
+        [SearchDateFilter.all, .today, .yesterday, .week, .month].first { $0.id == name }
+    }
 }

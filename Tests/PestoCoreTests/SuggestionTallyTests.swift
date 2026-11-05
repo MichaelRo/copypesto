@@ -57,6 +57,53 @@ struct SuggestionTallyTests {
         #expect(tally.suggestions(tagLimit: 1, appLimit: 5).topApps.map(\.bundleID) == ["com.example.named"])
     }
 
+    @Test("every named app is listed with its count, most copied first, ties by name")
+    func whenManyApps_thenAllAppsListedWithCounts() {
+        var tally = SuggestionTally()
+        for _ in 0..<3 {
+            tally.add(tags: [], bundleID: "com.b", appName: "Beta")
+        }
+        for _ in 0..<3 {
+            tally.add(tags: [], bundleID: "com.a", appName: "Alpha")
+        }
+        tally.add(tags: [], bundleID: "com.c", appName: "Gamma")
+
+        let result = tally.suggestions(tagLimit: 1, appLimit: 1)
+
+        #expect(result.allApps.map(\.name) == ["Alpha", "Beta", "Gamma"])
+        #expect(result.allApps.map(\.count) == [3, 3, 1])
+        #expect(result.topApps.count == 1)
+    }
+
+    @Test("languages are counted across clips, the two with their own chips and plain text left out")
+    func whenClipsHaveLanguages_thenCountedWithoutMarkdownJSONOrText() {
+        var tally = SuggestionTally()
+        tally.add(tags: [], bundleID: nil, appName: nil, language: "python")
+        tally.add(tags: [], bundleID: nil, appName: nil, language: "python")
+        tally.add(tags: [], bundleID: nil, appName: nil, language: "swift")
+        tally.add(tags: [], bundleID: nil, appName: nil, language: "markdown")
+        tally.add(tags: [], bundleID: nil, appName: nil, language: "json")
+        tally.add(tags: [], bundleID: nil, appName: nil, language: "text")
+        tally.add(tags: [], bundleID: nil, appName: nil, language: nil)
+
+        let languages = tally.suggestions(tagLimit: 1, appLimit: 1).languages
+
+        #expect(languages == [LanguageCount(name: "python", count: 2), LanguageCount(name: "swift", count: 1)])
+    }
+
+    @Test("a language is shown the way people write it")
+    func whenLanguageNamed_thenDisplayNameIsReadable() {
+        #expect(LanguageCount(name: "javascript", count: 1).displayName == "JavaScript")
+        #expect(LanguageCount(name: "html", count: 1).displayName == "HTML")
+        #expect(LanguageCount(name: "sql", count: 1).displayName == "SQL")
+        #expect(LanguageCount(name: "python", count: 1).displayName == "Python")
+        #expect(LanguageCount(name: "go", count: 1).displayName == "Go")
+        #expect(LanguageCount(name: "typescript", count: 1).displayName == "TypeScript")
+        #expect(LanguageCount(name: "css", count: 1).displayName == "CSS")
+        #expect(LanguageCount(name: "csharp", count: 1).displayName == "C#")
+        #expect(LanguageCount(name: "cpp", count: 1).displayName == "C++")
+    }
+
     @Test("an app this Mac cannot resolve is not a chip, however its clips got here")
     func whenAppIsUnresolvable_thenSkipped() {
         var tally = SuggestionTally(recentSince: .distantPast)

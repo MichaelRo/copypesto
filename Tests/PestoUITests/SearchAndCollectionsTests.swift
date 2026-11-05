@@ -198,6 +198,41 @@ final class FilterBarLayoutTests: PestoUITestCase {
         capture("filter-bar-when-chip")
     }
 
+    /// From is one menu chip with every app and its count; choosing one names the chip.
+    func test_fromMenu_listsEveryApp_andChoosingOneNamesTheChip() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let from = element(AccessibilityID.filterChip("Filter by app"))
+        XCTAssertTrue(from.waitForExistence(timeout: 5), "no From chip")
+        XCTAssertEqual(from.label, "From, any app")
+
+        from.click()
+        let mail = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH 'Mail'")).firstMatch
+        XCTAssertTrue(mail.waitForExistence(timeout: 5), "Mail is not in the From menu")
+        mail.click()
+
+        XCTAssertTrue(from.waitForExistence(timeout: 5))
+        XCTAssertEqual(from.label, "From, Mail")
+        XCTAssertTrue(from.isSelected)
+    }
+
+    /// Format is one menu chip with Markdown, JSON and the languages in the history.
+    func test_formatMenu_offersMarkdownAndJSON_andChoosingOneNamesTheChip() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let format = element(AccessibilityID.filterChip("Filter by format"))
+        XCTAssertTrue(format.waitForExistence(timeout: 5), "no Format chip")
+
+        format.click()
+        XCTAssertTrue(app.menuItems["Markdown"].waitForExistence(timeout: 5))
+        app.menuItems["JSON"].click()
+
+        XCTAssertEqual(format.label, "Format, JSON")
+        XCTAssertTrue(format.isSelected)
+    }
+
     /// The keyboard reaches the More chip with Tab, and Return opens its menu (it used to step through presets).
     func test_whenMoreMenu_opensFromTheKeyboard() {
         launch()
@@ -207,8 +242,8 @@ final class FilterBarLayoutTests: PestoUITestCase {
         XCTAssertTrue(field.waitForExistence(timeout: 5))
         field.click()
 
-        // Kind (6), Format (2), Today, Yesterday, then More.
-        for _ in 0..<11 {
+        // Kind (6), Format, Today, Yesterday, then More.
+        for _ in 0..<10 {
             app.typeKey(.tab, modifierFlags: [])
         }
         app.typeKey(.return, modifierFlags: [])

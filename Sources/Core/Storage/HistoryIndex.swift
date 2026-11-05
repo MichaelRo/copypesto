@@ -165,8 +165,10 @@ public struct HistoryIndex: Sendable {
     public func matching(_ criteria: HistoryCriteria, smartCollection: ((UUID) -> Bool)? = nil) -> [UUID] {
         let text = TextQuery(criteria.query)
         if text.cannotMatch { return [] }
+        // A whole language name ("java") means that language alone; only a part of a name ("javas") is a prefix.
+        let wholeLanguage = text.tagPrefix.map { prefix in rows.contains { $0.languageLowercased == prefix } } ?? false
         return rows.filter { row in
-            Self.inScope(row, criteria, smartCollection) && text.matches(row)
+            Self.inScope(row, criteria, smartCollection) && text.matches(row, wholeLanguage: wholeLanguage)
                 && (!criteria.searchActive || Self.passesChips(row, criteria))
         }.map(\.id)
     }
@@ -196,7 +198,8 @@ public struct HistoryIndex: Sendable {
         return true
     }
 
-    /// What was typed: `@prefix` asks for a tag by prefix or a language exactly, anything else is folded text.
+    /// What was typed: `@prefix` asks for a tag by prefix or a language (by prefix, or exactly when it is a whole name
+    /// in the history), anything else is folded text.
     private struct TextQuery {
         let isEmpty: Bool
         let tagPrefix: String?
@@ -211,10 +214,12 @@ public struct HistoryIndex: Sendable {
             cannotMatch = needle.contains(HistoryRow.separator)
         }
 
-        func matches(_ row: HistoryRow) -> Bool {
+        func matches(_ row: HistoryRow, wholeLanguage: Bool) -> Bool {
             if isEmpty { return true }
             guard let tagPrefix else { return row.contains(needle) }
-            return row.tagsLowercased.contains { $0.hasPrefix(tagPrefix) } || row.languageLowercased == tagPrefix
+            if row.tagsLowercased.contains(where: { $0.hasPrefix(tagPrefix) }) { return true }
+            guard let language = row.languageLowercased, !tagPrefix.isEmpty else { return false }
+            return wholeLanguage ? language == tagPrefix : language.hasPrefix(tagPrefix)
         }
     }
 

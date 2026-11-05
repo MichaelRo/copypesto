@@ -295,7 +295,8 @@ struct CommandBarView: View {
 
     /// Every chip in the order Tab walks them.
     private var allFilterEntries: [FilterEntry] {
-        typeEntries + formatEntries + dayEntries + [whenMoreEntry] + sourceEntries + [sensitiveEntry] + remoteEntries +
+        typeEntries + [formatEntry] + dayEntries + [whenMoreEntry] + (fromEntry.map { [$0] } ?? []) + [sensitiveEntry] +
+            remoteEntries +
             hiddenEntries
     }
 
@@ -320,12 +321,12 @@ struct CommandBarView: View {
             HStack(alignment: .bottom, spacing: 14) {
                 group("Kind", id: "Kind", typeEntries)
 
-                group("Format", id: "Format", formatEntries)
+                group("Format", id: "Format", [formatEntry])
 
                 group("When", id: "When", dayEntries + [whenMoreEntry])
 
-                if !sourceEntries.isEmpty {
-                    group("From", id: "From", sourceEntries)
+                if let fromEntry {
+                    group("From", id: "From", [fromEntry])
                 }
 
                 group("Other", id: "Other", [sensitiveEntry] + remoteEntries + hiddenEntries)
@@ -358,6 +359,8 @@ struct CommandBarView: View {
         case "remote": appState.searchRemoteOnly
         case "hidden": appState.showHiddenNSFW
         case let id where id.hasPrefix("type-"): appState.searchTypeFilter.contains(String(id.dropFirst(5)))
+        case Self.fromID: !appState.searchSourceFilter.isEmpty
+        case Self.formatID: formatEntry.isActive
         case "date-today": appState.searchDateFilter == .today
         case "date-yesterday": appState.searchDateFilter == .yesterday
         case Self.whenMoreID: ![SearchDateFilter.all, .today, .yesterday].contains(appState.searchDateFilter)

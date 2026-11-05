@@ -475,20 +475,3 @@ extension ClipboardCard {
         .padding(5)
     }
 }
-
-// MARK: - SensitivityCategory display
-
-extension SensitivityCategory {
-    var badgeLabel: String {
-        switch self {
-        case .creditCard: "Card"
-        case .ssn: "SSN"
-        case .jwt: "JWT"
-        case .apiKey: "API Key"
-        case .oauthToken: "OAuth"
-        case .privateKey: "Private Key"
-        case .password: "Password"
-        case .credential: "Credential"
-        }
-    }
-}

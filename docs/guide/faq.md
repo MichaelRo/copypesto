@@ -14,7 +14,7 @@ Yes. There are no paid tiers and every feature is available to everyone.
 
 ## Does it sync between my Macs?
 
-Yes, if you turn it on, per Mac (*Settings → Data → Sync with my other Macs*). It is off until you do. Pesto keeps encrypted files in a folder in iCloud Drive and merges them on each Mac, so there is no Pesto server and iCloud sees only encrypted bytes. Deleting a clip on one Mac deletes it on all, so sync is not a backup; keep the backup on too. Clips that hold secrets stay on the Mac that copied them unless you choose *Also sync clips with secrets*. Your settings, shortcuts and ignored apps stay per Mac. See [Settings](settings.md#data) and [Privacy and security](privacy-and-security.md).
+Yes, if you turn it on, per Mac (*Settings → Data → Sync with my other Macs*). It is off until you do. Pesto keeps encrypted files in a folder in iCloud Drive and merges them on each Mac, so there is no Pesto server and iCloud sees only encrypted bytes. Deleting a clip on one Mac deletes it on all, so sync is not a backup; keep the backup on too. Clips that hold secrets stay on the Mac that copied them unless you choose *Also sync clips with secrets*; clips over 10 MB and a password manager's copy kept under an allowance never sync. Your settings, shortcuts and ignored apps stay per Mac. See [Settings](settings.md#data) and [Privacy and security](privacy-and-security.md).
 
 ## How does a second Mac get the key?
 

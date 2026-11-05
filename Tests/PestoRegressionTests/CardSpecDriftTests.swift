@@ -28,6 +28,27 @@ struct CardSpecDriftTests {
         }
     }
 
+    @Test("the filter groups in the spec are the ones the search bar draws, in its order")
+    func specMatchesTheFilterGroups() throws {
+        let spec = try String(
+            contentsOf: SourceTree.repositoryRoot.appendingPathComponent("docs/design/website-shelf-spec.md"),
+            encoding: .utf8
+        )
+        let line = try #require(
+            spec.components(separatedBy: "\n").first { $0.hasPrefix("Filter groups, in order: ") },
+            "website-shelf-spec.md has no \"Filter groups, in order:\" line"
+        )
+        let listed = line.dropFirst("Filter groups, in order: ".count).dropLast().components(separatedBy: ", ")
+        let barFile = try SourceTree.swiftFiles(in: "Features/CommandBar", minimum: 5)
+            .first { $0.lastPathComponent == "CommandBarView.swift" }
+        let bar = try String(contentsOf: #require(barFile), encoding: .utf8)
+        let pattern = try NSRegularExpression(pattern: #"group\("(\w+)", id:"#)
+        let drawn = pattern.matches(in: bar, range: NSRange(bar.startIndex..., in: bar)).compactMap { match in
+            Range(match.range(at: 1), in: bar).map { String(bar[$0]) }
+        }
+        #expect(drawn == listed, "the search bar draws \(drawn) but website-shelf-spec.md lists \(listed)")
+    }
+
     @Test("the app wash share in the spec is the one the card draws")
     func specMatchesWash() throws {
         let card = try String(

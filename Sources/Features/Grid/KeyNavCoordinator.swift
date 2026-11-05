@@ -328,8 +328,27 @@ final class KeyNavCoordinator {
         case 29 where event.modifierFlags.contains(.command): // ⌘0 owns nothing
             return nil
         default:
+            // Search is open but its field has no focus yet (it takes a moment): a typed key joins the query instead
+            // of reaching a window with nowhere to put it.
+            nonisolated(unsafe) let unsafeEvent = event
+            if !MainActor.assumeIsolated({ unsafeEvent.window?.firstResponder is NSText }),
+               let typed = plainCharacters(of: event)
+            {
+                onCharacterTyped?(typed)
+                return nil
+            }
             return performFieldEdit(event) ? nil : event
         }
+    }
+
+    /// What a key types when it carries no modifier and is an ordinary character; nil for arrows, function keys and the
+    /// like.
+    private func plainCharacters(of event: NSEvent) -> String? {
+        guard event.modifierFlags.isDisjoint(with: [.command, .control, .option]),
+              let chars = event.characters,
+              !chars.isEmpty,
+              chars.unicodeScalars.allSatisfy({ $0.value >= 32 && $0.value < 0xF700 }) else { return nil }
+        return chars
     }
 
     /// ⌘Q, ⌃⌘Q and ⌘M belong to the app and the system (⌘W and ⌘H dismiss the shelf in the grid); every other ⌘ or ⌃

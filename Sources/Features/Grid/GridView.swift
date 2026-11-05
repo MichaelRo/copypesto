@@ -195,10 +195,7 @@ struct GridView: View {
                 onDismissShelf: isPinnedHost ? nil : { appState.close() },
                 onReturn: handleReturn,
                 onSpace: handleSpace,
-                onCharacterTyped: { char in
-                    appState.searchText = char
-                    appState.isSearchActive = true
-                },
+                onCharacterTyped: { appState.typeIntoSearch($0) },
                 onEscapeFromSearch: {
                     appState.isSearchActive = false
                 },

@@ -22,7 +22,7 @@ struct LoginItemToggle: View {
         .accessibilityIdentifier(AccessibilityID.launchAtLoginToggle)
         .settingsRow("Launch Pesto at login")
         .onAppear {
-            if appliesSetupDefault { LoginItemSetupDefault.applyOnce(service: service) }
+            if appliesSetupDefault, let change = LoginItemSetupDefault.applyOnce(service: service) { apply(change) }
             status = service.status
             service.logStatus()
         }

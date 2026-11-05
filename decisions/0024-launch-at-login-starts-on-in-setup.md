@@ -9,14 +9,15 @@ Pesto lives in the menu bar and only copies what it sees while it runs. Setup's 
 
 ## Decision
 - **The switch opens on.** When the last setup step appears and the login item is off, `LoginItemSetupDefault.applyOnce` registers it once through `LoginItemService`. The switch shows the real state, the caption says what it does, and the person can turn it off there or later in Settings → General.
-- **The offer is made once per Mac** (`Setting.loginItemOffered`, this Mac's own state, not carried by a backup). Whatever the person answers is kept: a Mac that was offered it, or has it off, is never turned on again by this.
-- **A refusal is recorded too.** An app outside Applications cannot register; the switch shows macOS's explanation as before, and setup does not retry it.
-- **Nothing changes for existing installs**, and nothing registers in a UI test or hosted test (their backend refuses).
+- **It is offered once per Mac** (`Setting.loginItemOffered`, this Mac's own state, not carried by a backup), and only to a Mac that has not finished setup (`hasOnboarded` false). Whatever the person answers is kept: a Mac that was offered it, has it off, or finished setup before this existed is never turned on again by this, even if setup is shown again because the Keychain key is missing.
+- **A refusal is recorded and shown.** An app outside Applications cannot register: the step shows macOS's explanation, as the Settings switch does, and setup does not retry it.
+- **Nothing registers in a UI test or hosted test**: `applyOnce` does nothing unless the launch uses system integrations, so those setup screens show no refusal either.
 
 ## Consequences
 - It is opt-out instead of opt-in. That is a deliberate trade: the switch is visible and one click from off, and a menu-bar tool that vanishes after a restart costs more than a login item some people do not want.
-- A person who ignores the step gets a login item. The guide says so in the setup description.
-- Setup's picture shows the switch off, because the UI-test backend refuses to register; the real step shows it on.
+- The login item is registered when the last step appears, not at Get Started, so a person who quits setup on that step has it (and macOS's "login item added" notice) without having finished. They can turn it off in Settings.
+- A person who ignores the step gets a login item. The guide says so.
+- Setup's picture shows the switch off, because the UI-test launch does not register; the real step shows it on.
 - The release hand check "Launch at login survives a reboot" still applies (`docs/testing.md`).
 
 ## Docs affected

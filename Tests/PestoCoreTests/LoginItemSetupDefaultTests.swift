@@ -28,15 +28,57 @@ private struct Refused: Error {}
 struct LoginItemSetupDefaultTests {
     @Test("it is turned on once, for a person who has not been offered it and has it off")
     func whenOffAndNeverOffered_thenItIsTurnedOn() {
-        #expect(LoginItemSetupDefault.shouldEnable(status: .disabled, alreadyOffered: false))
+        #expect(LoginItemSetupDefault.shouldEnable(status: .disabled, alreadyOffered: false, hasOnboarded: false))
     }
 
     @Test("it is left alone when it is already on, waits for approval, is unavailable, or was offered before")
     func whenNotTheTime_thenLeftAlone() {
-        #expect(!LoginItemSetupDefault.shouldEnable(status: .enabled, alreadyOffered: false))
-        #expect(!LoginItemSetupDefault.shouldEnable(status: .requiresApproval, alreadyOffered: false))
-        #expect(!LoginItemSetupDefault.shouldEnable(status: .unavailable, alreadyOffered: false))
-        #expect(!LoginItemSetupDefault.shouldEnable(status: .disabled, alreadyOffered: true))
+        #expect(!LoginItemSetupDefault.shouldEnable(status: .enabled, alreadyOffered: false, hasOnboarded: false))
+        #expect(!LoginItemSetupDefault.shouldEnable(
+            status: .requiresApproval,
+            alreadyOffered: false,
+            hasOnboarded: false
+        ))
+        #expect(!LoginItemSetupDefault.shouldEnable(status: .unavailable, alreadyOffered: false, hasOnboarded: false))
+        #expect(!LoginItemSetupDefault.shouldEnable(status: .disabled, alreadyOffered: true, hasOnboarded: false))
+    }
+
+    @Test("a Mac that finished setup before this existed keeps the answer it already gave")
+    func whenSetupWasDoneBefore_thenItIsNotTurnedOn() {
+        #expect(!LoginItemSetupDefault.shouldEnable(status: .disabled, alreadyOffered: false, hasOnboarded: true))
+
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(true, for: Setting.hasOnboarded)
+        let backend = SpyBackend()
+        LoginItemSetupDefault.applyOnce(service: LoginItemService(backend: backend), defaults: defaults, isLive: true)
+
+        #expect(backend.registerCalls == 0)
+    }
+
+    @Test("a UI test or hosted test never tries, so its setup step shows no refusal")
+    func whenNotALiveLaunch_thenNothingIsAttempted() {
+        let defaults = ThrowawayDefaults.make()
+        let backend = SpyBackend()
+
+        let change = LoginItemSetupDefault.applyOnce(
+            service: LoginItemService(backend: backend), defaults: defaults, isLive: false
+        )
+
+        #expect(change == nil)
+        #expect(backend.registerCalls == 0)
+        #expect(!defaults.value(for: Setting.loginItemOffered))
+    }
+
+    @Test("a refusal is handed back, so the step can show macOS's reason")
+    func whenRegistrationFails_thenTheFailureIsReturned() {
+        let backend = SpyBackend()
+        backend.registerError = Refused()
+        let change = LoginItemSetupDefault.applyOnce(
+            service: LoginItemService(backend: backend), defaults: ThrowawayDefaults.make(), isLive: true
+        )
+
+        #expect(change?.failure != nil)
+        #expect(change?.status == .disabled)
     }
 
     @Test("applying it registers the app and records that it was offered")
@@ -44,7 +86,7 @@ struct LoginItemSetupDefaultTests {
         let defaults = ThrowawayDefaults.make()
         let backend = SpyBackend()
 
-        LoginItemSetupDefault.applyOnce(service: LoginItemService(backend: backend), defaults: defaults)
+        LoginItemSetupDefault.applyOnce(service: LoginItemService(backend: backend), defaults: defaults, isLive: true)
 
         #expect(backend.registerCalls == 1)
         #expect(defaults.value(for: Setting.loginItemOffered))
@@ -56,9 +98,9 @@ struct LoginItemSetupDefaultTests {
         let backend = SpyBackend()
         let service = LoginItemService(backend: backend)
 
-        LoginItemSetupDefault.applyOnce(service: service, defaults: defaults)
+        LoginItemSetupDefault.applyOnce(service: service, defaults: defaults, isLive: true)
         service.setEnabled(false)
-        LoginItemSetupDefault.applyOnce(service: service, defaults: defaults)
+        LoginItemSetupDefault.applyOnce(service: service, defaults: defaults, isLive: true)
 
         #expect(backend.registerCalls == 1)
         #expect(service.status == .disabled)
@@ -70,8 +112,8 @@ struct LoginItemSetupDefaultTests {
         let backend = SpyBackend()
         backend.registerError = Refused()
 
-        LoginItemSetupDefault.applyOnce(service: LoginItemService(backend: backend), defaults: defaults)
-        LoginItemSetupDefault.applyOnce(service: LoginItemService(backend: backend), defaults: defaults)
+        LoginItemSetupDefault.applyOnce(service: LoginItemService(backend: backend), defaults: defaults, isLive: true)
+        LoginItemSetupDefault.applyOnce(service: LoginItemService(backend: backend), defaults: defaults, isLive: true)
 
         #expect(backend.registerCalls == 1)
         #expect(defaults.value(for: Setting.loginItemOffered))

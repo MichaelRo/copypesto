@@ -4,17 +4,17 @@ The release steps (`make publish-release`, `make marketing-images`) are the main
 them. The website takes what it needs from this repository on its own side. Dependabot watches the GitHub Actions only: Sparkle and swift-snapshot-testing are pinned
 by commit in `Pesto.yml`, so check their releases by hand before each release.
 
-Pesto 1.0 is distributed unsigned: built with a self-signed "Pesto Release" identity (no Gatekeeper trust, no
-notarization, no hardened runtime), outside the Mac App Store. Developer ID signing and notarization come later, once
-the Apple Developer Program is paid for (the sections headed "Later, once enrolled"). Nothing here has been run end to
-end yet: the first release is also the test of this pipeline, so do it with a throwaway version first.
+Pesto is distributed outside the Mac App Store as a disk image signed with a Developer ID and notarized by Apple
+(`make release`, below). Only 1.0.0 shipped unsigned, with a self-signed "Pesto Release" identity; the two sections
+headed "Historical" describe that path, which `make release-unsigned` still builds and `UnsignedReleaseRecipeTests`
+still checks, and which is not how a release is made now.
 
-## What a dry run already proved (2026-09-25, unsigned)
+## What a dry run proved before 1.0 (2026-09-25, unsigned)
 A Release build (`CODE_SIGNING_ALLOWED=NO`) succeeds, embeds Sparkle, reports 1.0.0 (1), carries the compiled icon
 (`Pesto.icns` + `Assets.car`) and the appcast URL and public key, and packages into a DMG with `hdiutil`. The release DMG is laid out by `scripts/make-dmg.sh` (Pesto, an Applications
 shortcut and a background with an arrow); `make dmg-preview` builds an unsigned one to look at the window. It also caught
 internal `CLAUDE.md` notes being copied into the app bundle (now excluded in `Pesto.yml`). Signing, notarization and
-stapling are the parts that still need your account.
+stapling were the parts that needed the Apple account, which now exists.
 
 ## What the gate checks about release (2026-10-03)
 `scripts/verify.sh` builds the Release configuration unsigned, ad-hoc signs it with the hardened runtime and verifies the
@@ -25,13 +25,13 @@ in `Pesto.yml`, and `Pesto.resolved` holds every transitive revision (`make gene
 update-resolved` refreshes it: review the diff). CI installs SwiftFormat, SwiftLint and XcodeGen through
 `scripts/install-tools.sh`, which checks each download's SHA-256 in `scripts/tool-versions.env`.
 
-## One-time setup, unsigned (1.0)
+## Historical: one-time setup for the unsigned 1.0.0
 1. **Release signing identity.** `make setup-release-signing` creates the self-signed "Pesto Release" identity once.
    Export its `.p12` and back it up with the Sparkle key (below), encrypted, in two places that are not this Mac: a new
    identity is a new signature, and a Mac that has the old one stops trusting updates less gracefully.
-2. **Sparkle keys**: as in "Later, once enrolled", step 3 (the same key signs the unsigned and the later releases; back
+2. **Sparkle keys**: as in "One-time setup", step 3 (the same key signs the unsigned and the later releases; back
    it up before the first release).
-3. **Where the appcast lives**: as in "Later, once enrolled", step 4. `https://copypesto.net/appcast.xml` never changes.
+3. **Where the appcast lives**: as in "One-time setup", step 4. `https://copypesto.net/appcast.xml` never changes.
 
 ## Choosing the version
 `MARKETING_VERSION` follows semantic versioning, `major.minor.patch`, and `CURRENT_PROJECT_VERSION` goes up by one on every
@@ -45,7 +45,7 @@ release.
 A patch number is never skipped to look bigger; a version that was never released does not count (1.0.1 to 1.1.2 would
 imply a 1.1.1 nobody got).
 
-## Each release, unsigned (1.0)
+## Historical: each release, unsigned (1.0.0 only)
 1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`.
 2. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` ("Before a release") is done.
 3. `make release-unsigned` builds the app, signs it with "Pesto Release" and writes `Pesto-<version>.dmg` and its
@@ -64,7 +64,7 @@ imply a 1.1.1 nobody got).
 8. Upload the DMG to the GitHub release and publish the appcast, then check for updates from an older build. Do not
    turn on immutable releases yet (see below).
 
-## Later, once enrolled: one-time setup (needs an Apple Developer account)
+## One-time setup (needs an Apple Developer account)
 1. **Developer ID Application certificate** in your login keychain, and your 10-character **Team ID**. `make archive`
    reads the team from `security find-identity`, or pass `APPLE_TEAM_ID=XXXXXXXXXX`.
 2. **Notarization credentials**: `xcrun notarytool store-credentials pesto-notarytool` (Apple ID + app-specific password
@@ -106,7 +106,7 @@ makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is u
    not find the key). Nothing here can be proved on one Mac.
 A development build signed "Pesto Development" can never use the iCloud key, so it always takes the this-device path.
 
-## Later, once enrolled: each release
+## Each release
 1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`.
 2. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` is done.
 3. `make release` (archive, export, notarize the app, build a DMG, sign, notarize and staple it).
@@ -128,7 +128,7 @@ A development build signed "Pesto Development" can never use the iCloud key, so 
    signature and notarization before it proposes anything. Merge that pull request, then try
    `brew upgrade --cask --greedy pesto`. The cask is not done until this pull request is merged.
 
-## Later, once enrolled: checks that prove the artifact is right
+## Checks that prove the artifact is right
 ```bash
 codesign -dvvv Pesto.app          # Developer ID, your team, hardened runtime
 codesign -dvvv Pesto.app/Contents/PlugIns/PestoControls.appex   # the Control Center extension: same team, sandboxed

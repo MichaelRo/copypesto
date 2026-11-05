@@ -73,13 +73,13 @@ You can also give up to nine pinned clips their own shortcut (**⌃1** to **⌃9
 - The **cursor menu** (off by default; *Settings → General* turns it on): when you press ⌘⇧V while typing in a text field, a compact list of your last five copies opens
   next to the cursor. It is for the mouse only: arrow keys and Return go to the app you are typing in.
 - The **floating window** (the window button in the shelf's toolbar, or the menu bar) is a small copy of the shelf that stays on top. It opens on the display of the app you are working in; the shelf does too, and falls back to the display under the pointer when no app window is in front. Click a clip there to paste it (or copy it, if you turned off *Paste from the floating window*).
-- **Paste One by One.** Select several clips and press *Paste One by One* in the bar that appears (or **⇧⌘P**): the first pastes when the shelf closes, and each plain ⌘V in any app pastes the next. A small panel at the top right shows where you are, with Stop Pasting One by One (also in the menu bar). Without Accessibility, the shortcut that opens the shelf (⌘⇧V unless you changed it) puts the next one on the clipboard, ready for ⌘V.
+- **Paste One by One.** Select several clips and press *Paste One by One* in the bar that appears (or **⇧⌘P**): the first pastes when the shelf closes, and each plain ⌘V in any app pastes the next. A small panel at the top right shows where you are, with Cancel; the menu bar has Stop Pasting One by One. Without Accessibility, the shortcut that opens the shelf (⌘⇧V unless you changed it) puts the next one on the clipboard, ready for ⌘V.
 - **Paste All.** Select two or more text clips and press *Paste All* (or **⌘P**): they are joined with a blank line and pasted at once. Nothing new is saved.
 - **Append.** Optionally, pressing ⌘C twice quickly
   appends the second copy to the first (turn it on in *Settings → Shortcuts*; it needs Accessibility).
 
 ## AI actions (optional)
-Right-click a text clip (or press **⌘K**) for *Summarize*, *Make Concise*, *Key Points*, *Professional*, *Translate* (into English, or English into Spanish) or *Extract*. They run on your Mac with Apple Intelligence: no
+Right-click a text clip (or press **⌘K**) for *Summarize*, *Concise*, *Key Points*, *Professional*, *Translate* (into English, or English into Spanish) or *Extract*. They run on your Mac with Apple Intelligence: no
 account, no key, nothing sent anywhere. They need macOS 26 or later. On a Mac without Apple Intelligence they are grayed
 out and the menu says why; *Settings → General → Apple Intelligence* shows whether this Mac is ready, and turns every AI
 feature off with one switch. The model reads as much of a long text as fits its window; when it could not read all of it,

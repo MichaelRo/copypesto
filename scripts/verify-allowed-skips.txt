@@ -33,3 +33,5 @@ SourceIconMemoryTests
 CopyLatencyPerformanceTests
 lock_reenabledAfterUnlock_locksImmediately
 RealDeviceCaptureTests
+# Text recognition needs a real Mac; a CI runner skips it (VisionAvailability.canRecognizeText).
+the real Vision reader makes a rendered screenshot searchable

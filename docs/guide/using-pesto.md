@@ -11,7 +11,7 @@ A text clip that is exactly one emoji or symbol (🍝, a flag, →, ©, ✓, €
 A text clip shows its paragraphs, with a slim dotted gap for a blank line. When the whole clip is shown, the footer adds its size, such as "64 characters · 8 lines". A card shows 4, 5 or 6 lines at the Small, Medium and Large sizes.
 
 - **← →** move between clips, **Return** pastes the selected clip, **Esc** closes the shelf.
-- **Start typing** to search. Search matches the first 500 characters of each clip, its title, note and tags, and the text inside pictures; search by meaning works in English.
+- **Start typing** to search. Search matches the first 500 characters of each clip, its title, note and tags, a link's page title and site name, and the text inside pictures; search by meaning works in English.
 - **Space** selects a clip so you can act on several at once (for example paste them together). **⌘A** selects every clip currently shown, so you can filter first and then delete or paste them all. While you are typing in the search field, the first ⌘A selects the text you typed and a second ⌘A selects every clip shown. Cut, copy, paste and undo (⌘X, ⌘C, ⌘V, ⌘Z) work on the text there too.
 - **⌫** deletes the selected clips, or the focused one when none is selected; Return confirms and Esc keeps them.
 - **Undo.** After a delete a bar reads *Deleted 3 clips* with an **Undo** button, and **⌘Z** takes back the last delete or change; **⇧⌘Z** does it again. It covers deleting clips and collections, renaming, notes, tags, icons, moving a clip to a collection (also by dragging), pinning, paste shortcuts, the sensitive mark, a dragged card's place, creating, editing, duplicating and reordering collections, adding or editing a snippet, and an import. In *Settings* the Edit menu's *Undo* does the same, and names the action. Pesto remembers the last 20 actions, only until you lock the history, clear it or quit. *Clear History* and *Clear Everything* are final, and so is deleting a clip that expires on its own, a hidden password or a very large clip; the question before a delete says which it is.
@@ -41,7 +41,7 @@ ones that contain the words. This runs on your Mac.
 - `@work` filters to clips tagged "work"; `@swift` filters by detected language. The **Format** chips (Markdown, JSON) put `@markdown` or `@json` in the search field for you: text written in Markdown and anything that is one JSON object or array.
 - While searching, chips let you narrow by kind, time or the app a clip came from; each group has a caption, and the clear button sits inside the search field. With *Keep copies from other devices* on (Settings →
   Privacy), an **Other Devices** chip shows only what you copied on your iPhone or another Mac.
-- Screenshots and photos are searchable by the text inside them.
+- Screenshots and photos are searchable by the text inside them (the first 500 characters Pesto reads, once the card has finished loading; a picture that holds a hidden secret is not searchable by its text). A copied file is found by its path and name, not by what is inside it.
 
 ## Collections
 ![The shelf with a collection chip in its header.](../images/collections.png)

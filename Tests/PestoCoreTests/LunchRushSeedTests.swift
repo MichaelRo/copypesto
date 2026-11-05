@@ -86,24 +86,24 @@ struct LunchRushSeedTests {
         #expect(LunchRushSeed.snippets.contains { $0.title == "Quick thanks" && !$0.text.contains("{{") })
     }
 
-    @Test("the shelf opens on the masked card, then the six finale clips side by side, with no covered picture")
+    @Test("the shelf opens on the two clips the film copies, then the masked card and the finale clips")
     func whenProfileBuilt_thenFinaleClipsFollowTheMaskedCard() {
         let newestFirst = Array(SeedFixtures.captures(for: .lunchRush).reversed())
 
-        #expect(newestFirst[0].payloadString == LunchRushSeed.cardNumber)
-        #expect(pictureWidth(newestFirst[1].payload) == 960)
-        #expect(newestFirst[2].typeIdentifier == "com.compuserve.gif")
-        #expect(newestFirst[3].payloadString == "#C9A227")
-        #expect(newestFirst[4].payloadString == LunchRushSeed.debateLink)
-        #expect(newestFirst[5].payloadString == LunchRushSeed.codeLine)
-        #expect(newestFirst[6].payloadString?.contains(".pdf") == true)
+        #expect(newestFirst[0].payloadString == LunchRushSeed.trackingNumber)
+        #expect(newestFirst[1].payloadString == LunchRushSeed.flightTime)
+        #expect(newestFirst[2].payloadString == LunchRushSeed.cardNumber)
+        #expect(pictureWidth(newestFirst[3].payload) == 960)
+        #expect(newestFirst[4].typeIdentifier == "com.compuserve.gif")
+        #expect(newestFirst[5].payloadString == "#C9A227")
+        #expect(newestFirst[6].payloadString == LunchRushSeed.debateLink)
+        #expect(newestFirst[7].payloadString == LunchRushSeed.codeLine)
+        #expect(newestFirst[8].payloadString?.contains(".pdf") == true)
     }
 
-    @Test("exactly one clip answers a search for flight")
-    func whenSearchedForFlight_thenOneClip() {
-        let matches = texts.filter { $0.lowercased().contains("flight") }
-
-        #expect(matches == [LunchRushSeed.flightClip])
+    @Test("no text clip says gate, so a search for it can only match the picture")
+    func whenSearchedForGate_thenNoTextClipMatches() {
+        #expect(!texts.contains { $0.lowercased().contains("gate") })
     }
 
     @Test("the order update snippet fills itself in from the date, the clipboard and the cursor, with no questions")
@@ -115,10 +115,10 @@ struct LunchRushSeedTests {
         #expect(update?.text.contains("{{choice") == false)
     }
 
-    @Test("the tracking number is a carrier example number, copied live and not seeded")
-    func whenBuilt_thenTrackingNumberIsNotSeeded() {
+    @Test("the tracking number is a carrier example number, seeded once as the film's first copy and copied again live")
+    func whenBuilt_thenTrackingNumberIsSeededOnce() {
         #expect(LunchRushSeed.trackingNumber == "1Z999AA10123456784")
-        #expect(!texts.contains(LunchRushSeed.trackingNumber))
+        #expect(texts.count(where: { $0 == LunchRushSeed.trackingNumber }) == 1)
     }
 
     @Test("the GIF is twelve frames at card size, so the shelf shows the whole jar and not its middle")
@@ -142,5 +142,77 @@ struct LunchRushSeedTests {
         #expect(texts.contains(LunchRushSeed.debateLink))
         #expect(texts.contains(LunchRushSeed.codeLine))
         #expect(LunchRushSeed.debateLink.hasPrefix("https://example.com/"))
+    }
+
+    @Test("the shelf's chip row carries the supplier collection and two more with distinct names")
+    func whenBuilt_thenTheExtraCollectionsAreDistinct() {
+        let names = [LunchRushSeed.supplierCollection] + LunchRushSeed.extraCollections.map(\.name)
+
+        #expect(names == ["Supplier links", "Travel", "Home"])
+        #expect(Set(names).count == names.count)
+    }
+
+    @Test("the boarding pass picture is seeded and text recognition reads its gate back")
+    func whenBoardingPassSeeded_thenItsGateIsReadable() async throws {
+        let pictures = LunchRushSeed.captures().filter { $0.typeIdentifier == "public.png" }
+        let pass = try #require(pictures.first { $0.payload == ShowcaseArt.boardingPass() })
+        guard !OCRService.isDisabled(environment: ProcessInfo.processInfo.environment) else { return }
+
+        let text = await OCRService().recognize(imageData: pass.payload)
+
+        #expect(text?.uppercased().contains("GATE") == true)
+        #expect(!LunchRushSeed.flightTime.lowercased().contains("gate"))
+    }
+}
+
+@Suite("Film seed copy source")
+struct LunchRushCopySourceTests {
+    private func configuration(mode: LaunchMode, seed: SeedProfile) -> RuntimeConfiguration {
+        RuntimeConfiguration(mode: mode, session: "test", seed: seed, accessibility: .trusted)
+    }
+
+    private func emptyDirectory() throws -> URL {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory
+    }
+
+    @Test("a UI-test copy under the film's seed is attributed to Safari when the runner named nothing")
+    func whenFilmSeedNamesNothing_thenSourceIsSafari() throws {
+        let source = try SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.anthropic.claudefordesktop",
+            configuration: configuration(mode: .uiTest, seed: .lunchRush),
+            workDirectory: emptyDirectory()
+        )
+
+        #expect(source == "com.apple.Safari")
+    }
+
+    @Test("a UI-test copy under the film's seed is attributed to the app the runner wrote down")
+    func whenRunnerNamesAnApp_thenThatIsTheSource() throws {
+        let directory = try emptyDirectory()
+        try "com.apple.mail\n".write(
+            to: directory.appendingPathComponent("copy-source"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let source = SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.anthropic.claudefordesktop",
+            configuration: configuration(mode: .uiTest, seed: .lunchRush),
+            workDirectory: directory
+        )
+
+        #expect(source == "com.apple.mail")
+    }
+
+    @Test("every other launch keeps the frontmost app as the source")
+    func whenOtherLaunch_thenSourceIsFrontmost() {
+        #expect(SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.apple.Notes", configuration: configuration(mode: .uiTest, seed: .basic)
+        ) == "com.apple.Notes")
+        #expect(SystemFrontmostAppProvider.sourceBundleID(
+            frontmost: "com.apple.Notes", configuration: configuration(mode: .normal, seed: .lunchRush)
+        ) == "com.apple.Notes")
     }
 }

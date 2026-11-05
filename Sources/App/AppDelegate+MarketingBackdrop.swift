@@ -89,6 +89,12 @@ extension AppDelegate {
                     isSmart: true, smartPredicateData: data
                 ))
             }
+            for (index, collection) in LunchRushSeed.extraCollections.enumerated() {
+                context.insert(Pinboard(
+                    name: collection.name, symbolName: collection.symbol, colorHex: collection.colorHex,
+                    sortOrder: index + 1
+                ))
+            }
             try? context.saveOrRollback()
         }
     #endif

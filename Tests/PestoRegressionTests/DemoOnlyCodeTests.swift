@@ -8,6 +8,7 @@ struct DemoOnlyCodeTests {
         "Sources/Core/Seeding/LunchRushSeed.swift",
         "Sources/Core/Seeding/LunchRushMedia.swift",
         "Sources/Core/Runtime/ShowcaseArt+Basil.swift",
+        "Sources/Core/Runtime/ShowcaseArt+BoardingPass.swift",
         "Sources/Core/Runtime/ShowcaseArt+Jar.swift"
     ]
 

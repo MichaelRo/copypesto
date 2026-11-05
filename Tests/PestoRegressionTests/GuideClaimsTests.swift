@@ -88,5 +88,6 @@ struct GuideClaimsTests {
         #expect(settings.contains("15 minutes, 1 hour, 4 hours or until Pesto quits"))
         let privacy = try guide("docs/guide/privacy-and-security.md")
         #expect(privacy.contains("15 minutes, an hour, four hours or until Pesto quits"))
+        #expect(privacy.contains("any clip over 10 MB, are never sent"), "sync skips clips over the backup's 10 MB")
     }
 }

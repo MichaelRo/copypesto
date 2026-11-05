@@ -53,6 +53,8 @@ echo "copying the menu bar icons..."
 cp Sources/Resources/Assets.xcassets/MenuBarIcon.imageset/menubar@2x.png "$website/video/teaser/public/brand/menubar.png"
 cp Sources/Resources/Assets.xcassets/MenuBarIconHidden.imageset/MenuBarIconHidden@2x.png "$website/video/teaser/public/brand/menubar-hidden.png"
 
+ffmpeg -v error -y -i Sources/Resources/Assets.xcassets/AppIconBasil.imageset/AppIconBasil.png -vf scale=256:256 "$website/video/teaser/public/brand/app-icon.png"
+
 echo "drawing the film's pictures..."
 "$website/video/teaser/scripts/render_art.sh" "$PWD"
 

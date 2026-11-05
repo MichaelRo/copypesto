@@ -335,6 +335,23 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   sync available and with it unavailable. Pass: Backup and Sync are two separate cards, each with a switch, one sentence
   and its buttons; no text is cut off; the sync sentence is readable as a warning; the Backup tile is gone from the
   stat strip; turning either switch on opens its set-up sheet and Cancel leaves it off.
+- The filter bar (ADR 0023), on a real history, on the 14-inch display and a wider one, in Light and Dark. Pass: the
+  bar fits without scrolling; Tab walks Kind, Format, Today, Yesterday, More, From and Sensitive; Return opens Format, More
+  and From as native menus, an arrow key moves in the menu and Return picks; the chip names what is chosen ("Last 3 hours",
+  "Safari +1", "Python") and picking it again, or Any Time, Any App or Any Format, clears it. With VoiceOver on, Space on
+  each of the three menu chips opens its menu (the runner cannot press a pop-up with VoiceOver).
+- Ask with dates: "invoice on Nov 3", "links last 3 hours", "report between Nov 1 and Nov 3", "last Thursday". Pass: the More
+  chip names the range and the shelf shows only clips from it; copy something new and "last 3 hours" still shows it.
+- The clip menu's Paste (ADR 0009): right-click a clip, then ⌘K on another. Pass: Paste, Paste as Plain Text, Copy and
+  Quick Look come first with their keys beside them (↩, ⇧↩, ⌘C, ⌘Y); Paste puts the clip in the app behind the shelf; in a
+  floating window set to copy only there is no Paste; with several clips selected the menu's Paste pastes only the clip
+  under the pointer, as intended, while Return pastes the selection one by one; and Return in an open menu pastes once.
+- The shelf's memory (`ShelfContextPolicy`, 90 seconds): open a collection and search, close the shelf, reopen within a
+  minute and again after two. Pass: within a minute the collection and filters are as left; after two the shelf opens on
+  All (or on the front app's own collection) with no filters. A `pesto://` link to a collection opens it even after a long
+  absence, and with the floating window open the shelf's closing leaves its filters alone.
+- A card inside a regular collection (ADR 0021): paste it. Pass: its age under the title does not change and its place in
+  the collection does not move; in All the age follows the last use.
 - The color panel from the shelf, Paste the previous clip after an iPhone copy, and the Other Devices chip with the
   setting off. Pass: the panel opens, the previous clip pastes, and the chip is hidden.
 - A snippet with fill-ins (ADR 0017), on hardware, in Mail, Notes, a browser field and Terminal: paste it from the shelf, from

@@ -58,7 +58,8 @@ public struct HistoryRow: Sendable {
     let collectionID: UUID?
     let tagsLowercased: [String]
     let languageLowercased: String?
-    /// The preview, title, note and tags, each folded for case and accents and separated by `separator`.
+    /// The preview, title, note, tags and a link's page title and site name, each folded for case and accents and
+    /// separated by `separator`.
     var haystack: [UInt8]
 
     static let separator: UInt8 = 0x01
@@ -90,6 +91,8 @@ public struct HistoryRow: Sendable {
         parts.append(metadata.customTitle.map(SearchMatching.fold) ?? "")
         parts.append(metadata.userNote.map(SearchMatching.fold) ?? "")
         parts.append(contentsOf: tags.map(SearchMatching.fold))
+        parts.append(metadata.ogTitle.map(SearchMatching.fold) ?? "")
+        parts.append(metadata.ogSiteName.map(SearchMatching.fold) ?? "")
         if isTemplate {
             parts.append("snippets")
         }

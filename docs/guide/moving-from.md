@@ -38,6 +38,8 @@ are not pinned, so your retention setting may remove the older ones. Clips you a
 - Only the first item of a multi-item copy, and nothing that lives only in Paste's iCloud data: Pesto reads the library
   file on this Mac. The file chooser starts where Paste keeps it (the App Store, Setapp and direct versions are all
   looked for); it is a hidden folder, so press ⌘⇧. in the chooser if you have to look for it yourself.
+A library of more than 20,000 clips, or a file over 1 GB, is refused whole ("That file is too large to import"), pinboards included. Trim Paste's history first.
+
 The import tells you how many clips came in and how many were left out.
 
 ## Moving from Maccy or Alfred

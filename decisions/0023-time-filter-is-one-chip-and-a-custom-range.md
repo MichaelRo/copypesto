@@ -1,4 +1,4 @@
-# 0023. The When filter is one chip with a menu, and a range can be any span Ask can read
+# 0023. The When filter keeps Today and Yesterday as chips and puts the rest in one menu, and a range can be any span Ask can read
 
 Status: Accepted
 
@@ -8,15 +8,13 @@ Relates to [0014](0014-shelf-suggestions.md) only through the bar; the search ch
 The search filter bar showed 19 to 21 chips, five of them for time (Any time, Today, Yesterday, 7d, 30d), and was always longer than the shelf, so it invited scrolling. The five ranges were also all there was: no single day, no last few hours, no range. Ask Pesto already turns a sentence into filters but could only name those five.
 
 ## Decision
-- `SearchDateFilter` gains `.custom(DateInterval)`: from its start, up to but not including its end. `AskDateRange` is the same type, so what Ask reads and what the bar holds cannot drift apart. Presets keep their meaning.
-- **When is one chip.** It names the range in force ("Any time", "Today", "Last 3 hours", "Nov 3", "Nov 1 – Nov 3"). A click opens a menu: the presets, the last hour, 3 hours and 12 hours, and a day from the last two weeks. The keyboard still reaches it with Tab, and Return steps through the presets.
-- **From shows the three most copied apps**, and any further app that is in use so it can be switched off.
-- **A ••• chip ends the From group** when more apps exist, listing every app with its clip count; another ends the Format group, listing the languages in the history with counts (Markdown and JSON keep their chips). `@lang` matches a language by prefix, as a tag does. The two chips are not in the Tab order: the keyboard reaches an app through the app chips row and a language by typing `@python`.
+- `SearchDateFilter` (now in `Core/Model`, so `Search` does not depend on `Storage`) gains `.custom(DateInterval)` for a day or a range of days, from its start up to but not including its end, and `.last(TimeInterval)`, a rolling span back from now that is worked out each time the filter is applied, so a clip copied after "Last 3 hours" was chosen is still in it. `AskDateRange` is the same type, so what Ask reads and what the bar holds cannot drift apart. Presets keep their meaning.
+- **When keeps Today and Yesterday as one-click chips** (choosing the one in force again clears it) **and one More chip** with a native pop-up menu: Any Time, Last 7 Days, Last 30 Days, Last Hour, Last 3 Hours, Last 12 Hours and a day from the last two weeks. The chip names the range in force. Tab reaches it and Return opens the menu. It is a `PopUpMenuButton`, not a SwiftUI `Menu`, which exposes no press action on macOS 27.
+- **From and Format are one labelled menu chip each**, the same pattern as More. From lists every app with its clip count and reads "From" until one is chosen, then the app's name (or the first and how many more). Format lists Markdown, JSON and the languages in the history with counts. The three app chips and the Markdown and JSON chips are gone: the shelf's app chips row stays the quick way to an app. Choosing a format puts `@name` in the search field, which replaces what was typed, as the old chips did. A language matches by its first letters, and exactly when what is typed is a whole name in the history (`@java` is Java only; `@javas` is JavaScript). Tab reaches both and Return opens the menu.
 - **Any other date is a sentence for Ask**: "last 3 hours", "30 minutes ago", "on Nov 3", "3 Nov", "2026-11-03", "last Thursday", "between Nov 1 and Nov 3". `DateRangeParser` reads them with the rules, so they work with Apple Intelligence off; the model's range is still overridden by the rules. A day with no year is the most recent such day, never a future one. A weekday is its most recent past occurrence. A month name alone ("may budget") stays a keyword.
-- A relative range ("last 3 hours") is fixed when it is chosen: a clip copied afterwards is not in it until the range is chosen again.
 
 ## Consequences
-- The bar is shorter, 13 to 15 chips instead of 19 to 21. It is still scrollable for the rare wide case.
+- The bar is shorter, 12 chips or fewer instead of 19 to 21: six kinds, Format, Today, Yesterday, More, From, and one to three of Sensitive, Other Devices and Hidden. It is still scrollable for the rare wide case.
 - There is no calendar picker. A DatePicker popover from a non-activating panel is untested in this app (compare the hover card, ADR 0009), so arbitrary dates go through Ask for now; adding a picker is a follow-up that needs a hand check on a real shelf.
 - Seconds are not offered: a clip is never copied so precisely that a range of seconds helps.
 - The pictures of the shelf with search open, and the teaser frames that show the filter bar, need to be retaken.

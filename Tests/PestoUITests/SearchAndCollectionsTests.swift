@@ -163,7 +163,7 @@ final class FilterBarLayoutTests: PestoUITestCase {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.filterChip("Any time")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
 
         for caption in ["Kind", "When", "Other"] {
             XCTAssertTrue(
@@ -172,47 +172,84 @@ final class FilterBarLayoutTests: PestoUITestCase {
             )
         }
         let when = element(AccessibilityID.filterGroup("When")).frame
-        XCTAssertTrue(when.contains(element(AccessibilityID.filterChip("Any time")).frame), "Any time is outside When")
+        XCTAssertTrue(when.contains(element(AccessibilityID.filterChip("Today")).frame), "Today is outside When")
     }
 
-    /// Five time chips made the bar long enough to scroll; When is one chip with a menu, and Ask takes any other date.
-    func test_whenIsOneMenuChip_withPresetsAndRecentRanges() {
+    /// Today and Yesterday stay one click; the rest of the ranges are one menu chip, and Ask takes any other date.
+    func test_whenHasDayChips_andOneMoreMenu() {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        let chip = element(AccessibilityID.filterChip("Any time"))
-        XCTAssertTrue(chip.waitForExistence(timeout: 5))
-        XCTAssertFalse(element(AccessibilityID.filterChip("Yesterday")).exists, "Yesterday is still its own chip")
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Yesterday")).exists)
+        XCTAssertFalse(element(AccessibilityID.filterChip("7d")).exists, "7d is still its own chip")
 
-        chip.click()
-        for title in ["Today", "Yesterday", "Last 7 days", "Last 30 days", "Last hour", "Last 3 hours"] {
+        let more = element(AccessibilityID.filterChip("More time ranges"))
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "no More chip in When")
+        more.click()
+        for title in ["Any Time", "Last 7 Days", "Last 30 Days", "Last Hour", "Last 3 Hours", "On a Day"] {
             XCTAssertTrue(app.menuItems[title].waitForExistence(timeout: 5), "no \(title) in the When menu")
         }
-        app.menuItems["Last 3 hours"].click()
+        app.menuItems["Last 3 Hours"].click()
 
-        let chosen = element(AccessibilityID.filterChip("Last 3 hours"))
-        XCTAssertTrue(chosen.waitForExistence(timeout: 5), "the chip does not name the range")
-        XCTAssertTrue(chosen.isSelected)
+        XCTAssertTrue(more.waitForExistence(timeout: 5))
+        XCTAssertTrue(more.isSelected, "the More chip does not show the range in force")
+        XCTAssertEqual(more.label, "When, Last 3 hours")
         capture("filter-bar-when-chip")
     }
 
-    /// The From group shows three apps; a last chip opens every app with its count, and a chosen one becomes a chip.
-    func test_moreApps_listsEveryApp_andAChosenOneBecomesAChip() {
+    /// From is one menu chip with every app and its count; choosing one names the chip.
+    func test_fromMenu_listsEveryApp_andChoosingOneNamesTheChip() {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        let more = element(AccessibilityID.filterChip("More apps"))
-        XCTAssertTrue(more.waitForExistence(timeout: 5), "no More apps chip in From")
-        XCTAssertFalse(element(AccessibilityID.filterChip("Mail")).exists, "Mail is already one of the three")
+        let from = element(AccessibilityID.filterChip("Filter by app"))
+        XCTAssertTrue(from.waitForExistence(timeout: 5), "no From chip")
+        XCTAssertEqual(from.label, "From, any app")
 
-        more.click()
+        from.click()
         let mail = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH 'Mail'")).firstMatch
-        XCTAssertTrue(mail.waitForExistence(timeout: 5), "Mail is not in the app menu")
+        XCTAssertTrue(mail.waitForExistence(timeout: 5), "Mail is not in the From menu")
         mail.click()
 
-        let chip = element(AccessibilityID.filterChip("Mail"))
-        XCTAssertTrue(chip.waitForExistence(timeout: 5), "the chosen app did not become a chip")
-        XCTAssertTrue(chip.isSelected)
+        XCTAssertTrue(from.waitForExistence(timeout: 5))
+        XCTAssertEqual(from.label, "From, Mail")
+        XCTAssertTrue(from.isSelected)
+    }
+
+    /// Format is one menu chip with Markdown, JSON and the languages in the history.
+    func test_formatMenu_offersMarkdownAndJSON_andChoosingOneNamesTheChip() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let format = element(AccessibilityID.filterChip("Filter by format"))
+        XCTAssertTrue(format.waitForExistence(timeout: 5), "no Format chip")
+
+        format.click()
+        XCTAssertTrue(app.menuItems["Markdown"].waitForExistence(timeout: 5))
+        app.menuItems["JSON"].click()
+
+        XCTAssertEqual(format.label, "Format, JSON")
+        XCTAssertTrue(format.isSelected)
+    }
+
+    /// The keyboard reaches the More chip with Tab, and Return opens its menu (it used to step through presets).
+    func test_whenMoreMenu_opensFromTheKeyboard() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let field = element(AccessibilityID.searchField)
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.click()
+
+        // Kind (6), Format, Today, Yesterday, then More.
+        for _ in 0..<10 {
+            app.typeKey(.tab, modifierFlags: [])
+        }
+        app.typeKey(.return, modifierFlags: [])
+
+        XCTAssertTrue(app.menuItems["Last 7 Days"].waitForExistence(timeout: 5), "Return did not open the When menu")
+        app.typeKey(.escape, modifierFlags: [])
     }
 
     /// The clear button sat after the field, away from the text it clears.
@@ -248,11 +285,10 @@ final class ChipLabelTests: PestoUITestCase {
         XCTAssertEqual(element(AccessibilityID.collectionChip("All")).label, "All collections")
 
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.filterChip("7d")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
 
-        XCTAssertEqual(element(AccessibilityID.filterChip("Any time")).label, "Any time")
-        XCTAssertEqual(element(AccessibilityID.filterChip("7d")).label, "Last 7 days")
-        XCTAssertEqual(element(AccessibilityID.filterChip("30d")).label, "Last 30 days")
+        XCTAssertEqual(element(AccessibilityID.filterChip("Today")).label, "Today")
+        XCTAssertEqual(element(AccessibilityID.filterChip("More time ranges")).label, "More time ranges")
     }
 }
 

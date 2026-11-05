@@ -22,8 +22,10 @@ struct PestoChip: View {
     /// The row has decided to show this collapsed chip's name (the pointer rests on it); see `ChipHoverIntent`.
     var isRevealed = false
     var helpText: String?
-    /// A chip that opens a menu instead of acting on a click (the When chip); `action` is then only the keyboard's.
-    var menu: AnyView?
+    /// A chip that opens a native menu (the More chip of When); `action` is then unused. `openRequest` opens it from
+    /// the keyboard.
+    var menuItems: [PopUpMenuItem]?
+    var openRequest = 0
     let action: () -> Void
 
     @State private var isHovered = false
@@ -63,10 +65,8 @@ struct PestoChip: View {
 
     @ViewBuilder
     private var control: some View {
-        if let menu {
-            Menu { menu } label: { chipContent }
-                .menuStyle(.button)
-                .menuIndicator(.hidden)
+        if let menuItems {
+            PopUpMenuButton(items: menuItems, openRequest: openRequest) { chipContent }
                 .buttonStyle(.plain)
         } else {
             Button(action: action) { chipContent }
@@ -102,7 +102,7 @@ struct PestoChip: View {
                         .accessibilityHidden(true)
                 }
             }
-            if menu != nil {
+            if menuItems != nil {
                 Image(systemName: "chevron.down").font(.caption2.weight(.bold)).accessibilityHidden(true)
             }
         }

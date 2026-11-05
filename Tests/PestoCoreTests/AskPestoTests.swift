@@ -138,15 +138,11 @@ struct AskPestoTests {
     func whenHoursOrMinutes_thenRelativeRange() {
         #expect(ask("invoice last 3 hours") == AskPestoQuery(
             keywords: "invoice", types: [],
-            range: .custom(DateInterval(start: now.addingTimeInterval(-3 * 3600), end: now))
+            range: .last(3 * 3600)
         ))
-        #expect(ask("links 30 minutes ago").range
-            == .custom(DateInterval(start: now.addingTimeInterval(-1800), end: now)))
-        #expect(ask("code last hour").range == .custom(DateInterval(start: now.addingTimeInterval(-3600), end: now)))
-        #expect(ask("report an hour ago").range == .custom(DateInterval(
-            start: now.addingTimeInterval(-3600),
-            end: now
-        )))
+        #expect(ask("links 30 minutes ago").range == .last(1800))
+        #expect(ask("code last hour").range == .last(3600))
+        #expect(ask("report an hour ago").range == .last(3600))
     }
 
     @Test("a named day is that calendar day, in either order and with an ordinal")
@@ -187,6 +183,13 @@ struct AskPestoTests {
         #expect(ask("from Anna").range == .all)
     }
 
+    @Test("idioms that only look like a time stay keywords")
+    func whenIdiom_thenKeyword() {
+        #expect(ask("last minute deal").range == .all)
+        #expect(ask("last minute deal").keywords == "minute deal")
+        #expect(ask("three hours of video").range == .last(3 * 3600))
+    }
+
     @Test("the presets are unchanged")
     func whenPreset_thenUnchanged() {
         #expect(ask("report last week").range == .week)
@@ -196,17 +199,39 @@ struct AskPestoTests {
 
     @Test("a custom range is described the way a person says it")
     func whenCustomRange_thenReadableSummary() {
-        let hours = AskDateRange.custom(DateInterval(start: now.addingTimeInterval(-3 * 3600), end: now))
-        #expect(hours.label(now: now) == "Last 3 hours")
-        let minutes = AskDateRange.custom(DateInterval(start: now.addingTimeInterval(-1800), end: now))
-        #expect(minutes.label(now: now) == "Last 30 minutes")
-        #expect(AskDateRange.custom(DateInterval(start: day(11, 3), end: day(11, 4))).label(now: now) == "Nov 3")
-        #expect(AskDateRange.custom(DateInterval(start: day(11, 1), end: day(11, 4)))
-            .label(now: now) == "Nov 1 \u{2013} Nov 3")
-        #expect(AskDateRange.custom(DateInterval(start: day(12, 25, year: 2025), end: day(12, 26, year: 2025)))
-            .label(now: now)
-            == "Dec 25, 2025")
+        #expect(AskDateRange.last(3 * 3600).label(now: now) == "Last 3 hours")
+        #expect(AskDateRange.last(1800).label(now: now) == "Last 30 minutes")
+        #expect(AskDateRange.last(3600).label(now: now) == "Last hour")
+        let en = Locale(identifier: "en_US")
+        let nov3 = AskDateRange.custom(DateInterval(start: day(11, 3), end: day(11, 4)))
+        #expect(nov3.label(now: now, locale: en) == "Nov 3")
+        let nov1to3 = AskDateRange.custom(DateInterval(start: day(11, 1), end: day(11, 4)))
+        #expect(nov1to3.label(now: now, locale: en) == "Nov 1 \u{2013} Nov 3")
+        let lastYear = AskDateRange.custom(DateInterval(start: day(12, 25, year: 2025), end: day(12, 26, year: 2025)))
+        #expect(lastYear.label(now: now, locale: en) == "Dec 25, 2025")
+        #expect(AskDateRange.last(90 * 60).label(now: now) == "Last 90 minutes")
         #expect(AskDateRange.week.label(now: now) == "Last 7 days")
         #expect(AskDateRange.all.label(now: now) == "Any time")
+    }
+
+    @Test("a dash joins two days, and a range written backwards still covers both")
+    func whenDashOrBackwards_thenSameRange() {
+        let expected = AskDateRange.custom(DateInterval(start: day(11, 1), end: day(11, 4)))
+        #expect(ask("report Nov 1 - Nov 3").range == expected)
+        #expect(ask("from Nov 3 to Nov 1").range == expected)
+    }
+
+    @Test("a day is 23 hours long when the clocks go forward, so it still ends at the next midnight")
+    func whenDaylightSavingDay_thenEndsAtNextMidnight() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        let noon = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 5, hour: 12)))
+        let query = rules.interpret("invoice on Mar 8", now: noon, calendar: calendar)
+
+        guard case let .custom(range) = query.range else {
+            Issue.record("not a custom range")
+            return
+        }
+        #expect(range.duration == 23 * 3600)
     }
 }

@@ -93,7 +93,7 @@ struct HistoryIndexTests {
         #expect(index.matching(HistoryCriteria(query: "api key")).count == 1)
     }
 
-    @Test("@prefix matches a tag or a language by prefix, so @java finds javascript")
+    @Test("@prefix matches a tag by prefix and a language by prefix, or exactly when it is a whole name")
     func whenAtQuery_thenTagOrLanguage() throws {
         let fixture = try Fixture()
         let tagged = try fixture.add("a", at: 1, tags: ["Python-notes"])
@@ -101,8 +101,19 @@ struct HistoryIndexTests {
         let longer = try fixture.add("c", at: 3, language: "pythonic")
         _ = try fixture.add("d", at: 4, language: "swift")
         let index = try HistoryIndex(items: fixture.items())
-        #expect(Set(index.matching(HistoryCriteria(query: "@python"))) == [tagged.id, language.id, longer.id])
+        #expect(Set(index.matching(HistoryCriteria(query: "@python"))) == [tagged.id, language.id])
+        #expect(Set(index.matching(HistoryCriteria(query: "@pyth"))) == [tagged.id, language.id, longer.id])
         #expect(index.matching(HistoryCriteria(query: "@swi")).count == 1)
+    }
+
+    @Test("a whole language name matches only that language, so @java does not bring back JavaScript")
+    func whenQueryIsAWholeLanguage_thenExact() throws {
+        let fixture = try Fixture()
+        let java = try fixture.add("a", at: 1, language: "java")
+        let script = try fixture.add("b", at: 2, language: "javascript")
+        let index = try HistoryIndex(items: fixture.items())
+        #expect(index.matching(HistoryCriteria(query: "@java")) == [java.id])
+        #expect(index.matching(HistoryCriteria(query: "@javas")) == [script.id])
     }
 
     @Test("scope and chips filter like ShelfFilter does")

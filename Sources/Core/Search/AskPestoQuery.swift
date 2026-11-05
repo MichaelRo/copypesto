@@ -27,7 +27,7 @@ public struct AskPestoQuery: Sendable, Equatable {
         case .yesterday: parts.append("yesterday")
         case .week: parts.append("past 7 days")
         case .month: parts.append("past 30 days")
-        case .custom: parts.append(range.label())
+        case .custom, .last: parts.append(range.label())
         }
         if !keywords.isEmpty { parts.append("\u{201C}\(keywords)\u{201D}") }
         return parts.joined(separator: " \u{00B7} ")

@@ -25,12 +25,13 @@ public struct LanguageCount: Sendable, Equatable {
     }
 
     public var displayName: String {
-        switch name {
-        case "javascript": "JavaScript"
-        case "html", "sql", "svg": name.uppercased()
-        default: name.prefix(1).uppercased() + name.dropFirst()
-        }
+        Self.names[name] ?? name.prefix(1).uppercased() + name.dropFirst()
     }
+
+    private static let names: [String: String] = [
+        "javascript": "JavaScript", "typescript": "TypeScript", "html": "HTML", "css": "CSS", "sql": "SQL",
+        "svg": "SVG", "xml": "XML", "yaml": "YAML", "php": "PHP", "csharp": "C#", "cpp": "C++", "go": "Go"
+    ]
 }
 
 public struct CommandBarSuggestions: Sendable, Equatable {

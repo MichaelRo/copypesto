@@ -193,4 +193,21 @@ struct ShelfFilterTests {
         #expect(SearchDateFilter.week.id == "week")
         #expect(SearchDateFilter.custom(range).id == "custom")
     }
+
+    @Test("a rolling range counts back from now each time it is applied, so a new clip is in it")
+    func rollingRangeFollowsNow() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        func inRange(_ age: TimeInterval, at moment: Date) -> Bool {
+            let item = clip("a")
+            item.timestamp = now.addingTimeInterval(-age)
+            var filter = filter(searchActive: true, date: .last(2 * 3600))
+            filter.now = moment
+            return filter.apply(to: [item]).count == 1
+        }
+
+        #expect(inRange(3600, at: now))
+        #expect(!inRange(3 * 3600, at: now))
+        #expect(inRange(3600, at: now.addingTimeInterval(3600)))
+        #expect(!inRange(3600, at: now.addingTimeInterval(2 * 3600)))
+    }
 }

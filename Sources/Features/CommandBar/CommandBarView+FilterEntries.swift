@@ -4,85 +4,73 @@ import PestoCore
 import SwiftUI
 
 extension CommandBarView {
-    static let whenEntryID = "date-when"
+    static let whenMoreID = "date-more"
 
-    private static let datePresets: [SearchDateFilter] = [.all, .today, .yesterday, .week, .month]
+    /// Today and Yesterday stay one click away; choosing the one in force again clears it.
+    var dayEntries: [FilterEntry] {
+        [(SearchDateFilter.today, "Today"), (.yesterday, "Yesterday")].map { filter, label in
+            let isOn = appState.searchDateFilter == filter
+            return FilterEntry(id: "date-\(filter.id)", label: label, isActive: isOn) {
+                appState.searchDateFilter = isOn ? .all : filter
+            }
+        }
+    }
 
-    /// The When chip: it names the range in force, a click opens the menu, and the keyboard steps through the presets.
-    var whenEntry: FilterEntry {
+    /// The rest of the ranges in one menu chip that names the range in force. Any other date is a sentence for Ask.
+    var whenMoreEntry: FilterEntry {
         let current = appState.searchDateFilter
+        let isInMenu = ![SearchDateFilter.all, .today, .yesterday].contains(current)
         return FilterEntry(
-            id: Self.whenEntryID, label: current.label(), spoken: "When, \(current.label())",
-            help: "Show only clips from a time range", isActive: current != .all
+            id: Self.whenMoreID, label: isInMenu ? current.label() : "More", identifier: "More time ranges",
+            spoken: isInMenu ? "When, \(current.label())" : "More time ranges",
+            help: "Last 7 days, the last hours, or a day", isActive: isInMenu, menu: whenMenuItems
         ) {
-            let presets = Self.datePresets
-            let next = presets.firstIndex(of: appState.searchDateFilter).map { ($0 + 1) % presets.count } ?? 0
-            appState.searchDateFilter = presets[next]
+            openRequests[Self.whenMoreID, default: 0] += 1
         }
     }
 
-    /// Presets, the last hours and the last two weeks of days. Any other date is a sentence for Ask.
-    @ViewBuilder
-    var whenMenu: some View {
-        let now = Date.now
+    private var whenMenuItems: [PopUpMenuItem] {
+        let current = appState.searchDateFilter
+        func choice(_ title: String, _ filter: SearchDateFilter) -> PopUpMenuItem {
+            .choice(title, isOn: current == filter) { appState.searchDateFilter = filter }
+        }
         let calendar = Calendar.current
-        ForEach(Self.datePresets, id: \.id) { filter in
-            whenButton(filter.label(), filter: filter)
+        let today = calendar.startOfDay(for: .now)
+        let days: [PopUpMenuItem] = (2...13).compactMap { back in
+            guard let day = calendar.date(byAdding: .day, value: -back, to: today),
+                  let end = calendar.date(byAdding: .day, value: 1, to: day) else { return nil }
+            return choice(
+                day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()),
+                .custom(DateInterval(start: day, end: end))
+            )
         }
-        Divider()
-        ForEach([1, 3, 12], id: \.self) { hours in
-            let range = SearchDateFilter.custom(DateInterval(
-                start: now.addingTimeInterval(-Double(hours) * 3600), end: now.addingTimeInterval(60)
-            ))
-            whenButton(hours == 1 ? "Last hour" : "Last \(hours) hours", filter: range)
-        }
-        Menu("On a Day") {
-            ForEach(2...13, id: \.self) { back in
-                if let day = calendar.date(byAdding: .day, value: -back, to: calendar.startOfDay(for: now)),
-                   let end = calendar.date(byAdding: .day, value: 1, to: day)
-                {
-                    whenButton(
-                        day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()),
-                        filter: .custom(DateInterval(start: day, end: end))
-                    )
-                }
-            }
-        }
-        Divider()
-        Button("For other dates, ask: \u{201C}between Nov 1 and Nov 3\u{201D}") {}
-            .disabled(true)
+        return [
+            choice("Any Time", .all), choice("Last 7 Days", .week), choice("Last 30 Days", .month), .divider,
+            choice("Last Hour", .last(3600)), choice("Last 3 Hours", .last(3 * 3600)),
+            choice("Last 12 Hours", .last(12 * 3600)), .divider, .submenu("On a Day", days)
+        ]
     }
 
-    private func whenButton(_ title: String, filter: SearchDateFilter) -> some View {
-        Button {
-            appState.searchDateFilter = filter
-        } label: {
-            if isChosen(filter, titled: title) {
-                Label(title, systemImage: "checkmark")
-            } else {
-                Text(title)
-            }
-        }
-    }
+    static let fromID = "from"
+    static let formatID = "format"
 
-    private func isChosen(_ filter: SearchDateFilter, titled title: String) -> Bool {
-        guard case let .custom(candidate) = filter, case let .custom(current) = appState.searchDateFilter else {
-            return appState.searchDateFilter == filter
-        }
-        let isWholeDay = Calendar.current.startOfDay(for: candidate.start) == candidate.start
-        return isWholeDay ? current == candidate : appState.searchDateFilter.label() == title
-    }
-
-    /// The From chips: the three most copied apps, and any further one that is in use so it can be switched off.
-    var sourceEntries: [FilterEntry] {
+    /// From: one menu chip with every app and its clip count. It reads "From" until an app is chosen, then the app's
+    /// name (or the first one and how many more).
+    var fromEntry: FilterEntry? {
         let apps = suggestionsModel.suggestions.allApps
-        let shown = apps.prefix(3) + apps.dropFirst(3).filter { appState.searchSourceFilter.contains($0.bundleID) }
-        return shown.map { app in
-            FilterEntry(
-                id: "app-\(app.bundleID)", label: app.name,
-                iconImage: SourceIconCache.shared.image(forBundleID: app.bundleID),
-                isActive: appState.searchSourceFilter.contains(app.bundleID)
-            ) {
+        guard !apps.isEmpty else { return nil }
+        let chosen = apps.filter { appState.searchSourceFilter.contains($0.bundleID) }
+        let label = switch chosen.count {
+        case 0: "From"
+        case 1: chosen[0].name
+        default: "\(chosen[0].name) +\(chosen.count - 1)"
+        }
+        var items: [PopUpMenuItem] = []
+        if !chosen.isEmpty {
+            items += [.action("Any App") { appState.searchSourceFilter = [] }, .divider]
+        }
+        items += apps.map { app in
+            .choice("\(app.name) \u{00B7} \(app.count)", isOn: appState.searchSourceFilter.contains(app.bundleID)) {
                 if appState.searchSourceFilter.contains(app.bundleID) {
                     appState.searchSourceFilter.remove(app.bundleID)
                 } else {
@@ -90,18 +78,44 @@ extension CommandBarView {
                 }
             }
         }
+        return FilterEntry(
+            id: Self.fromID, label: label, identifier: "Filter by app",
+            spoken: chosen.isEmpty ? "From, any app" : "From, \(chosen.map(\.name).joined(separator: ", "))",
+            help: "Show only clips copied from an app", isActive: !chosen.isEmpty, menu: items
+        ) {
+            openRequests[Self.fromID, default: 0] += 1
+        }
     }
 
-    /// Formats of text that the classifier tags (`@markdown`, `@json`): one chip each puts the tag in the search field.
-    var formatEntries: [FilterEntry] {
-        [("markdown", "Markdown", "text.alignleft"), ("json", "JSON", "curlybraces")].map { tag, label, icon in
-            let isActive = selectedTag?.lowercased() == tag
-            return FilterEntry(
-                id: "format-\(tag)", label: label, icon: icon, help: "Show only clips written as \(label)",
-                isActive: isActive
-            ) {
-                appState.searchText = isActive ? "" : "@\(tag)"
+    /// Format: one menu chip with Markdown, JSON and the languages in the history, each putting `@name` in the search
+    /// field (a language matches by its first letters, and exactly when it is a whole name).
+    var formatEntry: FilterEntry {
+        let languages = suggestionsModel.suggestions.languages
+        let tag = selectedTag?.lowercased()
+        let named: [(tag: String, title: String)] =
+            [("markdown", "Markdown"), ("json", "JSON")] + languages.map { ($0.name, $0.displayName) }
+        let current = named.first { $0.tag == tag }
+        var items: [PopUpMenuItem] = []
+        if current != nil {
+            items += [.action("Any Format") { appState.searchText = "" }, .divider]
+        }
+        for (name, title) in [("markdown", "Markdown"), ("json", "JSON")] {
+            items.append(.choice(title, isOn: tag == name) { appState.searchText = tag == name ? "" : "@\(name)" })
+        }
+        if !languages.isEmpty {
+            items.append(.divider)
+            items += languages.map { language in
+                .choice(
+                    "\(language.displayName) \u{00B7} \(language.count)", isOn: tag == language.name
+                ) { appState.searchText = tag == language.name ? "" : "@\(language.name)" }
             }
+        }
+        return FilterEntry(
+            id: Self.formatID, label: current?.title ?? "Format", identifier: "Filter by format",
+            spoken: current.map { "Format, \($0.title)" } ?? "Format, any",
+            help: "Show only clips written as Markdown, JSON or a language", isActive: current != nil, menu: items
+        ) {
+            openRequests[Self.formatID, default: 0] += 1
         }
     }
 
@@ -136,62 +150,5 @@ extension CommandBarView {
         ) {
             appState.showHiddenNSFW.toggle()
         }]
-    }
-
-    /// A last chip on the From group, only when more apps exist than the group shows: every app, with its count.
-    @ViewBuilder
-    var moreAppsChip: some View {
-        let apps = suggestionsModel.suggestions.allApps
-        if apps.count > 3 {
-            PestoChip(
-                label: "More apps", icon: "ellipsis", isActive: false, collapsesLabel: true,
-                helpText: "Filter by any app", menu: AnyView(moreAppsMenu(apps)), action: {}
-            )
-            .accessibilityIdentifier(AccessibilityID.filterChip("More apps"))
-        }
-    }
-
-    private func moreAppsMenu(_ apps: [SourceApp]) -> some View {
-        ForEach(apps, id: \.bundleID) { app in
-            Toggle(
-                "\(app.name) \u{00B7} \(app.count)",
-                isOn: Binding(
-                    get: { appState.searchSourceFilter.contains(app.bundleID) },
-                    set: { isOn in
-                        if isOn {
-                            appState.searchSourceFilter.insert(app.bundleID)
-                        } else {
-                            appState.searchSourceFilter.remove(app.bundleID)
-                        }
-                    }
-                )
-            )
-        }
-    }
-
-    /// A last chip on the Format group when the history holds other languages: each with its count.
-    @ViewBuilder
-    var moreFormatsChip: some View {
-        let languages = suggestionsModel.suggestions.languages
-        if !languages.isEmpty {
-            PestoChip(
-                label: "More formats", icon: "ellipsis", isActive: false, collapsesLabel: true,
-                helpText: "Filter by a language such as Python or SQL",
-                menu: AnyView(moreFormatsMenu(languages)), action: {}
-            )
-            .accessibilityIdentifier(AccessibilityID.filterChip("More formats"))
-        }
-    }
-
-    private func moreFormatsMenu(_ languages: [LanguageCount]) -> some View {
-        ForEach(languages, id: \.name) { language in
-            Toggle(
-                "\(language.displayName) \u{00B7} \(language.count)",
-                isOn: Binding(
-                    get: { selectedTag?.lowercased() == language.name },
-                    set: { appState.searchText = $0 ? "@\(language.name)" : "" }
-                )
-            )
-        }
     }
 }

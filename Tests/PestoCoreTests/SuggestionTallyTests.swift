@@ -98,6 +98,10 @@ struct SuggestionTallyTests {
         #expect(LanguageCount(name: "sql", count: 1).displayName == "SQL")
         #expect(LanguageCount(name: "python", count: 1).displayName == "Python")
         #expect(LanguageCount(name: "go", count: 1).displayName == "Go")
+        #expect(LanguageCount(name: "typescript", count: 1).displayName == "TypeScript")
+        #expect(LanguageCount(name: "css", count: 1).displayName == "CSS")
+        #expect(LanguageCount(name: "csharp", count: 1).displayName == "C#")
+        #expect(LanguageCount(name: "cpp", count: 1).displayName == "C++")
     }
 
     @Test("a clip copied on another device is noticed, and a history of local clips has none")

@@ -69,4 +69,24 @@ struct GuideClaimsTests {
         #expect(settings.contains("(1, 5, 15 minutes or 1 hour)"))
         #expect(privacy.contains("1, 5, 15 or 60 minutes"))
     }
+
+    @Test("the import, backup, size and allowance numbers in the guide are the code's")
+    func importBackupAndAllowanceNumbersAreTheCodes() throws {
+        let megabyte = 1024 * 1024
+        let moving = try guide("docs/guide/moving-from.md")
+        #expect(PasteLibraryReader.maxRecords == 20_000 && ClipboardAppLibraryReader.maxRecords == 20_000)
+        #expect(moving.contains("more than 20,000 clips"), "the import record limit changed; update the guide")
+        #expect(PasteLibraryReader.maxDatabaseBytes == 1_000_000_000)
+        #expect(moving.contains("a file over 1 GB"), "the import file limit changed; update the guide")
+
+        let settings = try guide("docs/guide/settings.md")
+        #expect(AutoBackupSettings.largestClipBytes == 10 * megabyte)
+        #expect(settings.contains("clips over 10 MB"), "the backup clip limit changed; update the guide")
+
+        let allowances = ExclusionAllowances.Length.allCases.map(\.rawValue).sorted()
+        #expect(allowances == [0, 15, 60, 240], "the allowance lengths changed; update the guides")
+        #expect(settings.contains("15 minutes, 1 hour, 4 hours or until Pesto quits"))
+        let privacy = try guide("docs/guide/privacy-and-security.md")
+        #expect(privacy.contains("15 minutes, an hour, four hours or until Pesto quits"))
+    }
 }

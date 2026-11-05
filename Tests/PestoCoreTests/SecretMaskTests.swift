@@ -6,18 +6,15 @@ import Testing
 
 @Suite("The mask a secret card shows is dots and a count")
 struct SecretMaskTests {
-    private static let badgeLabels: [SensitivityCategory: [String]] = [
-        .creditCard: ["card"], .ssn: ["ssn"], .jwt: ["jwt"], .apiKey: ["api key"], .oauthToken: ["oauth"],
-        .privateKey: ["private key"], .password: ["password"]
-    ]
-
-    @Test("no generic mask repeats the badge the card already wears", arguments: SensitivityCategory.allCases)
+    @Test(
+        "no generic mask repeats the badge the card already wears",
+        arguments: SensitivityCategory.allCases.filter { $0 != .credential }
+    )
     func whenGenericMask_thenItDoesNotRepeatTheBadge(category: SensitivityCategory) {
         for count in [nil, 45] {
             let mask = SensitiveContentDetector.localizedMask(for: category, count: count).lowercased()
-            for label in Self.badgeLabels[category] ?? [] {
-                #expect(!mask.contains(label), "\(category) mask \(mask) repeats \(label)")
-            }
+            let label = category.badgeLabel.lowercased()
+            #expect(!mask.contains(label), "\(category) mask \(mask) repeats \(label)")
         }
     }
 

@@ -20,6 +20,7 @@ collection too, and a collection the person had arranged by habit rearranged its
 - A regular collection orders by hand position first, then by `copiedAt`, newest first (`CollectionOrder.sorted`, in
   Core, so it is tested without a view). A use does not move a clip inside a collection.
 - The "Copied" line of the detail card shows `copiedAt`, the first copy, not the last paste.
+- The age under a card's title follows the same rule (`CardAge`): in a regular collection it is `copiedAt`, elsewhere `timestamp`.
 
 Written on first use rather than at ingest so a capture seals no extra metadata (the capture budget of 200 ms and the
 store size are untouched), and a clip that joins a collection after being pasted still keeps its first copy time.

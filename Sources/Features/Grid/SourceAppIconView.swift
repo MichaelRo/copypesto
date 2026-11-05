@@ -24,6 +24,6 @@ struct SourceAppIconView: View {
                     .pestoQuiet()
             }
         }
-        .help(appName ?? "Unknown app")
+        .help(appName ?? SourceAppRecord.unknownDisplayName)
     }
 }

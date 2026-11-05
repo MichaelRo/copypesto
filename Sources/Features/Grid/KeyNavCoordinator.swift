@@ -136,11 +136,22 @@ final class KeyNavCoordinator {
         case .saveImage:
             _ = onSaveImage?()
             return true
+        case .selectAll where isSearchActive: return selectFieldText(of: event)
         case .selectAll, .undo, .redo: return false
         // In the search field ⌘C belongs to the field: it copies the text the person selected there.
         case .copy where isSearchActive: return false
         default:
             perform(command)
+            return true
+        }
+    }
+
+    /// The shelf is a non-activating panel that never sees the Edit menu's ⌘A, so the field editor is told directly.
+    private func selectFieldText(of event: NSEvent) -> Bool {
+        nonisolated(unsafe) let unsafeEvent = event
+        return MainActor.assumeIsolated {
+            guard let editor = unsafeEvent.window?.firstResponder as? NSText else { return false }
+            editor.selectAll(nil)
             return true
         }
     }

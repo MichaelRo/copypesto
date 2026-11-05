@@ -15,7 +15,7 @@ final class AppState {
             historyStore?.setVisible(isOverlayVisible || isPinnedWindowVisible)
             if !isOverlayVisible {
                 if oldValue { shelfClosedAt = .now }
-                appChipFilter = []
+                if !isPinnedWindowVisible { appChipFilter = [] }
                 // A pointer that was on a banner when the shelf closed never reports leaving it.
                 dismissUndoOffer()
                 releaseUserError()
@@ -139,10 +139,15 @@ final class AppState {
     /// When the shelf last closed; `ShelfContextPolicy` decides from it whether the next open starts from All.
     @ObservationIgnored var shelfClosedAt: Date?
 
+    /// A link or script chose what the shelf shows (a collection, a search): a long absence must not undo it.
+    func noteContextRequested() {
+        shelfClosedAt = nil
+    }
+
     /// Called as the shelf opens. After `ShelfContextPolicy.memory` closed the shelf forgets its collection and
     /// filters; `restingCollectionID` is the frontmost app's own collection, if it has one.
     func resetShelfContextIfStale(now: Date = .now, restingCollectionID: UUID?) {
-        guard ShelfContextPolicy.shouldReset(closedAt: shelfClosedAt, now: now) else { return }
+        guard !isPinnedWindowVisible, ShelfContextPolicy.shouldReset(closedAt: shelfClosedAt, now: now) else { return }
         clearSearchFilters()
         appChipFilter = []
         selectedCollectionID = restingCollectionID

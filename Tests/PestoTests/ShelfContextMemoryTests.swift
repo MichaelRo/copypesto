@@ -60,5 +60,30 @@ extension HostedGlobals {
             #expect(state.appChipFilter.isEmpty)
             #expect(state.shelfClosedAt != nil)
         }
+
+        @Test("a link or script that picks a collection is not undone by a long absence")
+        func whenContextWasRequested_thenNotStale() {
+            let (state, collection) = stateInACollection()
+            state.shelfClosedAt = Date(timeIntervalSince1970: 1000)
+
+            state.noteContextRequested()
+            state.resetShelfContextIfStale(now: Date(timeIntervalSince1970: 9000), restingCollectionID: nil)
+
+            #expect(state.selectedCollectionID == collection)
+        }
+
+        @Test("while the floating window is open the shelf's closing leaves its filters alone")
+        func whenPinnedWindowIsOpen_thenCloseAndResetKeepFilters() {
+            let (state, collection) = stateInACollection()
+            state.isPinnedWindowVisible = true
+            state.isOverlayVisible = true
+
+            state.isOverlayVisible = false
+            state.shelfClosedAt = Date(timeIntervalSince1970: 1000)
+            state.resetShelfContextIfStale(now: Date(timeIntervalSince1970: 9000), restingCollectionID: nil)
+
+            #expect(state.appChipFilter == ["com.apple.Notes"])
+            #expect(state.selectedCollectionID == collection)
+        }
     }
 }

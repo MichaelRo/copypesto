@@ -410,7 +410,10 @@ struct CommandBarView: View {
                     try? await Task.sleep(for: .milliseconds(110))
                     refreshRecentSearches()
                 }
-                .onSubmit { saveToHistory(appState.searchText) }
+                .onSubmit {
+                    if let clear = appState.noResultsAction { return clear() }
+                    saveToHistory(appState.searchText)
+                }
                 .onChange(of: searchFocused) { _, focused in
                     guard focused else { return refreshRecentSearches() }
                     // A popover asked for before its field is in a window is dropped, and asking again with the same

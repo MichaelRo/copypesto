@@ -85,42 +85,31 @@ struct OverlayRootView: View {
     /// A capsule in the band under the cards (where the selection bar floats), so a delete never covers a card's
     /// header.
     private func undoBanner(_ label: UndoLabel) -> some View {
-        let accent = Color.pestoAccent(stored: accentColorHex, theme: appThemeRaw, darkTheme: appThemeDarkRaw)
-        return HStack(spacing: 10) {
-            Image(systemName: "arrow.uturn.backward.circle.fill")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(accent)
-                .accessibilityHidden(true)
-            Text(UndoText.action(label))
-                .scaledFont(size: 11)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-            Button { appState.performUndo() } label: { Text("Undo (\u{2318}Z)") }
-                .buttonStyle(.pestoProminent)
-                .controlSize(.small)
-                .accessibilityIdentifier(AccessibilityID.undoButton)
-            Button { appState.dismissUndoOffer() } label: {
-                Image(systemName: "xmark").font(.system(size: 10)).foregroundStyle(AdaptiveContrast.quiet(contrast))
-                    .pestoHitTarget()
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Dismiss")
-        }
-        .padding(.horizontal, 14)
-        .frame(height: 30)
-        .background {
-            ZStack {
-                Capsule().fill(Color.opaqueSurface)
-                Capsule().fill(accent.opacity(0.10))
-                Capsule().strokeBorder(accent.opacity(contrast == .increased ? 0.6 : 0.25), lineWidth: 1)
-            }
-        }
+        ShelfBannerCapsule(
+            symbol: "arrow.uturn.backward.circle.fill",
+            message: UndoText.action(label),
+            primary: .init(title: "Undo (\u{2318}Z)", identifier: AccessibilityID.undoButton) {
+                appState.performUndo()
+            },
+            onDismiss: { appState.dismissUndoOffer() }
+        )
         .fixedSize()
         .onHover { hovering in
             if hovering { appState.holdUndoOffer() } else { appState.releaseUndoOffer() }
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.undoBanner)
+    }
+
+    private var clickHint: some View {
+        Text("Return or a double-click pastes.")
+            .scaledFont(size: 11)
+            .pestoQuiet()
+            .padding(.horizontal, 12)
+            .frame(height: 24)
+            .background(Capsule().fill(Color.opaqueSurface))
+            .allowsHitTesting(false)
+            .accessibilityIdentifier(AccessibilityID.clickHint)
     }
 
     private func storageBanner(_ message: String) -> some View {
@@ -154,29 +143,19 @@ struct OverlayRootView: View {
     }
 
     private func importOfferBanner(_ sources: [ImportSource]) -> some View {
-        let accent = Color.pestoAccent(stored: accentColorHex, theme: appThemeRaw, darkTheme: appThemeDarkRaw)
-        return HStack(spacing: 8) {
-            Image(systemName: "tray.and.arrow.down")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(accent)
-                .accessibilityHidden(true)
-            Text(importOfferText(sources))
-                .lineLimit(1)
-                .scaledFont(size: 11)
-                .foregroundStyle(.primary)
-            Spacer()
-            Button(importOfferButtonTitle(sources)) {
-                appState.answerImportOffer(accepted: true)
+        ShelfBannerCapsule(
+            symbol: "tray.and.arrow.down",
+            message: importOfferText(sources),
+            primary: .init(
+                title: importOfferButtonTitle(sources), identifier: AccessibilityID.importOfferImportButton
+            ) { appState.answerImportOffer(accepted: true) },
+            secondary: .init(title: "Not Now", identifier: AccessibilityID.importOfferDismissButton) {
+                appState.answerImportOffer(accepted: false)
             }
-            .buttonStyle(.pestoCapsule(.primary))
-            .accessibilityIdentifier(AccessibilityID.importOfferImportButton)
-            Button("Not Now") { appState.answerImportOffer(accepted: false) }
-                .buttonStyle(.pestoCapsule(.secondary))
-                .accessibilityIdentifier(AccessibilityID.importOfferDismissButton)
-        }
+        )
         .padding(.horizontal, 16)
-        .padding(.vertical, 6)
-        .background(bannerFill(accent))
+        .padding(.vertical, 3)
+        .frame(maxWidth: .infinity)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.importOfferBanner)
     }
@@ -233,9 +212,15 @@ struct OverlayRootView: View {
                                   .value(for: Setting.screenSharingPrivacy))
                     {
                         SuggestionBanner(presentation: presentation)
+                            .padding(.horizontal, 16)
                             .padding(.bottom, SelectionActionBar.bottomInset)
+                    } else if appState.isClickHintVisible {
+                        clickHint
+                            .padding(.bottom, SelectionActionBar.bottomInset)
+                            .transition(.opacity)
                     }
                 }
+                .animation(Motion.animation(.pestoQuick), value: appState.isClickHintVisible)
                 .overlay(alignment: .top) {
                     VStack(spacing: 0) {
                         if let message = appState.lastUserError { userErrorBanner(message) }

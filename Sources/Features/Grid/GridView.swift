@@ -151,7 +151,7 @@ struct GridView: View {
         return String(localized: "selected apps")
     }
 
-    private var emptyState: ShelfEmptyState? {
+    var emptyState: ShelfEmptyState? {
         ShelfEmptyState.evaluate(.init(
             hasStorage: appState.historyContainer != nil,
             visibleCount: displayedItems.count,
@@ -286,17 +286,22 @@ struct GridView: View {
             )
             .animation(Motion.animation(ShelfMotion.switchEase), value: appState.selectedCollectionID)
             .frame(height: cardDimensions.height + ShelfHeight.liftRoom)
+            .onChange(of: noResultsAdvice, initial: true) { _, advice in
+                appState.noResultsAction = advice.map { advice in { apply(advice.action) } }
+            }
             .overlay {
                 if let emptyState {
                     ShelfEmptyStateView(
                         state: emptyState,
                         query: appState.searchText.trimmingCharacters(in: .whitespaces),
+                        advice: noResultsAdvice,
                         onAction: { action in
                             switch action {
                             case .openPrivacySettings: PasteboardAccessSettings.open()
                             case .resumeCapturing: appState.resumeCapturing?()
                             }
-                        }
+                        },
+                        onAdvice: apply
                     )
                 }
             }

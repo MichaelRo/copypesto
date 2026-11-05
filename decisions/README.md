@@ -45,3 +45,4 @@ Status: Accepted
 ## Docs affected
 ```
 | [0019](0019-backup-and-sync-group.md) | Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live; supersedes the Settings wording of 0010 and 0012 |
+| [0027](0027-one-band-style-and-two-small-shelf-hints.md) | The Suggestion, Undo and import offers share one glass-capsule banner; No results names the filters on and offers Clear Filters; a click on a card hints at the double click, three times at most |

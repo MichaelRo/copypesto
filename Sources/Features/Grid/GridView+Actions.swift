@@ -175,12 +175,37 @@ extension GridView {
         }
     }
 
+    var noResultsAdvice: NoResultsAdvice? {
+        guard emptyState == .noResults else { return nil }
+        let apps = appState.searchSourceFilter.sorted().map {
+            SourceIconCache.shared.displayName(forBundleID: $0) ?? $0
+        }
+        return NoResultsAdvice.make(
+            query: appState.searchText.trimmingCharacters(in: .whitespaces),
+            kinds: Set(appState.searchTypeFilter.compactMap(ClipboardType.init(rawValue:))),
+            date: appState.searchDateFilter,
+            appNames: apps,
+            sensitiveOnly: appState.searchSensitiveOnly,
+            remoteOnly: appState.searchRemoteOnly,
+            showsHidden: appState.showHiddenNSFW
+        )
+    }
+
+    func apply(_ action: NoResultsAdvice.Action) {
+        switch action {
+        case .clearFilters: appState.clearSearchFilters()
+        case .clearSearch: appState.searchText = ""
+        }
+    }
+
     func handleClick(_ click: ShelfClick, item: ClipboardItem) {
         let extendsSelection = !NSEvent.modifierFlags.isDisjoint(with: [.command, .shift])
-        switch ShelfTap.route(
+        let route = ShelfTap.route(
             copyOnly: copyOnly, pastesOnClick: pasteImmediately, hasSelection: !selection.isEmpty,
             extendsSelection: extendsSelection, click: click
-        ) {
+        )
+        if !isPinnedHost { appState.noteShelfClick(click, tap: route) }
+        switch route {
         case .copy:
             copyToPasteboard(item)
             flash(item.id)

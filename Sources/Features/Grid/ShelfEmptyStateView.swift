@@ -5,7 +5,9 @@ import SwiftUI
 struct ShelfEmptyStateView: View {
     let state: ShelfEmptyState
     let query: String
+    var advice: NoResultsAdvice?
     var onAction: ((ShelfEmptyState.Action) -> Void)?
+    var onAdvice: ((NoResultsAdvice.Action) -> Void)?
 
     var body: some View {
         VStack(spacing: 6) {
@@ -27,6 +29,14 @@ struct ShelfEmptyStateView: View {
                     .controlSize(.regular)
                     .padding(.top, 6)
                     .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAction)
+            }
+            if let advice {
+                Button(advice.buttonTitle) { onAdvice?(advice.action) }
+                    .buttonStyle(.pestoProminent)
+                    .controlSize(.regular)
+                    .padding(.top, 6)
+                    .help("\(advice.buttonTitle) (Return)")
+                    .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAdvice)
             }
         }
         .padding(.horizontal, 20)
@@ -73,7 +83,7 @@ struct ShelfEmptyStateView: View {
         case .storageUnavailable:
             "Pesto couldn’t open its history. Restart Pesto, and check free disk space if it happens again."
         case .noResults:
-            "Nothing matches “\(query)”. Search reads the first 500 characters of each clip."
+            advice?.sentence ?? NoResultsAdvice.make(query: query).sentence
         case .emptyCollection:
             "Drag a clip onto the collection to add it."
         case let .emptyAppFilter(name):

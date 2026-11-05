@@ -72,6 +72,10 @@ struct CommandBarView: View {
         .onChange(of: appState.isSearchActive) { _, active in
             if active {
                 searchFocused = true
+                Task {
+                    try? await Task.sleep(for: .milliseconds(40))
+                    SearchFieldCaret.placeAtEnd()
+                }
             } else {
                 searchFocused = false
                 showsRecentSearches = false
@@ -400,7 +404,9 @@ struct CommandBarView: View {
                     // finds no field, so wait a beat.
                     try? await Task.sleep(for: .milliseconds(60))
                     searchFocused = true
-                    try? await Task.sleep(for: .milliseconds(150))
+                    try? await Task.sleep(for: .milliseconds(40))
+                    SearchFieldCaret.placeAtEnd()
+                    try? await Task.sleep(for: .milliseconds(110))
                     refreshRecentSearches()
                 }
                 .onSubmit { saveToHistory(appState.searchText) }

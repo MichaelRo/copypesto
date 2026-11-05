@@ -233,6 +233,33 @@ final class FilterBarLayoutTests: PestoUITestCase {
         XCTAssertTrue(format.isSelected)
     }
 
+    /// Typing on the shelf without ⌘F opens the search with what was typed. Keys that arrive before the field has focus
+    /// replaced the first one (a ticket number lost its first digits).
+    func test_typingFast_onTheShelf_keepsEveryKey() {
+        launch()
+        showOverlay()
+
+        app.typeText("1234")
+
+        let field = element(AccessibilityID.searchField)
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertEqual(field.value as? String, "1234")
+    }
+
+    /// The field took focus with its text selected, so the next key replaced the first one.
+    func test_typingSlowly_onTheShelf_appendsToWhatWasTyped() {
+        launch()
+        showOverlay()
+
+        app.typeText("1")
+        let field = element(AccessibilityID.searchField)
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        RunLoop.current.run(until: Date().addingTimeInterval(1.5))
+        app.typeText("2")
+
+        XCTAssertEqual(field.value as? String, "12")
+    }
+
     /// The keyboard reaches the More chip with Tab, and Return opens its menu (it used to step through presets).
     func test_whenMoreMenu_opensFromTheKeyboard() {
         launch()

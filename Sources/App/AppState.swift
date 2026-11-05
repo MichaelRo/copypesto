@@ -153,6 +153,13 @@ final class AppState {
         selectedCollectionID = restingCollectionID
     }
 
+    /// A key typed on the shelf with no search open opens the search with that key. Keys that arrive before the field
+    /// has focus (it takes a moment) join what was typed, in order.
+    func typeIntoSearch(_ characters: String) {
+        searchText = isSearchActive ? searchText + characters : characters
+        isSearchActive = true
+    }
+
     func clearSearchFilters() {
         searchTypeFilter = []
         searchDateFilter = .all

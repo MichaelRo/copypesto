@@ -6,6 +6,8 @@ import SwiftUI
 
 struct LoginItemToggle: View {
     let title: String
+    /// Setup's last step passes true: the switch opens already on, once (`LoginItemSetupDefault`, ADR 0024).
+    var appliesSetupDefault = false
     private let service = LoginItemService()
     @State private var status = LoginItemService().status
     @State private var failure: String?
@@ -20,6 +22,7 @@ struct LoginItemToggle: View {
         .accessibilityIdentifier(AccessibilityID.launchAtLoginToggle)
         .settingsRow("Launch Pesto at login")
         .onAppear {
+            if appliesSetupDefault { LoginItemSetupDefault.applyOnce(service: service) }
             status = service.status
             service.logStatus()
         }

@@ -5,7 +5,7 @@
 /// below it, so the picture is clear beneath.
 public enum PictureScrim {
     public static let topOpacity = 0.6
-    public static let fadeHeight = 22.0
+    public static let fadeHeight = 40.0
     public static let nameOpacity = 1.0
     public static let ageOpacity = 0.85
     public static let pillOpacity = 0.6

@@ -16,7 +16,10 @@ public enum CardTreatment: Equatable, Sendable {
         switch input.type {
         case .image:
             guard let picture = input.picture else { return .standard }
-            return .fullBleedPicture(PictureFit.decide(aspectRatio: picture.aspectRatio), isAnimated: picture.isAnimated)
+            return .fullBleedPicture(
+                PictureFit.decide(aspectRatio: picture.aspectRatio),
+                isAnimated: picture.isAnimated
+            )
         case .color:
             guard let fill = input.colorFill else { return .standard }
             return .fullBleedColor(CardInk.forFill(fill, backdropIsDark: input.backdropIsDark))

@@ -26,30 +26,27 @@ struct DateRangeParser {
         return nil
     }
 
+    /// Two days joined by "and", "to", "until" or a dash, after an optional "between" or "from".
     private func parseBetween(_ words: [String], at index: Int) -> (range: SearchDateFilter, used: Int)? {
-        guard ["between", "from"].contains(words[index]), let first = parseDay(words, at: index + 1) else {
-            return nil
-        }
-        let connector = index + 1 + first.used
+        let lead = ["between", "from"].contains(words[index]) ? 1 : 0
+        guard let first = parseDay(words, at: index + lead) else { return nil }
+        let connector = index + lead + first.used
         guard connector < words.count, Self.connectors.contains(words[connector]),
               let second = parseDay(words, at: connector + 1) else { return nil }
-        let range = DateInterval(start: first.interval.start, end: max(first.interval.end, second.interval.end))
-        return (.custom(range), 1 + first.used + 1 + second.used)
+        let range = DateInterval(
+            start: min(first.interval.start, second.interval.start), end: max(first.interval.end, second.interval.end)
+        )
+        return (.custom(range), lead + first.used + 1 + second.used)
     }
 
     private func parseRelative(_ words: [String], at index: Int) -> (range: SearchDateFilter, used: Int)? {
         let word = words[index]
         let next = index + 1 < words.count ? words[index + 1] : ""
-        if ["last", "past"].contains(word), let unit = Self.seconds(per: next) {
-            return (relative(count: 1, unit: unit), 2)
-        }
+        // "last minute" is an idiom ("a last minute deal"); "last hour" is a range.
+        if ["last", "past"].contains(word), next == "hour" { return (.last(3600), 2) }
         let count = Int(word) ?? RuleBasedQueryInterpreter.numberWords[word] ?? (["a", "an"].contains(word) ? 1 : nil)
-        if let count, count > 0, let unit = Self.seconds(per: next) { return (relative(count: count, unit: unit), 2) }
+        if let count, count > 0, let unit = Self.seconds(per: next) { return (.last(Double(count) * unit), 2) }
         return nil
-    }
-
-    private func relative(count: Int, unit: TimeInterval) -> SearchDateFilter {
-        .custom(DateInterval(start: now.addingTimeInterval(-Double(count) * unit), end: now))
     }
 
     private static func seconds(per word: String) -> TimeInterval? {

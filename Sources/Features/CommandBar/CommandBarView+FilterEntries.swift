@@ -4,73 +4,51 @@ import PestoCore
 import SwiftUI
 
 extension CommandBarView {
-    static let whenEntryID = "date-when"
+    static let whenMoreID = "date-more"
 
-    private static let datePresets: [SearchDateFilter] = [.all, .today, .yesterday, .week, .month]
+    /// Today and Yesterday stay one click away; choosing the one in force again clears it.
+    var dayEntries: [FilterEntry] {
+        [(SearchDateFilter.today, "Today"), (.yesterday, "Yesterday")].map { filter, label in
+            let isOn = appState.searchDateFilter == filter
+            return FilterEntry(id: "date-\(filter.id)", label: label, isActive: isOn) {
+                appState.searchDateFilter = isOn ? .all : filter
+            }
+        }
+    }
 
-    /// The When chip: it names the range in force, a click opens the menu, and the keyboard steps through the presets.
-    var whenEntry: FilterEntry {
+    /// The rest of the ranges in one menu chip that names the range in force. Any other date is a sentence for Ask.
+    var whenMoreEntry: FilterEntry {
         let current = appState.searchDateFilter
+        let isInMenu = ![SearchDateFilter.all, .today, .yesterday].contains(current)
         return FilterEntry(
-            id: Self.whenEntryID, label: current.label(), spoken: "When, \(current.label())",
-            help: "Show only clips from a time range", isActive: current != .all
+            id: Self.whenMoreID, label: isInMenu ? current.label() : "More", identifier: "More time ranges",
+            spoken: isInMenu ? "When, \(current.label())" : "More time ranges",
+            help: "Last 7 days, the last hours, or a day", isActive: isInMenu, menu: whenMenuItems
         ) {
-            let presets = Self.datePresets
-            let next = presets.firstIndex(of: appState.searchDateFilter).map { ($0 + 1) % presets.count } ?? 0
-            appState.searchDateFilter = presets[next]
+            openRequests[Self.whenMoreID, default: 0] += 1
         }
     }
 
-    /// Presets, the last hours and the last two weeks of days. Any other date is a sentence for Ask.
-    @ViewBuilder
-    var whenMenu: some View {
-        let now = Date.now
+    private var whenMenuItems: [PopUpMenuItem] {
+        let current = appState.searchDateFilter
+        func choice(_ title: String, _ filter: SearchDateFilter) -> PopUpMenuItem {
+            .choice(title, isOn: current == filter) { appState.searchDateFilter = filter }
+        }
         let calendar = Calendar.current
-        ForEach(Self.datePresets, id: \.id) { filter in
-            whenButton(filter.label(), filter: filter)
+        let today = calendar.startOfDay(for: .now)
+        let days: [PopUpMenuItem] = (2...13).compactMap { back in
+            guard let day = calendar.date(byAdding: .day, value: -back, to: today),
+                  let end = calendar.date(byAdding: .day, value: 1, to: day) else { return nil }
+            return choice(
+                day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()),
+                .custom(DateInterval(start: day, end: end))
+            )
         }
-        Divider()
-        ForEach([1, 3, 12], id: \.self) { hours in
-            let range = SearchDateFilter.custom(DateInterval(
-                start: now.addingTimeInterval(-Double(hours) * 3600), end: now.addingTimeInterval(60)
-            ))
-            whenButton(hours == 1 ? "Last hour" : "Last \(hours) hours", filter: range)
-        }
-        Menu("On a Day") {
-            ForEach(2...13, id: \.self) { back in
-                if let day = calendar.date(byAdding: .day, value: -back, to: calendar.startOfDay(for: now)),
-                   let end = calendar.date(byAdding: .day, value: 1, to: day)
-                {
-                    whenButton(
-                        day.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()),
-                        filter: .custom(DateInterval(start: day, end: end))
-                    )
-                }
-            }
-        }
-        Divider()
-        Button("For other dates, ask: \u{201C}between Nov 1 and Nov 3\u{201D}") {}
-            .disabled(true)
-    }
-
-    private func whenButton(_ title: String, filter: SearchDateFilter) -> some View {
-        Button {
-            appState.searchDateFilter = filter
-        } label: {
-            if isChosen(filter, titled: title) {
-                Label(title, systemImage: "checkmark")
-            } else {
-                Text(title)
-            }
-        }
-    }
-
-    private func isChosen(_ filter: SearchDateFilter, titled title: String) -> Bool {
-        guard case let .custom(candidate) = filter, case let .custom(current) = appState.searchDateFilter else {
-            return appState.searchDateFilter == filter
-        }
-        let isWholeDay = Calendar.current.startOfDay(for: candidate.start) == candidate.start
-        return isWholeDay ? current == candidate : appState.searchDateFilter.label() == title
+        return [
+            choice("Any Time", .all), choice("Last 7 Days", .week), choice("Last 30 Days", .month), .divider,
+            choice("Last Hour", .last(3600)), choice("Last 3 Hours", .last(3 * 3600)),
+            choice("Last 12 Hours", .last(12 * 3600)), .divider, .submenu("On a Day", days)
+        ]
     }
 
     /// The From chips: the three most copied apps, and any further one that is in use so it can be switched off.

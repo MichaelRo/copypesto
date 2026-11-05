@@ -22,6 +22,8 @@ struct CommandBarView: View {
     @AppStorage(Setting.nsfwMode) var nsfwModeRaw: String
     @AppStorage(Setting.keepsRemoteCopies) var keepsRemoteCopies: Bool
     @State var suggestionsModel = CommandBarSuggestionsModel()
+    /// Bumped by a chip's keyboard action to open that chip's menu.
+    @State var openRequests: [String: Int] = [:]
     @State private var chipLiveOrder: [UUID]?
     @State private var chipInsertionBar: CollectionReorder.InsertionBar?
     @State private var chipFrozenFrames: [UUID: CGRect]?
@@ -264,11 +266,14 @@ struct CommandBarView: View {
     struct FilterEntry {
         let id: String
         let label: String
+        /// What a test and VoiceOver find the chip by when its label changes with its state.
+        var identifier: String?
         var icon: String?
         var iconImage: NSImage?
         var spoken: String?
         var help: String?
         let isActive: Bool
+        var menu: [PopUpMenuItem]?
         let toggle: () -> Void
     }
 
@@ -290,7 +295,8 @@ struct CommandBarView: View {
 
     /// Every chip in the order Tab walks them.
     private var allFilterEntries: [FilterEntry] {
-        typeEntries + formatEntries + [whenEntry] + sourceEntries + [sensitiveEntry] + remoteEntries + hiddenEntries
+        typeEntries + formatEntries + dayEntries + [whenMoreEntry] + sourceEntries + [sensitiveEntry] + remoteEntries +
+            hiddenEntries
     }
 
     private var filterBar: some View {
@@ -316,7 +322,7 @@ struct CommandBarView: View {
 
                 group("Format", id: "Format", formatEntries)
 
-                group("When", id: "When", [whenEntry])
+                group("When", id: "When", dayEntries + [whenMoreEntry])
 
                 if !sourceEntries.isEmpty {
                     group("From", id: "From", sourceEntries)
@@ -352,7 +358,9 @@ struct CommandBarView: View {
         case "remote": appState.searchRemoteOnly
         case "hidden": appState.showHiddenNSFW
         case let id where id.hasPrefix("type-"): appState.searchTypeFilter.contains(String(id.dropFirst(5)))
-        case Self.whenEntryID: appState.searchDateFilter != .all
+        case "date-today": appState.searchDateFilter == .today
+        case "date-yesterday": appState.searchDateFilter == .yesterday
+        case Self.whenMoreID: ![SearchDateFilter.all, .today, .yesterday].contains(appState.searchDateFilter)
         case let id where id.hasPrefix("app-"): appState.searchSourceFilter.contains(String(id.dropFirst(4)))
         default: false
         }
@@ -362,10 +370,10 @@ struct CommandBarView: View {
         PestoChip(
             label: entry.label, icon: entry.icon, iconImage: entry.iconImage, isActive: entry.isActive,
             hasKeyboardCursor: hasCursor, helpText: entry.help ?? "",
-            menu: entry.id == Self.whenEntryID ? AnyView(whenMenu) : nil, action: entry.toggle
+            menuItems: entry.menu, openRequest: openRequests[entry.id] ?? 0, action: entry.toggle
         )
         .accessibilityLabel(entry.spoken ?? entry.label)
-        .accessibilityIdentifier(AccessibilityID.filterChip(entry.label))
+        .accessibilityIdentifier(AccessibilityID.filterChip(entry.identifier ?? entry.label))
     }
 
     private var searchField: some View {

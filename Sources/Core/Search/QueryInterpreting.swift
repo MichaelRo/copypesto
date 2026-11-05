@@ -36,7 +36,9 @@ public struct RuleBasedQueryInterpreter: Sendable {
         var range = AskDateRange.all
         var types: [ClipboardType] = []
         var keywords: [String] = []
-        let tokens = words.map { $0.lowercased().trimmingCharacters(in: .punctuationCharacters) }
+        let dashes: Set = ["-", "\u{2013}", "\u{2014}"]
+        let tokens = words
+            .map { dashes.contains($0) ? "to" : $0.lowercased().trimmingCharacters(in: .punctuationCharacters) }
         var index = 0
         while index < words.count {
             let word = words[index]
@@ -108,8 +110,8 @@ public struct RuleBasedQueryInterpreter: Sendable {
     }
 
     private func widen(_ current: AskDateRange, to new: AskDateRange) -> AskDateRange {
-        if case .custom = current { return current }
-        if case .custom = new { return new }
+        if current.isExact { return current }
+        if new.isExact { return new }
         let order: [AskDateRange] = [.all, .today, .yesterday, .week, .month]
         return (order.firstIndex(of: new) ?? 0) > (order.firstIndex(of: current) ?? 0) ? new : current
     }

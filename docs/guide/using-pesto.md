@@ -39,7 +39,7 @@ ones that contain the words. This runs on your Mac.
 
 - The **Sensitive** chip in the filter bar shows only sensitive clips: the ones Pesto hid as secrets (cards, keys, passwords) and the ones marked sensitive. Press **⌘A**, then the trash button, to delete them all.
 - `@work` filters to clips tagged "work"; `@swift` filters by detected language. The **Format** chips (Markdown, JSON) put `@markdown` or `@json` in the search field for you: text written in Markdown and anything that is one JSON object or array.
-- While searching, chips let you narrow by kind, time (one *When* chip with a menu: today, yesterday, 7 and 30 days, the last hour or few hours, or a day from the last two weeks) or the app a clip came from (your three most copied apps); each group has a caption, and the clear button sits inside the search field. With *Keep copies from other devices* on (Settings →
+- While searching, chips let you narrow by kind, time (*Today* and *Yesterday*, and a *More* menu: 7 and 30 days, the last hour or few hours, or a day from the last two weeks) or the app a clip came from (your three most copied apps); each group has a caption, and the clear button sits inside the search field. With *Keep copies from other devices* on (Settings →
   Privacy), an **Other Devices** chip shows only what you copied on your iPhone or another Mac.
 - Screenshots and photos are searchable by the text inside them (the first 500 characters Pesto reads, once the card has finished loading; a picture that holds a hidden secret is not searchable by its text). A copied file is found by its path and name, not by what is inside it.
 
@@ -133,7 +133,7 @@ Snippets come in from Raycast and TextExpander exports: their fill-ins (`{argume
 the tokens above.
 
 ## Ask Pesto
-Type a sentence in the search field, such as “the invoice link from last week”, and click **Ask**. Pesto turns it into filters (type and date) and keywords, and you can adjust the chips afterwards. With Apple Intelligence on, the on-device model reads the question; without it, Pesto uses simple rules for words like *link*, *picture*, *today* and *last week*. Dates can be a preset (today, last week, last 30 days) or exact: *last 3 hours*, *30 minutes ago*, *on Nov 3*, *last Thursday* or *between Nov 1 and Nov 3*; the *When* chip then names the range. Nothing leaves your Mac.
+Type a sentence in the search field, such as “the invoice link from last week”, and click **Ask**. Pesto turns it into filters (type and date) and keywords, and you can adjust the chips afterwards. With Apple Intelligence on, the on-device model reads the question; without it, Pesto uses simple rules for words like *link*, *picture*, *today* and *last week*. Dates can be a preset (today, last week, last 30 days) or exact: *last 3 hours*, *30 minutes ago*, *on Nov 3*, *last Thursday* or *between Nov 1 and Nov 3*; the *More* chip then names the range. A range like *last 3 hours* moves with the clock. Nothing leaves your Mac.
 
 ## Shortcuts and Spotlight
 Pesto’s actions are App Shortcuts, so they show up in the Shortcuts app and in Spotlight (type “Search Pesto” or “Open Pesto”). *Search Pesto* opens the shelf with your query already typed; *Copy from Pesto* and *Copy Text to Pesto* work in your own shortcuts.

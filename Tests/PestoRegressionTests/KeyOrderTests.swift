@@ -33,13 +33,21 @@ struct KeyOrderTests {
         #expect(Self.outOfOrder(in: "Shift-Command-V").isEmpty)
     }
 
-    @Test("no source file, guide or doc writes a shortcut in another order")
+    @Test("no source file, guide, decision record or doc writes a shortcut in another order")
     func everyShortcutIsInTheMacsOrder() throws {
         let root = SourceTree.repositoryRoot
         var files = try SourceTree.everySwiftFile()
         files += try SourceTree.files(in: "Tests", minimum: 100, under: root)
         files += try SourceTree.files(in: "docs/guide", extensions: ["md"], minimum: 5, under: root)
-        files += ["README.md", "AGENTS.md", "CONTRIBUTING.md", "docs/feature-reference.md", "docs/copy-guide.md"]
+        files += try SourceTree.files(in: "decisions", extensions: ["md"], minimum: 20, under: root)
+        files += [
+            "README.md",
+            "AGENTS.md",
+            "CONTRIBUTING.md",
+            "CHANGELOG.md",
+            "docs/feature-reference.md",
+            "docs/copy-guide.md"
+        ]
             .map { root.appendingPathComponent($0) }
         var offenders: [String] = []
         var seen = 0

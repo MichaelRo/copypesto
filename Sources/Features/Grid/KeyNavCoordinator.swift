@@ -328,17 +328,21 @@ final class KeyNavCoordinator {
         case 29 where event.modifierFlags.contains(.command): // ⌘0 owns nothing
             return nil
         default:
-            // Search is open but its field has no focus yet (it takes a moment): a typed key joins the query instead
-            // of reaching a window with nowhere to put it.
-            nonisolated(unsafe) let unsafeEvent = event
-            if !MainActor.assumeIsolated({ unsafeEvent.window?.firstResponder is NSText }),
-               let typed = plainCharacters(of: event)
-            {
-                onCharacterTyped?(typed)
-                return nil
-            }
-            return performFieldEdit(event) ? nil : event
+            return handleTypedKeyInSearch(event)
         }
+    }
+
+    private func handleTypedKeyInSearch(_ event: NSEvent) -> NSEvent? {
+        // Search is open but its field has no focus yet (it takes a moment): a typed key joins the query instead
+        // of reaching a window with nowhere to put it.
+        nonisolated(unsafe) let unsafeEvent = event
+        let focus = MainActor.assumeIsolated { unsafeEvent.window?.firstResponder }
+        if !(focus is NSText), let typed = plainCharacters(of: event) {
+            onCharacterTyped?(typed)
+            return nil
+        }
+        if let editor = focus as? NSTextView { MainActor.assumeIsolated { SearchFieldCaret.settle(editor) } }
+        return performFieldEdit(event) ? nil : event
     }
 
     /// What a key types when it carries no modifier and is an ordinary character; nil for arrows, function keys and the

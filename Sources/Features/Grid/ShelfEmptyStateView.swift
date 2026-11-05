@@ -35,7 +35,7 @@ struct ShelfEmptyStateView: View {
                     .buttonStyle(.pestoProminent)
                     .controlSize(.regular)
                     .padding(.top, 6)
-                    .help("\(advice.buttonTitle) (Return)")
+                    .help(advice.buttonTitle)
                     .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAdvice)
             }
         }

@@ -286,9 +286,6 @@ struct GridView: View {
             )
             .animation(Motion.animation(ShelfMotion.switchEase), value: appState.selectedCollectionID)
             .frame(height: cardDimensions.height + ShelfHeight.liftRoom)
-            .onChange(of: noResultsAdvice, initial: true) { _, advice in
-                appState.noResultsAction = advice.map { advice in { apply(advice.action) } }
-            }
             .overlay {
                 if let emptyState {
                     ShelfEmptyStateView(

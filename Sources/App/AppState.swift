@@ -41,8 +41,6 @@ final class AppState {
     /// The quiet line under the cards that says a double-click pastes (`ClickHintPolicy`).
     var isClickHintVisible = false
     @ObservationIgnored var clickHintTask: Task<Void, Never>?
-    /// What Return does in the search field when nothing matches (`NoResultsAdvice`); set by the grid while it shows.
-    @ObservationIgnored var noResultsAction: (() -> Void)?
     /// Counts the undos and redos that were applied, so the shelf filters again (a clip moved in or out of a
     /// collection).
     var undoGeneration = 0

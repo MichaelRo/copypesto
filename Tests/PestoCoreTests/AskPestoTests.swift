@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import Foundation
 import Testing
 @testable import PestoCore
 
@@ -116,5 +117,120 @@ struct AskPestoTests {
 
     static var modelAvailable: Bool {
         OnDeviceQueryInterpreter.isAvailable
+    }
+
+    // MARK: Dates beyond the five presets
+
+    /// Thursday 5 November 2026, noon.
+    private var now: Date {
+        Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: 5, hour: 12)) ?? .distantPast
+    }
+
+    private func day(_ month: Int, _ day: Int, year: Int = 2026) -> Date {
+        Calendar.current.date(from: DateComponents(year: year, month: month, day: day)) ?? .distantPast
+    }
+
+    private func ask(_ question: String) -> AskPestoQuery {
+        rules.interpret(question, now: now)
+    }
+
+    @Test("the last N hours or minutes is a range that ends now")
+    func whenHoursOrMinutes_thenRelativeRange() {
+        #expect(ask("invoice last 3 hours") == AskPestoQuery(
+            keywords: "invoice", types: [],
+            range: .last(3 * 3600)
+        ))
+        #expect(ask("links 30 minutes ago").range == .last(1800))
+        #expect(ask("code last hour").range == .last(3600))
+        #expect(ask("report an hour ago").range == .last(3600))
+    }
+
+    @Test("a named day is that calendar day, in either order and with an ordinal")
+    func whenNamedDay_thenThatDay() {
+        let nov3 = DateInterval(start: day(11, 3), end: day(11, 4))
+        #expect(ask("invoice on Nov 3") == AskPestoQuery(keywords: "invoice", types: [], range: .custom(nov3)))
+        #expect(ask("notes on November 3rd").range == .custom(nov3))
+        #expect(ask("notes 3 Nov").range == .custom(nov3))
+        #expect(ask("notes on 2026-11-03").range == .custom(nov3))
+    }
+
+    @Test("a day later in the year than today means last year")
+    func whenDayIsInTheFuture_thenLastYear() {
+        #expect(ask("cards on Dec 25").range == .custom(DateInterval(
+            start: day(12, 25, year: 2025),
+            end: day(12, 26, year: 2025)
+        )))
+    }
+
+    @Test("a weekday is its most recent past occurrence")
+    func whenWeekday_thenMostRecentPast() {
+        #expect(ask("notes on Monday").range == .custom(DateInterval(start: day(11, 2), end: day(11, 3))))
+        #expect(ask("notes last Thursday").range == .custom(DateInterval(start: day(10, 29), end: day(10, 30))))
+    }
+
+    @Test("between two days covers both, to the end of the second")
+    func whenBetweenTwoDays_thenRange() {
+        let expected = AskDateRange.custom(DateInterval(start: day(11, 1), end: day(11, 4)))
+        #expect(ask("between Nov 1 and Nov 3").range == expected)
+        #expect(ask("report from Nov 1 to Nov 3") == AskPestoQuery(keywords: "report", types: [], range: expected))
+    }
+
+    @Test("a word that is only sometimes a date stays a keyword")
+    func whenMonthNameAloneOrNoDay_thenKeyword() {
+        #expect(ask("may budget").keywords == "may budget")
+        #expect(ask("monday standup").keywords == "monday standup")
+        #expect(ask("from Anna").keywords == "Anna")
+        #expect(ask("from Anna").range == .all)
+    }
+
+    @Test("idioms that only look like a time stay keywords")
+    func whenIdiom_thenKeyword() {
+        #expect(ask("last minute deal").range == .all)
+        #expect(ask("last minute deal").keywords == "minute deal")
+        #expect(ask("three hours of video").range == .last(3 * 3600))
+    }
+
+    @Test("the presets are unchanged")
+    func whenPreset_thenUnchanged() {
+        #expect(ask("report last week").range == .week)
+        #expect(ask("links from last 14 days").range == .month)
+        #expect(ask("password today").range == .today)
+    }
+
+    @Test("a custom range is described the way a person says it")
+    func whenCustomRange_thenReadableSummary() {
+        #expect(AskDateRange.last(3 * 3600).label(now: now) == "Last 3 hours")
+        #expect(AskDateRange.last(1800).label(now: now) == "Last 30 minutes")
+        let en = Locale(identifier: "en_US")
+        let nov3 = AskDateRange.custom(DateInterval(start: day(11, 3), end: day(11, 4)))
+        #expect(nov3.label(now: now, locale: en) == "Nov 3")
+        let nov1to3 = AskDateRange.custom(DateInterval(start: day(11, 1), end: day(11, 4)))
+        #expect(nov1to3.label(now: now, locale: en) == "Nov 1 \u{2013} Nov 3")
+        let lastYear = AskDateRange.custom(DateInterval(start: day(12, 25, year: 2025), end: day(12, 26, year: 2025)))
+        #expect(lastYear.label(now: now, locale: en) == "Dec 25, 2025")
+        #expect(AskDateRange.last(90 * 60).label(now: now) == "Last 90 minutes")
+        #expect(AskDateRange.week.label(now: now) == "Last 7 days")
+        #expect(AskDateRange.all.label(now: now) == "Any time")
+    }
+
+    @Test("a dash joins two days, and a range written backwards still covers both")
+    func whenDashOrBackwards_thenSameRange() {
+        let expected = AskDateRange.custom(DateInterval(start: day(11, 1), end: day(11, 4)))
+        #expect(ask("report Nov 1 - Nov 3").range == expected)
+        #expect(ask("from Nov 3 to Nov 1").range == expected)
+    }
+
+    @Test("a day is 23 hours long when the clocks go forward, so it still ends at the next midnight")
+    func whenDaylightSavingDay_thenEndsAtNextMidnight() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "America/New_York"))
+        let noon = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 5, hour: 12)))
+        let query = rules.interpret("invoice on Mar 8", now: noon, calendar: calendar)
+
+        guard case let .custom(range) = query.range else {
+            Issue.record("not a custom range")
+            return
+        }
+        #expect(range.duration == 23 * 3600)
     }
 }

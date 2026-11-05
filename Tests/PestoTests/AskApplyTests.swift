@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import Foundation
 import PestoCore
 import XCTest
 @testable import Pesto
@@ -19,6 +20,16 @@ final class AskApplyTests: XCTestCase {
         XCTAssertEqual(state.searchText, "")
         XCTAssertEqual(state.searchTypeFilter, ["text"])
         XCTAssertEqual(state.searchDateFilter, .yesterday)
+    }
+
+    func test_whenQueryNamesACustomRange_thenTheDateFilterHoldsIt() {
+        let state = AppState()
+        let range = DateInterval(start: Date(timeIntervalSince1970: 1000), end: Date(timeIntervalSince1970: 90_000))
+
+        state.apply(AskPestoQuery(keywords: "invoice", types: [], range: .custom(range)))
+
+        XCTAssertEqual(state.searchDateFilter, .custom(range))
+        XCTAssertTrue(state.isSearchActive)
     }
 
     func test_whenQueryHasNoFilters_thenEarlierFiltersAreCleared() {

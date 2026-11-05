@@ -163,7 +163,7 @@ final class FilterBarLayoutTests: PestoUITestCase {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.filterChip("Any time")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
 
         for caption in ["Kind", "When", "Other"] {
             XCTAssertTrue(
@@ -173,6 +173,48 @@ final class FilterBarLayoutTests: PestoUITestCase {
         }
         let when = element(AccessibilityID.filterGroup("When")).frame
         XCTAssertTrue(when.contains(element(AccessibilityID.filterChip("Today")).frame), "Today is outside When")
+    }
+
+    /// Today and Yesterday stay one click; the rest of the ranges are one menu chip, and Ask takes any other date.
+    func test_whenHasDayChips_andOneMoreMenu() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Yesterday")).exists)
+        XCTAssertFalse(element(AccessibilityID.filterChip("7d")).exists, "7d is still its own chip")
+
+        let more = element(AccessibilityID.filterChip("More time ranges"))
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "no More chip in When")
+        more.click()
+        for title in ["Any Time", "Last 7 Days", "Last 30 Days", "Last Hour", "Last 3 Hours", "On a Day"] {
+            XCTAssertTrue(app.menuItems[title].waitForExistence(timeout: 5), "no \(title) in the When menu")
+        }
+        app.menuItems["Last 3 Hours"].click()
+
+        XCTAssertTrue(more.waitForExistence(timeout: 5))
+        XCTAssertTrue(more.isSelected, "the More chip does not show the range in force")
+        XCTAssertEqual(more.label, "When, Last 3 hours")
+        capture("filter-bar-when-chip")
+    }
+
+    /// The keyboard reaches the More chip with Tab, and Return opens its menu (it used to step through presets).
+    func test_whenMoreMenu_opensFromTheKeyboard() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let field = element(AccessibilityID.searchField)
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.click()
+
+        // Kind (6), Format (2), Today, Yesterday, then More.
+        for _ in 0..<11 {
+            app.typeKey(.tab, modifierFlags: [])
+        }
+        app.typeKey(.return, modifierFlags: [])
+
+        XCTAssertTrue(app.menuItems["Last 7 Days"].waitForExistence(timeout: 5), "Return did not open the When menu")
+        app.typeKey(.escape, modifierFlags: [])
     }
 
     /// The clear button sat after the field, away from the text it clears.
@@ -208,11 +250,10 @@ final class ChipLabelTests: PestoUITestCase {
         XCTAssertEqual(element(AccessibilityID.collectionChip("All")).label, "All collections")
 
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.filterChip("7d")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
 
-        XCTAssertEqual(element(AccessibilityID.filterChip("Any time")).label, "Any time")
-        XCTAssertEqual(element(AccessibilityID.filterChip("7d")).label, "Last 7 days")
-        XCTAssertEqual(element(AccessibilityID.filterChip("30d")).label, "Last 30 days")
+        XCTAssertEqual(element(AccessibilityID.filterChip("Today")).label, "Today")
+        XCTAssertEqual(element(AccessibilityID.filterChip("More time ranges")).label, "More time ranges")
     }
 }
 

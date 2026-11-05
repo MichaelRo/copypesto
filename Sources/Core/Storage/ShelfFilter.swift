@@ -45,6 +45,8 @@ public struct ShelfFilter {
                 ?? startOfToday.addingTimeInterval(-86_400)
         case .week: now.addingTimeInterval(-7 * 86_400)
         case .month: now.addingTimeInterval(-30 * 86_400)
+        case let .custom(range): range.start
+        case let .last(seconds): now.addingTimeInterval(-seconds)
         }
     }
 
@@ -52,7 +54,8 @@ public struct ShelfFilter {
     public var dateBefore: Date? {
         switch date {
         case .yesterday: Calendar.current.startOfDay(for: now)
-        case .all, .today, .week, .month: nil
+        case let .custom(range): range.end
+        case .all, .today, .week, .month, .last: nil
         }
     }
 
@@ -103,9 +106,4 @@ public struct ShelfFilter {
         result += apply(to: supplement).filter { !present.contains($0.id) }
         return result
     }
-}
-
-/// The date range chosen in the filter bar.
-public enum SearchDateFilter: String, Sendable {
-    case all, today, yesterday, week, month
 }

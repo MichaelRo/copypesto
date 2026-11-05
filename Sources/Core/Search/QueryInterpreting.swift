@@ -24,25 +24,33 @@ public struct RuleBasedQueryInterpreter: Sendable {
         "color": .color, "colors": .color, "colour": .color, "colours": .color
     ]
 
-    private static let numberWords: [String: Int] = [
+    static let numberWords: [String: Int] = [
         "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
         "eight": 8, "nine": 9, "ten": 10, "fourteen": 14, "thirty": 30,
         "couple": 2, "few": 3, "several": 5
     ]
 
-    public func interpret(_ question: String) -> AskPestoQuery {
+    public func interpret(_ question: String, now: Date = .now, calendar: Calendar = .current) -> AskPestoQuery {
+        let dates = DateRangeParser(now: now, calendar: calendar)
         let words = question.split(whereSeparator: { $0.isWhitespace }).map(String.init)
         var range = AskDateRange.all
         var types: [ClipboardType] = []
         var keywords: [String] = []
+        let dashes: Set = ["-", "\u{2013}", "\u{2014}"]
+        let tokens = words
+            .map { dashes.contains($0) ? "to" : $0.lowercased().trimmingCharacters(in: .punctuationCharacters) }
         var index = 0
         while index < words.count {
             let word = words[index]
             let lower = word.lowercased().trimmingCharacters(in: .punctuationCharacters)
             let next = index + 1 < words.count
                 ? words[index + 1].lowercased().trimmingCharacters(in: .punctuationCharacters) : ""
+            let start = index
             index += 1
-            if let (matchedRange, extraStep) = Self.matchDateRange(lower: lower, next: next) {
+            if let (matchedRange, used) = dates.parse(tokens, at: start) {
+                range = widen(range, to: matchedRange)
+                index = start + used
+            } else if let (matchedRange, extraStep) = Self.matchDateRange(lower: lower, next: next) {
                 range = widen(range, to: matchedRange)
                 index += extraStep
             } else if let slashTypes = Self.parseSlashTypes(lower) {
@@ -102,6 +110,8 @@ public struct RuleBasedQueryInterpreter: Sendable {
     }
 
     private func widen(_ current: AskDateRange, to new: AskDateRange) -> AskDateRange {
+        if current.isExact { return current }
+        if new.isExact { return new }
         let order: [AskDateRange] = [.all, .today, .yesterday, .week, .month]
         return (order.firstIndex(of: new) ?? 0) > (order.firstIndex(of: current) ?? 0) ? new : current
     }

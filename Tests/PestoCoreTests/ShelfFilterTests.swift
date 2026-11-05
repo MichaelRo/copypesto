@@ -160,4 +160,54 @@ struct ShelfFilterTests {
 
         #expect(result.map(\.id) == [textHit.id, meaningHit.id])
     }
+
+    @Test("a custom range keeps the clips inside it, its start included and its end excluded")
+    func customRangeBounds() {
+        let start = Date(timeIntervalSince1970: 1_000_000)
+        let range = DateInterval(start: start, end: start.addingTimeInterval(86_400))
+        let atStart = clip("a")
+        atStart.timestamp = start
+        let inside = clip("b")
+        inside.timestamp = start.addingTimeInterval(3600)
+        let atEnd = clip("c")
+        atEnd.timestamp = range.end
+        let before = clip("d")
+        before.timestamp = start.addingTimeInterval(-1)
+
+        let result = filter(searchActive: true, date: .custom(range)).apply(to: [atStart, inside, atEnd, before])
+
+        #expect(Set(result.map(\.id)) == [atStart.id, inside.id])
+    }
+
+    @Test("a custom range only applies while a search is active, like the other chips")
+    func customRangeNeedsActiveSearch() {
+        let range = DateInterval(start: Date(timeIntervalSince1970: 0), end: Date(timeIntervalSince1970: 10))
+        let item = clip("a")
+
+        #expect(filter(searchActive: false, date: .custom(range)).apply(to: [item]).count == 1)
+    }
+
+    @Test("every date filter has a stable id for the chip and the keyboard")
+    func dateFilterIDs() {
+        let range = DateInterval(start: Date(timeIntervalSince1970: 0), end: Date(timeIntervalSince1970: 10))
+        #expect(SearchDateFilter.week.id == "week")
+        #expect(SearchDateFilter.custom(range).id == "custom")
+    }
+
+    @Test("a rolling range counts back from now each time it is applied, so a new clip is in it")
+    func rollingRangeFollowsNow() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        func inRange(_ age: TimeInterval, at moment: Date) -> Bool {
+            let item = clip("a")
+            item.timestamp = now.addingTimeInterval(-age)
+            var filter = filter(searchActive: true, date: .last(2 * 3600))
+            filter.now = moment
+            return filter.apply(to: [item]).count == 1
+        }
+
+        #expect(inRange(3600, at: now))
+        #expect(!inRange(3 * 3600, at: now))
+        #expect(inRange(3600, at: now.addingTimeInterval(3600)))
+        #expect(!inRange(3600, at: now.addingTimeInterval(2 * 3600)))
+    }
 }

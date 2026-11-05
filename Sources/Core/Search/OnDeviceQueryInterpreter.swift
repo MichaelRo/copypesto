@@ -48,7 +48,7 @@ public struct OnDeviceQueryInterpreter: QueryInterpreting {
 
         var query: AskPestoQuery {
             let lower = range.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-            let resolvedRange: AskDateRange = if let direct = AskDateRange(rawValue: lower) {
+            let resolvedRange: AskDateRange = if let direct = SearchDateFilter.preset(named: lower) {
                 direct
             } else if lower.contains("yesterday") {
                 .yesterday

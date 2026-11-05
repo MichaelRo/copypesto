@@ -30,6 +30,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0020](0020-decode-jwt-is-a-second-way-into-a-hidden-clip.md) | Decode JWT is a second way into a hidden clip: same authentication, read-only, closes with Show |
 | [0021](0021-a-collection-keeps-a-clip-where-it-was.md) | A collection keeps a clip where it was; only the history moves it on use |
 | [0022](0022-data-pane-backup-and-sync-cards.md) | Settings → Data gives backup and sync a card each and drops the Backup stat tile |
+| [0023](0023-time-filter-is-one-chip-and-a-custom-range.md) | The When filter is one chip with a menu, and a range can be any span Ask can read |
 
 ## Template
 

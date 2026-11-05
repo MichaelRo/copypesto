@@ -71,6 +71,7 @@ struct CommandBarView: View {
         .onChange(of: appState.isHistoryLocked) { _, _ in suggestionsModel.refresh() }
         .onChange(of: appState.isSearchActive) { _, active in
             if active {
+                SearchFieldCaret.arm()
                 searchFocused = true
                 Task {
                     try? await Task.sleep(for: .milliseconds(40))

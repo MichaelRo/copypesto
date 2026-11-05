@@ -26,4 +26,27 @@ final class TypeToSearchTests: XCTestCase {
         XCTAssertEqual(state.searchText, "3")
         XCTAssertTrue(state.isSearchActive)
     }
+
+    func test_whenTheFieldTookFocusWithItsTextSelected_thenTheNextKeyFindsTheCaretAtTheEnd() {
+        let editor = NSTextView()
+        editor.string = "12"
+        editor.setSelectedRange(NSRange(location: 0, length: 2))
+        SearchFieldCaret.arm()
+
+        SearchFieldCaret.settle(editor)
+
+        XCTAssertEqual(editor.selectedRange, NSRange(location: 2, length: 0))
+    }
+
+    func test_whenTheCaretWasPlaced_thenASelectionThePersonMakesIsKept() {
+        let editor = NSTextView()
+        editor.string = "12"
+        SearchFieldCaret.arm()
+        SearchFieldCaret.settle(editor)
+        editor.setSelectedRange(NSRange(location: 0, length: 2))
+
+        SearchFieldCaret.settle(editor)
+
+        XCTAssertEqual(editor.selectedRange, NSRange(location: 0, length: 2))
+    }
 }

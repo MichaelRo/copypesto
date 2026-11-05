@@ -28,7 +28,8 @@ it, whichever comes first; if a fix is not ready by then, say what you plan to p
 
 - History or clipboard content leaving the Mac other than through the requests listed in
   [Privacy and security](docs/guide/privacy-and-security.md): update checks, link previews (which can be turned off),
-  links the person chooses to open, and the automatic backup file in a folder the person picked.
+  links the person chooses to open, the automatic backup file in a folder the person picked, and the encrypted sync
+  files in an iCloud Drive folder, when the person turns sync on.
 - Clip content, previews, titles, notes, tags, page titles or search vectors written to disk unencrypted. The guide
   documents what is not encrypted by design: app names, times and sizes; clip kinds, pins and counts; collection names
   and rules; the masked previews of secrets (a card's last four digits); colors; the preview of the latest clip without a

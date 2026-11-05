@@ -25,7 +25,7 @@ The complete, detailed feature list (the [README](../README.md) has the short to
 - **Drag-and-drop** — drag a clip from the shelf directly into the target app
 - **Paste All** — select two or more text clips and press Paste All (`⌘P`): they are joined with a blank line and pasted at once; nothing new is saved
 - **Append** — once enabled in Settings → Shortcuts, double-press `⌘C` within 500 ms to append the new copy to the most recent clip
-- **Paste One by One** — select several clips and press Paste One by One (`⇧⌘P`): the first pastes when the shelf closes, then each plain `⌘V` in any app pastes the next; a small panel shows where you are and has Cancel (also in the menu bar). Needs Accessibility; without it `⌘⇧V` pastes the next one.
+- **Paste One by One** — select several clips and press Paste One by One (`⇧⌘P`): the first pastes when the shelf closes, then each plain `⌘V` in any app pastes the next; a small panel shows where you are and has Cancel, and the menu bar has Stop Pasting One by One. Needs Accessibility; without it `⌘⇧V` pastes the next one.
 
 ### Intelligence
 - **Masked secrets** — credit cards, API keys, JWTs, SSNs, password lines are detected and masked on the shelf; the real text shows only through Show (after Touch ID or the password; it stays until Hide, the shelf closes, the history locks or contents are covered) and is what a paste writes
@@ -58,7 +58,7 @@ The complete, detailed feature list (the [README](../README.md) has the short to
 ### Search and suggestions
 - **Semantic search** — queries > 8 chars also match by cosine similarity (NLEmbedding, on-device, degrades gracefully when model unavailable). Semantically similar clips are appended to substring results.
 - **Smart Collections** — Settings → Collections shows suggestions when it opens: on-device k-means clustering of the last 200 embedded clips gives up to five Topics, each named after its key terms and kept only when a rule on one of those terms gathers most of the cluster; each is a suggested collection you can create with one click.
-- **Syntax highlighting** — code clips in the hover card are colored (14 languages: Swift, Python, JS/TS, Go, Rust, SQL, Shell, HTML, CSS, Java, Kotlin, Ruby, C/C++/ObjC).
+- **Syntax highlighting** — code clips in the hover card are colored (13 language families: Swift, Python, JS/TS, Go, Rust, SQL, Shell, HTML, CSS, Java, Kotlin, Ruby, C/C++/ObjC).
 
 ### Automation
 

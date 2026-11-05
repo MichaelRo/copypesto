@@ -247,15 +247,15 @@ ends with **Pass:**, what a pass looks like. Nothing may be on screen from the s
 prompt or a macOS permission dialog (screen recording after a screenshot) makes the key-loss UI tests time out; restart
 `SecurityAgent` to clear a stale Keychain prompt.
 
-**Install, signing and updates (1.0 is unsigned, `docs/release.md`)**
-- Unsigned install from the DMG: download `Pesto-<version>.dmg` from the release, open it, drag Pesto to Applications and
-  open it. macOS says it could not verify Pesto; Done, then System Settings → Privacy & Security → Open Anyway.
-  Pass: Pesto opens after Open Anyway and the setup window shows.
-- SHA-256: `shasum -a 256 ~/Downloads/Pesto-<version>.dmg` and `codesign -dv --verbose=2 /Applications/Pesto.app`.
-  Pass: the hash equals the one in the release body, the `.sha256` file and the download page, and `codesign` names the
-  "Pesto Release" identity with no Developer ID team.
-- Local update test (`docs/release.md`, "Each release, unsigned (1.0)"): install 1.0.0, serve a throwaway 1.0.1 from a
-  local appcast, choose Check for Updates… from the menu bar. Pass: it updates to 1.0.1, the history opens with no
+**Install, signing and updates (releases are Developer ID signed and notarized, `docs/release.md`)**
+- Install from the DMG: download `Pesto-<version>.dmg` from the release, open it, drag Pesto to Applications and open
+  it. macOS asks once whether to open an app from the internet; choose Open. Pass: Pesto opens and the setup window
+  shows, with no Open Anyway step.
+- SHA-256: `shasum -a 256 ~/Downloads/Pesto-<version>.dmg`, `codesign -dvvv /Applications/Pesto.app` and
+  `spctl -a -vv /Applications/Pesto.app`. Pass: the hash equals the one in the release body, the `.sha256` file and the
+  download page, `codesign` names the Developer ID team, and `spctl` says "Notarized Developer ID".
+- Local update test (`docs/release.md`, "Each release"): install the previous release, serve a throwaway next one from a
+  local appcast, choose Check for Updates… from the menu bar. Pass: it updates to the next version, the history opens with no
   Keychain prompt, and paste still works without granting Accessibility again.
 - Fresh install: the Accessibility prompt appears, and granting it moves onboarding forward. Pass: the setup window
   advances to the next step as soon as the grant is on.

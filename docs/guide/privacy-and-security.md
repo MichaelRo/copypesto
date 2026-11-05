@@ -22,6 +22,8 @@ The only network requests Pesto makes are:
 - **Links you open**: Maps for an address, a carrier's tracking page, or a link inside a clip.
 - **Automatic backup**, if you switch it on: an encrypted file written to iCloud Drive or a folder you choose (see
   below). If you choose iCloud Drive, macOS uploads that encrypted file to Apple; Pesto itself sends it nowhere.
+- **Sync**, if you switch it on: encrypted files written to a folder in iCloud Drive and read back from the other Macs
+  (see below). macOS and iCloud move the files; Pesto itself makes no request and has no server.
 
 ## Undo
 To let you undo a delete, Pesto keeps the last few deleted clips in memory, still encrypted, and never writes them to disk. Locking the history, *Clear History*, *Clear Everything* and quitting empty that list. Credentials, clips that expire on their own and clips over 4 MB are never kept for undo (a masked card or API key can be undone).

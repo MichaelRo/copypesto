@@ -320,6 +320,13 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   left or right, in a full-screen app and with Stage Manager on. Pass: it hangs below the menu bar (below the notch on a
   notched Mac), the hover card opens below it and grows from its top edge; the stack HUD (top right) and the manual-paste
   toast (bottom center) may overlap the shelf, which is expected (ADR 0013).
+- Edit shortcuts in the shelf's search field (the panel is non-activating and has no Edit menu, so the key monitor drives
+  the field itself; `KeyNavCoordinatorSelectAllTests` pins the routing, not the real field editor). Open the shelf, press
+  ⌘F, type `invoice`, then: ⌘A selects the text; ⌘A again selects every clip shown (the selection bar appears); ⌘A in an
+  empty field selects the clips. Select the text and ⌘X cuts it, ⌘V pastes it back, ⌘C then ⌘V elsewhere carries it,
+  ⌘Z undoes the paste and ⇧⌘Z redoes it. In an empty field ⌘Z undoes the shelf's last delete. ⌥⌘A, ⌥⌘C and ⌃A do
+  nothing from Pesto. ← → ⌘← ⌘→ ⌥← ⌥→ ⌥⌫ ⌘⌫ move and delete as in any Mac text field. Pass: each does what is written
+  and nothing beeps. Press ⌘A with the caret in a card's title editor and in the collection name field: it selects the text.
 - Remote photos (UI tests cannot copy on an iPhone; run `make install` first, an older installed copy keeps files from
   other devices as dead paths): with Other devices on, copy a photo or a PDF on the iPhone, then paste a file clip whose
   file you deleted. Pass: nothing from the phone is kept, "Left out of your history" counts it in Settings → Privacy, ⌘V

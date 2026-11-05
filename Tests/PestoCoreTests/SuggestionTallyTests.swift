@@ -57,6 +57,21 @@ struct SuggestionTallyTests {
         #expect(tally.suggestions(tagLimit: 1, appLimit: 5).topApps.map(\.bundleID) == ["com.example.named"])
     }
 
+    @Test("an app this Mac cannot resolve is not a chip, however its clips got here")
+    func whenAppIsUnresolvable_thenSkipped() {
+        var tally = SuggestionTally(recentSince: .distantPast)
+        tally.add(
+            tags: [], bundleID: "com.example.gone", appName: SourceAppRecord.unknownDisplayName,
+            timestamp: .now
+        )
+        tally.add(tags: [], bundleID: "com.example.named", appName: "Named", timestamp: .now)
+
+        let result = tally.suggestions(tagLimit: 1, appLimit: 5, recentAppLimit: 5)
+
+        #expect(result.topApps.map(\.bundleID) == ["com.example.named"])
+        #expect(result.recentApps.map(\.bundleID) == ["com.example.named"])
+    }
+
     @Test("a clip copied on another device is noticed, and a history of local clips has none")
     func whenRemoteClipAdded_thenHasRemoteClips() {
         var tally = SuggestionTally()

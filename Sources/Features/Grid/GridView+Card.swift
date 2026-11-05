@@ -36,7 +36,8 @@ extension GridView {
             hideSecretsGeneration: hideSecretsGeneration,
             canRevealHidden: appState.authenticationAvailability == .available,
             isSuggested: isSuggested,
-            suggestedHotkeySlot: suggestedHotkeySlot
+            suggestedHotkeySlot: suggestedHotkeySlot,
+            showsFirstCopyTime: isStaticCollectionSelected
         )
         .environment(\.clipEditor, clipEditor)
         .onDrop(

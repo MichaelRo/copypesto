@@ -50,6 +50,7 @@ Collections keep related clips together.
 
 - Click **+** in the chip bar to create one without leaving the shelf. Pick a name and an icon; Pesto gives it a color you can change later.
 - **⌘[** and **⌘]** switch between collections while the shelf is open.
+- The shelf remembers the collection and filters you left it in for 90 seconds. Reopen it later and it starts on *All* (or on the collection of the app in front, if you gave it one).
 - A collection keeps its clips where they are: pasting or copying a clip does not move it inside the collection, only in *All*, which follows what you used last. Inside a collection the age under a card's title is when you first copied the clip, so a paste does not change it either. Drag a card to put it where you want it.
 - **⌘1 to ⌘9** paste the first nine clips, the number shown on each card.
 - **⌘K** opens the actions of the clip you have selected with the arrow keys (Copy, Rename, Add Note, Move to Collection and the rest), the menu a right-click shows.
@@ -68,7 +69,7 @@ You can also give up to nine pinned clips their own shortcut (**⌃1** to **⌃9
 - **⌘Y** toggles Quick Look for a larger view of the focused clip (text, picture, PDF, HTML or URL).
 - **Paste the previous copy** directly with a shortcut you record in *Settings → Shortcuts* (it was ⌘⌥V before; a Mac that already used Pesto keeps that).
 - **⌃⌥⌘V** pastes as plain text (if it does nothing, see *Shortcuts*: another app may own the combination).
-- **Paste as Plain Text** is in a clip's menu too, with its shortcut beside it (**⌘K** opens the menu from the keyboard).
+- **Paste** and **Paste as Plain Text** head a clip's menu, with **Copy** and **Quick Look**, and show their shortcuts (**Return** and **⇧Return**; **⌘K** opens the menu from the keyboard). A floating window set to copy only has no Paste.
 - **Paste As…** is in the same menu. It transforms the clip first and pastes the result: case conversions (lowercase, UPPERCASE, Title Case, Sentence Case, camelCase, PascalCase, Slug-Case), line sorting and deduplication, JSON formatting/minifying, Base64 encode/decode, URL encoding/decoding, tracking parameter removal, cryptographic hashes (MD5, SHA-256) and more: 26 transforms in all, counting Plain Text, which has its own item above.
 - The **cursor menu** (off by default; *Settings → General* turns it on): when you press ⌘⇧V while typing in a text field, a compact list of your last five copies opens
   next to the cursor. It is for the mouse only: arrow keys and Return go to the app you are typing in.

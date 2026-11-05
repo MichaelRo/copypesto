@@ -10,6 +10,8 @@ struct CardActions {
     var detailDismissed: (@MainActor () -> Void)?
     var pointerEntered: (@MainActor () -> Void)?
     var click: (@MainActor (ClipboardItem, ShelfClick) -> Void)?
+    /// Pastes the clip into the app behind the shelf. Absent where a card cannot paste (a copy-only floating window).
+    var paste: (@MainActor (ClipboardItem) -> Void)?
     var aiAction: (@MainActor (ClipboardItem, AIAction) -> Void)?
     /// Marks a clip sensitive or not.
     var toggleSensitive: (@MainActor (ClipboardItem) -> Void)?

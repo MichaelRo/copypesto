@@ -33,6 +33,13 @@ struct SettingsIndexTests {
         #expect(SettingsIndex.search("pasteboard").contains { $0.pane == "General" })
     }
 
+    @Test("double-press to append is found in General, beside the other copy and paste rows")
+    func whenDoublePressSearched_thenGeneralPane() {
+        let hits = SettingsIndex.search("double-press")
+        #expect(hits.contains { $0.pane == "General" })
+        #expect(!hits.contains { $0.pane == "Shortcuts" })
+    }
+
     @Test("snippets and templates are found in their own pane")
     func whenSnippetSearched_thenSnippets() {
         #expect(SettingsIndex.search("snippet").contains { $0.pane == "Snippets" })

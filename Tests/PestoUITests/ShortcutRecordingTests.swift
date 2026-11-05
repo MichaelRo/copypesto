@@ -100,10 +100,11 @@ final class ShortcutRecordingTests: PestoUITestCase {
         app.typeKey(.escape, modifierFlags: [])
     }
 
-    func test_doubleCopyAppend_livesWithTheShortcuts() {
+    func test_doubleCopyAppend_livesInGeneralNotWithTheShortcuts() {
         openShortcuts()
 
-        XCTAssertTrue(element(AccessibilityID.doubleCopyToggle).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.shortcutRecorder(12)).waitForExistence(timeout: 5))
+        XCTAssertFalse(element(AccessibilityID.doubleCopyToggle).exists, "the toggle moved to General, Copy and paste")
         capture("settings-general-shortcuts", of: settingsWindow)
     }
 

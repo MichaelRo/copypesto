@@ -5,14 +5,11 @@ import SwiftUI
 
 struct ShortcutsSettings: View {
     @Environment(AppState.self) private var appState: AppState
-    @AppStorage(Setting.doubleCopyAppend) private var doubleCopyAppend: Bool
     @State private var hotkeyConflicts: [String] = []
-    @State private var isAXTrusted = AccessibilityAccess.isTrusted
 
     var body: some View {
         Group {
             shortcutsSection
-            copyShortcutSection
             HistoryLockGate { PinnedShortcutsSection() }
             shelfKeysSection
         }
@@ -22,7 +19,6 @@ struct ShortcutsSettings: View {
         .onAppear {
             // Surface conflicts that were detected before this view appeared.
             hotkeyConflicts = appState.hotkeyController.conflictingHotkeys
-            isAXTrusted = AccessibilityAccess.isTrusted
         }
     }
 
@@ -76,28 +72,6 @@ struct ShortcutsSettings: View {
         } footer: {
             Text("These work while the shelf is open. They are fixed, so they never clash with your own shortcuts.")
                 .pestoCaption()
-        }
-    }
-
-    private var copyShortcutSection: some View {
-        Section {
-            Toggle("Double-press ⌘C to append to the last clip", isOn: $doubleCopyAppend)
-                .disabled(!isAXTrusted && !doubleCopyAppend)
-                .accessibilityIdentifier(AccessibilityID.doubleCopyToggle)
-                .settingsRow("Double-press ⌘C to append")
-        } header: {
-            Text("Copying")
-        } footer: {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(
-                    "Off by default: it watches every ⌘C keystroke system-wide and records only whether ⌘C was " +
-                        "pressed twice within half a second."
-                )
-                if !isAXTrusted {
-                    Text("It needs Accessibility, which is not granted yet (see General, Permissions).")
-                }
-            }
-            .pestoCaption()
         }
     }
 }

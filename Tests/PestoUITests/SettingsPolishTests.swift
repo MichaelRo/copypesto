@@ -103,4 +103,17 @@ final class SettingsPolishTests: PestoUITestCase {
         let resetButton = element(AccessibilityID.resetSuggestionsButton)
         XCTAssertTrue(resetButton.waitForExistence(timeout: 5), "no reset suggestions button in General settings")
     }
+
+    func test_settings_generalGroupsShelfCopyPasteAndFloatingWindow() {
+        openSettings(pane: "General")
+        for header in ["Shelf", "Copy and paste", "Floating window"] {
+            let found = settingsWindow.staticTexts[header].waitForExistence(timeout: 5)
+            XCTAssertTrue(found, "no \(header) section in General")
+        }
+        XCTAssertTrue(
+            element(AccessibilityID.doubleCopyToggle).waitForExistence(timeout: 5),
+            "Double-press to append is not in General"
+        )
+        XCTAssertTrue(element(AccessibilityID.shelfSuggestionsSettingsToggle).exists)
+    }
 }

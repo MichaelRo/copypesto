@@ -15,11 +15,11 @@ The header shows the version and opens **About Pesto**.
   whether a new version exists; the request carries Pesto's version and your IP address, and nothing from your clips). With the menu bar icon hidden, the shelf
   shortcut still opens Pesto, and opening Pesto again from Applications shows Settings. If macOS refuses to register
   Pesto as a login item, the switch says why.
-- **Copy and paste:** sounds on copy and paste (off by default), and *Paste from the floating window*: whether a click or Return in
-  the floating window pastes the clip or only copies it, and *Open a small menu at the cursor* (off by default): on, in a text
-  field the shortcut shows your last five copies by the cursor, for the mouse only (arrow keys and Return go to the app you are typing in); off, it always opens the full shelf, which works
+- **Shelf:** *Open a small menu at the cursor* (off by default): on, in a text field the shortcut shows your last five copies by the cursor, for the mouse only (arrow keys and Return go to the app you are typing in); off, it always opens the full shelf, which works
   fully from the keyboard. On the shelf a click only focuses a clip; a double click pastes it.
 - **Show suggestions on the shelf** (on by default): Pesto notices clips you paste often and offers a shortcut for a clip you paste on three or more different days, suggests a snippet when clips differ only in a few words, and tidies unused shortcuts. It uses the days a clip was pasted and how alike clips are, kept on this Mac. If you choose No Thanks, Pesto asks again about that clip only after you have used it twice as much and thirty days have passed, and never after a second No Thanks. Reset Suggestions re-arms all suggestions and clears past declines.
+- **Copy and paste:** sounds on copy and paste (off by default), *Save pictures to*, and *Double-press ⌘C to append to the last clip* (off by default; it needs Accessibility).
+- **Floating window:** *Paste from the floating window* chooses whether a click or Return in the floating window pastes the clip or only copies it.
 - **Apple Intelligence:** one switch, on by default, over every on-device AI feature: Summarize, Translate and Extract;
   Describe Image; picture screening for the content filter; and sentence understanding in Ask. It shows whether this Mac
   is ready. Off, the AI actions are grayed out. There is no account and no key, and nothing you copy leaves your Mac.
@@ -92,7 +92,6 @@ Keys that work in every app, and the keys that work on the shelf.
   shortcut or macOS already uses (and says which), and warns on the row when another app holds one. The menu at the end of each row has *Change…*, *Reset to Default* and *Turn Off*. The global shortcuts are *Open the shelf* (⌘⇧V), *Paste as plain text*
   (⌃⌥⌘V); *Paste the previous clip* (it was ⌘⌥V on installs before this changed, and those keep it), *Show or hide the
   floating window*, *Pause or resume capturing* and *Hide or show clip contents* start unset.
-- **Copying:** *Double-press ⌘C to append to the last clip* (off by default; it needs Accessibility).
 - **Pinned clip shortcuts:** pinned clips can each get ⌃1 to ⌃9. Choose one from a clip's menu (choosing a shortcut pins
   the clip, and unpinning it frees the shortcut); the list shows which clips have one, with a Remove button. Pesto can also offer a shortcut on the shelf for a clip you paste often, and suggest freeing an unused one (Settings → General, Show suggestions on the shelf).
 - **On the shelf:** the keys that work while the shelf is open (arrows, Return, Space, ⌘K and the rest). They are fixed.

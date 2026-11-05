@@ -75,7 +75,7 @@ extension CommandBarView {
 
     /// The From chips: the three most copied apps, and any further one that is in use so it can be switched off.
     var sourceEntries: [FilterEntry] {
-        let apps = suggestionsModel.suggestions.topApps
+        let apps = suggestionsModel.suggestions.allApps
         let shown = apps.prefix(3) + apps.dropFirst(3).filter { appState.searchSourceFilter.contains($0.bundleID) }
         return shown.map { app in
             FilterEntry(
@@ -136,5 +136,62 @@ extension CommandBarView {
         ) {
             appState.showHiddenNSFW.toggle()
         }]
+    }
+
+    /// A last chip on the From group, only when more apps exist than the group shows: every app, with its count.
+    @ViewBuilder
+    var moreAppsChip: some View {
+        let apps = suggestionsModel.suggestions.allApps
+        if apps.count > 3 {
+            PestoChip(
+                label: "More apps", icon: "ellipsis", isActive: false, collapsesLabel: true,
+                helpText: "Filter by any app", menu: AnyView(moreAppsMenu(apps)), action: {}
+            )
+            .accessibilityIdentifier(AccessibilityID.filterChip("More apps"))
+        }
+    }
+
+    private func moreAppsMenu(_ apps: [SourceApp]) -> some View {
+        ForEach(apps, id: \.bundleID) { app in
+            Toggle(
+                "\(app.name) \u{00B7} \(app.count)",
+                isOn: Binding(
+                    get: { appState.searchSourceFilter.contains(app.bundleID) },
+                    set: { isOn in
+                        if isOn {
+                            appState.searchSourceFilter.insert(app.bundleID)
+                        } else {
+                            appState.searchSourceFilter.remove(app.bundleID)
+                        }
+                    }
+                )
+            )
+        }
+    }
+
+    /// A last chip on the Format group when the history holds other languages: each with its count.
+    @ViewBuilder
+    var moreFormatsChip: some View {
+        let languages = suggestionsModel.suggestions.languages
+        if !languages.isEmpty {
+            PestoChip(
+                label: "More formats", icon: "ellipsis", isActive: false, collapsesLabel: true,
+                helpText: "Filter by a language such as Python or SQL",
+                menu: AnyView(moreFormatsMenu(languages)), action: {}
+            )
+            .accessibilityIdentifier(AccessibilityID.filterChip("More formats"))
+        }
+    }
+
+    private func moreFormatsMenu(_ languages: [LanguageCount]) -> some View {
+        ForEach(languages, id: \.name) { language in
+            Toggle(
+                "\(language.displayName) \u{00B7} \(language.count)",
+                isOn: Binding(
+                    get: { selectedTag?.lowercased() == language.name },
+                    set: { appState.searchText = $0 ? "@\(language.name)" : "" }
+                )
+            )
+        }
     }
 }

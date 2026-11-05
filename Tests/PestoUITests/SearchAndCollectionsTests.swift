@@ -196,6 +196,25 @@ final class FilterBarLayoutTests: PestoUITestCase {
         capture("filter-bar-when-chip")
     }
 
+    /// The From group shows three apps; a last chip opens every app with its count, and a chosen one becomes a chip.
+    func test_moreApps_listsEveryApp_andAChosenOneBecomesAChip() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let more = element(AccessibilityID.filterChip("More apps"))
+        XCTAssertTrue(more.waitForExistence(timeout: 5), "no More apps chip in From")
+        XCTAssertFalse(element(AccessibilityID.filterChip("Mail")).exists, "Mail is already one of the three")
+
+        more.click()
+        let mail = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH 'Mail'")).firstMatch
+        XCTAssertTrue(mail.waitForExistence(timeout: 5), "Mail is not in the app menu")
+        mail.click()
+
+        let chip = element(AccessibilityID.filterChip("Mail"))
+        XCTAssertTrue(chip.waitForExistence(timeout: 5), "the chosen app did not become a chip")
+        XCTAssertTrue(chip.isSelected)
+    }
+
     /// The clear button sat after the field, away from the text it clears.
     func test_clearButton_sitsInsideTheField_andEmptiesIt() {
         launch()

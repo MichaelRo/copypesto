@@ -4,10 +4,32 @@ import Foundation
 public struct SourceApp: Sendable, Equatable {
     public let bundleID: String
     public let name: String
+    /// How many clips came from it; 0 where the list is not a count (the shelf's app chips).
+    public let count: Int
 
-    public init(bundleID: String, name: String) {
+    public init(bundleID: String, name: String, count: Int = 0) {
         self.bundleID = bundleID
         self.name = name
+        self.count = count
+    }
+}
+
+/// A language the history holds, with how many clips carry it (the Format menu).
+public struct LanguageCount: Sendable, Equatable {
+    public let name: String
+    public let count: Int
+
+    public init(name: String, count: Int) {
+        self.name = name
+        self.count = count
+    }
+
+    public var displayName: String {
+        switch name {
+        case "javascript": "JavaScript"
+        case "html", "sql", "svg": name.uppercased()
+        default: name.prefix(1).uppercased() + name.dropFirst()
+        }
     }
 }
 
@@ -17,16 +39,23 @@ public struct CommandBarSuggestions: Sendable, Equatable {
     /// The apps copied from most over the last seven days, most copied first (the shelf's app chips).
     public let recentApps: [SourceApp]
     public let hasRemoteClips: Bool
+    /// Every app a clip came from, most copied first (the From menu); `topApps` is its first few.
+    public let allApps: [SourceApp]
+    /// The languages in the history other than Markdown and JSON, which have chips of their own.
+    public let languages: [LanguageCount]
 
     public static let empty = CommandBarSuggestions(topTags: [], topApps: [])
 
     public init(
-        topTags: [String], topApps: [SourceApp], recentApps: [SourceApp] = [], hasRemoteClips: Bool = false
+        topTags: [String], topApps: [SourceApp], recentApps: [SourceApp] = [], hasRemoteClips: Bool = false,
+        allApps: [SourceApp] = [], languages: [LanguageCount] = []
     ) {
         self.topTags = topTags
         self.topApps = topApps
         self.recentApps = recentApps
         self.hasRemoteClips = hasRemoteClips
+        self.allApps = allApps
+        self.languages = languages
     }
 }
 
@@ -65,8 +94,10 @@ public struct SuggestionTally: Sendable {
     private var appCounts: [String: Int] = [:]
     private var recentAppCounts: [String: Int] = [:]
     private var appNames: [String: String] = [:]
+    private var languageCounts: [String: Int] = [:]
     private var hasRemoteClips = false
     private let recentSince: Date?
+    private static let languagesWithTheirOwnChip: Set<String> = ["markdown", "json", "text"]
 
     /// `recentSince` is the start of the window that makes an app "recent"; without it there are no recent apps.
     public init(recentSince: Date? = nil) {
@@ -74,9 +105,13 @@ public struct SuggestionTally: Sendable {
     }
 
     public mutating func add(
-        tags: [String], bundleID: String?, appName: String?, isRemote: Bool = false, timestamp: Date? = nil
+        tags: [String], bundleID: String?, appName: String?, isRemote: Bool = false, timestamp: Date? = nil,
+        language: String? = nil
     ) {
         if isRemote { hasRemoteClips = true }
+        if let language, !Self.languagesWithTheirOwnChip.contains(language.lowercased()) {
+            languageCounts[language.lowercased(), default: 0] += 1
+        }
         for tag in tags {
             tagCounts[tag, default: 0] += 1
         }
@@ -91,12 +126,19 @@ public struct SuggestionTally: Sendable {
             topTags: TopCounts.rank(tagCounts, limit: tagLimit),
             topApps: apps(from: appCounts, limit: appLimit),
             recentApps: apps(from: recentAppCounts, limit: recentAppLimit),
-            hasRemoteClips: hasRemoteClips
+            hasRemoteClips: hasRemoteClips,
+            allApps: apps(from: appCounts, limit: appCounts.count, withCounts: true),
+            languages: TopCounts.rank(languageCounts, limit: languageCounts.count)
+                .map { LanguageCount(name: $0, count: languageCounts[$0] ?? 0) }
         )
     }
 
-    private func apps(from counts: [String: Int], limit: Int) -> [SourceApp] {
+    private func apps(from counts: [String: Int], limit: Int, withCounts: Bool = false) -> [SourceApp] {
         TopCounts.rank(counts.filter { appNames[$0.key] != nil }, limit: limit)
-            .compactMap { id in appNames[id].map { SourceApp(bundleID: id, name: $0) } }
+            .compactMap { id in appNames[id].map { SourceApp(
+                bundleID: id,
+                name: $0,
+                count: withCounts ? counts[id] ?? 0 : 0
+            ) } }
     }
 }

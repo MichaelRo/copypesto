@@ -21,7 +21,7 @@ public extension StorageService {
                 tally.add(
                     tags: item.tags, bundleID: item.sourceBundleID, appName: item.sourceAppName,
                     isRemote: item.isRemote,
-                    timestamp: item.timestamp
+                    timestamp: item.timestamp, language: item.detectedLanguage
                 )
             }
             guard page.count == batchSize else { break }

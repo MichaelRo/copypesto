@@ -296,7 +296,10 @@ struct CommandBarView: View {
     private var filterBar: some View {
         let entries = allFilterEntries
         let indexOf = Dictionary(entries.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
-        func group(_ caption: LocalizedStringKey, id: String, _ group: [FilterEntry]) -> some View {
+        func group(
+            _ caption: LocalizedStringKey, id: String, _ group: [FilterEntry], trailing: AnyView? = nil
+        )
+        -> some View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(caption)
                     .font(.caption2)
@@ -304,6 +307,7 @@ struct CommandBarView: View {
                     .accessibilityHidden(true)
                 HStack(spacing: 4) {
                     ForEach(group, id: \.id) { filterChip($0, hasCursor: appState.filterChipCursor == indexOf[$0.id]) }
+                    if let trailing { trailing }
                 }
             }
             .accessibilityElement(children: .contain)
@@ -314,12 +318,12 @@ struct CommandBarView: View {
             HStack(alignment: .bottom, spacing: 14) {
                 group("Kind", id: "Kind", typeEntries)
 
-                group("Format", id: "Format", formatEntries)
+                group("Format", id: "Format", formatEntries, trailing: AnyView(moreFormatsChip))
 
                 group("When", id: "When", [whenEntry])
 
                 if !sourceEntries.isEmpty {
-                    group("From", id: "From", sourceEntries)
+                    group("From", id: "From", sourceEntries, trailing: AnyView(moreAppsChip))
                 }
 
                 group("Other", id: "Other", [sensitiveEntry] + remoteEntries + hiddenEntries)

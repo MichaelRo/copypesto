@@ -214,7 +214,9 @@ public struct HistoryIndex: Sendable {
         func matches(_ row: HistoryRow) -> Bool {
             if isEmpty { return true }
             guard let tagPrefix else { return row.contains(needle) }
-            return row.tagsLowercased.contains { $0.hasPrefix(tagPrefix) } || row.languageLowercased == tagPrefix
+            return row.tagsLowercased
+                .contains { $0.hasPrefix(tagPrefix) } ||
+                (!tagPrefix.isEmpty && row.languageLowercased?.hasPrefix(tagPrefix) == true)
         }
     }
 

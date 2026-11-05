@@ -109,6 +109,26 @@ final class SettingsEffectsTests: PestoUITestCase {
         )
     }
 
+    /// A plain Paste sits first in the card menu, with Paste as Plain Text, Copy and Quick Look, and pastes the clip.
+    func test_contextMenuPaste_isFirstAndPastesTheCard() {
+        launch()
+        showOverlay()
+        let target = card(containing: "Team lunch")
+        XCTAssertTrue(target.waitForExistence(timeout: 5))
+
+        target.rightClick()
+        let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
+        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+        let named = cardMenu.menuItems.allElementsBoundByIndex.map(\.title).filter { !$0.isEmpty }
+        let titles = Array(named.prefix(4))
+        XCTAssertEqual(titles, ["Paste", "Paste as Plain Text", "Copy", "Quick Look"])
+        cardMenu.menuItems["Paste"].firstMatch.click()
+
+        XCTAssertEqual(
+            waitForPaste(count: 1), ["Team lunch is at 12:30 on Thursday, booked under Alex."]
+        )
+    }
+
     /// The size slider in Settings changes the real cards: its smallest position is the Small size.
     func test_cardSizeSlider_resizesTheShelfCards() {
         launch()

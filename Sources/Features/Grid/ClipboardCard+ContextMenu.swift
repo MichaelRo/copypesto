@@ -10,6 +10,22 @@ import UniformTypeIdentifiers
 extension ClipboardCard {
     @ViewBuilder
     var cardContextMenu: some View {
+        if actions.paste != nil {
+            Button {
+                actions.paste?(item)
+            } label: {
+                Label("Paste", systemImage: "doc.on.clipboard")
+            }
+            .keyboardShortcut(.return, modifiers: [])
+        }
+        if actions.pasteAs != nil, ShelfKeyGate.plainPasteAllowed(for: item.type) {
+            Button {
+                actions.pasteAs?(item, .stripFormatting)
+            } label: {
+                Label("Paste as Plain Text", systemImage: TextTransform.stripFormatting.symbolName)
+            }
+            .keyboardShortcut(.return, modifiers: .shift)
+        }
         Button {
             actions.copy?(item)
         } label: {
@@ -203,14 +219,6 @@ extension ClipboardCard {
         Divider()
 
         let pasteAsTransforms = availableTransforms(for: item.type)
-        if actions.pasteAs != nil, ShelfKeyGate.plainPasteAllowed(for: item.type) {
-            Button {
-                actions.pasteAs?(item, .stripFormatting)
-            } label: {
-                Label("Paste as Plain Text", systemImage: TextTransform.stripFormatting.symbolName)
-            }
-            .keyboardShortcut(plainTextPasteShortcut)
-        }
         if !pasteAsTransforms.isEmpty {
             if actions.copyTransformed != nil {
                 Menu {
@@ -377,22 +385,5 @@ extension ClipboardCard {
         default:
             []
         }
-    }
-}
-
-extension ClipboardCard {
-    /// The plain-text hotkey as the menu item shows it, so the item reads the same shortcut the keyboard uses. Nil when
-    /// the hotkey is turned off or is a key a menu cannot draw as one character.
-    var plainTextPasteShortcut: KeyboardShortcut? {
-        guard let binding = GlobalShortcut.pastePlainText.binding(in: AppDefaults.store),
-              let equivalent = HotkeyDescription.menuKeyEquivalent(
-                  keyCode: UInt32(binding.keyCode), modifiers: binding.modifiers
-              ) else { return nil }
-        var modifiers: EventModifiers = []
-        if equivalent.control { modifiers.insert(.control) }
-        if equivalent.option { modifiers.insert(.option) }
-        if equivalent.shift { modifiers.insert(.shift) }
-        if equivalent.command { modifiers.insert(.command) }
-        return KeyboardShortcut(KeyEquivalent(equivalent.character), modifiers: modifiers)
     }
 }

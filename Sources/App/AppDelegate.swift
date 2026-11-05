@@ -485,6 +485,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             overlayWindowController = controller
         }
         overlayWindowController?.show()
+        appState.resetShelfContextIfStale(restingCollectionID: workspacePinboardID(for: frontmost?.bundleIdentifier))
         appState.isOverlayVisible = true
         appState.checkAndApplyBiometricLock()
         appState.shelfDidOpen()
@@ -492,7 +493,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Closes the overlay without pasting (Escape / hotkey toggle path); any paste that was waiting is dropped.
     func hideOverlay() {
-        appState.appChipFilter = []
         appState.close()
     }
 }

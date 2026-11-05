@@ -14,6 +14,8 @@ final class AppState {
         didSet {
             historyStore?.setVisible(isOverlayVisible || isPinnedWindowVisible)
             if !isOverlayVisible {
+                if oldValue { shelfClosedAt = .now }
+                appChipFilter = []
                 // A pointer that was on a banner when the shelf closed never reports leaving it.
                 dismissUndoOffer()
                 releaseUserError()
@@ -133,6 +135,18 @@ final class AppState {
     var filterChipCursor: Int?
     /// The chips on screen, in order, as the keyboard can act on them. Set by the command bar.
     @ObservationIgnored var filterChipActions: [FilterChipAction] = []
+
+    /// When the shelf last closed; `ShelfContextPolicy` decides from it whether the next open starts from All.
+    @ObservationIgnored var shelfClosedAt: Date?
+
+    /// Called as the shelf opens. After `ShelfContextPolicy.memory` closed the shelf forgets its collection and
+    /// filters; `restingCollectionID` is the frontmost app's own collection, if it has one.
+    func resetShelfContextIfStale(now: Date = .now, restingCollectionID: UUID?) {
+        guard ShelfContextPolicy.shouldReset(closedAt: shelfClosedAt, now: now) else { return }
+        clearSearchFilters()
+        appChipFilter = []
+        selectedCollectionID = restingCollectionID
+    }
 
     func clearSearchFilters() {
         searchTypeFilter = []

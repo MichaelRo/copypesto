@@ -59,10 +59,11 @@ extension GridView {
     /// What every card on this shelf can do. Built once per update of the grid, not once per card.
     var cardActions: CardActions {
         let editor = clipEditor
-        return CardActions(
+        var actions = CardActions(
             detailDismissed: { keyboardRevealedID = nil },
             pointerEntered: { keyboardRevealedID = nil },
             click: { handleClick($1, item: $0) },
+            paste: { selectItem($0) },
             aiAction: { runAIAction($1, on: $0) },
             toggleSensitive: { item in editor.edit(item) { $0.isNSFW.toggle() } },
             setExpiry: { item, date in
@@ -119,6 +120,8 @@ extension GridView {
                 if shown { revealedIDs.insert(item.id) } else { revealedIDs.remove(item.id) }
             }
         )
+        if copyOnly { actions.paste = nil }
+        return actions
     }
 
     /// Every edit to a clip goes through one editor, so none of them skips the rollback, the message or the row

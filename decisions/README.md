@@ -37,7 +37,8 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0026](0026-cards-put-the-content-first.md) | Picture, color, short text and a link's host fill their card; the decision is `CardTreatment` in Core and anything hidden or covered keeps today's card |
 | [0027](0027-one-band-style-and-two-small-shelf-hints.md) | The Suggestion, Undo and import offers share one glass-capsule banner; No results names the filters on and offers Clear Filters; a click on a card hints at the double click, three times at most |
 | [0028](0028-a-covered-card-shows-number-kind-and-age.md) | A covered card shows its ⌘ number, its kind as one plain word and its age, from one tested allowlist, and nothing that identifies the content or origin; keeps 0003 |
-| [0029](0029-snippets-pane-leads-with-your-snippets.md) | The Snippets pane leads with your snippets, starters and clip suggestions; the placeholder reference is one closed disclosure row |
+| [0029](0029-snippets-pane-leads-with-your-snippets.md) | The Snippets pane leads with your snippets, starters and clip suggestions; the placeholder reference is one closed disclosure row; the fold is superseded by 0030 |
+| [0030](0030-placeholders-are-shown-in-the-snippets-pane.md) | The Snippets pane shows the placeholder reference, still after the snippet sections, with a link to the guide; supersedes the fold of 0029 |
 
 ## Template
 

@@ -99,7 +99,9 @@ struct UndoHistoryTests {
             )
         }
         #expect(holds())
-        #expect(holds(sensitivity: "api_key"))
+        for category in SensitivityCategory.allCases where category != .credential {
+            #expect(holds(sensitivity: category.rawValue), "\(category) is sealed in memory and can be undone")
+        }
         #expect(!holds(UndoPolicy.maxClipBytes + 1))
         #expect(!holds(expires: .now.addingTimeInterval(60)))
         #expect(!holds(sensitivity: "credential"))

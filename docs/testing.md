@@ -484,9 +484,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Delete one clip, then several with Space and ⌫, then a collection from its chip, with the shelf at the bottom and at the
   top. Pass: each shows the bar with Undo, ⌘Z brings it back in the same place with its pin, note and shortcut, and ⇧⌘Z
   deletes it again.
-- The delete question. Pass: it says "You can undo this with ⌘Z" for an ordinary clip (including secrets and credit cards,
-  which are sealed in memory under ADR 0008) and "This can't be undone" for a password manager copy, a burn-after-paste or
-  expiring clip and a very large one (> 4 MB).
 - Rename, add a note, a tag, move a clip to a collection by dragging it to a chip, reorder cards in a collection, pin,
   give a shortcut; create, rename, duplicate and reorder collections. Pass: ⌘Z undoes each, in the order made.
 - In Settings → Snippets add, edit and delete a snippet and import a snippets file; in Settings → Collections import a

@@ -32,9 +32,9 @@ struct TextTransformTests {
 
     // MARK: Encoders and formatters
 
-    @Test("JSON pretty-print produces the same document, indented")
+    @Test("JSON produces the same document, indented")
     func whenJSONPrettyPrinted_thenSameDataMultiLine() throws {
-        let pretty = TextTransform.jsonPrettyPrint.apply(to: "{\"name\":\"pesto\",\"n\":[1,2]}")
+        let pretty = TextTransform.json.apply(to: "{\"name\":\"pesto\",\"n\":[1,2]}")
         #expect(pretty.contains("\n"))
         let original = try JSONSerialization
             .jsonObject(with: Data("{\"name\":\"pesto\",\"n\":[1,2]}".utf8)) as? NSDictionary
@@ -49,7 +49,7 @@ struct TextTransformTests {
 
     @Test("text that is not JSON is left alone")
     func whenNotJSON_thenUnchanged() {
-        #expect(TextTransform.jsonPrettyPrint.apply(to: "just words") == "just words")
+        #expect(TextTransform.json.apply(to: "just words") == "just words")
         #expect(TextTransform.jsonMinify.apply(to: "{broken") == "{broken")
     }
 
@@ -164,5 +164,31 @@ struct TextTransformTests {
         let result = TextTransform.jsonMinify.apply(to: #"{"b":"https://x.com/a","a":1}"#)
 
         #expect(result == #"{"a":1,"b":"https://x.com/a"}"#)
+    }
+
+    // MARK: Which entries a kind of clip always offers
+
+    @Test("JSON and Markdown are never in the always-offered lists")
+    func whenListedByKind_thenStructuredEntriesAreAbsent() {
+        for type in ClipboardType.allCases {
+            let list = TextTransform.available(for: type)
+            #expect(!list.contains(.json) && !list.contains(.markdown), "\(type)")
+        }
+    }
+
+    @Test("text, code, link and color keep the lists they had")
+    func whenListedByKind_thenTheOldListsHold() {
+        let text = TextTransform.available(for: .text)
+        #expect(text.count == TextTransform.allCases.count - 4)
+        #expect(text.contains(.jsonMinify) && !text.contains(.markdownCodeBlock) && !text.contains(.urlMarkdownLink))
+        #expect(TextTransform.available(for: .code).first == .markdownCodeBlock)
+        #expect(TextTransform.available(for: .url).first == .urlMarkdownLink)
+        #expect(TextTransform.available(for: .color) == [.stripFormatting, .trimWhitespace, .uppercase, .lowercase])
+        #expect(TextTransform.available(for: .image).isEmpty && TextTransform.available(for: .file).isEmpty)
+    }
+
+    @Test("Markdown has no plain-text conversion: applied to text it returns the text")
+    func whenMarkdownAppliedToText_thenUnchanged() {
+        #expect(TextTransform.markdown.apply(to: "# not converted") == "# not converted")
     }
 }

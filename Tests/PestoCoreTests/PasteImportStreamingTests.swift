@@ -199,7 +199,6 @@ struct PasteImportStreamingTests {
         let container = try ModelContainerSetup.makeInMemory()
         let snapshot = try PasteLibrarySnapshot.open(databaseAt: fixture.url)
         let plan = try await snapshot.plan(retention: forever)
-        let started = Date()
 
         let summary = try await PasteMigrator(modelContainer: container).migrate(
             plan: plan, from: snapshot, includingHistory: true

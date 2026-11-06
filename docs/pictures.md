@@ -5,7 +5,7 @@ all of them from one build and writes the app commit into `docs/images/SOURCE`; 
 pictures carry the same commit. `PicturesMapTests` fails when a README or guide picture, or a file in `docs/images`,
 is missing from the first table.
 
-A change to any user-visible screen retakes all pictures, and the README, the guide and the site are updated in the same
+When a pane is taller than the window, one picture per part the guide describes: after `make pictures`, open both Snippets pictures and check each shows the sections named in its row; a new section in that pane needs its own scrolled capture. A change to any user-visible screen retakes all pictures, and the README, the guide and the site are updated in the same
 pair of pull requests.
 
 ## README and guide (`docs/images`)
@@ -22,7 +22,9 @@ pair of pull requests.
 | `settings-general-light.png`, `settings-general-dark.png` | `DocScreenshotTests` (settings panes in both modes) | guide (`settings.md`, light) |
 | `settings-appearance-light.png`, `settings-appearance-dark.png` | `DocScreenshotTests` | guide (`settings.md`, light) |
 | `settings-privacy-light.png`, `settings-privacy-dark.png` | `DocScreenshotTests` | guide (`settings.md`, light) |
-| `settings-snippets.png`, `settings-data.png` | `SettingsFlowTests` | guide (`settings.md`) |
+| `settings-snippets.png` | `SettingsFlowTests` (the pane at the top: must show Your snippets and the Starters or From your clips sections) | guide (`settings.md`) |
+| `settings-snippet-placeholders.png` | `SettingsFlowTests` (the same pane scrolled down: must show the *Placeholders you can use* section) | guide (`settings.md`) |
+| `settings-data.png` | `SettingsFlowTests` | guide (`settings.md`) |
 | `settings-snippet-fields.png` | `SnippetSuggestionsTests` | guide (`using-pesto.md`) |
 | `settings-shortcuts.png` | `SettingsReorganisationTests` | guide (`settings.md`) |
 | `fill-in-prompt.png` | snapshot baseline `FillInPromptTests/test_allKindsOfField_light` (record snapshots to retake) | guide (`using-pesto.md`) |

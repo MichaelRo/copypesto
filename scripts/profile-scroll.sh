@@ -24,7 +24,7 @@ for _ in $(seq 1 900); do [ -f "$W/ready.json" ] && break; sleep 1; done
 printf showOverlay > "$W/commands/$(printf '%020d' "$(python3 -c 'import time;print(time.monotonic_ns())')")-$(uuidgen).cmd"
 sleep 6
 # xctrace has hung the second pass with nothing to stop it, so recording and exporting each run under a deadline.
-"$HERE/run-with-deadline.sh" 120 xcrun xctrace record --template 'Animation Hitches' --attach "$PID" \
+"$HERE/run-with-deadline.sh" "${PROFILE_RECORD_DEADLINE:-120}" xcrun xctrace record --template 'Animation Hitches' --attach "$PID" \
   --time-limit 40s --output "$OUT/$LABEL.trace" --no-prompt < /dev/null > "$OUT/$LABEL.xctrace.log" 2>&1 &
 TRACE=$!
 sleep 6
@@ -32,7 +32,7 @@ sleep 6
 TRACE_STATUS=0
 wait "$TRACE" || TRACE_STATUS=$?
 [ "$TRACE_STATUS" -eq 0 ] || {
-  echo "profile-scroll: xctrace record failed (status $TRACE_STATUS, 124 means it hung past 120 s): $OUT/$LABEL.xctrace.log" >&2
+  echo "profile-scroll: xctrace record failed (status $TRACE_STATUS, 124 means it hung past ${PROFILE_RECORD_DEADLINE:-120} s): $OUT/$LABEL.xctrace.log" >&2
   exit 4
 }
 # Hitches are counted only while frames are produced, so a shelf that never moved would read as a pass: the run fails

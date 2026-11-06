@@ -31,13 +31,13 @@ The header shows the version and opens **About Pesto**.
 
 A picture of the shelf stays at the top of the pane and follows every choice below it.
 
-**Shelf position** is a pair of small pictures, like Light and Dark. It puts the shelf at the *Bottom*, resting on the Dock (the default), or *Top*, hanging from the
+**Shelf surface** is a pair of small pictures too. *Solid* (the default) draws the shelf on a plain ground in your theme's color, the same on every desktop. *Glass* lets a little of the desktop show through. Reduce Transparency in System Settings always gives Solid, and the pane says so. **Shelf position** is a pair of small pictures, like Light and Dark. It puts the shelf at the *Bottom*, resting on the Dock (the default), or *Top*, hanging from the
 menu bar at the top of the screen (below the notch, if your Mac has one). It slides in from that edge, and the hover card opens on the side away from it.
 
 **Theme** sets the look in one choice: Basil (Pesto as it has always looked), Parmesan (warm
 cream with a gold accent), Pine nut (sand and toasted amber) or Mortar (cool stone and sage). Each card is drawn half light and half dark, so you see
 the theme as it will look either way. A theme sets the accent and the app icon that
-goes with it (Parmesan, Pine nut and Mortar also put a light wash over the shelf's glass, and every theme tints the card headers in its color while the app's own color stays on top, lighter), and you can still change the accent or the icon on their own afterwards. The themes are checked so that no
+goes with it (Parmesan, Pine nut and Mortar also put a light wash over the shelf, and every theme tints the card headers in its color while the app's own color stays on top, lighter), and you can still change the accent or the icon on their own afterwards. The themes are checked so that no
 two look alike and every one keeps its text and accent readable in light and dark. **App icon** sits under the themes,
 with one icon for each theme, named after it and in the same order: Basil, Parmesan, Pine nut and Mortar. The icon's ground carries the theme and its P is the theme's accent. It shows in the Dock and the app switcher while a Pesto window is open; Finder and
 Launchpad keep the default Basil icon, because changing the icon of the installed app would break its code signature.

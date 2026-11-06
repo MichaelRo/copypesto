@@ -1,6 +1,6 @@
 # Features/Overlay — notes
 
-The bottom-shelf overlay panel, floating window, glass shelf background, and the paste-trigger timing that runs inside the hide animation. May import `Core/` but not vice versa. The overlay-open → first-paint budget is < 100 ms (`AGENTS.md`). Every `NSHostingView` here must be `SafeHostingView` (root pitfall, hook-enforced).
+The bottom-shelf overlay panel, floating window, shelf background (solid or glass, ADR 0035), and the paste-trigger timing that runs inside the hide animation. May import `Core/` but not vice versa. The overlay-open → first-paint budget is < 100 ms (`AGENTS.md`). Every `NSHostingView` here must be `SafeHostingView` (root pitfall, hook-enforced).
 
 ## Accessibility naming
 

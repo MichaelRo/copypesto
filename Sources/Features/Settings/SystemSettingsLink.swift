@@ -8,4 +8,11 @@ enum SystemSettingsLink {
             NSWorkspace.shared.open(url)
         }
     }
+
+    /// System Settings at Accessibility's Display pane, where Reduce Transparency is.
+    static func openDisplayAccessibility() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.Accessibility-Settings.extension?Display") {
+            NSWorkspace.shared.open(url)
+        }
+    }
 }

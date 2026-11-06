@@ -58,6 +58,11 @@ class PestoUITestCase: XCTestCase {
         for (key, value) in defaults {
             environment["PESTO_UITEST_DEFAULT_\(key)"] = value
         }
+        if let surface = ProcessInfo.processInfo.environment["PESTO_BENCH_SHELF_SURFACE"],
+           environment["PESTO_UITEST_DEFAULT_shelfSurface"] == nil
+        {
+            environment["PESTO_UITEST_DEFAULT_shelfSurface"] = surface
+        }
         if let backdrop { environment["PESTO_UITEST_BACKDROP"] = backdrop }
         if realDevice { environment["PESTO_UITEST_REAL_DEVICE"] = "1" }
         if let importFixture { environment["PESTO_UITEST_IMPORT_FIXTURE"] = importFixture }

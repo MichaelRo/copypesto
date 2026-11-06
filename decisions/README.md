@@ -42,6 +42,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0031](0031-short-text-and-link-hosts-use-two-sizes.md) | Short text and a link's host are set in two sizes, 24 and 18 pt, with the first line at one fixed distance under the header; supersedes the sizes of 0026 |
 | [0033](0033-paste-as-json-and-markdown.md) | Paste As and Copy As offer JSON and Markdown only for a clip that qualifies; JSON replaces JSON Pretty-Print, and a hidden, covered or oversized clip is never read |
 | [0034](0034-copy-recognized-text.md) | A picture's whole recognized text (up to 100,000 bytes) is kept in its own sealed file, scanned for secrets in full, and copied from the menu or a Copy Text button on the hover card, which takes the pointer; amends the pointer rule of 0009 |
+| [0035](0035-shelf-surface-solid-or-glass.md) | The shelf is solid by default and glass by choice (Settings → Appearance → Shelf surface); Reduce Transparency forces solid; the wash is soft on solid; supersedes the glass parts of 0013 |
 
 ## Template
 

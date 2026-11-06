@@ -34,6 +34,7 @@ public enum SettingsBackupManager {
         Setting.appearanceMode.name: .choice(Set(AppearanceMode.allCases.map(\.rawValue))),
         Setting.cardSize.name: .choice(Set(CardSize.allCases.map(\.rawValue))),
         Setting.shelfPosition.name: .choice(Set(ShelfPosition.allCases.map(\.rawValue))),
+        Setting.shelfSurface.name: .choice(Set(ShelfSurface.allCases.map(\.rawValue))),
         Setting.cardWidth.name: .integerOrSpecial(CardMetrics.widthRange, special: 0),
         Setting.nsfwMode.name: .choice(Set(NSFWMode.allCases.map(\.rawValue))),
         Setting.ruleStripTracking.name: .bool,

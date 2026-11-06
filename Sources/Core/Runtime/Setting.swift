@@ -19,6 +19,7 @@ public enum Setting {
     public static let cardSize = SettingKey("cardSize", default: "large")
     public static let cardWidth = SettingKey("cardWidth", default: 0)
     public static let shelfPosition = SettingKey("shelfPosition", default: ShelfPosition.bottom.rawValue)
+    public static let shelfSurface = SettingKey("shelfSurface", default: ShelfSurface.solid.rawValue)
 
     // MARK: History
 
@@ -128,7 +129,7 @@ public enum Setting {
     /// Every key's name, for the tests that keep the list honest.
     public static let allNames: [String] = [
         appearanceMode.name, accentColorHex.name, appTheme.name, appThemeDark.name, appIcon.name, cardSize.name,
-        cardWidth.name, shelfPosition.name,
+        cardWidth.name, shelfPosition.name, shelfSurface.name,
         retentionDays.name, retentionMaxItems.name, clearOnScreenLock.name, clearOnQuit.name,
         ruleStripTracking.name, ruleTrimWhitespace.name, ruleNormalizeLineEndings.name,
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,

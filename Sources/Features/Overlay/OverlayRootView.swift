@@ -238,6 +238,7 @@ struct OverlayRootView: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Clipboard history")
         .accessibilityIdentifier(AccessibilityID.overlayPanel)
+        .shelfSurfaceEnvironment()
         .pestoAccented(stored: accentColorHex, theme: appThemeRaw, darkTheme: appThemeDarkRaw)
         // Thread the synced SwiftData container so @Query in GridView has a ModelContext.
         .modelContainerIfAvailable(appState.historyContainer)

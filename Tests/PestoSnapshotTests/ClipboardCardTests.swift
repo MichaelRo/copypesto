@@ -103,6 +103,38 @@ final class ClipboardCardTests: XCTestCase {
         XCTAssertLessThan(mostSaturated, 0.25, "the covered card still shows a color")
     }
 
+    /// The cover is drawn over the card's own border, so it draws the focus ring itself.
+    func test_coveredFocusedCard_drawsTheFocusRing() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .text, preview: "plain")
+        func edgeSaturation(focused: Bool) throws -> Double {
+            let root = ClipboardCard(item: item, isFocused: focused, isPrivacyBlurred: true)
+                .defaultAppStorage(AppDefaults.store)
+                .environment(\.pestoAccent, .green)
+                .preferredColorScheme(.dark)
+                .frame(width: 200, height: 180)
+            let controller = NSHostingController(rootView: root)
+            controller.view.appearance = NSAppearance(named: .darkAqua)
+            controller.view.frame = NSRect(x: 0, y: 0, width: 200, height: 180)
+            let rep = try XCTUnwrap(controller.view.bitmapImageRepForCachingDisplay(in: controller.view.bounds))
+            controller.view.cacheDisplay(in: controller.view.bounds, to: rep)
+            var most = 0.0
+            for y in [60, 90, 120] {
+                let color = try XCTUnwrap(rep.colorAt(x: 1, y: y)?.usingColorSpace(.sRGB))
+                most = max(most, color.saturationComponent)
+            }
+            return most
+        }
+        XCTAssertLessThan(try edgeSaturation(focused: false), 0.25)
+        XCTAssertGreaterThan(try edgeSaturation(focused: true), 0.4, "the covered, focused card shows no ring")
+    }
+
+    func test_coveredCard_showsNumberKindAndAge() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .url, preview: "https://example.com")
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 2, isPrivacyBlurred: true))
+    }
+
     // MARK: - Text
 
     func test_textCard() throws {

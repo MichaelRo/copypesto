@@ -132,7 +132,8 @@ A name Pesto does not know, such as `{{name}}`, pastes as typed. Only a snippet 
 **Starters** are templates to begin with, and **From your clips** offers text you have
 pasted from the shelf more than twice (*Make Snippet*). *Add Snippet* is in the pane's header. The editor's *Add Question…* menu adds a
 question that is asked when you paste, and *Suggest Names* renames the fields of a snippet made from similar clips with the on-device model.
-All the tokens are in [Using Pesto](using-pesto.md#snippets).
+The pane runs in that order: **Your snippets**, **Starters**, **From your clips**, then **Placeholders you can use**, folded
+and closed until you open it, then the two settings below. All the tokens are in [Using Pesto](using-pesto.md#snippets).
 - **Remember fill-in values** (on by default): a fill-in starts with what you typed last time. The values are kept with the snippet, encrypted
   like its text. Turning it off erases them.
 - **Suggestion statistics:** how many suggestions the shelf has shown and how you answered them, counted on this Mac from the list it already keeps. *Copy Summary* copies plain numbers you can paste into an issue; nothing is sent anywhere.

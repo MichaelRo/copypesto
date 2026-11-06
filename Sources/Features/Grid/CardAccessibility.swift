@@ -75,12 +75,7 @@ struct CardAccessibility {
     }
 
     static func spokenAge(_ seconds: TimeInterval) -> String {
-        switch seconds {
-        case ..<60: "just now"
-        case 60..<3600: String(localized: "\(Int(seconds / 60)) minutes ago")
-        case 3600..<86_400: String(localized: "\(Int(seconds / 3600)) hours ago")
-        default: String(localized: "\(Int(seconds / 86_400)) days ago")
-        }
+        CardAge.spoken(interval: seconds)
     }
 
     private var typeName: String {

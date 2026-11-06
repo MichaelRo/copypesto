@@ -23,6 +23,7 @@ struct SnippetsView: View {
 
     @State private var editor: SnippetEditorDraft?
     @State private var pendingDelete: ClipboardItem?
+    @State private var placeholdersOpen = false
     let addRequest: Int
 
     private var dismissed: Set<String> {
@@ -53,24 +54,6 @@ struct SnippetsView: View {
 
     var body: some View {
         Form {
-            Section {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
-                    ForEach(SnippetDraft.placeholders, id: \.token) { placeholder in
-                        HStack(spacing: 8) {
-                            Keycap(symbol: placeholder.token)
-                            Text(placeholder.meaning).pestoCaption()
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Placeholders you can use in a snippet")
-            } header: {
-                Text("Placeholders")
-            } footer: {
-                Text("Filled in when you paste. Add Question\u{2026} in the editor asks one instead.").pestoCaption()
-            }
-
             Section {
                 if let editor, editor.clipID == nil, editor.anchorID == nil { editorView(editor) }
                 if snippets.isEmpty, editor == nil {
@@ -117,6 +100,12 @@ struct SnippetsView: View {
                 } footer: {
                     Text("Text you have pasted from the shelf more than twice. Make a snippet to keep it handy.")
                         .pestoCaption()
+                }
+            }
+
+            Section {
+                DisclosureGroup("Placeholders you can use", isExpanded: $placeholdersOpen) {
+                    placeholderReference
                 }
             }
 
@@ -183,6 +172,23 @@ struct SnippetsView: View {
         } message: {
             Text("It is removed from your history too. A backup made earlier can still bring it back.")
         }
+    }
+
+    private var placeholderReference: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
+                ForEach(SnippetDraft.placeholders, id: \.token) { placeholder in
+                    HStack(spacing: 8) {
+                        Keycap(symbol: placeholder.token)
+                        Text(placeholder.meaning).pestoCaption()
+                    }
+                }
+            }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Placeholders you can use in a snippet")
+            Text("Filled in when you paste. Add Question\u{2026} in the editor asks one instead.").pestoCaption()
+        }
+        .padding(.vertical, 4)
     }
 
     private var suggestionStatistics: some View {

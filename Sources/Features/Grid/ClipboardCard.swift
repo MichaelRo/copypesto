@@ -116,8 +116,7 @@ struct ClipboardCard: View {
     }
 
     var body: some View {
-        let accessibility = accessibility
-        return popoverCard
+        popoverCard
             .modifier(CardClickGestures(
                 onClick: actions.click.map { click in { click(item, $0) } },
                 isFlashing: isFlashing
@@ -155,9 +154,10 @@ struct ClipboardCard: View {
             // One element per card: without this the icon and badge each surfaced as a duplicate button.
             .accessibilityElement(children: .ignore)
             .accessibilityIdentifier(AccessibilityID.card)
-            .accessibilityLabel(accessibility.label)
+            .accessibilityLabel(spokenLabel)
             .accessibilityValue(accessibilityValueText)
-            .voiceOverContent(isFocused && !isCoveredForPrivacy ? voiceOverContent : VoiceOverDetails())
+            .voiceOverContent(isFocused && !isCoveredForPrivacy && !isBlurredAsSensitive ? voiceOverContent :
+                VoiceOverDetails())
             .accessibilityHint(hidesItsContent
                 ? (canRevealHidden ? "Hidden. Pastes without showing. Use Show to reveal it." : "Hidden.")
                 : "Pastes this clip.")
@@ -327,7 +327,13 @@ struct ClipboardCard: View {
                 if item.analysisPending {
                     analysisPendingOverlay
                 } else if isBlurredAsSensitive {
-                    nsfwBlurOverlay
+                    CoveredCardFace(
+                        facts: coverFacts,
+                        cornerRadius: Self.cardCornerRadius,
+                        ringColor: isFocused || isSelected || isSuggested ? accent : nil,
+                        note: String(localized: "Sensitive content"),
+                        show: reveal
+                    )
                 }
             }
             .modifier(GlassCardModifier(
@@ -350,31 +356,13 @@ struct ClipboardCard: View {
             .overlay {
                 if isCoveredForPrivacy {
                     // A neutral flat ground under the material: over the card's own tint the cover showed an image's or
-                    // a
-                    // color's dominant color (D-02).
-                    RoundedRectangle(cornerRadius: Self.cardCornerRadius)
-                        .fill(Color.opaqueSurface)
-                        .overlay { RoundedRectangle(cornerRadius: Self.cardCornerRadius).adaptiveMaterialFill() }
-                        .overlay {
-                            VStack(spacing: 6) {
-                                Image(systemName: "eye.slash.fill")
-                                    .font(.system(size: 22))
-                                Text("Hidden for sharing")
-                                    .font(.caption2.weight(.medium))
-                                Button {
-                                    reveal()
-                                } label: {
-                                    Text("Show")
-                                        .padding(.horizontal, 10)
-                                        .frame(minHeight: 24)
-                                        .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.pestoLink)
-                                .font(.caption2)
-                                .help("Show this clip. Return or a click pastes it without showing it.")
-                            }
-                            .pestoQuiet()
-                        }
+                    // a color's dominant color (D-02).
+                    CoveredCardFace(
+                        facts: coverFacts,
+                        cornerRadius: Self.cardCornerRadius,
+                        ringColor: isFocused || isSelected || isSuggested ? accent : nil,
+                        show: reveal
+                    )
                 }
             }
             .offset(y: isLifted ? -6 : 0)
@@ -447,7 +435,7 @@ struct ClipboardCard: View {
             tags: item.tags,
             removeTag: removeTagFromItem,
             isFocused: isFocused,
-            spokenCard: "\(accessibility.label), \(accessibility.value)"
+            spokenCard: "\(spokenLabel), \(spokenValue)"
         )
     }
 
@@ -473,7 +461,21 @@ struct ClipboardCard: View {
         actions.revealChanged?(item, false)
     }
 
+    var coverFacts: CoverFacts {
+        CoverFacts(item: item, number: shortcutNumber, inCollection: showsFirstCopyTime)
+    }
+
+    private var spokenLabel: String {
+        if isCoveredForPrivacy { return coverFacts.spokenLabel }
+        return isBlurredAsSensitive ? coverFacts.contentFilteredSpokenLabel : accessibility.label
+    }
+
+    private var spokenValue: String {
+        isCoveredForPrivacy || isBlurredAsSensitive ? coverFacts.spokenValue : accessibility.value
+    }
+
     private var accessibilityValueText: String {
+        if isCoveredForPrivacy || isBlurredAsSensitive { return coverFacts.spokenValue }
         var value = revealedSecret.map { "\(accessibility.value), shown: \($0)" } ?? accessibility.value
         if isSuggested {
             value += suggestedHotkeySlot.map { ", suggested shortcut Control \($0)" } ?? ", suggested"

@@ -18,33 +18,4 @@ extension ClipboardCard {
         }
         .accessibilityHidden(true)
     }
-
-    /// The cover on a clip the content filter flagged, with its Show button.
-    var nsfwBlurOverlay: some View {
-        ZStack {
-            Rectangle()
-                .adaptiveMaterialFill()
-            VStack(spacing: 6) {
-                Image(systemName: "eye.slash.fill")
-                    .font(.system(size: 20, weight: .medium))
-                    .pestoQuiet()
-                Text("Sensitive content")
-                    // Text size capped: this overlay fills a fixed-size card.
-                        .scaledFont(size: 10, weight: .semibold, maxScale: 1.3)
-                        .pestoQuiet()
-                Button {
-                    reveal()
-                } label: {
-                    Text("Show")
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.pestoLink)
-                .font(.caption2)
-                .help("Show this clip. Return or a click pastes it without showing it.")
-            }
-        }
-        .animation(Motion.animation(.easeInOut(duration: 0.15)), value: isNSFWRevealed)
-    }
 }

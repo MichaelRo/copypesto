@@ -2,7 +2,7 @@
 
 The release steps (`make publish-release`, `make marketing-images`) are the maintainer's alone; a contributor never runs
 them. The website takes what it needs from this repository on its own side. Dependabot watches the GitHub Actions only: Sparkle and swift-snapshot-testing are pinned
-by commit in `Pesto.yml`, so check their releases by hand before each release.
+by commit in `Pesto.yml`, so `make check-packages` compares them with their releases and advisories before each release.
 
 Pesto is distributed outside the Mac App Store as a disk image signed with a Developer ID and notarized by Apple
 (`make release`, below). Only 1.0.0 shipped unsigned, with a self-signed "Pesto Release" identity; the two sections
@@ -108,22 +108,23 @@ A development build signed "Pesto Development" can never use the iCloud key, so 
 
 ## Each release
 1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`.
-2. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` is done.
-3. `make release` (archive, export, notarize the app, build a DMG, sign, notarize and staple it).
-4. Sparkle signature: `sign_update <dmg>` prints `sparkle:edSignature` and `length`. In the website repo, add
+2. `make check-packages` shows no line starting `!!!`: it compares the two SwiftPM pins in `Pesto.yml` (Sparkle, swift-snapshot-testing) with their latest releases and with GitHub's Swift advisories, and prints the table. Dependabot cannot see `Pesto.yml`, so this is the only reminder. Keep each pin at the newest release that carries no known vulnerability; after a bump run `make update-resolved`, review `Pesto.resolved`, and do the Sparkle local update test below.
+3. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` is done.
+4. `make release` (archive, export, notarize the app, build a DMG, sign, notarize and staple it).
+5. Sparkle signature: `sign_update <dmg>` prints `sparkle:edSignature` and `length`. In the website repo, add
    `src/content/releases/<version>.md`: front matter `version` (`MARKETING_VERSION`), `build` (`CURRENT_PROJECT_VERSION`),
    `date`, `dmgURL` (the GitHub release asset), `length`, `edSignature`, `sha256` (`shasum -a 256 <dmg>`) and
    `minimumSystemVersion`, and the release notes as the body. The same file feeds the changelog page and `/appcast.xml`, and
    `npm run verify` there checks the URL and the shape of every field.
-5. Upload `Pesto-<version>.dmg` and `Pesto-<version>.dmg.sha256` to the GitHub release, publish the appcast, then check for updates from an older build.
-6. Put these in the GitHub release body, so anyone can check a download against the source: the commit or tag, the Xcode
+6. Upload `Pesto-<version>.dmg` and `Pesto-<version>.dmg.sha256` to the GitHub release, publish the appcast, then check for updates from an older build.
+7. Put these in the GitHub release body, so anyone can check a download against the source: the commit or tag, the Xcode
    version (`xcodebuild -version`), the SHA-256 of the DMG, the `codesign -dvvv` lines for the Team ID, and the three
    commands a person can run (`shasum -a 256`, `spctl --assess --type execute -vv`, `xcrun stapler validate`). Build
    output is not reproducible bit for bit (signatures carry timestamps), so do not say it is. Turn on immutable
    releases only after one full update from build N to N+1 has worked: assets cannot be replaced afterwards and a tag
    name cannot be reused, so a bad 1.0.0 becomes 1.0.1.
 
-7. Homebrew: once the site is deployed and `/appcast.xml` offers the version, `make release-cask` runs the tap's bump workflow
+8. Homebrew: once the site is deployed and `/appcast.xml` offers the version, `make release-cask` runs the tap's bump workflow
    at once (it polls every six hours anyway) and prints its pull request. The tap checks the disk image's hash, size,
    signature and notarization before it proposes anything. Merge that pull request, then try
    `brew upgrade --cask --greedy pesto`. The cask is not done until this pull request is merged.

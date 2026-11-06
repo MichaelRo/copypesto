@@ -257,6 +257,7 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Local update test (`docs/release.md`, "Each release"): install the previous release, serve a throwaway next one from a
   local appcast, choose Check for Updates… from the menu bar. Pass: it updates to the next version, the history opens with no
   Keychain prompt, and paste still works without granting Accessibility again.
+- After a Sparkle bump (`make check-packages`, `docs/release.md`), the local update test above must pass on that build; it is a hand check, nothing automated covers the installer.
 - Fresh install: the Accessibility prompt appears, and granting it moves onboarding forward. Pass: the setup window
   advances to the next step as soon as the grant is on.
 - Launch at login survives a reboot. Pass: after a restart Pesto is in the menu bar without being opened.

@@ -168,6 +168,10 @@ setup-signing: ## [Develop] Create a local dev signing cert so Accessibility per
 setup-release-signing: ## [Release] Create the self-signed "Pesto Release" identity that signs the unsigned 1.0 disk image (run once; says what it changes)
 	@SETUP_TARGET=setup-release-signing DEV_SIGN_IDENTITY="$(RELEASE_SIGN_IDENTITY)" scripts/setup-signing.sh
 
+.PHONY: check-packages
+check-packages: ## [Release] Compare the Pesto.yml package pins with the latest releases and known advisories (read-only; run before every release)
+	@scripts/check-package-updates.sh
+
 APP_SUPPORT_DIR = $(HOME)/Library/Application Support/net.copypesto.pesto
 
 # A development build shares the shipped identity (bundle ID, Keychain item, preferences, store), so a reset deletes the

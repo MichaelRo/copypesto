@@ -42,13 +42,28 @@ public struct LinkDisplay: Equatable, Sendable {
         return LinkDisplay(host: host, rest: rest)
     }
 
-    /// Fixed sizes by length: 22 pt up to 14 characters, 17 up to 22, 15 beyond.
+    /// Fixed sizes by length: the headline size up to 24 characters of host, the smaller step beyond.
     public static func hostPoints(forLength length: Int) -> Double {
-        switch length {
-        case ...14: 22
-        case ...22: 17
-        default: 15
-        }
+        length <= CardTreatment.headlineLimit ? CardTreatment.headlinePoints : CardTreatment.secondaryPoints
+    }
+
+    private static let roomyBudget = 90.0
+    private static let gapBetweenHostAndPath = 4.0
+
+    /// Lines for the host (two on a roomy card, else one, as many as fit) and then for the path in what is left;
+    /// the path gives way before the host shrinks.
+    public static func lineLimits(
+        hostPoints: Double,
+        pathPoints: Double,
+        heightBudget: Double
+    )
+    -> (host: Int, path: Int) {
+        let roomy = heightBudget >= roomyBudget
+        let hostLine = hostPoints * CardTreatment.lineHeightFactor
+        let host = min(max(Int(heightBudget / hostLine), 1), roomy ? 2 : 1)
+        let left = heightBudget - Double(host) * hostLine - gapBetweenHostAndPath
+        let path = min(max(Int(left / (pathPoints * CardTreatment.lineHeightFactor)), 0), roomy ? 3 : 2)
+        return (host, path)
     }
 
     /// The host with a zero-width space after every dot: the only places a host can wrap.

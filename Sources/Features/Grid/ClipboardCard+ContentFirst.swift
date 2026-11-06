@@ -177,9 +177,12 @@ extension ClipboardCard {
 
     func largeTextBody(points: Double) -> some View {
         let shown = bodySize(CGFloat(points))
+        let spaceAboveCaps = Self.spaceAboveCaps(size: shown, weight: .semibold)
+        let extra = CardLayout.largeTextTopPadding(spaceAboveCaps: spaceAboveCaps)
         let lines = CardTreatment.largeTextLineLimit(
-            points: Double(shown) * Self.largeTextHeadroom,
-            heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions))
+            points: Double(shown),
+            heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions) - extra),
+            maxLines: CardTreatment.maxLines(forPoints: points)
         )
         return Text(CardPreviewText.display(item.gridPreview))
             .scaledFont(size: shown, weight: .semibold, maxScale: Self.largeTextHeadroom)
@@ -187,31 +190,44 @@ extension ClipboardCard {
             .lineLimit(lines)
             .multilineTextAlignment(.leading)
             .frame(maxWidth: .infinity, alignment: .topLeading)
+            .padding(.top, extra)
     }
 
     func hostFirstBody(_ link: LinkDisplay) -> some View {
-        let roomy = CardLayout.textHeightBudget(for: cardDimensions) >= 90
+        let hostPoints = bodySize(CGFloat(LinkDisplay.hostPoints(forLength: link.host.count)))
+        let pathPoints = bodySize(11)
+        let extra = CardLayout.largeTextTopPadding(spaceAboveCaps: Self.spaceAboveCaps(size: hostPoints, weight: .semibold))
+        let lines = LinkDisplay.lineLimits(
+            hostPoints: Double(hostPoints),
+            pathPoints: Double(pathPoints),
+            heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions) - extra)
+        )
         return VStack(alignment: .leading, spacing: 4) {
             Text(LinkDisplay.breakableHost(link.host))
-                .scaledFont(
-                    size: bodySize(CGFloat(LinkDisplay.hostPoints(forLength: link.host.count))),
-                    weight: .semibold, maxScale: Self.largeTextHeadroom
-                )
+                .scaledFont(size: hostPoints, weight: .semibold, maxScale: Self.largeTextHeadroom)
                 .foregroundStyle(.primary.opacity(0.92))
-                .lineLimit(roomy ? 2 : 1)
+                .lineLimit(lines.host)
                 .truncationMode(.middle)
-            if !link.rest.isEmpty {
+            if !link.rest.isEmpty, lines.path > 0 {
                 Text(link.rest)
-                    .scaledFont(size: bodySize(11), maxScale: 1.3)
+                    .scaledFont(size: pathPoints, maxScale: 1.0)
                     .pestoQuiet()
-                    .lineLimit(roomy ? 3 : 2)
+                    .lineLimit(lines.path)
                     .truncationMode(.middle)
             }
         }
         .frame(maxWidth: .infinity, alignment: .topLeading)
+        .padding(.top, extra)
     }
 
+    /// The gap between the top of a first line's box and the top of its capital letters, from the font itself.
+    private static func spaceAboveCaps(size: CGFloat, weight: Font.Weight) -> CGFloat {
+        let font = NSFont.systemFont(ofSize: size, weight: weight == .semibold ? .semibold : .regular)
+        return max(0, font.ascender - font.capHeight)
+    }
+
+    /// Fixed sizes grow with the card, never with the text-size setting: the step would overflow a fixed card.
     static var largeTextHeadroom: Double {
-        1.15
+        1.0
     }
 }

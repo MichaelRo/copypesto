@@ -52,4 +52,19 @@ struct CardLayoutTests {
                 .lineTolerance)
         }
     }
+
+    @Test("the glyph tops of two sizes sit the same distance under the header", arguments: [
+        (24.0, 5.9), (18.0, 4.4), (20.4, 5.0), (28.8, 7.1)
+    ])
+    func whenSizes_thenCapTopFixed(points: Double, spaceAboveCaps: Double) {
+        let padding = CardLayout.largeTextTopPadding(spaceAboveCaps: CGFloat(spaceAboveCaps))
+        #expect(abs(CardLayout.bodyTopPadding + padding + CGFloat(spaceAboveCaps) - CardLayout.glyphTopInset) < 0.001
+            || padding == 0)
+    }
+
+    @Test("the offset never pulls the text up into the header and stays inside the allowance")
+    func whenTallSpace_thenNoNegativePadding() {
+        #expect(CardLayout.largeTextTopPadding(spaceAboveCaps: 40) == 0)
+        #expect(CardLayout.largeTextTopPadding(spaceAboveCaps: 3) <= CardLayout.glyphTopInsetAllowance)
+    }
 }

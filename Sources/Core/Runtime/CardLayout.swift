@@ -11,6 +11,15 @@ public enum CardLayout {
     /// the last line of text never touches the footer.
     public static let footerReserve: CGFloat = 36
 
+    public static let glyphTopInset: CGFloat = 12
+    public static let glyphTopInsetAllowance: CGFloat = 4
+
+    /// Extra top padding that puts a large text's capital letters `glyphTopInset` under the header whatever its size:
+    /// the line box starts above the glyphs by `spaceAboveCaps` (ascender less cap height), more for a bigger size.
+    public static func largeTextTopPadding(spaceAboveCaps: CGFloat) -> CGFloat {
+        min(max(0, glyphTopInset - bodyTopPadding - spaceAboveCaps), glyphTopInsetAllowance)
+    }
+
     public static func textHeightBudget(for size: CGSize) -> CGFloat {
         max(0, size.height - headerHeight - bodyTopPadding - footerReserve)
     }

@@ -59,10 +59,20 @@ struct LinkDisplayTests {
     }
 
     @Test("the host is set at a fixed size by its length, never fitted to a measurement", arguments: [
-        (3, 22.0), (14, 22.0), (15, 17.0), (22, 17.0), (23, 15.0), (80, 15.0)
+        (3, 24.0), (24, 24.0), (25, 18.0), (80, 18.0)
     ])
     func whenHostLength_thenFixedPoints(length: Int, points: Double) {
         #expect(LinkDisplay.hostPoints(forLength: length) == points)
+    }
+
+    @Test("the host takes the lines it fits and the path the room left, the path dropping out before the host shrinks", arguments: [
+        (24.0, 11.0, 104.0, 2, 2), (18.0, 11.0, 104.0, 2, 3), (24.0 * 0.85, 11.0 * 0.85, 64.0, 1, 2),
+        (24.0, 11.0, 40.0, 1, 0)
+    ])
+    func whenBudget_thenLinesShared(host: Double, path: Double, budget: Double, hostLines: Int, pathLines: Int) {
+        let lines = LinkDisplay.lineLimits(hostPoints: host, pathPoints: path, heightBudget: budget)
+        #expect(lines.host == hostLines)
+        #expect(lines.path == pathLines)
     }
 
     @Test("a host may break after each dot, so a long one wraps instead of being cut")

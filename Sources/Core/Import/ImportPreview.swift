@@ -10,6 +10,10 @@ public struct ImportPreview: Sendable {
     public let history: [PasteImportRecord]
     public let skipped: Int
     public let pinSummary: String?
+    /// Set for a Paste library read in pieces: which clips the import takes and why the others stay. `pinned` and
+    /// `history` are empty then, and `snapshot` is where the import reads the clips from (nil for a picture or test).
+    public let plan: PasteImportPlan?
+    public let snapshot: PasteLibrarySnapshot?
 
     public init(
         appName: String, pinned: [PasteImportRecord], history: [PasteImportRecord], skipped: Int, pinSummary: String?
@@ -19,16 +23,18 @@ public struct ImportPreview: Sendable {
         self.history = history
         self.skipped = skipped
         self.pinSummary = pinSummary
+        plan = nil
+        snapshot = nil
     }
 
-    public init(paste library: PasteLibrary) {
-        self.init(
-            appName: "Paste",
-            pinned: library.pinboards.flatMap(\.records),
-            history: library.history,
-            skipped: 0,
-            pinSummary: library.pinboardClipCount > 0 ? library.pinboardSummary : nil
-        )
+    public init(paste plan: PasteImportPlan, snapshot: PasteLibrarySnapshot?) {
+        appName = "Paste"
+        pinned = []
+        history = []
+        skipped = plan.unusable
+        pinSummary = plan.pinSummary
+        self.plan = plan
+        self.snapshot = snapshot
     }
 
     public init(appName: String, library: ClipboardAppLibrary) {
@@ -49,23 +55,29 @@ public struct ImportPreview: Sendable {
     }
 
     public var pinnedCount: Int {
-        pinned.count
+        plan?.pinboards.count ?? pinned.count
     }
 
     public var historyCount: Int {
-        history.count
+        plan?.history.count ?? history.count
     }
 
     public var hasPins: Bool {
-        !pinned.isEmpty
+        pinnedCount > 0
     }
 
     public var isEmpty: Bool {
-        pinned.isEmpty && history.isEmpty
+        pinnedCount == 0 && historyCount == 0
     }
 
     public var oldest: Date? {
-        (pinned + history).map(\.timestamp).min()
+        if let plan { return (plan.pinboards + plan.history).map(\.timestamp).min() }
+        return (pinned + history).map(\.timestamp).min()
+    }
+
+    public func importCount(includingHistory: Bool) -> Int {
+        if let plan { return plan.selectedCount(includingHistory: includingHistory) }
+        return pinned.count + (includingHistory ? history.count : 0)
     }
 
     public func records(includingHistory: Bool) -> [PasteImportRecord] {
@@ -76,7 +88,7 @@ public struct ImportPreview: Sendable {
     /// pinned
     /// clip never goes). Same rule as `ImportReport`, known before the person decides.
     public func expiring(retention: RetentionPolicy, now: Date = .now, includingHistory: Bool) -> Int {
-        guard includingHistory else { return 0 }
+        guard includingHistory, plan == nil else { return 0 }
         let cutoff = now.addingTimeInterval(-retention.maxAge)
         return history.count(where: { $0.timestamp < cutoff })
     }

@@ -30,15 +30,55 @@ struct ImportPreviewSheet: View {
         preview.expiring(retention: retention, includingHistory: importsHistory)
     }
 
+    private var importCount: Int {
+        preview.importCount(includingHistory: importsHistory)
+    }
+
+    private func limitedSummary(_ plan: PasteImportPlan) -> String {
+        let lead = switch plan.lead(includingHistory: importsHistory) {
+        case let .pinboardsAndNewest(count): String(localized: "your collections and the newest \(count.formatted())")
+        case .pinboards: String(localized: "your collections")
+        case let .newest(count): String(localized: "the newest \(count.formatted())")
+        case let .firstPinboards(count): String(localized: "the first \(count.formatted()) from your collections")
+        }
+        let chosen = plan.selectedCount(includingHistory: importsHistory).formatted()
+        return String(localized: "\(chosen) of \(CountText.clips(plan.libraryClips)) will be imported: \(lead).")
+    }
+
     private func pinnedLine(_ summary: String) -> String {
         let found = "Found \(CountText.clips(preview.pinnedCount)) pinned in \(preview.appName): \(summary). "
         return found + "They go into collections, and the clips are pinned."
+    }
+
+    @ViewBuilder
+    private func limitCaptions(_ plan: PasteImportPlan) -> some View {
+        if plan.historyLeftByRetention > 0, importsHistory {
+            Text(
+                "The rest are past Keep clips for and Keep at most. "
+                    + "Raise those in Settings \u{2192} Data to bring in more."
+            )
+            .pestoCaption()
+        }
+        if plan.historyLeftByCap + plan.pinboardsLeftByCap > 0 {
+            let limit = ImportCap.paste.maxClips.formatted() + " clips"
+            Text("Pesto imports at most \(limit) or 1 GB at a time.")
+                .pestoCaption()
+        }
+        if plan.displacedExisting > 0, importsHistory {
+            Text("\(plan.displacedExisting.formatted()) of your older Pesto clips will go to make room.")
+                .pestoCaption()
+        }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Import from \(preview.appName)")
                 .font(.title3.weight(.semibold))
+            if let plan = preview.plan, plan.isLimited {
+                Text(limitedSummary(plan))
+                    .accessibilityIdentifier(AccessibilityID.importPreviewLimits)
+                limitCaptions(plan)
+            }
             if preview.hasPins, let summary = preview.pinSummary {
                 Text(pinnedLine(summary))
             }
@@ -78,7 +118,7 @@ struct ImportPreviewSheet: View {
                     .accessibilityIdentifier(AccessibilityID.importPreviewCancel)
                 Button("Import") { onImport(importsHistory) }
                     .keyboardShortcut(.defaultAction)
-                    .disabled(preview.records(includingHistory: importsHistory).isEmpty)
+                    .disabled(importCount == 0)
                     .accessibilityIdentifier(AccessibilityID.importPasteConfirm)
             }
         }

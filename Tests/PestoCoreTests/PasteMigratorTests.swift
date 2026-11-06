@@ -320,4 +320,19 @@ struct PasteMigratorTests {
         #expect(snippet.isPinned && snippet.isTemplate && snippet.collectionID == nil)
         #expect(try boards(in: container).isEmpty)
     }
+
+    @Test("a text over the size Pesto keeps is counted as left out and the import goes on")
+    func migrate_textOverTheLimit_isSkippedAndTheRunContinues() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let huge = String(repeating: "a", count: ClipSizePolicy.maxTextBytes + 1)
+
+        let summary = try await PasteMigrator(modelContainer: container).migrate(records: [
+            textRecord(pinboard: "Commands", text: huge),
+            textRecord(pinboard: "Commands", text: "after the huge one")
+        ])
+
+        #expect(summary.imported == 1)
+        #expect(summary.skipped == 1)
+        #expect(try items(in: container).count == 1)
+    }
 }

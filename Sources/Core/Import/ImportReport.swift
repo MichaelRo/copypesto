@@ -8,16 +8,20 @@ public struct ImportReport: Equatable, Sendable {
     public let imported: Int
     public let skipped: Int
     public let expiring: Int
+    /// Clips of a library that stayed behind because of the import's limits (the cap, or the retention setting).
+    public let leftByLimits: Int
 
     public init(
         summary: PasteMigrator.Summary,
         librarySkipped: Int = 0,
-        records: [PasteImportRecord],
+        leftByLimits: Int = 0,
+        records: [PasteImportRecord] = [],
         retention: RetentionPolicy,
         now: Date = .now
     ) {
         imported = summary.imported
         skipped = summary.skipped + librarySkipped
+        self.leftByLimits = leftByLimits
         let cutoff = now.addingTimeInterval(-retention.maxAge)
         let older = records.count(where: { $0.pinboard == nil && $0.timestamp < cutoff })
         expiring = min(older, summary.imported)

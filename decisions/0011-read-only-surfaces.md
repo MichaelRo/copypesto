@@ -1,6 +1,6 @@
 # 0011. Importers, the command-line tool and AppleScript are read-only surfaces that never open the store
 
-Status: Accepted
+Status: Accepted. The Paste bounds are superseded by 0032 (a library over the cap is partly imported, not refused).
 
 ## Context
 People switching from another clipboard manager want their curated clips, and scripts want to put text into Pesto and

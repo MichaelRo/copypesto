@@ -133,4 +133,21 @@ struct RecognizedTextTests {
         item.typeRaw = ClipboardType.text.rawValue
         #expect(!RecognizedText.isOffered(for: item, store: store))
     }
+
+    @Test("asking 5,000 pictures whether they read text, as VoiceOver's action list does, costs well under a frame")
+    func whenAskedOfManyPictures_thenCheap() throws {
+        let items = try (0..<5000).map { _ in try picture(preview: "Boarding pass gate B22") }
+        let cold = ContinuousClock.now
+        for item in items {
+            _ = RecognizedText.hasText(item)
+        }
+        let coldElapsed = ContinuousClock.now - cold
+        let warm = ContinuousClock.now
+        for item in items {
+            _ = RecognizedText.hasText(item)
+        }
+        let warmElapsed = ContinuousClock.now - warm
+        #expect(coldElapsed < .milliseconds(500), "cold took \(coldElapsed)")
+        #expect(warmElapsed < .milliseconds(100), "warm took \(warmElapsed)")
+    }
 }

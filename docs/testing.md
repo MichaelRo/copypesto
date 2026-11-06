@@ -251,9 +251,10 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Install from the DMG: download `Pesto-<version>.dmg` from the release, open it, drag Pesto to Applications and open
   it. macOS asks once whether to open an app from the internet; choose Open. Pass: Pesto opens and the setup window
   shows, with no Open Anyway step.
-- SHA-256: `shasum -a 256 ~/Downloads/Pesto-<version>.dmg`, `codesign -dvvv /Applications/Pesto.app` and
-  `spctl -a -vv /Applications/Pesto.app`. Pass: the hash equals the one in the release body, the `.sha256` file and the
-  download page, `codesign` names the Developer ID team, and `spctl` says "Notarized Developer ID".
+- Download check: `make verify-download DMG=~/Downloads/Pesto-<version>.dmg` (`scripts/verify-download.sh`; its failure
+  paths are `VerifyDownloadScriptTests`, its full pass has run once on a real download). Pass: it prints "all checks
+  passed" (hash equals the `.sha256` file, valid signature, the Developer ID team, "Notarized Developer ID", both tickets
+  stapled). By hand only: the hash also equals the one in the release body and on the download page.
 - Local update test (`docs/release.md`, "Each release"): install the previous release, serve a throwaway next one from a
   local appcast, choose Check for Updates… from the menu bar. Pass: it updates to the next version, the history opens with no
   Keychain prompt, and paste still works without granting Accessibility again.

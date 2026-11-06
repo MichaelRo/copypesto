@@ -372,6 +372,10 @@ publish-release: ## [Release] Run checks and package the release DMG
 build-cli: ## [Develop] Build the pesto CLI via SPM
 	DEVELOPER_DIR=$(DEVELOPER_DIR) swift build --product PestoCLI
 
+.PHONY: verify-download
+verify-download: ## [Release] Check a downloaded DMG in seconds: SHA-256 against its .sha256 file, signature and Team ID, Gatekeeper, stapled tickets; DMG=~/Downloads/Pesto-<version>.dmg
+	scripts/verify-download.sh "$(DMG)"
+
 .PHONY: install-cli
 install-cli: build-cli ## [Develop] Build and link the pesto CLI into /usr/local/bin, or ~/.local/bin when that cannot be written
 	.build/debug/PestoCLI install

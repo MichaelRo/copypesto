@@ -498,8 +498,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   passed on 2026-11-06 (Shift-Tab lands on the button); by hand check only the VoiceOver wording.
 - Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a
   card; the double-click hint shows only for mouse users who have not double-clicked yet, at most a few times.
-- Snippets pane (Settings → Snippets). Pass: Your snippets, Starters, From your clips, then the folded Placeholders,
-  Remember fill-in values and Suggestion statistics, in that order.
+- Snippets pane (Settings → Snippets). Pass: Your snippets, Starters, From your clips, then the Placeholders (shown, with a
+  See the guide link that opens the Snippets section of the guide), Remember fill-in values and Suggestion statistics, in that order.
 - Filter chips at rest. Pass: Format reads Any and From reads Any app until something is chosen, then the value.
 
 ## Two Macs: sync

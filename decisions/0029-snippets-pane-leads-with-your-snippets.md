@@ -1,6 +1,6 @@
 # 0029. The Snippets pane leads with the person's snippets, and the placeholder reference is folded
 
-Status: Accepted
+Status: Accepted; the folded placeholder reference is superseded by [0030](0030-placeholders-are-shown-in-the-snippets-pane.md)
 
 Relates to [0017](0017-smart-snippets.md) and [0012](0012-settings-and-shortcuts.md) only through the pane's layout. Nothing about storage, sync, the network or how a snippet is expanded changes.
 

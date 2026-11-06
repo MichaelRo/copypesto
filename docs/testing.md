@@ -312,9 +312,9 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Copy (⌘C) on the shelf. Pass: it copies the focused clip with no beep and the clip moves to the front; in the search
   field it copies the selected text; with a card menu open it still works.
 - Quick Look (⌘Y): copy a GIF from a browser, a page of a PDF and a WebP picture, and two files in Finder. Pass: ⌘Y shows
-  the GIF animating, the PDF page and the picture, not text, and the arrow keys step between the two files. The preview
-  is no larger than about half the display, Esc closes only the preview (the shelf stays), arrow keys then move between
-  clips and open no preview, and ⌘Y opens it again.
+  the GIF animating, the PDF page and the picture, not text, and the arrow keys step between the two files. Esc closes
+  only the preview (the shelf stays), arrow keys then move between clips and open no preview, and ⌘Y opens it again. Its
+  size (a share of the display, centred) is `QuickLookPanelSizingTests`.
 - AI result Paste (needs Apple Intelligence): run an action on a text clip and press Return. Pass: the answer lands in
   the app you were in, also after reading it for over 20 seconds; Copy Result files the answer in the history, Paste does
   not, and the clip it was made from moves to the front.
@@ -361,13 +361,13 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   stat strip; turning either switch on opens its set-up sheet and Cancel leaves it off.
 - The filter bar (ADR 0023), on a real history, on the 14-inch display and a wider one, in Light and Dark. Pass: the
   bar fits without scrolling; Tab walks Kind, Format, Today, Yesterday, More, From and Sensitive; Return opens Format, More
-  and From as native menus, an arrow key moves in the menu and Return picks; the chip names what is chosen ("Last 3 hours",
-  "Safari +1", "Python") and picking it again, or Any Time, Any App or Any Format, clears it. With VoiceOver on, Space on
+  and From as native menus, an arrow key moves in the menu and Return picks; picking a chosen value again, or Any Time, Any
+  App or Any Format, clears it (what a chip says is `FilterMenuLabelTests`). With VoiceOver on, Space on
   each of the three menu chips opens its menu (the runner cannot press a pop-up with VoiceOver).
 - Ask with dates: "invoice on Nov 3", "links last 3 hours", "report between Nov 1 and Nov 3", "last Thursday". Pass: the More
   chip names the range and the shelf shows only clips from it; copy something new and "last 3 hours" still shows it.
 - The clip menu's Paste (ADR 0009): right-click a clip, then ⌘K on another. Pass: Paste, Paste as Plain Text, Copy and
-  Quick Look come first with their keys beside them (↩, ⇧↩, ⌘C, ⌘Y); Paste puts the clip in the app behind the shelf; in a
+  Quick Look come first (the order is `SettingsEffectsTests`) with their keys beside them (↩, ⇧↩, ⌘C, ⌘Y); Paste puts the clip in the app behind the shelf; in a
   floating window set to copy only there is no Paste; with several clips selected the menu's Paste pastes only the clip
   under the pointer, as intended, while Return pastes the selection one by one; and Return in an open menu pastes once.
 - The shelf's memory (`ShelfContextPolicy`, 90 seconds): open a collection and search, close the shelf, reopen within a
@@ -428,9 +428,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   the shelf on one display, choose Settings from its gear; with the shelf closed, choose Settings from the menu-bar
   icon with the pointer on the other display. Pass: Settings opens on the display in use each time, at the size it was
   closed at, and a window already open is only brought forward, not moved.
-- Import offer with two or more clipboard managers really installed (Paste and Maccy). Pass: the shelf says "You have
-  Paste and Maccy", *Choose…* opens Settings → Data scrolled to **Found on this Mac** with each app's own icon, *Import…*
-  on a row asks for Touch ID and a file for that app only, and the row then says "Imported N clips".
+- Import offer with two or more clipboard managers really installed (Paste and Maccy). Pass: (the sentence is `ImportOfferTests`) *Choose…* opens Settings → Data scrolled to **Found on this Mac**
+  with each app's own icon, *Import…* on a row asks for Touch ID and a file for that app only, and the row then says "Imported N clips".
 - Card typography (`docs/design/card-typography.md`, option B): copies from three different apps on every theme in light
   and dark at Small, Medium and Large. Pass: the header names the app at a glance (the 32% wash is enough on Parmesan and
   Pine nut), the text is the loudest thing on the card, and a long text shows 4, 5 and 6 lines with a clear gap above
@@ -490,9 +489,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Delete one clip, then several with Space and ⌫, then a collection from its chip, with the shelf at the bottom and at the
   top. Pass: each shows the bar with Undo, ⌘Z brings it back in the same place with its pin, note and shortcut, and ⇧⌘Z
   deletes it again.
-- The delete question. Pass: it says "You can undo this with ⌘Z" for an ordinary clip (including secrets and credit cards,
-  which are sealed in memory under ADR 0008) and "This can't be undone" for a password manager copy, a burn-after-paste or
-  expiring clip and a very large one (> 4 MB).
 - Rename, add a note, a tag, move a clip to a collection by dragging it to a chip, reorder cards in a collection, pin,
   give a shortcut; create, rename, duplicate and reorder collections. Pass: ⌘Z undoes each, in the order made.
 - In Settings → Snippets add, edit and delete a snippet and import a snippets file; in Settings → Collections import a
@@ -508,20 +504,18 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   leads with its host and shows no query. PDF, video, code and long-text cards look as they did.
 - Scroll 5,000 clips of mixed kinds (`make bench-scroll` covers the numbers). Pass: nothing stutters on the picture and
   GIF cards, and Activity Monitor shows memory under the budget after a minute of scrolling.
-- Covered card for a screen share (start a share, or Hide Clip Contents) and the content filter's blur. Pass: a covered
-  card shows only its ⌘ number, kind and age, never the app, category, size, file name, domain or color; the menu offers
-  Paste, Paste as Plain Text, Copy, Delete and Show; with VoiceOver on, its actions list holds no Rename, Add Note,
-  Add Tag, Pin, Open or tag names (the `.accessibilityAction`s follow the same allowlist); and a click or Return still
-  pastes it without showing it.
+- A covered card (screen share, Hide Clip Contents, the content filter's blur): a click or Return still pastes it without
+  showing it. What it draws is the `test_coveredCard_showsNumberKindAndAge` baseline, what its menu and VoiceOver actions
+  offer is `CardConcealmentTests` and `CoveredMenuWiringTests`.
 - No Results: type a search with no match, then add a filter chip and do it again. Pass: the Clear Search or Clear
   Filters button shows; Tab (and Shift-Tab) from the search field walks the chips and ends on the button, Return presses
   it, VoiceOver says "Filters cleared" or "Search cleared", and Return on the field itself still saves the query. `NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt` covers the Tab walk and
   passed on 2026-11-06 (Shift-Tab lands on the button); by hand check only the VoiceOver wording.
 - Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a
-  card; the double-click hint shows only for mouse users who have not double-clicked yet, at most a few times.
+  card. When the hint shows is `ClickHintPolicyTests` (a first focusing click, at most three times, never after a double
+  click).
 - Snippets pane (Settings → Snippets). Pass: Your snippets, Starters, From your clips, then the Placeholders (shown, with a
   See the guide link that opens the Snippets section of the guide), Remember fill-in values and Suggestion statistics, in that order.
-- Filter chips at rest. Pass: Format reads Any and From reads Any app until something is chosen, then the value.
 
 ## Two Macs: sync
 Run once at the end, on two Macs signed in to the same Apple Account with iCloud Drive on, with a build from `make release SYNC_PROFILE=…` (iCloud Keychain key) and, separately, with the daily self-signed build (this-device key). Never use a Mac whose history matters: turn sync on only after a backup. Pass means every line holds.

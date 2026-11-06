@@ -14,8 +14,10 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
 
     private func openRestoreWindow() {
         XCTAssertTrue(restoreFromBackup.waitForExistence(timeout: 30), "the lost-key alert did not appear")
+        capture("key-loss-alert", of: app.dialogs.firstMatch)
         restoreFromBackup.click()
         XCTAssertTrue(app.buttons["Choose Backup\u{2026}"].waitForExistence(timeout: 10), "no restore window")
+        capture("key-loss-restore-window")
         app.buttons["Choose Backup\u{2026}"].click()
     }
 
@@ -35,6 +37,7 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
 
         if !app.buttons["Back"].waitForExistence(timeout: 10) { dumpState("after-open") }
         XCTAssertTrue(app.buttons["Back"].exists, "a wrong passphrase showed no error")
+        capture("key-loss-wrong-passphrase")
         app.buttons["Close"].click()
         XCTAssertTrue(restoreFromBackup.waitForExistence(timeout: 10), "the alert did not come back")
     }
@@ -46,6 +49,7 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
         open(with: passphrase)
 
         XCTAssertTrue(app.buttons["Restore"].waitForExistence(timeout: 20), "the preview did not open")
+        capture("key-loss-preview")
         // The sheet's texts reach XCUITest as `value`, not `label`.
         let warning = app.staticTexts.matching(NSPredicate(
             format: "value CONTAINS 'Restoring replaces it with this backup' OR label CONTAINS 'Restoring replaces it'"

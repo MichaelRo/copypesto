@@ -31,7 +31,7 @@ final class StackHUDViewModel {
 
 // MARK: - HUD view
 
-private struct StackHUDView: View {
+struct StackHUDView: View {
     @Environment(\.pestoAccent) private var accent
     @Environment(\.colorSchemeContrast) private var contrast
     @State var model: StackHUDViewModel

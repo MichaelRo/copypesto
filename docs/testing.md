@@ -480,6 +480,29 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - ⌘Z in the shelf's search field. Pass: it undoes typing while there is text, and the shelf's last action when the field
   is empty.
 
+**Cards, cover, No Results and the click hint (ADRs 0026 to 0029)**
+- Content-first cards: copy a picture, a GIF, a color, a short sentence and a plain link, and look at the shelf in light
+  and dark. Pass: the picture and GIF fill the card with readable text over it, the GIF moves where it did before, the
+  color card's text is readable on a light and a dark color, short text is larger than a paragraph, and a plain link leads
+  with its host and shows no query. PDF, video, code and long-text cards look as they did.
+- Scroll 5,000 clips of mixed kinds (`make bench-scroll` covers the numbers). Pass: nothing stutters on the picture and
+  GIF cards, and Activity Monitor shows memory under the budget after a minute of scrolling.
+- Covered card for a screen share (start a share, or Hide Clip Contents) and the content filter's blur. Pass: a covered
+  card shows only its ⌘ number, kind and age, never the app, category, size, file name, domain or color; the menu offers
+  Paste, Paste as Plain Text, Copy, Delete and Show; with VoiceOver on, its actions list holds no Rename, Add Note,
+  Add Tag, Pin, Open or tag names (the `.accessibilityAction`s follow the same allowlist); and a click or Return still
+  pastes it without showing it.
+- No Results: type a search with no match, then add a filter chip and do it again. Pass: the Clear Search or Clear
+  Filters button shows; Tab (and Shift-Tab) from the search field walks the chips and ends on the button, Return presses
+  it, VoiceOver says "Filters cleared" or "Search cleared", and Return on the field itself still saves the query. A UI
+  test, `NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt`, was written from the
+  cursor code and not yet run: run it and confirm Shift-Tab lands on the button.
+- Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a
+  card; the double-click hint shows only for mouse users who have not double-clicked yet, at most a few times.
+- Snippets pane (Settings → Snippets). Pass: Your snippets, Starters, From your clips, then the folded Placeholders,
+  Remember fill-in values and Suggestion statistics, in that order.
+- Filter chips at rest. Pass: Format reads Any and From reads Any app until something is chosen, then the value.
+
 ## Two Macs: sync
 Run once at the end, on two Macs signed in to the same Apple Account with iCloud Drive on, with a build from `make release SYNC_PROFILE=…` (iCloud Keychain key) and, separately, with the daily self-signed build (this-device key). Never use a Mac whose history matters: turn sync on only after a backup. Pass means every line holds.
 

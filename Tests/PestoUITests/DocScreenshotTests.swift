@@ -7,8 +7,12 @@ import XCTest
 /// `scripts/export-doc-images.sh`
 /// copies them out of the newest `scripts/verify.sh` run.
 final class DocScreenshotTests: PestoUITestCase {
-    private func showShelf(mode: String, seed: String = "marketing") {
-        launch(seed: seed, defaults: ["hasOnboarded": "true", "appearanceMode": mode], backdrop: "plain")
+    private func showShelf(mode: String, seed: String = "marketing", surface: String = "solid") {
+        launch(
+            seed: seed,
+            defaults: ["hasOnboarded": "true", "appearanceMode": mode, "shelfSurface": surface],
+            backdrop: "plain"
+        )
         showOverlay()
         XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
         parkPointer()
@@ -22,6 +26,12 @@ final class DocScreenshotTests: PestoUITestCase {
     func test_shelf_light() {
         showShelf(mode: "light")
         capture("showcase-light")
+    }
+
+    /// ADR 0035: the shelf on Glass, for the Shelf surface paragraph of the guide. The other pictures show the default.
+    func test_shelf_glass() {
+        showShelf(mode: "light", surface: "glass")
+        capture("showcase-glass")
     }
 
     func test_search() {

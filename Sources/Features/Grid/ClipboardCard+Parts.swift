@@ -45,7 +45,48 @@ extension ClipboardCard {
         return typeMeta.label
     }
 
+    @ViewBuilder
+    func headerTexts(over: HeaderOverlay?) -> some View {
+        if let over {
+            if let name = overlayTitle {
+                Text(name)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(over.ink.opacity(PictureScrim.nameOpacity))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .help(name)
+            }
+            Text(timeAgo)
+                .font(.caption2)
+                .foregroundStyle(over.ink.opacity(over.ageOpacity))
+                .lineLimit(1)
+        } else {
+            Text(headerTitle)
+                .font(.caption.weight(.medium))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .help(headerTitle)
+            Text(isPointed && !item.headerNamesTheApp ? (item.knownSourceAppName ?? timeAgo) : timeAgo)
+                .font(.caption2)
+                .foregroundStyle(AdaptiveContrast.quiet(contrast))
+                .lineLimit(1)
+        }
+    }
+
     var cardHeader: some View {
+        header(over: nil)
+    }
+
+    /// What the header of a picture or color card shows as its name: the title the person gave it, else the app it
+    /// came from, never the kind word.
+    var overlayTitle: String? {
+        if let title = item.customTitle { return title }
+        return item.isRemote ? String(localized: "Another device") : item.sourceAppName
+    }
+
+    /// The header band, or, with `over`, the header of a card whose picture or color fills it: no band wash, the app
+    /// name in place of the kind word, and `over.ink` for text (a dark scheme for white ink, so the badges follow).
+    func header(over: HeaderOverlay?) -> some View {
         HStack(alignment: .center, spacing: 9) {
             if let customSymbol = item.customSymbolName {
                 CollectionIcon(symbolName: customSymbol)
@@ -62,15 +103,7 @@ extension ClipboardCard {
                 )
             }
             VStack(alignment: .leading, spacing: 1) {
-                Text(headerTitle)
-                    .font(.caption.weight(.medium))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .help(headerTitle)
-                Text(isPointed && !item.headerNamesTheApp ? (item.knownSourceAppName ?? timeAgo) : timeAgo)
-                    .font(.caption2)
-                    .foregroundStyle(AdaptiveContrast.quiet(contrast))
-                    .lineLimit(1)
+                headerTexts(over: over)
             }
             Spacer(minLength: 2)
             headerBadges
@@ -91,13 +124,16 @@ extension ClipboardCard {
         .padding(.horizontal, 10)
         .frame(height: CardLayout.headerHeight)
         .background {
-            ZStack {
-                accent.opacity(Self.themeWashOpacity)
-                LinearGradient(
-                    colors: [headerTint.opacity(Self.appWashShare), .clear], startPoint: .top, endPoint: .bottom
-                )
+            if over == nil {
+                ZStack {
+                    accent.opacity(Self.themeWashOpacity)
+                    LinearGradient(
+                        colors: [headerTint.opacity(Self.appWashShare), .clear], startPoint: .top, endPoint: .bottom
+                    )
+                }
             }
         }
+        .environment(\.colorScheme, over?.scheme ?? colorScheme)
         .animation(Motion.animation(.easeOut(duration: 0.14)), value: isPointed)
     }
 
@@ -278,7 +314,7 @@ extension ClipboardCard {
     var cardFooter: some View {
         VStack(alignment: .leading, spacing: 3) {
             if !item.tags.isEmpty {
-                tagChipsRow
+                tagChipsRow()
             }
             ViewThatFits(in: .horizontal) {
                 footerLine(detail: footerDetail(withLines: true))
@@ -332,7 +368,8 @@ extension ClipboardCard {
             .accessibilityHidden(true)
     }
 
-    var tagChipsRow: some View {
+    /// `onDark` is a row over a picture or color, where a chip's usual tint would not read: white text on a dark chip.
+    func tagChipsRow(onDark: Bool = false) -> some View {
         // A clipped row, not a nested ScrollView: a horizontal scroll view inside the shelf's own one took trackpad
         // scrolls that began over a tag, so the shelf stuck.
         HStack(spacing: 3) {
@@ -345,11 +382,14 @@ extension ClipboardCard {
                         Circle().fill(tagColor(for: tag)).frame(width: 6, height: 6)
                         Text(tag)
                             .font(.caption2.weight(.medium))
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(onDark ? Color.white : Color.primary)
                     }
                     .padding(.horizontal, 6)
                     .frame(minHeight: 20)
-                    .background(tagColor(for: tag).opacity(0.18), in: Capsule())
+                    .background(
+                        onDark ? Color.black.opacity(PictureScrim.pillOpacity) : tagColor(for: tag).opacity(0.18),
+                        in: Capsule()
+                    )
                     .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)

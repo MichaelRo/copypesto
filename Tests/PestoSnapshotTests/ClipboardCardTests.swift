@@ -294,4 +294,120 @@ final class ClipboardCardTests: XCTestCase {
                 .environment(\.reduceTransparencyOverride, true)
         )
     }
+
+    // MARK: - Content first (ADR 0026)
+
+    private func samplePicture(aspect: CGFloat) -> NSImage {
+        let size = CGSize(width: 480, height: 480 / aspect)
+        return NSImage(size: size, flipped: false) { rect in
+            NSGradient(colors: [.systemTeal, .systemYellow, .white])?.draw(in: rect, angle: 35)
+            NSColor.systemOrange.setFill()
+            NSBezierPath(ovalIn: rect.insetBy(dx: rect.width * 0.3, dy: rect.height * 0.3)).fill()
+            return true
+        }
+    }
+
+    private func pictureItem(
+        in ctx: ModelContext, aspect: CGFloat, animated: Bool = false, source: String = "Preview"
+    )
+    -> ClipboardItem {
+        let item = makeItem(in: ctx, type: .image, preview: "")
+        item.sourceAppName = source
+        item.byteSize = 98_304
+        ThumbnailCache.shared.store(
+            .init(image: samplePicture(aspect: aspect), isAnimated: animated, byteSize: item.byteSize), for: item.id
+        )
+        return item
+    }
+
+    func test_pictureCard_fillsTheCard() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 16.0 / 9.0)
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), named: "light", colorScheme: .light)
+    }
+
+    func test_pictureCard_tallScreenshotIsFitted() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 0.4, source: "Screenshot")
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 3))
+    }
+
+    func test_gifCard_fillsTheCardWithABadge() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 1.2, animated: true, source: "Safari")
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 2))
+    }
+
+    func test_pictureCard_small() throws {
+        defer { ThumbnailCache.shared.clear() }
+        try withCardWidth(160) {
+            let ctx = try makeContext()
+            let item = pictureItem(in: ctx, aspect: 1.5)
+            snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), cardSize: CardMetrics.dimensions(width: 160))
+        }
+    }
+
+    func test_colorCard_lightFillTakesBlackInk() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .color, preview: "#C9A227")
+        item.sourceAppName = "Digital Color Meter"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 3))
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 3), named: "light", colorScheme: .light)
+    }
+
+    func test_largeTextCard_bucketsBySize() throws {
+        let ctx = try makeContext()
+        for (name, text) in [
+            ("up16", "Meeting at 3pm"),
+            ("up32", "Remember to call the dentist"),
+            ("up48", "The quarterly numbers look good, send them on")
+        ] {
+            let item = makeItem(in: ctx, type: .text, preview: text)
+            item.sourceAppName = "Notes"
+            snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), named: name)
+        }
+    }
+
+    func test_largeTextCard_small() throws {
+        try withCardWidth(160) {
+            let ctx = try makeContext()
+            let item = makeItem(in: ctx, type: .text, preview: "The quarterly numbers look good, send them on")
+            snapshotCard(ClipboardCard(item: item), cardSize: CardMetrics.dimensions(width: 160))
+        }
+    }
+
+    func test_linkCard_leadsWithTheRealHost() throws {
+        let ctx = try makeContext()
+        let item = makeItem(
+            in: ctx, type: .url,
+            preview: "https://news.example.com:8443/2026/11/story-about-a-very-long-headline?token=s3cr3t#frag"
+        )
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+    }
+
+    func test_linkCard_withMetadataKeepsItsRichBody() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .url, preview: "https://news.example.com/2026/11/story")
+        item.ogTitle = "A story worth reading"
+        item.ogSiteName = "Example News"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+    }
+
+    func test_pictureCard_pasteCountPillOverABrightPicture() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 1.5)
+        item.pasteCount = 4
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+    }
+
+    func test_shortCoveredText_keepsTheStandardCard() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .text, preview: "hunter2")
+        snapshotCard(ClipboardCard(item: item, isPrivacyBlurred: true))
+    }
 }

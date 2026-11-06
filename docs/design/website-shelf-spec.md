@@ -59,6 +59,16 @@ accent at 8%) is unchanged.
 ## A lone glyph
 A text clip that is exactly one emoji or symbol (`CardPreviewText.isSingleGlyph`: one character, emoji presentation or Unicode category So, Sm or Sc) is centered in the body at 64 pt (scaled by `CardTextScale`) with no margins; header and footer are unchanged. Secrets and hidden clips never take this layout. References: `test_singleEmojiCard.{1,light}.png`, `test_singleSymbolCard.{1,light}.png`.
 
+## Content-first cards (ADR 0026)
+Decided by `CardTreatment` (Core); the site's demo shelf follows in a separate website change. Header, tile, corner and rings are as above unless said.
+| Clip | Card |
+|---|---|
+| Picture, GIF | The picture fills the card (`object-fit: cover`) when its aspect ratio (width / height) is 0.6 to 2.0; otherwise it is `contain`ed below the 34 px header on a 6% white ground. The header floats over it with no band wash: tile, then the app's name (not "Image" or "GIF") at 12 px medium and the age at 11 px, in white. Scrim: black 60% from the top edge to 34 px, fading to clear by 74 px (`PictureScrim`: 60%, 34, 40). Bottom left, 10 px in, 8 px up: the shortcut number in a 5 px radius pill, monospaced 11 px semibold, white on black 60% with a 1 px white 55% outline; a GIF also has a "GIF" pill beside it. The paste count (`↑4`) is a pill of the same kind at the bottom right; a collection badge and tag chips are white on black 60% too. No footer line. |
+| Color | The card is the color. Header as above, in black or white ink at full strength for name and age (the higher WCAG contrast on the fill). The text is 26 px semibold (15 px if longer than 9 characters) bottom left, 12 px in, above an outlined shortcut pill in the same ink. |
+| One line of text, 48 characters or fewer | Body in 600 weight: 24 px up to 16 characters, 20 px up to 32, 17 px up to 48, line height 1.25, at most 3 lines (2 on the small card). Header and footer as for text. A lone emoji or symbol keeps the glyph layout. |
+| Link, no preview picture | The host (lower case, user info dropped, never the page's own site name) at 22 px semibold up to 14 characters, 17 px up to 22, 15 px beyond, wrapping after dots; beneath it the port, path and query at 11 px in the muted color, up to 3 lines. A link with a preview picture keeps its picture body. |
+Unchanged: code, multi-line or long text, every file card, anything hidden, masked or covered.
+
 ## Whitespace (`card-whitespace.md`)
 The app compacts a clip for display (a pure function, `CardPreviewText.display`); hand-written samples can follow the same
 rules by writing them that way:
@@ -160,7 +170,7 @@ the release step syncs.
 
 Filter groups, in order: Kind, Format, When, From, Other.
 
-- **In the app (`CommandBarView.swift`, ADR 0023):** Kind is any of six kind chips. Format is one labelled menu chip (Markdown, JSON and the languages in the history). When is **Today** and **Yesterday** chips plus a **More** menu chip (Any Time, Last 7 and 30 Days, the last hours, a day). From is one labelled menu chip listing every app. Other holds Sensitive, and Other Devices and Hidden when they apply. The top row (collections, then the apps clips came from) shows the frontmost app and three recent ones: four app chips.
+- **In the app (`CommandBarView.swift`, ADR 0023):** Kind is any of six kind chips. Format is one menu chip (Markdown, JSON and the languages in the history) that reads Any until one is chosen, then its name (ADR 0025). When is **Today** and **Yesterday** chips plus a **More** menu chip (Any Time, Last 7 and 30 Days, the last hours, a day). From is one menu chip listing every app that reads Any app until one is chosen, then its name. Other holds Sensitive, and Other Devices and Hidden when they apply. The top row (collections, then the apps clips came from) shows the frontmost app and three recent ones: four app chips.
 - **On the website (`Shelf.astro`, `src/lib/shelf-demo.ts`):** the same five groups in the same order (`filterGroups`), pinned by `tests/shelf-filter.test.ts` and `tests/shelf-spec.test.ts`, which read the line above. Format, More and From are `<details>` menus with no script that open upward from the docked shelf; Today and Yesterday are radio chips (the menu's Any Time clears them). The sample clips are all from the last two days, so Last 7 and 30 Days leave them all. Four app chips on the top row. **Intentional differences:** a menu stays open until its chip is pressed again (no script to close it); From is a plain list without the clip counts; Format lists only the formats the sample clips have.
 - **Changing the groups:** edit the line above, `CommandBarView.swift` and the site's `filterGroups` together; `CardSpecDriftTests` fails for the app and the site's test fails for the site.
 

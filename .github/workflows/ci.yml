@@ -1,7 +1,8 @@
 name: CI
 
 # The Linux analytics check runs on every push and pull request. The macOS `verify` job (the whole gate, on the Xcode 27
-# runner image) runs on every pull request and by hand, not on every push to main. On a hosted runner the card snapshots,
+# runner image) runs on a pull request that changes code, whose base is main, and not again for a tree that already passed;
+# also by hand, not on every push to main. On a hosted runner the card snapshots,
 # text recognition and a few hardware budgets are skipped; `scripts/verify.sh` locally runs all of them.
 on:
   pull_request:
@@ -25,6 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      tree: ${{ steps.filter.outputs.tree }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -39,6 +41,10 @@ jobs:
             echo "code=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
+          # The files of the pull request's own last commit, not of the merge with main: a rebase that changes no file
+          # keeps this value, which is how `verify` knows it has already passed on exactly this content.
+          echo "tree=$(git rev-parse "${{ github.event.pull_request.head.sha }}^{tree}")" >> "$GITHUB_OUTPUT"
 
           # Compare against the PR base branch.
           base_ref="origin/${{ github.base_ref }}"
@@ -81,27 +87,55 @@ jobs:
 
   # The same gate as `scripts/verify.sh` on a developer machine, minus the UI tests (they drive real windows and need
   # a Mac that has granted the runner automation permission; run them locally, see docs/testing.md).
+  #
+  # It does not run on a pull request stacked on another branch (its base is not main; it runs when it is retargeted),
+  # and it does not run again on files that already passed: a green run leaves a marker keyed by the pull request's
+  # tree, and a later run with the same tree (a rebase that changed nothing, a re-run) skips every step and reports
+  # success in about a minute.
   verify:
     needs: [detect-changes]
-    if: github.event_name != 'push' && needs.detect-changes.outputs.code == 'true'
+    if: >-
+      github.event_name != 'push' && needs.detect-changes.outputs.code == 'true'
+      && github.base_ref == github.event.repository.default_branch
     runs-on: xcode-27
     timeout-minutes: 45
     env:
       PESTO_DISABLE_TEXT_RECOGNITION: "1"
     steps:
+      - name: Has this exact content already passed?
+        id: seen
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .verified
+          key: verified-${{ needs.detect-changes.outputs.tree }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.seen.outputs.cache-hit != 'true'
         with:
           persist-credentials: false
       - name: Select the newest Xcode
+        if: steps.seen.outputs.cache-hit != 'true'
         run: scripts/select-xcode.sh
       - name: Install pinned tools (SwiftFormat, SwiftLint, XcodeGen; checksummed)
+        if: steps.seen.outputs.cache-hit != 'true'
         run: |
           tools="$(scripts/install-tools.sh)"
           echo "$tools" >> "$GITHUB_PATH"
       - name: Verify (lint, all SPM tests, build, hosted tests)
+        if: steps.seen.outputs.cache-hit != 'true'
         run: scripts/verify.sh --no-ui
+      - name: Remember that this content passed
+        if: success() && steps.seen.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .verified
+          echo "passed" > .verified/result
+      - name: Save the marker
+        if: success() && steps.seen.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .verified
+          key: verified-${{ needs.detect-changes.outputs.tree }}
       - name: Upload logs
-        if: always()
+        if: always() && steps.seen.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: verify-logs

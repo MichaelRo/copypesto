@@ -115,6 +115,8 @@ struct RestoreSheet: View {
     @Environment(AppState.self) private var appState: AppState
     /// Set when the history cannot be opened: the restore discards it first, after the backup has been verified.
     var replacing: (@MainActor () throws -> Void)?
+    /// False in the lost-key window, whose title bar already says it.
+    var showsHeading = true
     @State private var file: URL?
     @State private var kind = CredentialKind.passphrase
     @State private var secret = ""
@@ -124,7 +126,9 @@ struct RestoreSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Restore from Backup").font(.title3.weight(.semibold))
+            if showsHeading {
+                Text("Restore from Backup").font(.title3.weight(.semibold))
+            }
             Group {
                 switch phase {
                 case .choose: choose

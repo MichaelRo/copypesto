@@ -27,6 +27,18 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
         app.buttons["Open"].click()
     }
 
+    /// The window's title bar says "Restore from Backup"; the same words as a heading under it said it twice.
+    func test_theRestoreWindow_namesItselfOnce() {
+        launch(seed: "empty", keyLoss: true)
+        openRestoreWindow()
+
+        XCTAssertTrue(app.windows["Restore from Backup"].waitForExistence(timeout: 10), "the window has no title")
+        let headings = app.staticTexts.matching(NSPredicate(
+            format: "label == 'Restore from Backup' OR value == 'Restore from Backup'"
+        ))
+        XCTAssertEqual(headings.count, 1, "the title bar and a heading both say Restore from Backup")
+    }
+
     func test_aWrongPassphrase_changesNothing_andCloseBringsTheAlertBack() {
         launch(seed: "empty", keyLoss: true)
         openRestoreWindow()

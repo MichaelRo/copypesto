@@ -5,14 +5,17 @@ import SwiftUI
 
 /// The hover card: the clip itself, more than the card has room for. The whole text (rendered when it is Markdown,
 /// highlighted when it is code), a link's title and address, a picture larger, a file's paths, a colour as a swatch,
-/// then one line of facts. It has no buttons: actions live in the card's context menu, where they work on the whole
-/// clip. A card that scrolls takes the pointer; the rest let it through (`HoverCardHost`). A secret shows only facts.
+/// then one line of facts. It has one button, Copy Text on a picture that read some text (ADR 0034); every other action
+/// lives in the card's context menu, where it works on the whole clip. A card that scrolls or has the button takes the
+/// pointer; the rest let it through (`HoverCardHost`). A secret shows only facts.
 struct CardDetailPopover: View {
     let item: ClipboardItem
     var collectionName: String?
     var isRevealed: Bool
     var revealedText: String?
     var onScrollsChange: ((Bool) -> Void)?
+    /// Copies the whole text of a picture; nil when the picture does not offer it.
+    var onCopyRecognizedText: (() -> Bool)?
     @State private var shown: (text: String, wasCut: Bool)
     @State private var highlighted: AttributedString?
     @State private var textSize: CGSize?
@@ -30,13 +33,15 @@ struct CardDetailPopover: View {
         collectionName: String? = nil,
         isRevealed: Bool = false,
         revealedText: String? = nil,
-        onScrollsChange: ((Bool) -> Void)? = nil
+        onScrollsChange: ((Bool) -> Void)? = nil,
+        onCopyRecognizedText: (() -> Bool)? = nil
     ) {
         self.item = item
         self.collectionName = collectionName
         self.isRevealed = isRevealed
         self.revealedText = revealedText
         self.onScrollsChange = onScrollsChange
+        self.onCopyRecognizedText = onCopyRecognizedText
         let effectiveSensitive = item.sensitivity != nil && !isRevealed
         let baseText = isRevealed ? (revealedText ?? item.gridPreview) : item.gridPreview
         let first = Self.cut(item, of: baseText, isSensitive: effectiveSensitive)
@@ -209,7 +214,13 @@ struct CardDetailPopover: View {
             let inPicture = item.displayPreviewText.trimmingCharacters(in: .whitespacesAndNewlines)
             if !inPicture.isEmpty {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Text in the picture").scaledFont(size: 11, weight: .semibold).foregroundStyle(factsStyle)
+                    HStack(alignment: .center, spacing: 8) {
+                        Text("Text in the picture").scaledFont(size: 11, weight: .semibold).foregroundStyle(factsStyle)
+                        Spacer(minLength: 0)
+                        if let copy = onCopyRecognizedText {
+                            HoverCardCopyButton(quiet: factsStyle, copy: copy)
+                        }
+                    }
                     Text(String(inPicture.prefix(300))).scaledFont(size: 12).lineLimit(3)
                 }
                 .padding(.horizontal, 10)

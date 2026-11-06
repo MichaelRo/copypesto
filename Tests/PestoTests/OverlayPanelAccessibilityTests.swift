@@ -34,7 +34,7 @@ struct OverlayPanelAccessibilityTests {
         let owner = UUID()
         var escapeCalled = false
         HoverCardHost.shared.present(.init(
-            owner: owner, anchor: anchor, scrolls: false, content: { AnyView(EmptyView()) },
+            owner: owner, anchor: anchor, takesPointer: false, content: { AnyView(EmptyView()) },
             onPointerInside: { _ in }, onReplaced: {}, onEscape: { escapeCalled = true }
         ))
 

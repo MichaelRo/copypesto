@@ -20,7 +20,7 @@ struct CoveredMenuWiringTests {
     func voiceOverActionsAreGated() throws {
         let gated: [(file: String, expected: [String])] = [
             ("Features/Grid/CardEditActions.swift", ["rename", "note", "tag"]),
-            ("Features/Grid/CardMoreActions.swift", ["pin", "openLink", "tag"])
+            ("Features/Grid/CardMoreActions.swift", ["pin", "openLink", "tag", "copyRecognizedText"])
         ]
         for (file, expected) in gated {
             let source = try String(contentsOf: SourceTree.sources.appendingPathComponent(file), encoding: .utf8)
@@ -86,5 +86,49 @@ struct CoveredMenuWiringTests {
                 "\(SourceTree.relativePath(file)) reaches the structured transforms"
             )
         }
+    }
+
+    @Test("Copy Recognized Text is no covered-card entry and has no side door beyond its own files")
+    func recognizedTextHasNoSideDoor() throws {
+        #expect(!CardMenuItem.coveredAllowed.contains(.copyRecognizedText))
+        #expect(!CardMenuItem.copyRecognizedText.isOffered(covered: true))
+        let files = try SourceTree.files(in: "Features", minimum: 100)
+        let allowed: Set = [
+            "CardActions.swift", "GridView+Card.swift", "GridView+Actions.swift", "ClipboardCard+ContextMenu.swift",
+            "ClipboardCard.swift", "ClipboardCard+HoverCard.swift", "CardMoreActions.swift", "CardDetailPopover.swift",
+            "HoverCardCopyButton.swift"
+        ]
+        for file in files where !allowed.contains(file.lastPathComponent) {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            #expect(
+                !text.contains("RecognizedText") && !text.contains("recognizedText"),
+                "\(SourceTree.relativePath(file)) reaches the recognized text"
+            )
+        }
+    }
+
+    @Test(
+        "the hover card's Copy Text is built only for a clip the shelf said offers it, and the grid asks the lock first"
+    )
+    func hoverButtonIsGated() throws {
+        let hover = try String(
+            contentsOf: SourceTree.sources.appendingPathComponent("Features/Grid/ClipboardCard+HoverCard.swift"),
+            encoding: .utf8
+        )
+        #expect(hover.contains("actions.recognizedTextOffered?(item) == true"))
+        #expect(hover.contains("onCopyRecognizedText: detailCopiesText ?"))
+        let grid = try String(
+            contentsOf: SourceTree.sources.appendingPathComponent("Features/Grid/GridView+Card.swift"),
+            encoding: .utf8
+        )
+        #expect(grid.contains("!appState.isHistoryLockedNow() && RecognizedText.isOffered(for: $0)"))
+        let actions = try String(
+            contentsOf: SourceTree.sources.appendingPathComponent("Features/Grid/GridView+Actions.swift"),
+            encoding: .utf8
+        )
+        #expect(
+            actions.contains("appState.writeText(text, protected: false)"),
+            "the copy must go through the write gate"
+        )
     }
 }

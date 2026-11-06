@@ -38,6 +38,13 @@ public enum RecognizedText {
         return store.exists(for: item.id) || wholePreview(of: item) != nil
     }
 
+    /// A necessary condition that costs nothing a card has not already paid (its preview is cached): the picture is
+    /// eligible and read some text. VoiceOver lists the action on this; the action itself asks `isOffered`.
+    @MainActor
+    public static func hasText(_ item: ClipboardItem) -> Bool {
+        isEligible(item) && !item.displayPreviewText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// The text to write, nil when the picture does not offer it or its file will not open. A file that will not open
     /// is not replaced by the preview.
     @MainActor

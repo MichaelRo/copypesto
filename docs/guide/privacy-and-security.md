@@ -5,7 +5,7 @@ that should not see it.
 
 ## What Pesto stores
 Text, code, links, pictures, files and colors you copy, with the app they came from, the time, and any tags or notes
-you add. Text found inside pictures (OCR) is stored so pictures are searchable.
+you add. Text found inside pictures (OCR) is stored so pictures are searchable and so you can copy it (the first 500 characters with the clip, up to 100,000 bytes in a file of its own), encrypted like the rest, and never kept for a picture that holds a secret.
 
 ## Where it stays
 Your history lives in `~/Library/Application Support/net.copypesto.pesto/` on this Mac. **Pesto uploads nothing itself.** There is no

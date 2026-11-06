@@ -7,6 +7,7 @@ public enum CardMenuItem: CaseIterable, Sendable {
     case pastePlain
     case copy
     case copyLinkPreview
+    case copyRecognizedText
     case quickLook
     case revealSecret
     case decodeJWT

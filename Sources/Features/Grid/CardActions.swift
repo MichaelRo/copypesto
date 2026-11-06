@@ -42,6 +42,12 @@ struct CardActions {
     var togglePin: (@MainActor (ClipboardItem) -> Void)?
     /// Writes the clip to the pasteboard without pasting or closing the shelf.
     var copy: (@MainActor (ClipboardItem) -> Void)?
+    /// Whether a picture offers Copy Recognized Text (ADR 0034): asked when the menu opens or the hover card is about
+    /// to
+    /// show, never while a card draws. False while the history is locked.
+    var recognizedTextOffered: (@MainActor (ClipboardItem) -> Bool)?
+    /// Writes the whole text read in a picture to the pasteboard; false when nothing was written.
+    var copyRecognizedText: (@MainActor (ClipboardItem) -> Bool)?
     /// Copy As on a colour clip or URL title: puts this text on the clipboard.
     var copyText: (@MainActor (ClipboardItem, String) -> Void)?
     /// Writes raw image data to the pasteboard.

@@ -114,6 +114,8 @@ extension GridView {
             assignHotkey: { assignShortcut($1, toClip: $0.id) },
             togglePin: { togglePin(ofClip: $0.id) },
             copy: { copyToPasteboard($0) },
+            recognizedTextOffered: { !appState.isHistoryLockedNow() && RecognizedText.isOffered(for: $0) },
+            copyRecognizedText: { copyRecognizedText($0) },
             copyText: copyText,
             copyImageData: { copyImageData($1, from: $0) },
             copyImage: { copyImage($1, from: $0) },

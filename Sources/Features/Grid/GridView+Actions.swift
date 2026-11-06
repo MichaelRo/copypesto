@@ -479,6 +479,20 @@ extension GridView {
         }
     }
 
+    /// Copy Recognized Text (ADR 0034). The write goes through the same gate as every other copy; a text that cannot be
+    /// read is said so, never replaced by the preview.
+    @discardableResult
+    func copyRecognizedText(_ item: ClipboardItem) -> Bool {
+        guard !appState.isHistoryLockedNow(), let text = RecognizedText.text(of: item) else {
+            appState.showUserMessage("Couldn’t read the text in this picture.")
+            return false
+        }
+        appState.writeText(text, protected: false)
+        appState.noteCopied(item, in: modelContext)
+        Announcer.announce("Copied")
+        return true
+    }
+
     func copyImageData(_ data: Data, from item: ClipboardItem) {
         guard let image = NSImage(data: data) else { return }
         copyImage(image, from: item)

@@ -10,6 +10,8 @@ struct CardMoreActions: ViewModifier {
     let openLink: LinkOpenPolicy.Action
     let tags: [String]
     let removeTag: (String) -> Void
+    /// Copy Recognized Text, present only on a picture that read some text.
+    let copyRecognizedText: (() -> Void)?
     let isFocused: Bool
     let spokenCard: String
     let offers: (CardMenuItem) -> Bool
@@ -20,6 +22,9 @@ struct CardMoreActions: ViewModifier {
                 if offers(.pin) { Button(isPinned ? "Unpin" : "Pin") { togglePin?() } }
                 if offers(.openLink), let title = LinkOpener.title(for: openLink) {
                     Button(title) { LinkOpener.perform(openLink) }
+                }
+                if offers(.copyRecognizedText), let copy = copyRecognizedText {
+                    Button("Copy Recognized Text") { copy() }
                 }
                 if offers(.tag) {
                     ForEach(tags, id: \.self) { tag in

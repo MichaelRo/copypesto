@@ -99,8 +99,8 @@ final class HoverCardHost {
     struct Request {
         let owner: UUID
         let anchor: NSView
-        /// A card with nothing to scroll lets every click and the pointer through.
-        let scrolls: Bool
+        /// A card with nothing to scroll or press lets every click and the pointer through.
+        let takesPointer: Bool
         let content: () -> AnyView
         let onPointerInside: (Bool) -> Void
         let onReplaced: () -> Void
@@ -122,7 +122,7 @@ final class HoverCardHost {
         onReplaced = request.onReplaced
         onEscape = request.onEscape
         pointerInside = request.onPointerInside
-        panel.ignoresMouseEvents = !request.scrolls
+        panel.ignoresMouseEvents = !request.takesPointer
         if isNew { contentSize = .zero }
         panel.hosting.setPestoRoot(
             HoverCardEntrance(
@@ -234,7 +234,7 @@ private struct HoverCardEntrance: View {
 private struct HoverCardAnchor: NSViewRepresentable {
     let owner: UUID
     @Binding var isPresented: Bool
-    let scrolls: Bool
+    let takesPointer: Bool
     let onPointerInside: (Bool) -> Void
     let onEscape: () -> Void
     let content: () -> AnyView
@@ -258,7 +258,7 @@ private struct HoverCardAnchor: NSViewRepresentable {
     func updateNSView(_ anchor: NSView, context _: Context) {
         if isPresented, anchor.window != nil {
             HoverCardHost.shared.present(.init(
-                owner: owner, anchor: anchor, scrolls: scrolls, content: content,
+                owner: owner, anchor: anchor, takesPointer: takesPointer, content: content,
                 onPointerInside: onPointerInside,
                 onReplaced: { [binding = $isPresented] in binding.wrappedValue = false },
                 onEscape: onEscape
@@ -281,15 +281,17 @@ struct HoverCardCallbacks {
 }
 
 extension View {
-    /// Shows `content` in the hover-card panel above this view while `isPresented`. `scrolls` says whether the card
-    /// takes the pointer (it has something to scroll).
+    /// Shows `content` in the hover-card panel above this view while `isPresented`. `takesPointer` says whether the
+    /// card
+    /// takes the pointer (it has something to scroll, or a button to press).
     func hoverCard(
-        owner: UUID, isPresented: Binding<Bool>, scrolls: Bool, callbacks: HoverCardCallbacks,
+        owner: UUID, isPresented: Binding<Bool>, takesPointer: Bool, callbacks: HoverCardCallbacks,
         content: @escaping () -> some View
     )
     -> some View {
         background(HoverCardAnchor(
-            owner: owner, isPresented: isPresented, scrolls: scrolls, onPointerInside: callbacks.onPointerInside,
+            owner: owner, isPresented: isPresented, takesPointer: takesPointer,
+            onPointerInside: callbacks.onPointerInside,
             onEscape: callbacks.onEscape, content: { AnyView(content()) }
         ))
     }

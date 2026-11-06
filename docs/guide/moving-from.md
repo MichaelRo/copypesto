@@ -6,7 +6,7 @@ Bring your clipboard history, pinned clips or snippets into Pesto from other app
 - **There is no iPhone or iPad app.** Pesto can keep your Macs in step through iCloud Drive (*Settings → Data → Sync with my
   other Macs*, off until you turn it on), but not a phone or tablet, so pinboards you share with an iPhone in Paste will not
   stay shared there. You can also keep one encrypted backup file per Mac and restore it by hand.
-- **⌘⇧V may collide with your old app.** Paste also uses it. Quit the old app first, or record another shortcut in
+- **⇧⌘V may collide with your old app.** Paste also uses it. Quit the old app first, or record another shortcut in
   *Settings → Shortcuts*; the second app to start loses the key. Maccy's default is ⇧⌘C. Some apps use ⇧⌘V for "paste
   without formatting".
 - **Search reads the first 500 characters of each clip**, with words, meaning and the text inside pictures. There is no
@@ -37,7 +37,7 @@ are not pinned, so your retention setting may remove the older ones. Clips you a
 - Copies Paste marked concealed or transient (a password manager's, for example) are skipped, as a live copy would be.
 - Only the first item of a multi-item copy, and nothing that lives only in Paste's iCloud data: Pesto reads the library
   file on this Mac. The file chooser starts where Paste keeps it (the App Store, Setapp and direct versions are all
-  looked for); it is a hidden folder, so press ⌘⇧. in the chooser if you have to look for it yourself.
+  looked for); it is a hidden folder, so press ⇧⌘. in the chooser if you have to look for it yourself.
 A library of more than 20,000 clips, or a file over 1 GB, is refused whole ("That file is too large to import"), pinboards included. Trim Paste's history first.
 
 The import tells you how many clips came in and how many were left out.

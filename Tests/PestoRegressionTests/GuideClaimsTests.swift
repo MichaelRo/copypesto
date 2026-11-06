@@ -28,11 +28,11 @@ struct GuideClaimsTests {
         #expect(!text.contains("snippets files from Raycast, TextExpander or Alfred"))
     }
 
-    @Test("⌘⌥V is only ever named as history: paste the previous clip starts unset (ADR 0012)")
+    @Test("⌥⌘V is only ever named as history: paste the previous clip starts unset (ADR 0012)")
     func pastePreviousIsNotADefault() throws {
         #expect(GlobalShortcut.pastePrevious.defaultBinding == nil, "the default came back; update the guides")
         // ⌃⌥⌘V (plain text) contains ⌥⌘V, so a control key in front rules the match out.
-        let namesIt = try NSRegularExpression(pattern: "(?<!⌃)(⌘⌥V|⌥⌘V)")
+        let namesIt = try NSRegularExpression(pattern: "(?<!⌃)⌥⌘V")
         let history = ["was ", "before", "no longer", "keep it", "keeps it"]
         let root = SourceTree.repositoryRoot
         var files = try SourceTree.files(in: "docs/guide", extensions: ["md"], minimum: 5, under: root)
@@ -49,7 +49,7 @@ struct GuideClaimsTests {
             }
         }
 
-        #expect(offenders.isEmpty, "name ⌘⌥V only as what it used to be: \(offenders.joined(separator: ", "))")
+        #expect(offenders.isEmpty, "name ⌥⌘V only as what it used to be: \(offenders.joined(separator: ", "))")
     }
 
     @Test("the numbers the docs give for Undo and the History Lock window are the code's")

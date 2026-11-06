@@ -4,7 +4,7 @@ import PestoCore
 import SwiftData
 import SwiftUI
 
-/// Compact 5-item horizontal grid shown at the cursor position when ⌘⇧V is pressed
+/// Compact 5-item horizontal grid shown at the cursor position when ⇧⌘V is pressed
 /// inside a focused text field. Same card component as the main overlay — no command
 /// bar, no multi-select.
 struct QuickMenuView: View {

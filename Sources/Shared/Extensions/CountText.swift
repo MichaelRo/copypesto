@@ -17,6 +17,10 @@ enum CountText {
         String(localized: "\(count) deletions")
     }
 
+    static func keptHere(_ count: Int) -> String {
+        String(localized: "\(count) clips stay here")
+    }
+
     static func alreadyHere(_ count: Int) -> String {
         String(localized: "\(count) were already here.")
     }

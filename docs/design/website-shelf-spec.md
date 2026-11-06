@@ -81,6 +81,8 @@ The content-filter blur uses the same face and adds one 11 px line, "Sensitive c
 
 The site's demo shelf draws one covered card (the first): its ⌘ number, "Text", the age and an eye icon, nothing else; its spoken label and hover facts say no more. It follows this section and is changed in the website repo.
 
+The demo's picture hover card follows the app's for a picture that has text (ADR 0034): the picture, a "Text in the picture" box of the note's tint, then the facts line. The demo's box has no Copy Text button, because the demo has no script; the app's has one. Changed in the website repo.
+
 ## Whitespace (`card-whitespace.md`)
 The app compacts a clip for display (a pure function, `CardPreviewText.display`); hand-written samples can follow the same
 rules by writing them that way:

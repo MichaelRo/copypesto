@@ -170,6 +170,10 @@ public enum SettingsIndex {
             "logo"
         ),
         entry(
+            "Shelf surface", "Appearance", "Shelf surface",
+            "glass", "solid", "transparent", "transparency", "see-through", "liquid glass", "opaque", "wash"
+        ),
+        entry(
             "Shelf position", "Appearance", "Shelf position",
             "bottom", "top", "notch", "under the notch", "menu bar", "where the shelf opens"
         ),

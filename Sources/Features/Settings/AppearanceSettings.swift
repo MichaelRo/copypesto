@@ -11,6 +11,13 @@ struct AppearanceSettings: View {
     @AppStorage(Setting.cardSize) private var cardSizeRaw: String
     @AppStorage(Setting.cardWidth) private var cardWidth: Int
     @AppStorage(Setting.shelfPosition) private var shelfPositionRaw: String
+    @AppStorage(Setting.shelfSurface) private var shelfSurfaceRaw: String
+    @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
+    @Environment(\.reduceTransparencyOverride) private var reduceTransparencyOverride
+
+    private var reduceTransparency: Bool {
+        reduceTransparencyOverride ?? systemReduceTransparency
+    }
 
     private var appearanceMode: Binding<AppearanceMode> {
         Binding(
@@ -99,6 +106,35 @@ struct AppearanceSettings: View {
                     )
                 }
                 .settingsRow("Card size")
+            }
+
+            Section("Shelf surface") {
+                PreviewPicker(
+                    title: "Shelf surface",
+                    options: ShelfSurface.allCases,
+                    selection: Binding(
+                        get: { reduceTransparency ? .solid : ShelfSurface(stored: shelfSurfaceRaw) },
+                        set: { shelfSurfaceRaw = $0.rawValue }
+                    ),
+                    label: \.title,
+                    identifier: { AccessibilityID.settingsChoice("shelfSurface", $0.rawValue) },
+                    preview: {
+                        ShelfSurfacePreview(surface: $0, themeRaw: appThemeRaw, darkThemeRaw: appThemeDarkRaw)
+                    }
+                )
+                .disabled(reduceTransparency)
+                .settingsRow("Shelf surface")
+                if reduceTransparency {
+                    HStack {
+                        Text("Reduce Transparency is on in System Settings, so the shelf is solid.").pestoCaption()
+                        Spacer()
+                        Button("Open System Settings\u{2026}") { SystemSettingsLink.openDisplayAccessibility() }
+                            .buttonStyle(.pestoCapsule(.secondary))
+                    }
+                } else {
+                    Text("Glass shows a little of your desktop. Solid is plain and the same on every desktop.")
+                        .pestoCaption()
+                }
             }
 
             Section("Shelf position") {

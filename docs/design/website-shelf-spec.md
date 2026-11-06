@@ -3,6 +3,8 @@
 Later changes to the shelf and its cards, and to words the site repeats, are in
 [`review-fixes-website-spec.md`](review-fixes-website-spec.md) (2026-10-22).
 
+**The shelf's ground (2026-11-06, ADR 0035).** The app's shelf is solid by default: the theme's own ground, fully opaque, with a soft wash of the focused card's colour; Glass is a choice in Settings. The site's demo shelf (`.shelf`) is therefore a solid `var(--bg)` with the hairline and shadow it had, no `backdrop-filter`; its hover card keeps card material.
+
 ## Brief for the website agent (paste this first)
 > You are working in the the website repository repository. Nothing in it was edited from the app repository; this file is the whole
 > spec. Do three things, in this order, and open one pull request per part. (1) **Cards:** make the sample shelf cards in

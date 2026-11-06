@@ -43,6 +43,7 @@ struct PinnedWindowRootView: View {
         // Needs a label of its own, as the AppKit panel has in PinnedWindowController.
         .accessibilityLabel("Floating window")
         .accessibilityIdentifier(AccessibilityID.pinnedPanel)
+        .shelfSurfaceEnvironment()
         .pestoAccented(stored: accentColorHex, theme: appThemeRaw, darkTheme: appThemeDarkRaw)
         .modelContainerIfAvailable(appState.historyContainer)
     }

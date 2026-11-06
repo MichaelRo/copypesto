@@ -95,16 +95,23 @@ private struct AdaptiveCardFill<S: Shape>: View {
     @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
     @Environment(\.reduceTransparencyOverride) private var reduceTransparencyOverride
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.shelfDrawsGlass) private var shelfDrawsGlass
 
     private var reduceTransparency: Bool {
         reduceTransparencyOverride ?? systemReduceTransparency
+    }
+
+    /// On a plain shelf ground a light card is opaque white: 0.58 white over a ground that is already near white
+    /// would only grey it.
+    private var lightOpacity: Double {
+        shelfDrawsGlass == false ? 1 : 0.58
     }
 
     var body: some View {
         shape.fill(
             reduceTransparency
                 ? Color.opaqueSurface
-                : Color.white.opacity(colorScheme == .dark ? 0.10 : 0.58)
+                : Color.white.opacity(colorScheme == .dark ? 0.10 : lightOpacity)
         )
     }
 }

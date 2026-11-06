@@ -14,6 +14,7 @@ pair of pull requests.
 |---|---|---|
 | `shelf-light.png` | `DocScreenshotTests` | README, guide (`README.md`, `using-pesto.md`) |
 | `shelf-dark.png` | `DocScreenshotTests` | README |
+| `shelf-glass.png` | `DocScreenshotTests` (`test_shelf_glass`: the shelf on Glass; every other picture shows the default, Solid) | guide (`settings.md`) |
 | `search.png` | `DocScreenshotTests` | README, guide (`using-pesto.md`) |
 | `ask-pesto.png` | `DocScreenshotTests` | README |
 | `collections.png` | `DocScreenshotTests` | guide (`using-pesto.md`) |

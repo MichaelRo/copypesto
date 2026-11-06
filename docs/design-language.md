@@ -8,7 +8,7 @@ website repository.
 1. **Basil is for action and focus.** Accent colors draw through `@Environment(\.pestoAccent)`, never
    `Color.accentColor`. Grounds are garlic, parmesan and pine nut in light and mortar and `1F2320` in dark, never pure
    black; the one exception is Mortar's dark ground, a near-black `0C1012` (ADR 0013) so the four themes tell apart. Gold is a glow, and gold text only as `7A5F00` / `E3C04A`.
-2. **Glass is chrome, not content.** The shelf is one glass surface; cards are material with a hairline border; Settings
+2. **Glass is chrome, not content, and optional.** The shelf is a plain ground in the theme's color by default and one glass surface when the person chooses Glass (ADR 0035); cards are material with a hairline border; Settings
    uses the system grouped form.
 3. **Settings, pane by pane.**
    - Every pane opens with `SettingsPaneHeader`: a 48 pt tile (accent glyph on accent at 16%), the pane name in

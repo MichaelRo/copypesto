@@ -27,7 +27,9 @@ final class ShelfOpenLatencyTests: PestoUITestCase {
         let durations = try overlayShowMilliseconds()
         XCTAssertEqual(durations.count, Self.runs, "one overlayShow per open: \(durations)")
         let median = durations.sorted()[durations.count / 2]
-        add(XCTAttachment(string: "overlayShow ms: \(durations)"))
+        let timings = XCTAttachment(string: "overlayShow ms: \(durations)")
+        timings.lifetime = .keepAlways
+        add(timings)
         if ProcessInfo.processInfo.environment["CI"] == nil, ProcessInfo.processInfo.environment["PESTO_CI"] == nil {
             XCTAssertLessThan(median, Self.debugBudgetMilliseconds, "median \(median) ms over runs \(durations)")
         }

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Pesto is MIT-licensed (see `LICENSE`). The released app bundles one third-party component. Its license text is reproduced below, as its license requires. The test-only packages (swift-snapshot-testing and what it brings: swift-custom-dump, swift-syntax, xctest-dynamic-overlay) are not bundled in the app, so they need no notice here.
+Pesto is MIT-licensed (see `LICENSE`). The released app bundles one third-party component. Its license text is reproduced below, as its license requires. The test-only packages (swift-snapshot-testing and what it brings: swift-custom-dump, swift-syntax, swift-issue-reporting) are not bundled in the app, so they need no notice here.
 
 ## Sparkle (auto-update)
 

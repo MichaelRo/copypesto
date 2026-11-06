@@ -53,12 +53,12 @@ packages:
     path: .
   SnapshotTesting:
     url: https://github.com/pointfreeco/swift-snapshot-testing
-    # 1.19.2, pinned by commit because a tag can move
-    revision: ad5e3190cc63dc288f28546f9c6827efc1e9d495
+    # 1.19.7, pinned by commit because a tag can move
+    revision: 1488390b0735e726564b948bf08b384398bdab5c
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
-    # 2.9.1, pinned by commit because a tag can move (this is the code that installs updates)
-    revision: 066e75a8b3e99962685d6a90cdd5293ebffd9261
+    # 2.10.1, pinned by commit because a tag can move (this is the code that installs updates)
+    revision: ab7d71291238df6e0492143b120c9b696a35f603
 
 targets:
   Pesto:

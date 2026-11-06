@@ -47,3 +47,4 @@ Status: Accepted
 ## Docs affected
 ```
 | [0019](0019-backup-and-sync-group.md) | Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live; supersedes the Settings wording of 0010 and 0012 |
+| [0026](0026-cards-put-the-content-first.md) | Picture, color, short text and a link's host fill their card; the decision is `CardTreatment` in Core and anything hidden or covered keeps today's card |

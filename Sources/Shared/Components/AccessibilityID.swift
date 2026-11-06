@@ -86,6 +86,7 @@ enum AccessibilityID {
     static let importPreviewSheet = "import-preview-sheet"
     static let importPreviewHistoryToggle = "import-preview-history-toggle"
     static let importPreviewExpiring = "import-preview-expiring"
+    static let importPreviewLimits = "import-preview-limits"
     static let importPreviewCancel = "import-preview-cancel"
     static let settingsWindow = "net.copypesto.pesto.settings"
     static let onboardingWindow = "pesto-onboarding"

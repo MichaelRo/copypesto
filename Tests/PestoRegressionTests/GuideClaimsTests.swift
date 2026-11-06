@@ -74,10 +74,14 @@ struct GuideClaimsTests {
     func importBackupAndAllowanceNumbersAreTheCodes() throws {
         let megabyte = 1024 * 1024
         let moving = try guide("docs/guide/moving-from.md")
-        #expect(PasteLibraryReader.maxRecords == 20_000 && ClipboardAppLibraryReader.maxRecords == 20_000)
-        #expect(moving.contains("more than 20,000 clips"), "the import record limit changed; update the guide")
-        #expect(PasteLibraryReader.maxDatabaseBytes == 1_000_000_000)
-        #expect(moving.contains("a file over 1 GB"), "the import file limit changed; update the guide")
+        #expect(ImportCap.paste.maxClips == 20_000 && ClipboardAppLibraryReader.maxRecords == 20_000)
+        #expect(moving.contains("at most 20,000 clips"), "the Paste import clip limit changed; update the guide")
+        #expect(
+            moving.contains("a library of more than 20,000 clips"),
+            "the other apps' limit changed; update the guide"
+        )
+        #expect(ImportCap.paste.maxBytes == 1_000_000_000)
+        #expect(moving.contains("or 1 GB"), "the Paste import size limit changed; update the guide")
 
         let settings = try guide("docs/guide/settings.md")
         #expect(AutoBackupSettings.largestClipBytes == 10 * megabyte)

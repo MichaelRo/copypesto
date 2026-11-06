@@ -19,14 +19,32 @@ public enum ImportFixture {
         case "alfred":
             return ImportPreview(appName: "Alfred", library: ClipboardAppLibrary(records: history, skipped: 2))
         case "paste":
-            let library = PasteLibrary(
-                pinboards: [.init(name: "Commands", records: [record(1, "Commands"), record(3, "Commands")])],
-                history: history
+            return ImportPreview(
+                appName: "Paste", pinned: [record(1, "Commands"), record(3, "Commands")], history: history,
+                skipped: 0, pinSummary: "Commands (2)"
             )
-            return ImportPreview(paste: library)
+        case "paste-over-cap":
+            return ImportPreview(paste: overCapPlan(now: now), snapshot: nil)
         default:
             return nil
         }
+    }
+
+    /// A Paste library of 30,000 clips, of which the cap and the retention setting leave 4,200: 1,000 in pinboards and
+    /// the newest 3,200.
+    static func overCapPlan(now: Date) -> PasteImportPlan {
+        func entry(_ key: Int64, daysAgo: Double, board: String?) -> PasteImportPlan.Entry {
+            .init(
+                snippetKey: key, dataKey: key, bytes: 1000, timestamp: now.addingTimeInterval(-daysAgo * 86_400),
+                pinboard: board
+            )
+        }
+        let boards = (0..<1000).map { entry(Int64($0), daysAgo: 100 + Double($0) / 100, board: "Commands") }
+        let history = (0..<3200).map { entry(Int64(10_000 + $0), daysAgo: Double($0) / 120, board: nil) }
+        return PasteImportPlan(
+            pinboards: boards, history: history, libraryClips: 30_000, unusable: 0, pinboardsLeftByCap: 0,
+            historyLeftByCap: 0, historyLeftByRetention: 25_800, displacedExisting: 0
+        )
     }
 
     /// The file `Other File…` reads in a UI test, where the file panel cannot be driven.

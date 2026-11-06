@@ -15,11 +15,21 @@ public actor PasteMigrator {
     public struct Summary: Sendable, Equatable {
         public var imported: Int
         public var skipped: Int
+        /// False when the import added more clips than one Undo holds (`UndoPolicy.maxClipsPerEntry`).
+        public var isUndoable = true
 
         public init(imported: Int = 0, skipped: Int = 0) {
             self.imported = imported
             self.skipped = skipped
         }
+    }
+
+    struct Run {
+        var summary = Summary()
+        var processedHashes = Set<String>()
+        var addedIDs: [UUID] = []
+        var createdBoards: [PinboardSnapshot] = []
+        var key: SymmetricKey?
     }
 
     /// A record from an app on the exclusion list is skipped, as it would have been when copied: the list is how a
@@ -31,63 +41,123 @@ public actor PasteMigrator {
     ) async throws
     -> Summary {
         let storage = StorageService(modelContainer: modelContainer)
-        var summary = Summary()
-        var processedHashes = Set<String>()
-        var addedIDs: [UUID] = []
-        var createdBoards: [PinboardSnapshot] = []
-
+        var run = Run()
         for record in records {
-            let flattened = await Self.flattenedRichText(of: record)
-            guard let capture = Self.makeCapture(from: record, flattenedRichText: flattened),
-                  !Self.isMarkedConcealed(record),
-                  !(record.sourceBundleID.map { exclusionRules.isExcluded($0) } ?? false) else
-            {
-                summary.skipped += 1
-                continue
-            }
-            // Collapse exact-duplicate content within a single run so `imported` reflects
-            // distinct items, not raw record count.
-            guard processedHashes.insert(capture.contentHash).inserted else {
-                summary.skipped += 1
-                continue
-            }
-
-            let boardID: UUID? = if let pinboardName = record.pinboard {
-                try collectionID(forPinboardNamed: pinboardName, created: &createdBoards)
-            } else {
-                nil
-            }
-            let forms = try ContentHash.candidates(for: capture.contentHash, key: BlobEncryption().loadOrCreateKey())
-            let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
-            let alreadyThere = try !modelContext.fetch(descriptor).isEmpty
-            try await storage.ingest(capture)
-
-            // ingest deduplicates by content hash; fetch the resulting item (new or existing)
-            // and attach it to the target collection.
-            guard let item = try modelContext.fetch(descriptor).first else {
-                summary.skipped += 1
-                continue
-            }
-            if let boardID {
-                item.collectionID = boardID
-                item.isPinned = true
-            } else if record.title == FirstRunSamples.snippetTitle {
-                item.isPinned = true
-            }
-            if let title = record.title, !title.isEmpty, item.customTitle == nil {
-                item.customTitle = title
-            }
-            try modelContext.saveOrRollback()
-            summary.imported += 1
-            if !alreadyThere { addedIDs.append(item.id) }
+            try await process(record, exclusionRules: exclusionRules, storage: storage, run: &run)
         }
+        return finish(run, undoHistory: undoHistory)
+    }
 
-        let changed = !addedIDs.isEmpty || !createdBoards.isEmpty
-        if let undoHistory, changed, addedIDs.count <= UndoPolicy.maxClipsPerEntry {
-            let added = AddedClips(kind: .imported, ids: addedIDs, boards: createdBoards)
+    /// Imports the clips of `plan` from `snapshot` one group at a time, so a library of any size costs one group of
+    /// memory. Between groups the work `ingest` leaves for later (judging pictures and long texts, computing search
+    /// vectors) is waited for, which keeps that backlog to one group as well. Pinboards come first and history newest
+    /// first, so an import cut short has already kept what matters most. The snapshot is discarded at the end.
+    public func migrate(
+        plan: PasteImportPlan,
+        from snapshot: PasteLibrarySnapshot,
+        includingHistory: Bool,
+        exclusionRules: ExclusionRules = ExclusionRules(),
+        undoHistory: UndoHistory? = nil,
+        progress: (@Sendable (_ done: Int, _ total: Int) async -> Void)? = nil
+    ) async throws
+    -> Summary {
+        let storage = StorageService(modelContainer: modelContainer)
+        var run = Run()
+        let total = plan.selectedCount(includingHistory: includingHistory)
+        var done = 0
+        do {
+            for group in plan.batches(includingHistory: includingHistory) {
+                let batch = try await snapshot.records(for: group[...])
+                run.summary.skipped += batch.undecodable
+                for record in batch.records {
+                    try await process(record, exclusionRules: exclusionRules, storage: storage, run: &run)
+                }
+                await storage.waitForBackgroundWork()
+                done += group.count
+                await progress?(done, total)
+            }
+        } catch {
+            await snapshot.discard()
+            throw error
+        }
+        await snapshot.discard()
+        return finish(run, undoHistory: undoHistory)
+    }
+
+    func finish(_ run: Run, undoHistory: UndoHistory?) -> Summary {
+        var summary = run.summary
+        let changed = !run.addedIDs.isEmpty || !run.createdBoards.isEmpty
+        if run.addedIDs.count > UndoPolicy.maxClipsPerEntry { summary.isUndoable = false }
+        if let undoHistory, changed, run.addedIDs.count <= UndoPolicy.maxClipsPerEntry {
+            let added = AddedClips(kind: .imported, ids: run.addedIDs, boards: run.createdBoards)
             undoHistory.record(UndoEntry(.clipsAdded(added)))
         }
         return summary
+    }
+
+    /// One record through `StorageService.ingest`. A text over the size Pesto keeps is counted as left out like any
+    /// other record that cannot come in, so one huge clip does not end a run of thousands.
+    func process(
+        _ record: PasteImportRecord,
+        exclusionRules: ExclusionRules,
+        storage: StorageService,
+        run: inout Run
+    ) async throws {
+        let flattened = await Self.flattenedRichText(of: record)
+        guard let capture = Self.makeCapture(from: record, flattenedRichText: flattened),
+              !Self.isMarkedConcealed(record),
+              !(record.sourceBundleID.map { exclusionRules.isExcluded($0) } ?? false),
+              !Self.isTooLarge(capture) else
+        {
+            run.summary.skipped += 1
+            return
+        }
+        // Collapse exact-duplicate content within a single run so `imported` reflects
+        // distinct items, not raw record count.
+        guard run.processedHashes.insert(capture.contentHash).inserted else {
+            run.summary.skipped += 1
+            return
+        }
+
+        let boardID: UUID? = if let pinboardName = record.pinboard {
+            try collectionID(forPinboardNamed: pinboardName, created: &run.createdBoards)
+        } else {
+            nil
+        }
+        let key = try run.key ?? BlobEncryption().loadOrCreateKey()
+        run.key = key
+        let forms = ContentHash.candidates(for: capture.contentHash, key: key)
+        let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
+        let alreadyThere = try !modelContext.fetch(descriptor).isEmpty
+        do {
+            try await storage.ingest(capture)
+        } catch is ClipSizePolicy.TooLarge {
+            run.summary.skipped += 1
+            return
+        }
+
+        // ingest deduplicates by content hash; fetch the resulting item (new or existing)
+        // and attach it to the target collection.
+        guard let item = try modelContext.fetch(descriptor).first else {
+            run.summary.skipped += 1
+            return
+        }
+        if let boardID {
+            item.collectionID = boardID
+            item.isPinned = true
+        } else if record.title == FirstRunSamples.snippetTitle {
+            item.isPinned = true
+        }
+        if let title = record.title, !title.isEmpty, item.customTitle == nil {
+            item.customTitle = title
+        }
+        try modelContext.saveOrRollback()
+        run.summary.imported += 1
+        if !alreadyThere { run.addedIDs.append(item.id) }
+    }
+
+    private static func isTooLarge(_ capture: PasteboardCapture) -> Bool {
+        ClipSizePolicy.isTooLarge(byteCount: capture.payload.count, typeIdentifier: capture.typeIdentifier)
     }
 
     /// The old app kept every flavour of a copy, markers included. One that said "concealed" or "transient" is dropped

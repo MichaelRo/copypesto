@@ -54,4 +54,15 @@ struct ImportReportTests {
 
         #expect(report(records, imported: 1).expiring == 1)
     }
+
+    @Test("clips left behind by a limit are reported apart from the ones that were left out")
+    func whenLimited_thenLeftByLimitsIsItsOwnCount() {
+        let result = ImportReport(
+            summary: .init(imported: 4180, skipped: 15), librarySkipped: 5, leftByLimits: 25_800,
+            retention: RetentionPolicy(maxAge: .infinity, maxItemCount: 5000, maxTotalBytes: 1 << 30), now: now
+        )
+
+        #expect(result.leftByLimits == 25_800)
+        #expect(result.skipped == 20 && result.expiring == 0)
+    }
 }

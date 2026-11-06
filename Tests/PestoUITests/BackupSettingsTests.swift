@@ -45,6 +45,7 @@ final class BackupSettingsTests: PestoUITestCase {
         restore.click()
 
         XCTAssertTrue(app.staticTexts["Restore from Backup"].waitForExistence(timeout: 5))
+        capture("restore-sheet", of: settingsWindow)
     }
 
     func test_theBackupSheet_keepsSetUpDisabledUntilAFolderIsChosen_andCancelLeavesNothingSetUp() {

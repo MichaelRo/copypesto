@@ -27,7 +27,8 @@ make teaser TEASER_MUSIC=~/Downloads/a_curious_afternoon.mp4   # frames, then re
 - The music is not in either repository (`video/LICENSES.md` in the website repo says where it came from). The track's key decides
   the shift; `make_film.sh --semitones` changes it (the default fits `a_curious_afternoon`).
 - `scripts/teaser.sh` writes the app commit it took the frames from to `video/teaser/FRAMES-SOURCE` in the website repo.
-- After `make teaser`, in the website repo: `npm run build && npx vitest run`, look at both films, then commit the changed files
+- After `make teaser`, in the website repo: `npm run build`, then `npm run poster` (the poster is remade every time the film is:
+  it draws the same shelf frames), then `npx vitest run`, look at both films and both posters, then commit the changed files
   (`public/video`, `public/og.png`, `design/social`) in the website pull request.
 
 ## What the frame test does

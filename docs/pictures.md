@@ -14,6 +14,7 @@ pair of pull requests.
 |---|---|---|
 | `shelf-light.png` | `DocScreenshotTests` | README, guide (`README.md`, `using-pesto.md`) |
 | `shelf-dark.png` | `DocScreenshotTests` | README |
+| `shelf-glass.png` | `DocScreenshotTests` (`test_shelf_glass`: the shelf on Glass; every other picture shows the default, Solid) | guide (`settings.md`) |
 | `search.png` | `DocScreenshotTests` | README, guide (`using-pesto.md`) |
 | `ask-pesto.png` | `DocScreenshotTests` | README |
 | `collections.png` | `DocScreenshotTests` | guide (`using-pesto.md`) |
@@ -40,6 +41,16 @@ pair of pull requests.
 `scripts/export-doc-images.sh` copies them out of the UI-test screenshots and renames them. The website syncs this folder
 into `src/assets/guide` (`scripts/sync-from-app.sh` there), so the guide pictures on the site are these files.
 `docs/images/SOURCE` is the commit stamp.
+
+## Surfaces that are not pictures in the docs
+
+Read them after a change to the surface (the gate's screenshots, or the result bundle of the test):
+
+| Surface | Test and capture |
+|---|---|
+| The lost-key alert, its restore window, a wrong passphrase, the preview | `KeyLossRecoveryUITests`: `key-loss-alert`, `key-loss-restore-window`, `key-loss-wrong-passphrase`, `key-loss-preview` |
+| The restore sheet in Settings → Data | `BackupSettingsTests.test_restoreSheet_opensFromTheDataPane`: `restore-sheet` |
+| The status menu, the Paste One by One HUD | not captured: XCUITest gives the status menu an empty frame and the HUD is not in the window tree, and a crop of the screen would show the developer's desktop. A hand look, or a drawing of the panel in a snapshot test |
 
 ## Website (`.build/marketing`, then `src/assets/marketing` in the website repo)
 

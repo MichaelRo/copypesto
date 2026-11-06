@@ -34,6 +34,8 @@ A picture of the shelf stays at the top of the pane and follows every choice bel
 **Shelf surface** is a pair of small pictures too. *Solid* (the default) draws the shelf on a plain ground in your theme's color, the same on every desktop. *Glass* lets a little of the desktop show through. Reduce Transparency in System Settings always gives Solid, and the pane says so. **Shelf position** is a pair of small pictures, like Light and Dark. It puts the shelf at the *Bottom*, resting on the Dock (the default), or *Top*, hanging from the
 menu bar at the top of the screen (below the notch, if your Mac has one). It slides in from that edge, and the hover card opens on the side away from it.
 
+![The shelf on Glass: the cards sit on a see-through shelf that shows a little of the desktop.](../images/shelf-glass.png)
+
 **Theme** sets the look in one choice: Basil (Pesto as it has always looked), Parmesan (warm
 cream with a gold accent), Pine nut (sand and toasted amber) or Mortar (cool stone and sage). Each card is drawn half light and half dark, so you see
 the theme as it will look either way. A theme sets the accent and the app icon that

@@ -63,4 +63,21 @@ final class ImportPreviewUITests: PestoUITestCase {
         XCTAssertTrue(element(AccessibilityID.importPreviewHistoryToggle).exists)
         element(AccessibilityID.importPreviewCancel).click()
     }
+
+    func test_pasteOverTheLimits_saysHowManyComeInAndChangesWithTheHistoryChoice() {
+        openImport(AccessibilityID.importPasteButton, fixture: "paste-over-cap")
+
+        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10), "no preview sheet")
+        let limits = element(AccessibilityID.importPreviewLimits)
+        XCTAssertTrue(limits.exists, "a library past the limits should say what comes in")
+        XCTAssertTrue(limits.label.contains("30,000"), "the sentence names the whole library: \(limits.label)")
+        XCTAssertTrue(limits.label.hasSuffix("your collections."), "history is the person's choice: \(limits.label)")
+
+        element(AccessibilityID.importPreviewHistoryToggle).click()
+        XCTAssertTrue(
+            limits.label.contains("the newest 3,200"), "with history in, the sentence names it: \(limits.label)"
+        )
+        capture("import-preview-paste-limits", of: settingsWindow)
+        element(AccessibilityID.importPreviewCancel).click()
+    }
 }

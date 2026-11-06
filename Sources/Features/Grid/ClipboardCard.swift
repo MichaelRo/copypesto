@@ -192,7 +192,8 @@ struct ClipboardCard: View {
                 addTag: {
                     tagText = ""
                     showTagPopover = true
-                }
+                },
+                offers: offers
             ))
     }
 
@@ -435,7 +436,8 @@ struct ClipboardCard: View {
             tags: item.tags,
             removeTag: removeTagFromItem,
             isFocused: isFocused,
-            spokenCard: "\(spokenLabel), \(spokenValue)"
+            spokenCard: "\(spokenLabel), \(spokenValue)",
+            offers: offers
         )
     }
 

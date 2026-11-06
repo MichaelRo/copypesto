@@ -196,9 +196,13 @@ extension ClipboardCard {
     func hostFirstBody(_ link: LinkDisplay) -> some View {
         let hostPoints = bodySize(CGFloat(LinkDisplay.hostPoints(forLength: link.host.count)))
         let pathPoints = bodySize(11)
-        let extra = CardLayout.largeTextTopPadding(spaceAboveCaps: Self.spaceAboveCaps(size: hostPoints, weight: .semibold))
+        let extra = CardLayout.largeTextTopPadding(spaceAboveCaps: Self.spaceAboveCaps(
+            size: hostPoints,
+            weight: .semibold
+        ))
         let lines = LinkDisplay.lineLimits(
             hostPoints: Double(hostPoints),
+            hostMaxLines: CardTreatment.maxLines(forPoints: LinkDisplay.hostPoints(forLength: link.host.count)),
             pathPoints: Double(pathPoints),
             heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions) - extra)
         )

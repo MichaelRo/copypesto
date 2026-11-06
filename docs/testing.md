@@ -483,8 +483,9 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 **Cards, cover, No Results and the click hint (ADRs 0026 to 0029)**
 - Content-first cards: copy a picture, a GIF, a color, a short sentence and a plain link, and look at the shelf in light
   and dark. Pass: the picture and GIF fill the card with readable text over it, the GIF moves where it did before, the
-  color card's text is readable on a light and a dark color, short text is larger than a paragraph, and a plain link leads
-  with its host and shows no query. PDF, video, code and long-text cards look as they did.
+  color card's text is readable on a light and a dark color, short text is larger than a paragraph (24 pt up to 24 characters, 18 pt to 48, first
+  lines level across neighbours, nothing clipped under the header at the largest system text size), and a plain link
+  leads with its host and shows no query. PDF, video, code and long-text cards look as they did.
 - Scroll 5,000 clips of mixed kinds (`make bench-scroll` covers the numbers). Pass: nothing stutters on the picture and
   GIF cards, and Activity Monitor shows memory under the budget after a minute of scrolling.
 - Covered card for a screen share (start a share, or Hide Clip Contents) and the content filter's blur. Pass: a covered

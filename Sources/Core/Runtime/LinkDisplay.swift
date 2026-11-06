@@ -50,17 +50,18 @@ public struct LinkDisplay: Equatable, Sendable {
     private static let roomyBudget = 90.0
     private static let gapBetweenHostAndPath = 4.0
 
-    /// Lines for the host (two on a roomy card, else one, as many as fit) and then for the path in what is left;
-    /// the path gives way before the host shrinks.
+    /// Lines for the host (as many as fit, up to the step's most) and then for the path in what is left; the path
+    /// gives way before the host is cut.
     public static func lineLimits(
         hostPoints: Double,
+        hostMaxLines: Int,
         pathPoints: Double,
         heightBudget: Double
     )
     -> (host: Int, path: Int) {
         let roomy = heightBudget >= roomyBudget
         let hostLine = hostPoints * CardTreatment.lineHeightFactor
-        let host = min(max(Int(heightBudget / hostLine), 1), roomy ? 2 : 1)
+        let host = min(max(Int(heightBudget / hostLine), 1), hostMaxLines)
         let left = heightBudget - Double(host) * hostLine - gapBetweenHostAndPath
         let path = min(max(Int(left / (pathPoints * CardTreatment.lineHeightFactor)), 0), roomy ? 3 : 2)
         return (host, path)

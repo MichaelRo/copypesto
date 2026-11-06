@@ -39,6 +39,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0028](0028-a-covered-card-shows-number-kind-and-age.md) | A covered card shows its ⌘ number, its kind as one plain word and its age, from one tested allowlist, and nothing that identifies the content or origin; keeps 0003 |
 | [0029](0029-snippets-pane-leads-with-your-snippets.md) | The Snippets pane leads with your snippets, starters and clip suggestions; the placeholder reference is one closed disclosure row; the fold is superseded by 0030 |
 | [0030](0030-placeholders-are-shown-in-the-snippets-pane.md) | The Snippets pane shows the placeholder reference, still after the snippet sections, with a link to the guide; supersedes the fold of 0029 |
+| [0031](0031-short-text-and-link-hosts-use-two-sizes.md) | Short text and a link's host are set in two sizes, 24 and 18 pt, with the first line at one fixed distance under the header; supersedes the sizes of 0026 |
 
 ## Template
 

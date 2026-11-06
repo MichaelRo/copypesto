@@ -53,13 +53,11 @@ struct CardLayoutTests {
         }
     }
 
-    @Test("the glyph tops of two sizes sit the same distance under the header", arguments: [
-        (24.0, 5.9), (18.0, 4.4), (20.4, 5.0), (28.8, 7.1)
-    ])
-    func whenSizes_thenCapTopFixed(points: Double, spaceAboveCaps: Double) {
+    @Test("the glyph tops of both steps sit the same distance under the header", arguments: [5.9, 4.4, 5.0])
+    func whenSizes_thenCapTopFixed(spaceAboveCaps: Double) {
         let padding = CardLayout.largeTextTopPadding(spaceAboveCaps: CGFloat(spaceAboveCaps))
-        #expect(abs(CardLayout.bodyTopPadding + padding + CGFloat(spaceAboveCaps) - CardLayout.glyphTopInset) < 0.001
-            || padding == 0)
+        let capTop = CardLayout.bodyTopPadding + padding + CGFloat(spaceAboveCaps)
+        #expect(abs(capTop - CardLayout.glyphTopInset) < 0.001)
     }
 
     @Test("the offset never pulls the text up into the header and stays inside the allowance")

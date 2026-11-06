@@ -32,6 +32,7 @@ public extension StorageService {
         try modelContext.fetch(FetchDescriptor<Pinboard>()).forEach(modelContext.delete)
         try saveOrRollback()
         linkPreviews.deleteAll()
+        recognizedTexts.deleteAll()
         lastItemStore.clear()
         ExceptionRecorder.clear(in: AppPaths.supportDirectory)
         AppDefaults.store.removeObject(forKey: SearchHistory.defaultsKey)

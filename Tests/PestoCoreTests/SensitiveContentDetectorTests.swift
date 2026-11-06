@@ -398,3 +398,18 @@ struct SensitiveContentDetectorTests {
         }
     }
 }
+
+@Suite("Scanning a long text for a secret")
+struct DetectAnywhereLongTextTests {
+    @Test("a key 90 KB into a text is found, and the scan of 100 KB of prose stays quick")
+    func whenKeyIsDeep_thenFoundQuickly() {
+        let prose = String(repeating: "The quarterly summary says revenue rose while costs held steady. ", count: 1400)
+        let text = prose + "token sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef end"
+        #expect(text.utf8.count > 90_000 && text.utf8.count <= SensitiveContentDetector.maxLineScanBytes)
+        let start = ContinuousClock.now
+        let found = SensitiveContentDetector.detectAnywhere(in: text)
+        let elapsed = ContinuousClock.now - start
+        #expect(found != nil)
+        #expect(elapsed < .seconds(1), "scan took \(elapsed)")
+    }
+}

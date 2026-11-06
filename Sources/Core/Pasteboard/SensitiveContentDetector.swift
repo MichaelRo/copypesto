@@ -123,11 +123,16 @@ public enum SensitiveContentDetector {
         return result
     }
 
+    /// The longest text `detectAnywhere` reads line by line and word by word: the whole text a picture's recognized
+    /// text
+    /// can hold (`RecognizedText.maxBytes`, ADR 0034), so a key deep in a long screenshot is found like one at the top.
+    static let maxLineScanBytes = 100_000
+
     /// Like `detect`, but for text that merely *contains* a secret, such as OCR of a screenshot: tries the whole
     /// text, then each line, then each whitespace-separated word.
     public static func detectAnywhere(in text: String) -> Result? {
         if let whole = detect(in: text) { return whole }
-        guard text.utf8.count <= 50_000 else { return nil }
+        guard text.utf8.count <= maxLineScanBytes else { return nil }
         for line in text.split(whereSeparator: \.isNewline) {
             if let found = detect(in: String(line)) { return found }
         }

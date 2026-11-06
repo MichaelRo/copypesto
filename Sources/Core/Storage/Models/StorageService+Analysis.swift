@@ -30,7 +30,11 @@ struct IngestAnalysisInput {
 
 /// What the judging found.
 struct IngestAnalysis {
+    /// The first `CardPreviewText.previewLength` characters of the picture's text: its preview.
     var ocrText: String?
+    /// The whole text, up to `RecognizedText.maxBytes` (ADR 0034). Kept in a file only when it is longer than the
+    /// preview and nothing in it is a secret.
+    var recognizedText: String?
     var isNSFW = false
     var sensitivity: SensitiveContentDetector.Result?
 }
@@ -49,7 +53,11 @@ extension StorageService {
         var analysis = IngestAnalysis()
         if input.clipType == .image, let image = input.image {
             if input.readsImages {
-                analysis.ocrText = await recognizer.recognize(imageData: image).map { String($0.prefix(500)) }
+                if let read = await recognizer.recognize(imageData: image) {
+                    let whole = RecognizedText.capped(read)
+                    analysis.recognizedText = whole
+                    analysis.ocrText = String(whole.prefix(CardPreviewText.previewLength))
+                }
             }
             if input.screensContent { analysis.isNSFW = await screener.isSensitive(imageData: image) }
         } else if input.clipType == .url, input.screensContent, let link = input.link {
@@ -62,7 +70,8 @@ extension StorageService {
         } else {
             SensitiveContentDetector.detect(in: text)
         }
-        if analysis.sensitivity == nil, let ocr = analysis.ocrText {
+        // The whole text is scanned, not the preview: what is kept for Copy Recognized Text must hold no secret.
+        if analysis.sensitivity == nil, let ocr = analysis.recognizedText {
             analysis.sensitivity = SensitiveContentDetector.detectAnywhere(in: ocr)
         }
         return analysis
@@ -160,8 +169,21 @@ extension StorageService {
             Self.analysisLogger.error("Analysis not saved: \(error.localizedDescription, privacy: .public)")
             return
         }
+        keepRecognizedText(analysis.recognizedText, for: item)
         mirrorToLastItemFile(item)
         startEmbedding(for: item, text: input.text)
+    }
+
+    /// The whole text of a picture is kept in its own sealed file when the preview cut it (ADR 0034), after the clip is
+    /// saved, so a failed save leaves no file. A secret keeps none: only the mask is stored for it.
+    private func keepRecognizedText(_ text: String?, for item: ClipboardItem) {
+        guard item.type == .image, item.sensitivityRaw == nil, let text, RecognizedText.needsFile(text) else { return }
+        do {
+            try recognizedTexts.save(text, for: item.id)
+        } catch {
+            Self.analysisLogger
+                .error("Recognized text not kept: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// Clips left pending by an app that quit mid-judging are judged again, from their stored data.

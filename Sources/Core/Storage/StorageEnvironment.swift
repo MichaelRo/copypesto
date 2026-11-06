@@ -9,6 +9,7 @@ import Foundation
 public struct StorageEnvironment: Sendable {
     public var lastItemStore: any LastItemStoring
     public var linkPreviews: LinkPreviewImageStore
+    public var recognizedTexts: RecognizedTextStore
     public var linkPreviewCache: LinkPreviewCache
     public var imageScreener: any ImageSensitivityScreening
     public var textRecognizer: any TextRecognizing
@@ -35,6 +36,7 @@ public struct StorageEnvironment: Sendable {
 
     public init(
         lastItemStore: any LastItemStoring, linkPreviews: LinkPreviewImageStore,
+        recognizedTexts: RecognizedTextStore = RecognizedTextStore(),
         imageScreener: any ImageSensitivityScreening, textRecognizer: any TextRecognizing,
         embedder: any TextEmbedding,
         previewSealer: (@Sendable (Data, Data) throws -> BlobEncryption.EncryptedEnvelope)?,
@@ -47,6 +49,7 @@ public struct StorageEnvironment: Sendable {
     ) {
         self.lastItemStore = lastItemStore
         self.linkPreviews = linkPreviews
+        self.recognizedTexts = recognizedTexts
         self.linkPreviewCache = linkPreviewCache
         self.imageScreener = imageScreener
         self.textRecognizer = textRecognizer
@@ -105,6 +108,10 @@ public struct StorageEnvironment: Sendable {
         environment.lastItemStore = NoLastItemFile()
         environment.embedder = NoEmbedding()
         environment.wipeSuggestionLedger = nil
+        environment.recognizedTexts = RecognizedTextStore(
+            directory: FileManager.default.temporaryDirectory
+                .appendingPathComponent("pesto-test-recognized-text-\(UUID().uuidString)", isDirectory: true)
+        )
         environment.linkPreviewCache = LinkPreviewCache(
             fileURL: FileManager.default.temporaryDirectory
                 .appendingPathComponent("pesto-test-link-previews-\(UUID().uuidString)")

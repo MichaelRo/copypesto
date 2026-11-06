@@ -13,6 +13,8 @@ eye before any SwiftUI changes.**
   `(height − 44 − 34 − 10) ÷ (18 × scale)` lines: 3, 5 and 6.
 
 ## Status
+**Superseded in part (ADR 0026).** The 34 pt quiet header band below is still every card's header except a picture, GIF or color card: there the header floats over the clip with no band, and the clip fills the card. Everything below describes the band cards.
+
 Option B is implemented (2026-10-21): `CardLayout` (Core) holds the header height, tile size, the gap under the header
 and the footer reserve; `ClipboardCard+Parts.swift` and `RemoteSourceTile` use them. The check on a real shelf with all
 four themes is still a hand check (`docs/testing.md`, "Before a release").

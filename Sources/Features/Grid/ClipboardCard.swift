@@ -511,18 +511,28 @@ struct ClipboardCard: View {
 
     // MARK: - Card layouts
 
+    @ViewBuilder
     private var standardCard: some View {
+        let treatment = treatment
+        switch treatment {
+        case let .fullBleedPicture(fit, isAnimated): fullBleedPictureCard(fit: fit, isAnimated: isAnimated)
+        case let .fullBleedColor(ink): fullBleedColorCard(ink: ink)
+        case .standard, .largeText, .hostFirstLink: classicCard(treatment)
+        }
+    }
+
+    private func classicCard(_ treatment: CardTreatment) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             cardHeader
 
             if hasFullWidthBody {
-                cardContent
+                cardContent(treatment)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
             } else {
                 // Text starts at the top, as in a note; centring it left short clips floating in the middle.
-                cardContent
+                cardContent(treatment)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .padding(.horizontal, 10)
                     .padding(.top, CardLayout.bodyTopPadding)
@@ -542,7 +552,16 @@ struct ClipboardCard: View {
     }
 
     @ViewBuilder
-    private var cardContent: some View {
+    private func cardContent(_ treatment: CardTreatment) -> some View {
+        switch treatment {
+        case let .largeText(points): largeTextBody(points: points)
+        case let .hostFirstLink(link): hostFirstBody(link)
+        default: classicContent
+        }
+    }
+
+    @ViewBuilder
+    private var classicContent: some View {
         switch item.type {
         case .image: imageBody
         case .code where item.isSVGSource && shownThumbnail != nil: imageBody

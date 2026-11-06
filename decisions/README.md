@@ -33,6 +33,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0023](0023-time-filter-is-one-chip-and-a-custom-range.md) | The When filter is one chip with a menu, and a range can be any span Ask can read |
 | [0028](0028-a-covered-card-shows-number-kind-and-age.md) | A covered card shows its ⌘ number, its kind as one plain word and its age, from one tested allowlist, and nothing that identifies the content or origin; keeps 0003 |
 | [0029](0029-snippets-pane-leads-with-your-snippets.md) | The Snippets pane leads with your snippets, starters and clip suggestions; the placeholder reference is one closed disclosure row |
+| [0025](0025-filter-menu-chips-say-what-they-are-set-to.md) | The Format and From chips read Any and Any app at rest, then their value; supersedes a sentence of 0023 |
 | [0024](0024-launch-at-login-starts-on-in-setup.md) | Setup's last step offers "Launch Pesto at login" already on, once per Mac, and keeps the person's answer |
 
 ## Template
@@ -48,3 +49,4 @@ Status: Accepted
 ## Docs affected
 ```
 | [0019](0019-backup-and-sync-group.md) | Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live; supersedes the Settings wording of 0010 and 0012 |
+| [0026](0026-cards-put-the-content-first.md) | Picture, color, short text and a link's host fill their card; the decision is `CardTreatment` in Core and anything hidden or covered keeps today's card |

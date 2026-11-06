@@ -109,6 +109,7 @@ struct OverlayRootView: View {
             .frame(height: 24)
             .background(Capsule().fill(Color.opaqueSurface))
             .allowsHitTesting(false)
+            .onAppear { appState.noteClickHintDrawn() }
             .accessibilityIdentifier(AccessibilityID.clickHint)
     }
 

@@ -41,4 +41,10 @@ struct ClickHintPolicyTests {
         #expect(Setting.allNames.contains(Setting.clickHintShownCount.name))
         #expect(Setting.allNames.contains(Setting.doubleClickPasted.name))
     }
+
+    @Test("a backup does not carry them")
+    func whenBackupKeysListed_thenNotIncluded() {
+        #expect(!SettingsBackupManager.backupKeys.contains(Setting.clickHintShownCount.name))
+        #expect(!SettingsBackupManager.backupKeys.contains(Setting.doubleClickPasted.name))
+    }
 }

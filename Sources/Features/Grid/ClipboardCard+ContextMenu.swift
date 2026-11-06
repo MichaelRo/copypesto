@@ -233,10 +233,15 @@ extension ClipboardCard {
 
         Divider()
 
-        let pasteAsTransforms = availableTransforms(for: item.type)
+        let pasteAsTransforms = TextTransform.available(for: item.type)
         if !pasteAsTransforms.isEmpty {
             if offers(.copyTransformed), actions.copyTransformed != nil {
                 Menu {
+                    if !concealment.isConcealed {
+                        StructuredTransformRows(
+                            item: item, offered: actions.structuredTransforms, perform: actions.copyTransformed
+                        )
+                    }
                     ForEach(pasteAsTransforms, id: \.self) { transform in
                         Button {
                             actions.copyTransformed?(item, transform)
@@ -251,6 +256,11 @@ extension ClipboardCard {
 
             if offers(.pasteTransformed), actions.pasteAs != nil {
                 Menu {
+                    if !concealment.isConcealed {
+                        StructuredTransformRows(
+                            item: item, offered: actions.structuredTransforms, perform: actions.pasteAs
+                        )
+                    }
                     ForEach(pasteAsTransforms.filter { $0 != .stripFormatting }, id: \.self) { transform in
                         Button {
                             actions.pasteAs?(item, transform)
@@ -374,33 +384,6 @@ extension ClipboardCard {
                 Label("Delete", systemImage: "trash")
             }
             .keyboardShortcut(.delete, modifiers: .command)
-        }
-    }
-
-    func availableTransforms(for type: ClipboardType) -> [TextTransform] {
-        switch type {
-        case .url:
-            // URL-first: markdown link + tracking-param strip + basic text operations
-            [
-                .urlMarkdownLink,
-                .removeTrackingParams,
-                .urlEncode,
-                .urlDecode,
-                .stripFormatting,
-                .trimWhitespace
-            ]
-        case .code:
-            // Code-first: wrap in fence, then the full text transform suite minus URL-specific
-            [.markdownCodeBlock] + TextTransform.allCases.filter {
-                $0 != .urlMarkdownLink && $0 != .markdownCodeBlock
-            }
-        case .color:
-            // Colour values are short strings; only minimal text ops make sense
-            [.stripFormatting, .trimWhitespace, .uppercase, .lowercase]
-        case .text:
-            TextTransform.allCases.filter { $0 != .urlMarkdownLink && $0 != .markdownCodeBlock }
-        default:
-            []
         }
     }
 }

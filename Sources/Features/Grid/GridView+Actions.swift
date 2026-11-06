@@ -268,8 +268,7 @@ extension GridView {
 
     func selectItemWithTransform(_ item: ClipboardItem, transform: TextTransform) {
         guard !appState.isHistoryLockedNow() else { return }
-        let rawText = extractText(from: item)
-        let transformed = transform.apply(to: rawText, language: item.detectedLanguage)
+        guard let transformed = transformedText(of: item, by: transform) else { return }
         shelfActions.writeText(transformed, item.sensitivityRaw != nil)
         appState.notePastedInBackground(item, in: modelContext)
         appState.close(.paste(item, .text(transformed)))
@@ -277,10 +276,20 @@ extension GridView {
 
     func copyItemWithTransform(_ item: ClipboardItem, transform: TextTransform) {
         guard !appState.isHistoryLockedNow() else { return }
-        let rawText = extractText(from: item)
-        let transformed = transform.apply(to: rawText, language: item.detectedLanguage)
+        guard let transformed = transformedText(of: item, by: transform) else { return }
         shelfActions.writeText(transformed, item.sensitivityRaw != nil)
         appState.noteCopied(item, in: modelContext)
+    }
+
+    /// JSON and Markdown are made from the stored clip by `StructuredPaste`, which refuses what it may not read;
+    /// nil writes nothing and says nothing.
+    private func transformedText(of item: ClipboardItem, by transform: TextTransform) -> String? {
+        switch transform {
+        case .json, .markdown:
+            StructuredPaste.result(of: transform, for: item)
+        default:
+            transform.apply(to: extractText(from: item), language: item.detectedLanguage)
+        }
     }
 
     /// Copies the clip as it is and moves it to the front, unless nothing was written (locked, or a blob that will not

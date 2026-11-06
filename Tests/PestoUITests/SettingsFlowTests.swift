@@ -24,6 +24,22 @@ final class SettingsFlowTests: PestoUITestCase {
         }
     }
 
+    func test_snippetsPane_scrolledToThePlaceholderReference_isCaptured() {
+        launch()
+        send(.openSettings)
+        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "Settings window did not open")
+        element(AccessibilityID.settingsSidebar("Snippets")).click()
+
+        let reference = settingsWindow.descendants(matching: .any)
+            .matching(NSPredicate(format: "label == 'Placeholders you can use in a snippet'")).firstMatch
+        XCTAssertTrue(reference.waitForExistence(timeout: 5), "no placeholder reference in the Snippets pane")
+        for _ in 0..<8 where !reference.isHittable {
+            settingsWindow.scrollViews.firstMatch.scroll(byDeltaX: 0, deltaY: -300)
+        }
+        XCTAssertTrue(reference.isHittable, "the placeholder reference is still below the fold")
+        capture("settings-snippet-placeholders", of: settingsWindow)
+    }
+
     func test_settingsAskedToOpenAtAPane_opensOnThatPane() {
         launch()
         send(.openSettingsAtData)

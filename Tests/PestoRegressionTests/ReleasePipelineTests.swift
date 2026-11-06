@@ -115,12 +115,11 @@ struct ReleasePipelineTests {
             return (id, revision)
         })
         let project = try text("Pesto.yml")
-        for (identity, expected) in [
-            ("sparkle", "066e75a8b3e99962685d6a90cdd5293ebffd9261"),
-            ("swift-snapshot-testing", "ad5e3190cc63dc288f28546f9c6827efc1e9d495")
-        ] {
-            #expect(project.contains("revision: \(expected)"), "Pesto.yml does not pin \(identity)")
-            #expect(revisions[identity] == expected, "Pesto.resolved disagrees about \(identity)")
+        let pattern = /url: https:\/\/github\.com\/[^\/\s]+\/(\S+)\n\s+#[^\n]*\n\s+revision: ([0-9a-f]{40})/
+        let pinned = project.matches(of: pattern).map { (String($0.1).lowercased(), String($0.2)) }
+        #expect(pinned.count == 2, "Pesto.yml no longer pins Sparkle and swift-snapshot-testing by commit")
+        for (identity, expected) in pinned {
+            #expect(revisions[identity] == expected, "Pesto.resolved disagrees with Pesto.yml about \(identity)")
         }
         #expect(revisions["swift-syntax"] != nil && revisions["swift-custom-dump"] != nil, "transitive pins missing")
     }

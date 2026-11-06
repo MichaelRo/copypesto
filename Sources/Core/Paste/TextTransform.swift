@@ -16,7 +16,9 @@ public enum TextTransform: String, CaseIterable, Sendable {
     case sortLinesAZ = "Sort Lines A→Z"
     case sortLinesZA = "Sort Lines Z→A"
     case reverseLines = "Reverse Lines"
-    case jsonPrettyPrint = "JSON Pretty-Print"
+    /// Offered only when the clip is a JSON document that is not yet indented, or comma or tab separated rows (ADR
+    /// 0033).
+    case json = "JSON"
     case jsonMinify = "JSON Minify"
     case stripHTML = "Strip HTML Tags"
     case base64Encode = "Base64 Encode"
@@ -33,6 +35,27 @@ public enum TextTransform: String, CaseIterable, Sendable {
     case urlMarkdownLink = "Markdown Link"
     /// Code-specific: wraps the snippet in a triple-backtick fence.
     case markdownCodeBlock = "Markdown Code Block"
+    /// Offered only when the clip kept HTML or RTF with structure. The conversion needs the stored formatting, so
+    /// `StructuredPaste` makes it; `apply` has only the plain text, which is already as plain as it gets.
+    case markdown = "Markdown"
+
+    /// The always-offered entries of Paste As and Copy As for a kind of clip. JSON and Markdown are not here: they
+    /// depend on what the clip holds and come from `StructuredPaste`.
+    public static func available(for type: ClipboardType) -> [TextTransform] {
+        let general = allCases.filter { ![.urlMarkdownLink, .markdownCodeBlock, .json, .markdown].contains($0) }
+        switch type {
+        case .url:
+            return [.urlMarkdownLink, .removeTrackingParams, .urlEncode, .urlDecode, .stripFormatting, .trimWhitespace]
+        case .code:
+            return [.markdownCodeBlock] + general
+        case .color:
+            return [.stripFormatting, .trimWhitespace, .uppercase, .lowercase]
+        case .text:
+            return general
+        default:
+            return []
+        }
+    }
 
     public var symbolName: String {
         switch self {
@@ -47,7 +70,7 @@ public enum TextTransform: String, CaseIterable, Sendable {
         case .sortLinesAZ: "arrow.up.doc"
         case .sortLinesZA: "arrow.down.doc"
         case .reverseLines: "arrow.up.arrow.down"
-        case .jsonPrettyPrint: "curlybraces"
+        case .json: "curlybraces"
         case .jsonMinify: "curlybraces.square"
         case .stripHTML: "chevron.left.forwardslash.chevron.right"
         case .base64Encode: "lock.doc"
@@ -62,6 +85,7 @@ public enum TextTransform: String, CaseIterable, Sendable {
         case .md5Hash: "number.square"
         case .urlMarkdownLink: "link.badge.plus"
         case .markdownCodeBlock: "chevron.left.forwardslash.chevron.right"
+        case .markdown: "doc.richtext"
         }
     }
 
@@ -71,7 +95,7 @@ public enum TextTransform: String, CaseIterable, Sendable {
              .trimWhitespace, .unwrapLines, .removeDuplicateLines,
              .sortLinesAZ, .sortLinesZA, .reverseLines:
             applyCaseOrLine(to: text)
-        case .jsonPrettyPrint, .jsonMinify, .stripHTML,
+        case .json, .jsonMinify, .stripHTML,
              .base64Encode, .base64Decode, .urlEncode, .urlDecode, .removeTrackingParams:
             applyEncodeOrFormat(to: text)
         case .slugCase, .camelCase, .pascalCase:
@@ -82,6 +106,8 @@ public enum TextTransform: String, CaseIterable, Sendable {
             "[\(text)](\(text))"
         case .markdownCodeBlock:
             "```\n\(text)\n```"
+        case .markdown:
+            text
         }
     }
 
@@ -123,14 +149,7 @@ public enum TextTransform: String, CaseIterable, Sendable {
 
     private func applyEncodeOrFormat(to text: String) -> String {
         switch self {
-        case .jsonPrettyPrint:
-            guard let data = text.data(using: .utf8),
-                  let obj = try? JSONSerialization.jsonObject(with: data),
-                  let pretty = try? JSONSerialization.data(
-                      withJSONObject: obj, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-                  ),
-                  let result = String(data: pretty, encoding: .utf8) else { return text }
-            return result
+        case .json: return JSONDocument.formatted(text) ?? text
         case .jsonMinify:
             guard let data = text.data(using: .utf8),
                   let obj = try? JSONSerialization.jsonObject(with: data),

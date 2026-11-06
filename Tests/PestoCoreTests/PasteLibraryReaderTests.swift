@@ -30,7 +30,7 @@ final class FixtureItem: NSObject, NSSecureCoding {
 }
 
 /// A Paste.db with the real table layout and archive shape, built here so no one's clips are needed.
-private struct PasteFixture {
+struct PasteFixture {
     /// Core Data numbers a many-to-many join table from the order of its entities, so it changes with the model.
     struct JoinTable {
         var name = "Z_6LISTS"
@@ -97,24 +97,77 @@ private struct PasteFixture {
         sqlite3_finalize(statement)
     }
 
+    /// `count` snippets with ids from `first` in `list`, one shared payload, `seconds(id)` after the 2001 epoch.
+    func addMany(from first: Int, count: Int, list: Int, blob: Data, seconds: (Int) -> Double) throws {
+        try run("BEGIN;")
+        var snippet: OpaquePointer?
+        var payload: OpaquePointer?
+        sqlite3_prepare_v2(db, "INSERT INTO ZSNIPPET VALUES (?1, ?1, 1, ?2, NULL, NULL)", -1, &snippet, nil)
+        sqlite3_prepare_v2(
+            db,
+            "INSERT INTO ZSNIPPETDATA (ZSNIPPET, ZPASTEBOARDITEMS) VALUES (?1, ?2)",
+            -1,
+            &payload,
+            nil
+        )
+        for id in first..<(first + count) {
+            sqlite3_reset(snippet)
+            sqlite3_bind_int(snippet, 1, Int32(id))
+            sqlite3_bind_double(snippet, 2, seconds(id))
+            sqlite3_step(snippet)
+            sqlite3_reset(payload)
+            sqlite3_bind_int(payload, 1, Int32(id))
+            blob.withUnsafeBytes { _ = sqlite3_bind_blob(payload, 2, $0.baseAddress, Int32(blob.count), nil) }
+            sqlite3_step(payload)
+        }
+        sqlite3_finalize(snippet)
+        sqlite3_finalize(payload)
+        try run(
+            "INSERT INTO \(join.name) SELECT Z_PK, \(list) FROM ZSNIPPET "
+                + "WHERE Z_PK >= \(first) AND Z_PK < \(first + count);"
+        )
+        try run("COMMIT;")
+    }
+
     func close() {
         sqlite3_close(db)
         try? FileManager.default.removeItem(at: url)
     }
 }
 
+struct EverythingRead {
+    let plan: PasteImportPlan
+    let records: [PasteImportRecord]
+    let undecodable: Int
+}
+
+/// Everything a snapshot of `url` offers, read the way the import reads it: plan first, then the clips.
+func readEverything(
+    _ url: URL,
+    cap: ImportCap = .paste,
+    retention: RetentionPolicy = RetentionPolicy(maxAge: .infinity, maxItemCount: 1_000_000, maxTotalBytes: .max),
+    temporaryDirectory: URL = FileManager.default.temporaryDirectory
+) async throws
+-> EverythingRead {
+    let snapshot = try PasteLibrarySnapshot.open(databaseAt: url, temporaryDirectory: temporaryDirectory)
+    let plan = try await snapshot.plan(cap: cap, retention: retention)
+    let batch = try await snapshot.records(for: (plan.pinboards + plan.history)[...])
+    await snapshot.discard()
+    return EverythingRead(plan: plan, records: batch.records, undecodable: batch.undecodable)
+}
+
 @Suite("Reading a Paste library")
 struct PasteLibraryReaderTests {
     @Test("a library whose join table another version of Paste numbered differently is still read")
-    func whenJoinTableHasOtherNumbers_thenStillRead() throws {
+    func whenJoinTableHasOtherNumbers_thenStillRead() async throws {
         let fixture = try PasteFixture(join: .init(name: "Z_7LISTS", snippets: "Z_7SNIPPETS", lists: "Z_14LISTS"))
         defer { fixture.close() }
         try fixture.addSnippet(id: 1, list: 2, title: "Deploy", blob: PasteFixture.archive("alembic upgrade head"))
 
-        let library = try PasteLibraryReader.read(databaseAt: fixture.url)
+        let library = try await readEverything(fixture.url)
 
-        #expect(library.pinboards.first?.name == "Commands")
-        #expect(library.pinboards.first?.records.count == 1)
+        #expect(library.plan.pinboards.first?.pinboard == "Commands")
+        #expect(library.records.count == 1)
     }
 
     @Test("a database with no join table between snippets and lists is not a Paste library")
@@ -124,7 +177,7 @@ struct PasteLibraryReaderTests {
         try fixture.run("DROP TABLE Z_6LISTS;")
 
         #expect(throws: PasteLibraryReader.ReadError.notAPasteLibrary) {
-            try PasteLibraryReader.read(databaseAt: fixture.url)
+            try PasteLibrarySnapshot.open(databaseAt: fixture.url)
         }
     }
 
@@ -138,88 +191,137 @@ struct PasteLibraryReaderTests {
     }
 
     @Test("pinboards and history are read apart, in order, with titles, times and source apps")
-    func whenLibraryHasBoardsAndHistory_thenSplit() throws {
+    func whenLibraryHasBoardsAndHistory_thenSplit() async throws {
         let fixture = try PasteFixture()
         defer { fixture.close() }
         try fixture.addSnippet(id: 1, list: 2, title: "Deploy", blob: PasteFixture.archive("alembic upgrade head"))
         try fixture.addSnippet(
-            id: 2,
-            list: 3,
-            title: nil,
-            blob: PasteFixture.archive("Review this", extraType: "public.html")
+            id: 2, list: 3, title: nil, blob: PasteFixture.archive("Review this", extraType: "public.html")
         )
         try fixture.addSnippet(id: 3, list: 1, title: nil, blob: PasteFixture.archive("from history"), seconds: 5000)
 
-        let library = try PasteLibraryReader.read(databaseAt: fixture.url)
+        let library = try await readEverything(fixture.url)
 
-        #expect(library.pinboards.map(\.name) == ["Commands", "Prompts"])
-        #expect(library.pinboardClipCount == 2)
-        #expect(library.history.count == 1)
-        let deploy = try #require(library.pinboards.first?.records.first)
+        #expect(library.plan.pinboards.compactMap(\.pinboard) == ["Commands", "Prompts"])
+        #expect(library.plan.history.count == 1)
+        #expect(library.plan.pinSummary == "Commands (1), Prompts (1)")
+        let deploy = try #require(library.records.first)
         #expect(deploy.title == "Deploy")
         #expect(deploy.pinboard == "Commands")
         #expect(deploy.sourceBundleID == "com.example.editor")
         #expect(deploy.timestamp == Date(timeIntervalSinceReferenceDate: 1000))
-        #expect(library.pinboardSummary == "Commands (1), Prompts (1)")
-        #expect(library.history.first?.pinboard == nil)
-        #expect(library.history.first?.timestamp == Date(timeIntervalSinceReferenceDate: 5000))
+        let history = try #require(library.records.last)
+        #expect(history.pinboard == nil)
+        #expect(history.timestamp == Date(timeIntervalSinceReferenceDate: 5000))
     }
 
     @Test("every representation is kept in Paste's order, so the importer can choose like a live copy does")
-    func whenItemHasSeveralTypes_thenAllKeptInOrder() throws {
+    func whenItemHasSeveralTypes_thenAllKeptInOrder() async throws {
         let fixture = try PasteFixture()
         defer { fixture.close() }
         try fixture.addSnippet(id: 1, list: 2, title: nil, blob: PasteFixture.archive("hi", extraType: "public.html"))
 
-        let record = try #require(PasteLibraryReader.read(databaseAt: fixture.url).pinboards.first?.records.first)
+        let record = try #require(await readEverything(fixture.url).records.first)
 
         #expect(record.representations.map(\.uti) == ["public.html", "public.utf8-plain-text"])
         #expect(Data(base64Encoded: record.representations[1].dataBase64) == Data("hi".utf8))
     }
 
-    @Test("a snippet with no readable payload is skipped, not fatal")
-    func whenPayloadIsGarbageOrMissing_thenSkipped() throws {
+    @Test("a snippet with no payload is counted as unusable, and one that is not an archive as undecodable")
+    func whenPayloadIsGarbageOrMissing_thenCountedNotFatal() async throws {
         let fixture = try PasteFixture()
         defer { fixture.close() }
         try fixture.addSnippet(id: 1, list: 2, title: nil, blob: Data([1, 2, 3, 4]))
         try fixture.addSnippet(id: 2, list: 2, title: nil, blob: nil)
         try fixture.addSnippet(id: 3, list: 2, title: nil, blob: PasteFixture.archive("kept"))
 
-        let library = try PasteLibraryReader.read(databaseAt: fixture.url)
+        let library = try await readEverything(fixture.url)
 
-        #expect(library.pinboardClipCount == 1)
+        #expect(library.plan.unusable == 1)
+        #expect(library.records.count == 1 && library.undecodable == 1)
+        #expect(library.plan.libraryClips == 3)
     }
 
-    /// A file manager whose temporary directory is this test's own, so other tests that read a library at the same
-    /// moment (each makes and removes a work folder) cannot show up in the listing.
-    private final class PrivateTemporaryFileManager: FileManager, @unchecked Sendable {
-        let folder: URL
-
-        init(folder: URL) {
-            self.folder = folder
-            super.init()
-        }
-
-        override var temporaryDirectory: URL {
-            folder
-        }
-    }
-
-    @Test("the original file is left untouched and no temporary copy is left behind")
-    func whenRead_thenOriginalUnchangedAndNoLeftovers() throws {
+    @Test("history is newest first, ties go to the later row, and pinboards keep Paste's board and in-board order")
+    func whenOrdered_thenNewestFirstAndBoardsInOrder() async throws {
         let fixture = try PasteFixture()
         defer { fixture.close() }
-        try fixture.addSnippet(id: 1, list: 2, title: nil, blob: PasteFixture.archive("x"))
+        let blob = try PasteFixture.archive("x")
+        try fixture.addSnippet(id: 1, list: 1, title: nil, blob: blob, seconds: 100)
+        try fixture.addSnippet(id: 2, list: 1, title: nil, blob: blob, seconds: 300)
+        try fixture.addSnippet(id: 3, list: 1, title: nil, blob: blob, seconds: 300)
+        try fixture.addSnippet(id: 4, list: 3, title: nil, blob: blob)
+        try fixture.addSnippet(id: 5, list: 2, title: nil, blob: blob)
+
+        let plan = try await readEverything(fixture.url).plan
+
+        #expect(plan.history.map(\.snippetKey) == [3, 2, 1])
+        #expect(plan.pinboards.map(\.snippetKey) == [5, 4])
+    }
+
+    @Test("a library one clip over the cap keeps every pinboard and the newest history, and says what it left")
+    func whenOverTheCap_thenPinboardsAndNewestAreKept() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        let blob = try PasteFixture.archive("clip")
+        try fixture.addMany(from: 1, count: 50, list: 2, blob: blob) { Double($0) }
+        try fixture.addMany(from: 1001, count: PasteLibraryReaderTests.cap, list: 1, blob: blob) { Double($0) }
+
+        let plan = try await readEverything(fixture.url, cap: ImportCap(maxClips: 5000, maxBytes: .max)).plan
+
+        #expect(plan.pinboards.count == 50)
+        #expect(plan.history.count == 4950)
+        #expect(plan.history.first?.snippetKey == Int64(1000 + PasteLibraryReaderTests.cap))
+        #expect(plan.historyLeftByCap == 1 && plan.libraryClips == 5001)
+        #expect(plan.selectedCount + plan.leftByLimits + plan.unusable == plan.libraryClips)
+    }
+
+    static let cap = 4951
+
+    @Test("the real cap: 20,001 clips take 20,000 and a library of any size is read without holding it")
+    func whenOverTheRealCap_thenTwentyThousandAreTaken() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        let blob = try PasteFixture.archive("clip")
+        try fixture.addMany(from: 1, count: 20_001, list: 1, blob: blob) { Double($0) }
+
+        let plan = try await readEverything(fixture.url).plan
+
+        #expect(plan.history.count == 20_000 && plan.historyLeftByCap == 1)
+        #expect(plan.history.first?.snippetKey == 20_001 && plan.history.last?.snippetKey == 2)
+    }
+
+    @Test("a file over 1 GB is no longer refused: the cap counts the clips taken, not the file")
+    func whenFileIsOverAGigabyte_thenStillRead() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        try fixture.addSnippet(id: 1, list: 2, title: nil, blob: PasteFixture.archive("kept"))
+        let handle = try FileHandle(forUpdating: fixture.url)
+        try handle.truncate(atOffset: 1_100_000_000)
+        try handle.close()
+
+        let library = try await readEverything(fixture.url)
+
+        #expect(library.records.count == 1)
+    }
+
+    private func scratchFolder() throws -> URL {
         let scratch = FileManager.default.temporaryDirectory
             .appendingPathComponent("pesto-reader-scratch-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+        return scratch
+    }
+
+    @Test("the original file is left untouched and no temporary copy is left behind")
+    func whenRead_thenOriginalUnchangedAndNoLeftovers() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        try fixture.addSnippet(id: 1, list: 2, title: nil, blob: PasteFixture.archive("x"))
+        let scratch = try scratchFolder()
         defer { try? FileManager.default.removeItem(at: scratch) }
         let before = try Data(contentsOf: fixture.url)
 
-        _ = try PasteLibraryReader.read(
-            databaseAt: fixture.url,
-            fileManager: PrivateTemporaryFileManager(folder: scratch)
-        )
+        _ = try await readEverything(fixture.url, temporaryDirectory: scratch)
 
         #expect(try Data(contentsOf: fixture.url) == before)
         #expect(
@@ -228,10 +330,73 @@ struct PasteLibraryReaderTests {
         )
     }
 
+    @Test("the copy exists while the snapshot is open, and is gone once it is released without discard")
+    func whenSnapshotIsReleased_thenCopyIsRemoved() throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        try fixture.addSnippet(id: 1, list: 2, title: nil, blob: PasteFixture.archive("x"))
+        let scratch = try scratchFolder()
+        defer { try? FileManager.default.removeItem(at: scratch) }
+
+        var snapshot: PasteLibrarySnapshot? = try PasteLibrarySnapshot.open(
+            databaseAt: fixture.url,
+            temporaryDirectory: scratch
+        )
+        #expect(try FileManager.default.contentsOfDirectory(atPath: scratch.path).count == 1)
+        snapshot = nil
+
+        #expect(try FileManager.default.contentsOfDirectory(atPath: scratch.path).isEmpty)
+        _ = snapshot
+    }
+
+    @Test("the temporary copy of the library is readable by its owner only")
+    func whenCopied_thenFolderIsPrivate() throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        try fixture.addSnippet(id: 1, list: 2, title: nil, blob: PasteFixture.archive("x"))
+        let scratch = try scratchFolder()
+        defer { try? FileManager.default.removeItem(at: scratch) }
+
+        let snapshot = try PasteLibrarySnapshot.open(databaseAt: fixture.url, temporaryDirectory: scratch)
+
+        let folder = try #require(try FileManager.default.contentsOfDirectory(atPath: scratch.path).first)
+        let attributes = try FileManager.default.attributesOfItem(atPath: scratch.appendingPathComponent(folder).path)
+        #expect(attributes[.posixPermissions] as? Int == 0o700)
+        _ = snapshot
+    }
+
+    @Test("a copy a crashed Pesto left a day ago is removed, a recent one is not")
+    func whenStaleCopiesExist_thenOnlyOldOnesGo() throws {
+        let scratch = try scratchFolder()
+        defer { try? FileManager.default.removeItem(at: scratch) }
+        let old = scratch.appendingPathComponent("pesto-paste-old")
+        let recent = scratch.appendingPathComponent("pesto-paste-recent")
+        let other = scratch.appendingPathComponent("someone-elses")
+        for url in [old, recent, other] {
+            try FileManager.default.createDirectory(
+                at: url,
+                withIntermediateDirectories: true
+            )
+        }
+        try FileManager.default.setAttributes(
+            [.modificationDate: Date().addingTimeInterval(-90_000)],
+            ofItemAtPath: old.path
+        )
+        try FileManager.default.setAttributes(
+            [.modificationDate: Date().addingTimeInterval(-90_000)],
+            ofItemAtPath: other.path
+        )
+
+        PasteLibrarySnapshot.removeStaleFolders(in: scratch, fileManager: .default)
+
+        let left = try Set(FileManager.default.contentsOfDirectory(atPath: scratch.path))
+        #expect(left == ["pesto-paste-recent", "someone-elses"])
+    }
+
     @Test("a missing file, a non-Paste database and a garbage file each fail with their own error")
     func whenNotALibrary_thenClearErrors() throws {
         #expect(throws: PasteLibraryReader.ReadError.notFound) {
-            try PasteLibraryReader.read(databaseAt: URL(fileURLWithPath: "/nonexistent/Paste.db"))
+            try PasteLibrarySnapshot.open(databaseAt: URL(fileURLWithPath: "/nonexistent/Paste.db"))
         }
 
         let other = FileManager.default.temporaryDirectory.appendingPathComponent("other-\(UUID().uuidString).db")
@@ -240,17 +405,18 @@ struct PasteLibraryReaderTests {
         sqlite3_open(other.path, &handle)
         sqlite3_exec(handle, "CREATE TABLE t (a INTEGER);", nil, nil, nil)
         sqlite3_close(handle)
-        #expect(throws: PasteLibraryReader.ReadError.notAPasteLibrary) { try PasteLibraryReader.read(databaseAt: other)
+        #expect(throws: PasteLibraryReader.ReadError.notAPasteLibrary) {
+            try PasteLibrarySnapshot.open(databaseAt: other)
         }
 
         let garbage = FileManager.default.temporaryDirectory.appendingPathComponent("garbage-\(UUID().uuidString).db")
         defer { try? FileManager.default.removeItem(at: garbage) }
         try Data("not a database at all".utf8).write(to: garbage)
-        #expect(throws: (any Error).self) { try PasteLibraryReader.read(databaseAt: garbage) }
+        #expect(throws: (any Error).self) { try PasteLibrarySnapshot.open(databaseAt: garbage) }
     }
 
     @Test("a database with damaged pages is an error, not a library that happens to be short")
-    func whenPagesAreDamaged_thenReadingFails() throws {
+    func whenPagesAreDamaged_thenReadingFails() async throws {
         let fixture = try PasteFixture()
         defer { fixture.close() }
         let blob = try PasteFixture.archive(String(repeating: "pesto genovese ", count: 200))
@@ -265,7 +431,7 @@ struct PasteLibraryReaderTests {
         try handle.write(contentsOf: Data(repeating: 0xFF, count: 16_384))
         try handle.close()
 
-        #expect(throws: (any Error).self) { try PasteLibraryReader.read(databaseAt: fixture.url) }
+        await #expect(throws: (any Error).self) { try await readEverything(fixture.url) }
     }
 
     @Test("existingDatabaseURL finds Paste.db in the first candidate path that exists")

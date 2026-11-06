@@ -320,4 +320,35 @@ struct PasteMigratorTests {
         #expect(snippet.isPinned && snippet.isTemplate && snippet.collectionID == nil)
         #expect(try boards(in: container).isEmpty)
     }
+
+    @Test("an import past what Undo holds says so, and a small one stays undoable")
+    func migrate_manyClips_reportsWhetherUndoIsAvailable() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let many = (0...UndoPolicy.maxClipsPerEntry).map { textRecord(pinboard: "Bulk", text: "clip number \($0)") }
+        let few = many.prefix(3).map { _ in textRecord(pinboard: "Few", text: UUID().uuidString) }
+
+        let large = try await PasteMigrator(modelContainer: container).migrate(
+            records: many,
+            undoHistory: UndoHistory()
+        )
+        let small = try await PasteMigrator(modelContainer: container).migrate(records: few, undoHistory: UndoHistory())
+
+        #expect(large.imported == many.count && !large.isUndoable)
+        #expect(small.isUndoable)
+    }
+
+    @Test("a text over the size Pesto keeps is counted as left out and the import goes on")
+    func migrate_textOverTheLimit_isSkippedAndTheRunContinues() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let huge = String(repeating: "a", count: ClipSizePolicy.maxTextBytes + 1)
+
+        let summary = try await PasteMigrator(modelContainer: container).migrate(records: [
+            textRecord(pinboard: "Commands", text: huge),
+            textRecord(pinboard: "Commands", text: "after the huge one")
+        ])
+
+        #expect(summary.imported == 1)
+        #expect(summary.skipped == 1)
+        #expect(try items(in: container).count == 1)
+    }
 }

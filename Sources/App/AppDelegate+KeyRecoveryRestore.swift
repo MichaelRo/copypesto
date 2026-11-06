@@ -40,7 +40,8 @@ extension AppDelegate {
             replacing: { [weak self] in
                 try self?.discardUnreadableHistory(in: context)
                 replaced = true
-            }
+            },
+            showsHeading: false
         )
         window.contentView = SafeHostingView(pesto: sheet.environment(appState))
         window.center()

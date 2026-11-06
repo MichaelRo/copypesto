@@ -42,17 +42,22 @@ public struct LinkDisplay: Equatable, Sendable {
         return LinkDisplay(host: host, rest: rest)
     }
 
-    /// Fixed sizes by length: 22 pt up to 14 characters, 17 up to 22, 15 beyond.
+    /// Fixed sizes by length: the headline size up to 24 characters of host, the smaller step beyond.
     public static func hostPoints(forLength length: Int) -> Double {
-        switch length {
-        case ...14: 22
-        case ...22: 17
-        default: 15
-        }
+        length <= CardTreatment.headlineLimit ? CardTreatment.headlinePoints : CardTreatment.secondaryPoints
     }
 
-    /// The host with a zero-width space after every dot: the only places a host can wrap.
-    public static func breakableHost(_ host: String) -> String {
-        host.replacingOccurrences(of: ".", with: ".\u{200B}")
+    private static let roomyBudget = 90.0
+    private static let gapBetweenHostAndPath = 4.0
+
+    /// The host stays on one line and shrinks to this fraction of its size before it is cut: the smallest drawn host
+    /// (the 18 pt step on a Small card, 0.85) is then 10.7 pt, above the 10 pt floor.
+    public static let hostMinimumScale = 0.7
+
+    /// Lines for the path in what the one-line host leaves, up to 3 on a roomy card and 2 on a small one.
+    public static func pathLineLimit(hostPoints: Double, pathPoints: Double, heightBudget: Double) -> Int {
+        let roomy = heightBudget >= roomyBudget
+        let left = heightBudget - hostPoints * CardTreatment.lineHeightFactor - gapBetweenHostAndPath
+        return min(max(Int(left / (pathPoints * CardTreatment.lineHeightFactor)), 0), roomy ? 3 : 2)
     }
 }

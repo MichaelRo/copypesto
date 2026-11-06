@@ -59,15 +59,24 @@ struct LinkDisplayTests {
     }
 
     @Test("the host is set at a fixed size by its length, never fitted to a measurement", arguments: [
-        (3, 22.0), (14, 22.0), (15, 17.0), (22, 17.0), (23, 15.0), (80, 15.0)
+        (3, 24.0), (24, 24.0), (25, 18.0), (80, 18.0)
     ])
     func whenHostLength_thenFixedPoints(length: Int, points: Double) {
         #expect(LinkDisplay.hostPoints(forLength: length) == points)
     }
 
-    @Test("a host may break after each dot, so a long one wraps instead of being cut")
-    func whenHostWraps_thenBreaksAfterDots() {
-        #expect(LinkDisplay.breakableHost("news.example.com") == "news.\u{200B}example.\u{200B}com")
+    @Test("the path takes the room the one-line host leaves, and drops out before the host is cut", arguments: [
+        (24.0, 11.0, 104.0, 3), (18.0, 11.0, 104.0, 3), (24.0 * 0.85, 11.0 * 0.85, 64.0, 2),
+        (18.0 * 0.85, 11.0 * 0.85, 64.0, 2), (24.0, 11.0, 40.0, 0)
+    ])
+    func whenBudget_thenPathLines(host: Double, path: Double, budget: Double, lines: Int) {
+        #expect(LinkDisplay.pathLineLimit(hostPoints: host, pathPoints: path, heightBudget: budget) == lines)
+    }
+
+    @Test("the host never shrinks below the size that still reads")
+    func whenShrinking_thenFloorKeepsTenPoints() {
+        let smallest = CardTreatment.secondaryPoints * Double(CardTextScale.range.lowerBound)
+        #expect(smallest * LinkDisplay.hostMinimumScale >= 10)
     }
 
     @Test("a query or fragment is never shown, so a token in a link stays out of sight at rest")

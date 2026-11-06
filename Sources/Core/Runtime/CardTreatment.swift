@@ -9,7 +9,11 @@ public enum CardTreatment: Equatable, Sendable {
 
     public static let shortTextLimit = 48
     public static let lineHeightFactor = 1.25
-    public static let maxLargeTextLines = 3
+    public static let headlineLimit = 24
+    public static let headlinePoints = 24.0
+    public static let secondaryPoints = 18.0
+    private static let headlineMaxLines = 2
+    private static let secondaryMaxLines = 3
 
     public static func decide(_ input: CardTreatmentInput) -> CardTreatment {
         guard !input.isConcealed else { return .standard }
@@ -34,7 +38,7 @@ public enum CardTreatment: Equatable, Sendable {
         }
     }
 
-    /// Fixed sizes by length, never fitted to a measurement: 24 pt up to 16 characters, 20 up to 32, 17 up to 48.
+    /// Fixed sizes by length, never fitted to a measurement: 24 pt up to 24 characters, 18 pt up to 48.
     private static let pointsMemo = StringMemo<Double?>()
 
     private static func largeTextPoints(for raw: String) -> Double? {
@@ -45,16 +49,17 @@ public enum CardTreatment: Equatable, Sendable {
         let text = CardPreviewText.display(raw)
         guard !text.isEmpty, !text.contains("\n"), text.count <= shortTextLimit,
               !CardPreviewText.isSingleGlyph(text) else { return nil }
-        switch text.count {
-        case ...16: return 24
-        case ...32: return 20
-        default: return 17
-        }
+        return text.count <= headlineLimit ? headlinePoints : secondaryPoints
     }
 
-    /// How many lines of `points` type fit the height left between header and footer, from one up to three.
-    public static func largeTextLineLimit(points: Double, heightBudget: Double) -> Int {
+    public static func maxLines(forPoints points: Double) -> Int {
+        points >= headlinePoints ? headlineMaxLines : secondaryMaxLines
+    }
+
+    /// How many lines of `points` type (as drawn, already scaled to the card) fit the height left between header and
+    /// footer, from one up to `maxLines`, which belongs to the step's base size.
+    public static func largeTextLineLimit(points: Double, heightBudget: Double, maxLines: Int) -> Int {
         let fits = Int(heightBudget / (points * lineHeightFactor))
-        return min(max(fits, 1), maxLargeTextLines)
+        return min(max(fits, 1), maxLines)
     }
 }

@@ -391,11 +391,10 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 3), named: "light", colorScheme: .light)
     }
 
-    func test_largeTextCard_bucketsBySize() throws {
+    func test_largeTextCard_twoSteps() throws {
         let ctx = try makeContext()
         for (name, text) in [
-            ("up16", "Meeting at 3pm"),
-            ("up32", "Remember to call the dentist"),
+            ("up24", "Meeting at 3pm"),
             ("up48", "The quarterly numbers look good, send them on")
         ] {
             let item = makeItem(in: ctx, type: .text, preview: text)
@@ -419,6 +418,30 @@ final class ClipboardCardTests: XCTestCase {
             preview: "https://news.example.com:8443/2026/11/story-about-a-very-long-headline?token=s3cr3t#frag"
         )
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+    }
+
+    func test_linkCard_longHostTakesTheSmallerStep() throws {
+        let ctx = try makeContext()
+        let item = makeItem(
+            in: ctx, type: .url, preview: "https://documentation.internal.example.com/guides/start"
+        )
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+    }
+
+    func test_linkCard_hostStaysOnOneLineAtTheNarrowestAndWidestCard() throws {
+        for (name, host) in [("sixteen", "news.example.com"), ("twentyFour", "documentation.example.io")] {
+            for width in [160, 240] {
+                try withCardWidth(width) {
+                    let ctx = try makeContext()
+                    let item = makeItem(in: ctx, type: .url, preview: "https://\(host)/guides/start")
+                    snapshotCard(
+                        ClipboardCard(item: item, shortcutNumber: 1),
+                        named: "\(name)\(width)",
+                        cardSize: CardMetrics.dimensions(width: width)
+                    )
+                }
+            }
+        }
     }
 
     func test_linkCard_withMetadataKeepsItsRichBody() throws {

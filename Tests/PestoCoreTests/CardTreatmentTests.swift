@@ -71,13 +71,33 @@ struct CardTreatmentTests {
 
     // MARK: Short text
 
-    @Test("short text is set larger by length", arguments: [
-        ("Hi", 24.0), (String(repeating: "a", count: 16), 24.0),
-        (String(repeating: "a", count: 17), 20.0), (String(repeating: "a", count: 32), 20.0),
-        (String(repeating: "a", count: 33), 17.0), (String(repeating: "a", count: 48), 17.0)
+    @Test("short text is set in two steps by length, the boundaries at 24 and 25 and 48 and 49", arguments: [
+        ("Hi", 24.0), (String(repeating: "a", count: 24), 24.0),
+        (String(repeating: "a", count: 25), 18.0), (String(repeating: "a", count: 48), 18.0)
     ])
-    func whenShortText_thenLargeByBucket(text: String, points: Double) {
+    func whenShortText_thenLargeByStep(text: String, points: Double) {
         #expect(CardTreatment.decide(input(.text, text: text)) == .largeText(points: points))
+    }
+
+    @Test("characters are counted as the person sees them: an emoji, a flag or an accent is one", arguments: [
+        (String(repeating: "\u{1F600}", count: 22) + "ab", 24.0),
+        (String(repeating: "\u{1F1E9}\u{1F1EA}", count: 24), 24.0),
+        (String(repeating: "e\u{0301}", count: 25), 18.0)
+    ])
+    func whenMultiScalarCharacters_thenCountedAsCharacters(text: String, points: Double) {
+        #expect(CardTreatment.decide(input(.text, text: text)) == .largeText(points: points))
+    }
+
+    @Test("spaces and a trailing line break around the text are not counted")
+    func whenPadded_thenTrimmedBeforeCounting() {
+        let padded = "  " + String(repeating: "a", count: 24) + " \n"
+        #expect(CardTreatment.decide(input(.text, text: padded)) == .largeText(points: 24))
+    }
+
+    @Test("the bigger step sets two lines at most and the smaller three")
+    func whenStep_thenMaxLines() {
+        #expect(CardTreatment.maxLines(forPoints: 24) == 2)
+        #expect(CardTreatment.maxLines(forPoints: 18) == 3)
     }
 
     @Test("text over 48 characters, with a line break, or empty stays standard", arguments: [
@@ -103,21 +123,24 @@ struct CardTreatmentTests {
         #expect(CardTreatment.decide(input(.text, text: "hunter2", concealed: true)) == .standard)
     }
 
-    @Test("the line limit follows the card's height budget and never passes three", arguments: [
-        (24.0, 104.0, 3), (24.0 * 0.85, 64.0, 2), (17.0, 104.0, 3), (24.0, 20.0, 1), (24.0, 0.0, 1)
+    @Test("the line limit follows the card's height budget and never passes the step's most", arguments: [
+        (24.0, 104.0, 2, 2), (24.0 * 0.85, 64.0, 2, 2), (18.0, 104.0, 3, 3), (18.0 * 0.85, 40.0, 3, 2),
+        (24.0, 20.0, 2, 1), (24.0, 0.0, 2, 1)
     ])
-    func whenBudget_thenLinesFit(points: Double, budget: Double, lines: Int) {
-        #expect(CardTreatment.largeTextLineLimit(points: points, heightBudget: budget) == lines)
+    func whenBudget_thenLinesFit(points: Double, budget: Double, most: Int, lines: Int) {
+        #expect(CardTreatment.largeTextLineLimit(points: points, heightBudget: budget, maxLines: most) == lines)
     }
 
-    @Test("the limit fits the budget at every slider width for every size")
+    @Test("the limit fits the budget, less the first-line offset, at every slider width for both steps")
     func whenSliding_thenLargeTextFitsTheBudget() {
         for width in CardMetrics.sliderRange {
             let size = CardMetrics.dimensions(width: width)
-            let budget = Double(CardLayout.textHeightBudget(for: size))
-            for points in [24.0, 20.0, 17.0] {
+            let budget = Double(CardLayout.textHeightBudget(for: size)) - CardLayout.glyphTopInsetAllowance
+            for points in [24.0, 18.0] {
                 let scaled = Double(CardTextScale.size(CGFloat(points), cardWidth: size.width))
-                let lines = CardTreatment.largeTextLineLimit(points: scaled, heightBudget: budget)
+                let lines = CardTreatment.largeTextLineLimit(
+                    points: scaled, heightBudget: budget, maxLines: CardTreatment.maxLines(forPoints: points)
+                )
                 #expect(lines == 1 || Double(lines) * scaled * CardTreatment.lineHeightFactor <= budget)
             }
         }

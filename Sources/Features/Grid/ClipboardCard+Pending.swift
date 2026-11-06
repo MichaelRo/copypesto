@@ -42,7 +42,7 @@ extension ClipboardCard {
                 }
                 .buttonStyle(.pestoLink)
                 .font(.caption2)
-                .help("Show this clip. Return or a click pastes it without showing it.")
+                .help("Show this clip. Return or a double click pastes it without showing it.")
             }
         }
         .animation(Motion.animation(.easeInOut(duration: 0.15)), value: isNSFWRevealed)

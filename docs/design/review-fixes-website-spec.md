@@ -9,11 +9,13 @@
 > the app pictures named in "Reference pictures".
 
 ## 1. A card covered for sharing shows no color (D-02)
-- App: the "Hidden for sharing" cover is drawn on a flat neutral ground (`Color.opaqueSurface`) under the material, so
+- App: the cover for sharing is drawn on a flat neutral ground (`Color.opaqueSurface`) under the material, so
   the clip's own tint (an image's or a color's dominant color) no longer shows through. A covered card is the card's
-  rounded rectangle in a neutral dark or light fill, the eye-slash symbol, "Hidden for sharing" and a **Show** link; nothing
-  of the clip, its header tint or its footer is visible.
-- Site: if `Shelf.astro` or a screenshot draws a covered card, draw it the same: no tint, no header color.
+  rounded rectangle in a neutral dark or light fill with the eye-slash symbol, a **Show** link, and three facts only
+  (ADR 0028): the ⌘ number and the age along the top, the kind of clip as one word under the symbol. Nothing else of the
+  clip, its header tint or its footer is visible.
+- Site: if `Shelf.astro` or a screenshot draws a covered card, draw it the same: no tint, no header color, number, kind
+  and age only. The website demo follows separately.
 - Reference picture: `Tests/PestoSnapshotTests/__Snapshots__/ClipboardCardTests/test_coveredColorCard_showsNoColor.covered.png`.
 
 ## 2. The locked shelf hides what is behind the lock (D-01)

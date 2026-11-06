@@ -8,9 +8,14 @@ import UniformTypeIdentifiers
 // MARK: - Context menu
 
 extension ClipboardCard {
+    /// A card covered for a screen share offers only `CardMenuItem.coveredAllowed` (ADR 0028).
+    func offers(_ menuItem: CardMenuItem) -> Bool {
+        menuItem.isOffered(covered: isCoveredForPrivacy)
+    }
+
     @ViewBuilder
     var cardContextMenu: some View {
-        if actions.paste != nil {
+        if offers(.paste), actions.paste != nil {
             Button {
                 actions.paste?(item)
             } label: {
@@ -18,7 +23,7 @@ extension ClipboardCard {
             }
             .keyboardShortcut(.return, modifiers: [])
         }
-        if actions.pasteAs != nil, ShelfKeyGate.plainPasteAllowed(for: item.type) {
+        if offers(.pastePlain), actions.pasteAs != nil, ShelfKeyGate.plainPasteAllowed(for: item.type) {
             Button {
                 actions.pasteAs?(item, .stripFormatting)
             } label: {
@@ -26,14 +31,16 @@ extension ClipboardCard {
             }
             .keyboardShortcut(.return, modifiers: .shift)
         }
-        Button {
-            actions.copy?(item)
-        } label: {
-            Label("Copy", systemImage: "doc.on.doc")
+        if offers(.copy) {
+            Button {
+                actions.copy?(item)
+            } label: {
+                Label("Copy", systemImage: "doc.on.doc")
+            }
+            .keyboardShortcut("c", modifiers: .command)
         }
-        .keyboardShortcut("c", modifiers: .command)
 
-        if item.type == .url, item.sensitivity == nil, !concealment.isConcealed {
+        if offers(.copyLinkPreview), item.type == .url, item.sensitivity == nil, !concealment.isConcealed {
             if let pageTitle = item.ogTitle, !pageTitle.isEmpty, actions.copyText != nil {
                 Button {
                     actions.copyText?(item, pageTitle)
@@ -58,7 +65,7 @@ extension ClipboardCard {
 
         if item.sensitivity == nil {
             // A covered card is read with Show (or once screen sharing stops), not Quick Look.
-            if concealment.allowsQuickLook {
+            if offers(.quickLook), concealment.allowsQuickLook {
                 Button {
                     actions.quickLook?(item)
                 } label: {
@@ -68,7 +75,7 @@ extension ClipboardCard {
             }
         } else {
             // A hidden clip is read with Show, not Quick Look: one way in, one place that asks first.
-            if canRevealHidden {
+            if canRevealHidden, offers(.revealSecret) {
                 Button {
                     toggleReveal()
                 } label: {
@@ -78,7 +85,7 @@ extension ClipboardCard {
                     )
                 }
                 .keyboardShortcut("e", modifiers: .command)
-                if item.sensitivity == .jwt, concealment.allowsDecode, actions.decodeJWT != nil {
+                if offers(.decodeJWT), item.sensitivity == .jwt, concealment.allowsDecode, actions.decodeJWT != nil {
                     Button {
                         decodeJWT()
                     } label: {
@@ -88,7 +95,7 @@ extension ClipboardCard {
             }
         }
 
-        if item.type == .image, concealment.allowsDrag, actions.saveImage != nil {
+        if offers(.saveImage), item.type == .image, concealment.allowsDrag, actions.saveImage != nil {
             Button {
                 actions.saveImage?(item)
             } label: {
@@ -97,7 +104,7 @@ extension ClipboardCard {
             .keyboardShortcut("s", modifiers: .command)
         }
 
-        if item.type == .color, item.sensitivity == nil, actions.copyText != nil,
+        if offers(.colorCopyFormats), item.type == .color, item.sensitivity == nil, actions.copyText != nil,
            let color = ColorLiteralParser.firstColor(in: item.displayPreviewText)
         {
             Menu {
@@ -109,7 +116,7 @@ extension ClipboardCard {
             }
         }
 
-        if item.type == .url {
+        if offers(.openLink), item.type == .url {
             let link = LinkOpenPolicy.action(for: item.displayPreviewText)
             if let title = LinkOpener.title(for: link) {
                 Button {
@@ -120,7 +127,7 @@ extension ClipboardCard {
             }
         }
 
-        if item.type == .file, concealment.allowsQuickLook {
+        if offers(.showInFinder), item.type == .file, concealment.allowsQuickLook {
             let files = FileClip.revealable(inText: item.displayPreviewText) {
                 FileManager.default.fileExists(atPath: $0.path)
             }
@@ -133,7 +140,7 @@ extension ClipboardCard {
             }
         }
 
-        if actions.moveToCollection != nil, !availableCollections.isEmpty {
+        if offers(.moveToCollection), actions.moveToCollection != nil, !availableCollections.isEmpty {
             Divider()
 
             Menu {
@@ -164,7 +171,7 @@ extension ClipboardCard {
 
         Divider()
 
-        if actions.togglePin != nil {
+        if offers(.pin), actions.togglePin != nil {
             Button {
                 actions.togglePin?(item)
             } label: {
@@ -172,21 +179,25 @@ extension ClipboardCard {
             }
         }
 
-        Button {
-            renameText = item.customTitle ?? ""
-            isRenamingTitle = true
-        } label: {
-            Label("Rename\u{2026}", systemImage: "pencil")
+        if offers(.rename) {
+            Button {
+                renameText = item.customTitle ?? ""
+                isRenamingTitle = true
+            } label: {
+                Label("Rename\u{2026}", systemImage: "pencil")
+            }
         }
 
-        Button {
-            noteText = item.userNote ?? ""
-            showNotePopover = true
-        } label: {
-            Label(item.userNote == nil ? "Add Note\u{2026}" : "Edit Note\u{2026}", systemImage: "note.text")
+        if offers(.note) {
+            Button {
+                noteText = item.userNote ?? ""
+                showNotePopover = true
+            } label: {
+                Label(item.userNote == nil ? "Add Note\u{2026}" : "Edit Note\u{2026}", systemImage: "note.text")
+            }
         }
 
-        if item.offersCustomIcon {
+        if offers(.icon), item.offersCustomIcon {
             Button {
                 showIconPopover = true
             } label: {
@@ -197,14 +208,18 @@ extension ClipboardCard {
             }
         }
 
-        Button {
-            tagText = ""
-            showTagPopover = true
-        } label: {
-            Label("Add Tag\u{2026}", systemImage: "tag")
+        if offers(.tag) {
+            Button {
+                tagText = ""
+                showTagPopover = true
+            } label: {
+                Label("Add Tag\u{2026}", systemImage: "tag")
+            }
         }
 
-        if item.customTitle != nil || item.userNote != nil || item.customSymbolName != nil {
+        if offers(.clearCustomizations),
+           item.customTitle != nil || item.userNote != nil || item.customSymbolName != nil
+        {
             Button(role: .destructive) {
                 edit { clip in
                     clip.customTitle = nil
@@ -220,7 +235,7 @@ extension ClipboardCard {
 
         let pasteAsTransforms = availableTransforms(for: item.type)
         if !pasteAsTransforms.isEmpty {
-            if actions.copyTransformed != nil {
+            if offers(.copyTransformed), actions.copyTransformed != nil {
                 Menu {
                     ForEach(pasteAsTransforms, id: \.self) { transform in
                         Button {
@@ -234,7 +249,7 @@ extension ClipboardCard {
                 }
             }
 
-            if actions.pasteAs != nil {
+            if offers(.pasteTransformed), actions.pasteAs != nil {
                 Menu {
                     ForEach(pasteAsTransforms.filter { $0 != .stripFormatting }, id: \.self) { transform in
                         Button {
@@ -249,14 +264,14 @@ extension ClipboardCard {
             }
         }
 
-        if item.type == .text || item.type == .code, let onEntityAction = actions.entityAction {
+        if offers(.entityActions), item.type == .text || item.type == .code, let onEntityAction = actions.entityAction {
             EntityMenuSection(text: item.gridPreview, onAction: onEntityAction)
         }
 
         Divider()
 
         let aiActions = AIAction.actions(for: item.type)
-        if !aiActions.isEmpty, concealment.allowsAIActions, let onAIAction = actions.aiAction {
+        if offers(.aiActions), !aiActions.isEmpty, concealment.allowsAIActions, let onAIAction = actions.aiAction {
             AIActionsMenuSection(actions: aiActions, onAction: { onAIAction(item, $0) })
         }
 
@@ -272,7 +287,7 @@ extension ClipboardCard {
             .keyboardShortcut("e", modifiers: .command)
         }
 
-        if let toggleSensitive = actions.toggleSensitive {
+        if offers(.markSensitive), let toggleSensitive = actions.toggleSensitive {
             if isBlurredAsSensitive {
                 Button {
                     reveal()
@@ -300,7 +315,7 @@ extension ClipboardCard {
             }
         }
 
-        if actions.setExpiry != nil {
+        if offers(.setExpiry), actions.setExpiry != nil {
             Menu {
                 Button { actions.setExpiry?(item, .distantPast) } label: {
                     Label("Burn After Paste", systemImage: "flame")
@@ -325,7 +340,7 @@ extension ClipboardCard {
             }
         }
 
-        if actions.assignHotkey != nil {
+        if offers(.assignShortcut), actions.assignHotkey != nil {
             Menu {
                 ForEach(1...9, id: \.self) { slot in
                     let taken = unavailableHotkeySlots.contains(slot)
@@ -352,12 +367,14 @@ extension ClipboardCard {
         }
 
         Divider()
-        Button(role: .destructive) {
-            actions.delete?(item)
-        } label: {
-            Label("Delete", systemImage: "trash")
+        if offers(.delete) {
+            Button(role: .destructive) {
+                actions.delete?(item)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+            .keyboardShortcut(.delete, modifiers: .command)
         }
-        .keyboardShortcut(.delete, modifiers: .command)
     }
 
     func availableTransforms(for type: ClipboardType) -> [TextTransform] {

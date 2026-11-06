@@ -163,6 +163,33 @@ struct SyncControllerTests {
         }
     }
 
+    @Test("a grant that carries a key the vault does not accept is refused, and nothing is saved")
+    func aGrantWithTheWrongKeyIsNotSaved() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        await settle(a)
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        b.controller.askAnotherMac()
+        a.controller.refresh()
+        let pending = try #require(a.controller.pendingJoin)
+        let layout = SyncFolderLayout(root: folder)
+        let group = try #require(try SyncGroupManager.openGroup(layout: layout, keyStore: a.keyStore))
+        let approver = try #require(try KeychainDeviceKeyStore(secrets: a.secrets).deviceKeys())
+        let forged = try SyncGrant.seal(
+            key: SyncKey.generate(), vaultID: group.vault.vaultID, epoch: group.epoch, to: pending.request,
+            approver: approver
+        )
+        try FileManager.default.createDirectory(at: layout.grants("mac-a"), withIntermediateDirectories: true)
+        try forged.serialized().write(to: layout.grants("mac-a").appendingPathComponent("mac-b.pestogrant"))
+
+        b.controller.refresh()
+        try await Task.sleep(for: .milliseconds(200))
+
+        if case .failed = b.controller.flow {} else { Issue.record("expected a refusal, got \(b.controller.flow)") }
+        #expect(try b.keyStore.syncKey(vaultID: group.vault.vaultID, epoch: group.epoch) == nil)
+    }
+
     @Test("a request that is denied does not come back, and one addressed to another Mac is not shown")
     func denied() async throws {
         let a = try SyncMac(name: "mac-a", folder: folder, time: time)

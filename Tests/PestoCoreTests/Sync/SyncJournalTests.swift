@@ -152,6 +152,22 @@ struct SyncJournalTests {
         #expect(tombstone.kindRaw == "item" && tombstone.syncDirty == true && tombstone.changeClock != nil)
     }
 
+    @Test("deleting a clip that holds a secret leaves a tombstone with no hash of the secret in it")
+    func deletionOfASecretCarriesNoHash() async throws {
+        enable()
+        defer { SyncJournal.disable(for: container) }
+        let key = "sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef"
+        try await ingest(key)
+        let clip = try #require(items().first)
+        #expect(clip.sensitivityRaw != nil, "the test needs a clip that is judged a secret")
+
+        try await service.deleteItems(ids: [clip.id], reason: .user)
+
+        let tombstone = try #require(ModelContext(container).fetch(FetchDescriptor<DeletedItemTombstone>()).first)
+        #expect(tombstone.plainHash == nil)
+        #expect(tombstone.syncDirty == true && tombstone.changeClock != nil, "the deletion itself still syncs")
+    }
+
     @Test("with sync off a tombstone is what it always was, and retention writes none")
     func deletionWithSyncOff() async throws {
         try await ingest("a")

@@ -494,9 +494,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   pastes it without showing it.
 - No Results: type a search with no match, then add a filter chip and do it again. Pass: the Clear Search or Clear
   Filters button shows; Tab (and Shift-Tab) from the search field walks the chips and ends on the button, Return presses
-  it, VoiceOver says "Filters cleared" or "Search cleared", and Return on the field itself still saves the query. A UI
-  test, `NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt`, was written from the
-  cursor code and not yet run: run it and confirm Shift-Tab lands on the button.
+  it, VoiceOver says "Filters cleared" or "Search cleared", and Return on the field itself still saves the query. `NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt` covers the Tab walk and
+  passed on 2026-11-06 (Shift-Tab lands on the button); by hand check only the VoiceOver wording.
 - Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a
   card; the double-click hint shows only for mouse users who have not double-clicked yet, at most a few times.
 - Snippets pane (Settings → Snippets). Pass: Your snippets, Starters, From your clips, then the folded Placeholders,

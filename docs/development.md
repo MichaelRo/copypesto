@@ -44,7 +44,7 @@ the app itself: its state, windows and launch. `AppDelegate`, `ClipboardCard` an
 | Persistence | SwiftData (`@Model`, `@Attribute(.externalStorage)`) |
 | Encryption | CryptoKit AES-GCM-256, per-install key in the login Keychain (this device only) |
 | Snapshot tests | swift-snapshot-testing |
-| Auto-update | Sparkle 2.x (a `make build`, `make run` or `make install` build never starts it, so *Check for Updates…* there says so in a toast) |
+| Auto-update | Sparkle 2.x, pinned by commit in `Pesto.yml` with swift-snapshot-testing; `make check-packages` compares both pins with the latest releases and known advisories, because Dependabot cannot read `Pesto.yml` (a `make build`, `make run` or `make install` build never starts it, so *Check for Updates…* there says so in a toast) |
 
 ## Development
 

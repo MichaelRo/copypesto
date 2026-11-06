@@ -85,6 +85,17 @@ struct CoverFactsTests {
         }
     }
 
+    @Test("a clip blurred by the content filter is spoken as its kind, that it is sensitive content and hidden, only")
+    func contentFilterLabelNamesNoApp() throws {
+        for testCase in try cases() {
+            let facts = CoverFacts(item: testCase.item, number: 2, inCollection: false, now: now)
+            #expect(facts.contentFilteredSpokenLabel == "\(facts.kind.lowercased()), sensitive content, hidden")
+            for word in testCase.forbidden {
+                #expect(!facts.contentFilteredSpokenLabel.contains(word), "\(testCase.name): \(word)")
+            }
+        }
+    }
+
     @Test("a masked secret and any sensitive clip read as plain Text, with no category")
     func sensitiveReadsAsText() throws {
         let card = try makeItem(.text, preview: "x", secret: .creditCard, mask: "•••• 4242")

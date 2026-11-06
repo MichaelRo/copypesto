@@ -10,6 +10,8 @@ struct CoveredCardFace: View {
     let cornerRadius: CGFloat
     /// The accent while the card is focused or part of the selection, so the cover does not hide the ring under it.
     let ringColor: Color?
+    /// Why the card is covered, when it is not a screen share ("Sensitive content" for the content filter).
+    var note: String?
     let show: () -> Void
 
     var body: some View {
@@ -48,6 +50,9 @@ struct CoveredCardFace: View {
                 .font(.title)
             Text(facts.kind)
                 .font(.caption2.weight(.medium))
+            if let note {
+                Text(note).font(.caption2)
+            }
             Button(action: show) {
                 Text("Show")
                     .padding(.horizontal, 10)

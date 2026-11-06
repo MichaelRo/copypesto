@@ -156,7 +156,8 @@ struct ClipboardCard: View {
             .accessibilityIdentifier(AccessibilityID.card)
             .accessibilityLabel(spokenLabel)
             .accessibilityValue(accessibilityValueText)
-            .voiceOverContent(isFocused && !isCoveredForPrivacy ? voiceOverContent : VoiceOverDetails())
+            .voiceOverContent(isFocused && !isCoveredForPrivacy && !isBlurredAsSensitive ? voiceOverContent :
+                VoiceOverDetails())
             .accessibilityHint(hidesItsContent
                 ? (canRevealHidden ? "Hidden. Pastes without showing. Use Show to reveal it." : "Hidden.")
                 : "Pastes this clip.")
@@ -326,7 +327,13 @@ struct ClipboardCard: View {
                 if item.analysisPending {
                     analysisPendingOverlay
                 } else if isBlurredAsSensitive {
-                    nsfwBlurOverlay
+                    CoveredCardFace(
+                        facts: coverFacts,
+                        cornerRadius: Self.cardCornerRadius,
+                        ringColor: isFocused || isSelected || isSuggested ? accent : nil,
+                        note: String(localized: "Sensitive content"),
+                        show: reveal
+                    )
                 }
             }
             .modifier(GlassCardModifier(
@@ -428,7 +435,7 @@ struct ClipboardCard: View {
             tags: item.tags,
             removeTag: removeTagFromItem,
             isFocused: isFocused,
-            spokenCard: "\(spokenLabel), \(isCoveredForPrivacy ? coverFacts.spokenValue : accessibility.value)"
+            spokenCard: "\(spokenLabel), \(spokenValue)"
         )
     }
 
@@ -459,11 +466,16 @@ struct ClipboardCard: View {
     }
 
     private var spokenLabel: String {
-        isCoveredForPrivacy ? coverFacts.spokenLabel : accessibility.label
+        if isCoveredForPrivacy { return coverFacts.spokenLabel }
+        return isBlurredAsSensitive ? coverFacts.contentFilteredSpokenLabel : accessibility.label
+    }
+
+    private var spokenValue: String {
+        isCoveredForPrivacy || isBlurredAsSensitive ? coverFacts.spokenValue : accessibility.value
     }
 
     private var accessibilityValueText: String {
-        if isCoveredForPrivacy { return coverFacts.spokenValue }
+        if isCoveredForPrivacy || isBlurredAsSensitive { return coverFacts.spokenValue }
         var value = revealedSecret.map { "\(accessibility.value), shown: \($0)" } ?? accessibility.value
         if isSuggested {
             value += suggestedHotkeySlot.map { ", suggested shortcut Control \($0)" } ?? ", suggested"

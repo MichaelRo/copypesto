@@ -18,7 +18,7 @@ A card covered for a screen share or by Hide Clip Contents was an identical "Hid
 ## Consequences
 - A person sharing a screen can say "paste the third one" and use ⌘3, and a watcher learns the kind and the age of a clip, as they already could from the shelf's own order.
 - A clip's kind and age are shown on a covered card even for a secret; the kind of a secret is always Text, so it is not a hint.
-- A card blurred by the content filter (not the share cover) is unchanged by this decision, and its VoiceOver text still names the app.
+- A card blurred by the content filter is drawn with the same face (`CoveredCardFace`, with the line "Sensitive content") and spoken from the same `CoverFacts`: "text, sensitive content, hidden" and "command 3, 5 minutes ago", so it no longer names the app, and its hover details are off. Its context menu is not cut down: it keeps Mark as Not Sensitive, Rename and the rest, so the person can manage a clip the filter caught. Only the share cover has the short menu.
 - The pictures of the shelf with Hide Clip Contents on need to be retaken, and the website's shelf follows separately.
 
 ## Docs affected

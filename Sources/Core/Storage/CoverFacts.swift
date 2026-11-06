@@ -28,11 +28,17 @@ public struct CoverFacts: Equatable, Sendable {
         "\(kind.lowercased()), hidden"
     }
 
+    /// A clip blurred by the content filter says why it is hidden; the words "sensitive content, hidden" are what the
+    /// UI tests and automation find such a card by.
+    public var contentFilteredSpokenLabel: String {
+        "\(kind.lowercased()), sensitive content, hidden"
+    }
+
     public var spokenValue: String {
         number.map { "command \($0), \(spokenAge)" } ?? spokenAge
     }
 
     public var everyString: [String] {
-        [numberLabel, kind, age, spokenLabel, spokenValue].compactMap(\.self)
+        [numberLabel, kind, age, spokenLabel, contentFilteredSpokenLabel, spokenValue].compactMap(\.self)
     }
 }

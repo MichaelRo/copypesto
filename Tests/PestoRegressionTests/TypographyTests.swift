@@ -47,7 +47,6 @@ struct TypographyTests {
             "Features/Collections/CollectionEditor.swift": 2,
             "Features/Grid/ClipboardCard.swift": 1,
             "Features/Grid/ClipboardCard+Bodies.swift": 2,
-            "Features/Grid/ClipboardCard+Pending.swift": 1,
             "Features/Grid/ClipboardCard+Parts.swift": 6,
             "Features/Grid/RemoteSourceTile.swift": 1,
             "Features/Settings/SettingsPaneHeader.swift": 1,

@@ -109,7 +109,18 @@ A development build signed "Pesto Development" can never use the iCloud key, so 
 ## Each release
 1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`.
 2. `make check-packages` shows no line starting `!!!`: it compares the two SwiftPM pins in `Pesto.yml` (Sparkle, swift-snapshot-testing) with their latest releases and with GitHub's Swift advisories, and prints the table. Dependabot cannot see `Pesto.yml`, so this is the only reminder. Keep each pin at the newest release that carries no known vulnerability; after a bump run `make update-resolved`, review `Pesto.resolved`, and do the Sparkle local update test below, and delete the stale module caches first (`rm -rf .build/*/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules`): after the 2.10.1 bump `make install` and both benches failed with "Sparkle.framework/Headers/SUAppcastItem.h has been modified since the module file ... was built".
-3. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` is done. The pictures and the film come after the version bump and before the release: `make pictures` (README, guide, website), then `make teaser`, the poster and the share card; the website's pictures must carry the same app commit (`docs/pictures.md`). Take the Glass picture in the same run: `DocScreenshotTests.test_shelf_glass` writes `shelf-glass.png`; add its row to `docs/pictures.md` and the image to the Shelf surface paragraph of `docs/guide/settings.md` together, because `PicturesMapTests` fails on a mapped picture that does not exist yet.
+3. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` is done.
+   **Pictures and film, after the version bump and before the release, in this order:**
+   - `make pictures` retakes the README, guide and website pictures from one build and stamps the app commit
+     (`docs/pictures.md`). It includes the Glass picture (`DocScreenshotTests.test_shelf_glass` -> `shelf-glass.png`), so
+     it is retaken every release with the rest.
+   - In the website repo, from the merged app commit: `scripts/marketing/copy-from-app.sh` (the website pictures) and
+     `scripts/sync-from-app.sh` (the guide text and the guide pictures, `src/content/guide` and `src/assets/guide`),
+     then `npm run verify`. The website's pictures must carry the same app commit as `docs/images/SOURCE`.
+   - `make teaser TEASER_MUSIC=<track>` (the film and the share card `og.png`), then **always the poster too**: in the
+     website repo `npm run build && npm run poster` (it draws the shelf frames the film just retook). Look at both
+     films and both posters, then commit `public/video`, `public/og.png` and `design/social` in the website pull request
+     (`docs/teaser.md`).
 4. `make release` (archive, export, notarize the app, build a DMG, sign, notarize and staple it).
 5. Sparkle signature: `sign_update <dmg>` prints `sparkle:edSignature` and `length`. In the website repo, add
    `src/content/releases/<version>.md`: front matter `version` (`MARKETING_VERSION`), `build` (`CURRENT_PROJECT_VERSION`),

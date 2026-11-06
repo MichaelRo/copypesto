@@ -48,4 +48,43 @@ struct CoveredMenuWiringTests {
             #expect(allowed.contains(name), "\(name) is a VoiceOver action outside the covered list")
         }
     }
+
+    @Test("the JSON and Markdown rows are drawn only inside Paste As and Copy As, and never on a concealed card")
+    func structuredRowsAreGated() throws {
+        let menu = try String(
+            contentsOf: SourceTree.sources.appendingPathComponent("Features/Grid/ClipboardCard+ContextMenu.swift"),
+            encoding: .utf8
+        )
+        let lines = menu.components(separatedBy: "\n")
+        let uses = lines.indices.filter { lines[$0].contains("StructuredTransformRows(") }
+        #expect(uses.count == 2, "one use in Copy As and one in Paste As")
+        for use in uses {
+            let before = lines[max(0, use - 2)..<use].joined(separator: "\n")
+            #expect(before.contains("!concealment.isConcealed"), "line \(use + 1) is not behind the concealment check")
+        }
+        for (name, gate) in [
+            ("copyTransformed", "offers(.copyTransformed)"),
+            ("pasteTransformed", "offers(.pasteTransformed)")
+        ] {
+            #expect(menu.contains(gate), "\(name) menu is not behind \(gate)")
+        }
+        #expect(!CardMenuItem.coveredAllowed.contains(.copyTransformed))
+        #expect(!CardMenuItem.coveredAllowed.contains(.pasteTransformed))
+    }
+
+    @Test("no VoiceOver action or other file reaches the structured transforms except the menu and the grid")
+    func structuredTransformsHaveNoSideDoor() throws {
+        let files = try SourceTree.files(in: "Features", minimum: 100)
+        let allowed: Set = [
+            "CardActions.swift", "GridView+Card.swift", "GridView+Actions.swift", "StructuredTransformRows.swift",
+            "ClipboardCard+ContextMenu.swift"
+        ]
+        for file in files where !allowed.contains(file.lastPathComponent) {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            #expect(
+                !text.contains("structuredTransforms") && !text.contains("StructuredPaste"),
+                "\(SourceTree.relativePath(file)) reaches the structured transforms"
+            )
+        }
+    }
 }

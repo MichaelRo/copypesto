@@ -101,6 +101,9 @@ The full list of what is stored and sent, including what encryption does *not* p
   server that receives the files.
 - **Collections**, paste as plain text, and drag a clip into any app or onto the Desktop. A click picks a clip and a
   double click pastes it.
+- **Paste As and Copy As.** 27 transforms (case, lines, Base64, hashes and more), and two that appear only when a clip
+  fits: *JSON* (a JSON document indented, or spreadsheet rows as a JSON list) and *Markdown* (formatted text, links,
+  lists and tables from a web page or a document).
 - **Undo history.** The last 20 actions are kept in memory, encrypted, and forgotten when you lock, clear or quit.
 - **Coming from another clipboard manager?** Import from Paste and ten others: Maccy, Alfred, CleanClip, PasteNow,
   CopyClip, PastePal, Pastebot, Clipy, Flycut and Unclutter. Pesto reads a copy of the library and leaves the original

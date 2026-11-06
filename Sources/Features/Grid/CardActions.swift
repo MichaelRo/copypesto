@@ -30,6 +30,9 @@ struct CardActions {
     var pasteAs: (@MainActor (ClipboardItem, TextTransform) -> Void)?
     /// Writes the transformed text to the pasteboard without closing the shelf or pasting.
     var copyTransformed: (@MainActor (ClipboardItem, TextTransform) -> Void)?
+    /// The JSON and Markdown entries this clip qualifies for (ADR 0033). Asked when the menu opens, never while the
+    /// card draws; empty while the history is locked.
+    var structuredTransforms: (@MainActor (ClipboardItem) -> [TextTransform])?
     /// An entity quick action (Call, Compose Email, Open in Maps).
     var entityAction: (@MainActor (EntityDetector.Entity) -> Void)?
     /// A drag gesture began on this card.

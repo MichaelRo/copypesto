@@ -74,9 +74,10 @@ public enum JWTDecoder {
     }
 
     private static func pretty(_ object: [String: Any]) -> String {
-        guard let data = try? JSONSerialization.data(withJSONObject: object),
-              let text = String(data: data, encoding: .utf8) else { return "{}" }
-        return TextTransform.jsonPrettyPrint.apply(to: text)
+        guard let data = try? JSONSerialization.data(
+            withJSONObject: object, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        ), let text = String(data: data, encoding: .utf8) else { return "{}" }
+        return text
     }
 
     private static func date(_ value: Any?) -> Date? {

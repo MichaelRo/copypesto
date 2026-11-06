@@ -90,6 +90,9 @@ extension GridView {
             copyProtectedText: { appState.writeText($0, protected: true) },
             pasteAs: { selectItemWithTransform($0, transform: $1) },
             copyTransformed: { copyItemWithTransform($0, transform: $1) },
+            structuredTransforms: { item in
+                appState.isHistoryLockedNow() ? [] : StructuredPaste.offered(for: item)
+            },
             entityAction: { entity in
                 EntityActionRunner.run(entity)
                 appState.close()

@@ -284,6 +284,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Paste as Plain Text (2026-11-04): right-click a text clip. Pass: *Paste as Plain Text* is above *Paste As…* with
   ⌃⌥⌘V beside it, it pastes the text without formatting (a UI test covers the paste), the item follows the shortcut
   after it is changed in Settings → Shortcuts, and shows no shortcut when that one is turned off.
+- JSON and Markdown in Paste As… (2026-11-06, ADR 0033): copy rows from a spreadsheet (Numbers or Excel), a table from a
+  web page, formatted text from Pages, Notes and Google Docs, and a one-line JSON document. Right-click each, or press ⌘K.
+  Pass: the rows lead *Paste As…* and *Copy As…* only where they fit (prose, a picture and a hidden clip show none),
+  the pasted text is what the guide says, and the menu opens without a pause on a 1 MB table. With screen sharing on
+  or Hide Clip Contents, the covered card's menu has no Paste As… at all.
 - ⌘[ and ⌘] (2026-11-04): with a 5,000-clip history and three collections, hold ⌘] across all of them and back, and
   compare with 1.2.0. Pass: each collection's clips appear in one step, with no flash of the previous collection's
   clips, and no stutter (`LargeHistoryPerformanceTests` times the filtering; the redraw is only seen by eye).

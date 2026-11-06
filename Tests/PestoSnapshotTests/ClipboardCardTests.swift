@@ -166,7 +166,8 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .text, preview: "Dark card on the solid shelf")
         snapshotCard(
-            ClipboardCard(item: item), named: "solidDark", colorScheme: .dark, solidShelfGround: BrandPalette.darkSurface
+            ClipboardCard(item: item), named: "solidDark", colorScheme: .dark,
+            solidShelfGround: BrandPalette.darkSurface
         )
     }
 

@@ -238,6 +238,10 @@ public enum HTMLMarkdown {
                         pending[column] = cell.rows - 1
                     }
                     cellCount += cell.columns
+                    if line.count > HTMLMarkdown.maxColumns || cellCount > HTMLMarkdown.maxTableCells {
+                        failed = true
+                        return []
+                    }
                 }
                 fillPending()
                 guard line.count <= HTMLMarkdown.maxColumns, cellCount <= HTMLMarkdown.maxTableCells else {

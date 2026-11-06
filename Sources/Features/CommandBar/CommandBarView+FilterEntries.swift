@@ -54,17 +54,13 @@ extension CommandBarView {
     static let fromID = "from"
     static let formatID = "format"
 
-    /// From: one menu chip with every app and its clip count. It reads "From" until an app is chosen, then the app's
+    /// From: one menu chip with every app and its clip count. It reads "Any app" until an app is chosen, then the app's
     /// name (or the first one and how many more).
     var fromEntry: FilterEntry? {
         let apps = suggestionsModel.suggestions.allApps
         guard !apps.isEmpty else { return nil }
         let chosen = apps.filter { appState.searchSourceFilter.contains($0.bundleID) }
-        let label = switch chosen.count {
-        case 0: "From"
-        case 1: chosen[0].name
-        default: "\(chosen[0].name) +\(chosen.count - 1)"
-        }
+        let label = FilterMenuLabel.from(chosen: chosen.map(\.name))
         var items: [PopUpMenuItem] = []
         if !chosen.isEmpty {
             items += [.action("Any App") { appState.searchSourceFilter = [] }, .divider]
@@ -111,7 +107,7 @@ extension CommandBarView {
             }
         }
         return FilterEntry(
-            id: Self.formatID, label: current?.title ?? "Format", identifier: "Filter by format",
+            id: Self.formatID, label: FilterMenuLabel.format(chosen: current?.title), identifier: "Filter by format",
             spoken: current.map { "Format, \($0.title)" } ?? "Format, any",
             help: "Show only clips written as Markdown, JSON or a language", isActive: current != nil, menu: items
         ) {

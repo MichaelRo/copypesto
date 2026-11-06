@@ -69,6 +69,13 @@ struct PluralStringsTests {
             "This deletes all 7 clips, including pinned ones.")
     }
 
+    @Test("the sync sheet counts the clips that stay here in plain words, with no markdown for the sheet to show")
+    func clipsKeptHere_agree() {
+        #expect(CountText.keptHere(1) == "1 clip stays here")
+        #expect(CountText.keptHere(2) == "2 clips stay here")
+        #expect(!CountText.keptHere(2).contains("*"))
+    }
+
     @Test("a shortcut conflict names one shortcut or several")
     func shortcutConflict_agrees() {
         let one = String(localized: "\(1) shortcut conflicts: \("Open the shelf")")

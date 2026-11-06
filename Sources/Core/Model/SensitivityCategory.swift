@@ -21,10 +21,27 @@ public extension SensitivityCategory {
         case .ssn: "SSN"
         case .jwt: "JWT"
         case .apiKey: String(localized: "API key")
-        case .oauthToken: "OAuth"
+        case .oauthToken: String(localized: "Token") + " OAuth"
         case .privateKey: String(localized: "Private key")
         case .password: String(localized: "Password")
         case .credential: String(localized: "Credential")
+        }
+    }
+}
+
+public extension SensitivityCategory {
+    /// The word on a hidden card's badge. A token covers API keys and personal access tokens as well as OAuth grants,
+    /// so it says what a person would call it, not the protocol.
+    var badgeLabel: String {
+        switch self {
+        case .creditCard: "Card"
+        case .ssn: "SSN"
+        case .jwt: "JWT"
+        case .apiKey: "API Key"
+        case .oauthToken: "Token"
+        case .privateKey: "Private Key"
+        case .password: "Password"
+        case .credential: "Credential"
         }
     }
 }

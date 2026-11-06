@@ -27,15 +27,17 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0016](0016-search-arrows-move-cards.md) | In search, the arrow keys move between result cards and Return pastes; supersedes the key handling of 0009 |
 | [0017](0017-smart-snippets.md) | Snippets ask for fill-in fields at paste time, and Pesto offers them for clips that differ in a few words |
 | [0018](0018-multi-device-sync.md) | Macs sync through an encrypted, append-only log per Mac in a folder the person picks, with a separate sync key (iCloud Keychain once Developer ID exists, by hand until then) and one Reset Sync action (proposed) |
+| [0019](0019-backup-and-sync-group.md) | Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live; supersedes the Settings wording of 0010 and 0012 |
 | [0020](0020-decode-jwt-is-a-second-way-into-a-hidden-clip.md) | Decode JWT is a second way into a hidden clip: same authentication, read-only, closes with Show |
 | [0021](0021-a-collection-keeps-a-clip-where-it-was.md) | A collection keeps a clip where it was; only the history moves it on use |
 | [0022](0022-data-pane-backup-and-sync-cards.md) | Settings → Data gives backup and sync a card each and drops the Backup stat tile |
 | [0023](0023-time-filter-is-one-chip-and-a-custom-range.md) | The When filter is one chip with a menu, and a range can be any span Ask can read |
+| [0024](0024-launch-at-login-starts-on-in-setup.md) | Setup's last step offers "Launch Pesto at login" already on, once per Mac, and keeps the person's answer |
+| [0025](0025-filter-menu-chips-say-what-they-are-set-to.md) | The Format and From chips read Any and Any app at rest, then their value; supersedes a sentence of 0023 |
+| [0026](0026-cards-put-the-content-first.md) | Picture, color, short text and a link's host fill their card; the decision is `CardTreatment` in Core and anything hidden or covered keeps today's card |
+| [0027](0027-one-band-style-and-two-small-shelf-hints.md) | The Suggestion, Undo and import offers share one glass-capsule banner; No results names the filters on and offers Clear Filters; a click on a card hints at the double click, three times at most |
 | [0028](0028-a-covered-card-shows-number-kind-and-age.md) | A covered card shows its ⌘ number, its kind as one plain word and its age, from one tested allowlist, and nothing that identifies the content or origin; keeps 0003 |
 | [0029](0029-snippets-pane-leads-with-your-snippets.md) | The Snippets pane leads with your snippets, starters and clip suggestions; the placeholder reference is one closed disclosure row |
-| [0027](0027-one-band-style-and-two-small-shelf-hints.md) | The Suggestion, Undo and import offers share one glass-capsule banner; No results names the filters on and offers Clear Filters; a click on a card hints at the double click, three times at most |
-| [0025](0025-filter-menu-chips-say-what-they-are-set-to.md) | The Format and From chips read Any and Any app at rest, then their value; supersedes a sentence of 0023 |
-| [0024](0024-launch-at-login-starts-on-in-setup.md) | Setup's last step offers "Launch Pesto at login" already on, once per Mac, and keeps the person's answer |
 
 ## Template
 
@@ -49,5 +51,3 @@ Status: Accepted
 ## Consequences
 ## Docs affected
 ```
-| [0019](0019-backup-and-sync-group.md) | Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live; supersedes the Settings wording of 0010 and 0012 |
-| [0026](0026-cards-put-the-content-first.md) | Picture, color, short text and a link's host fill their card; the decision is `CardTreatment` in Core and anything hidden or covered keeps today's card |

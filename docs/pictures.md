@@ -41,6 +41,16 @@ pair of pull requests.
 into `src/assets/guide` (`scripts/sync-from-app.sh` there), so the guide pictures on the site are these files.
 `docs/images/SOURCE` is the commit stamp.
 
+## Surfaces that are not pictures in the docs
+
+Read them after a change to the surface (the gate's screenshots, or the result bundle of the test):
+
+| Surface | Test and capture |
+|---|---|
+| The lost-key alert, its restore window, a wrong passphrase, the preview | `KeyLossRecoveryUITests`: `key-loss-alert`, `key-loss-restore-window`, `key-loss-wrong-passphrase`, `key-loss-preview` |
+| The restore sheet in Settings → Data | `BackupSettingsTests.test_restoreSheet_opensFromTheDataPane`: `restore-sheet` |
+| The status menu, the Paste One by One HUD | not captured: XCUITest gives the status menu an empty frame and the HUD is not in the window tree, and a crop of the screen would show the developer's desktop. A hand look, or a drawing of the panel in a snapshot test |
+
 ## Website (`.build/marketing`, then `src/assets/marketing` in the website repo)
 
 All come from `MarketingScreenshotTests` (`make pictures`, or `make marketing-images` alone), as 2x masters named

@@ -306,9 +306,9 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Copy (⌘C) on the shelf. Pass: it copies the focused clip with no beep and the clip moves to the front; in the search
   field it copies the selected text; with a card menu open it still works.
 - Quick Look (⌘Y): copy a GIF from a browser, a page of a PDF and a WebP picture, and two files in Finder. Pass: ⌘Y shows
-  the GIF animating, the PDF page and the picture, not text, and the arrow keys step between the two files. The preview
-  is no larger than about half the display, Esc closes only the preview (the shelf stays), arrow keys then move between
-  clips and open no preview, and ⌘Y opens it again.
+  the GIF animating, the PDF page and the picture, not text, and the arrow keys step between the two files. Esc closes
+  only the preview (the shelf stays), arrow keys then move between clips and open no preview, and ⌘Y opens it again. Its
+  size (a share of the display, centred) is `QuickLookPanelSizingTests`.
 - AI result Paste (needs Apple Intelligence): run an action on a text clip and press Return. Pass: the answer lands in
   the app you were in, also after reading it for over 20 seconds; Copy Result files the answer in the history, Paste does
   not, and the clip it was made from moves to the front.
@@ -509,7 +509,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   it, VoiceOver says "Filters cleared" or "Search cleared", and Return on the field itself still saves the query. `NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt` covers the Tab walk and
   passed on 2026-11-06 (Shift-Tab lands on the button); by hand check only the VoiceOver wording.
 - Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a
-  card; the double-click hint shows only for mouse users who have not double-clicked yet, at most a few times.
+  card. When the hint shows is `ClickHintPolicyTests` (a first focusing click, at most three times, never after a double
+  click).
 - Snippets pane (Settings → Snippets). Pass: Your snippets, Starters, From your clips, then the Placeholders (shown, with a
   See the guide link that opens the Snippets section of the guide), Remember fill-in values and Suggestion statistics, in that order.
 - Filter chips at rest. Pass: Format reads Any and From reads Any app until something is chosen, then the value.

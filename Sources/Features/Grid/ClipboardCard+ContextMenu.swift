@@ -40,6 +40,16 @@ extension ClipboardCard {
             .keyboardShortcut("c", modifiers: .command)
         }
 
+        if offers(.copyRecognizedText), item.type == .image, actions.copyRecognizedText != nil,
+           actions.recognizedTextOffered?(item) == true
+        {
+            Button {
+                _ = actions.copyRecognizedText?(item)
+            } label: {
+                Label("Copy Recognized Text", systemImage: "text.viewfinder")
+            }
+        }
+
         if offers(.copyLinkPreview), item.type == .url, item.sensitivity == nil, !concealment.isConcealed {
             if let pageTitle = item.ogTitle, !pageTitle.isEmpty, actions.copyText != nil {
                 Button {

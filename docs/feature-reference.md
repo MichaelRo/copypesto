@@ -5,7 +5,7 @@ The complete, detailed feature list (the [README](../README.md) has the short to
 ### Capture
 - **Clipboard history** — captures text, code, pictures, files, URLs, colors
 - **Source app tracking** — captures which app you copied from, with icon and accent color
-- **On-device OCR** — pictures are scanned so text inside screenshots is searchable
+- **On-device OCR** — pictures are scanned so text inside screenshots is searchable and copyable (Copy Recognized Text: the menu, VoiceOver and a Copy Text button on the hover card)
 - **Smart deduplication** — full-history keyed content hash (HMAC-SHA256 under a key derived from the install key) (30-second in-memory fast path + DB fetch) + perceptual hash (Hamming ≤ 5) for near-identical pictures; re-copying an existing clip moves it to the top without creating a duplicate
 - **GIF support** — animated GIFs are captured and shown as picture clips (`com.compuserve.gif` / `public.gif`)
 

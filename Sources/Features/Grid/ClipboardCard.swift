@@ -64,6 +64,7 @@ struct ClipboardCard: View {
     @State var detailSpent = false
     /// The card scrolls, so it takes the pointer and stays open while the pointer crosses to it or is on it.
     @State var detailScrolls = false
+    @State var detailCopiesText = false
     @State var pointerInDetail = false
     @State var detailHeld = false
     @State var graceTask: Task<Void, Never>?
@@ -287,7 +288,9 @@ struct ClipboardCard: View {
                     detailHeld = false
                 } else {
                     detailSpent = false
-                    if showDetailPopover, DetailPopoverPolicy.waitsForPointer(contentScrolls: detailScrolls) {
+                    if showDetailPopover,
+                       DetailPopoverPolicy.waitsForPointer(contentScrolls: detailScrolls || detailCopiesText)
+                    {
                         startDetailGrace()
                     }
                 }
@@ -300,6 +303,7 @@ struct ClipboardCard: View {
                 detailHeld = false
                 pointerInDetail = false
                 detailScrolls = false
+                detailCopiesText = false
             }
             .onChange(of: hoverArmed) { _, _ in restartDetailPopoverTimer() }
             .onChange(of: scrollState?.menuOpenings) { _, _ in
@@ -312,7 +316,7 @@ struct ClipboardCard: View {
             .onChange(of: concealment.isConcealed) { _, _ in restartDetailPopoverTimer() }
             .onChange(of: isScrolling) { _, _ in restartDetailPopoverTimer() }
             .hoverCard(
-                owner: item.id, isPresented: $showDetailPopover, scrolls: detailScrolls,
+                owner: item.id, isPresented: $showDetailPopover, takesPointer: detailScrolls || detailCopiesText,
                 callbacks: .init(onPointerInside: { pointerInsideDetail($0) }, onEscape: { closeDetailForGood() }),
                 content: { detailCard }
             )
@@ -435,6 +439,7 @@ struct ClipboardCard: View {
             openLink: link,
             tags: item.tags,
             removeTag: removeTagFromItem,
+            copyRecognizedText: recognizedTextAction,
             isFocused: isFocused,
             spokenCard: "\(spokenLabel), \(spokenValue)",
             offers: offers

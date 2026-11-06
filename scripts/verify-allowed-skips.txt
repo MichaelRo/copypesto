@@ -11,6 +11,7 @@ the real on-device model understands a question
 HistoryMemoryTests
 # Takes two minutes, so it runs only with TEST_RUNNER_PESTO_LONG_COPY_MEMORY=1 (docs/perf/budgets-2026-10.md).
 LongCopyMemoryTests
+RecognizedTextMemoryTests
 # Needs Touch ID and Apple Intelligence and a person at the Mac: only `make capture-real` runs it.
 RealDeviceCaptureTests
 # A hosted CI runner is a virtual machine: Vision's text recognition never returns there, AppKit's rich-text import needs a

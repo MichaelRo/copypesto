@@ -20,6 +20,7 @@ public actor StorageService: ModelActor {
         sequenceCounter = environment.sequenceCounter
         lastItemStore = environment.lastItemStore
         linkPreviews = environment.linkPreviews
+        recognizedTexts = environment.recognizedTexts
         linkPreviewCache = environment.linkPreviewCache
         previewSealer = environment.previewSealer
         imageScreener = environment.imageScreener
@@ -73,6 +74,7 @@ public actor StorageService: ModelActor {
     public let lastItemStore: any LastItemStoring
 
     let linkPreviews: LinkPreviewImageStore
+    let recognizedTexts: RecognizedTextStore
     let linkPreviewCache: LinkPreviewCache
 
     /// Seals a preview with the given associated data; nil seals with the install's key.
@@ -445,6 +447,7 @@ public actor StorageService: ModelActor {
         let deletedIDs = doomed.map(\.id)
         deletedIDs.forEach { similarity.remove($0) }
         linkPreviews.delete(ids: deletedIDs)
+        recognizedTexts.delete(ids: deletedIDs)
         linkPreviewCache.remove(pages)
         deletedIDs.forEach { lastItemStore.clear(ifItemID: $0) }
         return deletedIDs.count
@@ -482,6 +485,7 @@ public actor StorageService: ModelActor {
         ids.forEach { similarity.remove($0) }
         PreviewTextCache.shared.clear()
         linkPreviews.delete(ids: ids)
+        recognizedTexts.delete(ids: ids)
         linkPreviewCache.clear()
         lastItemStore.clear()
         if range == .all {

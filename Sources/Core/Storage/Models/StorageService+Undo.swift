@@ -20,7 +20,12 @@ public struct UndoOutcome: Equatable, Sendable {
 extension StorageService {
     func undoSnapshots(of doomed: [ClipboardItem]) -> [ClipSnapshot]? {
         guard UndoPolicy.canHold(doomed) else { return nil }
-        return doomed.map { ClipSnapshot(item: $0, linkPreviewFile: linkPreviews.sealedFile(for: $0.id)) }
+        return doomed.map {
+            ClipSnapshot(
+                item: $0, linkPreviewFile: linkPreviews.sealedFile(for: $0.id),
+                recognizedTextFile: recognizedTexts.sealedFile(for: $0.id)
+            )
+        }
     }
 
     /// Undoes the newest action; nil when there is nothing to undo or the thing it acted on is gone.
@@ -100,6 +105,7 @@ extension StorageService {
         try saveOrRollback()
         for snapshot in restored {
             if let file = snapshot.linkPreviewFile { try? linkPreviews.restoreSealedFile(file, for: snapshot.id) }
+            if let file = snapshot.recognizedTextFile { try? recognizedTexts.restoreSealedFile(file, for: snapshot.id) }
         }
         var newest = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
         newest.fetchLimit = 1

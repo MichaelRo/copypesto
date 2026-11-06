@@ -77,6 +77,8 @@ public struct ClipSnapshot: Sendable {
     let blob: Blob?
     /// The link preview image file as it is on disk (sealed), restored beside the clip.
     let linkPreviewFile: Data?
+    /// The sealed file holding a picture's whole recognized text (ADR 0034), restored beside the clip.
+    let recognizedTextFile: Data?
 
     /// Whether `UndoPolicy` allows this clip to be kept.
     var isHoldable: Bool {
@@ -90,12 +92,12 @@ public struct ClipSnapshot: Sendable {
         let parts: [Int?] = [
             blob?.encryptedData.count, blob?.encryptedRichData?.count, previewCiphertext?.count,
             metadataCiphertext?.count, embeddingCiphertext?.count, legacyEmbeddingData?.count,
-            ogImageThumbnail?.count, sourceIconData?.count, linkPreviewFile?.count
+            ogImageThumbnail?.count, sourceIconData?.count, linkPreviewFile?.count, recognizedTextFile?.count
         ]
         return parts.reduce(1024) { $0 + ($1 ?? 0) }
     }
 
-    init(item: ClipboardItem, linkPreviewFile: Data?) {
+    init(item: ClipboardItem, linkPreviewFile: Data?, recognizedTextFile: Data? = nil) {
         id = item.id
         timestamp = item.timestamp
         typeRaw = item.typeRaw
@@ -145,6 +147,7 @@ public struct ClipSnapshot: Sendable {
             )
         }
         self.linkPreviewFile = linkPreviewFile
+        self.recognizedTextFile = recognizedTextFile
     }
 
     /// A new, uninserted clip with the stored columns and its blob; the caller inserts it.

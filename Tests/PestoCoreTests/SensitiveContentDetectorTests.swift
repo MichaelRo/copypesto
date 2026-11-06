@@ -398,3 +398,42 @@ struct SensitiveContentDetectorTests {
         }
     }
 }
+
+@Suite("Scanning a long text for a secret")
+struct DetectAnywhereLongTextTests {
+    @Test("a key 90 KB into a text is found, and the scan of 100 KB of prose stays quick")
+    func whenKeyIsDeep_thenFoundQuickly() {
+        let prose = String(repeating: "The quarterly summary says revenue rose while costs held steady. ", count: 1400)
+        let text = prose + "token sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef end"
+        #expect(text.utf8.count > 90_000 && text.utf8.count <= SensitiveContentDetector.maxLineScanBytes)
+        let start = ContinuousClock.now
+        let found = SensitiveContentDetector.detectAnywhere(in: text)
+        let elapsed = ContinuousClock.now - start
+        #expect(found != nil)
+        #expect(elapsed < .seconds(1), "scan took \(elapsed)")
+    }
+
+    @Test("the line and word scan reads as much as a picture's text can hold")
+    func whenTheScanLimitIsRead_thenItCoversTheRecognizedTextCap() {
+        #expect(SensitiveContentDetector.maxLineScanBytes >= RecognizedText.maxBytes)
+    }
+
+    @Test("text built to be slow for the patterns is read inside a second, at the 100 KB the scan now reads")
+    func whenTextIsAdversarial_thenStillQuick() {
+        let cases: [String: String] = [
+            "digits and spaces": String(repeating: "1 ", count: 50_000),
+            "digit groups": String(repeating: "4111-1111-", count: 10_000),
+            "one long word": String(repeating: "a", count: 100_000),
+            "one long hex word": String(repeating: "deadbeef", count: 12_500),
+            "one long digit word": String(repeating: "7", count: 100_000),
+            "words of eight": String(repeating: "abcdefgh ", count: 11_000),
+            "dashes": String(repeating: "-", count: 100_000)
+        ]
+        for (name, text) in cases {
+            let start = ContinuousClock.now
+            _ = SensitiveContentDetector.detectAnywhere(in: text)
+            let elapsed = ContinuousClock.now - start
+            #expect(elapsed < .seconds(1), "\(name) took \(elapsed)")
+        }
+    }
+}

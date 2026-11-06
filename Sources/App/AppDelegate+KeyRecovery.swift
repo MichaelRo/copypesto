@@ -109,6 +109,8 @@ extension AppDelegate {
         storageService?.undoHistory.clear()
         // The file the CLI reads holds the latest clip's preview: an emptied history must not leave it behind.
         FileLastItemStore().clear()
+        // Sealed under the lost key, so unreadable, but not left on the disk for good (ADR 0034).
+        RecognizedTextStore().deleteAll()
         BlobEncryption.setMintingLocked(false)
     }
 

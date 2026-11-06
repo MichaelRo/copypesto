@@ -85,6 +85,8 @@ extension ClipboardCard {
         hoverTask = Task {
             try? await Task.sleep(for: DetailPopoverPolicy.dwell)
             guard !Task.isCancelled else { return }
+            // Asked here, once the pointer has rested, never while the card draws.
+            detailCopiesText = item.type == .image && actions.recognizedTextOffered?(item) == true
             showDetailPopover = true
             guard let delay = DetailPopoverPolicy.autoCloseDelay(hovered: isHovered || isHeldOpen) else { return }
             try? await Task.sleep(for: delay)
@@ -94,13 +96,21 @@ extension ClipboardCard {
         }
     }
 
+    /// Copy Recognized Text as a VoiceOver action: on a picture that read some text; the action asks again when run.
+    var recognizedTextAction: (() -> Void)? {
+        guard item.type == .image, let copy = actions.copyRecognizedText,
+              RecognizedText.hasText(item) else { return nil }
+        return { _ = copy(item) }
+    }
+
     var detailCard: some View {
         CardDetailPopover(
             item: item,
             collectionName: availableCollections.first { $0.id == item.collectionID }?.name,
             isRevealed: revealedSecret != nil,
             revealedText: revealedSecret,
-            onScrollsChange: { detailScrolls = $0 }
+            onScrollsChange: { detailScrolls = $0 },
+            onCopyRecognizedText: detailCopiesText ? { actions.copyRecognizedText?(item) ?? false } : nil
         )
     }
 }

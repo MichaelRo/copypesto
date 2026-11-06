@@ -289,6 +289,14 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   Pass: the rows lead *Paste As…* and *Copy As…* only where they fit (prose, a picture and a hidden clip show none),
   the pasted text is what the guide says, and the menu opens without a pause on a 1 MB table. With screen sharing on
   or Hide Clip Contents, the covered card's menu has no Paste As… at all.
+- Copy Recognized Text (2026-11-06, ADR 0034): screenshot a page of text, a receipt and a picture with no text (⇧⌃⌘4 to
+  the clipboard). Wait for each card to finish loading. Pass: the menu of the text pictures has *Copy Recognized Text*
+  after Copy, pasting it elsewhere gives all the text (not only the first 500 characters), the plain picture has no
+  entry, and a screenshot of a key or card number has none and is masked. Hover the text picture and move straight to
+  the *Copy Text* button: the card stays open on the way, a wash shows behind the button, one click says *Copied* for
+  two seconds, and the shelf under the card still takes clicks. The copy moves the clip to the front of the history like any copy: look that the card and the hover card do not jump under the pointer. Reduce Motion on: no animation. With screen sharing on
+  or Hide Clip Contents the covered card has no hover card and no entry. The synthetic click test
+  (`HoverCardClickTests`) cannot tell a real first click in a never-key window from a sent event: check one by hand.
 - ⌘[ and ⌘] (2026-11-04): with a 5,000-clip history and three collections, hold ⌘] across all of them and back, and
   compare with 1.2.0. Pass: each collection's clips appear in one step, with no flash of the previous collection's
   clips, and no stutter (`LargeHistoryPerformanceTests` times the filtering; the redraw is only seen by eye).

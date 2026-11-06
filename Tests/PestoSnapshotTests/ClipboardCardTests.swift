@@ -437,7 +437,7 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }
 
-    func test_shortCoveredText_keepsTheStandardCard() throws {
+    func test_shortCoveredText_showsTheCoverFace() throws {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .text, preview: "hunter2")
         snapshotCard(ClipboardCard(item: item, isPrivacyBlurred: true))

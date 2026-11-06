@@ -13,8 +13,8 @@ Bring your clipboard history, pinned clips or snippets into Pesto from other app
   regular-expression or fuzzy mode.
 - **Your old app's ignored-apps list does not come across.** Pesto has its own exclusions (*Settings → Privacy*), and
   password managers are skipped by default.
-- **Pesto keeps a month of clips by default** (*Settings → Data*). Imported history keeps its original dates, so the
-  older part of a big import is removed at the next cleanup. The import tells you how many clips that is.
+- **Pesto keeps a month of clips by default** (*Settings → Data*). Imported history keeps its original dates, so for apps other than Paste the
+  older part of a big import is removed at the next cleanup (the import tells you how many clips that is). Paste's import leaves those clips out instead.
 
 ## How Pesto finds and imports your history
 If another supported clipboard manager is installed when you finish setup, the shelf shows a one-time line offering to bring its history
@@ -38,7 +38,7 @@ are not pinned, so your retention setting may remove the older ones. Clips you a
 - Only the first item of a multi-item copy, and nothing that lives only in Paste's iCloud data: Pesto reads the library
   file on this Mac. The file chooser starts where Paste keeps it (the App Store, Setapp and direct versions are all
   looked for); it is a hidden folder, so press ⇧⌘. in the chooser if you have to look for it yourself.
-A library of more than 20,000 clips, or a file over 1 GB, is refused whole ("That file is too large to import"), pinboards included. Trim Paste's history first.
+Pesto imports at most 20,000 clips or 1 GB of them at a time. A bigger Paste library is not refused: your pinboards come first, as collections, then the newest history, and before anything is imported the sheet says how many of the clips will come in ("4,200 of 30,000 clips will be imported: your collections and the newest 3,200"). Clips that are older than *Keep clips for* or past *Keep at most* in *Settings → Data* are not imported either, because Pesto would remove them at the next cleanup; raise those settings first to bring in more. The import then tells you how many stayed in Paste. For the other apps below, a library of more than 20,000 clips is refused whole ("That file is too large to import"); trim that app's history first.
 
 The import tells you how many clips came in and how many were left out.
 

@@ -18,27 +18,45 @@ struct ImportPreviewTests {
         RetentionPolicy(maxAge: Double(days) * 86_400, maxItemCount: 5000, maxTotalBytes: 1 << 30)
     }
 
-    @Test("Paste's pinboards are the pinned clips and its history is the rest, with its pinboard summary")
+    @Test("a Paste plan shows its pinboards as the pinned clips and its history as the rest, with its summary")
     func whenFromPaste_thenPinboardsArePinned() {
-        let library = PasteLibrary(
-            pinboards: [
-                .init(name: "Commands", records: [record(daysAgo: 1, pinboard: "Commands")]),
-                .init(
-                    name: "Prompts",
-                    records: [record(daysAgo: 2, pinboard: "Prompts"), record(daysAgo: 3, pinboard: "Prompts")]
-                )
-            ],
-            history: [record(daysAgo: 4), record(daysAgo: 400)]
+        func entry(_ key: Int64, _ board: String?) -> PasteImportPlan.Entry {
+            .init(snippetKey: key, dataKey: key, bytes: 10, timestamp: now, pinboard: board)
+        }
+        let plan = PasteImportPlan(
+            pinboards: [entry(1, "Commands"), entry(2, "Prompts"), entry(3, "Prompts")],
+            history: [entry(4, nil), entry(5, nil)], libraryClips: 30_000, unusable: 2, pinboardsLeftByCap: 0,
+            historyLeftByCap: 0, historyLeftByRetention: 29_993, displacedExisting: 0
         )
 
-        let preview = ImportPreview(paste: library)
+        let preview = ImportPreview(paste: plan, snapshot: nil)
 
         #expect(preview.appName == "Paste")
-        #expect(preview.pinnedCount == 3)
-        #expect(preview.historyCount == 2)
+        #expect(preview.pinnedCount == 3 && preview.historyCount == 2 && preview.hasPins)
         #expect(preview.pinSummary == "Commands (1), Prompts (2)")
-        #expect(preview.records(includingHistory: false).count == 3)
-        #expect(preview.records(includingHistory: true).count == 5)
+        #expect(preview.skipped == 2)
+        #expect(plan.selectedCount + plan.leftByLimits + plan.unusable == plan.libraryClips)
+        #expect(plan.lead(includingHistory: true) == .pinboardsAndNewest(2))
+        #expect(plan.lead(includingHistory: false) == .pinboards)
+        #expect(plan.selectedCount(includingHistory: false) == 3)
+    }
+
+    @Test("with no pinboards the summary names the newest clips, and with pinboards cut it names the first ones")
+    func whenNoPinboardsOrCut_thenLeadNamesWhatIsTaken() {
+        let one = PasteImportPlan.Entry(snippetKey: 1, dataKey: 1, bytes: 10, timestamp: now, pinboard: nil)
+        let board = PasteImportPlan.Entry(snippetKey: 2, dataKey: 2, bytes: 10, timestamp: now, pinboard: "A")
+        let newest = PasteImportPlan(
+            pinboards: [], history: [one], libraryClips: 5, unusable: 0, pinboardsLeftByCap: 0, historyLeftByCap: 4,
+            historyLeftByRetention: 0, displacedExisting: 0
+        )
+        let cut = PasteImportPlan(
+            pinboards: [board], history: [], libraryClips: 5, unusable: 0, pinboardsLeftByCap: 3,
+            historyLeftByCap: 1, historyLeftByRetention: 0, displacedExisting: 0
+        )
+
+        #expect(newest.lead(includingHistory: true) == .newest(1))
+        #expect(cut.lead(includingHistory: true) == .firstPinboards(1))
+        #expect(cut.lead(includingHistory: false) == .firstPinboards(1))
     }
 
     @Test("a Maccy or Alfred library is split by whether the record is in a pinboard, in its original order")

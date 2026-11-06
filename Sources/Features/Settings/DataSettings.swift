@@ -5,7 +5,7 @@ import PestoCore
 import SwiftData
 import SwiftUI
 
-private let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "DataSettings")
+let dataSettingsLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "DataSettings")
 
 struct DataSettings: View {
     enum Part {
@@ -17,11 +17,11 @@ struct DataSettings: View {
         case exportHistory, importHistory, importPaste, importSnippets, rebuildIndex
     }
 
-    @Environment(\.modelContext) private var modelContext
-    @Environment(AppState.self) private var appState: AppState
-    @State private var messages: [Action: String] = [:]
+    @Environment(\.modelContext) var modelContext
+    @Environment(AppState.self) var appState: AppState
+    @State var messages: [Action: String] = [:]
     @State private var isRebuildingIndex = false
-    @State private var importPreview: ImportPreview?
+    @State var importPreview: ImportPreview?
     @State var otherFile: OtherFileChoice?
 
     var body: some View {
@@ -119,13 +119,17 @@ struct DataSettings: View {
                 }
             )
         }
-        .sheet(isPresented: Binding(get: { importPreview != nil }, set: { if !$0 { importPreview = nil } })) {
+        .sheet(isPresented: Binding(get: { importPreview != nil }, set: { if !$0 { closePreview() } })) {
             if let preview = importPreview {
                 ImportPreviewSheet(
                     preview: preview,
                     retention: RetentionPolicy.fromDefaults(AppDefaults.store),
-                    onCancel: { importPreview = nil },
+                    onCancel: { closePreview() },
                     onImport: { includeHistory in
+                        if preview.plan != nil {
+                            importPlanned(preview, includingHistory: includeHistory)
+                            return
+                        }
                         importPreview = nil
                         runPasteImport(
                             preview.records(includingHistory: includeHistory),
@@ -226,37 +230,6 @@ struct DataSettings: View {
         }
     }
 
-    private func importFromPaste() {
-        Task {
-            guard await ProtectedAction.permitted(reason: "Import clips from Paste") else {
-                return flash(.importPaste, "Not imported.")
-            }
-            if let preview = ImportFixture.preview(forApp: "Paste", in: ImportFixture.requested) {
-                return importPreview = preview
-            }
-            let panel = NSOpenPanel()
-            let detected = PasteLibraryReader.existingDatabaseURL()
-            panel.directoryURL = (detected ?? PasteLibraryReader.defaultDatabaseURL).deletingLastPathComponent()
-            panel.nameFieldStringValue = "Paste.db"
-            panel.message = "Choose Paste.db in the com.wiheads.paste folder. Pesto reads a copy and never changes it."
-            panel.allowsMultipleSelection = false
-            guard panel.runModal() == .OK, let url = panel.url else { return }
-            do {
-                let library = try await Task.detached { try PasteLibraryReader.read(databaseAt: url) }.value
-                guard library.pinboardClipCount > 0 || !library.history.isEmpty else {
-                    return flash(.importPaste, "No clips found in that file.")
-                }
-                importPreview = ImportPreview(paste: library)
-            } catch PasteLibraryReader.ReadError.notAPasteLibrary {
-                flash(.importPaste, "That is not a Paste library.", seconds: 5)
-            } catch PasteLibraryReader.ReadError.tooLarge {
-                flash(.importPaste, "That file is too large to import.", seconds: 5)
-            } catch {
-                flash(.importPaste, "Couldn’t read that file. Choose another one.", seconds: 5)
-            }
-        }
-    }
-
     private func importFromClipboardApp(_ app: ClipboardAppSource) {
         Task {
             guard await ProtectedAction.permitted(reason: "Import clips from \(app.name)") else {
@@ -330,12 +303,18 @@ struct DataSettings: View {
         return parts.joined(separator: " ")
     }
 
-    private func importMessage(_ report: ImportReport) -> String {
+    func importMessage(_ report: ImportReport) -> String {
         var parts = [
             report
                 .imported == 0 ? String(localized: "Nothing new.") :
                 String(localized: "\(report.imported) clips imported.")
         ]
+        if !report.isUndoable, report.imported > 0 {
+            parts.append(String(localized: "Undo is not available for an import this large."))
+        }
+        if report.leftByLimits > 0 {
+            parts.append(String(localized: "\(report.leftByLimits.formatted()) stayed in Paste because of the limits."))
+        }
         if report.skipped > 0 {
             parts
                 .append(
@@ -373,7 +352,7 @@ struct DataSettings: View {
                 }
                 flash(.importPaste, importMessage(report), seconds: report.skipped + report.expiring > 0 ? 14 : 6)
             } catch {
-                logger.error("Paste import failed: \(error.localizedDescription, privacy: .public)")
+                dataSettingsLogger.error("Paste import failed: \(error.localizedDescription, privacy: .public)")
                 flash(.importPaste, "Couldn’t import from that library. Try again.", seconds: 5)
             }
         }

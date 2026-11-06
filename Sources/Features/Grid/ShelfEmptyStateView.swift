@@ -6,6 +6,7 @@ struct ShelfEmptyStateView: View {
     let state: ShelfEmptyState
     let query: String
     var advice: NoResultsAdvice?
+    var hasKeyboardCursor = false
     var onAction: ((ShelfEmptyState.Action) -> Void)?
     var onAdvice: ((NoResultsAdvice.Action) -> Void)?
 

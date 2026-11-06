@@ -192,10 +192,7 @@ extension GridView {
     }
 
     func apply(_ action: NoResultsAdvice.Action) {
-        switch action {
-        case .clearFilters: appState.clearSearchFilters()
-        case .clearSearch: appState.searchText = ""
-        }
+        appState.clearForNoResults(action)
     }
 
     func handleClick(_ click: ShelfClick, item: ClipboardItem) {

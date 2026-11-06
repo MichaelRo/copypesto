@@ -2,7 +2,7 @@
 import XCTest
 
 final class NoResultsAdviceUITests: PestoUITestCase {
-    func test_noResultsWithAKindOn_offersClearFilters() {
+    private func searchForNothingWithImageOn() -> XCUIElement {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
@@ -13,6 +13,11 @@ final class NoResultsAdviceUITests: PestoUITestCase {
         imageChip.click()
         field.click()
         field.typeText("Quarterly")
+        return field
+    }
+
+    func test_noResultsWithAKindOn_offersClearFilters() {
+        _ = searchForNothingWithImageOn()
 
         let advice = element(AccessibilityID.shelfEmptyStateAdvice)
         XCTAssertTrue(
@@ -20,6 +25,16 @@ final class NoResultsAdviceUITests: PestoUITestCase {
             "no Clear Filters button on an empty search with a filter on"
         )
         advice.click()
+
+        XCTAssertTrue(card(containing: "Quarterly report draft").waitForExistence(timeout: 5))
+    }
+
+    func test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt() {
+        let field = searchForNothingWithImageOn()
+        XCTAssertTrue(element(AccessibilityID.shelfEmptyStateAdvice).waitForExistence(timeout: 5))
+
+        field.typeKey(.tab, modifierFlags: .shift)
+        field.typeKey(.return, modifierFlags: [])
 
         XCTAssertTrue(card(containing: "Quarterly report draft").waitForExistence(timeout: 5))
     }

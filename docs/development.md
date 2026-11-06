@@ -83,8 +83,11 @@ git config core.hooksPath .githooks
 ## CI
 
 The gate is `scripts/verify.sh` (and the `.githooks/pre-push` hook). The GitHub Actions workflow runs the Linux analytics
-check on every push and pull request; the macOS `verify` job runs on every pull request and by hand (Actions tab, CI, Run workflow), on the
-Xcode 27 runner image. There the card snapshots, text recognition and a few hardware budgets are skipped (named in
+check on every push and pull request; the macOS `verify` job runs on a pull request that changes code, tests, scripts or project files and whose base is `main`
+(a stacked pull request runs it once retargeted; a docs-only one never), and by hand (Actions tab, CI, Run workflow), on the
+Xcode 27 runner image. A green run leaves a marker keyed by the pull request's tree, so a rebase or re-run that changed no
+file skips the twenty minutes and reports success. The branch ruleset does not require branches to be up to date, so a merge
+never re-runs another pull request's check. There the card snapshots, text recognition and a few hardware budgets are skipped (named in
 `scripts/verify-allowed-skips.txt`); `scripts/verify.sh` on a Mac runs all of them. Its jobs (actions pinned to commit SHAs, lint tools
 pinned in `scripts/tool-versions.env`):
 

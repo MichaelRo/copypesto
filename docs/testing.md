@@ -415,8 +415,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Each theme in light and dark with its icon. Pass: text, accent and the icon read on every one.
 - Wallpapers (also with Settings → Appearance → Shelf surface on Glass, then Solid; ADR 0035): System Settings → Appearance with the transparency slider at minimum, middle and maximum, Reduce
   Transparency, Increase Contrast and Reduce Motion, over the lightest and darkest wallpaper. Pass: the shelf, Settings
-  and the quick menu stay readable, the focus ring is visible (A-14), the card header time in Mortar dark reads (D-07,
-  estimated 4.46:1), and the hover card does not scale.
+  and the quick menu stay readable, the focus ring is visible (A-14), and the hover card does not scale (the card header's age is
+  `CardHeaderTimeContrastTests`, D-07).
 - Text size: set the largest text size and open the shelf, Settings and setup. Pass: no text is cut off or overlaps.
 - Settings on two displays (2026-11-04; the rule is tested in `SettingsWindowFrameTests`, the displays are not): with
   the shelf on one display, choose Settings from its gear; with the shelf closed, choose Settings from the menu-bar

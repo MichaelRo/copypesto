@@ -341,20 +341,22 @@ struct CommandBarView: View {
         }
         .padding(.vertical, -3)
         .onChange(of: entries.map(\.id)) { _, _ in registerFilterChipActions() }
+        .onChange(of: appState.noResultsAdvice) { _, _ in registerFilterChipActions() }
         .onAppear { registerFilterChipActions() }
     }
 
     /// Hands the keyboard the chips as they are now, so Tab and Return can act on them (`AppState.filterChipActions`).
     private func registerFilterChipActions() {
         let entries = allFilterEntries
-        appState.filterChipActions = entries.map { entry in
+        let actions = entries.map { entry in
             FilterChipAction(
                 spokenName: entry.spoken ?? entry.label,
                 isActive: { [appState] in currentlyActive(entry.id, appState: appState) },
                 toggle: entry.toggle
             )
-        }
-        appState.filterChipCursor = FilterChipCursor.kept(appState.filterChipCursor, count: entries.count)
+        } + [appState.noResultsChipAction()].compactMap(\.self)
+        appState.filterChipActions = actions
+        appState.filterChipCursor = FilterChipCursor.kept(appState.filterChipCursor, count: actions.count)
     }
 
     /// A chip's state read when it is spoken, after its toggle ran (the entry's own `isActive` is a snapshot).

@@ -53,6 +53,7 @@ extension AppState {
     }
 
     func shelfDidClose() {
+        hideClickHint()
         shelfSuggestionDwellTask?.cancel()
         shelfSuggestionDwellTask = nil
 

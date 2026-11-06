@@ -12,6 +12,7 @@ A text clip shows its paragraphs, with a slim dotted gap for a blank line. When 
 
 - **← →** move between clips, **Return** pastes the selected clip, **Esc** closes the shelf.
 - **Start typing** to search. Search matches the first 500 characters of each clip, its title, note and tags, a link's page title and site name, and the text inside pictures; search by meaning works in English.
+- When nothing matches, the shelf says so. If filters are on, it names them ("Nothing matches “invoice” with Image and Today on.") and **Clear Filters** turns them off and keeps what you typed; with none on, **Clear Search** empties the field. From the keyboard, Tab (or Shift-Tab) in the search field walks the filter chips and ends on this button; Return presses it.
 - **Space** selects a clip so you can act on several at once (for example paste them together). **⌘A** selects every clip currently shown, so you can filter first and then delete or paste them all. While you are typing in the search field, the first ⌘A selects the text you typed and a second ⌘A selects every clip shown. Cut, copy, paste and undo (⌘X, ⌘C, ⌘V, ⌘Z) work on the text there too.
 - **⌫** deletes the selected clips, or the focused one when none is selected; Return confirms and Esc keeps them.
 - **Undo.** After a delete a bar reads *Deleted 3 clips* with an **Undo** button, and **⌘Z** takes back the last delete or change; **⇧⌘Z** does it again. It covers deleting clips and collections, renaming, notes, tags, icons, moving a clip to a collection (also by dragging), pinning, paste shortcuts, the sensitive mark, a dragged card's place, creating, editing, duplicating and reordering collections, adding or editing a snippet, and an import. In *Settings* the Edit menu's *Undo* does the same, and names the action. Pesto remembers the last 20 actions, only until you lock the history, clear it or quit. *Clear History* and *Clear Everything* are final, and so is deleting a clip that expires on its own, a hidden password or a very large clip; the question before a delete says which it is.
@@ -63,7 +64,7 @@ Pin a clip to keep it forever: pinned clips are never removed by the retention l
 You can also give up to nine pinned clips their own shortcut (**⌃1** to **⌃9**) that pastes them instantly.
 
 ## Pasting
-- **Return** or a double click on a clip pastes it into the app you were using.
+- **Return** or a double click on a clip pastes it into the app you were using. After a single click that only selects, a quiet line under the cards reminds you of this, at most three times, and never once you have pasted by double click.
 - **⇧Return** pastes the focused clip directly as plain text (available for text, code, links and colors).
 - **⌘C** copies the focused clip to the clipboard without pasting or closing the shelf.
 - **⌘Y** toggles Quick Look for a larger view of the focused clip (text, picture, PDF, HTML or URL).

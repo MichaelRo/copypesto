@@ -38,6 +38,11 @@ final class AppState {
     /// The banner that offers to take back what was just deleted. Set by `offerUndo()`, gone after a while.
     var undoOffer: UndoLabel?
     @ObservationIgnored var undoOfferDismissal: Task<Void, Never>?
+    /// The quiet line under the cards that says a double-click pastes (`ClickHintPolicy`).
+    var isClickHintVisible = false
+    /// The next step the empty search offers (`NoResultsAdvice`); set by the grid while No results shows.
+    var noResultsAdvice: NoResultsAdvice?
+    @ObservationIgnored var clickHintTask: Task<Void, Never>?
     /// Counts the undos and redos that were applied, so the shelf filters again (a clip moved in or out of a
     /// collection).
     var undoGeneration = 0

@@ -4,7 +4,6 @@ import SwiftUI
 
 struct SuggestionBanner: View {
     let presentation: ShelfSuggestionPresentation
-    @Environment(\.pestoAccent) private var accent
     @Environment(AppState.self) private var appState: AppState
 
     private var symbol: String {
@@ -64,18 +63,10 @@ struct SuggestionBanner: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: symbol)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(accent)
-                .accessibilityHidden(true)
-            Text(titleText)
-                .lineLimit(2)
-                .scaledFont(size: 11)
-                .foregroundStyle(.primary)
-                .help(titleText)
-            Spacer()
-            Button(primaryTitle) {
+        ShelfBannerCapsule(
+            symbol: symbol,
+            message: titleText,
+            primary: .init(title: primaryTitle, identifier: AccessibilityID.shelfSuggestionAcceptButton) {
                 if presentation.isNotice {
                     appState.pendingSettingsSection = SettingsSection.general.rawValue
                     appState.openSettingsFromOverlay?()
@@ -83,25 +74,17 @@ struct SuggestionBanner: View {
                 } else {
                     appState.acceptShelfSuggestion()
                 }
-            }
-            .buttonStyle(.pestoCapsule(.primary))
-            .accessibilityIdentifier(AccessibilityID.shelfSuggestionAcceptButton)
-
-            if let secondaryTitle {
-                Button(secondaryTitle) {
+            },
+            secondary: secondaryTitle.map { title in
+                .init(title: title, identifier: AccessibilityID.shelfSuggestionDeclineButton) {
                     if presentation.isNotice {
                         appState.shelfSuggestion = nil
                     } else {
                         appState.declineShelfSuggestion()
                     }
                 }
-                .buttonStyle(.pestoCapsule(.secondary))
-                .accessibilityIdentifier(AccessibilityID.shelfSuggestionDeclineButton)
             }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 6)
-        .background(BannerFill(tint: accent))
+        )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(titleText)
         .accessibilityIdentifier(AccessibilityID.shelfSuggestionBanner)

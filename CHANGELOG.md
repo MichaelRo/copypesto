@@ -36,7 +36,7 @@ once (`docs/guide/getting-started.md`). Check the download against the SHA-256 o
 - A theme for dark mode, if you want one; Show Pesto in the menu bar can be turned off.
 - Suggested snippets (starters, and text you paste often); *Import from another app* takes a Raycast snippets export as well as Paste.
 - About Pesto is a window in the style of the website.
-- Clipboard history shelf (⌘⇧V) with a horizontal row of cards.
+- Clipboard history shelf (⇧⌘V) with a horizontal row of cards.
 - Encrypted backup to one file per Mac (passphrase or recovery key), and restore from any backup file.
 - AES-256-GCM encryption at rest of clip content, previews, titles, notes, tags and search vectors.
 - Masking of secrets (card numbers, API keys, tokens, password lines); the real text shows only through Show, after Touch ID or the account password.
@@ -45,7 +45,7 @@ once (`docs/guide/getting-started.md`). Check the download against the SHA-256 o
 - Three-tier paste: Accessibility direct-write → keystroke synthesis → clipboard replace.
 - Onboarding flow with Accessibility and Keychain permission steps.
 - Retention policy (configurable; default 30 days).
-- Quick-paste-last shortcut (⌘⌥V).
+- Quick-paste-last shortcut (⌥⌘V).
 - Paste anywhere: a click on the shelf focuses a clip and a double click or Return pastes it; ⇧Return pastes plain text.
 - Themes (Basil, Parmesan, Pine nut, Mortar), each with an app icon; a separate theme for dark mode if you want one.
 - One *Ask for Touch ID again after* setting (1, 5, 15 or 60 minutes) for the history lock and every protected action.

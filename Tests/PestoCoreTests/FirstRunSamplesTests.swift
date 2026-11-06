@@ -13,7 +13,7 @@ struct FirstRunSamplesTests {
 
     @Test("a new install gets a welcome note and a sample snippet without creating a Snippets collection")
     func whenRecordsBuilt_thenWelcomeAndSnippet() {
-        let records = FirstRunSamples.records(shortcut: "⌘⇧V")
+        let records = FirstRunSamples.records(shortcut: "⇧⌘V")
 
         #expect(records.count == 2)
         #expect(records[0].title == FirstRunSamples.welcomeTitle)
@@ -29,7 +29,7 @@ struct FirstRunSamplesTests {
         let welcome = try text(first)
 
         #expect(welcome.contains("⌃⌥P opens this shelf"))
-        #expect(!welcome.contains("⌘⇧V"))
+        #expect(!welcome.contains("⇧⌘V"))
     }
 
     @Test("the snippet is a real template: every token is one the expander fills in")

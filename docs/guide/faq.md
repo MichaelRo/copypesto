@@ -2,11 +2,11 @@
 
 ## How to see clipboard history on a Mac
 
-Press **⌘⇧V** to open Pesto's shelf along the bottom of the screen. You can scroll through your recent clips with the arrow keys, swipe with the trackpad, or search by typing immediately. Press **Return** or click a card to paste it into your active app.
+Press **⇧⌘V** to open Pesto's shelf along the bottom of the screen. You can scroll through your recent clips with the arrow keys, swipe with the trackpad, or search by typing immediately. Press **Return** or click a card to paste it into your active app.
 
 ## What is the Mac clipboard history shortcut?
 
-The default shortcut is **⌘⇧V** (Command-Shift-V). Pressing it opens the shelf wherever you are. You can change this shortcut to any key combination in *Settings → Shortcuts*.
+The default shortcut is **⇧⌘V** (Shift-Command-V). Pressing it opens the shelf wherever you are. You can change this shortcut to any key combination in *Settings → Shortcuts*.
 
 ## Is Pesto free?
 
@@ -26,7 +26,7 @@ There is no list of Macs to manage. *Reset Sync* gives every Mac a new key: a Ma
 
 ## Can I hide Pesto's icon from the menu bar?
 
-Yes: *Settings → General → Show Pesto in the menu bar*. Then ⌘⇧V (or the
+Yes: *Settings → General → Show Pesto in the menu bar*. Then ⇧⌘V (or the
 shortcut you chose) opens the shelf, and opening Pesto again from Applications shows Settings, so you can bring the icon
 back.
 

@@ -155,6 +155,28 @@
         }
       }
     },
+    "%lld clips stay here": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clip stays here"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clips stay here"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld clips re-indexed.": {
       "localizations": {
         "en": {
@@ -1362,28 +1384,6 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld clips stay on this Mac"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "Clips with secrets stay on this Mac unless you choose: **%lld clips stay here**.": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Clips with secrets stay on this Mac unless you choose: **%lld clip stays here**."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Clips with secrets stay on this Mac unless you choose: **%lld clips stay here**."
                 }
               }
             }

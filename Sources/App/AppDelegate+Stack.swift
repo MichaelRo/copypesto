@@ -4,7 +4,7 @@ import PestoCore
 
 /// A paste stack (ADR 0009): the first clip is pasted when the shelf closes, then each plain ⌘V, in any app, pastes the
 /// next one, because Pesto puts it on the pasteboard as soon as the one before has been read. Without Accessibility
-/// Pesto cannot see the keystroke, and ⌘⇧V pastes the next clip as it did before.
+/// Pesto cannot see the keystroke, and ⇧⌘V pastes the next clip as it did before.
 @MainActor
 extension AppDelegate {
     func stackAfterFirstPaste(_ updated: PasteStack?) {

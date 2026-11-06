@@ -191,6 +191,14 @@ schemes:
         - PestoSnapshotTests
         - PestoUITests
       gatherCoverageData: true
+      # Dates in the snapshot baselines are drawn in the process's own region and time zone, so a Mac set to another one
+      # failed 12 of 14 popover baselines. The tests run as a US Mac in UTC.
+      environmentVariables:
+        - variable: TZ
+          value: UTC
+      commandLineArguments:
+        "-AppleLocale en_US": true
+        "-AppleLanguages (en)": true
     profile:
       config: Profile
     analyze:

@@ -51,17 +51,21 @@ final class ClipboardCardTests: XCTestCase {
         colorScheme: ColorScheme = .dark,
         layoutDirection: LayoutDirection = .leftToRight,
         cardSize: CGSize = CGSize(width: 200, height: 180),
+        solidShelfGround: String? = nil,
         file: StaticString = #filePath,
         testName: String = #function,
         line: UInt = #line
     ) {
+        let ground = solidShelfGround.flatMap { Color(hex: $0) }
+            ?? (colorScheme == .dark ? Color(white: 0.11) : Color(white: 0.9))
         let root = card
             .defaultAppStorage(AppDefaults.store)
             .environment(\.layoutDirection, layoutDirection)
+            .environment(\.shelfDrawsGlass, solidShelfGround == nil ? nil : false)
             .preferredColorScheme(colorScheme)
             .frame(width: cardSize.width, height: cardSize.height)
             .padding(20)
-            .background(colorScheme == .dark ? Color(white: 0.11) : Color(white: 0.9))
+            .background(ground)
         let controller = NSHostingController(rootView: root)
         // `preferredColorScheme` does not reach text drawn in a view that is not in a window: it takes the Mac's own
         // appearance (white text on the light card of the light picture).
@@ -147,6 +151,23 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .text, preview: "Light mode text card variant")
         snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
+    }
+
+    /// ADR 0035: on the solid shelf a light card is opaque white on the theme's own ground (the Basil light ground).
+    func test_textCard_onTheSolidShelf_light() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .text, preview: "Light card on the solid shelf")
+        snapshotCard(
+            ClipboardCard(item: item), named: "solidLight", colorScheme: .light, solidShelfGround: BrandPalette.garlic
+        )
+    }
+
+    func test_textCard_onTheSolidShelf_dark() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .text, preview: "Dark card on the solid shelf")
+        snapshotCard(
+            ClipboardCard(item: item), named: "solidDark", colorScheme: .dark, solidShelfGround: BrandPalette.darkSurface
+        )
     }
 
     func test_textCard_rtl() throws {

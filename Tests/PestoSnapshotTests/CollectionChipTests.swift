@@ -23,7 +23,7 @@ final class CollectionChipTests: XCTestCase {
             .preferredColorScheme(colorScheme)
             .padding(8)
             .frame(width: size.width, height: size.height)
-        let controller = NSHostingController(rootView: root)
+        let controller = NSHostingController(rootView: root.inBrandAccent())
         withSnapshotTesting(record: .missing) {
             assertSnapshot(
                 of: controller,

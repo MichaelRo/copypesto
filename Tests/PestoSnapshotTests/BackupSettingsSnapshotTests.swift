@@ -29,7 +29,7 @@ final class BackupSettingsSnapshotTests: XCTestCase {
             .frame(width: size.width, height: size.height)
             .background(Color(white: 0.16))
             .environment(\.colorScheme, .dark)
-        let controller = NSHostingController(rootView: root)
+        let controller = NSHostingController(rootView: root.inBrandAccent())
         controller.view.appearance = NSAppearance(named: .darkAqua)
         withSnapshotTesting(record: .missing) {
             assertSnapshot(of: controller, as: .image(size: size), file: file, testName: testName, line: line)

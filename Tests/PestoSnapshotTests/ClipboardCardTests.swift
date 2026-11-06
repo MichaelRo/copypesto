@@ -66,7 +66,7 @@ final class ClipboardCardTests: XCTestCase {
             .frame(width: cardSize.width, height: cardSize.height)
             .padding(20)
             .background(ground)
-        let controller = NSHostingController(rootView: root)
+        let controller = NSHostingController(rootView: root.inBrandAccent())
         // `preferredColorScheme` does not reach text drawn in a view that is not in a window: it takes the Mac's own
         // appearance (white text on the light card of the light picture).
         controller.view.appearance = NSAppearance(named: colorScheme == .dark ? .darkAqua : .aqua)

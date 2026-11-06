@@ -56,7 +56,9 @@ public enum RecognizedText {
 
     @MainActor
     private static func wholePreview(of item: ClipboardItem) -> String? {
-        let preview = item.displayPreviewText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !preview.isEmpty && preview.count < CardPreviewText.previewLength ? preview : nil
+        let preview = item.displayPreviewText
+        guard preview.count < CardPreviewText.previewLength else { return nil }
+        let text = preview.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? nil : text
     }
 }

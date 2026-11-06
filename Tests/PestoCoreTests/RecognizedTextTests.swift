@@ -90,6 +90,16 @@ struct RecognizedTextTests {
         #expect(RecognizedText.text(of: item, store: store) == nil)
     }
 
+    @Test("a preview cut at 500 characters that ends in a line break is not offered either")
+    func whenCutPreviewEndsInLineBreak_thenHidden() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let item = try picture(preview: String(repeating: "y", count: CardPreviewText.previewLength - 1) + "\n")
+
+        #expect(!RecognizedText.isOffered(for: item, store: store))
+        #expect(RecognizedText.text(of: item, store: store) == nil)
+    }
+
     @Test("a picture with no text is not offered")
     func whenNoText_thenHidden() throws {
         let (store, directory) = makeStore()

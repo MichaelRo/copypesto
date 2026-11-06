@@ -413,6 +413,11 @@ struct DetectAnywhereLongTextTests {
         #expect(elapsed < .seconds(1), "scan took \(elapsed)")
     }
 
+    @Test("the line and word scan reads as much as a picture's text can hold")
+    func whenTheScanLimitIsRead_thenItCoversTheRecognizedTextCap() {
+        #expect(SensitiveContentDetector.maxLineScanBytes >= RecognizedText.maxBytes)
+    }
+
     @Test("text built to be slow for the patterns is read inside a second, at the 100 KB the scan now reads")
     func whenTextIsAdversarial_thenStillQuick() {
         let cases: [String: String] = [

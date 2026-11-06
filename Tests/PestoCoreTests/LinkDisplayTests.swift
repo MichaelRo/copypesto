@@ -65,23 +65,18 @@ struct LinkDisplayTests {
         #expect(LinkDisplay.hostPoints(forLength: length) == points)
     }
 
-    @Test(
-        "the host takes the lines it fits and the path the room left, the path dropping out before the host shrinks",
-        arguments: [
-            (24.0, 2, 11.0, 104.0, [2, 2]), (18.0, 3, 11.0, 104.0, [3, 2]), (24.0 * 0.85, 2, 11.0 * 0.85, 64.0, [2, 0]),
-            (18.0 * 0.85, 3, 11.0 * 0.85, 64.0, [3, 0]), (24.0, 2, 11.0, 40.0, [1, 0])
-        ]
-    )
-    func whenBudget_thenLinesShared(host: Double, hostMost: Int, path: Double, budget: Double, expected: [Int]) {
-        let lines = LinkDisplay.lineLimits(
-            hostPoints: host, hostMaxLines: hostMost, pathPoints: path, heightBudget: budget
-        )
-        #expect([lines.host, lines.path] == expected)
+    @Test("the path takes the room the one-line host leaves, and drops out before the host is cut", arguments: [
+        (24.0, 11.0, 104.0, 3), (18.0, 11.0, 104.0, 3), (24.0 * 0.85, 11.0 * 0.85, 64.0, 2),
+        (18.0 * 0.85, 11.0 * 0.85, 64.0, 2), (24.0, 11.0, 40.0, 0)
+    ])
+    func whenBudget_thenPathLines(host: Double, path: Double, budget: Double, lines: Int) {
+        #expect(LinkDisplay.pathLineLimit(hostPoints: host, pathPoints: path, heightBudget: budget) == lines)
     }
 
-    @Test("a host may break after each dot, so a long one wraps instead of being cut")
-    func whenHostWraps_thenBreaksAfterDots() {
-        #expect(LinkDisplay.breakableHost("news.example.com") == "news.\u{200B}example.\u{200B}com")
+    @Test("the host never shrinks below the size that still reads")
+    func whenShrinking_thenFloorKeepsTenPoints() {
+        let smallest = CardTreatment.secondaryPoints * Double(CardTextScale.range.lowerBound)
+        #expect(smallest * LinkDisplay.hostMinimumScale >= 10)
     }
 
     @Test("a query or fragment is never shown, so a token in a link stays out of sight at rest")

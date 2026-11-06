@@ -428,6 +428,22 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }
 
+    func test_linkCard_hostStaysOnOneLineAtTheNarrowestAndWidestCard() throws {
+        for (name, host) in [("sixteen", "news.example.com"), ("twentyFour", "documentation.example.io")] {
+            for width in [160, 240] {
+                try withCardWidth(width) {
+                    let ctx = try makeContext()
+                    let item = makeItem(in: ctx, type: .url, preview: "https://\(host)/guides/start")
+                    snapshotCard(
+                        ClipboardCard(item: item, shortcutNumber: 1),
+                        named: "\(name)\(width)",
+                        cardSize: CardMetrics.dimensions(width: width)
+                    )
+                }
+            }
+        }
+    }
+
     func test_linkCard_withMetadataKeepsItsRichBody() throws {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .url, preview: "https://news.example.com/2026/11/story")

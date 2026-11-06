@@ -200,23 +200,23 @@ extension ClipboardCard {
             size: hostPoints,
             weight: .semibold
         ))
-        let lines = LinkDisplay.lineLimits(
+        let pathLines = LinkDisplay.pathLineLimit(
             hostPoints: Double(hostPoints),
-            hostMaxLines: CardTreatment.maxLines(forPoints: LinkDisplay.hostPoints(forLength: link.host.count)),
             pathPoints: Double(pathPoints),
             heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions) - extra)
         )
         return VStack(alignment: .leading, spacing: 4) {
-            Text(LinkDisplay.breakableHost(link.host))
+            Text(link.host)
                 .scaledFont(size: hostPoints, weight: .semibold, maxScale: Self.largeTextHeadroom)
                 .foregroundStyle(.primary.opacity(0.92))
-                .lineLimit(lines.host)
-                .truncationMode(.middle)
-            if !link.rest.isEmpty, lines.path > 0 {
+                .lineLimit(1)
+                .minimumScaleFactor(LinkDisplay.hostMinimumScale)
+                .truncationMode(.tail)
+            if !link.rest.isEmpty, pathLines > 0 {
                 Text(link.rest)
                     .scaledFont(size: pathPoints, maxScale: 1.0)
                     .pestoQuiet()
-                    .lineLimit(lines.path)
+                    .lineLimit(pathLines)
                     .truncationMode(.middle)
             }
         }

@@ -50,25 +50,14 @@ public struct LinkDisplay: Equatable, Sendable {
     private static let roomyBudget = 90.0
     private static let gapBetweenHostAndPath = 4.0
 
-    /// Lines for the host (as many as fit, up to the step's most) and then for the path in what is left; the path
-    /// gives way before the host is cut.
-    public static func lineLimits(
-        hostPoints: Double,
-        hostMaxLines: Int,
-        pathPoints: Double,
-        heightBudget: Double
-    )
-    -> (host: Int, path: Int) {
-        let roomy = heightBudget >= roomyBudget
-        let hostLine = hostPoints * CardTreatment.lineHeightFactor
-        let host = min(max(Int(heightBudget / hostLine), 1), hostMaxLines)
-        let left = heightBudget - Double(host) * hostLine - gapBetweenHostAndPath
-        let path = min(max(Int(left / (pathPoints * CardTreatment.lineHeightFactor)), 0), roomy ? 3 : 2)
-        return (host, path)
-    }
+    /// The host stays on one line and shrinks to this fraction of its size before it is cut: the smallest drawn host
+    /// (the 18 pt step on a Small card, 0.85) is then 10.7 pt, above the 10 pt floor.
+    public static let hostMinimumScale = 0.7
 
-    /// The host with a zero-width space after every dot: the only places a host can wrap.
-    public static func breakableHost(_ host: String) -> String {
-        host.replacingOccurrences(of: ".", with: ".\u{200B}")
+    /// Lines for the path in what the one-line host leaves, up to 3 on a roomy card and 2 on a small one.
+    public static func pathLineLimit(hostPoints: Double, pathPoints: Double, heightBudget: Double) -> Int {
+        let roomy = heightBudget >= roomyBudget
+        let left = heightBudget - hostPoints * CardTreatment.lineHeightFactor - gapBetweenHostAndPath
+        return min(max(Int(left / (pathPoints * CardTreatment.lineHeightFactor)), 0), roomy ? 3 : 2)
     }
 }

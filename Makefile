@@ -39,6 +39,7 @@ help: ## [Develop] Show this help
 
 .PHONY: generate
 generate: ## [Develop] Regenerate Pesto.xcodeproj from Pesto.yml (and restore the committed package pins)
+	scripts/clear-stale-module-cache.sh
 	xcodegen generate --spec Pesto.yml
 	mkdir -p Pesto.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
 	cp Pesto.resolved Pesto.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved

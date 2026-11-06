@@ -20,7 +20,7 @@ final class FillInPromptTests: XCTestCase {
             .padding(24)
             .background(scheme == .light ? Color(red: 0.92, green: 0.85, blue: 0.71) : Color(white: 0.13))
             .environment(\.colorScheme, scheme)
-        let controller = NSHostingController(rootView: root)
+        let controller = NSHostingController(rootView: root.inBrandAccent())
         controller.view.appearance = NSAppearance(named: scheme == .light ? .aqua : .darkAqua)
         withSnapshotTesting(record: .missing) {
             assertSnapshot(

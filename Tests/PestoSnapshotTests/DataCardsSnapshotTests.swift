@@ -41,7 +41,7 @@ final class DataCardsSnapshotTests: XCTestCase {
             .frame(width: size.width, height: size.height)
             .background(scheme == .dark ? Color(white: 0.16) : Color(white: 0.96))
             .environment(\.colorScheme, scheme)
-        let controller = NSHostingController(rootView: root)
+        let controller = NSHostingController(rootView: root.inBrandAccent())
         controller.view.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua)
         withSnapshotTesting(record: .missing) {
             assertSnapshot(of: controller, as: .image(size: size), file: file, testName: testName, line: line)

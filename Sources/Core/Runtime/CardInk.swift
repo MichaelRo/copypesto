@@ -7,15 +7,24 @@ public enum CardInk: Equatable, Sendable {
 
     /// A fill that is see-through is judged over the backdrop behind it (black in a dark card, white in a light one).
     public static func forFill(_ fill: HexColorComponents, backdropIsDark: Bool) -> CardInk {
+        let luminance = seenLuminance(of: fill, backdropIsDark: backdropIsDark)
+        let whiteContrast = 1.05 / (luminance + 0.05)
+        let blackContrast = (luminance + 0.05) / 0.05
+        return whiteContrast >= blackContrast ? .white : .black
+    }
+
+    /// WCAG contrast of full-strength `ink` on `fill` as it looks over the backdrop.
+    public static func contrast(of ink: CardInk, on fill: HexColorComponents, backdropIsDark: Bool) -> Double {
+        let luminance = seenLuminance(of: fill, backdropIsDark: backdropIsDark)
+        return ink == .white ? 1.05 / (luminance + 0.05) : (luminance + 0.05) / 0.05
+    }
+
+    private static func seenLuminance(of fill: HexColorComponents, backdropIsDark: Bool) -> Double {
         let behind = backdropIsDark ? 0.0 : 1.0
         func over(_ channel: Double) -> Double {
             channel * fill.alpha + behind * (1 - fill.alpha)
         }
-        let luminance = HexColorComponents(red: over(fill.red), green: over(fill.green), blue: over(fill.blue))
-            .luminance
-        let whiteContrast = 1.05 / (luminance + 0.05)
-        let blackContrast = (luminance + 0.05) / 0.05
-        return whiteContrast >= blackContrast ? .white : .black
+        return HexColorComponents(red: over(fill.red), green: over(fill.green), blue: over(fill.blue)).luminance
     }
 
     /// The color's text is the loudest thing on its card up to a `#RRGGBBAA`; a longer function such as `rgba()` is

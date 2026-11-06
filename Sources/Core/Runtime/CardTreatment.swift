@@ -26,7 +26,8 @@ public enum CardTreatment: Equatable, Sendable {
         case .text:
             return largeTextPoints(for: input.text).map { .largeText(points: $0) } ?? .standard
         case .url:
-            guard !input.linkPictureShown, let link = LinkDisplay.parse(input.text) else { return .standard }
+            guard !input.linkPictureShown, !input.hasLinkMetadata,
+                  let link = LinkDisplay.parse(input.text) else { return .standard }
             return .hostFirstLink(link)
         case .code, .file:
             return .standard
@@ -34,7 +35,13 @@ public enum CardTreatment: Equatable, Sendable {
     }
 
     /// Fixed sizes by length, never fitted to a measurement: 24 pt up to 16 characters, 20 up to 32, 17 up to 48.
+    private static let pointsMemo = StringMemo<Double?>()
+
     private static func largeTextPoints(for raw: String) -> Double? {
+        pointsMemo.value(for: raw) { computeLargeTextPoints(for: raw) }
+    }
+
+    private static func computeLargeTextPoints(for raw: String) -> Double? {
         let text = CardPreviewText.display(raw)
         guard !text.isEmpty, !text.contains("\n"), text.count <= shortTextLimit,
               !CardPreviewText.isSingleGlyph(text) else { return nil }

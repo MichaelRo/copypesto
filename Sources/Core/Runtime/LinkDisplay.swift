@@ -11,10 +11,22 @@ public struct LinkDisplay: Equatable, Sendable {
     }
 
     /// The host the address really goes to, read by `URLComponents` and never from a page's own name for itself, and
-    /// the port, path, query and fragment after it. User info (`paypal.com@evil.example`) is dropped, so the host shown
-    /// is the one a click reaches. An address typed without a scheme is read as a network-path reference (`//host/path`),
-    /// so nothing here builds a URL to open. Nil when there is no host to lead with (mailto:, file:, text that is not one link).
+    /// the port and path after it, cut at `restLimit`. The query and fragment are never shown: a magic-link or reset
+    /// token
+    /// lives there, and the old card showed no address at all. User info (`paypal.com@evil.example`) is dropped, so the
+    /// host shown
+    /// is the one a click reaches. An address typed without a scheme is read as a network-path reference
+    /// (`//host/path`),
+    /// so nothing here builds a URL to open. Nil when there is no host to lead with (mailto:, file:, text that is not
+    /// one link).
     public static func parse(_ text: String) -> LinkDisplay? {
+        memo.value(for: text) { read(text) }
+    }
+
+    public static let restLimit = 80
+    private static let memo = StringMemo<LinkDisplay?>()
+
+    private static func read(_ text: String) -> LinkDisplay? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !trimmed.contains(where: \.isWhitespace) else { return nil }
         var components = URLComponents(string: trimmed)
@@ -22,11 +34,11 @@ public struct LinkDisplay: Equatable, Sendable {
             components = URLComponents(string: "//" + trimmed)
             guard components?.host?.contains(".") == true else { return nil }
         }
-        guard let components, let host = components.host?.lowercased(), !host.isEmpty else { return nil }
+        guard let components, var host = components.host?.lowercased(), !host.isEmpty else { return nil }
+        if host.contains(":"), !host.hasPrefix("[") { host = "[\(host)]" }
         var rest = components.port.map { ":\($0)" } ?? ""
         if components.path != "/" { rest += components.path }
-        if let query = components.query { rest += "?" + query }
-        if let fragment = components.fragment { rest += "#" + fragment }
+        if rest.count > restLimit { rest = String(rest.prefix(restLimit - 1)) + "\u{2026}" }
         return LinkDisplay(host: host, rest: rest)
     }
 

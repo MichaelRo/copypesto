@@ -15,6 +15,14 @@ struct PictureScrimTests {
         #expect(PictureScrim.worstCaseContrast(coverOpacity: PictureScrim.pillOpacity, textOpacity: 1) >= 4.5)
     }
 
+    @Test("the paste count and the collection badge sit on the pill ground and pass over a white picture")
+    func whenWhitePicture_thenFooterTextPassesAA() {
+        let ground = PictureScrim.pillOpacity
+        #expect(PictureScrim
+            .worstCaseContrast(coverOpacity: ground, textOpacity: PictureScrim.pasteCountOpacity) >= 4.5)
+        #expect(PictureScrim.worstCaseContrast(coverOpacity: ground, textOpacity: PictureScrim.badgeOpacity) >= 4.5)
+    }
+
     @Test("a weaker scrim would fail, so the numbers are what keep the guarantee")
     func whenScrimTooWeak_thenContrastFails() {
         #expect(PictureScrim.worstCaseContrast(coverOpacity: 0.4, textOpacity: 1) < 4.5)

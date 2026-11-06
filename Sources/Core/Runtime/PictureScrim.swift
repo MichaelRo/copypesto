@@ -9,6 +9,8 @@ public enum PictureScrim {
     public static let nameOpacity = 1.0
     public static let ageOpacity = 0.85
     public static let pillOpacity = 0.6
+    public static let pasteCountOpacity = 1.0
+    public static let badgeOpacity = 1.0
 
     public static func opacity(atHeight height: Double) -> Double {
         let solid = Double(CardLayout.headerHeight)

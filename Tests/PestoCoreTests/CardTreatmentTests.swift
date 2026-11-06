@@ -11,12 +11,13 @@ struct CardTreatmentTests {
         concealed: Bool = false,
         picture: CardTreatmentInput.Picture? = nil,
         linkPictureShown: Bool = false,
+        hasLinkMetadata: Bool = false,
         fill: HexColorComponents? = nil
     )
     -> CardTreatmentInput {
         CardTreatmentInput(
             type: type, text: text, isConcealed: concealed, picture: picture,
-            linkPictureShown: linkPictureShown, colorFill: fill, backdropIsDark: true
+            linkPictureShown: linkPictureShown, hasLinkMetadata: hasLinkMetadata, colorFill: fill, backdropIsDark: true
         )
     }
 
@@ -133,6 +134,11 @@ struct CardTreatmentTests {
     @Test("a link whose picture is shown keeps its picture body")
     func whenLinkPicture_thenStandard() {
         #expect(CardTreatment.decide(input(.url, text: "https://example.com", linkPictureShown: true)) == .standard)
+    }
+
+    @Test("a link with a title, site name or icon keeps its rich body")
+    func whenLinkHasMetadata_thenStandard() {
+        #expect(CardTreatment.decide(input(.url, text: "https://example.com/a", hasLinkMetadata: true)) == .standard)
     }
 
     @Test("a link with no host, or one that is concealed, stays standard")

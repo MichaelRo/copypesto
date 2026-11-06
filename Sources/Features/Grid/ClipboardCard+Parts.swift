@@ -64,7 +64,7 @@ extension ClipboardCard {
             }
             Text(timeAgo)
                 .font(.caption2)
-                .foregroundStyle(over.ink.opacity(PictureScrim.ageOpacity))
+                .foregroundStyle(over.ink.opacity(over.ageOpacity))
                 .lineLimit(1)
         } else {
             Text(headerTitle)

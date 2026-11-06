@@ -42,4 +42,17 @@ struct CardInkTests {
         #expect(CardInk.labelPoints(forLength: 10) == 15)
         #expect(CardInk.labelPoints(forLength: 40) == 15)
     }
+
+    @Test("full-strength ink reads at 4.5 to 1 or better on every fill, mid-luminance ones included")
+    func whenAnyFill_thenInkPassesAA() {
+        var fills = [fill(0.5, 0.5, 0.5), fill(0.46, 0.46, 0.46), fill(0.2, 0.6, 0.3), fill(0.8, 0.4, 0.1)]
+        fills += [fill(0.3, 0.3, 0.9), fill(0.9, 0.7, 0.1), fill(0.55, 0.2, 0.7)]
+        fills += (0...40).map { fill(Double($0) / 40, Double($0) / 40, Double($0) / 40) }
+        for color in fills {
+            for dark in [true, false] {
+                let ink = CardInk.forFill(color, backdropIsDark: dark)
+                #expect(CardInk.contrast(of: ink, on: color, backdropIsDark: dark) >= 4.5)
+            }
+        }
+    }
 }

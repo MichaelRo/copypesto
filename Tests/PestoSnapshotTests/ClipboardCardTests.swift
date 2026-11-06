@@ -384,9 +384,24 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(
             in: ctx, type: .url,
-            preview: "https://news.example.com:8443/2026/11/story-about-a-very-long-headline?ref=home&utm=x"
+            preview: "https://news.example.com:8443/2026/11/story-about-a-very-long-headline?token=s3cr3t#frag"
         )
-        item.ogSiteName = "A Page Calling Itself Something Else"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+    }
+
+    func test_linkCard_withMetadataKeepsItsRichBody() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .url, preview: "https://news.example.com/2026/11/story")
+        item.ogTitle = "A story worth reading"
+        item.ogSiteName = "Example News"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+    }
+
+    func test_pictureCard_pasteCountPillOverABrightPicture() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 1.5)
+        item.pasteCount = 4
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }
 

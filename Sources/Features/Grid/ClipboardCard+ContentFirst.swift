@@ -6,16 +6,19 @@ import SwiftUI
 struct HeaderOverlay {
     let ink: Color
     let scheme: ColorScheme
+    let ageOpacity: Double
 
-    static let onPicture = HeaderOverlay(ink: .white, scheme: .dark)
+    static let onPicture = HeaderOverlay(ink: .white, scheme: .dark, ageOpacity: PictureScrim.ageOpacity)
 
-    init(ink: Color, scheme: ColorScheme) {
+    init(ink: Color, scheme: ColorScheme, ageOpacity: Double) {
         self.ink = ink
         self.scheme = scheme
+        self.ageOpacity = ageOpacity
     }
 
+    /// On a color the age is full ink: 85% of it falls under 4.5:1 on a mid-luminance fill.
     init(_ ink: CardInk) {
-        self.init(ink: ink == .white ? .white : .black, scheme: ink == .white ? .dark : .light)
+        self.init(ink: ink == .white ? .white : .black, scheme: ink == .white ? .dark : .light, ageOpacity: 1)
     }
 }
 
@@ -40,6 +43,7 @@ extension ClipboardCard {
             isConcealed: concealment.isConcealed || hidesItsContent || isRenamingTitle,
             picture: picture,
             linkPictureShown: urlOGImage != nil,
+            hasLinkMetadata: item.ogTitle != nil || item.ogSiteName != nil || urlFavicon != nil,
             colorFill: item.type == .color ? ColorStringDetector.components(in: item.gridPreview) : nil,
             backdropIsDark: colorScheme == .dark
         ))
@@ -128,7 +132,7 @@ extension ClipboardCard {
     private func contentFirstFooter(over: HeaderOverlay, onPicture: Bool, showsGIF: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             if !item.tags.isEmpty {
-                tagChipsRow(onDark: onPicture)
+                tagChipsRow(onDark: true)
             }
             HStack(alignment: .center, spacing: 6) {
                 if let number = shortcutNumber {
@@ -139,19 +143,34 @@ extension ClipboardCard {
                 }
                 Spacer(minLength: 4)
                 if item.pasteCount >= 2 {
-                    Text("\u{2191}\(item.pasteCount)")
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(over.ink.opacity(PictureScrim.ageOpacity))
+                    ContentFirstPill(text: "\u{2191}\(item.pasteCount)", ink: over.ink, onPicture: onPicture)
                 }
                 if let collectionID = item.collectionID,
                    let collection = availableCollections.first(where: { $0.id == collectionID })
                 {
-                    collectionBadge(collection)
-                        .lineLimit(1)
+                    contentFirstCollectionBadge(collection, ink: over.ink, onPicture: onPicture)
                 }
             }
         }
         .environment(\.colorScheme, over.scheme)
+    }
+
+    /// The collection badge without the frosted ground the standard card gives it, which no contrast can be promised
+    /// for over a picture: white on the pill ground there, the fill's own ink on a color.
+    private func contentFirstCollectionBadge(_ collection: CollectionRef, ink: Color, onPicture: Bool) -> some View {
+        HStack(spacing: 3) {
+            CollectionIcon(symbolName: collection.symbolName)
+                .font(.caption2.weight(.medium))
+            Text(collection.name)
+                .font(.caption2.weight(.medium))
+                .lineLimit(1)
+        }
+        .foregroundStyle(ink.opacity(PictureScrim.badgeOpacity))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background {
+            if onPicture { Capsule().fill(Color.black.opacity(PictureScrim.pillOpacity)) }
+        }
     }
 
     // MARK: - Short text and links

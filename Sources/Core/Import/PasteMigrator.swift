@@ -15,6 +15,8 @@ public actor PasteMigrator {
     public struct Summary: Sendable, Equatable {
         public var imported: Int
         public var skipped: Int
+        /// False when the import added more clips than one Undo holds (`UndoPolicy.maxClipsPerEntry`).
+        public var isUndoable = true
 
         public init(imported: Int = 0, skipped: Int = 0) {
             self.imported = imported
@@ -27,6 +29,7 @@ public actor PasteMigrator {
         var processedHashes = Set<String>()
         var addedIDs: [UUID] = []
         var createdBoards: [PinboardSnapshot] = []
+        var key: SymmetricKey?
     }
 
     /// A record from an app on the exclusion list is skipped, as it would have been when copied: the list is how a
@@ -55,7 +58,7 @@ public actor PasteMigrator {
         includingHistory: Bool,
         exclusionRules: ExclusionRules = ExclusionRules(),
         undoHistory: UndoHistory? = nil,
-        progress: (@Sendable (_ done: Int, _ total: Int) -> Void)? = nil
+        progress: (@Sendable (_ done: Int, _ total: Int) async -> Void)? = nil
     ) async throws
     -> Summary {
         let storage = StorageService(modelContainer: modelContainer)
@@ -71,7 +74,7 @@ public actor PasteMigrator {
                 }
                 await storage.waitForBackgroundWork()
                 done += group.count
-                progress?(done, total)
+                await progress?(done, total)
             }
         } catch {
             await snapshot.discard()
@@ -82,12 +85,14 @@ public actor PasteMigrator {
     }
 
     func finish(_ run: Run, undoHistory: UndoHistory?) -> Summary {
+        var summary = run.summary
         let changed = !run.addedIDs.isEmpty || !run.createdBoards.isEmpty
+        if run.addedIDs.count > UndoPolicy.maxClipsPerEntry { summary.isUndoable = false }
         if let undoHistory, changed, run.addedIDs.count <= UndoPolicy.maxClipsPerEntry {
             let added = AddedClips(kind: .imported, ids: run.addedIDs, boards: run.createdBoards)
             undoHistory.record(UndoEntry(.clipsAdded(added)))
         }
-        return run.summary
+        return summary
     }
 
     /// One record through `StorageService.ingest`. A text over the size Pesto keeps is counted as left out like any
@@ -119,7 +124,9 @@ public actor PasteMigrator {
         } else {
             nil
         }
-        let forms = try ContentHash.candidates(for: capture.contentHash, key: BlobEncryption().loadOrCreateKey())
+        let key = try run.key ?? BlobEncryption().loadOrCreateKey()
+        run.key = key
+        let forms = ContentHash.candidates(for: capture.contentHash, key: key)
         let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
         let alreadyThere = try !modelContext.fetch(descriptor).isEmpty
         do {

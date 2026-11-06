@@ -8,6 +8,16 @@ import Testing
 struct PasteImportStreamingTests {
     private let forever = RetentionPolicy(maxAge: .infinity, maxItemCount: 1_000_000, maxTotalBytes: .max)
 
+    /// The process footprint is shared with every suite running beside this one, so it is only asserted off CI; the
+    /// bytes a group holds are counted exactly and asserted everywhere.
+    private var assertsFootprint: Bool {
+        ProcessInfo.processInfo.environment["CI"] == nil
+    }
+
+    private func heldBytes(_ batch: PasteLibrarySnapshot.Batch) -> Int {
+        batch.records.reduce(0) { $0 + $1.representations.reduce(0) { $0 + $1.dataBase64.utf8.count } }
+    }
+
     private func footprintBytes() -> Int {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
@@ -132,17 +142,46 @@ struct PasteImportStreamingTests {
         let baseline = footprintBytes()
         var peak = 0
         var read = 0
+        var largestGroup = 0
 
         for group in plan.batches(includingHistory: true) {
             let batch = try await snapshot.records(for: group[...])
             read += batch.records.count
+            largestGroup = max(largestGroup, heldBytes(batch))
             peak = max(peak, footprintBytes() - baseline)
         }
         await snapshot.discard()
 
         #expect(read == 2000)
         #expect(blob.count * 2000 > 400_000_000)
-        #expect(peak < 250_000_000, "reading held \(peak / 1_048_576) MB; the library is 400 MB")
+        #expect(largestGroup <= 2 * PasteLibrarySnapshot.batchBytes, "a group held \(largestGroup / 1_048_576) MB")
+        if assertsFootprint {
+            #expect(peak < 250_000_000, "reading held \(peak / 1_048_576) MB; the library is 400 MB")
+        }
+    }
+
+    @Test("a group of large clips is held at about its own size, not at several times it")
+    func whenClipsAreLarge_thenAGroupStaysNearItsOwnSize() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        let blob = try PasteFixture.archive(String(repeating: "pesto genovese basil ", count: 250_000))
+        try fixture.addMany(from: 1, count: 40, list: 1, blob: blob) { Double($0) }
+        let snapshot = try PasteLibrarySnapshot.open(databaseAt: fixture.url)
+        let plan = try await snapshot.plan(retention: forever)
+        var largestGroup = 0
+        var groups = 0
+
+        for group in plan.batches(includingHistory: true) {
+            let batch = try await snapshot.records(for: group[...])
+            largestGroup = max(largestGroup, heldBytes(batch))
+            groups += 1
+        }
+        await snapshot.discard()
+
+        // The process footprint of such a group was measured once at 1.4 times the group (ADR 0032); it is not
+        // asserted here because every suite running beside this one moves it.
+        #expect(largestGroup <= 2 * PasteLibrarySnapshot.batchBytes)
+        #expect(groups > 10, "40 clips of 5 MB should not be one group")
     }
 
     @Test("importing 2,000 ordinary clips through ingest in groups finishes and keeps every one")

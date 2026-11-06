@@ -349,6 +349,22 @@ struct PasteLibraryReaderTests {
         _ = snapshot
     }
 
+    @Test("the temporary copy of the library is readable by its owner only")
+    func whenCopied_thenFolderIsPrivate() throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        try fixture.addSnippet(id: 1, list: 2, title: nil, blob: PasteFixture.archive("x"))
+        let scratch = try scratchFolder()
+        defer { try? FileManager.default.removeItem(at: scratch) }
+
+        let snapshot = try PasteLibrarySnapshot.open(databaseAt: fixture.url, temporaryDirectory: scratch)
+
+        let folder = try #require(try FileManager.default.contentsOfDirectory(atPath: scratch.path).first)
+        let attributes = try FileManager.default.attributesOfItem(atPath: scratch.appendingPathComponent(folder).path)
+        #expect(attributes[.posixPermissions] as? Int == 0o700)
+        _ = snapshot
+    }
+
     @Test("a copy a crashed Pesto left a day ago is removed, a recent one is not")
     func whenStaleCopiesExist_thenOnlyOldOnesGo() throws {
         let scratch = try scratchFolder()

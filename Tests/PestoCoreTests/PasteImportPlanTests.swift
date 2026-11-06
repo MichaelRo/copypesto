@@ -188,4 +188,52 @@ struct PasteImportPlanTests {
         #expect(plan.selectedCount + plan.leftByLimits + plan.unusable == plan.libraryClips)
         #expect(plan.libraryClips == 22)
     }
+
+    @Test("a library imported before is not counted against retention again, or imported again")
+    func whenClipsAreAlreadyStored_thenTheyAreLeftOutOfTheMath() {
+        var planner = planner(clips: 100)
+        for key in 1...5 {
+            planner.addHistory(row(Int64(key), daysAgo: Double(key)))
+        }
+        let existing = (1...5).map { (UUID(), now.addingTimeInterval(-Double($0) * 86_400), 10) }
+        let policy = RetentionPolicy(maxAge: .infinity, maxItemCount: 5, maxTotalBytes: .max)
+
+        let plan = planner.plan(retention: policy, existing: existing, now: now)
+
+        #expect(plan.history.isEmpty && plan.alreadyInPesto == 5)
+        #expect(plan.historyLeftByRetention == 0 && plan.displacedExisting == 0)
+        #expect(plan.selectedCount + plan.leftByLimits + plan.unusable + plan.alreadyInPesto == plan.libraryClips)
+        #expect(!plan.isLimited)
+    }
+
+    @Test("only the clips not stored yet are imported, and the stored ones are counted once when making room")
+    func whenSomeClipsAreStored_thenOnlyTheNewOnesCompeteForRoom() {
+        var planner = planner(clips: 100)
+        for key in 1...6 {
+            planner.addHistory(row(Int64(key), daysAgo: Double(key)))
+        }
+        let existing = (4...6).map { (UUID(), now.addingTimeInterval(-Double($0) * 86_400), 10) }
+        let policy = RetentionPolicy(maxAge: .infinity, maxItemCount: 4, maxTotalBytes: .max)
+
+        let plan = planner.plan(retention: policy, existing: existing, now: now)
+
+        #expect(plan.alreadyInPesto == 3)
+        #expect(plan.history.map(\.snippetKey) == [1, 2, 3])
+        #expect(plan.historyLeftByRetention == 0 && plan.displacedExisting == 2)
+        #expect(plan.selectedCount + plan.leftByLimits + plan.unusable + plan.alreadyInPesto == plan.libraryClips)
+    }
+
+    @Test("nothing fits when every clip is past the limits, and the summary says so")
+    func whenNothingFits_thenLeadSaysNothing() {
+        var planner = planner(clips: 100)
+        for key in 1...3 {
+            planner.addHistory(row(Int64(key), daysAgo: 100))
+        }
+        let policy = RetentionPolicy(maxAge: 30 * 86_400, maxItemCount: 100, maxTotalBytes: .max)
+
+        let plan = planner.plan(retention: policy, now: now)
+
+        #expect(plan.selectedCount == 0 && plan.isLimited)
+        #expect(plan.lead(includingHistory: true) == .nothing)
+    }
 }

@@ -67,12 +67,10 @@ extension DataSettings {
                     plan: plan, from: snapshot, includingHistory: includingHistory,
                     exclusionRules: ExclusionRules.fromSettings(), undoHistory: undoHistory
                 ) { done, total in
-                    Task { @MainActor in
-                        messages[.importPaste] = importingText(done, total)
-                    }
+                    await MainActor.run { messages[.importPaste] = importingText(done, total) }
                 }
                 let report = ImportReport(
-                    summary: summary, librarySkipped: preview.skipped, leftByLimits: leftByLimits(
+                    summary: summary, librarySkipped: preview.skipped + plan.alreadyInPesto, leftByLimits: leftByLimits(
                         plan,
                         includingHistory
                     ),

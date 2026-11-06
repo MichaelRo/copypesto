@@ -46,6 +46,10 @@ public struct PasteImportPlan: Sendable, Equatable {
     public let historyLeftByCap: Int
     public let historyLeftByRetention: Int
     public let displacedExisting: Int
+    /// History clips with the same copy time as a clip Pesto already holds: the same clip, imported before. They are
+    /// not imported again and do not count against retention. Found by time alone, so a clip Pesto has moved to the
+    /// front since is not recognised here and is skipped by `ingest` instead.
+    public var alreadyInPesto = 0
 
     public var selectedCount: Int {
         pinboards.count + history.count
@@ -74,6 +78,7 @@ public struct PasteImportPlan: Sendable, Equatable {
         case pinboardsAndNewest(Int)
         case pinboards
         case newest(Int)
+        case nothing
         case firstPinboards(Int)
     }
 
@@ -110,7 +115,7 @@ public struct PasteImportPlan: Sendable, Equatable {
     /// named. Pinboards cut by the cap leave no room for history at all.
     public func lead(includingHistory: Bool) -> Lead {
         if pinboardsLeftByCap > 0 { return .firstPinboards(pinboards.count) }
-        if pinboards.isEmpty { return .newest(history.count) }
+        if pinboards.isEmpty { return history.isEmpty ? .nothing : .newest(history.count) }
         return includingHistory && !history.isEmpty ? .pinboardsAndNewest(history.count) : .pinboards
     }
 }
@@ -170,15 +175,17 @@ public struct PasteImportPlanner: Sendable {
         now: Date = .now
     )
     -> PasteImportPlan {
-        let importedIDs = history.map { _ in UUID() }
+        let storedTimes = Set(existing.map(\.1.timeIntervalSinceReferenceDate))
+        let alreadyThere = history.count(where: { storedTimes.contains($0.timestamp.timeIntervalSinceReferenceDate) })
+        let fresh = history.filter { !storedTimes.contains($0.timestamp.timeIntervalSinceReferenceDate) }
+        let freshIDs = fresh.map { _ in UUID() }
         var candidates = existing
-        for (index, entry) in history.enumerated() {
-            candidates.append((importedIDs[index], entry.timestamp, entry.bytes))
+        for (index, entry) in fresh.enumerated() {
+            candidates.append((freshIDs[index], entry.timestamp, entry.bytes))
         }
         candidates.sort { $0.1 < $1.1 }
         let evicted = Set(RetentionPruner.computeEvictions(candidates: candidates, policy: retention, now: now))
-        let kept = history.enumerated().filter { !evicted.contains(importedIDs[$0.offset]) }.map(\.element)
-        let displaced = existing.count(where: { evicted.contains($0.0) })
+        let kept = fresh.enumerated().filter { !evicted.contains(freshIDs[$0.offset]) }.map(\.element)
         return PasteImportPlan(
             pinboards: pinboards,
             history: kept,
@@ -186,8 +193,9 @@ public struct PasteImportPlanner: Sendable {
             unusable: unusable,
             pinboardsLeftByCap: pinboardsLeft,
             historyLeftByCap: historyLeft,
-            historyLeftByRetention: history.count - kept.count,
-            displacedExisting: displaced
+            historyLeftByRetention: fresh.count - kept.count,
+            displacedExisting: existing.count(where: { evicted.contains($0.0) }),
+            alreadyInPesto: alreadyThere
         )
     }
 

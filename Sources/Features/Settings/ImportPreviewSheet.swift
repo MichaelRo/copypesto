@@ -35,7 +35,13 @@ struct ImportPreviewSheet: View {
     }
 
     private func limitedSummary(_ plan: PasteImportPlan) -> String {
+        if plan.lead(includingHistory: importsHistory) == .nothing {
+            return String(
+                localized: "None of \(CountText.clips(plan.libraryClips)) fit Keep clips for and Keep at most."
+            )
+        }
         let lead = switch plan.lead(includingHistory: importsHistory) {
+        case .nothing: ""
         case let .pinboardsAndNewest(count): String(localized: "your collections and the newest \(count.formatted())")
         case .pinboards: String(localized: "your collections")
         case let .newest(count): String(localized: "the newest \(count.formatted())")
@@ -61,7 +67,8 @@ struct ImportPreviewSheet: View {
         }
         if plan.historyLeftByCap + plan.pinboardsLeftByCap > 0 {
             let limit = ImportCap.paste.maxClips.formatted() + " clips"
-            Text("Pesto imports at most \(limit) or 1 GB at a time.")
+            let size = ByteCountFormatter.string(fromByteCount: Int64(ImportCap.paste.maxBytes), countStyle: .decimal)
+            Text("Pesto imports at most \(limit) or \(size) at a time.")
                 .pestoCaption()
         }
         if plan.displacedExisting > 0, importsHistory {
@@ -101,6 +108,10 @@ struct ImportPreviewSheet: View {
                 Text("\(expiring) of them are older than Keep clips for allows and go.")
                     .pestoCaption()
                     .accessibilityIdentifier(AccessibilityID.importPreviewExpiring)
+            }
+            if let plan = preview.plan, plan.alreadyInPesto > 0 {
+                Text("\(plan.alreadyInPesto.formatted()) are already in Pesto and will be skipped.")
+                    .pestoCaption()
             }
             if preview.skipped > 0 {
                 Text("\(preview.skipped) clips cannot be imported (pictures or empty).")

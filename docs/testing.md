@@ -260,6 +260,12 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Fresh install: the Accessibility prompt appears, and granting it moves onboarding forward. Pass: the setup window
   advances to the next step as soon as the grant is on.
 - Launch at login survives a reboot. Pass: after a restart Pesto is in the menu bar without being opened.
+- Paste import with a real library (ADR 0032; every automated test uses a made-up `Paste.db`): Settings → Data → Another
+  app's library → Import… → From Paste…, and choose a real `Paste.db`. Pass: the sheet reads "X of Y clips will be
+  imported" when a limit applies and says why; Import brings in the collections and the newest history; the summary
+  stays on screen after; a second import of the same library says the clips are already in Pesto and adds none; Cancel
+  leaves no `pesto-paste-*` folder in the temporary folder (`ls $TMPDIR`); a library over 20,000 clips imports without
+  a visible stall in Pesto's menu bar item or the shelf.
 - Setup turns Launch at login on (ADR 0024), on a scratch user or after a reset with `PESTO_DEV_RESET=1`: the last setup
   step shows the switch already on and System Settings → General → Login Items lists Pesto. Pass: restart and Pesto is in
   the menu bar; turn the switch off in Settings, restart, and it is not. A Pesto outside Applications shows macOS's reason

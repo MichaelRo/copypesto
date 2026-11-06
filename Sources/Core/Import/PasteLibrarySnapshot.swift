@@ -13,7 +13,7 @@ public actor PasteLibrarySnapshot {
     }
 
     public static let batchRecords = 64
-    public static let batchBytes = 32_000_000
+    public static let batchBytes = 16_000_000
 
     private static let folderPrefix = "pesto-paste-"
     private static let staleAfter: TimeInterval = 86_400
@@ -49,7 +49,9 @@ public actor PasteLibrarySnapshot {
         )
 
         let folder = temporaryDirectory.appendingPathComponent("\(folderPrefix)\(UUID().uuidString)")
-        try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+        try fileManager.createDirectory(
+            at: folder, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700]
+        )
         let copy = folder.appendingPathComponent("Paste.db")
         do {
             try fileManager.copyItem(at: url, to: copy)

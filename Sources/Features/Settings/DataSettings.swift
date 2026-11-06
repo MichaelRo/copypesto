@@ -309,6 +309,9 @@ struct DataSettings: View {
                 .imported == 0 ? String(localized: "Nothing new.") :
                 String(localized: "\(report.imported) clips imported.")
         ]
+        if !report.isUndoable, report.imported > 0 {
+            parts.append(String(localized: "Undo is not available for an import this large."))
+        }
         if report.leftByLimits > 0 {
             parts.append(String(localized: "\(report.leftByLimits.formatted()) stayed in Paste because of the limits."))
         }

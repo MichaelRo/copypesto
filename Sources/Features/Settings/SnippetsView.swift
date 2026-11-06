@@ -23,7 +23,6 @@ struct SnippetsView: View {
 
     @State private var editor: SnippetEditorDraft?
     @State private var pendingDelete: ClipboardItem?
-    @State private var placeholdersOpen = false
     let addRequest: Int
 
     private var dismissed: Set<String> {
@@ -104,9 +103,9 @@ struct SnippetsView: View {
             }
 
             Section {
-                DisclosureGroup("Placeholders you can use", isExpanded: $placeholdersOpen) {
-                    placeholderReference
-                }
+                placeholderReference
+            } header: {
+                Text("Placeholders you can use")
             }
 
             Section {
@@ -187,6 +186,11 @@ struct SnippetsView: View {
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Placeholders you can use in a snippet")
             Text("Filled in when you paste. Add Question\u{2026} in the editor asks one instead.").pestoCaption()
+            if let guide = URL(string: "https://copypesto.net/docs/settings/#snippets") {
+                Link("See the guide", destination: guide)
+                    .buttonStyle(.pestoLink)
+                    .pestoCaption()
+            }
         }
         .padding(.vertical, 4)
     }

@@ -8,7 +8,7 @@ struct SnippetsPaneOrderTests {
         "Text(\"Your snippets\")",
         "Text(\"Starters\")",
         "Text(\"From your clips\")",
-        "DisclosureGroup(\"Placeholders you can use\"",
+        "Text(\"Placeholders you can use\")",
         "Text(\"Remember fill-in values\")",
         "Text(\"Suggestion statistics\")"
     ]
@@ -31,12 +31,14 @@ struct SnippetsPaneOrderTests {
         }
     }
 
-    @Test("the placeholder reference is folded, closed by default, and keeps its VoiceOver label and footer")
-    func placeholdersAreFolded() throws {
+    @Test("the placeholder reference is shown, not folded, keeps its VoiceOver label and links to the guide")
+    func placeholdersAreShown() throws {
         let text = try source()
-        #expect(text.contains("@State private var placeholdersOpen = false"))
-        #expect(text.contains("isExpanded: $placeholdersOpen"))
+        #expect(!text.contains("DisclosureGroup"))
+        #expect(!text.contains("placeholdersOpen"))
         #expect(text.contains("Placeholders you can use in a snippet"))
         #expect(text.contains("Filled in when you paste."))
+        #expect(text.contains("See the guide"))
+        #expect(text.contains("https://copypesto.net/docs/settings/#snippets"))
     }
 }

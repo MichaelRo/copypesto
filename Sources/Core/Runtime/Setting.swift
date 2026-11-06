@@ -117,6 +117,8 @@ public enum Setting {
     public static let shelfSuggestionsLastShownAt = SettingKey("shelfSuggestionsLastShownAt", default: 0)
     public static let shelfSuggestionDeclines = SettingKey("shelfSuggestionDeclines", default: 0)
     public static let shelfSuggestionLedger = SettingKey("shelfSuggestionLedger", default: "")
+    public static let clickHintShownCount = SettingKey("clickHintShownCount", default: 0)
+    public static let doubleClickPasted = SettingKey("doubleClickPasted", default: false)
 
     // MARK: Switches only a UI test sets
 
@@ -160,7 +162,7 @@ public enum Setting {
         shelfSuggestionsArmedAt.name,
         shelfSuggestionsLastShownAt.name,
         shelfSuggestionDeclines.name,
-        shelfSuggestionLedger.name,
+        shelfSuggestionLedger.name, clickHintShownCount.name, doubleClickPasted.name,
         uitestAuthenticationGranted.name, uitestAuthenticationUnavailable.name
     ]
 }

@@ -98,6 +98,8 @@ enum AccessibilityID {
     static let storageBanner = "overlay-storage-banner"
     static let shelfEmptyState = "shelf-empty-state"
     static let shelfEmptyStateAction = "shelf-empty-state-action"
+    static let shelfEmptyStateAdvice = "shelf-empty-state-advice"
+    static let clickHint = "shelf-click-hint"
     static let card = "clipboard-card"
     static let cardDetailPopover = "card-detail-popover"
     static let pasteAllButton = "action-paste-all"

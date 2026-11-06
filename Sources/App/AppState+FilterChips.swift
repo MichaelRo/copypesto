@@ -6,6 +6,7 @@ struct FilterChipAction {
     let spokenName: String
     let isActive: () -> Bool
     let toggle: () -> Void
+    var confirmation: String?
 }
 
 extension AppState {
@@ -16,7 +17,9 @@ extension AppState {
         filterChipCursor = FilterChipCursor.moved(from: filterChipCursor, by: delta, count: filterChipActions.count)
         if let cursor = filterChipCursor {
             let chip = filterChipActions[cursor]
-            Announcer.announce("\(chip.spokenName), \(chip.isActive() ? "on" : "off")")
+            Announcer
+                .announce(chip.confirmation == nil ? "\(chip.spokenName), \(chip.isActive() ? "on" : "off")" : chip
+                    .spokenName)
         } else {
             Announcer.announce("Search field")
         }
@@ -29,7 +32,7 @@ extension AppState {
         guard let cursor = FilterChipCursor.kept(filterChipCursor, count: filterChipActions.count) else { return false }
         let chip = filterChipActions[cursor]
         chip.toggle()
-        Announcer.announce("\(chip.spokenName), \(chip.isActive() ? "on" : "off")")
+        Announcer.announce(chip.confirmation ?? "\(chip.spokenName), \(chip.isActive() ? "on" : "off")")
         return true
     }
 
@@ -39,5 +42,29 @@ extension AppState {
         guard filterChipCursor != nil else { return false }
         filterChipCursor = nil
         return true
+    }
+}
+
+extension AppState {
+    /// The No results button is the last stop Tab reaches in search, after the chips (`registerFilterChipActions`).
+    var isKeyboardOnNoResultsAdvice: Bool {
+        noResultsAdvice != nil && filterChipCursor == filterChipActions.count - 1
+    }
+
+    func clearForNoResults(_ action: NoResultsAdvice.Action) {
+        switch action {
+        case .clearFilters: clearSearchFilters()
+        case .clearSearch: searchText = ""
+        }
+    }
+
+    func noResultsChipAction() -> FilterChipAction? {
+        guard let advice = noResultsAdvice else { return nil }
+        return FilterChipAction(
+            spokenName: advice.buttonTitle,
+            isActive: { false },
+            toggle: { [weak self] in self?.clearForNoResults(advice.action) },
+            confirmation: advice.action == .clearFilters ? "Filters cleared" : "Search cleared"
+        )
     }
 }

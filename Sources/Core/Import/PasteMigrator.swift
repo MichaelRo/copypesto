@@ -24,6 +24,13 @@ public actor PasteMigrator {
         }
     }
 
+    /// An import that stopped part way (the library became unreadable, a save failed). What came in stays, is one Undo
+    /// like a finished import, and is counted here, so the message can say so instead of "try again".
+    public struct Interrupted: Error {
+        public let summary: Summary
+        public let cause: any Error
+    }
+
     struct Run {
         var summary = Summary()
         var processedHashes = Set<String>()
@@ -78,7 +85,8 @@ public actor PasteMigrator {
             }
         } catch {
             await snapshot.discard()
-            throw error
+            let partial = finish(run, undoHistory: undoHistory)
+            throw partial.imported > 0 ? Interrupted(summary: partial, cause: error) : error
         }
         await snapshot.discard()
         return finish(run, undoHistory: undoHistory)

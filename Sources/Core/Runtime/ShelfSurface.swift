@@ -10,7 +10,22 @@ public enum ShelfSurface: String, CaseIterable, Sendable {
     /// How much of the focused card's colour wash a solid ground keeps. Over glass the wash is full strength.
     public static let softWashShare = 0.35
 
-    private static let fullWash: [Double] = [0.22, 0.12, 0.18]
+    /// The opacities of the wash's three corners.
+    public struct Wash: Equatable, Sendable {
+        public let topLeading: Double
+        public let bottomLeading: Double
+        public let bottomTrailing: Double
+
+        func scaled(by share: Double) -> Wash {
+            Wash(
+                topLeading: topLeading * share,
+                bottomLeading: bottomLeading * share,
+                bottomTrailing: bottomTrailing * share
+            )
+        }
+    }
+
+    private static let fullWash = Wash(topLeading: 0.22, bottomLeading: 0.12, bottomTrailing: 0.18)
 
     public init(stored: String) {
         self = Self(rawValue: stored) ?? .solid
@@ -27,8 +42,7 @@ public enum ShelfSurface: String, CaseIterable, Sendable {
         !reduceTransparency && ShelfSurface(stored: stored) == .glass
     }
 
-    /// The opacities of the wash's three corners (top left, bottom left, bottom right).
-    public static func washOpacities(solid: Bool) -> [Double] {
-        solid ? fullWash.map { $0 * softWashShare } : fullWash
+    public static func wash(solid: Bool) -> Wash {
+        solid ? fullWash.scaled(by: softWashShare) : fullWash
     }
 }

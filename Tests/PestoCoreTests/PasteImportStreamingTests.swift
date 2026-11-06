@@ -205,6 +205,37 @@ struct PasteImportStreamingTests {
         )
         #expect(summary.imported == 2000 && summary.skipped == 0)
     }
+
+    @Test("an import that fails part way keeps what came in, can be undone, and says how many")
+    func whenTheReadFailsPartWay_thenWhatCameInIsUndoableAndCounted() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        let total = PasteLibrarySnapshot.batchRecords + 6
+        try fixture.run("BEGIN;")
+        for index in 1...total {
+            try fixture.addSnippet(id: index, list: 1, title: nil, blob: PasteFixture.archive("clip \(index)"))
+        }
+        try fixture.run("COMMIT;")
+        let container = try ModelContainerSetup.makeInMemory()
+        let history = UndoHistory()
+        let snapshot = try PasteLibrarySnapshot.open(databaseAt: fixture.url)
+        let plan = try await snapshot.plan(retention: forever)
+
+        do {
+            _ = try await PasteMigrator(modelContainer: container).migrate(
+                plan: plan, from: snapshot, includingHistory: true, undoHistory: history
+            ) { done, _ in
+                if done == PasteLibrarySnapshot.batchRecords { await snapshot.discard() }
+            }
+            Issue.record("the second group should not be readable")
+        } catch let interrupted as PasteMigrator.Interrupted {
+            #expect(interrupted.summary.imported == PasteLibrarySnapshot.batchRecords)
+            #expect(interrupted.cause is PasteLibraryReader.ReadError)
+        }
+        let stored = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+        #expect(stored.count == PasteLibrarySnapshot.batchRecords)
+        #expect(history.entryCount == 1, "the clips that came in are one Undo")
+    }
 }
 
 final class LockedCounts: @unchecked Sendable {

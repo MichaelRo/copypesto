@@ -21,7 +21,7 @@ extension DataSettings {
             panel.message = "Choose Paste.db in the com.wiheads.paste folder. Pesto reads a copy and never changes it."
             panel.allowsMultipleSelection = false
             guard panel.runModal() == .OK, let url = panel.url else { return }
-            flash(.importPaste, "Reading\u{2026}", seconds: 120)
+            flash(.importPaste, "Reading\u{2026}", seconds: 3600)
             do {
                 let snapshot = try await Task.detached { try PasteLibrarySnapshot.open(databaseAt: url) }.value
                 let existing = try await existingClips()
@@ -80,6 +80,19 @@ extension DataSettings {
                     appState.importedThisSession[source, default: 0] += report.imported
                 }
                 flash(.importPaste, importMessage(report), seconds: 3600)
+            } catch let interrupted as PasteMigrator.Interrupted {
+                dataSettingsLogger.error(
+                    "Paste import stopped: \(interrupted.cause.localizedDescription, privacy: .public)"
+                )
+                if let source = ImportSource.allCases.first(where: { $0.name == preview.appName }) {
+                    appState.importedThisSession[source, default: 0] += interrupted.summary.imported
+                }
+                let came = CountText.clips(interrupted.summary.imported)
+                flash(
+                    .importPaste,
+                    String(localized: "Couldn’t finish importing. \(came) came in, and \u{2318}Z takes them back."),
+                    seconds: 3600
+                )
             } catch {
                 dataSettingsLogger.error("Paste import failed: \(error.localizedDescription, privacy: .public)")
                 flash(.importPaste, "Couldn’t import from that library. Try again.", seconds: 5)

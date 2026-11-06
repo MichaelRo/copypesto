@@ -29,13 +29,13 @@ struct ShelfSurfaceTests {
 
     @Test("the wash keeps its three corners on glass and is a third as strong on solid")
     func whenSolid_thenTheWashIsSoft() {
-        let glass = ShelfSurface.washOpacities(solid: false)
-        let solid = ShelfSurface.washOpacities(solid: true)
-        #expect(glass == [0.22, 0.12, 0.18])
-        #expect(solid.count == 3)
-        for (soft, full) in zip(solid, glass) {
-            #expect(abs(soft - full * ShelfSurface.softWashShare) < 0.0001)
-        }
+        let glass = ShelfSurface.wash(solid: false)
+        let solid = ShelfSurface.wash(solid: true)
+        #expect(glass == ShelfSurface.Wash(topLeading: 0.22, bottomLeading: 0.12, bottomTrailing: 0.18))
+        let share = ShelfSurface.softWashShare
+        #expect(abs(solid.topLeading - glass.topLeading * share) < 0.0001)
+        #expect(abs(solid.bottomLeading - glass.bottomLeading * share) < 0.0001)
+        #expect(abs(solid.bottomTrailing - glass.bottomTrailing * share) < 0.0001)
     }
 
     @Test("the solid ground of every theme is what its accent and text are checked on")

@@ -69,6 +69,7 @@ struct StaleModuleCacheScriptTests {
     @Test("with no record of the pins, the module caches of every build folder are cleared and the pins recorded")
     func whenNoStamp_thenCachesAreCleared() throws {
         let checkout = try makeCheckout(pins: "sparkle 2.10.1")
+        defer { try? FileManager.default.removeItem(at: checkout.root) }
         try fill(checkout)
         #expect(try run(checkout) == 0)
         #expect(!exists(checkout.cache))
@@ -80,6 +81,7 @@ struct StaleModuleCacheScriptTests {
     @Test("with the same pins, a cache built since is left alone")
     func whenPinsAreUnchanged_thenCachesStay() throws {
         let checkout = try makeCheckout(pins: "sparkle 2.10.1")
+        defer { try? FileManager.default.removeItem(at: checkout.root) }
         try fill(checkout)
         #expect(try run(checkout) == 0)
         try fill(checkout)
@@ -91,6 +93,7 @@ struct StaleModuleCacheScriptTests {
     @Test("when the pins change, the caches go again")
     func whenPinsChange_thenCachesAreClearedAgain() throws {
         let checkout = try makeCheckout(pins: "sparkle 2.10.1")
+        defer { try? FileManager.default.removeItem(at: checkout.root) }
         try fill(checkout)
         #expect(try run(checkout) == 0)
         try fill(checkout)
@@ -105,6 +108,7 @@ struct StaleModuleCacheScriptTests {
     @Test("a checkout that has never been built has nothing to clear and is not an error")
     func whenThereIsNoBuildFolder_thenItSucceeds() throws {
         let checkout = try makeCheckout(pins: "sparkle 2.10.1")
+        defer { try? FileManager.default.removeItem(at: checkout.root) }
         #expect(try run(checkout) == 0)
     }
 }

@@ -43,6 +43,10 @@ struct VerifyDownloadScriptTests {
     @Test("a hash that does not match fails before anything is opened")
     func whenTheHashDiffers_thenItFailsAtOnce() throws {
         let file = try notAnImage()
+        defer {
+            try? FileManager.default.removeItem(at: file.url)
+            try? FileManager.default.removeItem(atPath: file.url.path + ".sha256")
+        }
         let result = try run([file.url.path, String(repeating: "0", count: 64)])
         #expect(result.code == 1)
         #expect(result.output.contains("FAIL  SHA-256"))
@@ -52,6 +56,10 @@ struct VerifyDownloadScriptTests {
     @Test("a .sha256 file beside the image is the expected hash")
     func whenASha256FileSitsBeside_thenItIsUsed() throws {
         let file = try notAnImage()
+        defer {
+            try? FileManager.default.removeItem(at: file.url)
+            try? FileManager.default.removeItem(atPath: file.url.path + ".sha256")
+        }
         try String(repeating: "0", count: 64).write(
             to: URL(fileURLWithPath: file.url.path + ".sha256"), atomically: true, encoding: .utf8
         )
@@ -66,6 +74,10 @@ struct VerifyDownloadScriptTests {
     @Test("a file with the right hash that is not a disk image fails")
     func whenItIsNotADiskImage_thenItFails() throws {
         let file = try notAnImage()
+        defer {
+            try? FileManager.default.removeItem(at: file.url)
+            try? FileManager.default.removeItem(atPath: file.url.path + ".sha256")
+        }
         let result = try run([file.url.path, file.sha])
         #expect(result.code == 1)
         #expect(result.output.contains("does not open as a disk image"))

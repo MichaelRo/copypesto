@@ -155,10 +155,7 @@ struct SettingsShelfPreview: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                barShape.fill(.regularMaterial)
-                    .overlay { ThemeTintLayer(themeRaw: themeRaw, darkThemeRaw: darkThemeRaw).clipShape(barShape) }
-            )
+            .background(PreviewShelfFill(shape: barShape, themeRaw: themeRaw, darkThemeRaw: darkThemeRaw))
             .overlay(barShape.strokeBorder(Color.primary.opacity(0.10)))
             .padding(.horizontal, 24)
             .padding(atTop ? .bottom : .top, 28)
@@ -168,6 +165,7 @@ struct SettingsShelfPreview: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.primary.opacity(0.10)))
         .environment(\.colorScheme, scheme)
+        .shelfSurfaceEnvironment()
         .animation(Motion.animation(.easeOut(duration: 0.2)), value: cardDimensions.width)
         // The tint, the dots and the borders change together, so a theme reads as one change and not as a tint that
         // lags behind colours that jumped.

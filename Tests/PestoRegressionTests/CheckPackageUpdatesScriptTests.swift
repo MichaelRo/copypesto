@@ -32,7 +32,8 @@ struct CheckPackageUpdatesScriptTests {
         let spec = folder.appendingPathComponent("Pesto.yml")
         try Self.packagesYAML.write(to: spec, atomically: true, encoding: .utf8)
         try "{\"tag_name\": \"\(latest)\"}".write(
-            to: folder.appendingPathComponent("sparkle-project__Sparkle.release.json"), atomically: true, encoding: .utf8
+            to: folder.appendingPathComponent("sparkle-project__Sparkle.release.json"),
+            atomically: true, encoding: .utf8
         )
         try Self.advisories(range: range).write(
             to: folder.appendingPathComponent("sparkle-project__Sparkle.advisories.json"),

@@ -3,7 +3,7 @@
 ## The shelf
 ![The Pesto shelf, a row of clip cards along the bottom of the screen.](../images/shelf-light.png)
 
-Press **⌘⇧V** to open the shelf. Each card is one clip: text, code, a link, a picture, a file, or a color. A card shows
+Press **⇧⌘V** to open the shelf. Each card is one clip: text, code, a link, a picture, a file, or a color. A card shows
 a preview, the app it came from, and when.
 
 A text clip that is exactly one emoji or symbol (🍝, a flag, →, ©, ✓, €) is drawn large and centered on its card; two glyphs, a letter or a digit stay ordinary text.
@@ -67,14 +67,14 @@ You can also give up to nine pinned clips their own shortcut (**⌃1** to **⌃9
 - **⇧Return** pastes the focused clip directly as plain text (available for text, code, links and colors).
 - **⌘C** copies the focused clip to the clipboard without pasting or closing the shelf.
 - **⌘Y** toggles Quick Look for a larger view of the focused clip (text, picture, PDF, HTML or URL).
-- **Paste the previous copy** directly with a shortcut you record in *Settings → Shortcuts* (it was ⌘⌥V before; a Mac that already used Pesto keeps that).
+- **Paste the previous copy** directly with a shortcut you record in *Settings → Shortcuts* (it was ⌥⌘V before; a Mac that already used Pesto keeps that).
 - **⌃⌥⌘V** pastes as plain text (if it does nothing, see *Shortcuts*: another app may own the combination).
 - **Paste** and **Paste as Plain Text** head a clip's menu, with **Copy** and **Quick Look**, and show their shortcuts (**Return** and **⇧Return**; **⌘K** opens the menu from the keyboard). A floating window set to copy only has no Paste.
 - **Paste As…** is in the same menu. It transforms the clip first and pastes the result: case conversions (lowercase, UPPERCASE, Title Case, Sentence Case, camelCase, PascalCase, Slug-Case), line sorting and deduplication, JSON formatting/minifying, Base64 encode/decode, URL encoding/decoding, tracking parameter removal, cryptographic hashes (MD5, SHA-256) and more: 26 transforms in all, counting Plain Text, which has its own item above.
-- The **cursor menu** (off by default; *Settings → General* turns it on): when you press ⌘⇧V while typing in a text field, a compact list of your last five copies opens
+- The **cursor menu** (off by default; *Settings → General* turns it on): when you press ⇧⌘V while typing in a text field, a compact list of your last five copies opens
   next to the cursor. It is for the mouse only: arrow keys and Return go to the app you are typing in.
 - The **floating window** (the window button in the shelf's toolbar, or the menu bar) is a small copy of the shelf that stays on top. It opens on the display of the app you are working in; the shelf does too, and falls back to the display under the pointer when no app window is in front. Click a clip there to paste it (or copy it, if you turned off *Paste from the floating window*).
-- **Paste One by One.** Select several clips and press *Paste One by One* in the bar that appears (or **⇧⌘P**): the first pastes when the shelf closes, and each plain ⌘V in any app pastes the next. A small panel at the top right shows where you are, with Cancel; the menu bar has Stop Pasting One by One. Without Accessibility, the shortcut that opens the shelf (⌘⇧V unless you changed it) puts the next one on the clipboard, ready for ⌘V.
+- **Paste One by One.** Select several clips and press *Paste One by One* in the bar that appears (or **⇧⌘P**): the first pastes when the shelf closes, and each plain ⌘V in any app pastes the next. A small panel at the top right shows where you are, with Cancel; the menu bar has Stop Pasting One by One. Without Accessibility, the shortcut that opens the shelf (⇧⌘V unless you changed it) puts the next one on the clipboard, ready for ⌘V.
 - **Paste All.** Select two or more text clips and press *Paste All* (or **⌘P**): they are joined with a blank line and pasted at once. Nothing new is saved.
 - **Append.** Optionally, pressing ⌘C twice quickly
   appends the second copy to the first (turn it on in *Settings → Shortcuts*; it needs Accessibility).

@@ -144,7 +144,7 @@ struct KeyNavCoordinatorSelectAllTests {
     }
 
     @Test(
-        "Ctrl, Option and ⌘⌥ combinations of A, C, V, X and Z are not taken as Edit shortcuts",
+        "Ctrl, Option and ⌥⌘ combinations of A, C, V, X and Z are not taken as Edit shortcuts",
         arguments: [UInt16(0), 6, 7, 8, 9],
         [NSEvent.ModifierFlags.option, .control, [.command, .option]]
     )

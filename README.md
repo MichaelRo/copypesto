@@ -36,7 +36,7 @@ everyone, open source, and private by design.
 
 ## What it does
 
-Press **⌘⇧V** and your history slides up as a shelf of clips. Arrow to a clip and press Return, or press **⌘1** to
+Press **⇧⌘V** and your history slides up as a shelf of clips. Arrow to a clip and press Return, or press **⌘1** to
 **⌘9**. It lands in the app you were using, a fraction of a second later; a copy is on the shelf before you reach for it.
 
 - **Paste All** (**⌘P**) joins the selected text clips with a blank line and pastes them at once.
@@ -148,7 +148,7 @@ The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 - **Source.** Build it yourself; see For developers below. The `pesto` command-line tool is in the source tree and is
   not part of the download yet (`make build-cli`).
 
-Then press **⌘⇧V**. Pesto asks for **Accessibility** access once, so it can paste into other apps for you and notice a
+Then press **⇧⌘V**. Pesto asks for **Accessibility** access once, so it can paste into other apps for you and notice a
 double ⌘C (the optional append shortcut). Everything else works without it.
 
 [Getting started](docs/guide/getting-started.md) walks through it.

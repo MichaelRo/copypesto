@@ -11,7 +11,7 @@ final class StackHUDViewModel {
     var progress: String = ""
     var preview: String = ""
     var totalCount: Int = 0
-    /// True when the next clip is pasted by the person's own ⌘V, false when ⌘⇧V pastes it.
+    /// True when the next clip is pasted by the person's own ⌘V, false when ⇧⌘V pastes it.
     var pastesWithCommandV = true
     /// What to press, from `StackHint`: the person's ⌘V, or the key bound to Open the shelf.
     var hint = ""

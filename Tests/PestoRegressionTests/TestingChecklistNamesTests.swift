@@ -23,6 +23,13 @@ struct TestingChecklistNamesTests {
         return Set(qualified + bare)
     }
 
+    /// `struct Name` or `class Name` followed by something that ends a name, so `FooTests` is not found in
+    /// `FooTestsHelper`.
+    private func defined(_ name: String, in source: String) -> Bool {
+        let pattern = "(struct|class) \(NSRegularExpression.escapedPattern(for: name))\\b"
+        return source.range(of: pattern, options: .regularExpression) != nil
+    }
+
     private func testsSource() throws -> String {
         let files = try SourceTree.files(in: "Tests", minimum: 300, under: root)
         return try files.map { try String(contentsOf: $0, encoding: .utf8) }.joined(separator: "\n")
@@ -44,7 +51,7 @@ struct TestingChecklistNamesTests {
         let methods = Self.citedMethods(in: document)
         #expect(types.count >= 15, "found too few cited suites: \(types.count)")
         #expect(methods.count >= 2, "found too few cited methods: \(methods.count)")
-        let missingTypes = types.filter { !source.contains("struct \($0)") && !source.contains("class \($0)") }
+        let missingTypes = types.filter { !defined($0, in: source) }
         let missingMethods = methods.filter { !source.contains("func \($0)(") }
         #expect(missingTypes.isEmpty, "docs/testing.md cites suites that do not exist: \(missingTypes.sorted())")
         #expect(missingMethods.isEmpty, "docs/testing.md cites tests that do not exist: \(missingMethods.sorted())")

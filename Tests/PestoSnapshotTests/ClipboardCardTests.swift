@@ -162,6 +162,17 @@ final class ClipboardCardTests: XCTestCase {
         )
     }
 
+    /// Reduce Transparency turns the shelf solid; the card must be the same white on it, not the system's window grey.
+    func test_textCard_onTheSolidShelf_underReduceTransparency_light() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .text, preview: "Light card, Reduce Transparency, Parmesan")
+        snapshotCard(
+            ClipboardCard(item: item).environment(\.reduceTransparencyOverride, true),
+            named: "solidReducedLight", colorScheme: .light,
+            solidShelfGround: AppTheme.parmesan.groundHex(dark: false)
+        )
+    }
+
     func test_textCard_onTheSolidShelf_dark() throws {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .text, preview: "Dark card on the solid shelf")

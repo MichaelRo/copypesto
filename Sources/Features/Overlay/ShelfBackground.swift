@@ -51,14 +51,14 @@ struct ShelfBackground: View {
     }
 
     private var wash: some View {
-        let opacity = ShelfSurface.washOpacities(solid: !drawsGlass)
+        let opacity = ShelfSurface.wash(solid: !drawsGlass)
         return MeshGradient(
             width: 3,
             height: 2,
             points: [[0, 0], [0.5, 0], [1, 0], [0, 1], [0.5, 1], [1, 1]],
             colors: [
-                .clear, animatedColor.opacity(opacity[0]), .clear,
-                animatedColor.opacity(opacity[1]), .clear, animatedColor.opacity(opacity[2])
+                .clear, animatedColor.opacity(opacity.topLeading), .clear,
+                animatedColor.opacity(opacity.bottomLeading), .clear, animatedColor.opacity(opacity.bottomTrailing)
             ]
         )
         .allowsHitTesting(false)

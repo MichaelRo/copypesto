@@ -107,9 +107,15 @@ private struct AdaptiveCardFill<S: Shape>: View {
         shelfDrawsGlass == false ? 1 : 0.58
     }
 
+    /// Inside a shelf the ground is already opaque (solid, or glass turned solid by Reduce Transparency), so the card
+    /// keeps the solid shelf's recipe; the system's window grey is only for a card drawn outside a shelf.
+    private var usesSystemSurface: Bool {
+        reduceTransparency && shelfDrawsGlass != false
+    }
+
     var body: some View {
         shape.fill(
-            reduceTransparency
+            usesSystemSurface
                 ? Color.opaqueSurface
                 : Color.white.opacity(colorScheme == .dark ? 0.10 : lightOpacity)
         )

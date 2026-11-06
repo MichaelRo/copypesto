@@ -1434,6 +1434,28 @@
           }
         }
       }
+    },
+    "%lld are already in Pesto and will be skipped.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld is already in Pesto and will be skipped."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld are already in Pesto and will be skipped."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.0"

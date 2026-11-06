@@ -36,6 +36,7 @@ struct ShelfPositionPreview: View {
                     )
             }
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .shelfSurfaceEnvironment()
             .padding(5)
             .accessibilityHidden(true)
     }
@@ -77,10 +78,7 @@ struct ShelfPositionPreview: View {
         }
         .padding(4)
         .frame(height: Self.shelfHeight)
-        .background(
-            shelfShape.fill(.regularMaterial)
-                .overlay { ThemeTintLayer(themeRaw: themeRaw, darkThemeRaw: darkThemeRaw).clipShape(shelfShape) }
-        )
+        .background(PreviewShelfFill(shape: shelfShape, themeRaw: themeRaw, darkThemeRaw: darkThemeRaw))
         .overlay(shelfShape.strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.5))
         .shadow(color: accent.opacity(0.35), radius: 5)
     }

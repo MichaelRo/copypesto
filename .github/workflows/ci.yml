@@ -42,9 +42,12 @@ jobs:
             exit 0
           fi
 
-          # The files of the pull request's own last commit, not of the merge with main: a rebase that changes no file
-          # keeps this value, which is how `verify` knows it has already passed on exactly this content.
-          echo "tree=$(git rev-parse "${{ github.event.pull_request.head.sha }}^{tree}")" >> "$GITHUB_OUTPUT"
+          # What `verify` judges, as it would be merged: the code paths of the merge with main, hashed. A rebase that
+          # changes no code keeps this value, and so does a docs-only change on main, which is how `verify` knows it has
+          # already passed on exactly this content; a code change on main changes it, so a re-run is never a stale pass.
+          code_paths=(Sources Tests Package.swift Package.resolved Pesto.yml Pesto.resolved scripts Makefile
+            .github/workflows tool-versions.env)
+          echo "tree=$(git ls-tree HEAD -- "${code_paths[@]}" | sha256sum | cut -d" " -f1)" >> "$GITHUB_OUTPUT"
 
           # Compare against the PR base branch.
           base_ref="origin/${{ github.base_ref }}"
@@ -89,14 +92,14 @@ jobs:
   # a Mac that has granted the runner automation permission; run them locally, see docs/testing.md).
   #
   # It does not run on a pull request stacked on another branch (its base is not main; it runs when it is retargeted),
-  # and it does not run again on files that already passed: a green run leaves a marker keyed by the pull request's
-  # tree, and a later run with the same tree (a rebase that changed nothing, a re-run) skips every step and reports
+  # and it does not run again on code that already passed: a green run leaves a marker keyed by a hash of the merge's code
+  # paths, and a later run with the same hash (a rebase that changed nothing, a re-run) skips every step and reports
   # success in about a minute.
   verify:
     needs: [detect-changes]
     if: >-
       github.event_name != 'push' && needs.detect-changes.outputs.code == 'true'
-      && github.base_ref == github.event.repository.default_branch
+      && (github.event_name == 'workflow_dispatch' || github.base_ref == github.event.repository.default_branch)
     runs-on: xcode-27
     timeout-minutes: 45
     env:

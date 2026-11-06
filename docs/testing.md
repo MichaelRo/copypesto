@@ -474,7 +474,10 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   made while the shelf was closed; `OverlayPerformanceTests` has none of them). Pass: the median is under 100 ms each time.
 - `make bench-scroll`. Pass: it prints `shelf scroll travel` of at least 300 points for both histories (a run in which
   the shelf did not move fails) and stays within the scroll budget. A trace that hangs is stopped after two minutes
-  (`scripts/run-with-deadline.sh`) and that history fails while the next one still runs.
+  (`scripts/run-with-deadline.sh`) and that history fails while the next one still runs; `xctrace` took about three
+  minutes to save a trace on 2026-11-06, so on a Mac under load run `PROFILE_RECORD_DEADLINE=600 make bench-scroll`.
+  To compare the shelf surfaces (ADR 0035) put `PESTO_UITEST_DEFAULT_shelfSurface=glass` (or `solid`) before
+  `make bench-scroll` or `make bench-latency`; for a UI test, `TEST_RUNNER_PESTO_BENCH_SHELF_SURFACE=glass`.
   To see it work, quit `xctrace` (`pkill xctrace`) during a pass. Pass: that history fails with *xctrace record
   failed*, the next history still runs, and `make bench-scroll` exits non-zero.
 - `make bench-latency all 7`, `make bench-undo` after a change to Undo, and `make bench-sync` after a change to sync. Pass: both stay within budget.

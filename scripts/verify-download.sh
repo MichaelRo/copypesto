@@ -20,6 +20,7 @@ check() {
 actual=$(shasum -a 256 "$dmg" | cut -d' ' -f1)
 expected="${2:-}"
 if [ -z "$expected" ] && [ -f "$dmg.sha256" ]; then expected=$(cut -d' ' -f1 "$dmg.sha256"); fi
+expected=$(printf '%s' "$expected" | tr 'A-F' 'a-f')
 if [ -z "$expected" ]; then
   echo "note  no expected hash given and no $(basename "$dmg").sha256 beside it: the hash is $actual"
 elif [ "$actual" = "$expected" ]; then

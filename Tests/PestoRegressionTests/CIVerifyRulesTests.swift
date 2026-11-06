@@ -22,6 +22,10 @@ struct CIVerifyRulesTests {
         let job = try verifyJob(workflow())
         #expect(job.contains("github.base_ref == github.event.repository.default_branch"))
         #expect(job.contains("github.event_name != 'push'"))
+        #expect(
+            job.contains("github.event_name == 'workflow_dispatch' ||"),
+            "a manual run has no base_ref and must still run"
+        )
     }
 
     @Test("a green run leaves a marker keyed by the pull request's tree, and a run that finds it skips the work")
@@ -32,7 +36,14 @@ struct CIVerifyRulesTests {
         #expect(job.components(separatedBy: key).count - 1 == 2, "the marker is restored and saved under one key")
         #expect(job.contains("actions/cache/restore@"))
         #expect(job.contains("actions/cache/save@"))
-        #expect(text.contains("^{tree}"), "the tree is the pull request's own head, not the merge with main")
+        #expect(text.contains("git ls-tree HEAD -- \"${code_paths[@]}\""), "the key is the merge's code paths")
+        #expect(
+            !text.contains("^{tree}"),
+            "the key is not the pull request's head tree: a re-run after main moved is no pass"
+        )
+        for path in ["Sources", "Tests", "Pesto.resolved", "scripts", "Makefile", ".github/workflows"] {
+            #expect(text.contains(path), "\(path) is part of what verify judges")
+        }
         let verifyStep = try #require(job.range(of: "scripts/verify.sh --no-ui"))
         let before = String(job[..<verifyStep.lowerBound])
         let step = try #require(before.components(separatedBy: "      - ").last)

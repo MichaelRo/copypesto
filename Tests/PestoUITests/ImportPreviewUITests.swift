@@ -70,13 +70,15 @@ final class ImportPreviewUITests: PestoUITestCase {
         XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10), "no preview sheet")
         let limits = element(AccessibilityID.importPreviewLimits)
         XCTAssertTrue(limits.exists, "a library past the limits should say what comes in")
-        XCTAssertTrue(limits.label.contains("30,000"), "the sentence names the whole library: \(limits.label)")
-        XCTAssertTrue(limits.label.hasSuffix("your collections."), "history is the person's choice: \(limits.label)")
+        /// A static text reaches XCUITest as its value; the label stays empty.
+        func sentence() -> String {
+            "\(limits.value ?? limits.label)"
+        }
+        XCTAssertTrue(sentence().contains("30,000"), "the sentence names the whole library: \(sentence())")
+        XCTAssertTrue(sentence().hasSuffix("your collections."), "history is the person's choice: \(sentence())")
 
         element(AccessibilityID.importPreviewHistoryToggle).click()
-        XCTAssertTrue(
-            limits.label.contains("the newest 3,200"), "with history in, the sentence names it: \(limits.label)"
-        )
+        XCTAssertTrue(sentence().contains("the newest 3,200"), "with history in, the sentence names it: \(sentence())")
         capture("import-preview-paste-limits", of: settingsWindow)
         element(AccessibilityID.importPreviewCancel).click()
     }

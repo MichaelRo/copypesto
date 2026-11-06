@@ -31,6 +31,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0021](0021-a-collection-keeps-a-clip-where-it-was.md) | A collection keeps a clip where it was; only the history moves it on use |
 | [0022](0022-data-pane-backup-and-sync-cards.md) | Settings → Data gives backup and sync a card each and drops the Backup stat tile |
 | [0023](0023-time-filter-is-one-chip-and-a-custom-range.md) | The When filter is one chip with a menu, and a range can be any span Ask can read |
+| [0024](0024-launch-at-login-starts-on-in-setup.md) | Setup's last step offers "Launch Pesto at login" already on, once per Mac, and keeps the person's answer |
 
 ## Template
 

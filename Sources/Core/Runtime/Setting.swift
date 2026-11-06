@@ -95,6 +95,8 @@ public enum Setting {
     public static let samplesSeeded = SettingKey("samplesSeeded", default: false)
     /// Whether the person has been offered, or has answered, the first-launch offer to import another app's history.
     public static let importOffered = SettingKey("importOffered", default: false)
+    /// Whether setup has already offered "Launch Pesto at login" turned on (ADR 0024); this Mac's own state.
+    public static let loginItemOffered = SettingKey("loginItemOffered", default: false)
     /// Ids of collection suggestions the person dismissed, one per line.
     /// Ids of snippet suggestions (a starter's id, or a clip's UUID) the person dismissed, one per line.
     public static let dismissedSnippetSuggestions = SettingKey("dismissedSnippetSuggestions", default: "")
@@ -146,7 +148,7 @@ public enum Setting {
         toggleCaptureHotkeyKeyCode.name, toggleCaptureHotkeyModifiers.name,
         toggleClipContentsHotkeyKeyCode.name, toggleClipContentsHotkeyModifiers.name,
         settingsWindowFrame.name, lastSettingsPane.name, declinedAutoPaste.name, pinnedWindowFrame.name,
-        samplesSeeded.name, importOffered.name,
+        samplesSeeded.name, importOffered.name, loginItemOffered.name,
         dismissedSnippetSuggestions.name,
         dismissedCollectionSuggestions.name,
         installPromptSuppressed.name,

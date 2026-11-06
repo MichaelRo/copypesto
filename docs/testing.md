@@ -260,6 +260,10 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Fresh install: the Accessibility prompt appears, and granting it moves onboarding forward. Pass: the setup window
   advances to the next step as soon as the grant is on.
 - Launch at login survives a reboot. Pass: after a restart Pesto is in the menu bar without being opened.
+- Setup turns Launch at login on (ADR 0024), on a scratch user or after a reset with `PESTO_DEV_RESET=1`: the last setup
+  step shows the switch already on and System Settings → General → Login Items lists Pesto. Pass: restart and Pesto is in
+  the menu bar; turn the switch off in Settings, restart, and it is not. A Pesto outside Applications shows macOS's reason
+  under the switch instead. A UI test cannot check this: its launch never registers a login item.
 - Missing key: on a scratch user or a VM (it deletes the real key), quit Pesto, delete the blob-key item in Keychain
   Access, relaunch. `KeyLossRecoveryUITests` covers the flow after the alert; by hand check only that a real missing key
   reaches it. Pass: the "can't unlock your clipboard history" alert shows and no new key appears until you pick Start

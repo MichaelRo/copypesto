@@ -225,7 +225,7 @@ struct OnboardingView: View {
             if appState.authenticationAvailability != .unavailable {
                 lockToggle
             }
-            LoginItemToggle(title: "Launch Pesto at login")
+            LoginItemToggle(title: "Launch Pesto at login", appliesSetupDefault: true)
             Button {
                 withAnimation(Motion.animation(.pestoMove)) { moreOptionsOpen.toggle() }
             } label: {

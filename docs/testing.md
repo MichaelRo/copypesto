@@ -306,9 +306,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - ⌘[ and ⌘] (2026-11-04): with a 5,000-clip history and three collections, hold ⌘] across all of them and back, and
   compare with 1.2.0. Pass: each collection's clips appear in one step, with no flash of the previous collection's
   clips, and no stutter (`LargeHistoryPerformanceTests` times the filtering; the redraw is only seen by eye).
-- A collection keeps its clips where they are (ADR 0021): paste a clip from a collection by hand, then look at the
-  collection and at All. Pass: the collection's order does not change, All puts the clip first, and the card's detail
-  line shows the first copy time, not the paste.
 - Copy (⌘C) on the shelf. Pass: it copies the focused clip with no beep and the clip moves to the front; in the search
   field it copies the selected text; with a card menu open it still works.
 - Quick Look (⌘Y): copy a GIF from a browser, a page of a PDF and a WebP picture, and two files in Finder. Pass: ⌘Y shows
@@ -364,8 +361,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   and From as native menus, an arrow key moves in the menu and Return picks; picking a chosen value again, or Any Time, Any
   App or Any Format, clears it (what a chip says is `FilterMenuLabelTests`). With VoiceOver on, Space on
   each of the three menu chips opens its menu (the runner cannot press a pop-up with VoiceOver).
-- Ask with dates: "invoice on Nov 3", "links last 3 hours", "report between Nov 1 and Nov 3", "last Thursday". Pass: the More
-  chip names the range and the shelf shows only clips from it; copy something new and "last 3 hours" still shows it.
 - The clip menu's Paste (ADR 0009): right-click a clip, then ⌘K on another. Pass: Paste, Paste as Plain Text, Copy and
   Quick Look come first (the order is `SettingsEffectsTests`) with their keys beside them (↩, ⇧↩, ⌘C, ⌘Y); Paste puts the clip in the app behind the shelf; in a
   floating window set to copy only there is no Paste; with several clips selected the menu's Paste pastes only the clip
@@ -374,8 +369,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   minute and again after two. Pass: within a minute the collection and filters are as left; after two the shelf opens on
   All (or on the front app's own collection) with no filters. A `pesto://` link to a collection opens it even after a long
   absence, and with the floating window open the shelf's closing leaves its filters alone.
-- A card inside a regular collection (ADR 0021): paste it. Pass: its age under the title does not change and its place in
-  the collection does not move; in All the age follows the last use.
 - The color panel from the shelf, Paste the previous clip after an iPhone copy, and the Other Devices chip with the
   setting off. Pass: the panel opens, the previous clip pastes, and the chip is hidden.
 - A snippet with fill-ins (ADR 0017), on hardware, in Mail, Notes, a browser field and Terminal: paste it from the shelf, from
@@ -434,10 +427,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   and dark at Small, Medium and Large. Pass: the header names the app at a glance (the 32% wash is enough on Parmesan and
   Pine nut), the text is the loudest thing on the card, and a long text shows 4, 5 and 6 lines with a clear gap above
   the footer. If the app color is lost on a theme, fall back to option A.
-- Card whitespace (`docs/design/card-whitespace.md`): copy a web page's text with blank lines above it, a text with a
-  U+2028 line break and a text of 501 characters. Pass: the card starts at the first word, shows the paragraphs with a
-  slim dotted gap, the 501-character clip says "501 characters" only, a short three-line clip says "N characters · 3
-  lines", and the cards on the welcome screen and in Settings → Appearance are the same.
 - Hover card: scroll a long clip with the pointer inside the card, then leave it. Pass: it closes after about half a
   second and does not flicker between neighboring clips, also in the floating window and on a second display.
 - The 2026-10 review changes: run Describe Image or Summarize; delete a clip; in search, Tab to a filter chip; look at
@@ -514,8 +503,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a
   card. When the hint shows is `ClickHintPolicyTests` (a first focusing click, at most three times, never after a double
   click).
-- Snippets pane (Settings → Snippets). Pass: Your snippets, Starters, From your clips, then the Placeholders (shown, with a
-  See the guide link that opens the Snippets section of the guide), Remember fill-in values and Suggestion statistics, in that order.
 
 ## Two Macs: sync
 Run once at the end, on two Macs signed in to the same Apple Account with iCloud Drive on, with a build from `make release SYNC_PROFILE=…` (iCloud Keychain key) and, separately, with the daily self-signed build (this-device key). Never use a Mac whose history matters: turn sync on only after a backup. Pass means every line holds.

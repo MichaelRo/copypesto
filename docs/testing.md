@@ -417,6 +417,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   Transparency, Increase Contrast and Reduce Motion, over the lightest and darkest wallpaper. Pass: the shelf, Settings
   and the quick menu stay readable, the focus ring is visible (A-14), the card header time in Mortar dark reads (D-07,
   estimated 4.46:1), and the hover card does not scale.
+- Shelf surface (ADR 0035): in Settings → Appearance choose Solid, then Glass, in each theme, light and dark, with a white
+  window and a busy wallpaper behind the shelf, and once with Reduce Transparency on. Pass: on Solid a light card's edge
+  reads on the shelf and the shelf does not vanish into a white window behind it; the wash follows the focused card on
+  both; with Reduce Transparency on, Solid is selected and disabled with the reason, and *Open System Settings…* opens
+  the Display pane of Accessibility (the URL is unverified).
 - Text size: set the largest text size and open the shelf, Settings and setup. Pass: no text is cut off or overlaps.
 - Settings on two displays (2026-11-04; the rule is tested in `SettingsWindowFrameTests`, the displays are not): with
   the shelf on one display, choose Settings from its gear; with the shelf closed, choose Settings from the menu-bar

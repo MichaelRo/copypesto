@@ -19,6 +19,7 @@ copy() {
 
 copy showcase-dark.png shelf-dark.png
 copy showcase-light.png shelf-light.png   # the Overview's pair
+copy showcase-glass.png shelf-glass.png   # the Shelf surface paragraph of settings.md (docs/release.md)
 copy showcase-search.png search.png
 copy showcase-ask.png ask-pesto.png
 copy showcase-collections.png collections.png

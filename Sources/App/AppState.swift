@@ -331,7 +331,7 @@ final class AppState {
     // exit animation. Used by the Settings button so it fires only after the overlay is gone.
 
     /// Non-nil while a multi-item paste stack is active.
-    /// `⌘⇧V` advances through items instead of opening the overlay.
+    /// `⇧⌘V` advances through items instead of opening the overlay.
     var activeStack: PasteStack?
     @ObservationIgnored var cancelActiveStack: (() -> Void)?
 

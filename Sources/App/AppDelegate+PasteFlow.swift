@@ -66,7 +66,7 @@ extension AppDelegate {
     }
 
     /// Pastes the current stack item, advances the index, and updates the HUD.
-    /// Called both when the stack is first activated (overlay close) and on each subsequent ⌘⇧V.
+    /// Called both when the stack is first activated (overlay close) and on each subsequent ⇧⌘V.
     func pasteNextStackItem() {
         guard let stack = appState.activeStack, let item = stack.current else {
             cancelStack()

@@ -3,7 +3,7 @@ import AppKit
 import Carbon.HIToolbox
 import os
 
-/// Registers global hotkeys via the Carbon Event Manager: every `GlobalShortcut` that has a combination (⌘⇧V opens
+/// Registers global hotkeys via the Carbon Event Manager: every `GlobalShortcut` that has a combination (⇧⌘V opens
 /// the shelf and ⌃⌥⌘V pastes plain text by default; the rest start unset), and
 /// ⌃1–⌃9, which instant-paste the pinned clip assigned to that slot.
 @MainActor

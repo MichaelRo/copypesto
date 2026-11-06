@@ -415,8 +415,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Each theme in light and dark with its icon. Pass: text, accent and the icon read on every one.
 - Wallpapers (also with Settings → Appearance → Shelf surface on Glass, then Solid; ADR 0035): System Settings → Appearance with the transparency slider at minimum, middle and maximum, Reduce
   Transparency, Increase Contrast and Reduce Motion, over the lightest and darkest wallpaper. Pass: the shelf, Settings
-  and the quick menu stay readable, the focus ring is visible (A-14), the card header time in Mortar dark reads (D-07,
-  estimated 4.46:1), and the hover card does not scale.
+  and the quick menu stay readable, the focus ring is visible (A-14), and the hover card does not scale (the card header's age is
+  `CardHeaderTimeContrastTests`, D-07).
 - Shelf surface (ADR 0035): in Settings → Appearance choose Solid, then Glass, in each theme, light and dark, with a white
   window and a busy wallpaper behind the shelf, and once with Reduce Transparency on. Pass: on Solid a light card's edge
   reads on the shelf and the shelf does not vanish into a white window behind it; the wash follows the focused card on

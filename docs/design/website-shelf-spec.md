@@ -79,7 +79,7 @@ Never drawn: the source app's tile or name, the category, a size or length, a ti
 
 The content-filter blur uses the same face and adds one 11 px line, "Sensitive content", between the kind and Show. Its context menu stays complete; the share cover's menu and VoiceOver actions are Paste, Paste as Plain Text, Copy, Delete and Show only.
 
-The site's demo shelf does not draw a covered card today; if it does, it follows this section and is changed in the website repo.
+The site's demo shelf draws one covered card (the first): its ⌘ number, "Text", the age and an eye icon, nothing else; its spoken label and hover facts say no more. It follows this section and is changed in the website repo.
 
 ## Whitespace (`card-whitespace.md`)
 The app compacts a clip for display (a pure function, `CardPreviewText.display`); hand-written samples can follow the same

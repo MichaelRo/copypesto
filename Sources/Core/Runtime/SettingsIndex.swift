@@ -174,7 +174,15 @@ public enum SettingsIndex {
             "bottom", "top", "notch", "under the notch", "menu bar", "where the shelf opens"
         ),
         entry("Card size", "Appearance", "Card size", "compact", "large", "standard", "bigger", "smaller"),
-        entry("Open the shelf shortcut", "Shortcuts", "Open the shelf", "hotkey", "keyboard", "command shift v"),
+        entry(
+            "Open the shelf shortcut",
+            "Shortcuts",
+            "Open the shelf",
+            "hotkey",
+            "keyboard",
+            "shift command v",
+            "command shift v"
+        ),
         entry("Paste as plain text shortcut", "Shortcuts", "Paste as plain text", "hotkey", "formatting", "plain text"),
         entry("Quick paste shortcut", "Shortcuts", "Paste the previous clip", "hotkey", "previous"),
         entry(

@@ -38,16 +38,10 @@ extension ClipboardCard {
         }
     }
 
-    /// "Text" tells nothing the card does not already show, so a plain text clip names the app it came from; the other
-    /// kinds (Link, Image, Color, Code, File) keep their label, because it is what sets them apart.
-    var headerNamesTheApp: Bool {
-        item.customTitle == nil && item.type == .text && item.sourceAppName != nil && !item.isRemote
-    }
-
     var headerTitle: String {
         if let title = item.customTitle { return title }
         if shownThumbnail?.isAnimated == true { return "GIF" }
-        if headerNamesTheApp, let app = item.sourceAppName { return app }
+        if item.headerNamesTheApp, let app = item.knownSourceAppName { return app }
         return typeMeta.label
     }
 
@@ -73,7 +67,7 @@ extension ClipboardCard {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .help(headerTitle)
-                Text(isPointed && !headerNamesTheApp ? (item.sourceAppName ?? timeAgo) : timeAgo)
+                Text(isPointed && !item.headerNamesTheApp ? (item.knownSourceAppName ?? timeAgo) : timeAgo)
                     .font(.caption2)
                     .foregroundStyle(AdaptiveContrast.quiet(contrast))
                     .lineLimit(1)
@@ -473,22 +467,5 @@ extension ClipboardCard {
         // needs to stay visibly frosted on macOS 15 for legibility.
         .glassPanelBackground(in: Capsule())
         .padding(5)
-    }
-}
-
-// MARK: - SensitivityCategory display
-
-extension SensitivityCategory {
-    var badgeLabel: String {
-        switch self {
-        case .creditCard: "Card"
-        case .ssn: "SSN"
-        case .jwt: "JWT"
-        case .apiKey: "API Key"
-        case .oauthToken: "OAuth"
-        case .privateKey: "Private Key"
-        case .password: "Password"
-        case .credential: "Credential"
-        }
     }
 }

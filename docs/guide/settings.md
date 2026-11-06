@@ -89,8 +89,8 @@ Keys that work in every app, and the keys that work on the shelf.
 
 - **Everywhere:** click a shortcut, then press the new keys. It needs ⌘, ⌥ or ⌃; Esc cancels. Pesto pauses its own
   shortcuts while you record, so you can record the combination you have now. It refuses a combination another Pesto
-  shortcut or macOS already uses (and says which), and warns on the row when another app holds one. The menu at the end of each row has *Change…*, *Reset to Default* and *Turn Off*. The global shortcuts are *Open the shelf* (⌘⇧V), *Paste as plain text*
-  (⌃⌥⌘V); *Paste the previous clip* (it was ⌘⌥V on installs before this changed, and those keep it), *Show or hide the
+  shortcut or macOS already uses (and says which), and warns on the row when another app holds one. The menu at the end of each row has *Change…*, *Reset to Default* and *Turn Off*. The global shortcuts are *Open the shelf* (⇧⌘V), *Paste as plain text*
+  (⌃⌥⌘V); *Paste the previous clip* (it was ⌥⌘V on installs before this changed, and those keep it), *Show or hide the
   floating window*, *Pause or resume capturing* and *Hide or show clip contents* start unset.
 - **Pinned clip shortcuts:** pinned clips can each get ⌃1 to ⌃9. Choose one from a clip's menu (choosing a shortcut pins
   the clip, and unpinning it frees the shortcut); the list shows which clips have one, with a Remove button. Pesto can also offer a shortcut on the shelf for a clip you paste often, and suggest freeing an unused one (Settings → General, Show suggestions on the shelf).

@@ -9,7 +9,7 @@ the docs and the website. Change a term here first, then everywhere.
 |---|---|---|
 | **clip** | One saved copy of anything (text, link, picture, file, color) | item, entry, snippet (see below), record |
 | **card** | A clip's picture on the shelf. Only in layout words: "card size", "clip cards" | using "card" for the clip itself |
-| **shelf** | The bottom drawer opened with ⌘⇧V | overlay, drawer, panel, popup |
+| **shelf** | The bottom drawer opened with ⇧⌘V | overlay, drawer, panel, popup |
 | **history** | Every clip Pesto has saved | clipboard log |
 | **pinned clip** | A clip kept forever and exempt from retention (can have a ⌃1–⌃9 shortcut) | favorite, starred |
 | **floating window** | The always-on-top copy of the shelf, from the menu bar. Not "pinned window": it reads like a window of pinned clips | pinned window |
@@ -31,6 +31,12 @@ Read / Mark as Unread in Mail). A menu item that toggles a flag is worded for wh
 ## Arrows in paths
 The guide writes a place in Settings as an arrow path, *Settings → Data → Another app's library*. The UI never does: a
 label names one thing. The website's own copy follows its own voice document and only the synced guide keeps the arrows.
+
+## Shortcuts
+Write modifier keys in the Mac's order, ⌃ ⌥ ⇧ ⌘, then the key: ⇧⌘V, ⌥⇧⌘V, ⌃⌥⌘V. This is the order Apple's own
+[keyboard shortcuts page](https://support.apple.com/en-us/102650) uses ("Shift-Command-N"), and what the Mac draws in its
+menus, so Pesto's text matches what a person sees there. In words: Shift-Command-V. `KeyOrderTests` scans for the
+other order. The rule has no ADR: it follows the platform.
 
 ## Spelling
 The UI, the docs, the guide and the website use American English: color, license, organize, summarize, sanitization,

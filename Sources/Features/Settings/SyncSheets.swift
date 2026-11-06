@@ -29,10 +29,10 @@ struct SyncSetUpSheet: View {
         }
     }
 
-    private var secretsLine: LocalizedStringKey {
-        controller.keepsHere == 0
-            ? "Clips with secrets stay on this Mac unless you choose."
-            : "Clips with secrets stay on this Mac unless you choose: **\(controller.keepsHere) clips stay here**."
+    private var secretsLine: Text {
+        let sentence = Text("Clips with secrets stay on this Mac unless you choose")
+        guard controller.keepsHere > 0 else { return sentence + Text(".") }
+        return sentence + Text(": ") + Text(CountText.keptHere(controller.keepsHere)).bold() + Text(".")
     }
 
     private func bullet(verbatim text: String) -> some View {
@@ -43,9 +43,13 @@ struct SyncSetUpSheet: View {
     }
 
     private func bullet(_ text: LocalizedStringKey) -> some View {
+        bullet(Text(text))
+    }
+
+    private func bullet(_ text: Text) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text("\u{2022}")
-            Text(text)
+            text
         }
     }
 }

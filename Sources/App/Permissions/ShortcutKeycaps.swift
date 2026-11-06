@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import SwiftUI
 
-/// A shortcut such as "⌘⇧V" drawn as one small key per symbol.
+/// A shortcut such as "⇧⌘V" drawn as one small key per symbol.
 struct ShortcutKeycaps: View {
     let label: String
 

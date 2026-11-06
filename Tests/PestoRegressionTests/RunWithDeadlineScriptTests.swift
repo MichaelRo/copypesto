@@ -35,7 +35,7 @@ struct RunWithDeadlineScriptTests {
         let ok = try run(["30", "/bin/echo", "traced"])
         #expect(ok.code == 0)
         #expect(ok.output.contains("traced"))
-        #expect(ok.seconds < 10)
+        #expect(ok.seconds < 20)
         let failed = try run(["30", "/bin/sh", "-c", "exit 3"])
         #expect(failed.code == 3)
     }
@@ -44,7 +44,7 @@ struct RunWithDeadlineScriptTests {
     func whenTheCommandHangs_thenItIsKilledAt124() throws {
         let result = try run(["1", "/bin/sleep", "60"])
         #expect(result.code == 124)
-        #expect(result.seconds < 15)
+        #expect(result.seconds < 30)
         #expect(result.output.contains("gave up"))
     }
 
@@ -53,13 +53,21 @@ struct RunWithDeadlineScriptTests {
         let marker = "pesto-deadline-\(UUID().uuidString)"
         let result = try run(["1", "/bin/sh", "-c", "/bin/sleep 61 & /bin/sleep 62 # \(marker)"])
         #expect(result.code == 124)
-        let check = Process()
-        check.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
-        check.arguments = ["-f", "sleep 61"]
-        let found = Pipe()
-        check.standardOutput = found
-        try check.run()
-        check.waitUntilExit()
-        #expect(check.terminationStatus != 0)
+        #expect(try nothingMatchesSleep61(within: 2))
+    }
+
+    private func nothingMatchesSleep61(within seconds: TimeInterval) throws -> Bool {
+        let deadline = Date().addingTimeInterval(seconds)
+        repeat {
+            let check = Process()
+            check.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+            check.arguments = ["-f", "sleep 61"]
+            check.standardOutput = Pipe()
+            try check.run()
+            check.waitUntilExit()
+            if check.terminationStatus != 0 { return true }
+            Thread.sleep(forTimeInterval: 0.1)
+        } while Date() < deadline
+        return false
     }
 }

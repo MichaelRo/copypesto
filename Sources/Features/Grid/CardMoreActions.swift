@@ -12,18 +12,19 @@ struct CardMoreActions: ViewModifier {
     let removeTag: (String) -> Void
     let isFocused: Bool
     let spokenCard: String
+    let offers: (CardMenuItem) -> Bool
 
     func body(content: Content) -> some View {
         content
-            .accessibilityAction(named: isPinned ? "Unpin" : "Pin") { togglePin?() }
             .accessibilityActions {
-                if let title = LinkOpener.title(for: openLink) {
+                if offers(.pin) { Button(isPinned ? "Unpin" : "Pin") { togglePin?() } }
+                if offers(.openLink), let title = LinkOpener.title(for: openLink) {
                     Button(title) { LinkOpener.perform(openLink) }
                 }
-            }
-            .accessibilityActions {
-                ForEach(tags, id: \.self) { tag in
-                    Button("Remove Tag \(tag)") { removeTag(tag) }
+                if offers(.tag) {
+                    ForEach(tags, id: \.self) { tag in
+                        Button("Remove Tag \(tag)") { removeTag(tag) }
+                    }
                 }
             }
             .onChange(of: isFocused) { _, focused in

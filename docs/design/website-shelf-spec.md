@@ -69,6 +69,18 @@ Decided by `CardTreatment` (Core); the site's demo shelf follows in a separate w
 | Link, no preview picture | The host (lower case, user info dropped, never the page's own site name) at 22 px semibold up to 14 characters, 17 px up to 22, 15 px beyond, wrapping after dots; beneath it the port, path and query at 11 px in the muted color, up to 3 lines. A link with a preview picture keeps its picture body. |
 Unchanged: code, multi-line or long text, every file card, anything hidden, masked or covered.
 
+## Covered cards (ADR 0028)
+A card covered for a screen share (or by Hide Clip Contents) is the standard card shape, an opaque surface with the card material over it and no content (`CoveredCardFace`, facts from `CoverFacts` in Core). It draws exactly three facts and nothing else:
+- Top left: the shortcut number (cards 1 to 9) in a 4 px radius outlined pill, 11 px medium (`caption2`), gray at 60%.
+- Top right: the relative age, 11 px, quiet gray.
+- Centre: the `eye.slash.fill` symbol at title size, the kind as one plain word (Text, Link, Image, File, Color, Code) at 11 px medium, and the Show link at 11 px. A masked secret and any clip with a sensitivity category read "Text".
+
+Never drawn: the source app's tile or name, the category, a size or length, a title, a file name, a link's domain, a color's hex or tint, a picture. A focused or selected covered card draws its 1.5 px accent ring over the cover.
+
+The content-filter blur uses the same face and adds one 11 px line, "Sensitive content", between the kind and Show. Its context menu stays complete; the share cover's menu and VoiceOver actions are Paste, Paste as Plain Text, Copy, Delete and Show only.
+
+The site's demo shelf draws one covered card (the first): its ⌘ number, "Text", the age and an eye icon, nothing else; its spoken label and hover facts say no more. It follows this section and is changed in the website repo.
+
 ## Whitespace (`card-whitespace.md`)
 The app compacts a clip for display (a pure function, `CardPreviewText.display`); hand-written samples can follow the same
 rules by writing them that way:

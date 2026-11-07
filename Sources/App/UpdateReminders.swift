@@ -88,7 +88,7 @@ final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdater
     -> Bool {
         guard Thread.isMainThread else { return false }
         nonisolated(unsafe) let install = install
-        let checked = updater.lastUpdateCheckDate
+        let checked = MainActor.assumeIsolated { updater.lastUpdateCheckDate }
         let version = item.displayVersionString
         let fullNotes = item.fullReleaseNotesURL
         let itemNotes = item.releaseNotesURL
@@ -105,7 +105,8 @@ final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdater
     }
 
     nonisolated func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor _: SPUUpdateCheck, error _: (any Error)?) {
-        let checked = updater.lastUpdateCheckDate
+        guard Thread.isMainThread else { return }
+        let checked = MainActor.assumeIsolated { updater.lastUpdateCheckDate }
         onMain {
             $0.hasPendingManualCheck = false
             $0.appState.lastUpdateCheck = checked

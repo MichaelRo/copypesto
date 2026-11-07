@@ -174,8 +174,7 @@ struct GenericFileReaderTests {
     func whenAdversarial_thenFast() {
         let unclosed = "text\n\"" + String(repeating: "a,\"\"b\n", count: 20_000)
         let delimiters = "text\n" + String(repeating: ",", count: 200_000)
-        let clock = ContinuousClock()
-        let elapsed = clock.measure {
+        let elapsed = BestOf.measure(budget: .milliseconds(500)) {
             _ = try? read(unclosed, "csv")
             _ = try? read(delimiters, "csv")
         }

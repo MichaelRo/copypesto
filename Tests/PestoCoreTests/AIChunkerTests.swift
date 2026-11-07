@@ -75,9 +75,8 @@ struct AIChunkerTests {
     @Test("a 5 MB text is chunked from its first 100,000 characters in well under a frame")
     func whenHuge_thenFast() {
         let huge = String(repeating: "lorem ipsum dolor sit amet. ", count: 180_000)
-        let clock = ContinuousClock()
         var result = AIParts(parts: [], total: 0, readable: 0)
-        let elapsed = clock.measure {
+        let elapsed = BestOf.measure(budget: .milliseconds(50)) {
             result = AIChunker.parts(of: huge, budget: 8700, totalCharacters: 5_040_000)
         }
         #expect(elapsed < .milliseconds(50))

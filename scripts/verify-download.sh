@@ -41,12 +41,12 @@ app="$mount_point/Pesto.app"
 [ -d "$app" ] || { echo "FAIL  no Pesto.app in the image"; exit 1; }
 
 check "code signature is valid (deep, strict)" codesign --verify --deep --strict "$app"
-if codesign -dvvv "$app" 2>&1 | grep -q "TeamIdentifier=$TEAM_ID"; then
+if codesign -dvvv "$app" 2>&1 | grep "TeamIdentifier=$TEAM_ID" >/dev/null; then
   echo "ok    Team ID $TEAM_ID"
 else
   echo "FAIL  Team ID is not $TEAM_ID"; failed=1
 fi
-if spctl --assess --type execute -vv "$app" 2>&1 | grep -q "Notarized Developer ID"; then
+if spctl --assess --type execute -vv "$app" 2>&1 | grep "Notarized Developer ID" >/dev/null; then
   echo "ok    Gatekeeper: Notarized Developer ID"
 else
   echo "FAIL  Gatekeeper does not say Notarized Developer ID"; failed=1

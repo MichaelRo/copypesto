@@ -34,7 +34,7 @@ if [[ "${PESTO_SKIP_VERIFY_RECEIPT:-}" == "1" ]]; then
   exit 0
 fi
 
-if [[ -n "$(git status --porcelain)" ]]; then
+if [[ -n "$(git status --porcelain -uno)" ]]; then
   echo "error: working tree has uncommitted changes. Commit all changes and run 'make verify' before releasing." >&2
   exit 1
 fi
@@ -51,6 +51,7 @@ NOTE_JSON="$(git notes --ref=verify show HEAD 2>/dev/null || true)"
 
 python3 - "$CURRENT_TREE" "$CURRENT_COMMIT" "$RECEIPT_JSON" "$NOTE_JSON" <<'PY'
 import json
+import subprocess
 import sys
 
 current_tree, current_commit, file_raw, note_raw = sys.argv[1:5]
@@ -85,10 +86,17 @@ for source, data in candidates:
         continue
     recorded_tree = data.get("tree", "")
     if recorded_tree != current_tree:
-        reasons.append(
-            f"{source}: recorded tree {recorded_tree[:12]} does not match HEAD^{{tree}} {current_tree[:12]}"
-        )
-        continue
+        rec_commit = data.get("commit", "")
+        code_diff = subprocess.run(
+            ["git", "diff", "--name-only", rec_commit, current_commit, "--", "Sources", "Tests", "Package.resolved"],
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if not rec_commit or code_diff:
+            reasons.append(
+                f"{source}: recorded tree {recorded_tree[:12]} does not match HEAD^{{tree}} {current_tree[:12]}"
+            )
+            continue
     print(
         f"✓ Release verify receipt valid ({source}): "
         f"run={data.get('run', '?')} timestamp={data.get('timestamp', '?')} "

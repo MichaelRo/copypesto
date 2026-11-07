@@ -121,24 +121,15 @@ A development build signed "Pesto Development" can never use the iCloud key, so 
      website repo `npm run build && npm run poster` (it draws the shelf frames the film just retook). Look at both
      films and both posters, then commit `public/video`, `public/og.png` and `design/social` in the website pull request
      (`docs/teaser.md`).
-4. `make release` (archive, export, notarize the app, build a DMG, sign, notarize and staple it).
-5. Sparkle signature: `sign_update <dmg>` prints `sparkle:edSignature` and `length`. In the website repo, add
+4. `make release` (archive, export, notarize the app, build a DMG, sign, notarize and staple it). The pre-check `check-verify-receipt` verifies that no code files (`Sources/`, `Tests/`, `Package.resolved`) have changed since `make verify` ran.
+5. Sparkle signature: `sign_update <dmg>` prints `sparkle:edSignature` and `length`. Check the artifact with `make verify-download DMG=.build/xcode/export/Pesto-<version>.dmg`. In the website repo, add
    `src/content/releases/<version>.md`: front matter `version` (`MARKETING_VERSION`), `build` (`CURRENT_PROJECT_VERSION`),
    `date`, `dmgURL` (the GitHub release asset), `length`, `edSignature`, `sha256` (`shasum -a 256 <dmg>`) and
    `minimumSystemVersion`, and the release notes as the body. The same file feeds the changelog page and `/appcast.xml`, and
-   `npm run verify` there checks the URL and the shape of every field.
-6. Upload `Pesto-<version>.dmg` and `Pesto-<version>.dmg.sha256` to the GitHub release, publish the appcast, then check for updates from an older build.
-7. Put these in the GitHub release body, so anyone can check a download against the source: the commit or tag, the Xcode
-   version (`xcodebuild -version`), the SHA-256 of the DMG, the `codesign -dvvv` lines for the Team ID, and the three
-   commands a person can run (`shasum -a 256`, `spctl --assess --type execute -vv`, `xcrun stapler validate`). Build
-   output is not reproducible bit for bit (signatures carry timestamps), so do not say it is. Turn on immutable
-   releases only after one full update from build N to N+1 has worked: assets cannot be replaced afterwards and a tag
-   name cannot be reused, so a bad 1.0.0 becomes 1.0.1.
-
-8. Homebrew: once the site is deployed and `/appcast.xml` offers the version, `make release-cask` runs the tap's bump workflow
-   at once (it polls every six hours anyway) and prints its pull request. The tap checks the disk image's hash, size,
-   signature and notarization before it proposes anything. Merge that pull request, then try
-   `brew upgrade --cask --greedy pesto`. The cask is not done until this pull request is merged.
+   `npm run verify` there checks the URL and the shape of every field. Merge that pull request into the website repo.
+6. Create the GitHub release: upload `Pesto-<version>.dmg` and `Pesto-<version>.dmg.sha256` to the GitHub release `v<version>`, and publish it.
+7. Deploy the website: `npm run deploy` from clean `main`, then `npm run check-live -- https://copypesto.net` to verify headers, CSP, and `/appcast.xml`.
+8. Homebrew: once the GitHub release is live and `/appcast.xml` offers the version, run `scripts/bump-cask.sh <version>` (or `make release-cask`). The tap's bump workflow verifies the downloaded DMG (hash, signature, notarization) and opens a PR on `MichaelRo/homebrew-copypesto`. Merge that pull request, then test `brew upgrade --cask --greedy pesto`. The release is complete once the cask PR is merged.
 
 ## Checks that prove the artifact is right
 ```bash

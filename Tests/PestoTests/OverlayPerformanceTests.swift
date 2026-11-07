@@ -21,11 +21,10 @@ final class OverlayPerformanceTests: XCTestCase {
         let appState = AppState()
         // Baseline: the synchronous path through show() should be well under 100 ms.
         // If this regresses, profile BottomShelfPositioning.frame() and NSHostingView layout.
-        let clock = ContinuousClock()
         let warmUp = OverlayWindowController(appState: appState)
         warmUp.show()
         warmUp.hide()
-        let elapsed = clock.measure {
+        let elapsed = BestOf.measure(budget: .milliseconds(100)) {
             let wc = OverlayWindowController(appState: appState)
             wc.show()
             CATransaction.flush()

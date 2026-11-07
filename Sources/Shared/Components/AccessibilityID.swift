@@ -162,6 +162,10 @@ enum AccessibilityID {
         "settings-privacy-fact-\(name)"
     }
 
+    static func snippetPlaceholderMeaning(_ token: String) -> String {
+        "settings-snippet-placeholder-\(token)"
+    }
+
     static func shortcutRecorder(_ id: UInt32) -> String {
         "settings-shortcut-\(id)"
     }

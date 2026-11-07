@@ -7,12 +7,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-08
+### Added
+- Settings, General: **Install updates automatically**, when Pesto last checked, and a **Check Now** button.
+- When a check you start finds an update that installs by itself, a notice under the menu bar says it is ready; click it to restart now.
+- While an update is waiting, the menu bar menu and General offer **Restart to Update** and **What's New**.
+
+### Changed
+- Pictures wider or taller than a card are shown whole over a blurred copy of themselves, not cropped. ([ADR 0041](decisions/0041-a-picture-fills-the-card-only-near-its-shape.md))
+
 ## [1.4.0] - 2026-11-07
 ### Changed
 - The shelf is solid by default. The translucent Liquid Glass look, the earlier default, is an option in Settings, Appearance. ([ADR 0035](decisions/0035-shelf-surface-solid-or-glass.md))
 - Short text clips and link hosts lead in prominent sizing; cards covered during screen sharing show clear kind and age badges.
 - New backup passphrases need twelve characters and pass a strength check.
-- Pictures wider or taller than a card are shown whole over a blurred copy of themselves, not cropped.
 
 ### Added
 - Copy Recognized Text from any picture clip, in its card menu or hover card.

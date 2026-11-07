@@ -122,6 +122,7 @@ A development build signed "Pesto Development" can never use the iCloud key, so 
      films and both posters, then commit `public/video`, `public/og.png` and `design/social` in the website pull request
      (`docs/teaser.md`).
 4. `make release` (archive, export, notarize the app, build a DMG, sign, notarize and staple it). The pre-check `check-verify-receipt` verifies that no code or build configuration files (`Sources/`, `Tests/`, `Package.swift`, `Package.resolved`, `Pesto.yml`, `Pesto.entitlements`, `PestoSync.entitlements`, `exportOptions.plist`, `Makefile`) have changed since `make verify` ran.
+   **Without a gate run (an explicit choice, never the default):** `PESTO_SKIP_VERIFY_RECEIPT=1 make release` skips the receipt check and prints a warning. Use it only when the tree differs from a gated one in nothing a person can run (documentation, pictures), or when the maintainer decides to ship without the hour-long gate; say so in the release notes of the pull request, because the proof that the shipped tree passed is then missing.
 5. Sparkle signature: `sign_update <dmg>` prints `sparkle:edSignature` and `length`. Check the artifact with `make verify-download DMG=.build/xcode/export/Pesto-<version>.dmg`. In the website repo, add
    `src/content/releases/<version>.md`: front matter `version` (`MARKETING_VERSION`), `build` (`CURRENT_PROJECT_VERSION`),
    `date`, `dmgURL` (the GitHub release asset), `length`, `edSignature`, `sha256` (`shasum -a 256 <dmg>`) and

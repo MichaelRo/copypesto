@@ -107,7 +107,7 @@ makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is u
 A development build signed "Pesto Development" can never use the iCloud key, so it always takes the this-device path.
 
 ## Each release
-1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`.
+1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`. Move the `## [Unreleased]` entries of `CHANGELOG.md` under a `## [<version>] - <date>` heading and add what is missing; the website's release notes (step 5) say the same in the same words. `ChangelogCoversReleaseTests` fails until the heading exists.
 2. `make check-packages` shows no line starting `!!!`: it compares the two SwiftPM pins in `Pesto.yml` (Sparkle, swift-snapshot-testing) with their latest releases and with GitHub's Swift advisories, and prints the table. Dependabot cannot see `Pesto.yml`, so this is the only reminder. Keep each pin at the newest release that carries no known vulnerability; after a bump run `make update-resolved`, review `Pesto.resolved`, and do the Sparkle local update test below, and delete the stale module caches first (`rm -rf .build/*/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules`): after the 2.10.1 bump `make install` and both benches failed with "Sparkle.framework/Headers/SUAppcastItem.h has been modified since the module file ... was built".
 3. `scripts/verify.sh` is green, and the manual checklist in `docs/testing.md` is done.
    **Pictures and film, after the version bump and before the release, in this order:**

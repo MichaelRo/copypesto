@@ -388,7 +388,15 @@ final class ClipboardCardTests: XCTestCase {
     func test_pictureCard_fillsTheCard() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()
-        let item = pictureItem(in: ctx, aspect: 16.0 / 9.0)
+        let item = pictureItem(in: ctx, aspect: 1.0)
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), named: "light", colorScheme: .light)
+    }
+
+    func test_pictureCard_wideIsShownWholeOverABlurredCopy() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 1.5, source: "Preview")
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), named: "light", colorScheme: .light)
     }
@@ -411,7 +419,7 @@ final class ClipboardCardTests: XCTestCase {
         defer { ThumbnailCache.shared.clear() }
         try withCardWidth(160) {
             let ctx = try makeContext()
-            let item = pictureItem(in: ctx, aspect: 1.5)
+            let item = pictureItem(in: ctx, aspect: 1.0)
             snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), cardSize: CardMetrics.dimensions(width: 160))
         }
     }
@@ -488,7 +496,7 @@ final class ClipboardCardTests: XCTestCase {
     func test_pictureCard_pasteCountPillOverABrightPicture() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()
-        let item = pictureItem(in: ctx, aspect: 1.5)
+        let item = pictureItem(in: ctx, aspect: 1.0)
         item.pasteCount = 4
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }

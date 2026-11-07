@@ -74,7 +74,13 @@ public final class SyncController {
     private var service: SyncFolderService?
     private var identity: SyncIdentity?
     private var approverID: String?
+    /// A join request is shown to the approving Mac for this long. Someone who plants requests cannot wear the person
+    /// down at the prompt forever, and an old one is not an answer to anyone who is waiting.
+    public static let joinRequestLifetime: TimeInterval = 24 * 3600
+
     private var ignored: Set<String> = []
+    /// The words of a request, kept because deriving them is deliberately slow and a refresh asks again and again.
+    private var pairingWords: [String: [String]] = [:]
 
     /// "Pesto \u{203A} Pesto Sync": the last two parts of the folder, how a person would say where it is.
     public var folderDisplayName: String {
@@ -297,9 +303,13 @@ public final class SyncController {
             guard let data = SyncSmallFile.read(layout.joinRequest(id)),
                   let request = try? SyncJoinRequest.parse(data),
                   request.approverKeyID == me.keys.publicKeys.keyID, !ignored.contains(request.deviceID),
+                  env.now().timeIntervalSince(request.createdAt) <= Self.joinRequestLifetime,
                   !FileManager.default.fileExists(atPath: layout.grants(me.deviceID)
                       .appendingPathComponent("\(request.deviceID).pestogrant").path) else { continue }
-            return SyncPendingJoin(request: request, words: request.pairingWords(approver: me.keys.publicKeys))
+            let words = pairingWords[request.signature]
+                ?? request.pairingWords(approver: me.keys.publicKeys)
+            pairingWords[request.signature] = words
+            return SyncPendingJoin(request: request, words: words)
         }
         return nil
     }

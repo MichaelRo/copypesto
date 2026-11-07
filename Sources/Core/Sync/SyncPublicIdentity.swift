@@ -2,7 +2,7 @@
 import Foundation
 
 /// `devices/<id>/identity.pestokey`: the public halves of an enrolled Mac's keys, signed by the Mac, readable by anyone
-/// with the folder. A Mac that wants to join reads one to learn which approver's six words to show, before it has the
+/// with the folder. A Mac that wants to join reads one to learn which approver's words to show, before it has the
 /// sync key. It carries nothing secret; what protects the join is the person comparing the words on both screens.
 public struct SyncPublicIdentity: Codable, Equatable, Sendable {
     public var deviceID: String

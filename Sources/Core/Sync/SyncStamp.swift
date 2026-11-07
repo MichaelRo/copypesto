@@ -14,6 +14,10 @@ public enum SyncError: Error, Equatable, Sendable {
     case brokenChain
     case unsupportedVersion
     case deviceUnknown
+    /// The folder holds an older epoch of the group than this Mac has already seen.
+    case vaultWentBack
+    /// The folder holds a different group than the one this Mac joined.
+    case otherGroup
 }
 
 /// A hybrid logical clock reading: wall time in milliseconds, a counter that breaks ties inside one millisecond (and

@@ -46,6 +46,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0035](0035-shelf-surface-solid-or-glass.md) | The shelf is solid by default and glass by choice (Settings → Appearance → Shelf surface); Reduce Transparency forces solid; the wash is soft on solid; supersedes the glass parts of 0013 |
 | [0036](0036-copy-text-button-hugs-its-label.md) | The hover card's Copy Text button is as wide as its label (8 pt of wash each side, 22 pt tall); supersedes the 84 pt minimum of ADR 0034. |
 | [0038](0038-sync-folder-hardening.md) | Small sync files are read through a 1 MiB cap, a grant's key is checked before it is saved, and a deletion tombstone holds no hash of a secret. |
+| [0039](0039-sync-trust-hardening.md) | Pairing is eight stretched words; a Mac keeps the group and epoch it joined; a log's signer must be its Mac; join requests expire after a day; undownloaded provider files are not read yet. |
 
 ## Template
 

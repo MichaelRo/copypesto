@@ -72,7 +72,7 @@ final class SyncSheetsTests: XCTestCase {
     }
 
     func test_pairing() throws {
-        let words = ["amber", "fern", "marble", "river", "quilt", "lantern"]
+        let words = ["amber", "fern", "marble", "river", "quilt", "lantern", "ginger", "copper"]
         try snapshot(
             SyncPairingSheet(controller: makeController(), words: words, approver: "Michael’s Mac mini"),
             size: CGSize(width: 520, height: 280)
@@ -85,7 +85,7 @@ final class SyncSheetsTests: XCTestCase {
             deviceID: "mac-b", name: "Michael’s MacBook Air", keys: me.publicKeys, vaultID: Data(count: 16),
             createdAt: .now
         ).signed(by: me)
-        let words = ["amber", "fern", "marble", "river", "quilt", "lantern"]
+        let words = ["amber", "fern", "marble", "river", "quilt", "lantern", "ginger", "copper"]
         try snapshot(
             SyncApproveSheet(
                 controller: makeController(),

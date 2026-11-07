@@ -11,7 +11,7 @@ struct SyncCopyTests {
         let local = SyncCopy.keyLine(.thisDevice)
         #expect(!local.contains("needs nothing typed"))
         #expect(local.contains("recovery key"))
-        #expect(local.contains("six words"))
+        #expect(local.contains("checking the words"))
     }
 
     @Test(

@@ -154,14 +154,18 @@ public final class SyncFolderService {
     }
 
     private func openGroup() throws -> SyncGroup? {
-        switch try SyncGroupManager.open(layout: layout, keyStore: keyStore) {
+        let joined = water.vaultFloor.flatMap { Data(hexString: $0.vaultID) }
+        switch try SyncGroupManager.open(layout: layout, keyStore: keyStore, preferring: joined) {
         case .empty:
             set(.waitingForFolder)
             return nil
-        case .needsKey:
+        case let .needsKey(vault):
+            try water.check(vaultID: vault.vaultID, epoch: vault.epoch)
             set(.needsKey)
             return nil
         case let .ready(found):
+            try water.admit(vaultID: found.vault.vaultID, epoch: found.epoch)
+            highWaterStore.save(water)
             return found
         }
     }
@@ -182,7 +186,7 @@ public final class SyncFolderService {
             layout: layout, vault: found.vault, key: found.key, identity: identity, now: now()
         )
         if epochChanged {
-            water = SyncHighWater()
+            water.resetMarks()
             highWaterStore.save(water)
             ownLogRecovered = false
         }
@@ -393,6 +397,12 @@ public final class SyncFolderService {
         case .fork, .rollback, .brokenChain: "Another Mac's log went backwards or was changed. Nothing was changed."
         case .clockFarAhead: "Another Mac's clock is far ahead, so its changes were not applied."
         case .wrongVault, .wrongEpoch, .wrongKey: "Sync was reset. It will pick up the new key."
+        case .vaultWentBack:
+            "The sync folder went back to an older state than this Mac has seen. Nothing was changed. "
+                + "If you reset sync on purpose, choose Leave Sync here and join again."
+        case .otherGroup:
+            "This folder holds a different sync from the one this Mac joined. Nothing was changed. "
+                + "To use it, choose Leave Sync here first."
         default: "A file from another Mac is damaged. Nothing was changed."
         }
     }

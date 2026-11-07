@@ -46,6 +46,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0035](0035-shelf-surface-solid-or-glass.md) | The shelf is solid by default and glass by choice (Settings → Appearance → Shelf surface); Reduce Transparency forces solid; the wash is soft on solid; supersedes the glass parts of 0013 |
 | [0036](0036-copy-text-button-hugs-its-label.md) | The hover card's Copy Text button is as wide as its label (8 pt of wash each side, 22 pt tall); supersedes the 84 pt minimum of ADR 0034. |
 | [0037](0037-copy-recognized-text-makes-a-clip.md) | Copy Recognized Text writes the text as an ordinary copy (off the write gate), so it becomes a clip of its own at the front and the picture stays where it is; supersedes the "moves to the front" sentence of ADR 0034. |
+| [0040](0040-backup-passphrase-must-be-strong.md) | A backup passphrase must be strong: twelve characters at least, no common word or run, and only a strong one is accepted. |
 
 ## Template
 

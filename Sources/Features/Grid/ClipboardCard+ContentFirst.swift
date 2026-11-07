@@ -54,6 +54,12 @@ extension ClipboardCard {
     func fullBleedPictureCard(fit: PictureFit, isAnimated: Bool) -> some View {
         ZStack(alignment: .top) {
             Color.white.opacity(0.06)
+            if fit == .fit {
+                pictureLayer(fit: .fill)
+                    .blur(radius: 14)
+                    .overlay(Color.black.opacity(0.35))
+                    .clipped()
+            }
             pictureLayer(fit: fit)
                 .padding(.top, fit == .fit ? CardLayout.headerHeight : 0)
             pictureScrim

@@ -12,7 +12,7 @@ and anything that deletes comes last.
 The header shows the version and opens **About Pesto**.
 
 - **Launch Pesto at login**, **show Pesto in the menu bar** and **check for updates automatically** (Pesto asks copypesto.net
-  whether a new version exists; the request carries Pesto's version and your IP address, and nothing from your clips). With the menu bar icon hidden, the shelf
+  whether a new version exists; the request carries Pesto's version and your IP address, and nothing from your clips), with when it last checked and a **Check Now** button. If a check you start finds a new version and Pesto installs updates by itself, a notice under the menu bar says it is ready; click it to restart now, or the update installs when Pesto next quits. With the menu bar icon hidden, the shelf
   shortcut still opens Pesto, and opening Pesto again from Applications shows Settings. If macOS refuses to register
   Pesto as a login item, the switch says why.
 - **Shelf:** *Open a small menu at the cursor* (off by default): on, in a text field the shortcut shows your last five copies by the cursor, for the mouse only (arrow keys and Return go to the app you are typing in); off, it always opens the full shelf, which works

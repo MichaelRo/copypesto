@@ -75,6 +75,12 @@ struct GeneralSettings: View {
                 .onAppear { checksForUpdates = updates.get() }
                 .onChange(of: checksForUpdates) { _, on in updates.set(on) }
                 .settingsRow("Check for updates automatically")
+                HStack {
+                    Text(UpdateCheckCaption.text(lastCheck: appState.lastUpdateCheck)).pestoCaption()
+                    Spacer()
+                    Button("Check Now") { appState.checkForUpdates?() }
+                        .disabled(appState.checkForUpdates == nil)
+                }
             }
         }
     }

@@ -7,6 +7,9 @@ public enum StatusToast: Equatable, Sendable {
     case updatesUnavailable
     /// A manual Check for Updates found nothing newer.
     case upToDate
+    /// A manual Check for Updates found a newer version and Sparkle has already downloaded it (automatic updates are
+    /// on, so no window opens): a click restarts into it.
+    case updateReady
     /// A paste found every file of the clip gone, and wrote nothing (the shelf has closed by then, so its banner is not
     /// seen).
     case filesGone
@@ -19,6 +22,7 @@ public enum StatusToast: Equatable, Sendable {
     public var isClickable: Bool {
         switch self {
         case let .manualPaste(toast): toast.isClickable
+        case .updateReady: true
         case .updatesUnavailable, .upToDate, .filesGone: false
         }
     }
@@ -26,6 +30,7 @@ public enum StatusToast: Equatable, Sendable {
     public var visibleSeconds: Double {
         switch self {
         case let .manualPaste(toast): toast.visibleSeconds
+        case .updateReady: 10
         case .updatesUnavailable, .upToDate, .filesGone: 4
         }
     }
@@ -35,7 +40,7 @@ public enum StatusToast: Equatable, Sendable {
     public var placement: Placement {
         switch self {
         case .manualPaste, .filesGone: .aboveDock
-        case .updatesUnavailable, .upToDate: .belowMenuBar
+        case .updatesUnavailable, .upToDate, .updateReady: .belowMenuBar
         }
     }
 }

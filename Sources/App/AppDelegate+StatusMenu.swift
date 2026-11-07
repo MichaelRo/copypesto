@@ -454,6 +454,11 @@ extension AppDelegate: NSMenuDelegate {
         ToastAnnouncement.upToDate()
     }
 
+    func showUpdateReadyToast(install: @escaping () -> Void) {
+        toastController.show(.updateReady, anchor: statusItemFrame, onClick: install)
+        ToastAnnouncement.updateReady()
+    }
+
     @objc
     func statusOpenSettings() {
         openSettingsWindow()

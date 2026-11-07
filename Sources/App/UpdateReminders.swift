@@ -8,6 +8,7 @@ import Sparkle
 final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdaterDelegate {
     private let appState: AppState
     var onUpToDate: (() -> Void)?
+    var onUpdateReady: ((_ install: @escaping () -> Void) -> Void)?
     private(set) var hasPendingManualCheck = false
 
     init(appState: AppState) {
@@ -68,13 +69,36 @@ final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdater
         }
     }
 
+    func handleUpdateStaged(install: @escaping () -> Void) {
+        guard hasPendingManualCheck else { return }
+        hasPendingManualCheck = false
+        onUpdateReady?(install)
+    }
+
+    /// With automatic updates on, Sparkle downloads a found update with no window, and a manual check would look as
+    /// if nothing happened. Returning false leaves the install-on-quit as it was.
+    nonisolated func updater(
+        _: SPUUpdater,
+        willInstallUpdateOnQuit _: SUAppcastItem,
+        immediateInstallationBlock install: @escaping () -> Void
+    )
+    -> Bool {
+        nonisolated(unsafe) let install = install
+        onMain { $0.handleUpdateStaged(install: { install() }) }
+        return false
+    }
+
     nonisolated func updaterDidNotFindUpdate(_: SPUUpdater, error: any Error) {
         let userInitiated = (error as NSError).userInfo[SPUNoUpdateFoundUserInitiatedKey] as? Bool == true
         onMain { $0.handleNoUpdateFound(userInitiated: userInitiated) }
     }
 
-    nonisolated func updater(_: SPUUpdater, didFinishUpdateCycleFor _: SPUUpdateCheck, error _: (any Error)?) {
-        onMain { $0.hasPendingManualCheck = false }
+    nonisolated func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor _: SPUUpdateCheck, error _: (any Error)?) {
+        let checked = updater.lastUpdateCheckDate
+        onMain {
+            $0.hasPendingManualCheck = false
+            $0.appState.lastUpdateCheck = checked
+        }
     }
 
     nonisolated func updater(_: SPUUpdater, didAbortWithError _: any Error) {

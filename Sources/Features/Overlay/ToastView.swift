@@ -20,6 +20,7 @@ private struct ToastView: View {
         case .manualPaste: toast.isClickable ? "hand.point.up.left" : "keyboard"
         case .updatesUnavailable: "arrow.triangle.2.circlepath"
         case .upToDate: "checkmark.circle"
+        case .updateReady: "arrow.down.circle"
         case .filesGone: "doc.badge.clock"
         }
     }
@@ -29,6 +30,7 @@ private struct ToastView: View {
         case .manualPaste: toast.isClickable ? "Auto-paste is off. Click to turn it on." : "Press ⌘V to paste"
         case .updatesUnavailable: "This build does not check for updates."
         case .upToDate: "You\u{2019}re up to date."
+        case .updateReady: "A new version is ready. Click to restart and update."
         case .filesGone: "Nothing pasted: those files were moved or deleted."
         }
     }

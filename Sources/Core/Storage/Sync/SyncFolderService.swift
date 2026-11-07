@@ -35,6 +35,8 @@ public final class SyncFolderService {
 
     private var group: SyncGroup?
     private var water: SyncHighWater
+    private var savedWater: SyncHighWater
+    private var stopped = false
     var ownLast: (sequence: UInt64, hash: String) = (0, SyncManifest.zeroHash)
     private var ownLogRecovered = false
     private var lastReceived: Date?
@@ -60,6 +62,7 @@ public final class SyncFolderService {
         self.keyStore = keyStore
         highWaterStore = highWater
         water = highWater.load()
+        savedWater = water
         self.timing = timing
         self.includeSensitive = includeSensitive
         self.isLocked = isLocked
@@ -70,6 +73,7 @@ public final class SyncFolderService {
 
     public func start() {
         guard loop == nil else { return }
+        stopped = false
         observer = ModelSaveObserver.observeChanges(in: container) { [weak self] _ in self?.scheduleSoon() }
         watcher = SyncFolderWatcher(url: layout.root) { [weak self] in
             Task { @MainActor in self?.scheduleSoon() }
@@ -85,6 +89,7 @@ public final class SyncFolderService {
     }
 
     public func stop() {
+        stopped = true
         loop?.cancel()
         pending?.cancel()
         loop = nil
@@ -94,6 +99,14 @@ public final class SyncFolderService {
         if let observer { NotificationCenter.default.removeObserver(observer) }
         observer = nil
         set(.off)
+    }
+
+    /// A pass that was in flight when the person left sync or changed the folder must not write its marks back over
+    /// the fresh ones the controller saved, and an unchanged mark is not written again.
+    private func saveWater() {
+        guard !stopped, water != savedWater else { return }
+        highWaterStore.save(water)
+        savedWater = water
     }
 
     private func scheduleSoon() {
@@ -165,7 +178,7 @@ public final class SyncFolderService {
             return nil
         case let .ready(found):
             try water.admit(vaultID: found.vault.vaultID, epoch: found.epoch)
-            highWaterStore.save(water)
+            saveWater()
             return found
         }
     }
@@ -187,7 +200,7 @@ public final class SyncFolderService {
         )
         if epochChanged {
             water.resetMarks()
-            highWaterStore.save(water)
+            saveWater()
             ownLogRecovered = false
         }
         if !announced || epochChanged { _ = try await storage.restampForSync(.notFrom(deviceID: identity.deviceID)) }
@@ -206,7 +219,7 @@ public final class SyncFolderService {
         for device in gone {
             water.forget(device)
         }
-        highWaterStore.save(water)
+        saveWater()
     }
 
     // MARK: Writing
@@ -368,7 +381,7 @@ public final class SyncFolderService {
             applied += summary.added + summary.updated + summary.removed
             if summary.clockRefused > 0 { throw SyncError.clockFarAhead }
             try water.record(verified.manifest)
-            highWaterStore.save(water)
+            saveWater()
         }
         return (applied, false)
     }

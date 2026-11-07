@@ -80,6 +80,20 @@ struct PassphraseStrengthTests {
         }
     }
 
+    @Test("a phrase of repeated words or of very few different characters is weak however many words it has")
+    func whenRepetitive_thenWeak() {
+        for passphrase in ["aa bb cc dd ee", "one two one two one two", "bdfhjlnbdfhjl"] {
+            #expect(PassphraseStrength.evaluate(passphrase) == .weak, "\(passphrase)")
+        }
+        #expect(PassphraseStrength.evaluate("bdfhjlnpbdfhjlnp") != .weak, "eight different characters is the least")
+    }
+
+    @Test("a common word turns a phrase away only inside one of its words, not across the gap between two")
+    func whenCommonWordSpansTwoWords_thenNotWeak() {
+        #expect(PassphraseStrength.evaluate("Blog in today please") == .strong)
+        #expect(PassphraseStrength.evaluate("log in with the green key") == .strong)
+    }
+
     @Test("a long mixed passphrase, or several words, is good")
     func whenLongOrManyWords_thenGood() {
         #expect(PassphraseStrength.evaluate("correct horse battery staple") == .strong)

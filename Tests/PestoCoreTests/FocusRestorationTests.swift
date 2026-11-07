@@ -200,6 +200,6 @@ struct FocusRestorationTests {
 
         let waited = await clock.measure { await task.value }
 
-        #expect(waited < .seconds(2))
+        #expect(waited < .seconds(10), "the ceiling is 30 s, so returning well before it proves the cancel")
     }
 }

@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import os
+
+private let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "SyncHighWater")
 
 /// What Settings says about sync: always a real state, never "connected" by default.
 public enum SyncStatus: Equatable, Sendable {
@@ -33,6 +36,10 @@ public struct SealedHighWaterStore: SyncHighWaterStoring {
 
     public func save(_ water: SyncHighWater) {
         guard let data = try? JSONEncoder().encode(water) else { return }
-        try? file.write(data)
+        do {
+            try file.write(data)
+        } catch {
+            logger.error("Could not save the sync marks: \(error.localizedDescription, privacy: .public)")
+        }
     }
 }

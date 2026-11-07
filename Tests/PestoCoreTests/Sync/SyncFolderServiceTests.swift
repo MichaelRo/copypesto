@@ -28,6 +28,7 @@ final class SyncSite {
     let keyStore: ThisDeviceSyncKeyStore
     let service: SyncFolderService
     var locked = false
+    let highWater = MemoryHighWater()
 
     init(name: String, layout: SyncFolderLayout, time: TimeBox, timing custom: SyncFolderService.Timing? = nil) throws {
         self.name = name
@@ -44,7 +45,7 @@ final class SyncSite {
         let flag = LockedFlag()
         service = SyncFolderService(
             container: container, storage: storage, layout: layout, identity: identity, keyStore: keyStore,
-            highWater: MemoryHighWater(), timing: timing, includeSensitive: { false }, isLocked: { flag.value },
+            highWater: highWater, timing: timing, includeSensitive: { false }, isLocked: { flag.value },
             now: { time.now }
         )
         lockedFlag = flag
@@ -328,6 +329,34 @@ struct SyncFolderServiceTests {
 
         if case .upToDate = b.service.status {} else { Issue.record("expected up to date, got \(b.service.status)") }
         #expect(try b.texts() == ["after the planting", "kept"])
+    }
+
+    @Test("a service that was stopped does not write its marks back, so Leave Sync's fresh state stays")
+    func stoppedServiceDoesNotSave() async throws {
+        let (a, b) = try pair()
+        try await a.copy("kept")
+        await settle(a, b)
+        b.service.stop()
+        b.highWater.save(SyncHighWater())
+        try await a.copy("after b stopped")
+        await settle(a)
+
+        await b.service.syncNow()
+
+        #expect(b.highWater.load() == SyncHighWater())
+    }
+
+    @Test("marks that did not change are not written again on the next pass")
+    func unchangedMarksAreNotRewritten() async throws {
+        let (a, b) = try pair()
+        try await a.copy("kept")
+        await settle(a, b)
+        let sentinel = SyncHighWater()
+        b.highWater.save(sentinel)
+
+        await b.service.syncNow()
+
+        #expect(b.highWater.load() == sentinel)
     }
 
     @Test("a folder whose real vault was replaced by another is refused, not followed")

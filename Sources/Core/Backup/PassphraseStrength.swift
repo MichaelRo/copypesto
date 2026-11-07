@@ -16,6 +16,7 @@ public enum PassphraseStrength: Equatable, Sendable {
 
     public static let minimumLength = 12
     static let longestRun = 4
+    static let minimumDistinctCharacters = 8
 
     private static let common: [String] = [
         "password", "passw0rd", "letmein", "qwerty", "iloveyou", "welcome", "admin", "123456", "backup", "pesto",
@@ -24,14 +25,18 @@ public enum PassphraseStrength: Equatable, Sendable {
     ]
 
     /// Deliberately simple, with no list of every breached password: it turns away a common word anywhere in the
-    /// passphrase, a run such as `abcde` or `12345`, and too few different characters. The key behind the passphrase
+    /// passphrase, a run such as `abcde` or `12345`, a phrase that repeats its words, and too few different characters.
+    /// The key behind the passphrase
     /// is slow to guess (600,000 rounds), but that slows a guess down, it does not make a guessable passphrase safe.
     public static func evaluate(_ passphrase: String) -> PassphraseStrength {
         let trimmed = passphrase.trimmingCharacters(in: .whitespaces)
         guard trimmed.count >= minimumLength else { return .tooShort }
         let lowered = trimmed.lowercased()
         let squeezed = lowered.filter { !$0.isWhitespace && $0 != "-" && $0 != "_" }
-        if common.contains(where: { squeezed.contains($0) }) || Set(lowered).count <= 5 || hasRun(squeezed) {
+        let tokens = lowered.split(whereSeparator: { $0 == " " || $0 == "-" || $0 == "_" })
+        let repeatsWords = tokens.count >= 4 && Set(tokens).count * 2 <= tokens.count
+        let hasCommonWord = tokens.contains { token in common.contains { token.contains($0) } }
+        if hasCommonWord || Set(lowered).count < minimumDistinctCharacters || repeatsWords || hasRun(squeezed) {
             return .weak
         }
         let words = trimmed.split(whereSeparator: { $0 == " " || $0 == "-" }).count

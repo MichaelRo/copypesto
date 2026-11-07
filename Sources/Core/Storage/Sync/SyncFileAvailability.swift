@@ -2,22 +2,14 @@
 import Foundation
 
 enum SyncFileAvailability {
-    /// `SF_DATALESS` from `<sys/stat.h>`: the file's name and size are here, its bytes are in the cloud. Dropbox and
-    /// Google Drive (File Provider folders) show files like this, and reading one makes the system fetch it, which
-    /// can take as long as the connection does and can fail offline.
-    static let datalessFlag: UInt32 = 0x4000_0000
+    static let datalessFlag = DatalessFile.flag
 
     /// False for a file a provider has listed but not downloaded yet; asking for it to be downloaded starts that, off
     /// this thread. A file in an ordinary folder is always readable.
-    static func isReadable(_ url: URL, flags: (URL) -> UInt32? = fileFlags) -> Bool {
+    static func isReadable(_ url: URL, flags: (URL) -> UInt32? = DatalessFile.fileFlags) -> Bool {
         guard FileManager.default.fileExists(atPath: url.path) else { return false }
-        if let flags = flags(url), flags & datalessFlag != 0 {
-            Task.detached(priority: .utility) {
-                if let handle = try? FileHandle(forReadingFrom: url) {
-                    _ = try? handle.read(upToCount: 1)
-                    try? handle.close()
-                }
-            }
+        if DatalessFile.isDataless(url, flags: flags) {
+            DatalessFile.fetchInBackground(url)
             return false
         }
         guard let values = try? url.resourceValues(forKeys: [
@@ -30,10 +22,5 @@ enum SyncFileAvailability {
         }
         try? FileManager.default.startDownloadingUbiquitousItem(at: url)
         return false
-    }
-
-    private static func fileFlags(_ url: URL) -> UInt32? {
-        var info = stat()
-        return stat(url.path, &info) == 0 ? info.st_flags : nil
     }
 }

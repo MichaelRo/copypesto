@@ -77,6 +77,9 @@ public final class SyncController {
     /// A join request is shown to the approving Mac for this long. Someone who plants requests cannot wear the person
     /// down at the prompt forever, and an old one is not an answer to anyone who is waiting.
     public static let joinRequestLifetime: TimeInterval = 24 * 3600
+    /// How far ahead of this Mac's clock a request may be dated. The date is the requester's own claim, so one dated
+    /// in the future would otherwise never expire.
+    public static let joinRequestClockSkew: TimeInterval = 10 * 60
 
     private var ignored: Set<String> = []
     /// The words of a request, kept because deriving them is deliberately slow and a refresh asks again and again.
@@ -141,6 +144,7 @@ public final class SyncController {
     public func changeFolder(to url: URL) {
         pause()
         env.highWater.save(SyncHighWater())
+        pairingWords.removeAll()
         chooseFolder(url)
         flow = .setUp
     }
@@ -297,17 +301,23 @@ public final class SyncController {
         }
     }
 
+    static func isFresh(_ request: SyncJoinRequest, now: Date) -> Bool {
+        let age = now.timeIntervalSince(request.createdAt)
+        return age <= joinRequestLifetime && age >= -joinRequestClockSkew
+    }
+
     private func findJoinRequest(_ layout: SyncFolderLayout) -> SyncPendingJoin? {
         guard let me = identity else { return nil }
         for id in layout.deviceIDs() where id != me.deviceID {
             guard let data = SyncSmallFile.read(layout.joinRequest(id)),
                   let request = try? SyncJoinRequest.parse(data),
                   request.approverKeyID == me.keys.publicKeys.keyID, !ignored.contains(request.deviceID),
-                  env.now().timeIntervalSince(request.createdAt) <= Self.joinRequestLifetime,
+                  Self.isFresh(request, now: env.now()),
                   !FileManager.default.fileExists(atPath: layout.grants(me.deviceID)
                       .appendingPathComponent("\(request.deviceID).pestogrant").path) else { continue }
             let words = pairingWords[request.signature]
                 ?? request.pairingWords(approver: me.keys.publicKeys)
+            if pairingWords.count >= 16 { pairingWords.removeAll() }
             pairingWords[request.signature] = words
             return SyncPendingJoin(request: request, words: words)
         }
@@ -386,6 +396,7 @@ public final class SyncController {
         service = nil
         SyncJournal.disable(for: env.container)
         env.highWater.save(SyncHighWater())
+        pairingWords.removeAll()
         let serial: Int = env.defaults.value(for: Setting.syncDeviceSerial) + 1
         env.defaults.set(serial, for: Setting.syncDeviceSerial)
         env.deviceID = Self.syncDeviceID(base: baseDeviceID, serial: serial)
@@ -427,7 +438,10 @@ public final class SyncController {
     }
 
     private func openGroup() throws -> SyncGroupOpening {
-        try SyncGroupManager.open(layout: SyncFolderLayout(root: env.folder), keyStore: env.keyStore)
+        let joined = env.highWater.load().vaultFloor.flatMap { Data(hexString: $0.vaultID) }
+        return try SyncGroupManager.open(
+            layout: SyncFolderLayout(root: env.folder), keyStore: env.keyStore, preferring: joined
+        )
     }
 
     private func refreshHeldCount() {

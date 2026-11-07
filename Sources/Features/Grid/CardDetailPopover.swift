@@ -21,6 +21,8 @@ struct CardDetailPopover: View {
     @State private var textSize: CGSize?
     @State private var scrollEnds = ScrollEnds()
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.calendar) private var calendar
+    @Environment(\.locale) private var locale
 
     /// Text and code scroll past this, so a long clip cannot make the card cover the screen.
     private static let previewMaxHeight: CGFloat = 180
@@ -297,13 +299,17 @@ struct CardDetailPopover: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 6) {
             Divider()
-            Text(DetailFactsText.line(DetailFactsText.facts(
-                for: item,
-                collectionName: collectionName,
-                shownText: shownText.text,
-                wasCut: shownText.wasCut,
-                isRevealed: isRevealed
-            )))
+            Text(DetailFactsText.line(
+                DetailFactsText.facts(
+                    for: item,
+                    collectionName: collectionName,
+                    shownText: shownText.text,
+                    wasCut: shownText.wasCut,
+                    isRevealed: isRevealed
+                ),
+                calendar: calendar,
+                locale: locale
+            ))
             .scaledFont(size: 11)
             .foregroundStyle(factsStyle)
             .fixedSize(horizontal: false, vertical: true)

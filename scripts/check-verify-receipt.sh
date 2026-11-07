@@ -87,14 +87,42 @@ for source, data in candidates:
     recorded_tree = data.get("tree", "")
     if recorded_tree != current_tree:
         rec_commit = data.get("commit", "")
-        code_diff = subprocess.run(
-            ["git", "diff", "--name-only", rec_commit, current_commit, "--", "Sources", "Tests", "Package.resolved"],
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        if not rec_commit or code_diff:
+        if not rec_commit or rec_commit == current_commit:
             reasons.append(
                 f"{source}: recorded tree {recorded_tree[:12]} does not match HEAD^{{tree}} {current_tree[:12]}"
+            )
+            continue
+        proc = subprocess.run(
+            [
+                "git",
+                "diff",
+                "--name-only",
+                rec_commit,
+                current_commit,
+                "--",
+                "Sources",
+                "Tests",
+                "Package.swift",
+                "Package.resolved",
+                "Pesto.yml",
+                "Pesto.entitlements",
+                "PestoSync.entitlements",
+                "exportOptions.plist",
+                "Makefile",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            reasons.append(
+                f"{source}: unable to diff recorded commit {rec_commit[:12]} against HEAD ({proc.stderr.strip()})"
+            )
+            continue
+        code_diff = proc.stdout.strip()
+        if code_diff:
+            changed_files = ", ".join(code_diff.splitlines()[:3])
+            reasons.append(
+                f"{source}: code or build configuration changed since verified commit {rec_commit[:12]}: {changed_files}"
             )
             continue
     print(

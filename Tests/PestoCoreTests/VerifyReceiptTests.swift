@@ -166,4 +166,45 @@ struct VerifyReceiptTests {
         #expect(overridden.status == 0)
         #expect(overridden.output.contains("skipping full-gate verification receipt check"))
     }
+
+    @Test("non-code commits after receipt are allowed, while code/build commits or uncommitted changes fail")
+    func whenNonCodeOrCodeChangesAfterReceipt_thenCheckedAppropriately() throws {
+        let repo = try makeTempGitRepo()
+        defer { try? FileManager.default.removeItem(at: repo.dir) }
+        try Data(".build/\n".utf8).write(to: repo.dir.appendingPathComponent(".gitignore"))
+        _ = try run("/usr/bin/git", ["add", ".gitignore"], in: repo.dir)
+        _ = try run("/usr/bin/git", ["commit", "-q", "-m", "ignore build"], in: repo.dir)
+        let tree = try run("/usr/bin/git", ["rev-parse", "HEAD^{tree}"], in: repo.dir).output
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let commit = try run("/usr/bin/git", ["rev-parse", "HEAD"], in: repo.dir).output
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let receipt = try writeReceipt(in: repo.dir, tree: tree, commit: commit)
+
+        // 1. Untracked scratch files do not dirty the check
+        try Data("scratch notes\n".utf8).write(to: repo.dir.appendingPathComponent("scratch.md"))
+        let untracked = try run(Self.scriptURL.path, ["--repo", repo.dir.path, "--receipt", receipt.path], in: repo.dir)
+        #expect(untracked.status == 0, "\(untracked.output)")
+
+        // 2. Non-code commit (e.g. docs/README) after verify is accepted
+        try Data("updated docs\n".utf8).write(to: repo.dir.appendingPathComponent("README.md"))
+        _ = try run("/usr/bin/git", ["add", "README.md"], in: repo.dir)
+        _ = try run("/usr/bin/git", ["commit", "-q", "-m", "docs: update readme"], in: repo.dir)
+        let nonCode = try run(Self.scriptURL.path, ["--repo", repo.dir.path, "--receipt", receipt.path], in: repo.dir)
+        #expect(nonCode.status == 0, "\(nonCode.output)")
+
+        // 3. Code commit after verify is rejected
+        let sourcesDir = repo.dir.appendingPathComponent("Sources", isDirectory: true)
+        try FileManager.default.createDirectory(at: sourcesDir, withIntermediateDirectories: true)
+        try Data("let x = 1\n".utf8).write(to: sourcesDir.appendingPathComponent("Test.swift"))
+        _ = try run("/usr/bin/git", ["add", "Sources/Test.swift"], in: repo.dir)
+        _ = try run("/usr/bin/git", ["commit", "-q", "-m", "feat: add file"], in: repo.dir)
+        let codeChange = try run(
+            Self.scriptURL.path,
+            ["--repo", repo.dir.path, "--receipt", receipt.path],
+            in: repo.dir
+        )
+        #expect(codeChange.status != 0)
+        #expect(codeChange.output.contains("code or build configuration changed"))
+    }
 }

@@ -331,7 +331,7 @@ write_receipt() {
   local full_gate="false"
   [[ $FAST -eq 0 && $SKIP_UI -eq 0 ]] && full_gate="true"
   local dirty="false"
-  [[ -n "$(git status --porcelain 2>/dev/null)" ]] && dirty="true"
+  [[ -n "$(git status --porcelain -uno 2>/dev/null)" ]] && dirty="true"
   local tree commit timestamp result_str
   tree="$(git rev-parse 'HEAD^{tree}' 2>/dev/null || echo "")"
   commit="$(git rev-parse HEAD 2>/dev/null || echo "")"

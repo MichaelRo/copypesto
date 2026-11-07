@@ -31,6 +31,13 @@ struct RuntimeConfigurationTests {
         #expect(!parse([], ["PESTO_UITEST_AI_FIXTURE": "1"]).aiFixture)
     }
 
+    @Test("a UI-test launch can stand in for Sparkle, and a normal launch never does")
+    func whenFakeUpdates_thenOnlyInUITestMode() {
+        #expect(!parse(["-UITestMode"]).fakeUpdates)
+        #expect(parse(["-UITestMode"], ["PESTO_UITEST_UPDATES": "1"]).fakeUpdates)
+        #expect(!parse([], ["PESTO_UITEST_UPDATES": "1"]).fakeUpdates)
+    }
+
     @Test("a UI-test launch can report hotkeys live to the suggestion policy, and a normal launch never does")
     func whenSuggestionsLive_thenOnlyInUITestMode() {
         #expect(!parse(["-UITestMode"]).suggestionsLive)

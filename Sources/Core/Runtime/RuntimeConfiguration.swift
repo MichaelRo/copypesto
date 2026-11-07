@@ -91,6 +91,9 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     /// Makes the shelf-suggestion policy see global hotkeys as live, which a UI-test launch never registers. Nothing is
     /// registered by it. UI-test mode only.
     public var suggestionsLive: Bool
+    /// Stands in for Sparkle, which a UI-test launch never starts: a check stages a fake update after a moment, and the
+    /// install action only writes a line to the command log. UI-test mode only.
+    public var fakeUpdates: Bool
 
     static let defaultOverridePrefix = "PESTO_UITEST_DEFAULT_"
 
@@ -110,7 +113,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         importFixture: String? = nil,
         keyLossFixture: Bool = false,
         aiFixture: Bool = false,
-        suggestionsLive: Bool = false
+        suggestionsLive: Bool = false,
+        fakeUpdates: Bool = false
     ) {
         self.mode = mode
         self.session = session
@@ -125,6 +129,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         self.importFixture = importFixture
         self.keyLossFixture = keyLossFixture
         self.aiFixture = aiFixture
+        self.fakeUpdates = fakeUpdates
         self.suggestionsLive = suggestionsLive
     }
 
@@ -160,7 +165,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             importFixture: environment["PESTO_UITEST_IMPORT_FIXTURE"].flatMap { $0.isEmpty ? nil : $0 },
             keyLossFixture: environment["PESTO_UITEST_KEYLOSS"] == "1",
             aiFixture: environment["PESTO_UITEST_AI_FIXTURE"] == "1",
-            suggestionsLive: environment["PESTO_UITEST_SUGGESTIONS_LIVE"] == "1"
+            suggestionsLive: environment["PESTO_UITEST_SUGGESTIONS_LIVE"] == "1",
+            fakeUpdates: environment["PESTO_UITEST_UPDATES"] == "1"
         )
     }
 

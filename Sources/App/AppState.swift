@@ -223,6 +223,8 @@ final class AppState {
     @ObservationIgnored var automaticUpdateChecks: (get: () -> Bool, set: (Bool) -> Void)?
     /// Reads and sets whether Sparkle installs a found update by itself (on quit) instead of asking.
     @ObservationIgnored var automaticUpdateInstalls: (get: () -> Bool, set: (Bool) -> Void)?
+    /// An update Sparkle has downloaded and will install when Pesto quits; the menu and General offer it.
+    var stagedUpdate: StagedUpdate?
     /// When Sparkle last finished looking for an update; Settings shows it beside Check Now.
     var lastUpdateCheck: Date?
     /// ⌃N slots already warned about, so a refresh does not repeat the banner.

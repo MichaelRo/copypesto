@@ -79,6 +79,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if mode.usesSystemIntegrations {
             _ = updaterController
             wireUpdateSettings()
+        } else if mode == .uiTest, RuntimeConfiguration.current.fakeUpdates {
+            wireFakeUpdatesForUITest()
         }
         bootStorage()
         resolveMissingEncryptionKey { [self] in finishLaunch(mode: mode) }

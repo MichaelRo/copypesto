@@ -85,7 +85,18 @@ struct GeneralSettings: View {
                     }
                     .onAppear { installsUpdates = installs.get() }
                     .onChange(of: installsUpdates) { _, on in installs.set(on) }
+                    .accessibilityIdentifier(AccessibilityID.settingsChoice("installUpdates", "toggle"))
                     .settingsRow("Install updates automatically")
+                }
+                if let staged = appState.stagedUpdate {
+                    HStack {
+                        Text("Pesto \(staged.version) is ready. It installs when Pesto quits.").pestoCaption()
+                        Spacer()
+                        if let notes = staged.whatsNew {
+                            Link("What\u{2019}s New", destination: notes).buttonStyle(.pestoLink)
+                        }
+                        Button("Restart Now") { staged.install() }
+                    }
                 }
                 HStack {
                     Text(UpdateCheckCaption.text(lastCheck: appState.lastUpdateCheck)).pestoCaption()

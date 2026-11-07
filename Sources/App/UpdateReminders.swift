@@ -69,31 +69,34 @@ final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdater
         }
     }
 
-    /// True when the notice was offered: Sparkle only honors the install handler after the delegate answers true.
-    @discardableResult
-    func handleUpdateStaged(install: @escaping () -> Void) -> Bool {
-        guard hasPendingManualCheck else { return false }
+    /// Keeps the staged update for the menu and Settings, and offers the restart when a manual check found it.
+    func stage(_ update: StagedUpdate) {
+        appState.stagedUpdate = update
+        guard hasPendingManualCheck else { return }
         hasPendingManualCheck = false
-        onUpdateReady?(install)
-        return true
+        onUpdateReady?(update.install)
     }
 
-    /// With automatic updates on, Sparkle downloads a found update with no window, and a manual check would look as
-    /// if nothing happened. Only a manual check takes the install over (answering true stalls later scheduled
-    /// cycles); the update still installs on quit.
+    /// With automatic updates on, Sparkle downloads a found update with no window, and a check would look as if
+    /// nothing happened. Answering true is what makes Sparkle honor the install handler; the update still installs
+    /// on quit, and later scheduled cycles stall because this one has the update.
     nonisolated func updater(
         _ updater: SPUUpdater,
-        willInstallUpdateOnQuit _: SUAppcastItem,
+        willInstallUpdateOnQuit item: SUAppcastItem,
         immediateInstallationBlock install: @escaping () -> Void
     )
     -> Bool {
         guard Thread.isMainThread else { return false }
         nonisolated(unsafe) let install = install
         let checked = updater.lastUpdateCheckDate
-        return MainActor.assumeIsolated {
+        let version = item.displayVersionString
+        let fullNotes = item.fullReleaseNotesURL
+        let itemNotes = item.releaseNotesURL
+        MainActor.assumeIsolated {
             appState.lastUpdateCheck = checked
-            return handleUpdateStaged(install: { install() })
+            stage(StagedUpdate(version: version, fullNotes: fullNotes, itemNotes: itemNotes, install: { install() }))
         }
+        return true
     }
 
     nonisolated func updaterDidNotFindUpdate(_: SPUUpdater, error: any Error) {

@@ -265,15 +265,25 @@ extension AppDelegate: NSMenuDelegate {
 
     // MARK: NSMenuDelegate — rebuild on every open so dynamic state is current
 
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        menu.removeAllItems()
-
-        if let version = appState.availableUpdateVersion {
+    private func addUpdateItems(to menu: NSMenu) {
+        if let staged = appState.stagedUpdate {
+            let restart = makeItem("Restart to Update\u{2026}", action: #selector(statusInstallStagedUpdate))
+            restart.toolTip = String(localized: "Pesto \(staged.version) is downloaded and installs when Pesto quits")
+            menu.addItem(restart)
+            menu.addItem(makeItem("What\u{2019}s New\u{2026}", action: #selector(statusShowWhatsNew)))
+            menu.addItem(.separator())
+        } else if let version = appState.availableUpdateVersion {
             let update = makeItem("Update Available…", action: #selector(statusCheckUpdates))
             update.toolTip = String(localized: "Pesto \(version) is ready to install")
             menu.addItem(update)
             menu.addItem(.separator())
         }
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+
+        addUpdateItems(to: menu)
 
         if appState.activeStack != nil {
             menu.addItem(makeItem("Stop Pasting One by One", action: #selector(statusCancelStack)))
@@ -435,6 +445,7 @@ extension AppDelegate: NSMenuDelegate {
 
     @objc
     func statusCheckUpdates() {
+        if LaunchMode.current == .uiTest, RuntimeConfiguration.current.fakeUpdates { return runFakeUpdateCheck() }
         switch UpdateCheckRoute.choose(isDevelopment: BuildKind.isDevelopment) {
         case .sparkle:
             if appState.availableUpdateVersion != nil || updaterController.updater.sessionInProgress {
@@ -447,6 +458,16 @@ extension AppDelegate: NSMenuDelegate {
             toastController.show(.updatesUnavailable, anchor: statusItemFrame)
             ToastAnnouncement.updatesUnavailable()
         }
+    }
+
+    @objc
+    func statusInstallStagedUpdate() {
+        appState.stagedUpdate?.install()
+    }
+
+    @objc
+    func statusShowWhatsNew() {
+        if let url = appState.stagedUpdate?.whatsNew { NSWorkspace.shared.open(url) }
     }
 
     func showUpToDateToast() {

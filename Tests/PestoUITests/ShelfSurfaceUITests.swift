@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import AppKit
 import XCTest
 
 final class ShelfSurfaceUITests: PestoUITestCase {
@@ -31,5 +32,31 @@ final class ShelfSurfaceUITests: PestoUITestCase {
             capture("shelf-\(surface)")
             app.terminate()
         }
+    }
+
+    func test_appearance_whenTheSurfaceChanges_thenThePictureOfTheShelfChanges() throws {
+        try XCTSkipIf(
+            NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency,
+            "Reduce Transparency makes both surfaces solid"
+        )
+        launch(defaults: ["hasOnboarded": "true"])
+        send(.openSettings)
+        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        element(AccessibilityID.settingsSidebar("Appearance")).click()
+        let preview = element(AccessibilityID.settingsPreviewShelf)
+        XCTAssertTrue(preview.waitForExistence(timeout: 5), "no picture of the shelf")
+        let solidPicture = preview.screenshot().pngRepresentation
+
+        let glass = element(AccessibilityID.settingsChoice("shelfSurface", "glass"))
+        glass.click()
+        expectation(for: NSPredicate(format: "isSelected == true"), evaluatedWith: glass)
+        waitForExpectations(timeout: 5)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+
+        XCTAssertNotEqual(
+            preview.screenshot().pngRepresentation,
+            solidPicture,
+            "choosing Glass left the picture as it was"
+        )
     }
 }

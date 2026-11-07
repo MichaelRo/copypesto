@@ -7,6 +7,10 @@ import SwiftUI
 /// The hover card is a window that is never key, where SwiftUI's `onHover` is not reliable, so the pointer is read by a
 /// tracking area (`PointerTracker`).
 struct HoverCardCopyButton: View {
+    static let height: CGFloat = 22
+    static let washInset: CGFloat = 8
+    static let trailingBleed: CGFloat = 8
+
     let quiet: Color
     let copy: () -> Bool
     @Environment(\.pestoAccent) private var accent
@@ -28,8 +32,8 @@ struct HoverCardCopyButton: View {
             label
                 .scaledFont(size: 11, weight: .semibold)
                 .foregroundStyle(copied ? quiet : accent)
-                .padding(.horizontal, 8)
-                .frame(minWidth: 84, minHeight: 22, alignment: .trailing)
+                .padding(.horizontal, Self.washInset)
+                .frame(minHeight: Self.height)
                 .background(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .fill(accent.opacity(hovering && !copied ? 0.14 : 0))
@@ -39,7 +43,7 @@ struct HoverCardCopyButton: View {
         .buttonStyle(.plain)
         .overlay(PointerTracker(isInside: $hovering))
         .animation(Motion.animation(.pestoQuick), value: hovering)
-        .padding(.trailing, -8)
+        .padding(.trailing, -Self.trailingBleed)
         .accessibilityLabel(Text("Copy Recognized Text"))
         .onDisappear { resetTask?.cancel() }
     }

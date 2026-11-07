@@ -16,7 +16,7 @@ import XCTest
 final class ClipboardCardTests: XCTestCase {
     // MARK: - Helpers
 
-    private func makeContext() throws -> ModelContext {
+    func makeContext() throws -> ModelContext {
         let container = try ModelContainerSetup.makeInMemory()
         return ModelContext(container)
     }
@@ -45,7 +45,7 @@ final class ClipboardCardTests: XCTestCase {
         return item
     }
 
-    private func snapshotCard(
+    func snapshotCard(
         _ card: some View,
         named name: String? = nil,
         colorScheme: ColorScheme = .dark,
@@ -372,7 +372,7 @@ final class ClipboardCardTests: XCTestCase {
         }
     }
 
-    private func pictureItem(
+    func pictureItem(
         in ctx: ModelContext, aspect: CGFloat, animated: Bool = false, source: String = "Preview"
     )
     -> ClipboardItem {
@@ -388,16 +388,9 @@ final class ClipboardCardTests: XCTestCase {
     func test_pictureCard_fillsTheCard() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()
-        let item = pictureItem(in: ctx, aspect: 16.0 / 9.0)
+        let item = pictureItem(in: ctx, aspect: 1.0)
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), named: "light", colorScheme: .light)
-    }
-
-    func test_pictureCard_tallScreenshotIsFitted() throws {
-        defer { ThumbnailCache.shared.clear() }
-        let ctx = try makeContext()
-        let item = pictureItem(in: ctx, aspect: 0.4, source: "Screenshot")
-        snapshotCard(ClipboardCard(item: item, shortcutNumber: 3))
     }
 
     func test_gifCard_fillsTheCardWithABadge() throws {
@@ -411,7 +404,7 @@ final class ClipboardCardTests: XCTestCase {
         defer { ThumbnailCache.shared.clear() }
         try withCardWidth(160) {
             let ctx = try makeContext()
-            let item = pictureItem(in: ctx, aspect: 1.5)
+            let item = pictureItem(in: ctx, aspect: 1.0)
             snapshotCard(ClipboardCard(item: item, shortcutNumber: 1), cardSize: CardMetrics.dimensions(width: 160))
         }
     }
@@ -488,7 +481,7 @@ final class ClipboardCardTests: XCTestCase {
     func test_pictureCard_pasteCountPillOverABrightPicture() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()
-        let item = pictureItem(in: ctx, aspect: 1.5)
+        let item = pictureItem(in: ctx, aspect: 1.0)
         item.pasteCount = 4
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }

@@ -64,18 +64,36 @@ struct PassphraseStrengthTests {
         #expect(PassphraseStrength.evaluate("aaaaaaaaaaaa") == .weak)
     }
 
+    @Test("eleven characters are too short, twelve are not")
+    func whenElevenOrTwelve_thenTheLimit() {
+        #expect(PassphraseStrength.evaluate("elevenchars") == .tooShort)
+        #expect(PassphraseStrength.evaluate("twelve-chars") != .tooShort)
+    }
+
+    @Test("a common word anywhere in it, or a run like abcde, 12345 or a keyboard row, is weak however long")
+    func whenPatterned_thenWeak() {
+        for passphrase in [
+            "mypassword1234", "xxiloveyouxxxx", "qwertyuiopasdf", "abcdefghijkl", "1234567890ab", "zyxwvutsrqponm",
+            "my letmein phrase", "the-dragon-sleeps-here"
+        ] {
+            #expect(PassphraseStrength.evaluate(passphrase) == .weak, "\(passphrase)")
+        }
+    }
+
     @Test("a long mixed passphrase, or several words, is good")
     func whenLongOrManyWords_thenGood() {
         #expect(PassphraseStrength.evaluate("correct horse battery staple") == .strong)
         #expect(PassphraseStrength.evaluate("Tq7!mWz2#Lp9vXr4") == .strong)
+        #expect(PassphraseStrength.evaluate("BlueTiger2024!x") == .strong)
         #expect(PassphraseStrength.evaluate("basil garden twelve") == .fair)
+        #expect(PassphraseStrength.evaluate("tiny gardens grow") == .fair)
     }
 
-    @Test("only fair and strong are accepted")
+    @Test("only a strong passphrase is accepted: fair is not enough to protect a file that sits in a shared folder")
     func whenChecked_thenAcceptance() {
         #expect(!PassphraseStrength.tooShort.isAcceptable)
         #expect(!PassphraseStrength.weak.isAcceptable)
-        #expect(PassphraseStrength.fair.isAcceptable)
+        #expect(!PassphraseStrength.fair.isAcceptable)
         #expect(PassphraseStrength.strong.isAcceptable)
     }
 }

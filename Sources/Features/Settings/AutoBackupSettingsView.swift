@@ -162,9 +162,9 @@ struct AutoBackupSheet: View {
             return "The two passphrases are different."
         }
         return switch strength {
-        case .tooShort: "Use at least 10 characters, or a few words."
+        case .tooShort: "Use at least 12 characters, or four words."
         case .weak: "Too easy to guess. Try a few unrelated words."
-        case .fair: "Fair. A few more words would make it strong."
+        case .fair: "Not strong enough yet. Four unrelated words work well, or use a recovery key."
         case .strong: "Strong."
         }
     }

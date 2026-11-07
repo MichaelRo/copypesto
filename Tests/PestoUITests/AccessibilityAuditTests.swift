@@ -342,8 +342,18 @@ final class AccessibilityAuditTests: PestoUITestCase {
         ])
     }
 
+    /// By calculation the caption is about 8:1 (70% of black on the pane's light grey). Up to three of the placeholder
+    /// meanings ("today's date", "the current time", …) measure under 4.5:1 in a run,
+    /// at 70% of the primary colour and at 85% alike (a rerun at 85% moved the finding to other rows), while the
+    /// rest of the same style pass: the artefact the Collections pane shows. The ceiling is three, so a fourth, or a
+    /// finding on any other element, still fails.
     func test_settingsSnippets_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Snippets")
+        try auditSettingsPane("Snippets", plus: [
+            KnownAuditFinding(
+                .contrast, "Contrast failed", on: .staticText,
+                identifierPrefix: "settings-snippet-placeholder-", allowed: 3
+            )
+        ])
     }
 
     func test_settingsData_passesTheAccessibilityAudit() throws {

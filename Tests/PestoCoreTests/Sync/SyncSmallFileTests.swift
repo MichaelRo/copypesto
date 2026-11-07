@@ -43,4 +43,12 @@ struct SyncSmallFileTests {
     func whenMissing_thenNil() {
         #expect(SyncSmallFile.read(folder.appendingPathComponent("nope")) == nil)
     }
+
+    @Test("a dataless placeholder is not read: it would wait for the network on the calling thread")
+    func whenDataless_thenNil() throws {
+        let url = try file(of: 10)
+
+        #expect(SyncSmallFile.read(url, flags: { _ in DatalessFile.flag }) == nil)
+        #expect(SyncSmallFile.read(url, flags: { _ in 0 })?.count == 10)
+    }
 }

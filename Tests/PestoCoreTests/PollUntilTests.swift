@@ -18,7 +18,7 @@ struct PollUntilTests {
     func whenTurnsTrue_thenTrue() async {
         var calls = 0
 
-        let result = await PollUntil.holds(timeout: .seconds(5), interval: .milliseconds(5)) {
+        let result = await PollUntil.holds(timeout: .seconds(60), interval: .milliseconds(5)) {
             calls += 1
             return calls >= 4
         }

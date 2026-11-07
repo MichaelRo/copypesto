@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-/// 1,024 short, common words: ten bits each, so six of them are sixty bits of a pairing code.
+/// 1,024 short, common words: ten bits each, so eight of them are eighty bits of a pairing code.
 enum SyncWordList {
     static let words: [String] = [
         "able", "acid", "also", "area", "army", "away", "baby", "back", "ball", "band", "bank", "barn", "base",

@@ -20,6 +20,10 @@ The review treated the folder as untrusted storage that anyone who can write to 
 - **A file planted at this Mac's backup name** stops automatic backups until it is removed. The message says so; a folder writer can already do this by deleting the backup.
 - **Backup chunks share one key with random 96-bit nonces.** At a billion chunks across every backup of a Mac the chance of one repeated nonce is about 2^-37, so a per-file key would change the backup format for no practical gain.
 - **`SyncHead.open` is not called**, so ADR 0018's sentence that a head below the stored mark is refused is not implemented. The high-water chain check (`SyncHighWater.decide`) is what refuses a rolled-back, forked or re-ordered log.
+- **A device record can be rewritten by another enrolled Mac** (`SyncTrust.deviceKeyIDs`): Mac B can write `devices/A/` with B's keys, so B signs into A's log and A's real signatures are refused. Binding a signer to its device stops accidents and anyone who does not hold the sync key; a Mac that holds it can already write any clip. Pinning the key per device on first sight would stop this and is left for a later change.
+- **The vault floor pins the group id and the epoch, not the creator's key.** Group ids are public and vault files are self-signed, so a file planted under the real id with a higher epoch makes a joined Mac wait for a key it does not have, the same effect as deleting the vault. No clip is read or written.
+- **Two Macs that set sync up at the same moment in an empty folder** each create a group and each keeps its own: the old lowest-id rule is gone for a Mac that already has a floor. Open: whether the second should be shown a "two groups in this folder" status.
+- **Pairing keys are derived on the main actor** (about 0.2 s, once per request, cached, at most 16 kept and cleared on Leave Sync and a folder change). A planted request costs one hitch.
 
 ## Consequences
 - Pairing takes about a fifth of a second longer on each Mac, once per request.

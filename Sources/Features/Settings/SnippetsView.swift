@@ -180,6 +180,7 @@ struct SnippetsView: View {
                     HStack(spacing: 8) {
                         Keycap(symbol: placeholder.token)
                         Text(placeholder.meaning).pestoCaption()
+                            .accessibilityIdentifier(AccessibilityID.snippetPlaceholderMeaning(placeholder.token))
                     }
                 }
             }

@@ -44,6 +44,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0033](0033-paste-as-json-and-markdown.md) | Paste As and Copy As offer JSON and Markdown only for a clip that qualifies; JSON replaces JSON Pretty-Print, and a hidden, covered or oversized clip is never read |
 | [0034](0034-copy-recognized-text.md) | A picture's whole recognized text (up to 100,000 bytes) is kept in its own sealed file, scanned for secrets in full, and copied from the menu or a Copy Text button on the hover card, which takes the pointer; amends the pointer rule of 0009 |
 | [0035](0035-shelf-surface-solid-or-glass.md) | The shelf is solid by default and glass by choice (Settings → Appearance → Shelf surface); Reduce Transparency forces solid; the wash is soft on solid; supersedes the glass parts of 0013 |
+| [0036](0036-copy-text-button-hugs-its-label.md) | The hover card's Copy Text button is as wide as its label (8 pt of wash each side, 22 pt tall); supersedes the 84 pt minimum of ADR 0034. |
 | [0038](0038-sync-folder-hardening.md) | Small sync files are read through a 1 MiB cap, a grant's key is checked before it is saved, and a deletion tombstone holds no hash of a secret. |
 
 ## Template

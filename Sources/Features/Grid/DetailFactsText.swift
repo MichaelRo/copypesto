@@ -5,8 +5,11 @@ import SwiftUI
 
 /// The words for `DetailFact`s: one line, joined with a middle dot.
 enum DetailFactsText {
-    static func line(_ facts: [DetailFact], now: Date = .now, calendar: Calendar = .current) -> String {
-        facts.map { text(for: $0, now: now, calendar: calendar) }.joined(separator: " · ")
+    static func line(
+        _ facts: [DetailFact], now: Date = .now, calendar: Calendar = .current, locale: Locale = .current
+    )
+    -> String {
+        facts.map { text(for: $0, now: now, calendar: calendar, locale: locale) }.joined(separator: " · ")
     }
 
     static func facts(
@@ -45,10 +48,10 @@ enum DetailFactsText {
         )
     }
 
-    static func text(for fact: DetailFact, now: Date, calendar: Calendar) -> String {
+    static func text(for fact: DetailFact, now: Date, calendar: Calendar, locale: Locale = .current) -> String {
         switch fact {
         case .fromPhone: String(localized: "From iPhone")
-        case let .copied(date): when(date, now: now, calendar: calendar)
+        case let .copied(date): when(date, now: now, calendar: calendar, locale: locale)
         case let .language(name): name
         case let .secretKind(kind): kind
         case let .collection(name): String(localized: "In \(name)")
@@ -71,15 +74,18 @@ enum DetailFactsText {
         }
     }
 
-    static func when(_ date: Date, now: Date, calendar: Calendar) -> String {
-        let time = date.formatted(date: .omitted, time: .shortened)
+    static func when(_ date: Date, now: Date, calendar: Calendar, locale: Locale = .current) -> String {
+        let style = Date.FormatStyle(locale: locale, calendar: calendar, timeZone: calendar.timeZone)
+        let time = date.formatted(Date.FormatStyle(
+            date: .omitted, time: .shortened, locale: locale, calendar: calendar, timeZone: calendar.timeZone
+        ))
         if calendar.isDate(date, inSameDayAs: now) { return String(localized: "Today, \(time)") }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
            calendar.isDate(date, inSameDayAs: yesterday) { return String(localized: "Yesterday, \(time)") }
         let sameYear = calendar.isDate(date, equalTo: now, toGranularity: .year)
         let day = sameYear
-            ? date.formatted(.dateTime.month(.abbreviated).day())
-            : date.formatted(.dateTime.year().month(.abbreviated).day())
+            ? date.formatted(style.month(.abbreviated).day())
+            : date.formatted(style.year().month(.abbreviated).day())
         return "\(day), \(time)"
     }
 }

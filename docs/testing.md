@@ -301,7 +301,7 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   after Copy, pasting it elsewhere gives all the text (not only the first 500 characters), the plain picture has no
   entry, and a screenshot of a key or card number has none and is masked. Hover the text picture and move straight to
   the *Copy Text* button: the card stays open on the way, a wash shows behind the button with the same space on both sides of the label (ADR 0036), one click says *Copied* for
-  two seconds, and the shelf under the card still takes clicks. The copy moves the clip to the front of the history like any copy: look that the card and the hover card do not jump under the pointer. Reduce Motion on: no animation. With screen sharing on
+  two seconds, and the shelf under the card still takes clicks. The copy makes the text a new clip at the front of the shelf and the picture stays where it is (ADR 0037): the shelf gains a card within about 200 ms, so look that the focus ring and the hover card do not jump under the pointer. Copy the same text again: the clip you have moves to the front, no second one. Reduce Motion on: no animation. With screen sharing on
   or Hide Clip Contents the covered card has no hover card and no entry. The synthetic click test
   (`HoverCardClickTests`) cannot tell a real first click in a never-key window from a sent event: check one by hand.
 - ⌘[ and ⌘] (2026-11-04): with a 5,000-clip history and three collections, hold ⌘] across all of them and back, and

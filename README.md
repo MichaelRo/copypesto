@@ -43,7 +43,7 @@ Press **⇧⌘V** and your history slides up as a shelf of clips. Arrow to a cli
 - **Paste One by One** (**⇧⌘P**) pastes the first clip, then the next on each plain ⌘V.
 - **Undo** (**⌘Z**) takes back a delete or an edit, and **⇧⌘Z** does it again.
 - **Secrets** such as card numbers and keys are masked on the shelf until you choose Show.
-- **Copy Recognized Text** copies all the text Pesto read in a screenshot, from the menu or the hover card.
+- **Copy Recognized Text** copies all the text Pesto read in a screenshot, from the menu or the hover card. The text becomes a clip of its own and the picture stays where it is.
 - **Decode JWT** reads a masked token's header, payload and expiry on your Mac after Touch ID, without showing the signature.
 
 ## Type to find it

@@ -120,6 +120,14 @@ public enum SettingsIndex {
             "version"
         ),
         entry(
+            "Install updates automatically",
+            "General",
+            "Install updates automatically",
+            "updates",
+            "sparkle",
+            "ask first"
+        ),
+        entry(
             "Show suggestions on the shelf",
             "General",
             "Show suggestions on the shelf",

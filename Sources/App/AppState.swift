@@ -221,6 +221,8 @@ final class AppState {
     /// Reads and sets whether Sparkle checks for updates by itself. Set when the updater runs (a normal launch), so
     /// Settings offers the switch only where it does something.
     @ObservationIgnored var automaticUpdateChecks: (get: () -> Bool, set: (Bool) -> Void)?
+    /// Reads and sets whether Sparkle installs a found update by itself (on quit) instead of asking.
+    @ObservationIgnored var automaticUpdateInstalls: (get: () -> Bool, set: (Bool) -> Void)?
     /// When Sparkle last finished looking for an update; Settings shows it beside Check Now.
     var lastUpdateCheck: Date?
     /// ⌃N slots already warned about, so a refresh does not repeat the banner.

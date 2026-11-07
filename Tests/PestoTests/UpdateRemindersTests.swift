@@ -13,9 +13,11 @@ struct UpdateRemindersTests {
         reminders.onUpdateReady = { _ in offered += 1 }
         reminders.beginManualCheck()
 
-        reminders.handleUpdateStaged(install: { installed += 1 })
-        reminders.handleUpdateStaged(install: { installed += 1 })
+        let first = reminders.handleUpdateStaged(install: { installed += 1 })
+        let second = reminders.handleUpdateStaged(install: { installed += 1 })
 
+        #expect(first)
+        #expect(!second)
         #expect(offered == 1)
         #expect(installed == 0)
         #expect(!reminders.hasPendingManualCheck)
@@ -27,9 +29,10 @@ struct UpdateRemindersTests {
         var offered = 0
         reminders.onUpdateReady = { _ in offered += 1 }
 
-        reminders.handleUpdateStaged(install: {})
+        let tookOver = reminders.handleUpdateStaged(install: {})
 
         #expect(offered == 0)
+        #expect(!tookOver)
     }
 
     @Test("the offer hands over the install action")

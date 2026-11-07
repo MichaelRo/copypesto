@@ -69,23 +69,31 @@ final class UpdateReminders: NSObject, SPUStandardUserDriverDelegate, SPUUpdater
         }
     }
 
-    func handleUpdateStaged(install: @escaping () -> Void) {
-        guard hasPendingManualCheck else { return }
+    /// True when the notice was offered: Sparkle only honors the install handler after the delegate answers true.
+    @discardableResult
+    func handleUpdateStaged(install: @escaping () -> Void) -> Bool {
+        guard hasPendingManualCheck else { return false }
         hasPendingManualCheck = false
         onUpdateReady?(install)
+        return true
     }
 
     /// With automatic updates on, Sparkle downloads a found update with no window, and a manual check would look as
-    /// if nothing happened. Returning false leaves the install-on-quit as it was.
+    /// if nothing happened. Only a manual check takes the install over (answering true stalls later scheduled
+    /// cycles); the update still installs on quit.
     nonisolated func updater(
-        _: SPUUpdater,
+        _ updater: SPUUpdater,
         willInstallUpdateOnQuit _: SUAppcastItem,
         immediateInstallationBlock install: @escaping () -> Void
     )
     -> Bool {
+        guard Thread.isMainThread else { return false }
         nonisolated(unsafe) let install = install
-        onMain { $0.handleUpdateStaged(install: { install() }) }
-        return false
+        let checked = updater.lastUpdateCheckDate
+        return MainActor.assumeIsolated {
+            appState.lastUpdateCheck = checked
+            return handleUpdateStaged(install: { install() })
+        }
     }
 
     nonisolated func updaterDidNotFindUpdate(_: SPUUpdater, error: any Error) {

@@ -10,6 +10,10 @@ extension AppDelegate {
         appState.checkForUpdates = { [weak self] in self?.statusCheckUpdates() }
         appState.updateReminders.onUpToDate = { [weak self] in self?.showUpToDateToast() }
         appState.updateReminders.onUpdateReady = { [weak self] install in self?.showUpdateReadyToast(install: install) }
+        appState.automaticUpdateInstalls = (
+            get: { updater.automaticallyDownloadsUpdates },
+            set: { updater.automaticallyDownloadsUpdates = $0 }
+        )
         appState.automaticUpdateChecks = (
             get: { updater.automaticallyChecksForUpdates },
             set: { updater.automaticallyChecksForUpdates = $0 }

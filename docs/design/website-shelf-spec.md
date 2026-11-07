@@ -81,7 +81,9 @@ Never drawn: the source app's tile or name, the category, a size or length, a ti
 
 The content-filter blur uses the same face and adds one 11 px line, "Sensitive content", between the kind and Show. Its context menu stays complete; the share cover's menu and VoiceOver actions are Paste, Paste as Plain Text, Copy, Delete and Show only.
 
-The site's demo shelf draws one covered card (the first): its ⌘ number, "Text", the age and an eye icon, nothing else; its spoken label and hover facts say no more. It follows this section and is changed in the website repo.
+The site's demo shelf draws one covered card (the first), as this section says: the ⌘ number top left, the age top right, the `eye.slash` symbol, "Text" and the Show link, nothing else (Show is decorative on the site); its spoken label and hover facts say no more. It follows this section and is changed in the website repo.
+
+The demo draws only kinds the app has (text, link, image, file, color, code). A PDF or a video is a File card (icon, name, folder, size), a lone emoji is a Text card set large (the single-glyph layout above, "1 character" in the foot), and Swift, JSON and Markdown clips are Code cards headed "Code" with the language in the foot facts.
 
 The demo's picture hover card follows the app's for a picture that has text (ADR 0034): the picture, a "Text in the picture" box of the note's tint, then the facts line. The demo's box has no Copy Text button, because the demo has no script; the app's has one. Changed in the website repo.
 

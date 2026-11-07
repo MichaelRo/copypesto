@@ -99,4 +99,17 @@ final class CardDetailPopoverTests: XCTestCase {
         ctx.insert(item)
         snapshot(item)
     }
+
+    func test_copyTextButton_whenAtRest_thenItsWashHugsTheLabel() {
+        func width(of view: some View) -> CGFloat {
+            NSHostingController(rootView: view.inBrandAccent()).view.fittingSize.width
+        }
+        let label = width(of: Text("Copy Text").scaledFont(size: 11, weight: .semibold))
+        let button = width(of: HoverCardCopyButton(quiet: .gray, copy: { true }))
+
+        XCTAssertEqual(
+            button, label + 2 * HoverCardCopyButton.washInset - HoverCardCopyButton.trailingBleed, accuracy: 1,
+            "the wash is the label plus \(HoverCardCopyButton.washInset) pt on each side"
+        )
+    }
 }

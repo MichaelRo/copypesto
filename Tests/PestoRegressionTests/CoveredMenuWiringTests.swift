@@ -127,8 +127,19 @@ struct CoveredMenuWiringTests {
             encoding: .utf8
         )
         #expect(
-            actions.contains("appState.writeText(text, protected: false)"),
-            "the copy must go through the write gate"
+            actions.contains("appState.copyRecognizedText(of: item)"),
+            "the grid copies through AppState, where the lock is asked and the write is an ordinary copy (ADR 0037)"
+        )
+        let paste = try String(
+            contentsOf: SourceTree.sources.appendingPathComponent("App/AppState+Paste.swift"), encoding: .utf8
+        )
+        let start = try #require(paste.range(of: "func copyRecognizedText(of item"))
+        let rest = paste[start.lowerBound...]
+        let copyBody = rest.prefix(upTo: rest.range(of: "\n    }\n")?.upperBound ?? rest.endIndex)
+        #expect(copyBody.contains("!isHistoryLockedNow()"), "the lock is asked first")
+        #expect(
+            !copyBody.contains("writeToPasteboard"),
+            "off the write gate, so the watcher records the text as a clip"
         )
     }
 }

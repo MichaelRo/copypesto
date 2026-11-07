@@ -96,6 +96,21 @@ extension AppState {
         }
     }
 
+    /// Copy Recognized Text (ADR 0037): an ordinary copy, off the write gate, so the watcher records the text as a
+    /// clip of its own. The picture is not a use and stays where it is. A text that cannot be read is said so, never
+    /// replaced by the preview.
+    @discardableResult
+    func copyRecognizedText(of item: ClipboardItem, store: RecognizedTextStore = RecognizedTextStore()) -> Bool {
+        guard !isHistoryLockedNow(), let text = RecognizedText.text(of: item, store: store) else {
+            showUserMessage("Couldn’t read the text in this picture.")
+            return false
+        }
+        let board = AppPasteboard.general
+        Self.beginWrite(on: board, protected: false)
+        board.setString(text, forType: .string)
+        return true
+    }
+
     /// Writes an image back to the pasteboard through the write gate, keeping the protection the source had.
     func writeImage(_ image: NSImage, protected: Bool) {
         writeToPasteboard { pb in

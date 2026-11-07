@@ -188,4 +188,53 @@ struct RecognizedTextIngestTests {
         #expect(restored.id == item.id)
         #expect(targetStore.load(for: restored.id) == long)
     }
+
+    private func textCapture(_ text: String) -> PasteboardCapture {
+        let data = Data(text.utf8)
+        let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        return PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text", payload: data, payloadString: text, contentHash: hash
+        )
+    }
+
+    private func clips(of type: ClipboardType) throws -> [ClipboardItem] {
+        try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+            .filter { $0.type == type }
+            .sorted { $0.timestamp > $1.timestamp }
+    }
+
+    @Test("copying the text of a picture makes its own text clip at the front, and the picture stays where it is")
+    func whenTextIsCopied_thenItIsANewClipAtTheFront() async throws {
+        let (service, picture) = try await read("Boarding pass gate B22")
+        let pictureMovedAt = picture.timestamp
+
+        try await service.ingest(textCapture("Boarding pass gate B22"))
+
+        let texts = try clips(of: .text)
+        #expect(texts.count == 1)
+        #expect(texts.first?.displayPreviewText == "Boarding pass gate B22")
+        #expect(try #require(texts.first).timestamp > pictureMovedAt)
+        let pictureNow = try #require(try clips(of: .image).first)
+        #expect(pictureNow.timestamp == pictureMovedAt)
+    }
+
+    @Test("copying text that is already a clip moves that clip to the front and stores no second one")
+    func whenTheTextIsAlreadyAClip_thenThatClipMoves() async throws {
+        let service = service(reading: "Boarding pass gate B22")
+        try await service.ingest(textCapture("Boarding pass gate B22"))
+        let original = try #require(try clips(of: .text).first)
+        let firstStamp = original.timestamp
+        try await service.ingest(picture())
+        await service.waitForBackgroundWork()
+
+        try await service.ingest(textCapture("Boarding pass gate B22"))
+
+        let texts = try clips(of: .text)
+        #expect(texts.count == 1)
+        #expect(texts.first?.id == original.id)
+        #expect(try #require(texts.first).timestamp > firstStamp)
+        let order = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+            .sorted { $0.timestamp > $1.timestamp }
+        #expect(order.first?.type == .text)
+    }
 }

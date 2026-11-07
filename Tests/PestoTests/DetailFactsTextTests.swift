@@ -39,6 +39,19 @@ struct DetailFactsTextTests {
         #expect(text(.fromPhone) == "From iPhone")
     }
 
+    @Test("a date reads in the locale and time zone it is given, whatever this Mac uses")
+    func when_followsTheGivenLocaleAndZone() {
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let now = date.addingTimeInterval(86_400 * 400)
+        func read(_ identifier: String) -> String {
+            DetailFactsText.when(date, now: now, calendar: calendar, locale: Locale(identifier: identifier))
+                .replacingOccurrences(of: "\u{202F}", with: " ")
+        }
+
+        #expect(read("en_US") == "Nov 14, 2023, 10:13 PM")
+        #expect(read("en_GB") == "14 Nov 2023, 22:13")
+    }
+
     @Test("when it was copied is today, yesterday, or a date")
     func when_namesTodayAndYesterday() {
         let now = Date(timeIntervalSince1970: 1_800_000_000)

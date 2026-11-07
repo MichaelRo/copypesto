@@ -42,4 +42,13 @@ struct StatusToastTests {
         #expect(!toast.isClickable)
         #expect(toast.visibleSeconds >= 4)
     }
+
+    @Test("the update-ready notice sits under the menu bar, takes a click to restart and stays long enough to act on")
+    func whenUpdateReady_thenItIsClickableNearTheMenuBar() {
+        let toast = StatusToast.updateReady
+
+        #expect(toast.placement == .belowMenuBar)
+        #expect(toast.isClickable)
+        #expect(toast.visibleSeconds >= 8)
+    }
 }

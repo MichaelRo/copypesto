@@ -84,6 +84,7 @@ extension HostedGlobals {
             let delegate = AppDelegate()
             delegate.wireUpdateSettings()
             #expect(delegate.appState.automaticUpdateChecks != nil)
+            #expect(delegate.appState.automaticUpdateInstalls != nil)
             #expect(delegate.appState.checkForUpdates != nil)
             #expect(delegate.appState.updateReminders.onUpToDate != nil)
 

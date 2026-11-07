@@ -23,6 +23,7 @@ struct GeneralSettings: View {
     @State private var isAXTrusted = AccessibilityAccess.isTrusted
     @Environment(AppState.self) private var appState: AppState
     @State private var checksForUpdates = true
+    @State private var installsUpdates = false
 
     var body: some View {
         switch part {
@@ -75,6 +76,34 @@ struct GeneralSettings: View {
                 .onAppear { checksForUpdates = updates.get() }
                 .onChange(of: checksForUpdates) { _, on in updates.set(on) }
                 .settingsRow("Check for updates automatically")
+                if let installs = appState.automaticUpdateInstalls {
+                    Toggle(isOn: $installsUpdates) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Install updates automatically")
+                            Text("On: a new version installs when Pesto quits. Off: Pesto asks first.").pestoCaption()
+                        }
+                    }
+                    .onAppear { installsUpdates = installs.get() }
+                    .onChange(of: installsUpdates) { _, on in installs.set(on) }
+                    .accessibilityIdentifier(AccessibilityID.settingsChoice("installUpdates", "toggle"))
+                    .settingsRow("Install updates automatically")
+                }
+                if let staged = appState.stagedUpdate {
+                    HStack {
+                        Text("Pesto \(staged.version) is ready. It installs when Pesto quits.").pestoCaption()
+                        Spacer()
+                        if let notes = staged.whatsNew {
+                            Link("What\u{2019}s New", destination: notes).buttonStyle(.pestoLink)
+                        }
+                        Button("Restart Now") { staged.install() }
+                    }
+                }
+                HStack {
+                    Text(UpdateCheckCaption.text(lastCheck: appState.lastUpdateCheck)).pestoCaption()
+                    Spacer()
+                    Button("Check Now") { appState.checkForUpdates?() }
+                        .disabled(appState.checkForUpdates == nil)
+                }
             }
         }
     }

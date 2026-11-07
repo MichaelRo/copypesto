@@ -21,6 +21,10 @@ extension ToastAnnouncement {
         Announcer.announce("This build does not check for updates.")
     }
 
+    static func updateReady() {
+        Announcer.announce("A new version of Pesto is ready. It installs when Pesto quits.")
+    }
+
     static func upToDate() {
         Announcer.announce("Pesto is up to date.")
     }

@@ -156,6 +156,22 @@ struct SyncFormatTests {
         #expect(throws: SyncError.unknownSigner) { try verify(made.data, trust: SyncTrust([other.publicKeys])) }
     }
 
+    @Test("a log signed by another enrolled Mac's key is refused when the trust says whose key is whose")
+    func signerIsBoundToItsDevice() throws {
+        let forged = try segment(deviceID: "mac-a", keys: other)
+        let bound = SyncTrust(
+            [device.publicKeys, other.publicKeys],
+            devices: ["mac-a": device.publicKeys.keyID, "mac-b": other.publicKeys.keyID]
+        )
+
+        #expect(throws: SyncError.badSignature) { try verify(forged.data, trust: bound) }
+        #expect(throws: Never.self) { try verify(segment(deviceID: "mac-a", keys: device).data, trust: bound) }
+        #expect(throws: Never.self) { try verify(segment(deviceID: "mac-b", keys: other).data, trust: bound) }
+        #expect(throws: Never.self, "a trust that names no devices keeps accepting any enrolled key") {
+            try verify(forged.data)
+        }
+    }
+
     @Test("a chunk spliced in from another segment does not open")
     func splicedChunk() throws {
         let first = try segment(count: 3)
@@ -286,11 +302,23 @@ struct SyncFormatTests {
 
     // MARK: Pairing words
 
+    @Test("the pairing words for fixed keys are fixed, so an accidental change to the derivation is noticed")
+    func pairingWordsVector() {
+        let words = SyncPairingCode.words(
+            vaultID: Data((0..<16).map { UInt8($0) }), keyA: Data(repeating: 1, count: 64),
+            keyB: Data(repeating: 2, count: 64)
+        )
+
+        #expect(words == ["token", "glory", "moth", "sour", "fluid", "scan", "post", "spin"])
+    }
+
     @Test("the pairing words are the same on both Macs, change with the vault or a key, and come from a clean list")
     func pairingWords() {
         let a = device.publicKeys.agreement, b = other.publicKeys.agreement
         let words = SyncPairingCode.words(vaultID: vaultID, keyA: a, keyB: b)
-        #expect(words.count == 6)
+        #expect(words.count == 8)
+        #expect(SyncPairingCode.wordCount * 10 == 80, "eighty bits, so two sides cannot be ground to a match")
+        #expect(SyncPairingCode.stretchIterations >= 600_000, "each guess costs an attacker a slow derivation")
         #expect(words == SyncPairingCode.words(vaultID: vaultID, keyA: b, keyB: a))
         #expect(words != SyncPairingCode.words(vaultID: Data(repeating: 1, count: 16), keyA: a, keyB: b))
         #expect(words != SyncPairingCode.words(

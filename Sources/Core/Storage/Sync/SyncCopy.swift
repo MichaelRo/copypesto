@@ -23,7 +23,7 @@ public enum SyncCopy {
             [
                 String(localized: "The key stays on this Mac."),
                 String(
-                    localized: "A new Mac joins with the recovery key, or you approve it here after checking six words."
+                    localized: "A new Mac joins with the recovery key, or you approve it here after checking the words."
                 )
             ].joined(separator: " ")
         }

@@ -281,6 +281,84 @@ struct SyncFolderServiceTests {
         #expect(try b.texts() == ["after the reset", "before the reset"])
     }
 
+    @Test("a newest vault file that goes missing does not take a Mac back to an older epoch")
+    func hiddenVaultIsNotARollback() async throws {
+        let (a, b) = try pair()
+        try await a.copy("before the reset")
+        await settle(a, b)
+        guard case let .ready(group) = try SyncGroupManager.open(layout: layout, keyStore: a.keyStore) else {
+            Issue.record("no group")
+            return
+        }
+        let next = try SyncGroupManager.reset(
+            layout: layout, from: group, identity: a.identity, keyStore: a.keyStore, now: time.now
+        )
+        try b.keyStore.saveSyncKey(next.group.key, vaultID: next.group.vault.vaultID, epoch: 2)
+        await settle(a, b, a)
+        let logged = {
+            (try? FileManager.default.contentsOfDirectory(atPath: self.layout.log("mac-b").path))?.count ?? 0
+        }
+        let before = logged()
+
+        try FileManager.default.removeItem(at: layout.vault(epoch: 2))
+        try await b.copy("after the vault was hidden")
+        await settle(b)
+
+        #expect(b.service.status == .refused(SyncFolderService.reason(.vaultWentBack)))
+        #expect(logged() == before, "nothing was written under the old epoch")
+    }
+
+    private func plantVault(epoch: UInt32) throws {
+        let creator = SyncDeviceKeys.generate()
+        let planted = SyncVault.create(
+            vaultID: Data(repeating: 0, count: 16), epoch: epoch, syncKey: .generate(), creator: creator
+        )
+        try planted.serialized(signedBy: creator).write(to: layout.vault(epoch: epoch))
+    }
+
+    @Test("a vault planted with a smaller id is ignored by the Macs that joined the real one, and they keep syncing")
+    func plantedVaultIsIgnored() async throws {
+        let (a, b) = try pair()
+        try await a.copy("kept")
+        await settle(a, b)
+        try plantVault(epoch: 7)
+
+        try await a.copy("after the planting")
+        await settle(a, b, a)
+
+        if case .upToDate = b.service.status {} else { Issue.record("expected up to date, got \(b.service.status)") }
+        #expect(try b.texts() == ["after the planting", "kept"])
+    }
+
+    @Test("a folder whose real vault was replaced by another is refused, not followed")
+    func replacedVaultIsRefused() async throws {
+        let (a, b) = try pair()
+        try await a.copy("kept")
+        await settle(a, b)
+        try FileManager.default.removeItem(at: layout.vault(epoch: 1))
+        try plantVault(epoch: 1)
+
+        await settle(b)
+
+        #expect(b.service.status == .refused(SyncFolderService.reason(.otherGroup)))
+        #expect(try b.texts() == ["kept"])
+    }
+
+    @Test("a folder that was emptied after sync was set up is waited for, and nothing is written into it")
+    func emptiedFolderIsWaitedFor() async throws {
+        let (a, b) = try pair()
+        try await a.copy("kept")
+        await settle(a, b)
+        for name in try FileManager.default.contentsOfDirectory(atPath: layout.root.path) {
+            try FileManager.default.removeItem(at: layout.root.appendingPathComponent(name))
+        }
+
+        await settle(b)
+
+        #expect(b.service.status == .waitingForFolder)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: layout.root.path).isEmpty)
+    }
+
     @Test("the folder watcher reports a file that appears in the folder")
     func watcher() async throws {
         try FileManager.default.createDirectory(at: layout.root, withIntermediateDirectories: true)

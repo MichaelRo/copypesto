@@ -2,14 +2,14 @@
 import PestoCore
 import SwiftUI
 
-/// The joining Mac: these six words must match the other Mac's screen.
+/// The joining Mac: these words must match the other Mac's screen.
 struct SyncPairingSheet: View {
     let controller: SyncController
     let words: [String]
     let approver: String
 
     var body: some View {
-        SyncSheetFrame(title: "Check these six words") {
+        SyncSheetFrame(title: "Check these words") {
             Text("\(approver) shows a request from this Mac. Confirm both screens show the same words.")
             SyncWords(words: words)
             HStack(spacing: 8) {
@@ -29,7 +29,7 @@ struct SyncApproveSheet: View {
 
     var body: some View {
         SyncSheetFrame(title: "\u{201C}\(pending.request.name)\u{201D} wants to join") {
-            Text("Allow it only if this Mac shows the same six words. It will be able to read your synced clips.")
+            Text("Allow it only if this Mac shows the same words. It will be able to read your synced clips.")
             SyncWords(words: pending.words)
         } actions: {
             Button("Don\u{2019}t Allow", role: .cancel) { controller.deny(pending) }

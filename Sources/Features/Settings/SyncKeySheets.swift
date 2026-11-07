@@ -26,7 +26,7 @@ struct SyncNeedsKeySheet: View {
     var body: some View {
         SyncSheetFrame(title: "This Mac needs the key") {
             Text(verbatim: SyncCopy.needsKeyLead(controller.keyMode))
-            option("Ask another Mac", "It shows a request, and you check that six words match.")
+            option("Ask another Mac", "It shows a request, and you check that the words on both Macs match.")
             option("Enter a recovery key", "The key you saved when sync was turned on.")
         } actions: {
             Button("Cancel", role: .cancel) { controller.cancelFlow() }.keyboardShortcut(.cancelAction)

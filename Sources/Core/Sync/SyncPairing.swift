@@ -4,14 +4,14 @@ import Foundation
 
 /// `devices/<id>/join.pestojoin`: a new Mac says it wants to join (interim mode, ADR 0018). It carries only public
 /// keys,
-/// signed by the new Mac, and it is readable by anyone with the folder; what protects the join is the six words both
+/// signed by the new Mac, and it is readable by anyone with the folder; what protects the join is the words both
 /// Macs show (`SyncPairingCode`), which a provider that swapped a key could not make match.
 public struct SyncJoinRequest: Codable, Equatable, Sendable {
     public var deviceID: String
     public var name: String
     public var keys: SyncDevicePublicKeys
     public var vaultID: String
-    /// The Mac this request is addressed to (the others ignore it), so only the Mac whose six words the person compares
+    /// The Mac this request is addressed to (the others ignore it), so only the Mac whose words the person compares
     /// can allow it.
     public var approverKeyID: String
     public var createdAt: Date
@@ -118,7 +118,7 @@ public struct SyncGrant: Codable, Equatable, Sendable {
         request.pairingWords(approver: approver)
     }
 
-    /// Opens a grant addressed to this Mac, once the person has confirmed the six words: `expectedApprover` is the
+    /// Opens a grant addressed to this Mac, once the person has confirmed the words: `expectedApprover` is the
     /// approver those words named. A grant signed by anyone else, for another Mac, vault or epoch, or changed, does not
     /// open.
     public func open(

@@ -42,7 +42,7 @@ One PR per phase, tests green in each, the full gate once before merging the las
 5. **Transport** (`SyncFolderService` actor): writer with a 2 s batch window, FSEvents reader with a poll fallback,
    compaction, status states; starts only when `LaunchMode.current.usesSystemIntegrations`; tests use a temp folder.
 6. **UI and pairing**: Settings → Data → Sync (set up, join, sensitive opt-in, Reset Sync, real
-   state), `SettingsIndex` entries, `Setting.syncEnabled` (default false, added to `Setting.allNames`, not in the export), first-sync progress that never blocks the shelf, approval with the six-word code. No Mac list; Reset Sync is the one action. UI and snapshot tests first.
+   state), `SettingsIndex` entries, `Setting.syncEnabled` (default false, added to `Setting.allNames`, not in the export), first-sync progress that never blocks the shelf, approval with the eight-word code. No Mac list; Reset Sync is the one action. UI and snapshot tests first.
 7. **Ship**: two-Mac check, `make bench-sync` within budget, ADR to
    Accepted, README, guide and website.
 

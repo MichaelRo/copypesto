@@ -27,15 +27,22 @@ struct SyncWords: View {
     let words: [String]
 
     var body: some View {
-        HStack(spacing: 8) {
-            ForEach(Array(words.enumerated()), id: \.offset) { _, word in
-                Text(word)
-                    .font(.title3.weight(.semibold))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.primary.opacity(0.07)))
-                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(accent.opacity(0.35)))
+        VStack(spacing: 8) {
+            ForEach(Array(stride(from: 0, to: words.count, by: 4)), id: \.self) { start in
+                HStack(spacing: 8) {
+                    ForEach(Array(words[start..<min(start + 4, words.count)].enumerated()), id: \.offset) { _, word in
+                        Text(word)
+                            .font(.title3.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(Color.primary.opacity(0.07)))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .strokeBorder(accent.opacity(0.35))
+                            )
+                    }
+                }
             }
         }
         .accessibilityElement(children: .ignore)

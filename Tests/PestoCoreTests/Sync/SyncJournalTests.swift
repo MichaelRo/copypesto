@@ -168,6 +168,23 @@ struct SyncJournalTests {
         #expect(tombstone.syncDirty == true && tombstone.changeClock != nil, "the deletion itself still syncs")
     }
 
+    @Test("a secret that was synced keeps its hash in the tombstone, so the deletion reaches the Macs that hold it")
+    func deletionOfASyncedSecretKeepsTheHash() async throws {
+        enable()
+        defer { SyncJournal.disable(for: container) }
+        let key = "sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef"
+        try await ingest(key)
+        let context = ModelContext(container)
+        let clip = try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first)
+        clip.syncEmittedClock = clip.changeClock ?? "1"
+        try context.save()
+
+        try await service.deleteItems(ids: [clip.id], reason: .user)
+
+        let tombstone = try #require(ModelContext(container).fetch(FetchDescriptor<DeletedItemTombstone>()).first)
+        #expect(tombstone.plainHash == Data(SHA256.hash(data: Data(key.utf8))).hexString)
+    }
+
     @Test("with sync off a tombstone is what it always was, and retention writes none")
     func deletionWithSyncOff() async throws {
         try await ingest("a")

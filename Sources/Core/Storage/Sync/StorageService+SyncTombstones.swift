@@ -11,7 +11,7 @@ extension StorageService {
         let tombstone = DeletedItemTombstone(id: item.id)
         guard let clock = SyncJournal.clock(for: modelContainer) else { return tombstone }
         tombstone.kindRaw = "item"
-        if item.sensitivityRaw == nil {
+        if item.sensitivityRaw == nil || item.syncEmittedClock != nil {
             tombstone.plainHash = item.blob?.decryptedData().map { Data(SHA256.hash(data: $0)).hexString }
         }
         tombstone.changeClock = clock.next().encoded

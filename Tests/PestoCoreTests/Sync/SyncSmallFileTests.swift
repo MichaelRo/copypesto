@@ -29,6 +29,16 @@ struct SyncSmallFileTests {
         #expect(SyncSmallFile.read(url) == nil)
     }
 
+    @Test("a folder or a pipe is refused before it is opened: opening a pipe waits for a writer")
+    func whenNotARegularFile_thenNil() throws {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let pipe = folder.appendingPathComponent("pipe")
+        #expect(mkfifo(pipe.path, 0o600) == 0)
+
+        #expect(SyncSmallFile.read(pipe) == nil)
+        #expect(SyncSmallFile.read(folder) == nil)
+    }
+
     @Test("a missing file reads as nothing")
     func whenMissing_thenNil() {
         #expect(SyncSmallFile.read(folder.appendingPathComponent("nope")) == nil)

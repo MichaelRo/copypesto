@@ -8,7 +8,8 @@ enum SyncSmallFile {
     static let maxBytes = 1 << 20
 
     static func read(_ url: URL) -> Data? {
-        guard let handle = try? FileHandle(forReadingFrom: url) else { return nil }
+        guard (try? url.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true,
+              let handle = try? FileHandle(forReadingFrom: url) else { return nil }
         defer { try? handle.close() }
         guard let data = try? handle.read(upToCount: maxBytes + 1), data.count <= maxBytes else { return nil }
         return data

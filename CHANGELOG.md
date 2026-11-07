@@ -7,10 +7,46 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-07
+### Changed
+- The shelf is solid by default. The translucent Liquid Glass look, the earlier default, is an option in Settings, Appearance. ([ADR 0035](decisions/0035-shelf-surface-solid-or-glass.md))
+- Short text clips and link hosts lead in prominent sizing; cards covered during screen sharing show clear kind and age badges.
+- New backup passphrases need twelve characters and pass a strength check.
+- Pictures wider or taller than a card are shown whole over a blurred copy of themselves, not cropped.
+
+### Added
+- Copy Recognized Text from any picture clip, in its card menu or hover card.
+- Paste As and Copy As turn structured text into formatted JSON and Markdown.
+- Paste import keeps Paste boards as collections and imports recent history up to capacity.
+
+## [1.3.0] - 2026-11-05
+### Changed
+- Search filters: Today and Yesterday are chips; a More menu holds the last 7 and 30 days, the last hours and any recent day. Format and From list every language and app in your history. Ask understands exact dates.
+- Typing on the shelf without ⌘F counts every key, including after a pause.
+- The clip menu leads with Paste and Paste as Plain Text. The shelf opens on All again after 90 seconds closed.
+- A clip in a collection shows when you first copied it, so a paste does not change it.
+- Settings: General is grouped into Shelf, Copy and paste and Floating window.
+
+## [1.2.0] - 2026-11-02
+### Added
+- Multi-device sync through encrypted folders (off by default). ([ADR 0018](decisions/0018-multi-device-sync.md))
+- Dedicated importers for eleven clipboard managers, any CSV, JSON or text file, and Raycast snippets.
+- Decode JWT from a card; lone emojis and symbols get glyph cards; `{{clipboard}}` and `{{uuid}}` snippet placeholders.
+
 ### Changed
 - Settings → Data: backup is a switch, *Back up this Mac*, under a line that says your clips stay on this Mac and what the
   backup is doing. The fourth tile shows the time of the last backup, or *Needs you* when the last run could not save.
   *Restore from Backup…* counts what it would add before you confirm. ([ADR 0019](decisions/0019-backup-and-sync-group.md))
+
+## [1.1.0] - 2026-10-28
+### Added
+- Smart Snippets: fill-ins that Pesto asks for when you paste, and suggestions for look-alike text you paste over several days.
+- Shelf app chips show the app icon and open in place on hover.
+
+## [1.0.1] - 2026-10-26
+### Changed
+- Signed with a Developer ID and notarized.
+- Shelf suggestions above the clip grid; refined spacing during search.
 
 ## [1.0.0] - 2026-10-23
 

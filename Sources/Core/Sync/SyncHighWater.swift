@@ -17,9 +17,35 @@ public struct SyncHighWater: Codable, Equatable, Sendable {
         case gap
     }
 
+    /// The group this Mac joined and the newest epoch of it that it has opened. A folder that shows an older epoch (a
+    /// newer vault file hidden) or a different group (one planted beside it) is refused, so neither can take the
+    /// Mac back to a key someone else may hold. Cleared by Leave Sync and when the folder is changed.
+    public struct VaultFloor: Codable, Equatable, Sendable {
+        public var vaultID: String
+        public var epoch: UInt32
+    }
+
     public private(set) var marks: [String: Mark] = [:]
+    public private(set) var vaultFloor: VaultFloor?
 
     public init() {}
+
+    /// Throws when the folder shows another group or an older epoch than the one this Mac has opened.
+    public func check(vaultID: Data, epoch: UInt32) throws {
+        guard let floor = vaultFloor else { return }
+        guard floor.vaultID == vaultID.hexString else { throw SyncError.otherGroup }
+        guard epoch >= floor.epoch else { throw SyncError.vaultWentBack }
+    }
+
+    /// Checks, then remembers the group and epoch this Mac has now opened.
+    public mutating func admit(vaultID: Data, epoch: UInt32) throws {
+        try check(vaultID: vaultID, epoch: epoch)
+        vaultFloor = VaultFloor(vaultID: vaultID.hexString, epoch: epoch)
+    }
+
+    public mutating func resetMarks() {
+        marks = [:]
+    }
 
     public func mark(for deviceID: String) -> Mark? {
         marks[deviceID]

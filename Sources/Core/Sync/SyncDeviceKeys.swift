@@ -57,16 +57,21 @@ public struct SyncDevicePublicKeys: Codable, Equatable, Sendable {
 /// The signers a Mac accepts: the devices enrolled in the sync group, by key id.
 public struct SyncTrust: Sendable, Equatable {
     public var signers: [String: SyncDevicePublicKeys]
+    /// Which key belongs to which enrolled Mac, so one enrolled Mac cannot write into another's log. A device that is
+    /// not named (the vault's creator after it left) is checked against the signers alone.
+    public var deviceKeyIDs: [String: String]
 
-    public init(_ keys: [SyncDevicePublicKeys] = []) {
+    public init(_ keys: [SyncDevicePublicKeys] = [], devices: [String: String] = [:]) {
         signers = Dictionary(keys.map { ($0.keyID, $0) }, uniquingKeysWith: { first, _ in first })
+        deviceKeyIDs = devices
     }
 
     public mutating func add(_ keys: SyncDevicePublicKeys) {
         signers[keys.keyID] = keys
     }
 
-    func verify(_ signature: Data, over message: Data, signerID: String) throws {
+    func verify(_ signature: Data, over message: Data, signerID: String, deviceID: String? = nil) throws {
+        if let deviceID, let bound = deviceKeyIDs[deviceID], bound != signerID { throw SyncError.badSignature }
         guard let keys = signers[signerID], let key = try? keys.signingKey() else { throw SyncError.unknownSigner }
         guard key.isValidSignature(signature, for: message) else { throw SyncError.badSignature }
     }

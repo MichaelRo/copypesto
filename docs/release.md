@@ -83,7 +83,7 @@ imply a 1.1.1 nobody got).
 
 ## The sync key in iCloud Keychain (optional; needs a provisioning profile)
 Sync works without this: a Mac that is not signed for it keeps the sync key as a this-device item and joins another Mac
-by recovery key or by approving it (six words). With this, a second Mac signed in to the same Apple Account finds the key
+by recovery key or by approving it (eight words). With this, a second Mac signed in to the same Apple Account finds the key
 by itself and sync needs no typing. It needs the data protection keychain, which needs `com.apple.application-identifier`,
 a restricted entitlement that only a provisioning profile can authorize (Apple TN3137). Claiming it without the profile
 makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is used only when `SYNC_PROFILE` is set.

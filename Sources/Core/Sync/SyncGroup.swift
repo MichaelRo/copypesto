@@ -12,7 +12,10 @@ public struct SyncGroup: Sendable {
     /// The vault's creator is trusted whether or not its device record is still in the folder: a Mac that made the
     /// group and then left (Leave Sync removes its record) must not take the group away from the others.
     public var trust: SyncTrust {
-        SyncTrust(devices.map(\.keys) + [vault.creator])
+        SyncTrust(
+            devices.map(\.keys) + [vault.creator],
+            devices: Dictionary(devices.map { ($0.deviceID, $0.keys.keyID) }, uniquingKeysWith: { first, _ in first })
+        )
     }
 
     public var epoch: UInt32 {
@@ -108,13 +111,20 @@ public enum SyncGroupManager {
     /// with a key this Mac has, and the key for it if this Mac has one. Two vaults of the same epoch (two resets that
     /// raced) resolve to the one
     /// with the smaller file hash, the same on every Mac.
-    public static func open(layout: SyncFolderLayout, keyStore: any SyncKeyStoring) throws -> SyncGroupOpening {
+    public static func open(
+        layout: SyncFolderLayout, keyStore: any SyncKeyStoring, preferring joined: Data? = nil
+    ) throws
+    -> SyncGroupOpening {
         var candidates: [(vault: SyncVault, hash: String)] = []
         for url in layout.vaultFiles() {
-            guard let data = try? Data(contentsOf: url), let vault = try? SyncVault.parse(data) else { continue }
+            guard let data = SyncSmallFile.read(url), let vault = try? SyncVault.parse(data) else { continue }
             candidates.append((vault, Data(SHA256.hash(data: data)).hexString))
         }
-        guard let vaultID = candidates.map(\.vault.vaultID).min(by: { $0.lexicographicallyPrecedes($1) }) else {
+        let lowest = candidates.map(\.vault.vaultID).min(by: { $0.lexicographicallyPrecedes($1) })
+        // The group this Mac joined wins over a smaller id that someone put in the folder beside it.
+        guard let vaultID = joined
+            .flatMap({ id in candidates.contains { $0.vault.vaultID == id } ? id : nil }) ?? lowest else
+        {
             return .empty
         }
         let ordered = candidates.filter { $0.vault.vaultID == vaultID }
@@ -141,7 +151,7 @@ public enum SyncGroupManager {
 
     static func devices(layout: SyncFolderLayout, vault: SyncVault, key: SyncKey) -> [SyncDeviceRecord] {
         layout.deviceIDs().compactMap { id in
-            guard let data = try? Data(contentsOf: layout.deviceRecord(id)) else { return nil }
+            guard let data = SyncSmallFile.read(layout.deviceRecord(id)) else { return nil }
             return try? SyncDeviceRecord.open(
                 data,
                 syncKey: key,

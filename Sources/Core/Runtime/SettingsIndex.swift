@@ -378,7 +378,7 @@ public enum SettingsIndex {
         entry(
             "Sync with my other Macs", "Data", "Sync with my other Macs",
             "sync", "icloud", "icloud drive", "other macs", "more than one mac", "second mac", "keep macs matching",
-            "recovery key", "sync key", "reset sync", "leave sync", "pause sync", "pairing", "six words",
+            "recovery key", "sync key", "reset sync", "leave sync", "pause sync", "pairing", "pairing words",
             "where your copies live", "secrets"
         ),
         entry("Rebuild search index", "Data", "Rebuild search index", "semantic", "search", "embeddings"),

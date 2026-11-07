@@ -1,6 +1,6 @@
 # Sync key in iCloud Keychain: Apple portal steps (Michael)
 
-Needed only for the invisible iCloud Keychain key. Without it, sync works with the recovery key or the six-word approval.
+Needed only for the invisible iCloud Keychain key. Without it, sync works with the recovery key or the eight-word approval.
 
 ## 1. Create the App ID (once)
 1. Open https://developer.apple.com/account → **Certificates, Identifiers & Profiles** → **Identifiers** → the blue **+**.

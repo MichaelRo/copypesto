@@ -40,7 +40,7 @@ public struct SyncManifest: Codable, Equatable, Sendable {
 
     func verify(trust: SyncTrust) throws {
         guard let signature = Data(base64Encoded: signature) else { throw SyncError.badSignature }
-        try trust.verify(signature, over: signingBytes(), signerID: signerKeyID)
+        try trust.verify(signature, over: signingBytes(), signerID: signerKeyID, deviceID: deviceID)
     }
 
     static func canonical(_ value: some Encodable) throws -> Data {

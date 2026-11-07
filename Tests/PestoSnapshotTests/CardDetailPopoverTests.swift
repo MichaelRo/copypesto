@@ -10,6 +10,14 @@ import XCTest
 /// The hover card for each kind of clip, in light and dark. Baselines are OS-specific (see `ClipboardCardTests`).
 @MainActor
 final class CardDetailPopoverTests: XCTestCase {
+    /// The footer date is drawn in the locale and zone the baselines were recorded in, so they hold on any Mac.
+    private static var baselineCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(identifier: "en_US")
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        return calendar
+    }
+
     private func makeItem(_ type: ClipboardType, preview: String, language: String? = nil) throws -> ClipboardItem {
         let container = try ModelContainerSetup.makeInMemory()
         let ctx = ModelContext(container)
@@ -31,6 +39,8 @@ final class CardDetailPopoverTests: XCTestCase {
             .padding(20)
             .background(scheme == .light ? Color(red: 0.92, green: 0.85, blue: 0.71) : Color(white: 0.13))
             .environment(\.colorScheme, scheme)
+            .environment(\.locale, Locale(identifier: "en_US"))
+            .environment(\.calendar, Self.baselineCalendar)
         let controller = NSHostingController(rootView: root.inBrandAccent())
         controller.view.appearance = NSAppearance(named: scheme == .light ? .aqua : .darkAqua)
         withSnapshotTesting(record: .missing) {

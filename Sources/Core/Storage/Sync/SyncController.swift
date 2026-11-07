@@ -74,7 +74,13 @@ public final class SyncController {
     private var service: SyncFolderService?
     private var identity: SyncIdentity?
     private var approverID: String?
+    /// A join request is shown to the approving Mac for this long. Someone who plants requests cannot wear the person
+    /// down at the prompt forever, and an old one is not an answer to anyone who is waiting.
+    public static let joinRequestLifetime: TimeInterval = 24 * 3600
+
     private var ignored: Set<String> = []
+    /// The words of a request, kept because deriving them is deliberately slow and a refresh asks again and again.
+    private var pairingWords: [String: [String]] = [:]
 
     /// "Pesto \u{203A} Pesto Sync": the last two parts of the folder, how a person would say where it is.
     public var folderDisplayName: String {
@@ -274,13 +280,14 @@ public final class SyncController {
     private func collectGrant(_ layout: SyncFolderLayout) {
         guard let me = identity, let approverID else { return }
         let url = layout.grants(approverID).appendingPathComponent("\(me.deviceID).pestogrant")
-        guard let data = try? Data(contentsOf: url), let grant = try? SyncGrant.parse(data),
+        guard let data = SyncSmallFile.read(url), let grant = try? SyncGrant.parse(data),
               let approver = Self.publicIdentities(layout).first(where: { $0.deviceID == approverID }),
               case let .needsKey(vault) = try? openGroup() else { return }
         do {
             let opened = try grant.open(
                 device: me.keys, deviceID: me.deviceID, vaultID: vault.vaultID, expectedApprover: approver.keys
             )
+            guard vault.accepts(opened.key) else { throw SyncError.wrongKey }
             try env.keyStore.saveSyncKey(opened.key, vaultID: vault.vaultID, epoch: opened.epoch)
             try? FileManager.default.removeItem(at: layout.joinRequest(me.deviceID))
             self.approverID = nil
@@ -293,12 +300,16 @@ public final class SyncController {
     private func findJoinRequest(_ layout: SyncFolderLayout) -> SyncPendingJoin? {
         guard let me = identity else { return nil }
         for id in layout.deviceIDs() where id != me.deviceID {
-            guard let data = try? Data(contentsOf: layout.joinRequest(id)),
+            guard let data = SyncSmallFile.read(layout.joinRequest(id)),
                   let request = try? SyncJoinRequest.parse(data),
                   request.approverKeyID == me.keys.publicKeys.keyID, !ignored.contains(request.deviceID),
+                  env.now().timeIntervalSince(request.createdAt) <= Self.joinRequestLifetime,
                   !FileManager.default.fileExists(atPath: layout.grants(me.deviceID)
                       .appendingPathComponent("\(request.deviceID).pestogrant").path) else { continue }
-            return SyncPendingJoin(request: request, words: request.pairingWords(approver: me.keys.publicKeys))
+            let words = pairingWords[request.signature]
+                ?? request.pairingWords(approver: me.keys.publicKeys)
+            pairingWords[request.signature] = words
+            return SyncPendingJoin(request: request, words: words)
         }
         return nil
     }
@@ -434,7 +445,7 @@ public final class SyncController {
 
     private static func publicIdentities(_ layout: SyncFolderLayout) -> [SyncPublicIdentity] {
         layout.deviceIDs().compactMap { id in
-            (try? Data(contentsOf: layout.identity(id))).flatMap { try? SyncPublicIdentity.parse($0) }
+            SyncSmallFile.read(layout.identity(id)).flatMap { try? SyncPublicIdentity.parse($0) }
         }
     }
 

@@ -135,7 +135,7 @@ struct SyncControllerTests {
         #expect(!b.controller.isEnabled)
     }
 
-    @Test("asking another Mac: six words on both screens, an Allow, and the key arrives with nothing typed")
+    @Test("asking another Mac: the same words on both screens, an Allow, and the key arrives with nothing typed")
     func pairing() async throws {
         let a = try SyncMac(name: "mac-a", folder: folder, time: time)
         await a.controller.turnOn()
@@ -149,11 +149,11 @@ struct SyncControllerTests {
             Issue.record("expected pairing, got \(b.controller.flow)")
             return
         }
-        #expect(words.count == 6 && approver == "mac-a’s Mac")
+        #expect(words.count == SyncPairingCode.wordCount && approver == "mac-a’s Mac")
 
         a.controller.refresh()
         let pending = try #require(a.controller.pendingJoin)
-        #expect(pending.words == words, "both Macs must show the same six words")
+        #expect(pending.words == words, "both Macs must show the same words")
         a.controller.allow(pending)
         b.controller.refresh()
         try await Task.sleep(for: .milliseconds(200))
@@ -161,6 +161,33 @@ struct SyncControllerTests {
             Issue.record("expected an offer to join, got \(b.controller.flow)")
             return
         }
+    }
+
+    @Test("a grant that carries a key the vault does not accept is refused, and nothing is saved")
+    func aGrantWithTheWrongKeyIsNotSaved() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        await settle(a)
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        b.controller.askAnotherMac()
+        a.controller.refresh()
+        let pending = try #require(a.controller.pendingJoin)
+        let layout = SyncFolderLayout(root: folder)
+        let group = try #require(try SyncGroupManager.openGroup(layout: layout, keyStore: a.keyStore))
+        let approver = try #require(try KeychainDeviceKeyStore(secrets: a.secrets).deviceKeys())
+        let forged = try SyncGrant.seal(
+            key: SyncKey.generate(), vaultID: group.vault.vaultID, epoch: group.epoch, to: pending.request,
+            approver: approver
+        )
+        try FileManager.default.createDirectory(at: layout.grants("mac-a"), withIntermediateDirectories: true)
+        try forged.serialized().write(to: layout.grants("mac-a").appendingPathComponent("mac-b.pestogrant"))
+
+        b.controller.refresh()
+        try await Task.sleep(for: .milliseconds(200))
+
+        if case .failed = b.controller.flow {} else { Issue.record("expected a refusal, got \(b.controller.flow)") }
+        #expect(try b.keyStore.syncKey(vaultID: group.vault.vaultID, epoch: group.epoch) == nil)
     }
 
     @Test("a request that is denied does not come back, and one addressed to another Mac is not shown")
@@ -175,6 +202,23 @@ struct SyncControllerTests {
         let pending = try #require(a.controller.pendingJoin)
         a.controller.deny(pending)
         a.controller.refresh()
+        #expect(a.controller.pendingJoin == nil)
+    }
+
+    @Test("a request that is a day old is not shown: it is a request nobody is waiting for")
+    func staleRequestIsNotShown() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        await settle(a)
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        b.controller.askAnotherMac()
+        a.controller.refresh()
+        #expect(a.controller.pendingJoin != nil, "a fresh request is shown")
+
+        time.advance(by: SyncController.joinRequestLifetime + 1)
+        a.controller.refresh()
+
         #expect(a.controller.pendingJoin == nil)
     }
 

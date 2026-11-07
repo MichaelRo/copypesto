@@ -111,7 +111,7 @@ public enum SyncGroupManager {
     public static func open(layout: SyncFolderLayout, keyStore: any SyncKeyStoring) throws -> SyncGroupOpening {
         var candidates: [(vault: SyncVault, hash: String)] = []
         for url in layout.vaultFiles() {
-            guard let data = try? Data(contentsOf: url), let vault = try? SyncVault.parse(data) else { continue }
+            guard let data = SyncSmallFile.read(url), let vault = try? SyncVault.parse(data) else { continue }
             candidates.append((vault, Data(SHA256.hash(data: data)).hexString))
         }
         guard let vaultID = candidates.map(\.vault.vaultID).min(by: { $0.lexicographicallyPrecedes($1) }) else {
@@ -141,7 +141,7 @@ public enum SyncGroupManager {
 
     static func devices(layout: SyncFolderLayout, vault: SyncVault, key: SyncKey) -> [SyncDeviceRecord] {
         layout.deviceIDs().compactMap { id in
-            guard let data = try? Data(contentsOf: layout.deviceRecord(id)) else { return nil }
+            guard let data = SyncSmallFile.read(layout.deviceRecord(id)) else { return nil }
             return try? SyncDeviceRecord.open(
                 data,
                 syncKey: key,

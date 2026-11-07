@@ -274,13 +274,14 @@ public final class SyncController {
     private func collectGrant(_ layout: SyncFolderLayout) {
         guard let me = identity, let approverID else { return }
         let url = layout.grants(approverID).appendingPathComponent("\(me.deviceID).pestogrant")
-        guard let data = try? Data(contentsOf: url), let grant = try? SyncGrant.parse(data),
+        guard let data = SyncSmallFile.read(url), let grant = try? SyncGrant.parse(data),
               let approver = Self.publicIdentities(layout).first(where: { $0.deviceID == approverID }),
               case let .needsKey(vault) = try? openGroup() else { return }
         do {
             let opened = try grant.open(
                 device: me.keys, deviceID: me.deviceID, vaultID: vault.vaultID, expectedApprover: approver.keys
             )
+            guard vault.accepts(opened.key) else { throw SyncError.wrongKey }
             try env.keyStore.saveSyncKey(opened.key, vaultID: vault.vaultID, epoch: opened.epoch)
             try? FileManager.default.removeItem(at: layout.joinRequest(me.deviceID))
             self.approverID = nil
@@ -293,7 +294,7 @@ public final class SyncController {
     private func findJoinRequest(_ layout: SyncFolderLayout) -> SyncPendingJoin? {
         guard let me = identity else { return nil }
         for id in layout.deviceIDs() where id != me.deviceID {
-            guard let data = try? Data(contentsOf: layout.joinRequest(id)),
+            guard let data = SyncSmallFile.read(layout.joinRequest(id)),
                   let request = try? SyncJoinRequest.parse(data),
                   request.approverKeyID == me.keys.publicKeys.keyID, !ignored.contains(request.deviceID),
                   !FileManager.default.fileExists(atPath: layout.grants(me.deviceID)
@@ -434,7 +435,7 @@ public final class SyncController {
 
     private static func publicIdentities(_ layout: SyncFolderLayout) -> [SyncPublicIdentity] {
         layout.deviceIDs().compactMap { id in
-            (try? Data(contentsOf: layout.identity(id))).flatMap { try? SyncPublicIdentity.parse($0) }
+            SyncSmallFile.read(layout.identity(id)).flatMap { try? SyncPublicIdentity.parse($0) }
         }
     }
 

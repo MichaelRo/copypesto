@@ -21,13 +21,19 @@ struct CardTreatmentTests {
         )
     }
 
-    private let ordinary = CardTreatmentInput.Picture(aspectRatio: 1.5, isAnimated: false)
+    private let ordinary = CardTreatmentInput.Picture(aspectRatio: 1.0, isAnimated: false)
 
     // MARK: Pictures
 
     @Test("a picture that is loaded fills the card")
     func whenImageLoaded_thenFullBleed() {
         #expect(CardTreatment.decide(input(.image, picture: ordinary)) == .fullBleedPicture(.fill, isAnimated: false))
+    }
+
+    @Test("a 3:2 picture is shown whole, not cropped")
+    func whenWidePicture_thenFit() {
+        let pass = CardTreatmentInput.Picture(aspectRatio: 1.5, isAnimated: false)
+        #expect(CardTreatment.decide(input(.image, picture: pass)) == .fullBleedPicture(.fit, isAnimated: false))
     }
 
     @Test("a GIF fills the card and says it is one")

@@ -40,13 +40,13 @@ struct PictureScrimTests {
 
 @Suite("Picture fit")
 struct PictureFitTests {
-    @Test("ordinary pictures fill the card", arguments: [0.6, 0.75, 1.0, 1.33, 1.78, 2.0])
+    @Test("ordinary pictures fill the card", arguments: [0.8, 0.9, 1.0, 1.2, 1.35])
     func whenOrdinaryAspect_thenFill(aspect: Double) {
         #expect(PictureFit.decide(aspectRatio: aspect) == .fill)
     }
 
-    @Test("very tall and very wide pictures are fitted instead of cropped to a band", arguments: [
-        0.59, 0.3, 0.1, 2.01, 3.0, 10.0
+    @Test("tall and wide pictures, a 3:2 pass included, are fitted instead of cropped", arguments: [
+        0.79, 0.6, 0.3, 0.1, 1.36, 1.5, 1.78, 2.0, 3.0, 10.0
     ])
     func whenExtremeAspect_thenFit(aspect: Double) {
         #expect(PictureFit.decide(aspectRatio: aspect) == .fit)

@@ -51,8 +51,12 @@ extension AppDelegate {
         context: ModelContext,
         then: @escaping () -> Void
     ) {
-        NSApp.activate()
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
         let alert = Self.keyLossAlert(missing: decision == .keyMissingWithExistingData)
+        alert.window.orderFrontRegardless()
+        alert.window.makeKeyAndOrderFront(nil)
+        defer { updateActivationPolicy() }
         let choice = KeyLossChoice(buttonIndex: alert.runModal().rawValue - NSApplication.ModalResponse
             .alertFirstButtonReturn.rawValue)
         if choice.opensRestore {
@@ -117,8 +121,12 @@ extension AppDelegate {
     /// A locked or unreachable Keychain is not a lost key: never offer to wipe. The person can try again once it is
     /// available, or quit with the history untouched.
     private func waitForKeychain(then: @escaping () -> Void) {
-        NSApp.activate()
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
+        alert.window.orderFrontRegardless()
+        alert.window.makeKeyAndOrderFront(nil)
+        defer { updateActivationPolicy() }
         alert.alertStyle = .warning
         alert.messageText = String(localized: "Pesto can’t reach your Keychain")
         alert.informativeText = String(localized: """

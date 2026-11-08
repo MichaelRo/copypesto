@@ -10,7 +10,7 @@ final class ClearHistoryTests: PestoUITestCase {
         statusItem.click()
         let parent = app.menuItems["Clear History"]
         XCTAssertTrue(parent.waitForExistence(timeout: 5), "status menu has no Clear History")
-        parent.click()
+        parent.hover()
         let item = app.menuItems.matching(identifier: identifier).firstMatch
         XCTAssertTrue(item.waitForExistence(timeout: 5), "submenu item \(identifier) missing")
         item.click()
@@ -23,7 +23,7 @@ final class ClearHistoryTests: PestoUITestCase {
         let confirm = element(AccessibilityID.clearConfirmDelete)
         XCTAssertTrue(confirm.waitForExistence(timeout: 10), "no confirmation before deleting")
         capture("clear-confirmation", of: confirm.exists ? app.windows.firstMatch : nil)
-        confirm.click()
+        clickIgnoringInterruptions(confirm)
 
         showOverlay()
         XCTAssertFalse(card(containing: "Quarterly report draft").exists, "the newest item should be gone")
@@ -39,7 +39,7 @@ final class ClearHistoryTests: PestoUITestCase {
         chooseClear("statusClearAll")
         let cancel = element(AccessibilityID.clearConfirmCancel)
         XCTAssertTrue(cancel.waitForExistence(timeout: 10), "no confirmation before deleting")
-        cancel.click()
+        clickIgnoringInterruptions(cancel)
 
         showOverlay()
         XCTAssertTrue(card(containing: "Quarterly report draft").exists)

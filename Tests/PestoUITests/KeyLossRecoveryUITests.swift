@@ -15,7 +15,7 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
     private func openRestoreWindow() {
         XCTAssertTrue(restoreFromBackup.waitForExistence(timeout: 30), "the lost-key alert did not appear")
         capture("key-loss-alert", of: app.dialogs.firstMatch)
-        restoreFromBackup.click()
+        clickIgnoringInterruptions(restoreFromBackup)
         XCTAssertTrue(app.buttons["Choose Backup\u{2026}"].waitForExistence(timeout: 10), "no restore window")
         capture("key-loss-restore-window")
         app.buttons["Choose Backup\u{2026}"].click()

@@ -313,4 +313,13 @@ class PestoUITestCase: XCTestCase {
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         return base
     }
+
+    /// Clicks an element without letting XCUITest scan background application windows for system interruption dialogs.
+    /// Modal alerts centered on the screen otherwise trigger 35s-per-window interruption checks on any
+    /// overlapping desktop windows (IDE, browser, etc.).
+    func clickIgnoringInterruptions(_ element: XCUIElement) {
+        app.setValue(true, forKey: "doesNotHandleUIInterruptions")
+        element.click()
+        app.setValue(false, forKey: "doesNotHandleUIInterruptions")
+    }
 }

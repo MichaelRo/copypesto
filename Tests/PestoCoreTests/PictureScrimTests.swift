@@ -10,6 +10,39 @@ struct PictureScrimTests {
         #expect(PictureScrim.worstCaseContrast(textOpacity: PictureScrim.ageOpacity) >= 4.5)
     }
 
+    @Test("every theme surface scrim keeps header text at 4.5 to 1 or better in light and dark")
+    func whenAnyThemeSurfaceScrim_thenHeaderTextPassesAAInLightAndDark() {
+        for theme in AppTheme.allCases {
+            let darkGround = theme.groundHex(dark: true)
+            #expect(PictureScrim.worstCaseContrast(
+                coverHex: darkGround,
+                textHex: BrandPalette.parmesan,
+                textOpacity: PictureScrim.nameOpacity,
+                pictureIsBright: true
+            ) >= 4.5)
+            #expect(PictureScrim.worstCaseContrast(
+                coverHex: darkGround,
+                textHex: BrandPalette.parmesan,
+                textOpacity: PictureScrim.ageOpacity,
+                pictureIsBright: true
+            ) >= 4.5)
+
+            let lightGround = theme.groundHex(dark: false)
+            #expect(PictureScrim.worstCaseContrast(
+                coverHex: lightGround,
+                textHex: BrandPalette.mortar,
+                textOpacity: PictureScrim.nameOpacity,
+                pictureIsBright: false
+            ) >= 4.5)
+            #expect(PictureScrim.worstCaseContrast(
+                coverHex: lightGround,
+                textHex: BrandPalette.mortar,
+                textOpacity: PictureScrim.ageOpacity,
+                pictureIsBright: false
+            ) >= 4.5)
+        }
+    }
+
     @Test("the shortcut pill's text reads at 4.5 to 1 or better over a white picture")
     func whenWhitePicture_thenPillPassesAA() {
         #expect(PictureScrim.worstCaseContrast(coverOpacity: PictureScrim.pillOpacity, textOpacity: 1) >= 4.5)
@@ -28,28 +61,23 @@ struct PictureScrimTests {
         #expect(PictureScrim.worstCaseContrast(coverOpacity: 0.4, textOpacity: 1) < 4.5)
     }
 
-    @Test("the scrim is solid across the whole header band and fades below it")
-    func whenOpacityAtHeight_thenSolidThenFading() {
+    @Test("the scrim eases across the header band and fades to clear below it")
+    func whenOpacityAtHeight_thenEasesThenFading() {
         #expect(PictureScrim.opacity(atHeight: 0) == PictureScrim.topOpacity)
-        #expect(PictureScrim.opacity(atHeight: Double(CardLayout.headerHeight)) == PictureScrim.topOpacity)
+        #expect(PictureScrim.opacity(atHeight: Double(CardLayout.headerHeight)) == PictureScrim.headerBottomOpacity)
         #expect(PictureScrim.opacity(atHeight: Double(CardLayout.headerHeight) + PictureScrim.fadeHeight) == 0)
         let middle = PictureScrim.opacity(atHeight: Double(CardLayout.headerHeight) + PictureScrim.fadeHeight / 2)
-        #expect(middle > 0 && middle < PictureScrim.topOpacity)
+        #expect(middle > 0 && middle < PictureScrim.headerBottomOpacity)
     }
 }
 
 @Suite("Picture fit")
 struct PictureFitTests {
-    @Test("ordinary pictures fill the card", arguments: [0.8, 0.9, 1.0, 1.2, 1.35])
-    func whenOrdinaryAspect_thenFill(aspect: Double) {
-        #expect(PictureFit.decide(aspectRatio: aspect) == .fill)
-    }
-
-    @Test("tall and wide pictures, a 3:2 pass included, are fitted instead of cropped", arguments: [
-        0.79, 0.6, 0.3, 0.1, 1.36, 1.5, 1.78, 2.0, 3.0, 10.0
+    @Test("valid pictures fill the card edge-to-edge", arguments: [
+        0.3, 0.6, 0.8, 1.0, 1.35, 1.5, 1.78, 2.0, 3.0
     ])
-    func whenExtremeAspect_thenFit(aspect: Double) {
-        #expect(PictureFit.decide(aspectRatio: aspect) == .fit)
+    func whenValidAspect_thenFill(aspect: Double) {
+        #expect(PictureFit.decide(aspectRatio: aspect) == .fill)
     }
 
     @Test("an aspect that cannot be trusted is fitted", arguments: [0.0, -1.0, Double.nan, Double.infinity])

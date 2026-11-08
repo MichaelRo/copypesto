@@ -26,33 +26,33 @@ extension GridView {
                 pinboards.contains { $0.id == id } ? id : nil
             }
         }
+        let now = Date.now
         var ids = index.matching(
             HistoryCriteria(
                 hidesSensitive: filter.hidesSensitive, appBundleIDs: filter.appBundleIDs,
                 collectionID: plainCollection, searchActive: filter.searchActive, types: filter.types,
                 sources: filter.sources, dateCutoff: filter.dateCutoff, dateBefore: filter.dateBefore,
-                sensitiveOnly: filter.sensitiveOnly, remoteOnly: filter.remoteOnly, query: query
+                sensitiveOnly: filter.sensitiveOnly, remoteOnly: filter.remoteOnly, query: query,
+                now: now
             ),
             smartCollection: smart
         )
         var result = ids.compactMap(store.item(for:))
-        if !query.isEmpty, !query.hasPrefix("@") {
+        if !query.isEmpty, !query.hasPrefix("@"), !semanticSupplement.isEmpty {
             let present = Set(ids)
+            var addedAny = false
             for item in filter.apply(to: semanticSupplement) where !present.contains(item.id) {
+                if !item.isPinned, let expiry = item.expiresAt, expiry != .distantPast, expiry <= now {
+                    continue
+                }
                 result.append(item)
                 ids.append(item.id)
+                addedAny = true
             }
-        }
-        let now = Date.now
-        result.removeAll { item in
-            guard !item.isPinned, let expiry = item.expiresAt, expiry != .distantPast else { return false }
-            return expiry <= now
-        }
-        let validIDs = Set(result.map(\.id))
-        ids.removeAll { !validIDs.contains($0) }
-        if plainCollection != nil {
-            result = CollectionOrder.sorted(result)
-            ids = result.map(\.id)
+            if addedAny, plainCollection != nil {
+                result = CollectionOrder.sorted(result)
+                ids = result.map(\.id)
+            }
         }
         return Filtered(items: result, ids: ids)
     }
@@ -60,14 +60,17 @@ extension GridView {
     /// Puts a new result on the shelf, animating when the change is one that animates, and keeps the focus ring and the
     /// selection on clips that are still there.
     func applyFiltered(_ filtered: Filtered, isUpdate: Bool) {
+        let sliced = Array(filtered.items.prefix(displayLimit))
         if isUpdate, ShelfMotion.shouldAnimateChange(from: cachedFilteredIDs, to: filtered.ids) {
             withAnimation(Motion.animation(.snappy(duration: ShelfMotion.change))) {
                 cachedFilteredItems = filtered.items
                 cachedFilteredIDs = filtered.ids
+                displayedItems = sliced
             }
         } else {
             cachedFilteredItems = filtered.items
             cachedFilteredIDs = filtered.ids
+            displayedItems = sliced
         }
         guard isUpdate else { return }
         focusedIndex = ShelfFocus.resolvedIndex(focusedID: focusedID, previousIndex: focusedIndex, in: filtered.ids)

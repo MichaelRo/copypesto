@@ -6,7 +6,11 @@ import SwiftUI
 /// What a card can ask the shelf to do. The shelf builds one value for all its cards and puts it in the environment;
 /// each action takes the clip it is about. An action that is absent hides its menu command, so a card with none (a
 /// preview, a snapshot, the sample strip) is a plain card, and the small menu at the cursor supplies only a click.
-struct CardActions {
+struct CardActions: Equatable {
+    static func == (lhs: CardActions, rhs: CardActions) -> Bool {
+        (lhs.paste == nil) == (rhs.paste == nil) && (lhs.click == nil) == (rhs.click == nil)
+    }
+
     var detailDismissed: (@MainActor () -> Void)?
     var pointerEntered: (@MainActor () -> Void)?
     var click: (@MainActor (ClipboardItem, ShelfClick) -> Void)?

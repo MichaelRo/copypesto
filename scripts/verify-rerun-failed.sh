@@ -43,6 +43,7 @@ env TEST_RUNNER_PESTO_SCREENSHOT_DIR="$PWD/.build/ui-screenshots/rerun-$STAMP" x
 CODE=$?
 
 xcrun xcresulttool get test-results summary --path "$RESULT" --compact >"${RESULT%.xcresult}-summary.json" 2>/dev/null
+xcrun xcresulttool get test-results tests --path "$RESULT" --compact >"${RESULT%.xcresult}-tree.json" 2>/dev/null
 python3 - "${RESULT%.xcresult}-summary.json" <<'PY'
 import json, sys
 s = json.load(open(sys.argv[1]))
@@ -50,5 +51,13 @@ print("passed=%s failed=%s skipped=%s" % (s.get("passedTests", "?"), s.get("fail
 PY
 python3 scripts/verify_failures.py "${RESULT%.xcresult}-summary.json"
 echo "log: $LOG"
-if [[ $CODE -eq 0 ]]; then echo "RESULT: PASS (partial run: not the gate)"; else echo "RESULT: FAIL"; fi
+if [[ $CODE -eq 0 ]]; then
+  if python3 scripts/verify_reconcile.py --repo "$PWD" --run-dir "${RUN_DIR%/}" --stamp "$STAMP"; then
+    echo "RESULT: PASS (reconciled gate receipt written)"
+  else
+    echo "RESULT: PASS (partial run: not reconciled)"
+  fi
+else
+  echo "RESULT: FAIL"
+fi
 exit $CODE

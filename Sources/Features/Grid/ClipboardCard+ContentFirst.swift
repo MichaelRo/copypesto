@@ -8,7 +8,12 @@ struct HeaderOverlay {
     let scheme: ColorScheme
     let ageOpacity: Double
 
-    static let onPicture = HeaderOverlay(ink: .white, scheme: .dark, ageOpacity: PictureScrim.ageOpacity)
+    static func onPicture(scheme: ColorScheme) -> HeaderOverlay {
+        let ink = scheme == .dark
+            ? (Color(hex: BrandPalette.parmesan) ?? .white)
+            : (Color(hex: BrandPalette.mortar) ?? .black)
+        return HeaderOverlay(ink: ink, scheme: scheme, ageOpacity: PictureScrim.ageOpacity)
+    }
 
     init(ink: Color, scheme: ColorScheme, ageOpacity: Double) {
         self.ink = ink
@@ -24,6 +29,10 @@ struct HeaderOverlay {
 
 @MainActor
 extension ClipboardCard {
+    var pictureOverlay: HeaderOverlay {
+        HeaderOverlay.onPicture(scheme: colorScheme)
+    }
+
     // MARK: - Which treatment
 
     var treatment: CardTreatment {
@@ -52,15 +61,28 @@ extension ClipboardCard {
     // MARK: - Picture and color cards
 
     func fullBleedPictureCard(fit: PictureFit, isAnimated: Bool) -> some View {
-        ZStack(alignment: .top) {
-            Color.white.opacity(0.06)
-            if fit == .fit, let shown = shownThumbnail {
-                pictureBackdrop(shown.image)
-            }
+        let over = pictureOverlay
+        return ZStack(alignment: .top) {
+            surface
             pictureLayer(fit: fit)
-                .padding(.top, fit == .fit ? CardLayout.headerHeight : 0)
             pictureScrim
-            contentFirstChrome(over: .onPicture, onPicture: true, showsGIF: isAnimated, label: nil)
+            contentFirstChrome(over: over, onPicture: true, showsGIF: isAnimated, label: nil)
+        }
+    }
+
+    var fullBleedLinkCard: some View {
+        let over = pictureOverlay
+        return ZStack(alignment: .top) {
+            surface
+            urlImageBody
+            pictureScrim
+            VStack(alignment: .leading, spacing: 0) {
+                header(over: over)
+                Spacer(minLength: 0)
+                contentFirstFooter(over: over, onPicture: true, showsGIF: urlOGImageIsAnimated)
+                    .padding(.horizontal, 10)
+                    .padding(.bottom, 8)
+            }
         }
     }
 
@@ -75,38 +97,22 @@ extension ClipboardCard {
     }
 
     @ViewBuilder
-    private func pictureLayer(fit: PictureFit) -> some View {
+    private func pictureLayer(fit _: PictureFit) -> some View {
         if let shown = shownThumbnail {
             let aspect = shown.image.size.height > 0 ? shown.image.size.width / shown.image.size.height : 1
             Color.clear
                 .overlay {
                     if shown.isAnimated {
-                        if fit == .fill {
-                            AnimatedImageView(image: shown.image, animates: playsAnimations)
-                                .aspectRatio(aspect, contentMode: .fill)
-                        } else {
-                            AnimatedImageView(image: shown.image, animates: playsAnimations)
-                        }
+                        AnimatedImageView(image: shown.image, animates: playsAnimations)
+                            .aspectRatio(aspect, contentMode: .fill)
                     } else {
                         Image(nsImage: shown.image)
                             .resizable()
-                            .aspectRatio(contentMode: fit == .fill ? .fill : .fit)
+                            .aspectRatio(contentMode: .fill)
                     }
                 }
                 .clipped()
         }
-    }
-
-    private func pictureBackdrop(_ image: NSImage) -> some View {
-        Color.clear
-            .overlay {
-                Image(nsImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .blur(radius: 14, opaque: true)
-            }
-            .overlay(Color.black.opacity(0.35))
-            .clipped()
     }
 
     private var pictureScrim: some View {
@@ -114,9 +120,9 @@ extension ClipboardCard {
         let total = solid + PictureScrim.fadeHeight
         return LinearGradient(
             stops: [
-                .init(color: .black.opacity(PictureScrim.topOpacity), location: 0),
-                .init(color: .black.opacity(PictureScrim.topOpacity), location: solid / total),
-                .init(color: .black.opacity(0), location: 1)
+                .init(color: surface.opacity(PictureScrim.topOpacity), location: 0),
+                .init(color: surface.opacity(PictureScrim.headerBottomOpacity), location: solid / total),
+                .init(color: surface.opacity(0), location: 1)
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -147,7 +153,7 @@ extension ClipboardCard {
     private func contentFirstFooter(over: HeaderOverlay, onPicture: Bool, showsGIF: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             if !item.tags.isEmpty {
-                tagChipsRow(onDark: true)
+                tagChipsRow(onDark: onPicture)
             }
             HStack(alignment: .center, spacing: 6) {
                 if let number = shortcutNumber {
@@ -184,7 +190,7 @@ extension ClipboardCard {
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background {
-            if onPicture { Capsule().fill(Color.black.opacity(PictureScrim.pillOpacity)) }
+            if onPicture { Capsule().fill(surface.opacity(PictureScrim.pillOpacity)) }
         }
     }
 

@@ -62,6 +62,8 @@ struct GridView: View {
     @State var cachedFilteredItems: [ClipboardItem] = []
     /// The ids of `cachedFilteredItems`, from the index, so no pass over the clips is needed to read them.
     @State var cachedFilteredIDs: [UUID] = []
+    /// Visible slice of `cachedFilteredItems` up to `displayLimit`, stored so focus changes do not re-slice the array.
+    @State var displayedItems: [ClipboardItem] = []
     /// Bumped when a clip is edited in a way the filter reads (sensitive mark, collection, tags), which the other
     /// inputs of `FilterKey` do not show.
     @State var filterEditGeneration = 0
@@ -177,10 +179,6 @@ struct GridView: View {
         )
     }
 
-    var displayedItems: [ClipboardItem] {
-        Array(cachedFilteredItems.prefix(displayLimit))
-    }
-
     var body: some View {
         VStack(spacing: 0) {
             KeyboardNavigationWrapper(
@@ -199,10 +197,15 @@ struct GridView: View {
                 onEscapeFromSearch: {
                     appState.isSearchActive = false
                 },
-                onArrowKey: {
-                    keyboardRevealedID = displayedItems.indices.contains(focusedIndex)
-                        ? displayedItems[focusedIndex].id : nil
-                    scrollToFocused()
+                onArrowKey: { isRepeat in
+                    if isRepeat {
+                        if keyboardRevealedID != nil { keyboardRevealedID = nil }
+                        scrollToFocused(animated: false)
+                    } else {
+                        keyboardRevealedID = displayedItems.indices.contains(focusedIndex)
+                            ? displayedItems[focusedIndex].id : nil
+                        scrollToFocused(animated: true)
+                    }
                 },
                 onPrevPinboard: { cyclePinboard(forward: false) },
                 onNextPinboard: { cyclePinboard(forward: true) },
@@ -253,7 +256,7 @@ struct GridView: View {
                                     proxy.scrollTo(request.id, anchor: .center)
                                 }
                             } else {
-                                proxy.scrollTo(request.id, anchor: .leading)
+                                proxy.scrollTo(request.id, anchor: .center)
                             }
                         }
                     }
@@ -429,37 +432,7 @@ struct GridView: View {
         }
     }
 
-    // MARK: - Card grid
-
     private var cardStack: some View {
         cardRow
-    }
-
-    private var cardRow: some View {
-        let actions = cardActions
-        return LazyHStack(spacing: 8) {
-            ForEach(Array(displayedItems.enumerated()), id: \.element.id) { idx, item in
-                cardView(for: item, at: idx)
-                    .transition(cardTransition)
-            }
-            // Sentinel: when the last displayed card appears, load 500 more.
-            // The guard prevents multi-fire in a single layout pass — without it,
-            // onAppear can fire several times before the new displayLimit takes effect.
-            if cachedFilteredItems.count > displayedItems.count {
-                Color.clear
-                    .frame(width: 1, height: 1)
-                    .accessibilityHidden(true)
-                    .onAppear {
-                        guard cachedFilteredItems.count > displayLimit else { return }
-                        displayLimit += 500
-                    }
-            }
-        }
-        // Without this label the LazyHStack is an unnamed "Other" node in the AX tree (SwiftUI
-        // synthesizes a container element for it once it holds several buttons), which fails
-        // AccessibilityAuditTests. The name stays, redundant with "Clips" or not.
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Clipboard cards")
-        .environment(\.cardActions, actions)
     }
 }

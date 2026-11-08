@@ -28,4 +28,14 @@ public enum CollectionOrder {
             }
             .map(\.item)
     }
+
+    public static func sortedRows(_ rows: [HistoryRow]) -> [HistoryRow] {
+        rows.sorted { a, b in
+            let orderA = a.collectionOrder ?? Int.max
+            let orderB = b.collectionOrder ?? Int.max
+            if orderA != orderB { return orderA < orderB }
+            if a.copiedAt != b.copiedAt { return a.copiedAt > b.copiedAt }
+            return a.id.uuidString < b.id.uuidString
+        }
+    }
 }

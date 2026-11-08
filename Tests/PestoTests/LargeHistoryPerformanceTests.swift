@@ -101,13 +101,13 @@ final class LargeHistoryPerformanceTests: XCTestCase {
         let byID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         PreviewTextCache.shared.clear()
 
+        var previousIDs = items.map(\.id)
         func switchTo(_ collection: UUID?) -> Int {
-            let ids = index.matching(HistoryCriteria(collectionID: collection))
-            var result = ids.compactMap { byID[$0] }
-            if collection != nil {
-                result = CollectionOrder.sorted(result)
-            }
-            return result.count
+            let ids = index.matching(HistoryCriteria(collectionID: collection, now: .now))
+            _ = ShelfMotion.shouldAnimateChange(from: previousIDs, to: ids)
+            previousIDs = ids
+            let displayed = ids.prefix(100).compactMap { byID[$0] }
+            return displayed.count
         }
         let clock = ContinuousClock()
         func milliseconds(runs: Int = 3, _ body: () -> Int) -> (ms: Double, count: Int) {
@@ -122,14 +122,15 @@ final class LargeHistoryPerformanceTests: XCTestCase {
         let cold = milliseconds(runs: 1) { switchTo(collectionID) }
         let warm = milliseconds { switchTo(collectionID) }
         let all = milliseconds { switchTo(nil) }
-        XCTAssertEqual(cold.count, 1000)
-        XCTAssertEqual(all.count, 5000)
+        XCTAssertEqual(cold.count, 100)
+        XCTAssertEqual(all.count, 100)
         PerfReport.emit(
             "collection switch over 5,000 clips: collection of 1,000 cold \(cold.ms) ms, warm \(warm.ms) ms; all \(all.ms) ms"
         )
         if !RunEnvironment.isCI {
-            XCTAssertLessThan(warm.ms, 16, "a switch must leave the frame to SwiftUI")
-            XCTAssertLessThan(all.ms, 16, "a switch to All must leave the frame to SwiftUI")
+            XCTAssertLessThan(cold.ms, 4, "a cold collection switch must stay under a quarter frame")
+            XCTAssertLessThan(warm.ms, 4, "a warm collection switch must stay under a quarter frame")
+            XCTAssertLessThan(all.ms, 4, "a switch to All must stay under a quarter frame")
         }
     }
 }

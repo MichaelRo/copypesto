@@ -68,6 +68,14 @@ extension Color {
             return NSColor(hex: theme.accentHex(dark: dark)) ?? .controlAccentColor
         })
     }
+
+    static func themedSurface(light: String, dark darkTheme: String = "") -> Color {
+        Color(nsColor: NSColor(name: nil) { appearance in
+            let dark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let theme = AppTheme.resolve(light: light, dark: darkTheme, isDark: dark)
+            return NSColor(hex: theme.groundHex(dark: dark)) ?? .windowBackgroundColor
+        })
+    }
 }
 
 private extension NSColor {

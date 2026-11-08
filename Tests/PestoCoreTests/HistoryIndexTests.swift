@@ -193,6 +193,47 @@ struct HistoryIndexTests {
         #expect(index.hasSearchText)
         #expect(index.matching(HistoryCriteria(query: "secret")).count == 1)
     }
+
+    @Test("expired non-pinned clips are omitted while pinned or distantPast clips stay")
+    func whenExpired_thenNonPinnedOmitted() throws {
+        let fixture = try Fixture()
+        let active = try fixture.add("active", at: 1)
+        let expired = try fixture.add("expired", at: 2)
+        expired.expiresAt = Date(timeIntervalSince1970: 50)
+        let pinnedExpired = try fixture.add("pinned", at: 3)
+        pinnedExpired.isPinned = true
+        pinnedExpired.expiresAt = Date(timeIntervalSince1970: 50)
+        let distantPast = try fixture.add("distant", at: 4)
+        distantPast.expiresAt = .distantPast
+        try fixture.context.save()
+
+        let index = try HistoryIndex(items: fixture.items())
+        let now = Date(timeIntervalSince1970: 100)
+        #expect(index.matching(HistoryCriteria(now: now)) == [distantPast.id, pinnedExpired.id, active.id])
+    }
+
+    @Test("a plain collection sorts placed clips by collectionOrder then unplaced clips newest first")
+    func whenPlainCollection_thenOrderedByCollectionOrderThenTimestamp() throws {
+        let fixture = try Fixture()
+        let collection = UUID()
+        let unplacedOld = try fixture.add("unplaced-old", at: 1, collection: collection)
+        let placedSecond = try fixture.add("placed-2", at: 2, collection: collection)
+        placedSecond.collectionOrder = 2
+        let placedFirst = try fixture.add("placed-1", at: 3, collection: collection)
+        placedFirst.collectionOrder = 1
+        let unplacedNew = try fixture.add("unplaced-new", at: 4, collection: collection)
+        try fixture.context.save()
+
+        let index = try HistoryIndex(items: fixture.items())
+        #expect(
+            index.matching(HistoryCriteria(collectionID: collection)) == [
+                placedFirst.id,
+                placedSecond.id,
+                unplacedNew.id,
+                unplacedOld.id
+            ]
+        )
+    }
 }
 
 @Suite("History save change")

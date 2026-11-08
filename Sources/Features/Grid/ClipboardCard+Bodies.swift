@@ -48,7 +48,8 @@ extension ClipboardCard {
     }
 
     var urlImageBody: some View {
-        ZStack(alignment: .bottomLeading) {
+        let over = pictureOverlay
+        return ZStack(alignment: .bottomLeading) {
             Color.clear
                 .overlay {
                     if let img = urlOGImage {
@@ -61,15 +62,24 @@ extension ClipboardCard {
                         }
                     }
                 }
-            LinearGradient(colors: [.black.opacity(0.7), .clear], startPoint: .bottom, endPoint: .top)
-                .frame(height: 58)
-                .frame(maxHeight: .infinity, alignment: .bottom)
+                .clipped()
+            LinearGradient(
+                stops: [
+                    .init(color: surface.opacity(PictureScrim.topOpacity), location: 0),
+                    .init(color: surface.opacity(PictureScrim.headerBottomOpacity), location: 0.55),
+                    .init(color: surface.opacity(0), location: 1)
+                ],
+                startPoint: .bottom,
+                endPoint: .top
+            )
+            .frame(height: 84)
+            .frame(maxHeight: .infinity, alignment: .bottom)
             VStack(alignment: .leading, spacing: 2) {
                 if let title = item.ogTitle ?? item.customTitle {
                     Text(title)
                         // Text size capped: fills a fixed-size card's image scrim.
                             .scaledFont(size: 11, weight: .semibold, maxScale: 1.3)
-                            .foregroundStyle(.white)
+                            .foregroundStyle(over.ink.opacity(PictureScrim.nameOpacity))
                             .lineLimit(2)
                             .truncationMode(.tail)
                 }
@@ -82,18 +92,17 @@ extension ClipboardCard {
                     } else {
                         Image(systemName: "globe")
                             .font(.system(size: 10))
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(over.ink.opacity(over.ageOpacity))
                     }
                     Text(item.ogSiteName ?? URL(string: item.displayPreviewText)?.host ?? item.displayPreviewText)
                         .font(.caption2.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(over.ink.opacity(over.ageOpacity))
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.bottom, 6)
+            .padding(.horizontal, 10)
+            .padding(.bottom, shortcutNumber != nil || item.pasteCount >= 2 || item.collectionID != nil ? 28 : 8)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

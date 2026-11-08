@@ -197,17 +197,28 @@ public actor StorageService: ModelActor {
         var pixelWidth: Int?
         var pixelHeight: Int?
         var perceptualHash: String?
-        if clipType == .image, let source = CGImageSourceCreateWithData(capture.payload as CFData, nil) {
-            if let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] {
+        if clipType == .image,
+           let source = CGImageSourceCreateWithData(
+               capture.payload as CFData,
+               [kCGImageSourceShouldCache: false] as CFDictionary
+           )
+        {
+            if let props = CGImageSourceCopyPropertiesAtIndex(
+                source, 0, [kCGImageSourceShouldCache: false] as CFDictionary
+            ) as? [CFString: Any] {
                 pixelWidth = props[kCGImagePropertyPixelWidth] as? Int
                 pixelHeight = props[kCGImagePropertyPixelHeight] as? Int
             }
-            let isLargeImage = capture.payload.count > 1_000_000 || (pixelWidth ?? 0) * (pixelHeight ?? 0) > 4_000_000
+            let isLargeImage = capture.payload.count > 250_000 || (pixelWidth ?? 0) * (pixelHeight ?? 0) > 500_000
             if !isLargeImage {
                 perceptualHash = PerceptualHasher.hash(imageSource: source)
             }
         }
-        if let pHash = perceptualHash, let similar = perceptualDuplicate(of: pHash, payload: capture.payload) {
+        if let pHash = perceptualHash,
+           let similar = perceptualDuplicate(
+               of: pHash, payload: capture.payload, pixelWidth: pixelWidth, pixelHeight: pixelHeight
+           )
+        {
             if popsLookalikePicture {
                 similar.bringToFront(at: now)
                 try saveOrRollback()
@@ -230,7 +241,7 @@ public actor StorageService: ModelActor {
         //    launch.
         let analysisInput = input(
             for: clipType, image: clipType == .image ? capture.payload : nil, text: payloadString,
-            link: capture.payloadString
+            link: capture.payloadString, needsPerceptualHash: clipType == .image && perceptualHash == nil
         )
         let judgedLater = analysisInput.runsInTheBackground
         var analysis = IngestAnalysis()
@@ -520,17 +531,6 @@ public actor StorageService: ModelActor {
         let gif87a: [UInt8] = [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]
         let gif89a: [UInt8] = [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]
         return prefix == gif87a || prefix == gif89a
-    }
-
-    // MARK: - Perceptual dedup
-
-    func storeEmbedding(contentHash: String, embeddingData: Data) throws {
-        let desc = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { $0.contentHash == contentHash }
-        )
-        guard let item = try modelContext.fetch(desc).first else { return }
-        item.embeddingData = embeddingData
-        try saveOrRollback()
     }
 }
 

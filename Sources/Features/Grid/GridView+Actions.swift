@@ -45,9 +45,9 @@ extension GridView {
         }
     }
 
-    func scrollToFocused() {
+    func scrollToFocused(animated: Bool = true) {
         guard displayedItems.indices.contains(focusedIndex) else { return }
-        scrollRequest = ShelfScrollRequest(id: displayedItems[focusedIndex].id, animated: true)
+        scrollRequest = ShelfScrollRequest(id: displayedItems[focusedIndex].id, animated: animated)
     }
 
     /// UI-test only: a screen's worth of cards at a time, so each is drawn once on the way (a jump to the end draws

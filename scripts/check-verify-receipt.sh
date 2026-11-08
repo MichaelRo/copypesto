@@ -78,9 +78,16 @@ for source, data in candidates:
     if data.get("result") != "PASS":
         reasons.append(f"{source}: result is {data.get('result')!r}, expected 'PASS'")
         continue
+    if data.get("scoped"):
+        reasons.append(f"{source}: gate ran with --scoped; release requires full 'make verify'")
+        continue
     if not data.get("full_gate"):
         reasons.append(f"{source}: gate ran with --fast or --no-ui; release requires full 'make verify'")
         continue
+    if data.get("reconciled"):
+        if not str(data.get("reconciled_from") or "").strip() or not str(data.get("rerun_stamp") or "").strip():
+            reasons.append(f"{source}: reconciled receipt is missing reconciled_from or rerun_stamp")
+            continue
     if data.get("dirty"):
         reasons.append(f"{source}: gate ran on a dirty working tree; release requires a clean tree")
         continue

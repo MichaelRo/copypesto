@@ -7,6 +7,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-08
+### Changed
+- Popovers for animated GIFs preserve their full bounds and aspect ratio without letterbox clipping.
+- Link preview fetching introduces per-host queue throttling to prevent request floods and rate-limiting.
+- HTML entity decoding in URL metadata safely preserves ampersands and prevents double-expansion.
+
+### Added
+- Sensitive media detection screens OCR text recognized inside pictures and conceals sensitive images behind Touch ID and account password protection.
+- Retina image pasting writes dual PNG and TIFF companion flavors to ensure crisp rendering across all macOS apps.
+- Keyboard navigation across large histories applies active debounce protection.
+
 ## [1.5.0] - 2026-11-08
 ### Added
 - Settings, General: **Install updates automatically**, when Pesto last checked, and a **Check Now** button.

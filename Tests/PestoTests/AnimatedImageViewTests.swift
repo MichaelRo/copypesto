@@ -67,4 +67,18 @@ struct AnimatedImageViewTests {
         #expect(fitting.width == 288)
         #expect(fitting.height == 144)
     }
+
+    @Test("when proposal has infinite dimensions, sizeThatFits falls back gracefully")
+    func whenInfiniteProposal_thenFallsBackGracefully() {
+        let imageSize = CGSize(width: 300, height: 150)
+        let infiniteProposal = ProposedViewSize(width: .infinity, height: .infinity)
+        let size = AnimatedImageView.sizeThatFits(imageSize: imageSize, proposal: infiniteProposal)
+        #expect(size != nil)
+        if let size {
+            #expect(size.width.isFinite)
+            #expect(size.height.isFinite)
+            #expect(size.width == 300)
+            #expect(size.height == 150)
+        }
+    }
 }

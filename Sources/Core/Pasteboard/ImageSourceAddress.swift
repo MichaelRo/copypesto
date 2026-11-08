@@ -22,10 +22,10 @@ public enum ImageSourceAddress {
 
     private static func decodeHTMLEntities(_ string: String) -> String {
         string
-            .replacingOccurrences(of: "&amp;", with: "&")
             .replacingOccurrences(of: "&quot;", with: "\"")
             .replacingOccurrences(of: "&apos;", with: "'")
             .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&amp;", with: "&")
     }
 
     private static func imageURLs(inHTML html: String) -> [URL] {

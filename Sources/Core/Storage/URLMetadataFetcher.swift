@@ -122,13 +122,13 @@ public final class URLMetadataFetcher {
         return withGIF
     }
 
-    private func throttleHostIfNeeded(_ host: String) async {
+    private func throttleHostIfNeeded(_ host: String) async throws {
         guard !host.isEmpty else { return }
         let now = ContinuousClock.now
         if let nextAllowed = lastHostFetchTime[host], nextAllowed > now {
             let sleepTime = now.duration(to: nextAllowed)
             lastHostFetchTime[host] = nextAllowed + Duration.seconds(1)
-            try? await Task.sleep(for: sleepTime)
+            try await Task.sleep(for: sleepTime)
         } else {
             lastHostFetchTime[host] = now + Duration.seconds(1)
         }
@@ -156,7 +156,7 @@ public final class URLMetadataFetcher {
         await acquireSlot()
         defer { releaseSlot() }
 
-        await throttleHostIfNeeded(url.host?.lowercased() ?? "")
+        try await throttleHostIfNeeded(url.host?.lowercased() ?? "")
 
         if let directGIF = await fetchDirectGIF(url: url, originalURL: originalURL) {
             return directGIF

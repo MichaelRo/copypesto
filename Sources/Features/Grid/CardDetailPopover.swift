@@ -115,7 +115,9 @@ struct CardDetailPopover: View {
                 if let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
                     pictureImage = cached.image
                     pictureIsAnimated = cached.isAnimated
-                } else if let blob = item.blob, let data = blob.decryptedData() {
+                } else if DetailPopoverContent.canRead(byteSize: item.byteSize),
+                          let blob = item.blob, let data = blob.decryptedData()
+                {
                     let isAnimated = blob.mimeType == "com.compuserve.gif"
                         || blob.mimeType == "public.gif" || data.isGIF
                     if let image = await PreparedImage.image(from: data, animated: isAnimated) {
@@ -126,9 +128,14 @@ struct CardDetailPopover: View {
             }
         } else if item.type == .url, LinkPreviewPolicy.isEnabled() {
             if linkImage == nil {
-                let itemID = item.id
-                let stored = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
-                if let data = item.ogImageThumbnail ?? stored {
+                let data: Data?
+                if let direct = item.ogImageThumbnail {
+                    data = direct
+                } else {
+                    let itemID = item.id
+                    data = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
+                }
+                if let data {
                     linkImage = await PreparedImage.image(from: data, animated: data.isGIF)
                     linkImageIsAnimated = data.isGIF
                 }

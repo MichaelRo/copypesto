@@ -102,6 +102,12 @@ final class NSFWURLDetectorTests: XCTestCase {
         XCTAssertLessThan(score, 0.85)
     }
 
+    func test_keywordScore_isCaseInsensitiveForUppercaseAndCapitalizedText() {
+        XCTAssertGreaterThanOrEqual(NSFWURLDetector.keywordScore(in: "NSFW content detected"), 0.85)
+        XCTAssertGreaterThanOrEqual(NSFWURLDetector.keywordScore(in: "EXPLICIT PORN IMAGE"), 0.85)
+        XCTAssertGreaterThanOrEqual(NSFWURLDetector.keywordScore(in: "Adult Material XXX"), 0.85)
+    }
+
     // MARK: - Newly added blocklist entries
 
     func test_eromeDomain_isExplicit() {

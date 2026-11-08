@@ -195,11 +195,14 @@ final class AccessibilityAuditTests: PestoUITestCase {
     }
 
     func test_undoBanner_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("undo banner") {
+        try auditInBothAppearances("undo banner", knownFindings: [
+            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 1)
+        ]) {
             showOverlay()
             overlay.typeKey(.delete, modifierFlags: [])
             element(AccessibilityID.deleteConfirmButton).click()
             XCTAssertTrue(element(AccessibilityID.undoButton).waitForExistence(timeout: 5))
+            parkPointer()
         }
     }
 

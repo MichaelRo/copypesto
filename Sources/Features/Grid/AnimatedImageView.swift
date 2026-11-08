@@ -11,6 +11,7 @@ struct AnimatedImageView: NSViewRepresentable {
     let image: NSImage
     var animates = true
     var contentMode: NSImageScaling = .scaleProportionallyUpOrDown
+    var aspectFit = false
 
     static func sizeThatFits(imageSize: CGSize, proposal: ProposedViewSize) -> CGSize? {
         guard imageSize.width > 0, imageSize.height > 0 else { return nil }
@@ -26,18 +27,18 @@ struct AnimatedImageView: NSViewRepresentable {
         let view = SynchronizedGIFImageView()
         view.imageAlignment = .alignCenter
         view.wantsLayer = true
-        view.layer?.contentsGravity = .resizeAspect
         view.layer?.masksToBounds = true
-        view.configure(image: image, animates: animates, scaling: contentMode)
+        view.configure(image: image, animates: animates, scaling: contentMode, aspectFit: aspectFit)
         return view
     }
 
     func updateNSView(_ nsView: SynchronizedGIFImageView, context _: Context) {
-        nsView.configure(image: image, animates: animates, scaling: contentMode)
+        nsView.configure(image: image, animates: animates, scaling: contentMode, aspectFit: aspectFit)
     }
 
     func sizeThatFits(_ proposal: ProposedViewSize, nsView _: SynchronizedGIFImageView, context _: Context) -> CGSize? {
-        Self.sizeThatFits(imageSize: image.size, proposal: proposal)
+        guard aspectFit else { return nil }
+        return Self.sizeThatFits(imageSize: image.size, proposal: proposal)
     }
 }
 
@@ -46,14 +47,16 @@ final class SynchronizedGIFImageView: NSImageView {
     private(set) var shouldAnimate = false
     var lastRenderedFrameIndex: Int?
 
-    func configure(image: NSImage, animates: Bool, scaling: NSImageScaling) {
+    func configure(image: NSImage, animates: Bool, scaling: NSImageScaling, aspectFit: Bool = false) {
         let changedImage = self.image !== image
         if changedImage {
             self.image = image
             lastRenderedFrameIndex = nil
         }
         imageScaling = scaling
-        layer?.contentsGravity = .resizeAspect
+        if aspectFit {
+            layer?.contentsGravity = .resizeAspect
+        }
         super.animates = false
         shouldAnimate = animates
         AnimatedGIFClock.shared.updateMembership(for: self)

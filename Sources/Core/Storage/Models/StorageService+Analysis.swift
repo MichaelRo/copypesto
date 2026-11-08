@@ -117,7 +117,7 @@ extension StorageService {
         let recognizer = textRecognizer
         let screener = imageScreener
         let taskID = UUID()
-        if input.clipType == .image, let imageData = input.image {
+        if input.clipType == .image, RuntimeConfiguration.current.mode != .uiTest, let imageData = input.image {
             Task.detached(priority: .userInitiated) {
                 ThumbnailService.prewarm(id: itemID, imageData: imageData, maxPixel: 480)
             }

@@ -235,7 +235,8 @@ struct CardDetailPopover: View {
                     AnimatedImageView(
                         image: img,
                         animates: !Motion.reduceMotion,
-                        contentMode: .scaleProportionallyUpOrDown
+                        contentMode: .scaleProportionallyUpOrDown,
+                        aspectFit: true
                     )
                     .aspectRatio(aspect, contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: Self.previewMaxHeight)
@@ -275,7 +276,8 @@ struct CardDetailPopover: View {
                     AnimatedImageView(
                         image: image,
                         animates: !Motion.reduceMotion,
-                        contentMode: .scaleProportionallyUpOrDown
+                        contentMode: .scaleProportionallyUpOrDown,
+                        aspectFit: true
                     )
                     .aspectRatio(aspect, contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: Self.previewMaxHeight)

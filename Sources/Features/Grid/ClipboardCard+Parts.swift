@@ -295,6 +295,11 @@ extension ClipboardCard {
         decodedJWT = nil
     }
 
+    func releaseOffscreenThumbnail() {
+        urlOGImage = nil
+        urlFavicon = nil
+    }
+
     /// Copy Payload, from the button or Return: the payload goes out concealed and the popover closes.
     func copyDecodedPayload(_ text: String? = nil) {
         guard case let .decoded(decoding)? = decodedJWT else { return }

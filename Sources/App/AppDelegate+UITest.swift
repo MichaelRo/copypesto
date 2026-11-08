@@ -54,8 +54,22 @@ extension AppDelegate {
 
     private func seedForUITest(_ profile: SeedProfile) async -> Int {
         guard let service = storageService else { return 0 }
-        let captures = SeedFixtures.captures(for: profile)
         var seeded = 0
+        if profile == .pictures {
+            for index in 0..<300 {
+                let capture = SeedFixtures.pictureCapture(at: index)
+                do {
+                    try await service.ingest(capture)
+                    seeded += 1
+                } catch {
+                    Self.logger.error("UI-test seed ingest failed: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+            await service.waitForBackgroundWork()
+            await service.clearModelContext()
+            return seeded
+        }
+        let captures = SeedFixtures.captures(for: profile)
         for (index, capture) in captures.enumerated() {
             do {
                 let isSuggestionClip = profile == .suggestion && index == 0

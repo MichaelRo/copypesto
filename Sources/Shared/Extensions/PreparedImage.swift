@@ -15,7 +15,10 @@ enum PreparedImage {
     }
 
     nonisolated static func decode(_ data: Data) -> CGImage? {
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            [kCGImageSourceShouldCache: false] as CFDictionary
+        ) else { return nil }
         let options = [kCGImageSourceShouldCacheImmediately: true] as CFDictionary
         return CGImageSourceCreateImageAtIndex(source, 0, options)
     }

@@ -14,14 +14,14 @@ public actor ThumbnailService {
     private static let maxAnimatedFrames = 60
     private nonisolated(unsafe) static let animatedPreviews: NSCache<NSUUID, NSData> = {
         let cache = NSCache<NSUUID, NSData>()
-        cache.totalCostLimit = 48 * 1024 * 1024
+        cache.totalCostLimit = 24 * 1024 * 1024
         return cache
     }()
 
     private nonisolated(unsafe) static let stillPreviews: NSCache<NSString, NSData> = {
         let cache = NSCache<NSString, NSData>()
-        cache.countLimit = 32
-        cache.totalCostLimit = 16 * 1024 * 1024
+        cache.countLimit = 12
+        cache.totalCostLimit = 4 * 1024 * 1024
         return cache
     }()
 
@@ -42,14 +42,18 @@ public actor ThumbnailService {
 
     public func thumbnail(for itemID: UUID, maxPixel: Int) async -> Thumbnail? {
         let stillKey = "\(itemID.uuidString):\(maxPixel)" as NSString
+        if let cached = Self.animatedPreviews.object(forKey: itemID as NSUUID) {
+            return Thumbnail(data: cached as Data, isAnimated: true)
+        }
+        if let cached = Self.stillPreviews.object(forKey: stillKey) {
+            return Thumbnail(data: cached as Data, isAnimated: false)
+        }
+        defer { modelContext.rollback() }
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID })
         descriptor.fetchLimit = 1
         guard let blob = (try? modelContext.fetch(descriptor))?.first?.blob else { return nil }
 
         let isMimeAnimated = blob.mimeType == "com.compuserve.gif" || blob.mimeType == "public.gif"
-        if !isMimeAnimated, let cached = Self.stillPreviews.object(forKey: stillKey) {
-            return Thumbnail(data: cached as Data, isAnimated: false)
-        }
         guard let imageData = blob.decryptedData() else { return nil }
         let isAnimated = isMimeAnimated || imageData.isGIF
         if isAnimated {

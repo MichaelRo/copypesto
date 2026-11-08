@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import AppKit
+import PestoCore
 import SwiftUI
 import Testing
 @testable import Pesto
@@ -8,7 +9,8 @@ import Testing
 @MainActor
 struct ShelfBannerCapsuleTests {
     private func size(of capsule: ShelfBannerCapsule) -> CGSize {
-        NSHostingController(rootView: capsule).sizeThatFits(in: CGSize(width: 900, height: 100))
+        NSHostingController(rootView: capsule.defaultAppStorage(AppDefaults.store))
+            .sizeThatFits(in: CGSize(width: 900, height: 100))
     }
 
     @Test("import offer, shelf suggestion and single-action banners share the 30 pt capsule height and fit their text")

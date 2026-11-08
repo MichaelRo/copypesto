@@ -314,6 +314,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - ⇧⌘V from TextEdit, VS Code, Chrome and Slack. Pass: the shelf and the caret quick menu open, and pasting lands in each.
 - Paste a text, link, picture and file from the shelf into TextEdit, Safari, Chrome, Slack, Terminal and VS Code (Return
   and double click). Pass: every paste lands; none does nothing.
+- The shelf's memory (ShelfContextPolicy, 90 seconds): open a collection and search, close the shelf, reopen within a
+  minute and again after two. Pass: within 90 seconds the collection and the search stay; after 90 seconds the shelf is on
+  All and the search is empty. A paste clears the search immediately.
+- Edit shortcuts in the shelf's search field: ⌘X cuts, ⌘V pastes, and caret movements (← → ⌘← ⌘→ ⌥← ⌥→ ⌥⌫ ⌘⌫) move and
+  delete across words and to the ends. Pass: each edit shortcut mutates the search field without clobbering the shelf.
 - ⌃⌥⌘V (paste as plain text): `log show --last 5m --predicate 'category == "hotkey"'`. Pass: it shows "Registered Paste
   as plain text: status 0" and "Pressed …" (a status of -9878 means another app holds the combination).
 - Double ⌘C in a real app, and a ⌘V stack across apps. Pass: the double copy appends, and each plain ⌘V pastes the next clip.
@@ -355,6 +360,7 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   directly under "Copy".
 
 **Privacy**
+- A copy from 1Password or Apple Passwords. Pass: it is not captured.
 - Touch ID lock and unlock, the password fallback, and one shared timer for protected actions. Pass: the lock asks for
   Touch ID, falls back to the password, and a protected action inside the "Ask for Touch ID again after" window asks nothing.
 - Show on a hidden clip with Use Password…. Pass: the shelf stays open while the system dialog is up and the clip shows
@@ -382,6 +388,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   the shelf on one display, choose Settings from its gear; with the shelf closed, choose Settings from the menu-bar
   icon with the pointer on the other display. Pass: Settings opens on the display in use each time, at the size it was
   closed at, and a window already open is only brought forward, not moved.
+- Settings → Data, the Backup and Sync cards (ADR 0022), on hardware: in a narrow Settings window, in Dark and Light, with
+  sync available and with it unavailable (signed out of Apple Account, or offline); turning either switch on opens its
+  set-up sheet and Cancel leaves it off.
+- The color panel from the shelf, and Paste the previous clip after an iPhone copy. Pass: the panel opens, and the
+  previous clip pastes.
 - Import offer with two or more clipboard managers really installed (Paste and Maccy). Pass: (the sentence is `ImportOfferTests`) *Choose…* opens Settings → Data scrolled to **Found on this Mac**
   with each app's own icon, *Import…* on a row asks for Touch ID and a file for that app only, and the row then says "Imported N clips".
 - Card typography (`docs/design/card-typography.md`, option B): copies from three different apps on every theme in light
@@ -434,6 +445,9 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   failed*, the next history still runs, and `make bench-scroll` exits non-zero.
 - `make bench-latency all 7`, `make bench-undo` after a change to Undo, and `make bench-sync` after a change to sync. Pass: both stay within budget.
 
+**Undo** (ADR 0008; `make bench-undo` for the numbers)
+- Shelf at the bottom and at the top: delete a clip or collection, and press ⌘Z. Pass: the undo banner shows and ⌘Z brings it back in the same place.
+
 **Cards, cover, No Results and the click hint (ADRs 0026 to 0029)**
 - Content-first cards: copy a picture, a GIF, a color, a short sentence and a plain link, and look at the shelf in light
   and dark. Pass: the picture and GIF fill the card with readable text over it, the GIF moves where it did before, the
@@ -445,6 +459,7 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - A covered card (screen share, Hide Clip Contents, the content filter's blur): a click or Return still pastes it without
   showing it. What it draws is the `test_coveredCard_showsNumberKindAndAge` baseline, what its menu and VoiceOver actions
   offer is `CardConcealmentTests` and `CoveredMenuWiringTests`.
+- Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a card.
 - No Results VoiceOver wording (`NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt` covers the Tab walk): with VoiceOver on, press Clear Filters or Clear Search. Pass: VoiceOver says "Filters cleared" or "Search cleared".
 
 ## Two Macs: sync

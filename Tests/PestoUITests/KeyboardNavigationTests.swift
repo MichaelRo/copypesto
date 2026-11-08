@@ -119,13 +119,6 @@ final class SearchKeyboardTests: PestoUITestCase {
         app.typeText("pesto")
         XCTAssertEqual(field.value as? String, "pesto")
 
-        // First ⌘A selects the text in the search field; ⌘X cuts it and ⌘V pastes it back.
-        field.typeKey("a", modifierFlags: .command)
-        field.typeKey("x", modifierFlags: .command)
-        XCTAssertEqual(field.value as? String, "")
-        field.typeKey("v", modifierFlags: .command)
-        XCTAssertEqual(field.value as? String, "pesto")
-
         // First ⌘A selects the text in the search field; second ⌘A selects all matching clips on the shelf.
         field.typeKey("a", modifierFlags: .command)
         field.typeKey("a", modifierFlags: .command)

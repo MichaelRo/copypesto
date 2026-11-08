@@ -57,7 +57,12 @@ struct StoreBackwardCompatibilityTests {
         #expect(before.count == expectedCount)
         #expect(before.first?.previewText == expectedFirstPreview)
 
-        let service = StorageService(modelContainer: container)
+        let service = StorageService(
+            modelContainer: container,
+            environment: .testing {
+                $0.sequenceCounter = SequenceCounter(defaults: ThrowawayDefaults.make())
+            }
+        )
         let text = "ingested after upgrade"
         let payload = Data(text.utf8)
         let hash = SHA256.hash(data: payload).map { String(format: "%02x", $0) }.joined()

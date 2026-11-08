@@ -261,7 +261,9 @@ struct RestoreSheet: View {
             }
             if let settings {
                 Text(settings.note).pestoCaption()
-                if !settings.heldBack.isEmpty { heldBackView(summary, settings) }
+                if !settings.heldBack.isEmpty {
+                    HeldBackView(summary: summary, settings: settings, onApply: applyHeldBack)
+                }
             }
             if summary
                 .failed > 0 { Text("\(summary.failed) could not be restored.").foregroundStyle(Color.statusWarning) }
@@ -269,17 +271,6 @@ struct RestoreSheet: View {
                 Spacer()
                 Button("Done", action: onClose).keyboardShortcut(.defaultAction)
             }
-        }
-    }
-
-    func heldBackView(_ summary: BackupRestoreSummary, _ settings: RestoreSettingsOutcome) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("The backup also asks Pesto to delete history or keep less of it:").font(.callout)
-            ForEach(settings.heldBack, id: \.key) { held in
-                Text("\u{2022} \(held.description)").pestoCaption()
-            }
-            Button("Apply These Too") { applyHeldBack(summary, settings) }
-                .accessibilityIdentifier(AccessibilityID.applyHeldBackSettings)
         }
     }
 
@@ -392,6 +383,23 @@ struct RestoreSheet: View {
                 phase = .done(summary, settings: restoreSettingsIfAsked(from: preview))
             } catch {
                 phase = .failed("Couldn’t restore. \(error.localizedDescription)")
+            }
+        }
+    }
+
+    struct HeldBackView: View {
+        let summary: BackupRestoreSummary
+        let settings: RestoreSettingsOutcome
+        var onApply: ((BackupRestoreSummary, RestoreSettingsOutcome) -> Void)?
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("The backup also asks Pesto to delete history or keep less of it:").font(.callout)
+                ForEach(settings.heldBack, id: \.key) { held in
+                    Text("\u{2022} \(held.description)").pestoCaption()
+                }
+                Button("Apply These Too") { onApply?(summary, settings) }
+                    .accessibilityIdentifier(AccessibilityID.applyHeldBackSettings)
             }
         }
     }

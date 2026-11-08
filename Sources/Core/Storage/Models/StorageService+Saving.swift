@@ -8,6 +8,11 @@ extension StorageService {
         try modelContext.saveOrRollback()
     }
 
+    /// Drops registered objects from memory after large bulk operations (e.g. seeding).
+    public func clearModelContext() {
+        modelContext.rollback()
+    }
+
     func sealPreview(_ data: Data, itemID: UUID) throws -> BlobEncryption.EncryptedEnvelope {
         let associatedData = BlobEncryption.associatedData(itemID: itemID, field: .preview)
         if let previewSealer { return try previewSealer(data, associatedData) }

@@ -71,6 +71,12 @@ public enum SeedFixtures {
         }
     }
 
+    public static func pictureCapture(at index: Int, count: Int = 300, now: Date = .now) -> PasteboardCapture {
+        let capture = MixedSeed.pictureCapture(at: index)
+        let age = age(ofCapture: index, of: count, in: .pictures)
+        return capture.with(timestamp: now.addingTimeInterval(-age))
+    }
+
     private static func storyCaptures(for profile: SeedProfile) -> [PasteboardCapture] {
         #if DEBUG
             if profile == .lunchRush { return LunchRushSeed.captures() }

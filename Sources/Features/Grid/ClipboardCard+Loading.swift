@@ -23,23 +23,16 @@ extension ClipboardCard {
     func loadThumbnailIfNeeded() async {
         PerfSignposts.shelf.event("cardAppear", item.id.uuidString)
         let byteSize = item.byteSize
-        guard item.type == .image || item.isSVGSource, thumbnail == nil || thumbnailByteSize != byteSize else { return }
+        guard item.type == .image || item.isSVGSource else { return }
+        if ThumbnailCache.shared.entry(for: item.id, byteSize: byteSize) != nil { return }
         defer { PerfSignposts.shelf.event("cardThumbnail", item.id.uuidString) }
         let id = item.id
-        if let cached = ThumbnailCache.shared.entry(for: id, byteSize: byteSize) {
-            thumbnail = cached.image
-            thumbnailIsAnimated = cached.isAnimated
-            thumbnailByteSize = byteSize
-            return
-        }
         let service = ThumbnailService(modelContainer: modelContext.container)
         // Twice the card width covers a Retina display; the full-resolution bitmap is never decoded.
         guard let result = await service.thumbnail(for: id, maxPixel: 480),
               let image = await PreparedImage.image(from: result.data, animated: result.isAnimated) else { return }
         ThumbnailCache.shared.store(.init(image: image, isAnimated: result.isAnimated, byteSize: byteSize), for: id)
-        thumbnail = image
-        thumbnailIsAnimated = result.isAnimated
-        thumbnailByteSize = byteSize
+        thumbnailLoaded.toggle()
     }
 
     func storeFetched(_ result: URLPreviewResult, storedImage: Data?, itemID: UUID) {

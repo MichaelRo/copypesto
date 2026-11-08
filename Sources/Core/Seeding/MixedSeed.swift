@@ -19,6 +19,10 @@ enum MixedSeed {
         (0..<count).map { image(at: $0) }
     }
 
+    static func pictureCapture(at index: Int) -> PasteboardCapture {
+        image(at: index)
+    }
+
     private static func capture(at index: Int) -> PasteboardCapture {
         switch index % 12 {
         case 0: image(at: index)

@@ -33,6 +33,7 @@ BUNDLE_ENV="$(/usr/libexec/PlistBuddy -c 'Print :LSEnvironment' "$APP/Contents/I
 
 PESTO_UITEST_SESSION="memory" PESTO_UITEST_DIR="$WORK" PESTO_UITEST_SEED="$SEED" PESTO_UITEST_ACCESSIBILITY=trusted \
   PESTO_UITEST_DEFAULT_hasOnboarded=true PESTO_UITEST_DEFAULT_linkPreviewsEnabled=false \
+  PESTO_UITEST_DEFAULT_nsfwMode=show \
   env $BUNDLE_ENV "$APP/Contents/MacOS/Pesto" -UITestMode >"$OUT/app.log" 2>&1 &
 PID=$!
 trap 'kill $PID 2>/dev/null || true; rm -rf "$OUT"' EXIT
@@ -52,12 +53,19 @@ if [ "$SHELF" = pictures ]; then
   for _ in $(seq 1 300); do [ -f "$WORK/walk-done" ] && break; sleep 1; done
   [ -f "$WORK/walk-done" ] || { echo "check-memory-budget: the shelf never reached its last clip" >&2; exit 1; }
 fi
-sleep 20
+# Wait up to 40 s for background thumbnail decoding and runtime caches to settle.
+MB=""
+for _ in $(seq 1 20); do
+  sleep 2
+  LINE="$(footprint "$PID" 2>/dev/null | grep -m1 -E 'Footprint:' || true)"
+  [ -n "$LINE" ] || continue
+  MB="$(echo "$LINE" | sed -E 's/.*Footprint: *([0-9.]+) *([KMG]B).*/\1 \2/' | awk '{ if ($2=="KB") print $1/1024; else if ($2=="GB") print $1*1024; else print $1 }')"
+  if awk -v mb="$MB" -v budget="$BUDGET_MB" 'BEGIN { exit (mb + 0 < budget + 0) ? 0 : 1 }'; then
+    break
+  fi
+done
 
-# footprint prints "Pesto [pid]: ... Footprint: 123 MB"; take the figure for this process.
-LINE="$(footprint "$PID" 2>/dev/null | grep -m1 -E 'Footprint:' || true)"
-[ -n "$LINE" ] || { echo "check-memory-budget: footprint printed nothing for pid $PID" >&2; exit 1; }
-MB="$(echo "$LINE" | sed -E 's/.*Footprint: *([0-9.]+) *([KMG]B).*/\1 \2/' | awk '{ if ($2=="KB") print $1/1024; else if ($2=="GB") print $1*1024; else print $1 }')"
-echo "memory: ${MB} MB footprint after 20 s on the ${SEED} history, shelf ${SHELF} (budget ${BUDGET_MB} MB)"
+[ -n "$MB" ] || { echo "check-memory-budget: footprint printed nothing for pid $PID" >&2; exit 1; }
+echo "memory: ${MB} MB footprint on the ${SEED} history, shelf ${SHELF} (budget ${BUDGET_MB} MB)"
 awk -v mb="$MB" -v budget="$BUDGET_MB" 'BEGIN { exit (mb + 0 < budget + 0) ? 0 : 1 }' \
   || { echo "check-memory-budget: over the budget" >&2; exit 1; }

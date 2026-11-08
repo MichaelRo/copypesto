@@ -34,12 +34,12 @@ struct AnimatedImageViewTests {
         }
     }
 
-    @Test("when SynchronizedGIFImageView is created and configured, its contentsGravity is resizeAspect")
+    @Test("when SynchronizedGIFImageView is created and configured with aspectFit, its contentsGravity is resizeAspect")
     func whenConfigured_thenContentsGravityIsResizeAspect() {
         let image = NSImage(size: NSSize(width: 320, height: 240))
         let imageView = SynchronizedGIFImageView()
         imageView.wantsLayer = true
-        imageView.configure(image: image, animates: false, scaling: .scaleProportionallyUpOrDown)
+        imageView.configure(image: image, animates: false, scaling: .scaleProportionallyUpOrDown, aspectFit: true)
 
         #expect(imageView.layer?.contentsGravity == .resizeAspect)
     }
@@ -54,7 +54,7 @@ struct AnimatedImageViewTests {
             let asp: CGFloat
             var body: some View {
                 VStack {
-                    AnimatedImageView(image: img, animates: false)
+                    AnimatedImageView(image: img, animates: false, aspectFit: true)
                         .aspectRatio(asp, contentMode: .fit)
                         .frame(maxWidth: .infinity, maxHeight: 180)
                 }

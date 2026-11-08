@@ -54,10 +54,7 @@ struct ClipboardCard: View {
     /// Files of a file clip that are gone, read off the main thread (see `FileClip.missing(inText:)`).
     @State var missingFileCount = 0
     @State var isHovered = false
-    @State var thumbnail: NSImage?
-    @State var thumbnailIsAnimated = false
-    /// The clip's size when `thumbnail` was made (a still that becomes its GIF has another).
-    @State var thumbnailByteSize = 0
+    @State var thumbnailLoaded = false
     @State var urlOGImage: NSImage?
     @State var urlOGImageIsAnimated = false
     @State var urlFavicon: NSImage?
@@ -125,7 +122,10 @@ struct ClipboardCard: View {
             ))
             // On the card itself, not on the body that shows the secret: covering and uncovering swaps the drag
             // branch below, which rebuilds that body, and a hook there hid the text the moment it was shown.
-            .onDisappear { hideSecret() }
+            .onDisappear {
+                hideSecret()
+                releaseOffscreenThumbnail()
+            }
             .onChange(of: hideSecretsGeneration) { hideSecret() }
             .onChange(of: isPrivacyBlurred) { _, covered in
                 if covered {
@@ -586,7 +586,7 @@ struct ClipboardCard: View {
     /// What the card shows for its picture: the one it loaded, or the cached one at once so a card built again does not
     /// flash the placeholder first.
     var shownThumbnail: (image: NSImage, isAnimated: Bool)? {
-        if let thumbnail, thumbnailByteSize == item.byteSize { return (thumbnail, thumbnailIsAnimated) }
+        _ = thumbnailLoaded
         return ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize).map { ($0.image, $0.isAnimated) }
     }
 }

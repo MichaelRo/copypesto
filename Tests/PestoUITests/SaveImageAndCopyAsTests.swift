@@ -26,6 +26,32 @@ final class SaveImageAndCopyAsTests: PestoUITestCase {
         XCTAssertTrue(savedFiles.first?.hasPrefix("Pesto picture ") ?? false)
     }
 
+    func test_imageCard_copyWritesBothPNGAndTIFFFlavours() {
+        launch()
+        showOverlay()
+        let imageCard = card(containing: "image")
+        XCTAssertTrue(imageCard.waitForExistence(timeout: 5), "the seed has image cards")
+        imageCard.rightClick()
+
+        let copy = overlay.menuItems["Copy"]
+        XCTAssertTrue(copy.waitForExistence(timeout: 3), "a picture offers Copy")
+        copy.click()
+
+        let board = NSPasteboard(name: NSPasteboard.Name("io.pesto.uitest.\(session)"))
+        let deadline = Date().addingTimeInterval(5)
+        var hasPNG = false
+        var hasTIFF = false
+        while !hasPNG || !hasTIFF, Date() < deadline {
+            hasPNG = board.data(forType: .png) != nil
+            hasTIFF = board.data(forType: .tiff) != nil
+            if !hasPNG || !hasTIFF {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+            }
+        }
+        XCTAssertTrue(hasPNG, "image copy writes public.png")
+        XCTAssertTrue(hasTIFF, "image copy writes public.tiff for sharp Cocoa rendering")
+    }
+
     func test_textCard_offersNeitherSaveImageNorCopyAs() {
         launch()
         showOverlay()

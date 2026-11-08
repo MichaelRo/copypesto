@@ -52,4 +52,22 @@ final class OtherDevicesTests: PestoUITestCase {
         XCTAssertTrue(toggle.waitForExistence(timeout: 5), "no Keep copies from other devices toggle")
         XCTAssertEqual(toggle.value as? Int, 0, "copies from other devices must be off by default")
     }
+
+    func test_togglingKeepCopiesFromOtherDevicesInSettings_updatesTheOtherDevicesChipLive() {
+        launch()
+        send(.openSettings)
+        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        element(AccessibilityID.settingsSidebar("Privacy")).click()
+        let toggle = element(AccessibilityID.settingsChoice("keepsRemoteCopies", "toggle"))
+        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        toggle.click()
+        XCTAssertEqual(toggle.value as? Int, 1)
+
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        XCTAssertTrue(
+            element(AccessibilityID.filterChip("Other Devices")).waitForExistence(timeout: 5),
+            "turning Keep copies from other devices on in Settings should expose the Other Devices chip"
+        )
+    }
 }

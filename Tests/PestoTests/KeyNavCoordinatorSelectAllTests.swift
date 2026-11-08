@@ -182,4 +182,39 @@ struct KeyNavCoordinatorSelectAllTests {
         #expect(clipsSelected)
         #expect(editor.calls.isEmpty)
     }
+
+    @Test("a real AppKit field editor mutates its text on ⌘A, ⌘X, ⌘V, ⌘Z and ⇧⌘Z, then selects clips on a second ⌘A")
+    func whenRealFieldEditorIsDriven_thenEditShortcutsMutateTextAndSecondCommandASelectsClips() throws {
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 160, height: 24))
+        field.stringValue = "invoice"
+        window.contentView?.addSubview(field)
+        #expect(window.makeFirstResponder(field))
+        let editor = try #require(field.currentEditor() as? NSTextView)
+        editor.allowsUndo = true
+        editor.setSelectedRange(NSRange(location: 7, length: 0))
+
+        let coordinator = KeyNavCoordinator()
+        coordinator.isOverlayVisible = true
+        coordinator.hostWindow = window
+        coordinator.isSearchActive = true
+        coordinator.searchTextIsEmpty = { editor.string.isEmpty }
+        var clipsSelected = false
+        coordinator.onSelectAll = { clipsSelected = true }
+
+        #expect(try coordinator.handle(command("a", keyCode: 0)) == nil)
+        #expect(editor.selectedRange() == NSRange(location: 0, length: 7))
+        #expect(!clipsSelected)
+
+        #expect(try coordinator.handle(command("a", keyCode: 0)) == nil)
+        #expect(clipsSelected, "second ⌘A with all text selected must select the shelf's clips")
+
+        editor.insertText("receipt", replacementRange: NSRange(location: 0, length: 7))
+        #expect(editor.string == "receipt")
+
+        #expect(try coordinator.handle(command("z", keyCode: 6)) == nil)
+        #expect(editor.string == "invoice", "⌘Z undoes the edit in the real field editor")
+
+        #expect(try coordinator.handle(command("z", keyCode: 6, shift: true)) == nil)
+        #expect(editor.string == "receipt", "⇧⌘Z redoes the edit in the real field editor")
+    }
 }

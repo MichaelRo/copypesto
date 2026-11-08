@@ -90,7 +90,7 @@ struct RecoveryKeySheet: View {
 }
 
 /// What happened to the settings in a restored backup, and the changes that were held back for the person to approve.
-private struct SettingsOutcome {
+struct RestoreSettingsOutcome: Equatable {
     var note: String
     var heldBack: [SettingsBackupManager.HeldBack] = []
     var data: Data?
@@ -101,7 +101,7 @@ struct RestoreSheet: View {
         case choose
         case working
         case preview(BackupPreview)
-        case done(BackupRestoreSummary, settings: SettingsOutcome?)
+        case done(BackupRestoreSummary, settings: RestoreSettingsOutcome?)
         case failed(String)
     }
 
@@ -254,7 +254,7 @@ struct RestoreSheet: View {
         preview.createdAt.formatted(date: .abbreviated, time: .shortened)
     }
 
-    private func done(_ summary: BackupRestoreSummary, settings: SettingsOutcome?) -> some View {
+    private func done(_ summary: BackupRestoreSummary, settings: RestoreSettingsOutcome?) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             if summary.restored > 0 || summary.alreadyHad > 0 || summary.collections > 0 || settings == nil {
                 Text("Restored \(restoredWords(summary)). \(CountText.alreadyHere(summary.alreadyHad))")
@@ -272,7 +272,7 @@ struct RestoreSheet: View {
         }
     }
 
-    private func heldBackView(_ summary: BackupRestoreSummary, _ settings: SettingsOutcome) -> some View {
+    func heldBackView(_ summary: BackupRestoreSummary, _ settings: RestoreSettingsOutcome) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("The backup also asks Pesto to delete history or keep less of it:").font(.callout)
             ForEach(settings.heldBack, id: \.key) { held in
@@ -283,16 +283,25 @@ struct RestoreSheet: View {
         }
     }
 
-    private func applyHeldBack(_ summary: BackupRestoreSummary, _ settings: SettingsOutcome) {
-        guard let data = settings.data else { return }
-        let note = if (try? SettingsBackupManager.restore(from: data, approving: Set(settings.heldBack.map(\.key)))) !=
-            nil
-        {
+    private func applyHeldBack(_ summary: BackupRestoreSummary, _ settings: RestoreSettingsOutcome) {
+        guard let outcome = Self.applyHeldBackSettings(settings) else { return }
+        phase = .done(summary, settings: outcome)
+    }
+
+    static func applyHeldBackSettings(
+        _ settings: RestoreSettingsOutcome,
+        into defaults: UserDefaults = AppDefaults.store
+    )
+    -> RestoreSettingsOutcome? {
+        guard let data = settings.data else { return nil }
+        let note = if (try? SettingsBackupManager.restore(
+            from: data, approving: Set(settings.heldBack.map(\.key)), into: defaults
+        )) != nil {
             String(localized: "Settings restored.")
         } else {
             String(localized: "The settings in the backup could not be read, so they were left as they are.")
         }
-        phase = .done(summary, settings: SettingsOutcome(note: note))
+        return RestoreSettingsOutcome(note: note)
     }
 
     private func failure(_ message: String) -> some View {
@@ -336,28 +345,34 @@ struct RestoreSheet: View {
     }
 
     /// What to tell the person about the settings, or nil when there is nothing to say.
-    private func restoreSettingsIfAsked(from preview: BackupPreview) -> SettingsOutcome? {
+    private func restoreSettingsIfAsked(from preview: BackupPreview) -> RestoreSettingsOutcome? {
         guard restoresSettings else { return nil }
-        return restoreSettings(from: preview.settingsData)
+        return Self.restoreSettings(from: preview.settingsData)
     }
 
-    private func restoreSettings(from data: Data?) -> SettingsOutcome? {
+    static func restoreSettings(
+        from data: Data?,
+        into defaults: UserDefaults = AppDefaults.store
+    )
+    -> RestoreSettingsOutcome? {
         guard let data else { return nil }
-        guard let result = try? SettingsBackupManager.restore(from: data) else {
-            return SettingsOutcome(
+        guard let result = try? SettingsBackupManager.restore(from: data, into: defaults) else {
+            return RestoreSettingsOutcome(
                 note: String(localized: "The settings in the backup could not be read, so they were left as they are.")
             )
         }
-        guard !result.heldBack.isEmpty else { return SettingsOutcome(note: String(localized: "Settings restored.")) }
+        guard !result.heldBack.isEmpty else {
+            return RestoreSettingsOutcome(note: String(localized: "Settings restored."))
+        }
         let held = result.heldBack.count
-        return SettingsOutcome(
+        return RestoreSettingsOutcome(
             note: String(localized: "Settings restored, except \(held) that would delete history or keep less of it."),
             heldBack: result.heldBack, data: data
         )
     }
 
     private func restoreSettingsOnly(_ preview: BackupPreview) {
-        let outcome = restoreSettings(from: preview.settingsData) ?? SettingsOutcome(
+        let outcome = Self.restoreSettings(from: preview.settingsData) ?? RestoreSettingsOutcome(
             note: String(localized: "The settings in the backup could not be read, so they were left as they are.")
         )
         phase = .done(BackupRestoreSummary(), settings: outcome)

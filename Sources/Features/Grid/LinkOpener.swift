@@ -4,10 +4,14 @@ import PestoCore
 
 /// Carries out `LinkOpenPolicy` for a link clip, from the card's menu and from its VoiceOver action.
 enum LinkOpener {
-    static func perform(_ action: LinkOpenPolicy.Action) {
+    static func perform(
+        _ action: LinkOpenPolicy.Action,
+        openURL: (URL) -> Void = { NSWorkspace.shared.open($0) },
+        revealInFinder: ([URL]) -> Void = { NSWorkspace.shared.activateFileViewerSelecting($0) }
+    ) {
         switch action {
-        case let .openInBrowser(url): NSWorkspace.shared.open(url)
-        case let .revealInFinder(url): NSWorkspace.shared.activateFileViewerSelecting([url])
+        case let .openInBrowser(url): openURL(url)
+        case let .revealInFinder(url): revealInFinder([url])
         case .none: break
         }
     }

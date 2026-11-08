@@ -109,6 +109,10 @@ extension ClipboardCard {
             collectionName: availableCollections.first { $0.id == item.collectionID }?.name,
             isRevealed: revealedSecret != nil,
             revealedText: revealedSecret,
+            pictureImage: thumbnail,
+            pictureIsAnimated: thumbnailIsAnimated,
+            linkImage: urlOGImage,
+            linkImageIsAnimated: urlOGImageIsAnimated,
             onScrollsChange: { detailScrolls = $0 },
             onCopyRecognizedText: detailCopiesText ? { actions.copyRecognizedText?(item) ?? false } : nil
         )

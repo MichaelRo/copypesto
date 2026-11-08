@@ -396,4 +396,44 @@ struct URLMetadataFetcherCacheTests {
         #expect(callCount.withLock { $0 } == 1)
         #expect(secondResult.title == nil)
     }
+
+    @Test("HTML entity decoding in title extraction")
+    func whenExtractingTitleWithHTMLEntities_thenDecodesProperly() {
+        let html1 = #"<meta property="og:title" content="Tom &amp; Jerry &quot;Classic&quot;">"#
+        #expect(URLMetadataFetcher.extractTitle(from: html1) == "Tom & Jerry \"Classic\"")
+
+        let html2 = #"<title>Pesto &#39;Clip&#39; &amp; More &lt;v2&gt;</title>"#
+        #expect(URLMetadataFetcher.extractTitle(from: html2) == "Pesto 'Clip' & More <v2>")
+    }
+
+    @Test("HTML entity decoding in OG image URL extraction")
+    func whenExtractingOGImageURLWithHTMLEntities_thenDecodesProperly() {
+        let html = #"<meta property="og:image" content="https://example.com/thumb.jpg?w=100&amp;h=200">"#
+        let url = URLMetadataFetcher.extractOGImageURL(from: html)
+        #expect(url?.absoluteString == "https://example.com/thumb.jpg?w=100&h=200")
+    }
+
+    @Test("Direct GIF link failure skips general loader fallback")
+    func whenDirectGIFLinkFails_thenSkipsGeneralLoader() async throws {
+        let directGIFURL = try #require(URL(string: "https://example.com/nonexistent.gif"))
+        let loaderCalled = Mutex(false)
+        let fetcher = URLMetadataFetcher(
+            isEnabled: { true },
+            linkPreviewCache: nil,
+            session: .shared,
+            loader: { _ in
+                loaderCalled.withLock { $0 = true }
+                return URLPreviewResult(
+                    title: "Should Not Be Called",
+                    ogImageData: nil,
+                    faviconData: nil,
+                    siteName: nil
+                )
+            }
+        )
+        await #expect(throws: URLError.self) {
+            try await fetcher.fetch(url: directGIFURL)
+        }
+        #expect(!loaderCalled.withLock { $0 })
+    }
 }

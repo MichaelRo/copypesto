@@ -82,4 +82,16 @@ struct SearchEnginePreviewSynthesizerTests {
         let url = try #require(URL(string: "https://en.wikipedia.org/wiki/Pesto"))
         #expect(SearchEnginePreviewSynthesizer.synthesize(url) == nil)
     }
+
+    @Test("rejects attacker domains spoofing Google subdomains")
+    func whenAttackerDomainWithGoogleSubdomain_thenReturnsNil() throws {
+        let spoof1 = try #require(URL(string: "https://login.google.com.attacker.com/login"))
+        #expect(SearchEnginePreviewSynthesizer.synthesize(spoof1) == nil)
+
+        let spoof2 = try #require(URL(string: "https://phishing.google.com.evil.org/"))
+        #expect(SearchEnginePreviewSynthesizer.synthesize(spoof2) == nil)
+
+        let spoof3 = try #require(URL(string: "https://fake-google.com/search?q=test"))
+        #expect(SearchEnginePreviewSynthesizer.synthesize(spoof3) == nil)
+    }
 }

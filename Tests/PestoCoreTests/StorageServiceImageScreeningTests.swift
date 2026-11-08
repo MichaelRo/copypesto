@@ -39,14 +39,20 @@ struct StorageServiceImageScreeningTests {
     private let service: StorageService
     private let screener = FakeScreener()
     private let mode = ModeHolder()
+    private let recognizedTexts = RecognizedTextStore(
+        directory: FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-test-recognized-text-\(UUID().uuidString)", isDirectory: true)
+    )
 
     init() async throws {
         container = try ModelContainerSetup.makeInMemory()
         let screener = screener
         let mode = mode
+        let recognizedTexts = recognizedTexts
         service = StorageService(modelContainer: container, environment: .testing {
             $0.imageScreener = screener
             $0.nsfwMode = { mode.get() }
+            $0.recognizedTexts = recognizedTexts
         })
     }
 
@@ -150,6 +156,22 @@ struct StorageServiceImageScreeningTests {
             try await service.ingest(capture(png(), sourceImageURL: sourceURL))
             await service.waitForBackgroundWork()
         }
+        #expect(try items().first?.isNSFW == true)
+    }
+
+    @Test("rescanning flags an image with explicit recognized text even if screener passes")
+    func whenRescanningImageWithExplicitText_thenFlagged() async throws {
+        screener.say(false)
+        try await withMode(.show) {
+            try await service.ingest(capture(png()))
+            await service.waitForBackgroundWork()
+        }
+        let item = try #require(items().first)
+        #expect(item.isNSFW == false)
+
+        try recognizedTexts.save("Explicit NSFW xxx hardcore content", for: item.id)
+
+        #expect(try await service.rescanNSFWImages() == 1)
         #expect(try items().first?.isNSFW == true)
     }
 }

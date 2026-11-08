@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 import AppKit
 import PestoCore
-import SwiftData
 import SwiftUI
 
 /// The hover card: the clip itself, more than the card has room for. The whole text (rendered when it is Markdown,
@@ -25,7 +24,6 @@ struct CardDetailPopover: View {
     @State private var pictureIsAnimated: Bool = false
     @State private var linkImage: NSImage?
     @State private var linkImageIsAnimated: Bool = false
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.calendar) private var calendar
     @Environment(\.locale) private var locale
@@ -41,6 +39,10 @@ struct CardDetailPopover: View {
         collectionName: String? = nil,
         isRevealed: Bool = false,
         revealedText: String? = nil,
+        pictureImage: NSImage? = nil,
+        pictureIsAnimated: Bool = false,
+        linkImage: NSImage? = nil,
+        linkImageIsAnimated: Bool = false,
         onScrollsChange: ((Bool) -> Void)? = nil,
         onCopyRecognizedText: (() -> Bool)? = nil
     ) {
@@ -55,6 +57,10 @@ struct CardDetailPopover: View {
         let first = Self.cut(item, of: baseText, isSensitive: effectiveSensitive)
         _shown = State(initialValue: first)
         _highlighted = State(initialValue: Self.highlight(item, first.text, isSensitive: effectiveSensitive))
+        _pictureImage = State(initialValue: pictureImage)
+        _pictureIsAnimated = State(initialValue: pictureIsAnimated)
+        _linkImage = State(initialValue: linkImage)
+        _linkImageIsAnimated = State(initialValue: linkImageIsAnimated)
     }
 
     private static func cut(_ item: ClipboardItem, of text: String, isSensitive: Bool) -> (text: String, wasCut: Bool) {
@@ -103,29 +109,20 @@ struct CardDetailPopover: View {
     }
 
     private func loadMedia() async {
+        guard !isSensitive, item.sensitivityRaw == nil else { return }
         if item.type == .image || item.isSVGSource {
-            if let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
+            if pictureImage == nil, let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
                 pictureImage = cached.image
                 pictureIsAnimated = cached.isAnimated
-                return
             }
-            let service = ThumbnailService(modelContainer: modelContext.container)
-            if let result = await service.thumbnail(for: item.id, maxPixel: 480),
-               let image = await PreparedImage.image(from: result.data, animated: result.isAnimated)
-            {
-                ThumbnailCache.shared.store(
-                    .init(image: image, isAnimated: result.isAnimated, byteSize: item.byteSize),
-                    for: item.id
-                )
-                pictureImage = image
-                pictureIsAnimated = result.isAnimated
-            }
-        } else if item.type == .url {
-            let itemID = item.id
-            let stored = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
-            if let data = item.ogImageThumbnail ?? stored {
-                linkImage = await PreparedImage.image(from: data, animated: data.isGIF)
-                linkImageIsAnimated = data.isGIF
+        } else if item.type == .url, LinkPreviewPolicy.isEnabled() {
+            if linkImage == nil {
+                let itemID = item.id
+                let stored = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
+                if let data = item.ogImageThumbnail ?? stored {
+                    linkImage = await PreparedImage.image(from: data, animated: data.isGIF)
+                    linkImageIsAnimated = data.isGIF
+                }
             }
         }
     }

@@ -34,7 +34,7 @@ public actor ThumbnailService {
 
     public nonisolated static func invalidate(id: UUID) {
         animatedPreviews.removeObject(forKey: id as NSUUID)
-        for maxPixel in [480, 600, 768] {
+        for maxPixel in [480, 600, 768, 1024] {
             let cacheKey: NSString = "\(id.uuidString):\(maxPixel)" as NSString
             stillPreviews.removeObject(forKey: cacheKey)
         }

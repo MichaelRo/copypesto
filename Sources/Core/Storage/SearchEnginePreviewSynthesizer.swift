@@ -98,9 +98,16 @@ public enum SearchEnginePreviewSynthesizer {
         return trimmed.isEmpty ? nil : trimmed
     }
 
+    private static let googleHostRegex = try? NSRegularExpression(
+        pattern: #"^(?:[a-z0-9-]+\.)*google\.(?:com|[a-z]{2,3}(?:\.[a-z]{2})?)$"#,
+        options: [.caseInsensitive]
+    )
+
     private static func isGoogleDomain(_ host: String) -> Bool {
-        host == "google.com" || host.hasSuffix(".google.com")
-            || host.contains(".google.")
-            || host.hasPrefix("google.")
+        guard let regex = googleHostRegex else {
+            return host == "google.com" || host.hasSuffix(".google.com")
+        }
+        let range = NSRange(host.startIndex..., in: host)
+        return regex.firstMatch(in: host, range: range) != nil
     }
 }

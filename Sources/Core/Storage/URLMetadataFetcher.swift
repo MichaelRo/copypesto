@@ -124,16 +124,17 @@ public final class URLMetadataFetcher {
 
     private func throttleHostIfNeeded(_ host: String) async {
         guard !host.isEmpty else { return }
-        if let last = lastHostFetchTime[host] {
-            let elapsed = last.duration(to: .now)
-            let minInterval = Duration.seconds(1)
-            if elapsed < minInterval {
-                try? await Task.sleep(for: minInterval - elapsed)
-            }
+        let now = ContinuousClock.now
+        if let nextAllowed = lastHostFetchTime[host], nextAllowed > now {
+            let sleepTime = now.duration(to: nextAllowed)
+            lastHostFetchTime[host] = nextAllowed + Duration.seconds(1)
+            try? await Task.sleep(for: sleepTime)
+        } else {
+            lastHostFetchTime[host] = now + Duration.seconds(1)
         }
-        lastHostFetchTime[host] = .now
         if lastHostFetchTime.count > 100 {
-            lastHostFetchTime.removeAll()
+            let current = ContinuousClock.now
+            lastHostFetchTime = lastHostFetchTime.filter { $0.value > current }
         }
     }
 
@@ -155,21 +156,22 @@ public final class URLMetadataFetcher {
         await acquireSlot()
         defer { releaseSlot() }
 
+        await throttleHostIfNeeded(url.host?.lowercased() ?? "")
+
         if let directGIF = await fetchDirectGIF(url: url, originalURL: originalURL) {
             return directGIF
         }
 
-        await throttleHostIfNeeded(url.host?.lowercased() ?? "")
+        if Self.isDirectGIFLink(url) {
+            let negative = URLPreviewResult(title: nil, ogImageData: nil, faviconData: nil, siteName: nil)
+            cachePreview(negative, originalURL: originalURL, unwrapped: url, isNegative: true)
+            throw URLError(.cannotDecodeContentData)
+        }
 
         do {
             let result = try await loader(url)
             let withGIF = await addingDirectGIF(to: result, for: url)
             cachePreview(withGIF, originalURL: originalURL, unwrapped: url, isNegative: false)
-            return withGIF
-        } catch where Self.isDirectGIFLink(url) {
-            let empty = URLPreviewResult(title: nil, ogImageData: nil, faviconData: nil, siteName: nil)
-            let withGIF = await addingDirectGIF(to: empty, for: url)
-            cachePreview(withGIF, originalURL: originalURL, unwrapped: url, isNegative: withGIF.ogImageData == nil)
             return withGIF
         } catch {
             let negative = URLPreviewResult(title: nil, ogImageData: nil, faviconData: nil, siteName: nil)
@@ -301,6 +303,17 @@ public final class URLMetadataFetcher {
         )
     }
 
+    /// Decodes common HTML entities found in scraped tags and attributes.
+    public nonisolated static func decodeHTMLEntities(_ string: String) -> String {
+        string
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&apos;", with: "'")
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+    }
+
     /// Extracts an image URL from HTML `<meta>` tags (og:image, og:image:secure_url, twitter:image).
     /// Pure function — exposed for unit testing.
     public nonisolated static func extractOGImageURL(from html: String) -> URL? {
@@ -316,7 +329,8 @@ public final class URLMetadataFetcher {
             if let match = regex.firstMatch(in: html, range: range),
                let matchRange = Range(match.range(at: 1), in: html)
             {
-                let urlString = String(html[matchRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let raw = String(html[matchRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let urlString = decodeHTMLEntities(raw)
                 if let url = URL(string: urlString), ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
                     return url
                 }
@@ -350,7 +364,8 @@ public final class URLMetadataFetcher {
             if let match = regex.firstMatch(in: html, range: range),
                let matchRange = Range(match.range(at: 1), in: html)
             {
-                let candidate = String(html[matchRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let raw = String(html[matchRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let candidate = decodeHTMLEntities(raw)
                 if !candidate.isEmpty {
                     return candidate
                 }

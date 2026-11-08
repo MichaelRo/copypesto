@@ -45,7 +45,7 @@ struct BackupRestoreRetentionViewTests {
         summary.restored = 10
         summary.collections = 1
         let heldBackView = RestoreSheet.HeldBackView(summary: summary, settings: outcome)
-        let controller = NSHostingController(rootView: heldBackView.defaultAppStorage(AppDefaults.store))
+        let controller = NSHostingController(rootView: heldBackView.defaultAppStorage(defaults))
         let size = controller.sizeThatFits(in: CGSize(width: 400, height: 200))
         #expect(size.height > 30, "heldBackView must lay out with content")
     }

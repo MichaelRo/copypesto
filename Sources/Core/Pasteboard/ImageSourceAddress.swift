@@ -20,16 +20,26 @@ public enum ImageSourceAddress {
         imageURLs(inHTML: html).first
     }
 
+    private static func decodeHTMLEntities(_ string: String) -> String {
+        string
+            .replacingOccurrences(of: "&amp;", with: "&")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&apos;", with: "'")
+            .replacingOccurrences(of: "&#39;", with: "'")
+    }
+
     private static func imageURLs(inHTML html: String) -> [URL] {
         guard let imageTag else { return [] }
         let head = String(html.prefix(readLimit))
         let range = NSRange(head.startIndex..., in: head)
         var urls: [URL] = []
         for match in imageTag.matches(in: head, range: range) {
-            let address = [1, 2].lazy.compactMap { index -> String? in
+            let rawAddress = [1, 2].lazy.compactMap { index -> String? in
                 Range(match.range(at: index), in: head).map { String(head[$0]) }
             }.first
-            guard let address, let url = URL(string: address), url.scheme?.lowercased() == "https",
+            guard let rawAddress else { continue }
+            let address = decodeHTMLEntities(rawAddress)
+            guard let url = URL(string: address), url.scheme?.lowercased() == "https",
                   LinkPreviewEligibility.isEligible(url) else { continue }
             urls.append(url)
         }

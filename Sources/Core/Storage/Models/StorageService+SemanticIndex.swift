@@ -65,7 +65,10 @@ public extension StorageService {
         for item in items {
             if item.typeRaw == imageRaw {
                 guard let blob = item.blob, let data = blob.decryptedData() else { continue }
-                if await imageScreener.isSensitive(imageData: data) {
+                let text = recognizedTexts.load(for: item.id) ?? item.displayPreviewText
+                let explicitByKeyword = NSFWURLDetector.keywordScore(in: text) >= 0.85
+                let explicitByScreener = explicitByKeyword ? false : await imageScreener.isSensitive(imageData: data)
+                if explicitByKeyword || explicitByScreener {
                     item.isNSFW = true
                     newlyFlagged += 1
                 }

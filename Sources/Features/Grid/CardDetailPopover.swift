@@ -20,6 +20,10 @@ struct CardDetailPopover: View {
     @State private var highlighted: AttributedString?
     @State private var textSize: CGSize?
     @State private var scrollEnds = ScrollEnds()
+    @State private var pictureImage: NSImage?
+    @State private var pictureIsAnimated: Bool = false
+    @State private var linkImage: NSImage?
+    @State private var linkImageIsAnimated: Bool = false
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.calendar) private var calendar
     @Environment(\.locale) private var locale
@@ -35,6 +39,10 @@ struct CardDetailPopover: View {
         collectionName: String? = nil,
         isRevealed: Bool = false,
         revealedText: String? = nil,
+        pictureImage: NSImage? = nil,
+        pictureIsAnimated: Bool = false,
+        linkImage: NSImage? = nil,
+        linkImageIsAnimated: Bool = false,
         onScrollsChange: ((Bool) -> Void)? = nil,
         onCopyRecognizedText: (() -> Bool)? = nil
     ) {
@@ -49,6 +57,10 @@ struct CardDetailPopover: View {
         let first = Self.cut(item, of: baseText, isSensitive: effectiveSensitive)
         _shown = State(initialValue: first)
         _highlighted = State(initialValue: Self.highlight(item, first.text, isSensitive: effectiveSensitive))
+        _pictureImage = State(initialValue: pictureImage)
+        _pictureIsAnimated = State(initialValue: pictureIsAnimated)
+        _linkImage = State(initialValue: linkImage)
+        _linkImageIsAnimated = State(initialValue: linkImageIsAnimated)
     }
 
     private static func cut(_ item: ClipboardItem, of text: String, isSensitive: Bool) -> (text: String, wasCut: Bool) {
@@ -90,7 +102,29 @@ struct CardDetailPopover: View {
                 .strokeBorder(.primary.opacity(contrast == .increased ? 0.4 : 0.14), lineWidth: 1)
         }
         .accessibilityIdentifier(AccessibilityID.cardDetailPopover)
-        .task(id: item.id) { loadFullText() }
+        .task(id: item.id) {
+            loadFullText()
+            await loadMedia()
+        }
+    }
+
+    private func loadMedia() async {
+        guard !isSensitive, item.sensitivityRaw == nil else { return }
+        if item.type == .image || item.isSVGSource {
+            if pictureImage == nil, let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
+                pictureImage = cached.image
+                pictureIsAnimated = cached.isAnimated
+            }
+        } else if item.type == .url, LinkPreviewPolicy.isEnabled() {
+            if linkImage == nil {
+                let itemID = item.id
+                let stored = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
+                if let data = item.ogImageThumbnail ?? stored {
+                    linkImage = await PreparedImage.image(from: data, animated: data.isGIF)
+                    linkImageIsAnimated = data.isGIF
+                }
+            }
+        }
     }
 
     /// Read when the card opens, and only for a clip small enough to decrypt on the main thread.
@@ -178,7 +212,24 @@ struct CardDetailPopover: View {
     }
 
     private var linkBody: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
+            if let img = linkImage {
+                if linkImageIsAnimated {
+                    AnimatedImageView(
+                        image: img,
+                        animates: !Motion.reduceMotion,
+                        contentMode: .scaleProportionallyDown
+                    )
+                    .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                } else {
+                    Image(nsImage: img)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+            }
             if let title = item.ogTitle ?? item.customTitle {
                 Text(title).scaledFont(size: 13, weight: .semibold).fixedSize(horizontal: false, vertical: true)
             }
@@ -195,18 +246,21 @@ struct CardDetailPopover: View {
     }
 
     private var pictureBody: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let entry = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
-                if entry.isAnimated {
+        let entry = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize)
+        let image = entry?.image ?? pictureImage
+        let isAnimated = entry?.isAnimated ?? pictureIsAnimated
+        return VStack(alignment: .leading, spacing: 8) {
+            if let image {
+                if isAnimated {
                     AnimatedImageView(
-                        image: entry.image,
+                        image: image,
                         animates: !Motion.reduceMotion,
                         contentMode: .scaleProportionallyDown
                     )
                     .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 } else {
-                    Image(nsImage: entry.image)
+                    Image(nsImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: .infinity, maxHeight: 180)

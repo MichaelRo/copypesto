@@ -19,7 +19,36 @@ public enum SearchEnginePreviewSynthesizer {
         if let searchPreview = synthesizeSearch(host: host, components: components) {
             return searchPreview
         }
-        return synthesizeGoogleWorkspace(host: host, path: components.path.lowercased())
+        if let ws = synthesizeGoogleWorkspace(host: host, path: components.path.lowercased()) {
+            return ws
+        }
+        if isGoogleDomain(host) {
+            return synthesizeGoogleServices(host: host, components: components)
+        }
+        return nil
+    }
+
+    private static func synthesizeGoogleServices(host: String, components: URLComponents) -> Preview? {
+        let path = components.path.lowercased()
+        if host.hasPrefix("maps.") || path.contains("/maps") {
+            return Preview(title: "Google Maps", siteName: "Google Maps")
+        }
+        if host.hasPrefix("images.") || path.contains("/imghp") || path.contains("/imgres") {
+            return Preview(title: "Google Images", siteName: "Google Images")
+        }
+        if host.hasPrefix("news.") || path.contains("/news") {
+            return Preview(title: "Google News", siteName: "Google News")
+        }
+        if host.hasPrefix("scholar.") || path.contains("/scholar") {
+            return Preview(title: "Google Scholar", siteName: "Google Scholar")
+        }
+        if host.hasPrefix("translate.") || path.contains("/translate") {
+            return Preview(title: "Google Translate", siteName: "Google Translate")
+        }
+        if host.hasPrefix("mail.") || path.contains("/mail") {
+            return Preview(title: "Gmail", siteName: "Google")
+        }
+        return Preview(title: "Google", siteName: "Google")
     }
 
     private static func synthesizeSearch(host: String, components: URLComponents) -> Preview? {
@@ -69,9 +98,16 @@ public enum SearchEnginePreviewSynthesizer {
         return trimmed.isEmpty ? nil : trimmed
     }
 
+    private static let googleHostRegex = try? NSRegularExpression(
+        pattern: #"^(?:[a-z0-9-]+\.)*google\.(?:com|[a-z]{2,3}(?:\.[a-z]{2})?)$"#,
+        options: [.caseInsensitive]
+    )
+
     private static func isGoogleDomain(_ host: String) -> Bool {
-        host == "google.com" || host.hasSuffix(".google.com")
-            || host.contains(".google.")
-            || host.hasPrefix("google.")
+        guard let regex = googleHostRegex else {
+            return host == "google.com" || host.hasSuffix(".google.com")
+        }
+        let range = NSRange(host.startIndex..., in: host)
+        return regex.firstMatch(in: host, range: range) != nil
     }
 }

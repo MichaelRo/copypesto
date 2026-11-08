@@ -241,7 +241,8 @@ public actor StorageService: ModelActor {
         //    launch.
         let analysisInput = input(
             for: clipType, image: clipType == .image ? capture.payload : nil, text: payloadString,
-            link: capture.payloadString, needsPerceptualHash: clipType == .image && perceptualHash == nil
+            link: capture.payloadString, sourceURL: capture.sourceImageURL,
+            needsPerceptualHash: clipType == .image && perceptualHash == nil
         )
         let judgedLater = analysisInput.runsInTheBackground
         var analysis = IngestAnalysis()

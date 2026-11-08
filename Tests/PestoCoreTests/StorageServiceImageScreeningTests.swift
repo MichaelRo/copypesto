@@ -39,14 +39,20 @@ struct StorageServiceImageScreeningTests {
     private let service: StorageService
     private let screener = FakeScreener()
     private let mode = ModeHolder()
+    private let recognizedTexts = RecognizedTextStore(
+        directory: FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-test-recognized-text-\(UUID().uuidString)", isDirectory: true)
+    )
 
     init() async throws {
         container = try ModelContainerSetup.makeInMemory()
         let screener = screener
         let mode = mode
+        let recognizedTexts = recognizedTexts
         service = StorageService(modelContainer: container, environment: .testing {
             $0.imageScreener = screener
             $0.nsfwMode = { mode.get() }
+            $0.recognizedTexts = recognizedTexts
         })
     }
 
@@ -69,10 +75,11 @@ struct StorageServiceImageScreeningTests {
         return output as Data
     }
 
-    private func capture(_ data: Data) -> PasteboardCapture {
+    private func capture(_ data: Data, sourceImageURL: URL? = nil) -> PasteboardCapture {
         PasteboardCapture(
             typeIdentifier: "public.png", payload: data, payloadString: nil,
-            contentHash: SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            contentHash: SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined(),
+            sourceImageURL: sourceImageURL
         )
     }
 
@@ -139,5 +146,32 @@ struct StorageServiceImageScreeningTests {
         }
 
         #expect(try await service.rescanNSFWImages() == 2)
+    }
+
+    @Test("an image copied from an explicit source URL is flagged even if screener passes")
+    func whenImageFromExplicitSourceURL_thenFlaggedEvenIfScreenerPasses() async throws {
+        screener.say(false)
+        let sourceURL = try #require(URL(string: "https://www.pornhub.com/media/preview.jpg"))
+        try await withMode(.blur) {
+            try await service.ingest(capture(png(), sourceImageURL: sourceURL))
+            await service.waitForBackgroundWork()
+        }
+        #expect(try items().first?.isNSFW == true)
+    }
+
+    @Test("rescanning flags an image with explicit recognized text even if screener passes")
+    func whenRescanningImageWithExplicitText_thenFlagged() async throws {
+        screener.say(false)
+        try await withMode(.show) {
+            try await service.ingest(capture(png()))
+            await service.waitForBackgroundWork()
+        }
+        let item = try #require(items().first)
+        #expect(item.isNSFW == false)
+
+        try recognizedTexts.save("Explicit NSFW xxx hardcore content", for: item.id)
+
+        #expect(try await service.rescanNSFWImages() == 1)
+        #expect(try items().first?.isNSFW == true)
     }
 }

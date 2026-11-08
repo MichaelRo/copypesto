@@ -83,6 +83,28 @@ struct GIFUpgradeTests {
         #expect(item.byteSize == gif.count)
     }
 
+    @Test("when upgraded to GIF, thumbnail service returns animated thumbnail instead of stale still cache")
+    func whenUpgradedToGIF_thenThumbnailServiceReturnsAnimated() async throws {
+        let gif = animatedGIF()
+        let service = Self.makeService(container: container, fetching: { _ in gif })
+        let thumbnailService = ThumbnailService(modelContainer: container)
+
+        try await service.ingest(capture(source: address))
+        let item = try onlyItem()
+
+        // Prewarm or load still thumbnail while still a PNG
+        ThumbnailService.prewarm(id: item.id, imageData: stillPNG(), maxPixel: 480)
+        let initialThumb = await thumbnailService.thumbnail(for: item.id, maxPixel: 480)
+        #expect(initialThumb?.isAnimated == false)
+
+        // Wait for background GIF upgrade
+        await service.waitForBackgroundWork()
+
+        // After upgrade, thumbnailService must return isAnimated == true, not the stale cached PNG
+        let upgradedThumb = await thumbnailService.thumbnail(for: item.id, maxPixel: 480)
+        #expect(upgradedThumb?.isAnimated == true)
+    }
+
     @Test("nothing is fetched without an address, and a copy that is already a GIF is left alone")
     func whenNoAddressOrAlreadyAGIF_thenNothingIsFetched() async throws {
         let log = FetchLog()

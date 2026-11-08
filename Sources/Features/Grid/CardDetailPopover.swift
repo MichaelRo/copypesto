@@ -111,15 +111,31 @@ struct CardDetailPopover: View {
     private func loadMedia() async {
         guard !isSensitive, item.sensitivityRaw == nil else { return }
         if item.type == .image || item.isSVGSource {
-            if pictureImage == nil, let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
-                pictureImage = cached.image
-                pictureIsAnimated = cached.isAnimated
+            if pictureImage == nil {
+                if let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
+                    pictureImage = cached.image
+                    pictureIsAnimated = cached.isAnimated
+                } else if DetailPopoverContent.canRead(byteSize: item.byteSize),
+                          let blob = item.blob, let data = blob.decryptedData()
+                {
+                    let isAnimated = blob.mimeType == "com.compuserve.gif"
+                        || blob.mimeType == "public.gif" || data.isGIF
+                    if let image = await PreparedImage.image(from: data, animated: isAnimated) {
+                        pictureImage = image
+                        pictureIsAnimated = isAnimated
+                    }
+                }
             }
         } else if item.type == .url, LinkPreviewPolicy.isEnabled() {
             if linkImage == nil {
-                let itemID = item.id
-                let stored = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
-                if let data = item.ogImageThumbnail ?? stored {
+                let data: Data?
+                if let direct = item.ogImageThumbnail {
+                    data = direct
+                } else {
+                    let itemID = item.id
+                    data = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
+                }
+                if let data {
                     linkImage = await PreparedImage.image(from: data, animated: data.isGIF)
                     linkImageIsAnimated = data.isGIF
                 }
@@ -215,18 +231,20 @@ struct CardDetailPopover: View {
         VStack(alignment: .leading, spacing: 6) {
             if let img = linkImage {
                 if linkImageIsAnimated {
+                    let aspect = (img.size.width > 0 && img.size.height > 0) ? img.size.width / img.size.height : nil
                     AnimatedImageView(
                         image: img,
                         animates: !Motion.reduceMotion,
-                        contentMode: .scaleProportionallyDown
+                        contentMode: .scaleProportionallyUpOrDown
                     )
-                    .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 180)
+                    .aspectRatio(aspect, contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: Self.previewMaxHeight)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 } else {
                     Image(nsImage: img)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity, maxHeight: 180)
+                        .frame(maxWidth: .infinity, maxHeight: Self.previewMaxHeight)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
             }
@@ -252,18 +270,21 @@ struct CardDetailPopover: View {
         return VStack(alignment: .leading, spacing: 8) {
             if let image {
                 if isAnimated {
+                    let aspect = (image.size.width > 0 && image.size.height > 0)
+                        ? image.size.width / image.size.height : nil
                     AnimatedImageView(
                         image: image,
                         animates: !Motion.reduceMotion,
-                        contentMode: .scaleProportionallyDown
+                        contentMode: .scaleProportionallyUpOrDown
                     )
-                    .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 180)
+                    .aspectRatio(aspect, contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: Self.previewMaxHeight)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 } else {
                     Image(nsImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity, maxHeight: 180)
+                        .frame(maxWidth: .infinity, maxHeight: Self.previewMaxHeight)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
             }

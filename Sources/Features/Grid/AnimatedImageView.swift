@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import AppKit
 import PestoCore
+import QuartzCore
 import SwiftUI
 
 /// Wraps `NSImageView` so multi-frame GIFs can play in lockstep across the shelf card and the hover card.
@@ -11,10 +12,21 @@ struct AnimatedImageView: NSViewRepresentable {
     var animates = true
     var contentMode: NSImageScaling = .scaleProportionallyUpOrDown
 
+    static func sizeThatFits(imageSize: CGSize, proposal: ProposedViewSize) -> CGSize? {
+        guard imageSize.width > 0, imageSize.height > 0 else { return nil }
+        let aspect = imageSize.width / imageSize.height
+        let targetWidth = proposal.width.flatMap { $0.isFinite ? $0 : nil } ?? imageSize.width
+        let targetHeight = proposal.height.flatMap { $0.isFinite ? $0 : nil } ?? (targetWidth / aspect)
+        let scaledHeight = min(targetHeight, targetWidth / aspect)
+        let scaledWidth = min(targetWidth, scaledHeight * aspect)
+        return CGSize(width: scaledWidth, height: scaledHeight)
+    }
+
     func makeNSView(context _: Context) -> SynchronizedGIFImageView {
         let view = SynchronizedGIFImageView()
         view.imageAlignment = .alignCenter
         view.wantsLayer = true
+        view.layer?.contentsGravity = .resizeAspect
         view.layer?.masksToBounds = true
         view.configure(image: image, animates: animates, scaling: contentMode)
         return view
@@ -23,18 +35,25 @@ struct AnimatedImageView: NSViewRepresentable {
     func updateNSView(_ nsView: SynchronizedGIFImageView, context _: Context) {
         nsView.configure(image: image, animates: animates, scaling: contentMode)
     }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView _: SynchronizedGIFImageView, context _: Context) -> CGSize? {
+        Self.sizeThatFits(imageSize: image.size, proposal: proposal)
+    }
 }
 
 @MainActor
 final class SynchronizedGIFImageView: NSImageView {
     private(set) var shouldAnimate = false
+    var lastRenderedFrameIndex: Int?
 
     func configure(image: NSImage, animates: Bool, scaling: NSImageScaling) {
         let changedImage = self.image !== image
         if changedImage {
             self.image = image
+            lastRenderedFrameIndex = nil
         }
         imageScaling = scaling
+        layer?.contentsGravity = .resizeAspect
         super.animates = false
         shouldAnimate = animates
         AnimatedGIFClock.shared.updateMembership(for: self)
@@ -88,6 +107,7 @@ private final class AnimatedGIFClock {
         if activeViews.allObjects.isEmpty {
             timer?.invalidate()
             timer = nil
+            durationsByRep.removeAll(keepingCapacity: true)
         }
     }
 
@@ -111,10 +131,12 @@ private final class AnimatedGIFClock {
     }
 
     private func setFrame(_ index: Int, on rep: NSBitmapImageRep, for view: SynchronizedGIFImageView) {
+        guard view.lastRenderedFrameIndex != index else { return }
         let current = rep.value(forProperty: .currentFrame) as? Int
         if current != index {
             rep.setProperty(.currentFrame, withValue: index)
         }
+        view.lastRenderedFrameIndex = index
         view.needsDisplay = true
     }
 

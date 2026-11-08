@@ -20,6 +20,12 @@ struct ImageSourceAddressTests {
             .query == "w=200&h=100")
     }
 
+    @Test("encoded entities decode in one pass without double-unescaping")
+    func whenDoubleEncodedEntities_thenDecodedWithoutDoubleUnescaping() {
+        let html = "<img src=\"https://a.example.com/x.gif?title=Tom&amp;amp;Jerry\">"
+        #expect(ImageSourceAddress.gifURL(inHTML: html)?.query == "title=Tom&amp;Jerry")
+    }
+
     @Test("a picture that is not a GIF, a data address, an insecure address and a missing tag give nothing")
     func whenNotAGIF_thenNil() {
         #expect(ImageSourceAddress.gifURL(inHTML: "<img src=\"https://a.example.com/x.png\">") == nil)

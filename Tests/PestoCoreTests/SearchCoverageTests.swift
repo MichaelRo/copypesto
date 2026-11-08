@@ -13,6 +13,41 @@ private struct FixedRecognizer: TextRecognizing {
     }
 }
 
+private final class Gate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var isOpen = false
+    private var waiting: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        await withCheckedContinuation { continuation in
+            let resumeNow = lock.withLock {
+                if !isOpen { waiting.append(continuation) }
+                return isOpen
+            }
+            if resumeNow { continuation.resume() }
+        }
+    }
+
+    func open() {
+        let toResume = lock.withLock {
+            isOpen = true
+            defer { waiting = [] }
+            return waiting
+        }
+        toResume.forEach { $0.resume() }
+    }
+}
+
+private struct HeldRecognizer: TextRecognizing {
+    let gate: Gate
+    let text: String?
+
+    func recognize(imageData _: Data) async -> String? {
+        await gate.wait()
+        return text
+    }
+}
+
 private func hash(_ data: Data) -> String {
     SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
 }
@@ -146,10 +181,13 @@ struct SearchCoverageTests {
 
     @Test("a picture still being read matches nothing, and the finished reading updates the same index")
     func whenPictureStillPending_thenNotYetSearchable() async throws {
-        let service = service { $0.textRecognizer = FixedRecognizer(text: "Lisbon") }
+        let gate = Gate()
+        let service = service { $0.textRecognizer = HeldRecognizer(gate: gate, text: "Lisbon") }
         try await service.ingest(pictureCapture(anyPNG()))
         let pending = try #require(try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).first)
-        if pending.analysisPending { #expect(try matches("lisbon").isEmpty) }
+        #expect(pending.analysisPending)
+        #expect(try matches("lisbon").isEmpty)
+        gate.open()
         await service.waitForBackgroundWork()
         #expect(try matches("lisbon").count == 1)
     }

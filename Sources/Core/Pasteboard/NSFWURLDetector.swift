@@ -69,7 +69,9 @@ public enum NSFWURLDetector: Sendable {
     }
 
     static func keywordScore(in text: String) -> Float {
-        let words = text.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }
+        let words = text.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
         guard !words.isEmpty else { return 0 }
         let strong = words.count(where: { strongKeywords.contains($0) })
         let weak = words.count(where: { weakKeywords.contains($0) })

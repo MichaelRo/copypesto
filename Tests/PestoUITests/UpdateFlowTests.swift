@@ -89,4 +89,21 @@ final class UpdateFlowTests: PestoUITestCase {
         waitForInstalls(2)
         XCTAssertEqual(installCount(), 2, "the menu's Restart to Update did not run the staged install")
     }
+
+    func test_developmentBuild_checkForUpdatesShowsUnavailableToast() {
+        launch(defaults: ["hasOnboarded": "true"])
+        let statusItem = app.statusItems.firstMatch
+        XCTAssertTrue(statusItem.waitForExistence(timeout: 10), "no menu-bar item")
+
+        statusItem.click()
+        let check = statusItem.menuItems["statusCheckUpdates"]
+        XCTAssertTrue(check.waitForExistence(timeout: 5), "no Check for Updates in the menu")
+        check.click()
+
+        let unavailableText = "This build does not check for updates."
+        let toast = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", unavailableText, unavailableText)
+        ).firstMatch
+        XCTAssertTrue(toast.waitForExistence(timeout: 5), "no unavailable-updates toast on development build")
+    }
 }

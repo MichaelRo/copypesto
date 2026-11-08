@@ -147,4 +147,44 @@ final class SettingsEffectsTests: PestoUITestCase {
         XCTAssertTrue(card.waitForExistence(timeout: 5))
         XCTAssertEqual(card.frame.width, 160, accuracy: 4, "the slider's smallest position should give Small cards")
     }
+
+    func test_pinnedWindowInCopyOnlyMode_omitsPasteFromCardContextMenu() {
+        launch(defaults: ["hasOnboarded": "true", "pinnedWindowAutoPaste": "false"])
+        send(.togglePinnedWindow)
+        let panel = element(AccessibilityID.pinnedPanel)
+        XCTAssertTrue(panel.waitForExistence(timeout: 10))
+        let target = panel.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier == %@ AND label CONTAINS %@", AccessibilityID.card, "Team lunch")
+        ).firstMatch
+        XCTAssertTrue(target.waitForExistence(timeout: 5))
+
+        target.rightClick()
+        let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
+        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+        XCTAssertFalse(cardMenu.menuItems["Paste"].exists, "a copy-only floating window must not offer Paste")
+        XCTAssertTrue(cardMenu.menuItems["Copy"].exists)
+    }
+
+    func test_contextMenuPasteWithMultipleSelected_pastesOnlyTheClickedCard() {
+        launch()
+        showOverlay()
+        let first = cards.element(boundBy: 0)
+        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        overlay.typeKey(.space, modifierFlags: [])
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        overlay.typeKey(.space, modifierFlags: [])
+
+        let third = card(containing: "hello@example.com")
+        XCTAssertTrue(third.exists)
+        third.rightClick()
+        let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
+        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5))
+        cardMenu.menuItems["Paste"].firstMatch.click()
+
+        XCTAssertEqual(
+            waitForPaste(count: 1),
+            ["hello@example.com"],
+            "the context menu's Paste must paste only the card under the pointer, not the multi-selection"
+        )
+    }
 }

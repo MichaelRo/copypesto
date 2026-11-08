@@ -112,7 +112,7 @@ The full list of what is stored and sent, including what encryption does *not* p
 - **Yours to script.** Shortcuts, Spotlight and a Control Center button (macOS 26 and later), a `pesto://` URL scheme,
   AppleScript, a Copy to Pesto item in the Services menu, a Copy Text to Pesto action in Shortcuts, and a command-line tool you can build from source. A Hide Clip Contents action (menu bar, Shortcuts or a
   Focus) blurs your clips for a screen share.
-- **Made for the Mac.** A plain or a Liquid Glass shelf (glass needs macOS 26), light and dark, four themes (Basil, Parmesan,
+- **Made for the Mac.** A Solid or a Liquid Glass shelf surface (Glass needs macOS 26 and switches to Solid when Reduce Transparency is on), light and dark, four themes (Basil, Parmesan,
   Pine nut, Mortar), an accent color and an app icon of your choice (the theme's own by default), Reduce Motion respected, keyboard
   first.
 

@@ -109,4 +109,22 @@ final class SearchKeyboardTests: PestoUITestCase {
             "two Rights then Return pastes the third result, the oldest of the three that mention pesto"
         )
     }
+
+    func test_editShortcutsInSearchField_selectAllTwiceSelectsClips() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let field = element(AccessibilityID.searchField)
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        app.typeText("pesto")
+        XCTAssertEqual(field.value as? String, "pesto")
+
+        // First ⌘A selects the text in the search field; second ⌘A selects all matching clips on the shelf.
+        field.typeKey("a", modifierFlags: .command)
+        field.typeKey("a", modifierFlags: .command)
+        XCTAssertTrue(
+            element(AccessibilityID.deleteSelectedButton).waitForExistence(timeout: 5),
+            "a second ⌘A with the search field's text selected must select the shown clips"
+        )
+    }
 }

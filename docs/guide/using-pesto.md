@@ -131,7 +131,7 @@ Pesto starts a field with what you typed last time. That is kept with the snippe
 **Snippets from your own clips.** When you have copied three or more clips that differ only in a few words (a name, an
 order number) on at least two days, and you paste one from the shelf, Pesto offers *Make Snippet…*: the editor opens
 with the shared text and a field where they differ. *Suggest Names* asks Apple's on-device model for better field names
-(it needs Apple Intelligence and is greyed out with the reason when it is unavailable).
+(it needs Apple Intelligence and is grayed out with the reason when it is unavailable).
 For text you paste the same way over and over, Pesto offers a shortcut instead.
 
 Snippets come in from Raycast and TextExpander exports: their fill-ins (`{argument}`, `%filltext`, `%fillpopup`, `%fillpart`) become

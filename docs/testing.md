@@ -283,15 +283,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Clipboard access: in System Settings → Privacy & Security → Paste from Other Apps set Pesto to Deny, then to Ask.
   Pass: the status menu shows "Clipboard Access Limited — Open Settings…", Settings → General (Permissions) shows the
   warning, and its button opens the right pane.
-- Update notice placement: on a `make run` build (not the DMG), choose Check for Updates…. Pass: the toast "This build
-  does not check for updates." appears under the menu bar and the About window says development build.
 
 **Shortcuts and pasting**
-- Copy from the shelf (a card's menu, Copy As…, a color format, or a click in the floating window set to copy). Pass: the
-  clip moves to the front, as a paste does, and its paste count does not change.
-- Paste as Plain Text (2026-11-04): right-click a text clip. Pass: *Paste as Plain Text* is above *Paste As…* with
-  ⌃⌥⌘V beside it, it pastes the text without formatting (a UI test covers the paste), the item follows the shortcut
-  after it is changed in Settings → Shortcuts, and shows no shortcut when that one is turned off.
 - JSON and Markdown in Paste As… (2026-11-06, ADR 0033): copy rows from a spreadsheet (Numbers or Excel), a table from a
   web page, formatted text from Pages, Notes and Google Docs, and a one-line JSON document. Right-click each, or press ⌘K.
   Pass: the rows lead *Paste As…* and *Copy As…* only where they fit (prose, a picture and a hidden clip show none),
@@ -308,8 +301,6 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - ⌘[ and ⌘] (2026-11-04): with a 5,000-clip history and three collections, hold ⌘] across all of them and back, and
   compare with 1.2.0. Pass: each collection's clips appear in one step, with no flash of the previous collection's
   clips, and no stutter (`LargeHistoryPerformanceTests` times the filtering; the redraw is only seen by eye).
-- Copy (⌘C) on the shelf. Pass: it copies the focused clip with no beep and the clip moves to the front; in the search
-  field it copies the selected text; with a card menu open it still works.
 - Quick Look (⌘Y): copy a GIF from a browser, a page of a PDF and a WebP picture, and two files in Finder. Pass: ⌘Y shows
   the GIF animating, the PDF page and the picture, not text, and the arrow keys step between the two files. Esc closes
   only the preview (the shelf stays), arrow keys then move between clips and open no preview, and ⌘Y opens it again. Its
@@ -323,8 +314,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - ⇧⌘V from TextEdit, VS Code, Chrome and Slack. Pass: the shelf and the caret quick menu open, and pasting lands in each.
 - Paste a text, link, picture and file from the shelf into TextEdit, Safari, Chrome, Slack, Terminal and VS Code (Return
   and double click). Pass: every paste lands; none does nothing.
-- Shortcut recorder: record ⇧⌘V while it is already set, record ⌃1, and press Esc while recording. Pass: the shelf does not
-  open and the shortcut stays; ⌃1 is refused (pinned slots); Esc cancels.
+- The shelf's memory (ShelfContextPolicy, 90 seconds): open a collection and search, close the shelf, reopen within a
+  minute and again after two. Pass: within 90 seconds the collection and the search stay; after 90 seconds the shelf is on
+  All and the search is empty. A paste clears the search immediately.
+- Edit shortcuts in the shelf's search field: ⌘X cuts, ⌘V pastes, and caret movements (← → ⌘← ⌘→ ⌥← ⌥→ ⌥⌫ ⌘⌫) move and
+  delete across words and to the ends. Pass: each edit shortcut mutates the search field without clobbering the shelf.
 - ⌃⌥⌘V (paste as plain text): `log show --last 5m --predicate 'category == "hotkey"'`. Pass: it shows "Registered Paste
   as plain text: status 0" and "Pressed …" (a status of -9878 means another app holds the combination).
 - Double ⌘C in a real app, and a ⌘V stack across apps. Pass: the double copy appends, and each plain ⌘V pastes the next clip.
@@ -343,48 +337,20 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   left or right, in a full-screen app and with Stage Manager on. Pass: it hangs below the menu bar (below the notch on a
   notched Mac), the hover card opens below it and grows from its top edge; the stack HUD (top right) and the manual-paste
   toast (bottom center) may overlap the shelf, which is expected (ADR 0013).
-- Edit shortcuts in the shelf's search field (the panel is non-activating and has no Edit menu, so the key monitor drives
-  the field itself; `KeyNavCoordinatorSelectAllTests` pins the routing, not the real field editor). Open the shelf, press
-  ⌘F, type `invoice`, then: ⌘A selects the text; ⌘A again selects every clip shown (the selection bar appears); ⌘A in an
-  empty field selects the clips. Select the text and ⌘X cuts it, ⌘V pastes it back, ⌘C then ⌘V elsewhere carries it,
-  ⌘Z undoes the paste and ⇧⌘Z redoes it. In an empty field ⌘Z undoes the shelf's last delete. ⌥⌘A, ⌥⌘C and ⌃A do
-  nothing from Pesto. ← → ⌘← ⌘→ ⌥← ⌥→ ⌥⌫ ⌘⌫ move and delete as in any Mac text field. Pass: each does what is written
-  and nothing beeps. Press ⌘A with the caret in a card's title editor and in the collection name field: it selects the text.
 - Remote photos (UI tests cannot copy on an iPhone; run `make install` first, an older installed copy keeps files from
   other devices as dead paths): with Other devices on, copy a photo or a PDF on the iPhone, then paste a file clip whose
   file you deleted. Pass: nothing from the phone is kept, "Left out of your history" counts it in Settings → Privacy, ⌘V
   still pastes it in any app, and a toast says nothing was pasted for the deleted file.
-- Settings → Data, the Backup and Sync cards (ADR 0022), on hardware: in a narrow Settings window, in Dark and Light, with
-  sync available and with it unavailable. Pass: Backup and Sync are two separate cards, each with a switch, one sentence
-  and its buttons; no text is cut off; the sync sentence is readable as a warning; the Backup tile is gone from the
-  stat strip; turning either switch on opens its set-up sheet and Cancel leaves it off.
 - The filter bar (ADR 0023), on a real history, on the 14-inch display and a wider one, in Light and Dark. Pass: the
   bar fits without scrolling; Tab walks Kind, Format, Today, Yesterday, More, From and Sensitive; Return opens Format, More
   and From as native menus, an arrow key moves in the menu and Return picks; picking a chosen value again, or Any Time, Any
   App or Any Format, clears it (what a chip says is `FilterMenuLabelTests`). With VoiceOver on, Space on
   each of the three menu chips opens its menu (the runner cannot press a pop-up with VoiceOver).
-- The clip menu's Paste (ADR 0009): right-click a clip, then ⌘K on another. Pass: Paste, Paste as Plain Text, Copy and
-  Quick Look come first (the order is `SettingsEffectsTests`) with their keys beside them (↩, ⇧↩, ⌘C, ⌘Y); Paste puts the clip in the app behind the shelf; in a
-  floating window set to copy only there is no Paste; with several clips selected the menu's Paste pastes only the clip
-  under the pointer, as intended, while Return pastes the selection one by one; and Return in an open menu pastes once.
-- The shelf's memory (`ShelfContextPolicy`, 90 seconds): open a collection and search, close the shelf, reopen within a
-  minute and again after two. Pass: within a minute the collection and filters are as left; after two the shelf opens on
-  All (or on the front app's own collection) with no filters. A `pesto://` link to a collection opens it even after a long
-  absence, and with the floating window open the shelf's closing leaves its filters alone.
-- The color panel from the shelf, Paste the previous clip after an iPhone copy, and the Other Devices chip with the
-  setting off. Pass: the panel opens, the previous clip pastes, and the chip is hidden.
 - A snippet with fill-ins (ADR 0017), on hardware, in Mail, Notes, a browser field and Terminal: paste it from the shelf, from
   a `⌃N` shortcut and with Paste the Previous Clip. Pass: the prompt opens over the app without taking the app's place in
   the Dock or menu bar, typing works at once, Return pastes the filled text into the same field the caret was in within
   about 300 ms of Return, Esc pastes nothing, and a second paste while the prompt is up closes it. Locking the screen with ⌃⌘Q leaves the prompt open (checked by hand 2026-10-28, accepted: it is still there after the unlock).
   Also paste one by one with a fill-in snippet in the selection: the prompt comes before the first clip and ⌘V never waits.
-- The snippet editor in the list: add, edit, Esc, ⌘Return, and a clip's ⌃N keycap on the card and in the hover card.
-  Pass: each works, and the keycap shows in both places.
-- Shelf suggestions (ADR 0014): paste the same clip 6+ times from the shelf. Pass: after 1.5 s dwell, a bottom banner
-  appears ("You have pasted this clip 6 times. Pin it and paste it from any app with ⌃N?"), the target card gains a 2 pt accent ring, and a dashed ghost keycap
-  appears with a subtle pop settle. Clicking "Pin with ⌃N" assigns the slot (Return continues to paste the selected card and never accepts suggestions); "No Thanks" dismisses it; 4 consecutive
-  declines turns off the feature; Settings → General toggle and "Reset suggestions" button work; History Lock suppresses
-  suggestions without wiping the ledger; Clear History and Restore wipe the ledger.
 - App chips and URL card actions: hover across the app filter chips slowly and fast (`AppChipHoverTests` moves a real pointer
   across them and keeps screenshots and a screen recording in the result bundle). Pass: chips are steady 24 pt icons;
   resting on one for a moment opens its name in place and pushes the chips after it to the right, never over them;
@@ -394,20 +360,14 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   directly under "Copy".
 
 **Privacy**
+- A copy from 1Password or Apple Passwords. Pass: it is not captured.
 - Touch ID lock and unlock, the password fallback, and one shared timer for protected actions. Pass: the lock asks for
   Touch ID, falls back to the password, and a protected action inside the "Ask for Touch ID again after" window asks nothing.
 - Show on a hidden clip with Use Password…. Pass: the shelf stays open while the system dialog is up and the clip shows
   afterwards (a known defect while the Touch ID prompt itself is up, filed as an issue).
-- A copy from 1Password or Apple Passwords. Pass: it is not captured.
-- A shown secret. Pass: it stays shown until Hide, closing the shelf, a lock or a cover.
 - A share from Google Meet in Chrome (whole screen or a single window) with Hide During Screen Share on (Chromium shows
   the floating sharing bar window for both, ADR 0003). Pass: the cards are covered within 3 s.
 - Hide Clip Contents from the menu bar, and as a Shortcuts action and Focus filter. Pass: the cards are covered each way.
-- Copy `https://example.com` and `file:///Applications/Safari.app`. Pass: the web clip's menu says Open in Browser and
-  opens the page; the file URL text clip's menu says Show in Finder and selects the file without launching it; both
-  offer the same single action to VoiceOver.
-- Lock the history (or let it lock). Pass: nothing can be undone, and after unlocking the stack is empty; Clear History
-  and Clear Everything leave nothing to undo.
 
 **Look and feel**
 - The menu-bar icon (2026-10-22): with Appearance forced to Dark on a Mac set to Dark whose wallpaper makes the menu bar
@@ -428,6 +388,11 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   the shelf on one display, choose Settings from its gear; with the shelf closed, choose Settings from the menu-bar
   icon with the pointer on the other display. Pass: Settings opens on the display in use each time, at the size it was
   closed at, and a window already open is only brought forward, not moved.
+- Settings → Data, the Backup and Sync cards (ADR 0022), on hardware: in a narrow Settings window, in Dark and Light, with
+  sync available and with it unavailable (signed out of Apple Account, or offline); turning either switch on opens its
+  set-up sheet and Cancel leaves it off.
+- The color panel from the shelf, and Paste the previous clip after an iPhone copy. Pass: the panel opens, and the
+  previous clip pastes.
 - Import offer with two or more clipboard managers really installed (Paste and Maccy). Pass: (the sentence is `ImportOfferTests`) *Choose…* opens Settings → Data scrolled to **Found on this Mac**
   with each app's own icon, *Import…* on a row asks for Touch ID and a file for that app only, and the row then says "Imported N clips".
 - Card typography (`docs/design/card-typography.md`, option B): copies from three different apps on every theme in light
@@ -464,11 +429,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   current history cannot be opened on this Mac. Restoring replaces it with this backup." and the Restore and Cancel buttons.
 - Full Keyboard Access and the beeps (A-05): ⌘S on a clip that is not a picture, ⌘0, ⌃ with a letter and Page Up in the
   search field, ⌘W and ⌘H. Pass: none beeps, ⌘W closes the shelf, ⌘H does nothing, and ⌘Q still quits.
-- Keys on the shelf (`docs/guide/shortcuts.md`): ⇧Return in search, and ⌥→, Page Down, ⌥← and Page Up with 30 or more
-  clips. Pass: ⇧Return pastes the focused result as plain text, and the others move a screenful (the visible clips less one).
 
 **Data and performance**
-- Restore a backup with a shorter retention in it. Pass: *Apply These Too* appears in the done step.
 - Footprint after days of real use: `footprint <pid>` (peak as well as current), and `ps eww <pid> | tr ' ' '\n' | grep
   Malloc` on a launch from Finder. Pass: steady state under 150 MB.
 - `make bench-latency open 7` three times (the only check that has the retention pruner, a 5,000-clip history and a copy
@@ -482,18 +444,9 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   To see it work, quit `xctrace` (`pkill xctrace`) during a pass. Pass: that history fails with *xctrace record
   failed*, the next history still runs, and `make bench-scroll` exits non-zero.
 - `make bench-latency all 7`, `make bench-undo` after a change to Undo, and `make bench-sync` after a change to sync. Pass: both stay within budget.
-- A store fixture from the shipped build is added before each release. Pass: the fixture opens in the next build.
 
 **Undo** (ADR 0008; `make bench-undo` for the numbers)
-- Delete one clip, then several with Space and ⌫, then a collection from its chip, with the shelf at the bottom and at the
-  top. Pass: each shows the bar with Undo, ⌘Z brings it back in the same place with its pin, note and shortcut, and ⇧⌘Z
-  deletes it again.
-- Rename, add a note, a tag, move a clip to a collection by dragging it to a chip, reorder cards in a collection, pin,
-  give a shortcut; create, rename, duplicate and reorder collections. Pass: ⌘Z undoes each, in the order made.
-- In Settings → Snippets add, edit and delete a snippet and import a snippets file; in Settings → Collections import a
-  collection file. Pass: the Edit menu's Undo names each and undoes it, and a text field being edited keeps its own ⌘Z.
-- ⌘Z in the shelf's search field. Pass: it undoes typing while there is text, and the shelf's last action when the field
-  is empty.
+- Shelf at the bottom and at the top: delete a clip or collection, and press ⌘Z. Pass: the undo banner shows and ⌘Z brings it back in the same place.
 
 **Cards, cover, No Results and the click hint (ADRs 0026 to 0029)**
 - Content-first cards: copy a picture, a GIF, a color, a short sentence and a plain link, and look at the shelf in light
@@ -506,13 +459,8 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - A covered card (screen share, Hide Clip Contents, the content filter's blur): a click or Return still pastes it without
   showing it. What it draws is the `test_coveredCard_showsNumberKindAndAge` baseline, what its menu and VoiceOver actions
   offer is `CardConcealmentTests` and `CoveredMenuWiringTests`.
-- No Results: type a search with no match, then add a filter chip and do it again. Pass: the Clear Search or Clear
-  Filters button shows; Tab (and Shift-Tab) from the search field walks the chips and ends on the button, Return presses
-  it, VoiceOver says "Filters cleared" or "Search cleared", and Return on the field itself still saves the query. `NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt` covers the Tab walk and
-  passed on 2026-11-06 (Shift-Tab lands on the button); by hand check only the VoiceOver wording.
-- Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a
-  card. When the hint shows is `ClickHintPolicyTests` (a first focusing click, at most three times, never after a double
-  click).
+- Banners: an import offer, a shelf suggestion and the click hint. Pass: they share one capsule style and none covers a card.
+- No Results VoiceOver wording (`NoResultsAdviceUITests.test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt` covers the Tab walk): with VoiceOver on, press Clear Filters or Clear Search. Pass: VoiceOver says "Filters cleared" or "Search cleared".
 
 ## Two Macs: sync
 Run once at the end, on two Macs signed in to the same Apple Account with iCloud Drive on, with a build from `make release SYNC_PROFILE=…` (iCloud Keychain key) and, separately, with the daily self-signed build (this-device key). Never use a Mac whose history matters: turn sync on only after a backup. Pass means every line holds.

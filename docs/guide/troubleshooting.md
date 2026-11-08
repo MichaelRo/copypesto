@@ -40,9 +40,8 @@ Two copies are running (for example one from a download and one from a developme
 with `pkill -x Pesto`, then open the one you want.
 
 ## A shortcut doesn't work
-Another app may already use it. *Settings → Shortcuts* shows a conflict warning. Record a
-different shortcut. The plain-text shortcut (⌃⌥⌘V) did nothing in one hand test that could not be repeated from the
-code; it also needs plain text on the clipboard, and it beeps when there is none. If you can, run
+Another app may already use it. *Settings → Shortcuts* shows a conflict warning when another app holds the key; record a
+different combination there. The plain-text shortcut (⌃⌥⌘V) also requires plain text on the clipboard and beeps when there is none. If you are debugging a hotkey issue, run
 `log stream --predicate 'subsystem == "net.copypesto.pesto" AND category == "hotkey"'` in Terminal, press it, and
 include what it prints: "Registered Paste as plain text: status -9878" means another app owns it, and no "Pressed" line
 means it never fired.

@@ -17,7 +17,7 @@ extension HostedGlobals {
         /// text are saved before they are judged (ADR 0006): 728 ms, 518 ms and 433 ms before.
         private static let budgetMilliseconds: [String: Double] = [
             "text": 50, "code": 50, "link": 50, "colour": 50, "file": 50,
-            "picture 1920x1080": 400, "screenshot 2880x1800": 400, "gif 24 frames": 100, "large clip 5 MB": 200
+            "picture 1920x1080": 200, "screenshot 2880x1800": 200, "gif 24 frames": 100, "large clip 5 MB": 200
         ]
 
         private func makeStore() throws -> (ModelContainer, URL) {
@@ -85,6 +85,36 @@ extension HostedGlobals {
                     )
                 }
             }
+        }
+
+        @Test("a full-screen 5K screenshot is ingested under 200 ms without blocking on OCR or perceptual hash")
+        func fullScreenScreenshot_ingestsUnder200ms() async throws {
+            let (container, directory) = try makeStore()
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let service = StorageService(modelContainer: container)
+            let clock = ContinuousClock()
+            let png = PictureFixtures.png(width: 5120, height: 2880)
+            var durations: [Double] = []
+            for variant in 0..<3 {
+                let capture = PasteboardCapture(
+                    typeIdentifier: "public.png",
+                    payload: png,
+                    frontmostBundleID: "com.apple.screencaptureui",
+                    contentHash: "5k-screenshot-\(variant)"
+                )
+                let start = clock.now
+                try await service.ingest(capture)
+                durations.append(PerfReport.milliseconds(clock.now - start))
+            }
+            let timing = PerfReport.timing(of: durations)
+            PerfReport.emit("ingest 5K screenshot 5120x2880: \(timing.text)")
+            if !RunEnvironment.isCI {
+                #expect(
+                    timing.median < 200,
+                    "5K screenshot ingest took \(timing.median) ms; budget < 200 ms"
+                )
+            }
+            await service.waitForBackgroundWork()
         }
     }
 }

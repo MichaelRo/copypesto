@@ -18,7 +18,25 @@ public actor ThumbnailService {
         return cache
     }()
 
+    private nonisolated(unsafe) static let stillPreviews: NSCache<NSString, NSData> = {
+        let cache = NSCache<NSString, NSData>()
+        cache.countLimit = 32
+        cache.totalCostLimit = 16 * 1024 * 1024
+        return cache
+    }()
+
+    public nonisolated static func prewarm(id: UUID, imageData: Data, maxPixel: Int) {
+        let key = "\(id.uuidString):\(maxPixel)" as NSString
+        guard stillPreviews.object(forKey: key) == nil, !imageData.isGIF,
+              let png = ImageDownsampler.thumbnailPNG(from: imageData, maxPixel: maxPixel) else { return }
+        stillPreviews.setObject(png as NSData, forKey: key, cost: png.count)
+    }
+
     public func thumbnail(for itemID: UUID, maxPixel: Int) async -> Thumbnail? {
+        let stillKey = "\(itemID.uuidString):\(maxPixel)" as NSString
+        if let cached = Self.stillPreviews.object(forKey: stillKey) {
+            return Thumbnail(data: cached as Data, isAnimated: false)
+        }
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID })
         descriptor.fetchLimit = 1
         guard let blob = (try? modelContext.fetch(descriptor))?.first?.blob,
@@ -40,6 +58,7 @@ public actor ThumbnailService {
             }
         }
         if let png = ImageDownsampler.thumbnailPNG(from: imageData, maxPixel: maxPixel) {
+            Self.stillPreviews.setObject(png as NSData, forKey: stillKey, cost: png.count)
             return Thumbnail(data: png, isAnimated: false)
         }
         guard let svg = await SVGThumbnail.png(from: imageData, maxPixel: maxPixel) else { return nil }

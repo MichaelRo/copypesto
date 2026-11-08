@@ -7,10 +7,16 @@ import UniformTypeIdentifiers
 extension GridView {
     /// One card. What it can ask the shelf to do arrives through `cardActions` in the environment, built once for the
     /// whole row; only the values that differ per card are parameters.
-    func cardView(for item: ClipboardItem, at idx: Int) -> some View {
+    func cardView(
+        for item: ClipboardItem,
+        at idx: Int,
+        collections: [CollectionRef],
+        showsFirstCopyTime: Bool,
+        isBlurred: Bool
+    )
+    -> some View {
         let isSuggested = appState.shelfSuggestion?.targetClipID == item.id
-            && !appState
-            .isContentCovered(screenSharingPrivacy: AppDefaults.store.value(for: Setting.screenSharingPrivacy))
+            && !isBlurred
             && !appState.isHistoryLocked
         let suggestedHotkeySlot = isSuggested ? appState.shelfSuggestion?.targetSlot : nil
         return ClipboardCard(
@@ -25,21 +31,16 @@ extension GridView {
             showRequest: showRequest,
             isFlashing: flashedID == item.id,
             unavailableHotkeySlots: appState.hotkeyController.unavailableSlots,
-            isPrivacyBlurred: isPrivacyBlurred,
-            availableCollections: pinboards.map { CollectionRef(
-                id: $0.id,
-                name: $0.name,
-                symbolName: $0.symbolName
-            ) },
+            isPrivacyBlurred: isBlurred,
+            availableCollections: collections,
             revealedFromOutside: revealedIDs.contains(item.id),
             previewsAllowed: !appState.isHistoryLocked,
             hideSecretsGeneration: hideSecretsGeneration,
             canRevealHidden: appState.authenticationAvailability == .available,
             isSuggested: isSuggested,
             suggestedHotkeySlot: suggestedHotkeySlot,
-            showsFirstCopyTime: isStaticCollectionSelected
+            showsFirstCopyTime: showsFirstCopyTime
         )
-        .environment(\.clipEditor, clipEditor)
         .onDrop(
             of: [
                 UTType.utf8PlainText.identifier, UTType.plainText.identifier,
@@ -47,7 +48,7 @@ extension GridView {
             ],
             isTargeted: nil
         ) { _ in
-            guard isStaticCollectionSelected,
+            guard showsFirstCopyTime,
                   let draggedID = appState.draggingItemID,
                   draggedID != item.id else { return false }
             reorderItem(from: draggedID, to: item.id)
@@ -145,6 +146,42 @@ extension GridView {
     var isStaticCollectionSelected: Bool {
         guard let pid = appState.selectedCollectionID else { return false }
         return pinboards.first { $0.id == pid }?.isSmart == false
+    }
+
+    var cardRow: some View {
+        let actions = cardActions
+        let editor = clipEditor
+        let collections = pinboards.map { CollectionRef(id: $0.id, name: $0.name, symbolName: $0.symbolName) }
+        let showsFirstCopy = isStaticCollectionSelected
+        let blurred = isPrivacyBlurred
+        return LazyHStack(spacing: 8) {
+            ForEach(displayedItems.indices, id: \.self) { idx in
+                let item = displayedItems[idx]
+                cardView(
+                    for: item,
+                    at: idx,
+                    collections: collections,
+                    showsFirstCopyTime: showsFirstCopy,
+                    isBlurred: blurred
+                )
+                .id(item.id)
+                .transition(cardTransition)
+            }
+            if cachedFilteredItems.count > displayedItems.count {
+                Color.clear
+                    .frame(width: 1, height: 1)
+                    .accessibilityHidden(true)
+                    .onAppear {
+                        guard cachedFilteredItems.count > displayLimit else { return }
+                        displayLimit += 500
+                        displayedItems = Array(cachedFilteredItems.prefix(displayLimit))
+                    }
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Clipboard cards")
+        .environment(\.cardActions, actions)
+        .environment(\.clipEditor, editor)
     }
 
     func reorderItem(from sourceID: UUID, to targetID: UUID) {

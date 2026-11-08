@@ -16,6 +16,7 @@ public struct HistoryCriteria: Sendable {
     public var sensitiveOnly: Bool
     public var remoteOnly: Bool
     public var query: String
+    public var now: Date?
 
     public init(
         hidesSensitive: Bool = false,
@@ -28,7 +29,8 @@ public struct HistoryCriteria: Sendable {
         dateBefore: Date? = nil,
         sensitiveOnly: Bool = false,
         remoteOnly: Bool = false,
-        query: String = ""
+        query: String = "",
+        now: Date? = nil
     ) {
         self.hidesSensitive = hidesSensitive
         self.appBundleIDs = appBundleIDs
@@ -41,6 +43,7 @@ public struct HistoryCriteria: Sendable {
         self.sensitiveOnly = sensitiveOnly
         self.remoteOnly = remoteOnly
         self.query = query
+        self.now = now
     }
 }
 
@@ -50,12 +53,16 @@ public struct HistoryRow: Sendable {
     public let id: UUID
     public let modelID: PersistentIdentifier
     let timestamp: Date
+    public let copiedAt: Date
     let typeRaw: String
     let sourceBundleID: String?
     let isNSFW: Bool
     let isSecret: Bool
     let isRemote: Bool
+    let isPinned: Bool
+    let expiresAt: Date?
     let collectionID: UUID?
+    public let collectionOrder: Int?
     let tagsLowercased: [String]
     let languageLowercased: String?
     /// The preview, title, note, tags and a link's page title and site name, each folded for case and accents and
@@ -67,14 +74,19 @@ public struct HistoryRow: Sendable {
     public init(_ item: ClipboardItem, includingText: Bool = true) {
         id = item.id
         modelID = item.persistentModelID
-        timestamp = item.timestamp
+        let ts = item.timestamp
+        timestamp = ts
         typeRaw = item.typeRaw
         sourceBundleID = item.sourceBundleID
         isNSFW = item.isNSFW
         isSecret = item.sensitivityRaw != nil
         isRemote = item.isRemote
+        isPinned = item.isPinned
+        expiresAt = item.expiresAt
         collectionID = item.collectionID
         let metadata = item.metadata
+        copiedAt = metadata.copiedAt ?? ts
+        collectionOrder = metadata.collectionOrder
         let tags = metadata.tags
         let isTemplate = item.isTemplate
         var loweredTags = tags.map { $0.lowercased() }
@@ -167,10 +179,14 @@ public struct HistoryIndex: Sendable {
         if text.cannotMatch { return [] }
         // A whole language name ("java") means that language alone; only a part of a name ("javas") is a prefix.
         let wholeLanguage = text.tagPrefix.map { prefix in rows.contains { $0.languageLowercased == prefix } } ?? false
-        return rows.filter { row in
+        let matched = rows.filter { row in
             Self.inScope(row, criteria, smartCollection) && text.matches(row, wholeLanguage: wholeLanguage)
                 && (!criteria.searchActive || Self.passesChips(row, criteria))
-        }.map(\.id)
+        }
+        if criteria.collectionID != nil, smartCollection == nil {
+            return CollectionOrder.sortedRows(matched).map(\.id)
+        }
+        return matched.map(\.id)
     }
 
     /// Hidden clips, the app chips and the collection.
@@ -178,6 +194,9 @@ public struct HistoryIndex: Sendable {
         _ row: HistoryRow, _ criteria: HistoryCriteria, _ smartCollection: ((UUID) -> Bool)?
     )
     -> Bool {
+        if let now = criteria.now, !row.isPinned, let expiry = row.expiresAt, expiry != .distantPast, expiry <= now {
+            return false
+        }
         if criteria.hidesSensitive, row.isNSFW { return false }
         let apps = criteria.searchActive ? criteria.appBundleIDs.union(criteria.sources) : criteria.appBundleIDs
         if !apps.isEmpty, !(row.sourceBundleID.map(apps.contains) ?? false) {

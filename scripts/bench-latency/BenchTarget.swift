@@ -55,12 +55,16 @@ final class ClipboardSnapshot {
 // MARK: - Fixtures for the copy bench
 
 enum CopyKind: String, CaseIterable {
-    case text, richText = "rich text", code, link, colour, file, picture, gif, large
+    case text, richText = "rich text", code, link, colour, file, picture, screenshot, gif, large
 
     func write(run: Int, to board: NSPasteboard) {
         // Everything slow is built before the board is touched: setData does not bump the change count, so a poll that
         // lands between clearContents and setData would see an empty board and never see the clip.
-        let png = self == .picture ? Self.picture(width: 1600, height: 1000, salt: run) : nil
+        let png = switch self {
+        case .picture: Self.picture(width: 1600, height: 1000, salt: run)
+        case .screenshot: Self.picture(width: 5120, height: 2880, salt: run + 100)
+        default: nil
+        }
         let gifBytes = self == .gif ? Self.gif(salt: run) : nil
         let gifStill = self == .gif ? Self.picture(width: 320, height: 320, salt: run) : nil
         let large = self == .large
@@ -100,7 +104,7 @@ enum CopyKind: String, CaseIterable {
             board.setString(String(format: "#%06X", 0x1E90FF &+ run * 257), forType: .string)
         case .file:
             if let fileURL { board.writeObjects([fileURL as NSURL]) }
-        case .picture:
+        case .picture, .screenshot:
             if let png { board.setData(png, forType: .png) }
         case .gif:
             if let gifBytes { board.setData(gifBytes, forType: NSPasteboard.PasteboardType("com.compuserve.gif")) }

@@ -18,6 +18,14 @@ struct VerifyReceiptTests {
             .appendingPathComponent("scripts/check-verify-receipt.sh")
     }
 
+    private static var reconcileScriptURL: URL {
+        scriptURL.deletingLastPathComponent().appendingPathComponent("verify_reconcile.py")
+    }
+
+    private static var scopeScriptURL: URL {
+        scriptURL.deletingLastPathComponent().appendingPathComponent("verify_scope.py")
+    }
+
     private func makeTempGitRepo() throws -> TempRepo {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent("pesto-verify-receipt-\(UUID().uuidString)", isDirectory: true)
@@ -206,5 +214,173 @@ struct VerifyReceiptTests {
         )
         #expect(codeChange.status != 0)
         #expect(codeChange.output.contains("code or build configuration changed"))
+    }
+
+    @Test("a reconciled full-gate receipt is accepted with provenance, while a scoped receipt is rejected")
+    func whenReconciledOrScopedReceiptChecked_thenValidatedAppropriately() throws {
+        let repo = try makeTempGitRepo()
+        defer { try? FileManager.default.removeItem(at: repo.dir) }
+        try Data(".build/\n".utf8).write(to: repo.dir.appendingPathComponent(".gitignore"))
+        _ = try run("/usr/bin/git", ["add", ".gitignore"], in: repo.dir)
+        _ = try run("/usr/bin/git", ["commit", "-q", "-m", "ignore build"], in: repo.dir)
+        let tree = try run("/usr/bin/git", ["rev-parse", "HEAD^{tree}"], in: repo.dir).output
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let commit = try run("/usr/bin/git", ["rev-parse", "HEAD"], in: repo.dir).output
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let buildDir = repo.dir.appendingPathComponent(".build", isDirectory: true)
+        try FileManager.default.createDirectory(at: buildDir, withIntermediateDirectories: true)
+        let receipt = buildDir.appendingPathComponent("verify-receipt.json")
+
+        let reconciledPayload: [String: Any] = [
+            "tree": tree, "commit": commit, "dirty": false, "full_gate": true,
+            "reconciled": true, "reconciled_from": "20261108-010000", "rerun_stamp": "20261108-011500",
+            "result": "PASS", "run": "20261108-010000", "timestamp": "2026-11-08T01:15:00Z"
+        ]
+        try JSONSerialization.data(withJSONObject: reconciledPayload).write(to: receipt)
+        let validReconciled = try run(
+            Self.scriptURL.path, ["--repo", repo.dir.path, "--receipt", receipt.path], in: repo.dir
+        )
+        #expect(validReconciled.status == 0, "\(validReconciled.output)")
+        #expect(validReconciled.output.contains("Release verify receipt valid"))
+
+        var incompletePayload = reconciledPayload
+        incompletePayload.removeValue(forKey: "rerun_stamp")
+        try JSONSerialization.data(withJSONObject: incompletePayload).write(to: receipt)
+        let incomplete = try run(
+            Self.scriptURL.path, ["--repo", repo.dir.path, "--receipt", receipt.path], in: repo.dir
+        )
+        #expect(incomplete.status != 0)
+        #expect(incomplete.output.contains("reconciled receipt is missing"))
+
+        let scopedPayload: [String: Any] = [
+            "tree": tree, "commit": commit, "dirty": false, "full_gate": false, "scoped": true,
+            "result": "PASS", "run": "20261108-012000", "timestamp": "2026-11-08T01:20:00Z"
+        ]
+        try JSONSerialization.data(withJSONObject: scopedPayload).write(to: receipt)
+        let scoped = try run(
+            Self.scriptURL.path, ["--repo", repo.dir.path, "--receipt", receipt.path], in: repo.dir
+        )
+        #expect(scoped.status != 0)
+        #expect(scoped.output.contains("--scoped"))
+    }
+
+    private func makeTestNodes(hostedPassed: Int, uiPassed: Int, failedID: String?) -> [String: Any] {
+        let hostedCases: [[String: Any]] = (0..<hostedPassed).map {
+            ["nodeType": "Test Case", "name": "h\($0)", "nodeIdentifier": "Suite/h\($0)", "result": "Passed"]
+        }
+        var uiCases: [[String: Any]] = (0..<uiPassed).map {
+            ["nodeType": "Test Case", "name": "u\($0)", "nodeIdentifier": "UISuite/u\($0)", "result": "Passed"]
+        }
+        if let failedID {
+            uiCases.append(["nodeType": "Test Case", "name": failedID, "nodeIdentifier": failedID, "result": "Failed"])
+        }
+        return [
+            "testNodes": [
+                ["nodeType": "Unit test bundle", "name": "PestoTests", "children": hostedCases],
+                ["nodeType": "UI test bundle", "name": "PestoUITests", "children": uiCases]
+            ]
+        ]
+    }
+
+    @Test("verify_reconcile.py writes a valid receipt when all failed hosted/UI tests pass on rerun")
+    func whenVerifyReconcileRuns_thenStampsReceiptOnlyWhenSafe() throws {
+        let repo = try makeTempGitRepo()
+        defer { try? FileManager.default.removeItem(at: repo.dir) }
+        try Data(".build/\n".utf8).write(to: repo.dir.appendingPathComponent(".gitignore"))
+        _ = try run("/usr/bin/git", ["add", ".gitignore"], in: repo.dir)
+        _ = try run("/usr/bin/git", ["commit", "-q", "-m", "ignore build"], in: repo.dir)
+        let tree = try run("/usr/bin/git", ["rev-parse", "HEAD^{tree}"], in: repo.dir).output
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let commit = try run("/usr/bin/git", ["rev-parse", "HEAD"], in: repo.dir).output
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let runID = "20261108-020000"
+        let stamp = "20261108-021000"
+        let runDir = repo.dir.appendingPathComponent(".build/verify/\(runID)", isDirectory: true)
+        try FileManager.default.createDirectory(at: runDir, withIntermediateDirectories: true)
+
+        let flakyID = "SensitiveCardTests/test_blurredCard()"
+        try JSONSerialization.data(withJSONObject: [
+            "passedTests": 410, "failedTests": 1,
+            "testFailures": [["targetName": "PestoUITests", "testIdentifierString": flakyID, "testName": flakyID]]
+        ]).write(to: runDir.appendingPathComponent("tests-summary.json"))
+        try JSONSerialization.data(withJSONObject: makeTestNodes(hostedPassed: 280, uiPassed: 130, failedID: flakyID))
+            .write(to: runDir.appendingPathComponent("tests-tree.json"))
+        try JSONSerialization.data(withJSONObject: ["passedTests": 1, "failedTests": 0, "testFailures": []])
+            .write(to: runDir.appendingPathComponent("rerun-\(stamp)-summary.json"))
+        try JSONSerialization.data(withJSONObject: [
+            "testNodes": [[
+                "nodeType": "UI test bundle", "name": "PestoUITests",
+                "children": [["nodeType": "Test Case", "name": flakyID, "nodeIdentifier": flakyID, "result": "Passed"]]
+            ]]
+        ]).write(to: runDir.appendingPathComponent("rerun-\(stamp)-tree.json"))
+
+        func meta(steps: [[String: String]]) -> [String: Any] {
+            [
+                "run": runID, "tree": tree, "commit": commit, "dirty": false, "full_gate": true,
+                "scoped": false, "runs_snapshots": false, "skip_ui": false, "steps": steps
+            ]
+        }
+        try JSONSerialization.data(withJSONObject: meta(steps: [
+            ["name": "lint", "status": "FAIL"], ["name": "hosted + UI tests", "status": "FAIL"]
+        ])).write(to: runDir.appendingPathComponent("run-meta.json"))
+        let refused = try run(
+            "/usr/bin/python3",
+            [Self.reconcileScriptURL.path, "--repo", repo.dir.path, "--run-dir", runDir.path, "--stamp", stamp],
+            in: repo.dir
+        )
+        #expect(refused.status != 0)
+        #expect(refused.output.contains("non-test step failed"))
+
+        try JSONSerialization.data(withJSONObject: meta(steps: [
+            ["name": "lint", "status": "PASS"], ["name": "core tests", "status": "PASS"],
+            ["name": "hosted + UI tests", "status": "FAIL"]
+        ])).write(to: runDir.appendingPathComponent("run-meta.json"))
+        let reconciled = try run(
+            "/usr/bin/python3",
+            [Self.reconcileScriptURL.path, "--repo", repo.dir.path, "--run-dir", runDir.path, "--stamp", stamp],
+            in: repo.dir
+        )
+        #expect(reconciled.status == 0, "\(reconciled.output)")
+        let check = try run(Self.scriptURL.path, ["--repo", repo.dir.path], in: repo.dir)
+        #expect(check.status == 0, "\(check.output)")
+    }
+
+    @Test("verify_scope.py maps changed files to targeted test suites")
+    func whenVerifyScopeEvaluatesChangesets_thenScopesTargetsAppropriately() throws {
+        // 1. Core-only change runs Core tests and skips UI tests
+        let coreOnly = try run(
+            "/usr/bin/python3",
+            [
+                Self.scopeScriptURL.path,
+                "--files",
+                "Sources/Core/Storage/HistoryIndex.swift",
+                "Tests/PestoCoreTests/HistoryIndexTests.swift"
+            ],
+            in: FileManager.default.temporaryDirectory
+        )
+        #expect(coreOnly.status == 0, "\(coreOnly.output)")
+        let corePlan = try #require(
+            JSONSerialization.jsonObject(with: Data(coreOnly.output.utf8)) as? [String: Any]
+        )
+        #expect(corePlan["run_core"] as? Bool == true)
+        #expect(corePlan["run_ui"] as? Bool == false)
+        #expect((corePlan["core_filter"] as? String)?.contains("HistoryIndexTests") == true)
+
+        // 2. Grid feature change runs hosted, snapshot, and targeted UI suites
+        let gridChange = try run(
+            "/usr/bin/python3",
+            [Self.scopeScriptURL.path, "--files", "Sources/Features/Grid/ClipboardCard.swift"],
+            in: FileManager.default.temporaryDirectory
+        )
+        #expect(gridChange.status == 0, "\(gridChange.output)")
+        let gridPlan = try #require(
+            JSONSerialization.jsonObject(with: Data(gridChange.output.utf8)) as? [String: Any]
+        )
+        #expect(gridPlan["run_hosted"] as? Bool == true)
+        #expect(gridPlan["run_ui"] as? Bool == true)
+        let onlyTesting = gridPlan["only_testing"] as? [String] ?? []
+        #expect(onlyTesting.contains("PestoUITests/OverlayFlowTests"))
+        #expect(onlyTesting.contains("PestoUITests/KeyboardNavigationTests"))
     }
 }

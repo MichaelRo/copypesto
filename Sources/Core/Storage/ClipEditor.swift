@@ -8,7 +8,12 @@ import SwiftData
 /// the search row in step with the clip, and tell the shelf that what it filters on may have moved. The card and the
 /// shelf used to spell that sequence out in a dozen places, three of them forgetting the rollback's message.
 @MainActor
-public struct ClipEditor {
+public struct ClipEditor: Equatable {
+    public nonisolated static func == (lhs: ClipEditor, rhs: ClipEditor) -> Bool {
+        lhs.identity == rhs.identity
+    }
+
+    private nonisolated let identity: ObjectIdentifier
     private let context: ModelContext
     private let historyStore: HistoryStore?
     private let report: (String.LocalizationValue, () throws -> Void) -> Void
@@ -26,6 +31,7 @@ public struct ClipEditor {
         didEdit: @escaping () -> Void,
         undoHistory: UndoHistory? = nil
     ) {
+        identity = ObjectIdentifier(context)
         self.context = context
         self.historyStore = historyStore
         self.report = report

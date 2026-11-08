@@ -23,8 +23,7 @@ extension ClipboardCard {
     func loadThumbnailIfNeeded() async {
         PerfSignposts.shelf.event("cardAppear", item.id.uuidString)
         let byteSize = item.byteSize
-        guard item.type == .image || item.isSVGSource, thumbnail == nil || thumbnailByteSize != byteSize,
-              !item.analysisPending else { return }
+        guard item.type == .image || item.isSVGSource, thumbnail == nil || thumbnailByteSize != byteSize else { return }
         defer { PerfSignposts.shelf.event("cardThumbnail", item.id.uuidString) }
         let id = item.id
         if let cached = ThumbnailCache.shared.entry(for: id, byteSize: byteSize) {

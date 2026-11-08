@@ -12,7 +12,7 @@ enum ShelfMotion {
     /// another, or one clip brought to the front. A search, filter or sort rewrites the whole list and must not
     /// animate.
     static func shouldAnimateChange(from old: [UUID], to new: [UUID]) -> Bool {
-        guard old != new else { return false }
+        guard abs(old.count - new.count) <= 2, old != new else { return false }
         let before = Set(old)
         let after = Set(new)
         let changed = before.symmetricDifference(after).count

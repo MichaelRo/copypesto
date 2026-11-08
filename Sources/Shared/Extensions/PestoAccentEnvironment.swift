@@ -7,4 +7,6 @@ extension EnvironmentValues {
     @Entry var pestoAccent: Color = .accentColor
     /// The text on a button filled with `pestoAccent` (`PestoProminentButtonStyle`).
     @Entry var pestoAccentLabel: Color = .white
+    /// The theme's surface ground color, resolved for the current light or dark appearance.
+    @Entry var pestoSurface: Color = .init(nsColor: .windowBackgroundColor)
 }

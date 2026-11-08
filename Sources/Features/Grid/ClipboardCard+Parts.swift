@@ -370,9 +370,10 @@ extension ClipboardCard {
 
     /// `onDark` is a row over a picture or color, where a chip's usual tint would not read: white text on a dark chip.
     func tagChipsRow(onDark: Bool = false) -> some View {
+        let over = pictureOverlay
         // A clipped row, not a nested ScrollView: a horizontal scroll view inside the shelf's own one took trackpad
         // scrolls that began over a tag, so the shelf stuck.
-        HStack(spacing: 3) {
+        return HStack(spacing: 3) {
             ForEach(item.tags, id: \.self) { tag in
                 Button {
                     tagToRemove = tag
@@ -382,12 +383,12 @@ extension ClipboardCard {
                         Circle().fill(tagColor(for: tag)).frame(width: 6, height: 6)
                         Text(tag)
                             .font(.caption2.weight(.medium))
-                            .foregroundStyle(onDark ? Color.white : Color.primary)
+                            .foregroundStyle(onDark ? over.ink : Color.primary)
                     }
                     .padding(.horizontal, 6)
                     .frame(minHeight: 20)
                     .background(
-                        onDark ? Color.black.opacity(PictureScrim.pillOpacity) : tagColor(for: tag).opacity(0.18),
+                        onDark ? surface.opacity(PictureScrim.pillOpacity) : tagColor(for: tag).opacity(0.18),
                         in: Capsule()
                     )
                     .contentShape(Capsule())

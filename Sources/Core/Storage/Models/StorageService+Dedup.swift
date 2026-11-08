@@ -36,7 +36,13 @@ extension StorageService {
         return true
     }
 
-    func perceptualDuplicate(of candidateHash: String, payload: Data) -> ClipboardItem? {
+    func perceptualDuplicate(
+        of candidateHash: String,
+        payload: Data,
+        pixelWidth: Int? = nil,
+        pixelHeight: Int? = nil
+    )
+    -> ClipboardItem? {
         let imageTypeRaw = ClipboardType.image.rawValue
         var descriptor = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { $0.typeRaw == imageTypeRaw },
@@ -44,13 +50,27 @@ extension StorageService {
         )
         descriptor.fetchLimit = 50
         guard let recent = try? modelContext.fetch(descriptor) else { return nil }
+        let dimensionMatched = recent.filter { item in
+            if let pixelWidth, let itemWidth = item.pixelWidth, itemWidth != pixelWidth { return false }
+            if let pixelHeight, let itemHeight = item.pixelHeight, itemHeight != pixelHeight { return false }
+            return true
+        }
         let nominatedIDs = Set(PerceptualHasher.nominees(
-            for: candidateHash, among: recent.map { (id: $0.id, hash: $0.perceptualHash) }
+            for: candidateHash, among: dimensionMatched.map { (id: $0.id, hash: $0.perceptualHash) }
         ))
-        let nominated = recent.filter { nominatedIDs.contains($0.id) }
+        let nominated = dimensionMatched.filter { nominatedIDs.contains($0.id) }
         guard !nominated.isEmpty, let digest = PerceptualHasher.pixelDigest(imageData: payload) else { return nil }
         return nominated.first { item in
             item.blob?.decryptedData().flatMap { PerceptualHasher.pixelDigest(imageData: $0) } == digest
         }
+    }
+
+    func storeEmbedding(contentHash: String, embeddingData: Data) throws {
+        let desc = FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { $0.contentHash == contentHash }
+        )
+        guard let item = try modelContext.fetch(desc).first else { return }
+        item.embeddingData = embeddingData
+        try saveOrRollback()
     }
 }

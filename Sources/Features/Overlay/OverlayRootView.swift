@@ -9,7 +9,6 @@ struct OverlayRootView: View {
     @Environment(AppState.self) var appState: AppState
     @Environment(\.colorSchemeContrast) private var contrast
     @State private var focusedDominantColor: Color = .clear
-    @State private var focusX: CGFloat = 0.5
     @AppStorage(Setting.accentColorHex) private var accentColorHex: String
     @AppStorage(Setting.appTheme) private var appThemeRaw: String
     @AppStorage(Setting.appThemeDark) private var appThemeDarkRaw: String
@@ -190,9 +189,10 @@ struct OverlayRootView: View {
 
                 BiometricLockOverlay {
                     GridView(
-                        onFocusChanged: { dominantColor, normalizedX in
-                            focusedDominantColor = dominantColor
-                            focusX = normalizedX
+                        onFocusChanged: { dominantColor, _ in
+                            if focusedDominantColor != dominantColor {
+                                focusedDominantColor = dominantColor
+                            }
                         }
                     )
                 }

@@ -6,8 +6,10 @@ extension View {
     func pestoAccented(stored: String, theme: String, darkTheme: String) -> some View {
         let accent = Color.pestoAccent(stored: stored, theme: theme, darkTheme: darkTheme)
         let label = Color.pestoAccentLabel(stored: stored, theme: theme, darkTheme: darkTheme)
+        let surface = Color.themedSurface(light: theme, dark: darkTheme)
         return tint(accent)
             .environment(\.pestoAccent, accent)
             .environment(\.pestoAccentLabel, label)
+            .environment(\.pestoSurface, surface)
     }
 }

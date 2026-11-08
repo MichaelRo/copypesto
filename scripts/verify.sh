@@ -6,6 +6,7 @@
 #   scripts/verify.sh           everything (UI tests take a few minutes and drive real windows)
 #   scripts/verify.sh --fast    lint + Core tests + build only (no Release build, no hosted or UI tests)
 #   scripts/verify.sh --no-ui   everything except the UI tests (what CI runs; hosted PestoTests still run)
+#   scripts/verify.sh --scoped  changeset-scoped dev/PR run (lint + targeted Core/hosted tests from git diff)
 #
 # Screenshots of the app's own windows land in .build/ui-screenshots/<run>/<Test>/<step>.png.
 # One-time machine setup for the UI tests: docs/testing.md.
@@ -20,8 +21,11 @@ fi
 
 FAST=0
 SKIP_UI=0
+SCOPED=0
 [[ "${1:-}" == "--fast" ]] && FAST=1
 [[ "${1:-}" == "--no-ui" ]] && SKIP_UI=1
+[[ "${1:-}" == "--scoped" ]] && SCOPED=1
+RUNS_SNAPSHOTS=0
 
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 # A running Pesto answers for the tests' windows and makes some of them skip, so the gate will not start next to one.
@@ -293,14 +297,71 @@ PY
   find "$raw" -type d -empty -delete 2>/dev/null
 }
 
+step_scoped() {
+  python3 scripts/verify_scope.py >"$LOGS/scope-plan.json"
+  local run_core core_filter run_hosted run_ui
+  run_core="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("run_core") else "0")' "$LOGS/scope-plan.json")"
+  core_filter="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("core_filter") or "")' "$LOGS/scope-plan.json")"
+  run_hosted="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("run_hosted") else "0")' "$LOGS/scope-plan.json")"
+  run_ui="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("run_ui") else "0")' "$LOGS/scope-plan.json")"
+  if [[ "$run_core" == "1" ]]; then
+    if [[ -n "$core_filter" ]]; then
+      if swift test --filter "$core_filter" >"$LOGS/core.log" 2>&1; then
+        record "scoped core tests" "PASS" "$core_filter"
+      else
+        record "scoped core tests" "FAIL" "$core_filter"
+      fi
+    else
+      step_core
+    fi
+  fi
+  step_build
+  if [[ "$run_hosted" == "1" ]]; then
+    make generate >"$LOGS/generate.log" 2>&1
+    set_stale_runner_aside
+    caffeinate -u -t 3 2>/dev/null || true
+    local only_args=()
+    while IFS= read -r suite; do
+      [[ -n "$suite" ]] && only_args+=("-only-testing:$suite")
+    done < <(python3 -c 'import json,sys; [print(s) for s in json.load(open(sys.argv[1])).get("only_testing", [])]' "$LOGS/scope-plan.json")
+    if ! scripts/snapshot-os.sh >/dev/null 2>&1; then
+      local filtered_args=()
+      for arg in "${only_args[@]}"; do
+        [[ "$arg" != "-only-testing:PestoSnapshotTests"* ]] && filtered_args+=("$arg")
+      done
+      only_args=("${filtered_args[@]}")
+    fi
+    local result="$LOGS/tests.xcresult"
+    local label="scoped hosted tests"
+    [[ "$run_ui" == "1" ]] && label="scoped hosted + UI tests"
+    if env TEST_RUNNER_PESTO_SCREENSHOT_DIR="$PWD/$SHOTS" xcodebuild \
+      -project Pesto.xcodeproj -scheme Pesto -configuration Debug \
+      -destination 'platform=macOS' -derivedDataPath "$DERIVED" \
+      CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+      "${only_args[@]}" \
+      -resultBundlePath "$result" \
+      test >"$LOGS/tests.log" 2>&1; then
+      record "$label" "PASS" "${only_args[*]}"
+    else
+      xcrun xcresulttool get test-results summary --path "$result" --compact >"$LOGS/tests-summary.json" 2>/dev/null
+      python3 scripts/verify_failures.py "$LOGS/tests-summary.json" >>"$LOGS/failures.txt" 2>/dev/null
+      record "$label" "FAIL" "${only_args[*]}"
+    fi
+  fi
+}
+
 step_lint
-step_core
-step_build
-if [[ $FAST -eq 0 ]]; then
-  step_release_build
-  [[ $SKIP_UI -eq 0 ]] && step_memory
-  [[ $SKIP_UI -eq 0 ]] && step_memory_pictures
-  step_hosted_and_ui
+if [[ $SCOPED -eq 1 ]]; then
+  step_scoped
+else
+  step_core
+  step_build
+  if [[ $FAST -eq 0 ]]; then
+    step_release_build
+    [[ $SKIP_UI -eq 0 ]] && step_memory
+    [[ $SKIP_UI -eq 0 ]] && step_memory_pictures
+    step_hosted_and_ui
+  fi
 fi
 
 summarize() {
@@ -328,8 +389,15 @@ done
 
 write_receipt() {
   local receipt=".build/verify-receipt.json"
+  local meta="$LOGS/run-meta.json"
   local full_gate="false"
-  [[ $FAST -eq 0 && $SKIP_UI -eq 0 ]] && full_gate="true"
+  [[ $FAST -eq 0 && $SKIP_UI -eq 0 && $SCOPED -eq 0 ]] && full_gate="true"
+  local scoped_str="false"
+  [[ $SCOPED -eq 1 ]] && scoped_str="true"
+  local skip_ui_str="false"
+  [[ $SKIP_UI -eq 1 ]] && skip_ui_str="true"
+  local snapshots_str="false"
+  [[ $RUNS_SNAPSHOTS -eq 1 ]] && snapshots_str="true"
   local dirty="false"
   [[ -n "$(git status --porcelain -uno 2>/dev/null)" ]] && dirty="true"
   local tree commit timestamp result_str
@@ -338,9 +406,28 @@ write_receipt() {
   timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   result_str="FAIL"
   [[ $FAILED -eq 0 ]] && result_str="PASS"
-  python3 - "$receipt" "$tree" "$commit" "$dirty" "$full_gate" "$result_str" "$RUN" "$timestamp" <<'PY'
-import json, sys
-path, tree, commit, dirty, full_gate, result, run, ts = sys.argv[1:9]
+  local steps_tsv="$LOGS/steps.tsv"
+  : >"$steps_tsv"
+  for i in "${!NAMES[@]}"; do
+    printf '%s\t%s\n' "${NAMES[$i]}" "${STATUS[$i]}" >>"$steps_tsv"
+  done
+  python3 - "$receipt" "$meta" "$steps_tsv" "$tree" "$commit" "$dirty" "$full_gate" "$scoped_str" "$skip_ui_str" "$snapshots_str" "$result_str" "$RUN" "$timestamp" <<'PY'
+import json, pathlib, sys
+(
+    path,
+    meta_path,
+    steps_tsv,
+    tree,
+    commit,
+    dirty,
+    full_gate,
+    scoped,
+    skip_ui,
+    runs_snapshots,
+    result,
+    run,
+    ts,
+) = sys.argv[1:14]
 payload = {
     "tree": tree,
     "commit": commit,
@@ -350,8 +437,31 @@ payload = {
     "run": run,
     "timestamp": ts,
 }
+if scoped == "true":
+    payload["scoped"] = True
 with open(path, "w") as f:
     json.dump(payload, f, indent=2)
+    f.write("\n")
+
+steps = []
+for line in pathlib.Path(steps_tsv).read_text().splitlines():
+    if "\t" in line:
+        name, status = line.split("\t", 1)
+        steps.append({"name": name, "status": status})
+meta_payload = {
+    "run": run,
+    "tree": tree,
+    "commit": commit,
+    "dirty": dirty == "true",
+    "full_gate": full_gate == "true",
+    "scoped": scoped == "true",
+    "skip_ui": skip_ui == "true",
+    "runs_snapshots": runs_snapshots == "true",
+    "steps": steps,
+    "timestamp": ts,
+}
+with open(meta_path, "w") as f:
+    json.dump(meta_payload, f, indent=2)
     f.write("\n")
 PY
   if [[ "$result_str" == "PASS" && "$full_gate" == "true" && "$dirty" == "false" && -n "$commit" ]]; then

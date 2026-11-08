@@ -16,7 +16,7 @@ struct KeyboardNavigationWrapper<Content: View>: View {
     var onSpace: (() -> Void)?
     var onCharacterTyped: ((String) -> Void)?
     var onEscapeFromSearch: (() -> Void)?
-    var onArrowKey: (() -> Void)?
+    var onArrowKey: ((Bool) -> Void)?
     var onPrevPinboard: (() -> Void)?
     var onNextPinboard: (() -> Void)?
     var onDelete: (() -> Void)?
@@ -68,32 +68,33 @@ struct KeyboardNavigationWrapper<Content: View>: View {
         let binding = $focusedIndex
         let count = itemCount
         let arrowKey = onArrowKey
+        let coord = coordinator
         coordinator.onLeft = {
             guard count > 0 else { return }
             binding.wrappedValue = max(0, binding.wrappedValue - 1)
-            arrowKey?()
+            arrowKey?(coord.isCurrentEventRepeat)
         }
         coordinator.onRight = {
             guard count > 0 else { return }
             binding.wrappedValue = min(count - 1, binding.wrappedValue + 1)
-            arrowKey?()
+            arrowKey?(coord.isCurrentEventRepeat)
         }
         coordinator.cardSpan = cardSpan
         coordinator.usesRightToLeft = layoutDirection == .rightToLeft
         coordinator.onPage = { pages in
             guard count > 0 else { return }
             binding.wrappedValue = min(max(0, binding.wrappedValue + pages), count - 1)
-            arrowKey?()
+            arrowKey?(coord.isCurrentEventRepeat)
         }
         coordinator.onFirst = {
             guard count > 0 else { return }
             binding.wrappedValue = 0
-            arrowKey?()
+            arrowKey?(coord.isCurrentEventRepeat)
         }
         coordinator.onLast = {
             guard count > 0 else { return }
             binding.wrappedValue = count - 1
-            arrowKey?()
+            arrowKey?(coord.isCurrentEventRepeat)
         }
     }
 

@@ -14,6 +14,7 @@ struct IngestAnalysisInput {
     let link: String?
     let readsImages: Bool
     let screensContent: Bool
+    var needsPerceptualHash = false
 
     /// Text larger than this is scanned after it is saved: the scan took 430 ms for 5 MB.
     static let backgroundTextBytes = 100_000
@@ -21,7 +22,7 @@ struct IngestAnalysisInput {
     /// Pictures are read and shown to the model; both take hundreds of milliseconds, so the card appears first.
     var runsInTheBackground: Bool {
         switch clipType {
-        case .image: readsImages || screensContent
+        case .image: readsImages || screensContent || needsPerceptualHash
         case .text, .code: text.utf8.count > Self.backgroundTextBytes
         default: false
         }
@@ -37,6 +38,7 @@ struct IngestAnalysis {
     var recognizedText: String?
     var isNSFW = false
     var sensitivity: SensitiveContentDetector.Result?
+    var perceptualHash: String?
 }
 
 extension StorageService {
@@ -52,6 +54,9 @@ extension StorageService {
     -> IngestAnalysis {
         var analysis = IngestAnalysis()
         if input.clipType == .image, let image = input.image {
+            if input.needsPerceptualHash {
+                analysis.perceptualHash = PerceptualHasher.hash(imageData: image)
+            }
             if input.readsImages {
                 if let read = await recognizer.recognize(imageData: image) {
                     let whole = RecognizedText.capped(read)
@@ -83,11 +88,15 @@ extension StorageService {
         configuration.mode != .uiTest || configuration.seed == .lunchRush
     }
 
-    func input(for clipType: ClipboardType, image: Data?, text: String, link: String?) -> IngestAnalysisInput {
+    func input(
+        for clipType: ClipboardType, image: Data?, text: String, link: String?, needsPerceptualHash: Bool = false
+    )
+    -> IngestAnalysisInput {
         IngestAnalysisInput(
             clipType: clipType, image: image, text: text, link: link,
             readsImages: Self.readsImages(in: RuntimeConfiguration.current),
-            screensContent: nsfwModeProvider().detectsContent
+            screensContent: nsfwModeProvider().detectsContent,
+            needsPerceptualHash: needsPerceptualHash
         )
     }
 
@@ -97,6 +106,11 @@ extension StorageService {
         let recognizer = textRecognizer
         let screener = imageScreener
         let taskID = UUID()
+        if input.clipType == .image, let imageData = input.image {
+            Task.detached(priority: .userInitiated) {
+                ThumbnailService.prewarm(id: itemID, imageData: imageData, maxPixel: 480)
+            }
+        }
         pendingAnalyses[taskID] = Task.detached(priority: .utility) { [self] in
             await acquireAnalysisSlot()
             let judging = PerfSignposts.copy.begin("analysis")
@@ -158,8 +172,8 @@ extension StorageService {
                 item.sensitivityMaskedPreview = sensitivity.maskedPreview
             }
         }
-        if item.perceptualHash == nil, input.clipType == .image, let data = input.image {
-            item.perceptualHash = PerceptualHasher.hash(imageData: data)
+        if item.perceptualHash == nil, let computedHash = analysis.perceptualHash {
+            item.perceptualHash = computedHash
         }
         item.isNSFW = analysis.isNSFW
         item.analysisPending = false

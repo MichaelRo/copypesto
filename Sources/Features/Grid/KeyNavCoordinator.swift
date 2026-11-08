@@ -82,6 +82,7 @@ final class KeyNavCoordinator {
     var onFilterChipRelease: (() -> Bool)?
 
     private var monitor: Any?
+    private(set) var isCurrentEventRepeat = false
 
     func start() {
         guard monitor == nil else { return }
@@ -99,6 +100,8 @@ final class KeyNavCoordinator {
 
     /// `internal` (not `private`) so tests can drive it directly without a real event loop.
     func handle(_ event: NSEvent) -> NSEvent? {
+        isCurrentEventRepeat = event.isARepeat
+        defer { isCurrentEventRepeat = false }
         guard isOverlayVisible else { return event }
         guard let hostWindow, event.window === hostWindow else { return event }
         guard !isEditingCollection else { return event }

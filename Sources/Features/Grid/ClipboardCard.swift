@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 // swiftlint:disable:next type_body_length
 struct ClipboardCard: View {
     @Environment(\.pestoAccent) var accent
+    @Environment(\.pestoSurface) var surface
     @Environment(\.colorSchemeContrast) var contrast
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.cardActions) var actions
@@ -329,7 +330,7 @@ struct ClipboardCard: View {
             .frame(width: cardDimensions.width, height: cardDimensions.height)
             .clipShape(RoundedRectangle(cornerRadius: Self.cardCornerRadius))
             .overlay {
-                if item.analysisPending {
+                if item.analysisPending, item.type != .image {
                     analysisPendingOverlay
                 } else if isBlurredAsSensitive {
                     CoveredCardFace(
@@ -388,7 +389,7 @@ struct ClipboardCard: View {
             nsfwBlurred: isBlurredAsSensitive,
             maskedSecret: item.sensitivity != nil,
             secretShown: revealedSecret != nil,
-            pendingAnalysis: item.analysisPending
+            pendingAnalysis: item.analysisPending && item.type != .image
         )
     }
 
@@ -524,6 +525,9 @@ struct ClipboardCard: View {
         switch treatment {
         case let .fullBleedPicture(fit, isAnimated): fullBleedPictureCard(fit: fit, isAnimated: isAnimated)
         case let .fullBleedColor(ink): fullBleedColorCard(ink: ink)
+        case .standard where item.type == .url && urlOGImage != nil
+            && !concealment.isConcealed && !hidesItsContent && !isRenamingTitle:
+            fullBleedLinkCard
         case .standard, .largeText, .hostFirstLink: classicCard(treatment)
         }
     }
@@ -587,13 +591,7 @@ struct ClipboardCard: View {
     }
 }
 
-// MARK: - Drag only while the card is not covered
-
 private extension View {
-    /// A covered card cannot be dragged out: the drag would hand the clip to another app without it being shown.
-    /// The modifier is always there and the provider is empty while the card is covered. An `if` that left it out
-    /// swapped the view's structure when a secret was shown, which rebuilt the whole card and hid the secret again
-    /// at once.
     func gatedDrag(allowed: Bool, data: @escaping () -> NSItemProvider) -> some View {
         onDrag { allowed ? data() : NSItemProvider() }
     }

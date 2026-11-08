@@ -36,7 +36,10 @@ extension AppDelegate {
         clear.hasDestructiveAction = true
         cancel.setAccessibilityIdentifier(AccessibilityID.clearConfirmCancel)
         clear.setAccessibilityIdentifier(AccessibilityID.clearConfirmDelete)
-        NSApp.activate()
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        alert.window.orderFrontRegardless()
+        defer { updateActivationPolicy() }
         return alert.runModal() == .alertSecondButtonReturn
     }
 }

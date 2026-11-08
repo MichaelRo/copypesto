@@ -16,6 +16,8 @@ struct ImageSourceAddressTests {
         #expect(ImageSourceAddress
             .gifURL(inHTML: "<img alt='x' src='https://a.example.com/x.GIF?w=200&h=100' width=3>") != nil)
         #expect(ImageSourceAddress.gifURL(inHTML: "<IMG SRC=\"https://a.example.com/x.gif\">") != nil)
+        #expect(ImageSourceAddress.gifURL(inHTML: "<img src=\"https://a.example.com/x.gif?w=200&amp;h=100\">")?
+            .query == "w=200&h=100")
     }
 
     @Test("a picture that is not a GIF, a data address, an insecure address and a missing tag give nothing")

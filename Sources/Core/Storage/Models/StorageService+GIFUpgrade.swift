@@ -39,6 +39,7 @@ extension StorageService {
             blob.aadBound = true
             item.byteSize = data.count
             try saveOrRollback()
+            ThumbnailService.invalidate(id: itemID)
         } catch {
             Self.analysisLogger.error("GIF not stored: \(error.localizedDescription, privacy: .public)")
         }

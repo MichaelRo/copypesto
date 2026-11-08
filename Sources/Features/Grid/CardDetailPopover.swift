@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import AppKit
 import PestoCore
+import SwiftData
 import SwiftUI
 
 /// The hover card: the clip itself, more than the card has room for. The whole text (rendered when it is Markdown,
@@ -20,6 +21,11 @@ struct CardDetailPopover: View {
     @State private var highlighted: AttributedString?
     @State private var textSize: CGSize?
     @State private var scrollEnds = ScrollEnds()
+    @State private var pictureImage: NSImage?
+    @State private var pictureIsAnimated: Bool = false
+    @State private var linkImage: NSImage?
+    @State private var linkImageIsAnimated: Bool = false
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.calendar) private var calendar
     @Environment(\.locale) private var locale
@@ -90,7 +96,38 @@ struct CardDetailPopover: View {
                 .strokeBorder(.primary.opacity(contrast == .increased ? 0.4 : 0.14), lineWidth: 1)
         }
         .accessibilityIdentifier(AccessibilityID.cardDetailPopover)
-        .task(id: item.id) { loadFullText() }
+        .task(id: item.id) {
+            loadFullText()
+            await loadMedia()
+        }
+    }
+
+    private func loadMedia() async {
+        if item.type == .image || item.isSVGSource {
+            if let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
+                pictureImage = cached.image
+                pictureIsAnimated = cached.isAnimated
+                return
+            }
+            let service = ThumbnailService(modelContainer: modelContext.container)
+            if let result = await service.thumbnail(for: item.id, maxPixel: 480),
+               let image = await PreparedImage.image(from: result.data, animated: result.isAnimated)
+            {
+                ThumbnailCache.shared.store(
+                    .init(image: image, isAnimated: result.isAnimated, byteSize: item.byteSize),
+                    for: item.id
+                )
+                pictureImage = image
+                pictureIsAnimated = result.isAnimated
+            }
+        } else if item.type == .url {
+            let itemID = item.id
+            let stored = await Task.detached(priority: .utility) { LinkPreviewImageStore().load(for: itemID) }.value
+            if let data = item.ogImageThumbnail ?? stored {
+                linkImage = await PreparedImage.image(from: data, animated: data.isGIF)
+                linkImageIsAnimated = data.isGIF
+            }
+        }
     }
 
     /// Read when the card opens, and only for a clip small enough to decrypt on the main thread.
@@ -178,7 +215,24 @@ struct CardDetailPopover: View {
     }
 
     private var linkBody: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
+            if let img = linkImage {
+                if linkImageIsAnimated {
+                    AnimatedImageView(
+                        image: img,
+                        animates: !Motion.reduceMotion,
+                        contentMode: .scaleProportionallyDown
+                    )
+                    .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                } else {
+                    Image(nsImage: img)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+            }
             if let title = item.ogTitle ?? item.customTitle {
                 Text(title).scaledFont(size: 13, weight: .semibold).fixedSize(horizontal: false, vertical: true)
             }
@@ -195,18 +249,21 @@ struct CardDetailPopover: View {
     }
 
     private var pictureBody: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let entry = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize) {
-                if entry.isAnimated {
+        let entry = ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize)
+        let image = entry?.image ?? pictureImage
+        let isAnimated = entry?.isAnimated ?? pictureIsAnimated
+        return VStack(alignment: .leading, spacing: 8) {
+            if let image {
+                if isAnimated {
                     AnimatedImageView(
-                        image: entry.image,
+                        image: image,
                         animates: !Motion.reduceMotion,
                         contentMode: .scaleProportionallyDown
                     )
                     .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 } else {
-                    Image(nsImage: entry.image)
+                    Image(nsImage: image)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: .infinity, maxHeight: 180)

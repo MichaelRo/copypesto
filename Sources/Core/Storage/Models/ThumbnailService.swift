@@ -32,19 +32,28 @@ public actor ThumbnailService {
         stillPreviews.setObject(png as NSData, forKey: key, cost: png.count)
     }
 
+    public nonisolated static func invalidate(id: UUID) {
+        animatedPreviews.removeObject(forKey: id as NSUUID)
+        for maxPixel in [480, 600, 768] {
+            let cacheKey: NSString = "\(id.uuidString):\(maxPixel)" as NSString
+            stillPreviews.removeObject(forKey: cacheKey)
+        }
+    }
+
     public func thumbnail(for itemID: UUID, maxPixel: Int) async -> Thumbnail? {
         let stillKey = "\(itemID.uuidString):\(maxPixel)" as NSString
-        if let cached = Self.stillPreviews.object(forKey: stillKey) {
-            return Thumbnail(data: cached as Data, isAnimated: false)
-        }
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID })
         descriptor.fetchLimit = 1
-        guard let blob = (try? modelContext.fetch(descriptor))?.first?.blob,
-              let imageData = blob.decryptedData() else { return nil }
-        let isAnimated = blob.mimeType == "com.compuserve.gif" || blob.mimeType == "public.gif" || imageData.isGIF
+        guard let blob = (try? modelContext.fetch(descriptor))?.first?.blob else { return nil }
+
+        let isMimeAnimated = blob.mimeType == "com.compuserve.gif" || blob.mimeType == "public.gif"
+        if !isMimeAnimated, let cached = Self.stillPreviews.object(forKey: stillKey) {
+            return Thumbnail(data: cached as Data, isAnimated: false)
+        }
+        guard let imageData = blob.decryptedData() else { return nil }
+        let isAnimated = isMimeAnimated || imageData.isGIF
         if isAnimated {
-            // The shelf plays a scaled, frame-capped copy: a copied GIF can be tens of megabytes, and every visible
-            // card decodes its frames. The stored original is what gets pasted.
+            Self.stillPreviews.removeObject(forKey: stillKey)
             if let cached = Self.animatedPreviews.object(forKey: itemID as NSUUID) {
                 return Thumbnail(data: cached as Data, isAnimated: true)
             }

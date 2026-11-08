@@ -138,6 +138,9 @@ struct DirectGIFLinkTests {
     @Test("only http(s) links whose path ends in .gif are treated as GIF links")
     func whenLink_thenRecognised() throws {
         #expect(try URLMetadataFetcher.isDirectGIFLink(#require(URL(string: "https://media.example.com/a/b.GIF?x=1"))))
+        #expect(try URLMetadataFetcher
+            .isDirectGIFLink(#require(URL(string: "https://media.example.com/a.gif?size=large"))))
+        #expect(try URLMetadataFetcher.isDirectGIFLink(#require(URL(string: "https://example.com/a.gif/view"))))
         #expect(try !URLMetadataFetcher.isDirectGIFLink(#require(URL(string: "https://example.com/gifs/cat"))))
         #expect(try !URLMetadataFetcher.isDirectGIFLink(#require(URL(string: "https://example.com/a.png"))))
         #expect(try !URLMetadataFetcher.isDirectGIFLink(#require(URL(string: "file:///tmp/a.gif"))))
@@ -244,6 +247,26 @@ struct DirectGIFLinkTests {
 
         await #expect(throws: URLError.self) { try await fetcher.fetch(url: url) }
     }
+
+    @MainActor
+    @Test("fetching a direct GIF link returns the GIF image and file title")
+    func whenDirectGIFLink_thenReturnsGIFData() async throws {
+        StubURLProtocol.response = .init(status: 200, headers: ["Content-Type": "image/gif"], body: gif)
+        let fetcher = URLMetadataFetcher(isEnabled: { true }, linkPreviewCache: nil, session: session)
+        let url = try #require(URL(string: "https://x.example/funny.gif"))
+        let result = try await fetcher.fetch(url: url)
+        #expect(result.ogImageData?.isGIF == true)
+        #expect(result.title == "funny.gif")
+        #expect(result.siteName == "x.example")
+    }
+
+    @Test("extractTitle finds og:title or html title tag")
+    func whenHTMLWithTitle_thenExtracted() {
+        let ogHTML = "<html><head><meta property=\"og:title\" content=\"My Article\"></head></html>"
+        #expect(URLMetadataFetcher.extractTitle(from: ogHTML) == "My Article")
+        let standardHTML = "<html><head><title>Page Title</title></head></html>"
+        #expect(URLMetadataFetcher.extractTitle(from: standardHTML) == "Page Title")
+    }
 }
 
 @Suite("URLMetadataFetcher synthesization and caching", .serialized)
@@ -290,6 +313,35 @@ struct URLMetadataFetcherCacheTests {
 
         #expect(loadedURL.withLock { $0 } == URL(string: "https://swift.org/blog"))
         #expect(result.title == "Swift.org")
+    }
+
+    @Test("All Google services are synthesized locally without network calls")
+    func whenGoogleServices_thenSynthesizedLocally() async throws {
+        let (cache, tempURL) = makeTempCache()
+        defer { try? FileManager.default.removeItem(at: tempURL.deletingLastPathComponent()) }
+
+        let loaderCalled = Mutex(false)
+        let fetcher = URLMetadataFetcher(isEnabled: { true }, linkPreviewCache: cache, loader: { _ in
+            loaderCalled.withLock { $0 = true }
+            return URLPreviewResult(title: "From Network", ogImageData: nil, faviconData: nil, siteName: "Network")
+        })
+
+        let testURLs = [
+            "https://maps.google.com/?q=Paris",
+            "https://www.google.com/maps/place/Berlin",
+            "https://scholar.google.com/scholar?q=ai",
+            "https://translate.google.com/?sl=en&tl=es&text=hello",
+            "https://mail.google.com/mail/u/0/#inbox",
+            "https://www.google.co.uk/"
+        ]
+
+        for urlString in testURLs {
+            let url = try #require(URL(string: urlString))
+            let result = try await fetcher.fetch(url: url)
+            #expect(!loaderCalled.withLock { $0 })
+            #expect(result.title != nil)
+            #expect(result.siteName != nil)
+        }
     }
 
     @Test("Cached entry in LinkPreviewCache is returned without calling loader")

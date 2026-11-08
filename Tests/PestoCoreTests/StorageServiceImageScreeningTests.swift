@@ -69,10 +69,11 @@ struct StorageServiceImageScreeningTests {
         return output as Data
     }
 
-    private func capture(_ data: Data) -> PasteboardCapture {
+    private func capture(_ data: Data, sourceImageURL: URL? = nil) -> PasteboardCapture {
         PasteboardCapture(
             typeIdentifier: "public.png", payload: data, payloadString: nil,
-            contentHash: SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            contentHash: SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined(),
+            sourceImageURL: sourceImageURL
         )
     }
 
@@ -139,5 +140,16 @@ struct StorageServiceImageScreeningTests {
         }
 
         #expect(try await service.rescanNSFWImages() == 2)
+    }
+
+    @Test("an image copied from an explicit source URL is flagged even if screener passes")
+    func whenImageFromExplicitSourceURL_thenFlaggedEvenIfScreenerPasses() async throws {
+        screener.say(false)
+        let sourceURL = try #require(URL(string: "https://www.pornhub.com/media/preview.jpg"))
+        try await withMode(.blur) {
+            try await service.ingest(capture(png(), sourceImageURL: sourceURL))
+            await service.waitForBackgroundWork()
+        }
+        #expect(try items().first?.isNSFW == true)
     }
 }

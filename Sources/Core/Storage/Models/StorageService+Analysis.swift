@@ -12,6 +12,8 @@ struct IngestAnalysisInput {
     let text: String
     /// The address, for the link check.
     let link: String?
+    /// Where the media/image came from (e.g. from an HTML <img> tag or source address).
+    let sourceURL: URL?
     let readsImages: Bool
     let screensContent: Bool
     var needsPerceptualHash = false
@@ -64,7 +66,15 @@ extension StorageService {
                     analysis.ocrText = String(whole.prefix(CardPreviewText.previewLength))
                 }
             }
-            if input.screensContent { analysis.isNSFW = await screener.isSensitive(imageData: image) }
+            if input.screensContent {
+                if let source = input.sourceURL, NSFWURLDetector.isExplicit(urlString: source.absoluteString) {
+                    analysis.isNSFW = true
+                } else if let ocr = analysis.recognizedText, NSFWURLDetector.keywordScore(in: ocr) >= 0.85 {
+                    analysis.isNSFW = true
+                } else {
+                    analysis.isNSFW = await screener.isSensitive(imageData: image)
+                }
+            }
         } else if input.clipType == .url, input.screensContent, let link = input.link {
             analysis.isNSFW = NSFWURLDetector.isExplicit(urlString: link)
         }
@@ -89,11 +99,12 @@ extension StorageService {
     }
 
     func input(
-        for clipType: ClipboardType, image: Data?, text: String, link: String?, needsPerceptualHash: Bool = false
+        for clipType: ClipboardType, image: Data?, text: String, link: String?, sourceURL: URL? = nil,
+        needsPerceptualHash: Bool = false
     )
     -> IngestAnalysisInput {
         IngestAnalysisInput(
-            clipType: clipType, image: image, text: text, link: link,
+            clipType: clipType, image: image, text: text, link: link, sourceURL: sourceURL,
             readsImages: Self.readsImages(in: RuntimeConfiguration.current),
             screensContent: nsfwModeProvider().detectsContent,
             needsPerceptualHash: needsPerceptualHash

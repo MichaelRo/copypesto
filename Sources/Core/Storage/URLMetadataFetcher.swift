@@ -306,12 +306,12 @@ public final class URLMetadataFetcher {
     /// Decodes common HTML entities found in scraped tags and attributes.
     public nonisolated static func decodeHTMLEntities(_ string: String) -> String {
         string
-            .replacingOccurrences(of: "&amp;", with: "&")
             .replacingOccurrences(of: "&quot;", with: "\"")
             .replacingOccurrences(of: "&apos;", with: "'")
             .replacingOccurrences(of: "&#39;", with: "'")
             .replacingOccurrences(of: "&lt;", with: "<")
             .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&amp;", with: "&")
     }
 
     /// Extracts an image URL from HTML `<meta>` tags (og:image, og:image:secure_url, twitter:image).

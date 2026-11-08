@@ -404,6 +404,7 @@ struct URLMetadataFetcherCacheTests {
 
         let html2 = #"<title>Pesto &#39;Clip&#39; &amp; More &lt;v2&gt;</title>"#
         #expect(URLMetadataFetcher.extractTitle(from: html2) == "Pesto 'Clip' & More <v2>")
+        #expect(URLMetadataFetcher.decodeHTMLEntities("&amp;quot;") == "&quot;")
     }
 
     @Test("HTML entity decoding in OG image URL extraction")

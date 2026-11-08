@@ -27,7 +27,7 @@ extension HostedGlobals {
                 let result = PerfReport.time { _ = state.writeItem(item) }
                 PerfReport.emit("paste-write \(fixture.name) (\(item.byteSize) bytes): \(result.text)")
                 if !RunEnvironment.isCI {
-                    let budget = fixture.name.hasPrefix("large") || fixture.name.hasPrefix("picture") ? 20.0 : 5.0
+                    let budget = fixture.storedType == .image ? 35.0 : (fixture.name.hasPrefix("large") ? 20.0 : 5.0)
                     #expect(
                         result.median < budget,
                         "\(fixture.name) took \(result.median) ms to write; budget \(budget) ms"

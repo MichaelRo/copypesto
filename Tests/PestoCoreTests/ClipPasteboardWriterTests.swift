@@ -52,13 +52,32 @@ final class ClipPasteboardWriterTests {
         #expect(board.data(forType: .html) == Data("<b>hi</b>".utf8))
     }
 
-    @Test("a picture writes its data and types as non-text")
-    func whenPicture_thenNonText() {
-        let png = Data([0x89, 0x50, 0x4E, 0x47])
+    @Test("a picture writes its stored data and companion flavours so both Cocoa and Web apps receive full quality")
+    func whenPicture_thenCompanionFlavoursWritten() throws {
+        let rep = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .calibratedRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        let png = try #require(rep.representation(using: .png, properties: [:]))
         let kind = fill(item(.image, preview: "Picture", mime: "public.png"), data: png)
 
         #expect(kind == .nonText)
         #expect(board.data(forType: NSPasteboard.PasteboardType("public.png")) == png)
+        #expect(board.data(forType: .tiff) != nil)
+    }
+
+    @Test("a TIFF picture writes both TIFF and PNG flavours")
+    func whenTIFFPicture_thenBothTIFFAndPNGWritten() throws {
+        let rep = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 48, pixelsHigh: 48, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .calibratedRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        let tiff = try #require(rep.tiffRepresentation)
+        let kind = fill(item(.image, preview: "Picture", mime: "public.tiff"), data: tiff)
+
+        #expect(kind == .nonText)
+        #expect(board.data(forType: .tiff) == tiff)
+        #expect(board.data(forType: .png) != nil)
     }
 
     @Test("files are written as file URLs and type as non-text")

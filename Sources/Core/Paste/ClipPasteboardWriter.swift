@@ -22,7 +22,13 @@ public enum ClipPasteboardWriter {
         let isText = item.type == .text || item.type == .code
         if let blob = item.blob, let data {
             richPayload?.write(to: pasteboard)
-            pasteboard.setData(data, forType: NSPasteboard.PasteboardType(blob.mimeType))
+            let storedType = NSPasteboard.PasteboardType(blob.mimeType)
+            pasteboard.setData(data, forType: storedType)
+            if item.type == .image {
+                for flavor in PasteFlavors.companionImageFlavors(forStoredType: blob.mimeType, data: data) {
+                    pasteboard.setData(flavor.data, forType: flavor.type)
+                }
+            }
             let plainFlavour = PasteFlavors.plainText(forStoredType: blob.mimeType, data: data)
             if let plainFlavour { pasteboard.setString(plainFlavour, forType: .string) }
             guard isText else { return .nonText }

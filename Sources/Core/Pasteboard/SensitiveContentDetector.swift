@@ -404,7 +404,7 @@ public enum SensitiveContentDetector {
               !trimmed.contains(" "),
               !trimmed.contains("\n"),
               trimmed.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "_" || $0 == "-" }) else { return nil }
-        guard shannonEntropy(trimmed) >= 4.0 else { return nil }
+        guard shannonEntropy(trimmed) >= 4.0, !TokenShape.looksLikeIdentifier(trimmed) else { return nil }
         return Result(category: .apiKey, maskedPreview: hiddenCountMask(trimmed.count))
     }
 

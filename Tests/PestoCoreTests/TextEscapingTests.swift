@@ -108,7 +108,7 @@ struct TextEscapingTests {
     func whenEmpty_thenStable() {
         #expect(TextTransform.shellQuote.apply(to: "") == "''")
         for transform in TextTransform.allCases where transform.group == .escaping && transform != .shellQuote {
-            #expect(transform.apply(to: "") == "", "\(transform)")
+            #expect(transform.apply(to: "").isEmpty, "\(transform)")
         }
     }
 

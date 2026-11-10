@@ -63,4 +63,27 @@ struct OnboardingDefaultsTests {
         #expect(Setting.linkPreviews.defaultValue == false)
         #expect(Setting.keepsRemoteCopies.defaultValue == false)
     }
+
+    @Test("an explicit setting restored or imported before setup finishes is never overwritten")
+    func whenValueAlreadyStored_thenNotOverwritten() {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(false, for: Setting.linkPreviews)
+
+        OnboardingDefaults.applyOnce(defaults: defaults, isLive: true)
+
+        #expect(!defaults.value(for: Setting.linkPreviews))
+        #expect(defaults.value(for: Setting.keepsRemoteCopies))
+    }
+
+    @Test("calling applyOnce twice leaves the store unchanged the second time")
+    func whenCalledTwice_thenIdempotent() {
+        let defaults = ThrowawayDefaults.make()
+
+        OnboardingDefaults.applyOnce(defaults: defaults, isLive: true)
+        defaults.set(false, for: Setting.linkPreviews)
+        OnboardingDefaults.applyOnce(defaults: defaults, isLive: true)
+
+        #expect(!defaults.value(for: Setting.linkPreviews))
+        #expect(defaults.value(for: Setting.keepsRemoteCopies))
+    }
 }

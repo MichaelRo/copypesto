@@ -67,11 +67,19 @@ public enum TextTransform: String, CaseIterable, Sendable {
         }
     }
 
-    public enum Group: CaseIterable, Sendable {
-        case caseAndNaming, lines, encoding, escaping, hashing
+    public enum Group: Hashable, CaseIterable, Sendable {
+        case plainText, caseAndNaming, lines, encoding, escaping, hashing
+
+        public var isSubmenu: Bool {
+            switch self {
+            case .plainText, .caseAndNaming: false
+            case .lines, .encoding, .escaping, .hashing: true
+            }
+        }
 
         public var title: String {
             switch self {
+            case .plainText: String(localized: "Plain")
             case .caseAndNaming: String(localized: "Case")
             case .lines: String(localized: "Lines")
             case .encoding: String(localized: "Encode and convert")
@@ -83,12 +91,14 @@ public enum TextTransform: String, CaseIterable, Sendable {
 
     public var group: Group {
         switch self {
-        case .stripFormatting, .uppercase, .lowercase, .titleCase, .sentenceCase, .slugCase, .camelCase, .pascalCase:
+        case .stripFormatting, .markdownCodeBlock, .urlMarkdownLink:
+            .plainText
+        case .uppercase, .lowercase, .titleCase, .sentenceCase, .slugCase, .camelCase, .pascalCase:
             .caseAndNaming
         case .trimWhitespace, .unwrapLines, .removeDuplicateLines, .sortLinesAZ, .sortLinesZA, .reverseLines:
             .lines
         case .json, .jsonMinify, .stripHTML, .base64Encode, .base64Decode, .urlEncode, .urlDecode,
-             .htmlEncode, .htmlDecode, .removeTrackingParams, .urlMarkdownLink, .markdownCodeBlock, .markdown:
+             .htmlEncode, .htmlDecode, .removeTrackingParams, .markdown:
             .encoding
         case .jsonEscape, .jsonUnescape, .backslashEscape, .backslashUnescape, .unicodeEscape, .unicodeUnescape,
              .regexEscape, .shellQuote:

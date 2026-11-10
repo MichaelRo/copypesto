@@ -66,7 +66,7 @@ More in [Using Pesto](docs/guide/using-pesto.md).
 - **Secrets** (card numbers, keys, tokens, passwords) are masked on the shelf and never indexed. Copies that an app
   marks as concealed, such as those from password managers, are ignored.
 - **No clip is sent to an AI service.** On-device AI runs with Apple Intelligence on your Mac, and only there.
-- Pesto makes only a few requests: update checks (switchable in Settings) and link previews (off until you turn them on) and links you open.
+- Pesto makes only a few requests: update checks (switchable in Settings) and link previews (on from setup for a new install, switchable in Privacy) and links you open.
 - Optional Touch ID lock, and **Clear Everything** in Settings, under Data.
 
 The full list of what is stored and sent, including what encryption does *not* protect, is in

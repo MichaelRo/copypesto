@@ -8,7 +8,12 @@ struct OnboardingMoreOptions: View {
     @AppStorage(Setting.keepsRemoteCopies) private var keepsRemoteCopies: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
     @AppStorage(Setting.retentionDays) private var retentionDays: Int
-    @State private var checksForUpdates = true
+    @State private var checksForUpdates: Bool
+
+    init(appState: AppState) {
+        self.appState = appState
+        _checksForUpdates = State(initialValue: appState.automaticUpdateChecks?.get() ?? true)
+    }
 
     var body: some View {
         Toggle(isOn: $showsMenuBarIcon) {
@@ -32,7 +37,7 @@ struct OnboardingMoreOptions: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Load link previews")
                 Text(
-                    "Pesto asks the website for its title and picture, so the site sees a request from your Mac."
+                    "Asks the linked site for its title and picture."
                 )
                 .pestoCaption()
             }
@@ -48,13 +53,12 @@ struct OnboardingMoreOptions: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Check for updates automatically")
                     Text(
-                        "Pesto asks copypesto.net whether a new version exists, and sends nothing from your clips."
+                        "Asks copypesto.net for new versions; sends no clips."
                     )
                     .pestoCaption()
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .onAppear { checksForUpdates = updates.get() }
             .onChange(of: checksForUpdates) { _, on in updates.set(on) }
             .accessibilityIdentifier(AccessibilityID.onboardingUpdatesToggle)
         }

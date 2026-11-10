@@ -167,4 +167,21 @@ struct SystemShortcutsTests {
 
         #expect(list.allSatisfy { $0.keyCode >= 0 })
     }
+
+    @Test("persisted bindings and conflict checks do not depend on the shortcut list order")
+    func whenEnumerated_thenBindingsAndConflictsAreOrderIndependent() {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(kVK_ANSI_K, for: Setting.quickPasteHotkeyKeyCode)
+        defaults.set(cmdKey | optionKey, for: Setting.quickPasteHotkeyModifiers)
+
+        let previous = GlobalShortcut.pastePrevious.binding(in: defaults)
+        let plain = GlobalShortcut.pastePlainText.binding(in: defaults)
+
+        #expect(previous == HotkeyBinding(keyCode: kVK_ANSI_K, modifiers: UInt32(cmdKey | optionKey)))
+        #expect(plain == GlobalShortcut.pastePlainText.defaultBinding)
+        let plainOthers = GlobalShortcut.pastePlainText.others(in: defaults)
+        let previousOthers = GlobalShortcut.pastePrevious.others(in: defaults)
+        #expect(plainOthers.contains { $0.name == GlobalShortcut.pastePrevious.label })
+        #expect(previousOthers.contains { $0.name == GlobalShortcut.pastePlainText.label })
+    }
 }

@@ -12,7 +12,16 @@ struct TransformRows: View {
         if transforms.count <= Self.flatLimit {
             rows(transforms)
         } else {
-            ForEach(TextTransform.grouped(transforms), id: \.group) { section in
+            let sections = TextTransform.grouped(transforms)
+            let primary = sections.filter { !$0.group.isSubmenu }
+            let submenus = sections.filter(\.group.isSubmenu)
+            ForEach(primary, id: \.group) { section in
+                rows(section.transforms)
+            }
+            if !primary.isEmpty, !submenus.isEmpty {
+                Divider()
+            }
+            ForEach(submenus, id: \.group) { section in
                 Menu(section.group.title) { rows(section.transforms) }
             }
         }

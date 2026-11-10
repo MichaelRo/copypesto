@@ -21,9 +21,11 @@ enum TextEscaping {
     }
 
     static func jsonUnescape(_ text: String) -> String? {
-        var body = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if body.count >= 2, body.hasPrefix("\""), body.hasSuffix("\"") {
-            body = String(body.dropFirst().dropLast())
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let body: String = if trimmed.count >= 2, trimmed.hasPrefix("\""), trimmed.hasSuffix("\"") {
+            String(trimmed.dropFirst().dropLast())
+        } else {
+            text
         }
         let data = Data("\"\(body)\"".utf8)
         let object = try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed)
@@ -32,19 +34,26 @@ enum TextEscaping {
     }
 
     static func backslashEscape(_ text: String) -> String {
-        text.replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-            .replacingOccurrences(of: "\n", with: "\\n")
-            .replacingOccurrences(of: "\r", with: "\\r")
-            .replacingOccurrences(of: "\t", with: "\\t")
+        var result = ""
+        for scalar in text.unicodeScalars {
+            switch scalar {
+            case "\\": result += "\\\\"
+            case "\"": result += "\\\""
+            case "\n": result += "\\n"
+            case "\r": result += "\\r"
+            case "\t": result += "\\t"
+            default: result.unicodeScalars.append(scalar)
+            }
+        }
+        return result
     }
 
     static func backslashUnescape(_ text: String) -> String? {
         var result = ""
-        var iterator = text.makeIterator()
-        while let character = iterator.next() {
-            guard character == "\\" else {
-                result.append(character)
+        var iterator = text.unicodeScalars.makeIterator()
+        while let scalar = iterator.next() {
+            guard scalar == "\\" else {
+                result.unicodeScalars.append(scalar)
                 continue
             }
             guard let next = iterator.next() else { return nil }
@@ -52,9 +61,10 @@ enum TextEscaping {
             case "n": result.append("\n")
             case "r": result.append("\r")
             case "t": result.append("\t")
-            case "\\", "\"", "'": result.append(next)
-            default: result.append("\\")
-                result.append(next)
+            case "\\", "\"", "'": result.unicodeScalars.append(next)
+            default:
+                result.append("\\")
+                result.unicodeScalars.append(next)
             }
         }
         return result
@@ -62,50 +72,107 @@ enum TextEscaping {
 
     static func unicodeEscape(_ text: String) -> String {
         var result = ""
-        for scalar in text.unicodeScalars {
-            switch scalar.value {
-            case 0..<0x80: result.unicodeScalars.append(scalar)
-            case 0x80..<0x10000: result += String(format: "\\u%04x", scalar.value)
-            default: result += "\\u{" + String(scalar.value, radix: 16) + "}"
+        for unit in text.utf16 {
+            if unit < 0x80, let scalar = Unicode.Scalar(unit) {
+                result.unicodeScalars.append(scalar)
+            } else {
+                result += String(format: "\\u%04x", unit)
             }
         }
         return result
     }
 
-    private static let unicodeEscapePattern = try? NSRegularExpression(
-        pattern: #"\\u(?:\{([0-9a-fA-F]{1,6})\}|([0-9a-fA-F]{4}))"#
-    )
-
     static func unicodeUnescape(_ text: String) -> String? {
-        guard let pattern = unicodeEscapePattern else { return nil }
-        let whole = NSRange(text.startIndex..., in: text)
-        let matches = pattern.matches(in: text, range: whole)
+        let scalars = Array(text.unicodeScalars)
         var result = ""
-        var cursor = text.startIndex
-        for match in matches {
-            guard let range = Range(match.range, in: text) else { return nil }
-            result += text[cursor..<range.lowerBound]
-            let digitsRange = Range(match.range(at: 1), in: text) ?? Range(match.range(at: 2), in: text)
-            guard let digitsRange, let value = UInt32(text[digitsRange], radix: 16),
-                  let scalar = Unicode.Scalar(value) else { return nil }
-            result.unicodeScalars.append(scalar)
-            cursor = range.upperBound
+        var index = 0
+        while index < scalars.count {
+            guard scalars[index] == "\\" else {
+                result.unicodeScalars.append(scalars[index])
+                index += 1
+                continue
+            }
+            if index + 1 < scalars.count, scalars[index + 1] == "\\" {
+                result += "\\\\"
+                index += 2
+                continue
+            }
+            guard index + 1 < scalars.count, scalars[index + 1] == "u" else {
+                result.append("\\")
+                index += 1
+                continue
+            }
+            guard let parsed = parseUnicodeEscape(scalars, from: index) else { return nil }
+            result.unicodeScalars.append(parsed.scalar)
+            index = parsed.nextIndex
         }
-        result += text[cursor...]
         return result
     }
 
+    private static func parseUnicodeEscape(
+        _ scalars: [Unicode.Scalar], from index: Int
+    )
+    -> (scalar: Unicode.Scalar, nextIndex: Int)? {
+        let afterU = index + 2
+        guard afterU < scalars.count else { return nil }
+        if scalars[afterU] == "{" {
+            guard let close = scalars[(afterU + 1)...].firstIndex(of: "}") else { return nil }
+            let count = close - (afterU + 1)
+            guard (1...6).contains(count),
+                  let value = parseHex(scalars[(afterU + 1)..<close]),
+                  let scalar = Unicode.Scalar(value) else { return nil }
+            return (scalar, close + 1)
+        }
+        guard afterU + 4 <= scalars.count,
+              let unit = parseHex(scalars[afterU..<(afterU + 4)]) else { return nil }
+        let afterFirst = afterU + 4
+        if (0xD800...0xDBFF).contains(unit) {
+            guard afterFirst + 6 <= scalars.count,
+                  scalars[afterFirst] == "\\", scalars[afterFirst + 1] == "u",
+                  let low = parseHex(scalars[(afterFirst + 2)..<(afterFirst + 6)]),
+                  (0xDC00...0xDFFF).contains(low) else { return nil }
+            let combined = 0x10000 + ((unit - 0xD800) << 10) + (low - 0xDC00)
+            guard let scalar = Unicode.Scalar(combined) else { return nil }
+            return (scalar, afterFirst + 6)
+        }
+        guard let scalar = Unicode.Scalar(unit) else { return nil }
+        return (scalar, afterFirst)
+    }
+
+    private static func parseHex(_ slice: ArraySlice<Unicode.Scalar>) -> UInt32? {
+        var hex = ""
+        for scalar in slice {
+            guard ("0"..."9").contains(scalar) || ("a"..."f").contains(scalar) || ("A"..."F").contains(scalar) else {
+                return nil
+            }
+            hex.unicodeScalars.append(scalar)
+        }
+        return UInt32(hex, radix: 16)
+    }
+
     static func htmlEncode(_ text: String) -> String {
-        text.replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
-            .replacingOccurrences(of: "\"", with: "&quot;")
-            .replacingOccurrences(of: "'", with: "&#39;")
+        var result = ""
+        for scalar in text.unicodeScalars {
+            switch scalar {
+            case "&": result += "&amp;"
+            case "<": result += "&lt;"
+            case ">": result += "&gt;"
+            case "\"": result += "&quot;"
+            case "'": result += "&#39;"
+            default: result.unicodeScalars.append(scalar)
+            }
+        }
+        return result
     }
 
     private static let entityPattern = try? NSRegularExpression(pattern: "&(#[xX][0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);")
     private static let namedEntities = [
-        "amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": "\u{A0}"
+        "amp": "&", "lt": "<", "gt": ">", "quot": "\"", "apos": "'", "nbsp": "\u{A0}",
+        "copy": "©", "reg": "®", "trade": "™", "hellip": "…", "mdash": "—", "ndash": "–",
+        "lsquo": "‘", "rsquo": "’", "ldquo": "“", "rdquo": "”", "bull": "•", "middot": "·",
+        "laquo": "«", "raquo": "»", "times": "×", "divide": "÷", "plusmn": "±",
+        "euro": "€", "pound": "£", "yen": "¥", "cent": "¢", "deg": "°", "sect": "§", "para": "¶",
+        "larr": "←", "rarr": "→", "uarr": "↑", "darr": "↓"
     ]
 
     static func htmlDecode(_ text: String) -> String {
@@ -132,20 +199,47 @@ enum TextEscaping {
             let value = digits.first.map { $0 == "x" || $0 == "X" } == true
                 ? UInt32(digits.dropFirst(), radix: 16)
                 : UInt32(digits)
-            return value.flatMap(Unicode.Scalar.init).map { String(Character($0)) }
+            guard let value, value > 0, let scalar = Unicode.Scalar(value) else { return nil }
+            return String(Character(scalar))
         }
         return namedEntities[name]
     }
 
     static func regexEscape(_ text: String) -> String {
-        let metacharacters = Set("\\.*+?()[]{}|^$")
-        return text.reduce(into: "") { result, character in
-            if metacharacters.contains(character) { result.append("\\") }
-            result.append(character)
+        let metacharacters: Set<Unicode.Scalar> = [
+            "\\",
+            ".",
+            "*",
+            "+",
+            "?",
+            "(",
+            ")",
+            "[",
+            "]",
+            "{",
+            "}",
+            "|",
+            "^",
+            "$"
+        ]
+        var result = ""
+        for scalar in text.unicodeScalars {
+            if metacharacters.contains(scalar) { result.append("\\") }
+            result.unicodeScalars.append(scalar)
         }
+        return result
     }
 
     static func shellQuote(_ text: String) -> String {
-        "'" + text.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        var result = "'"
+        for scalar in text.unicodeScalars {
+            if scalar == "'" {
+                result += "'\\''"
+            } else {
+                result.unicodeScalars.append(scalar)
+            }
+        }
+        result.append("'")
+        return result
     }
 }

@@ -150,7 +150,7 @@ public enum SensitiveContentDetector {
     private enum Patterns {
         static let creditCard = compile(#"\b(?:\d[ -]?){12,18}\d\b"#)
         static let embeddedCard = compile(#"(?<![0-9])[0-9](?:[ -]?[0-9]){12,18}(?![0-9])"#)
-        static let ssn = compile(#"\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b"#)
+        static let ssn = compile(#"(?<![0-9A-Za-z-])(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}(?![0-9A-Za-z-])"#)
         static let jwt = compile(#"^eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$"#)
         static let passwordLine = compile(
             #"(?im)^\s*(?:export\s+)?(?:[a-z0-9_.-]*[_.-])?(password|passwd|pwd)\s*[:=]\s*\S+"#
@@ -194,7 +194,7 @@ public enum SensitiveContentDetector {
               let r = Range(match.range, in: text) else { return nil }
         let raw = text[r].filter(\.isNumber)
         guard raw.count >= 13, raw.count <= 19 else { return nil }
-        guard luhnValid(raw) else { return nil }
+        guard luhnValid(raw), hasIssuerPrefix(raw) else { return nil }
 
         let last4 = String(raw.suffix(4))
         let groups = max(0, raw.count - 4)

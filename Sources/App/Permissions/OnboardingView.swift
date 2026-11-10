@@ -212,7 +212,9 @@ struct OnboardingView: View {
                     .foregroundStyle(.primary.opacity(0.75))
             }
 
-            OnboardingCardStrip()
+            if !moreOptionsOpen {
+                OnboardingCardStrip()
+            }
 
             choicesCard
         }

@@ -36,8 +36,8 @@ struct ShortcutsSettings: View {
                 }
             }
             HotkeyRecorderField(shortcut: .openShelf).settingsRow("Open the shelf shortcut")
-            HotkeyRecorderField(shortcut: .pastePrevious).settingsRow("Quick paste shortcut")
             HotkeyRecorderField(shortcut: .pastePlainText).settingsRow("Paste as plain text shortcut")
+            HotkeyRecorderField(shortcut: .pastePrevious).settingsRow("Quick paste shortcut")
             HotkeyRecorderField(shortcut: .togglePinnedWindow).settingsRow("Floating window shortcut")
             HotkeyRecorderField(shortcut: .toggleCapture).settingsRow("Pause capturing shortcut")
             HotkeyRecorderField(shortcut: .toggleClipContents).settingsRow("Hide clip contents shortcut")

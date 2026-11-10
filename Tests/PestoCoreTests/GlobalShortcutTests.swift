@@ -49,6 +49,13 @@ struct GlobalShortcutTests {
         }
     }
 
+    @Test("shortcuts that start with a default come before the ones that start unset")
+    func whenListed_thenShortcutsWithDefaultsComeFirst() {
+        let flags = GlobalShortcut.allCases.map(\.isOptional)
+
+        #expect(flags == flags.sorted { !$0 && $1 })
+    }
+
     @Test("Carbon ids stay clear of the nine pinned slots, which hold 3 to 11")
     func whenIdsAreAssigned_thenPinnedSlotsAreFree() {
         for shortcut in GlobalShortcut.allCases {

@@ -239,7 +239,7 @@ struct GeneralSettings: View {
         }
     }
 
-    private static func ageLabel(_ days: Int) -> String {
+    static func ageLabel(_ days: Int) -> String {
         switch days {
         case RetentionChoices.foreverDays: "Forever"
         case 7: "1 week"

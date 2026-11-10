@@ -47,7 +47,7 @@ Pesto is distributed directly and notarized by Apple so macOS Gatekeeper accepts
 
 Pesto does not upload your history. The few requests it makes are listed in
 [Privacy and security](privacy-and-security.md): update checks (and the download, from GitHub, when you accept one),
-link previews, which ask the linked site for its title and picture, and the same for the GIF behind a picture copied from a browser (both are off until you turn them on in *Settings → Privacy*),
+link previews, which ask the linked site for its title and picture, and the same for the GIF behind a picture copied from a browser (both are on from setup on a new install, off on a Mac that finished setup earlier, and switchable in *Settings → Privacy*),
 links you open, such as Maps or a carrier's tracking page, and the optional backup file. If you pick iCloud Drive for
 the backup, macOS uploads that encrypted file for you.
 

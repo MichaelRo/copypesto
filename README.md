@@ -88,7 +88,7 @@ The full list of what is stored and sent, including what encryption does *not* p
   (macOS 27, best effort, so it can miss things). Mark any clip as sensitive, and find them all again with one filter.
   Return and a double click paste a hidden clip without showing it; showing it is always your choice.
 - **Only this Mac, unless you say otherwise.** Copies from your iPhone or another Mac reach Pesto through Universal
-  Clipboard. They are ignored by default; turn them on in Privacy and find them with the Other Devices filter.
+  Clipboard. Setup keeps them on for a new install (you can switch them off in Privacy); find them with the Other Devices filter.
 - **On-device AI** (needs Apple Intelligence on macOS 26 or later; Describe Image needs macOS 27): summarize,
   translate (into English, or English into Spanish), extract, describe a picture. Grayed out with the reason when your Mac cannot.
 - **Encrypted backup.** One encrypted file for this Mac in iCloud Drive or a folder you choose, protected by a
@@ -102,7 +102,7 @@ The full list of what is stored and sent, including what encryption does *not* p
   server that receives the files.
 - **Collections**, paste as plain text, and drag a clip into any app or onto the Desktop. A click picks a clip and a
   double click pastes it.
-- **Paste As and Copy As.** 27 transforms (case, lines, Base64, hashes and more), and two that appear only when a clip
+- **Paste As and Copy As.** 37 transforms (case, lines, Base64, escaping, hashes and more), and two that appear only when a clip
   fits: *JSON* (a JSON document indented, or spreadsheet rows as a JSON list) and *Markdown* (formatted text, links,
   lists and tables from a web page or a document).
 - **Undo history.** The last 20 actions are kept in memory, encrypted, and forgotten when you lock, clear or quit.

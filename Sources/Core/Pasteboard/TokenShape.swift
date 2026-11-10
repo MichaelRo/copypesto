@@ -8,7 +8,7 @@ enum TokenShape {
         guard token.contains(where: \.isNumber), token.contains(where: \.isLetter) else { return true }
         let segments = token.split(whereSeparator: { $0 == "-" || $0 == "_" }).map(String.init)
         guard segments.count >= 3 else { return false }
-        let readable = segments.filter { isWord($0) || $0.allSatisfy(\.isNumber) }.count
+        let readable = segments.count(where: { isWord($0) || $0.allSatisfy(\.isNumber) })
         return Double(readable) / Double(segments.count) >= 0.6
     }
 

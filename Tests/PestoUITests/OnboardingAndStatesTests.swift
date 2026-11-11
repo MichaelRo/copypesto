@@ -234,4 +234,20 @@ final class OnboardingAndStatesTests: PestoUITestCase {
             try? FileManager.default.removeItem(at: workDirectory.appendingPathComponent(UITestSupport.readyFileName))
         }
     }
+
+    func test_onboarding_moreOptions_showsCustomRetentionSelection() {
+        launch(accessibility: "trusted", defaults: ["retentionDays": "14"])
+        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        app.activate()
+        continueFromShelfStep()
+        continueFromPastingStep()
+
+        let moreOptions = element(AccessibilityID.onboardingMoreOptions)
+        XCTAssertTrue(moreOptions.waitForExistence(timeout: 5))
+        moreOptions.click()
+
+        let picker = element(AccessibilityID.onboardingRetentionPicker)
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        XCTAssertEqual(picker.value as? String, "Custom (14 days)")
+    }
 }

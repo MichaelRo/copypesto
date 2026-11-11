@@ -52,7 +52,7 @@ Press **Esc** to close the shelf without pasting.
 |---|---|
 | **⇧⌘V** | Open the shelf. Arrow keys move, Return pastes. (*Settings → General* can open a small mouse-only menu at the cursor instead.) |
 
-You can change it in *Settings → Shortcuts*, where you can also record shortcuts for pasting the previous copy and for the floating window. To paste without formatting, choose *Paste As → Plain Text* in a clip's menu.
+You can change it in *Settings → Shortcuts*, where you can also record shortcuts for pasting the previous copy and for the floating window. To paste without formatting, choose *Paste as Plain Text* in a clip's menu.
 
 ## Updates
 Pesto checks for updates on its own. When you have it download and install them automatically, a new version installs when Pesto next quits; otherwise it asks first. You can also choose *Check for Updates…* from the menu

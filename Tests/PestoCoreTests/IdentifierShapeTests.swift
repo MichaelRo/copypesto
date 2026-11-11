@@ -29,7 +29,9 @@ struct IdentifierShapeTests {
             "s3://my-company-prod-analytics-exports-eu-west-1",
             "arn-aws-s3-prod-analytics-exports-eu-west-1-2026",
             "customer_support_ticket_export_2026_11_11_final",
-            "prod-eu-west-1-authentication-configuration-service"
+            "prod-eu-west-1-authentication-configuration-service",
+            "SCREAMING_SNAKE_CONFIGURATION_SERVICE",
+            "01234567-89ab-4cde-8f01-23456789abcd"
         ]
     )
     func whenIdentifier_thenNotASecret(_ text: String) {
@@ -46,6 +48,10 @@ struct IdentifierShapeTests {
             "x7k2m9q4-p8r3t6v1-w5y2z7a4-b9c3d6e1-zq8",
             "Kj82-mQ9x_LpR4tVb6Yn3Hd5Jf0GsA2uXeO9iT7w",
             "acme-prod-api-k3v9P2xLqR8nA7Fz1JbWmYsTcUe5Hg6X",
+            "acme-prod-api-k3v9P2xL-qR8nA7Fz1",
+            "acme_token_9xK2mP7qL_vL4nR8wZb5c",
+            "service-account-XKQAVBMNPOWERDFZ",
+            "service-account-xkqavbmnpowerdfz",
             "my_vendor_key_A8kLm2PqR7vXw9Yz0BcDeFgH",
             "xKqPmZvLtRnWbYcJhGfDsAcVbNmPqRsTuVwXyZ"
         ]

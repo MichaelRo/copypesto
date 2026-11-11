@@ -46,6 +46,9 @@ struct OnboardingMoreOptions: View {
         .accessibilityIdentifier(AccessibilityID.onboardingLinkPreviewsToggle)
         Picker("Keep clips for", selection: $retentionDays) {
             ForEach(RetentionChoices.ageDays, id: \.self) { Text(GeneralSettings.ageLabel($0)).tag($0) }
+            if !RetentionChoices.isPresetAge(retentionDays) {
+                Text(String(localized: "Custom (\(retentionDays) days)")).tag(retentionDays)
+            }
         }
         .accessibilityIdentifier(AccessibilityID.onboardingRetentionPicker)
         if let updates = appState.automaticUpdateChecks {

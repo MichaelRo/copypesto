@@ -75,8 +75,12 @@ extension ClipboardCard {
         guard !item.linkPreviewFetched else { return }
 
         // Fetch metadata if we don't have anything yet (first time this item is seen).
+        let fetching = PerfSignposts.shelf.begin("linkFetch")
         let fetchResult = try? await URLMetadataFetcher.shared.fetch(url: url)
+        fetching.end()
+        let saving = PerfSignposts.shelf.begin("metadataSave")
         derive { $0.linkPreviewFetched = true }
+        saving.end()
         guard let result = fetchResult else { return }
         guard !Task.isCancelled else { return }
         await applyFetchedPreview(result, stored: stored, itemID: itemID)

@@ -116,6 +116,7 @@ struct ClipboardCard: View {
 
     var body: some View {
         popoverCard
+            .renderProbe("ClipboardCard")
             .modifier(CardClickGestures(
                 onClick: actions.click.map { click in { click(item, $0) } },
                 isFlashing: isFlashing

@@ -38,7 +38,12 @@ extension GridView {
         // previous collection's clips and the right ones replaced them a frame later.
         appState.selectedCollectionID = ids[next]
         displayLimit = 1000
-        applyFiltered(computeFiltered(), isUpdate: true)
+        let filtering = PerfSignposts.shelf.begin("collectionFilter")
+        let filtered = computeFiltered()
+        filtering.end()
+        let applying = PerfSignposts.shelf.begin("collectionApply")
+        applyFiltered(filtered, isUpdate: true)
+        applying.end()
         appliedFilterKey = filterKey
     }
 }

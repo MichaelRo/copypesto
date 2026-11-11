@@ -66,9 +66,7 @@ enum MixedSeed {
     /// 1600 x 1000 with a gradient and a few dozen rectangles placed from the index, so no two are alike and the file
     /// is
     /// not trivially small, as with a real screenshot.
-    static func pngData(seed: Int) -> Data {
-        let width = 1600
-        let height = 1000
+    static func pngData(seed: Int, width: Int = 1600, height: Int = 1000) -> Data {
         guard let context = CGContext(
             data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
@@ -84,7 +82,10 @@ enum MixedSeed {
         for _ in 0..<400 {
             context
                 .setFillColor(NSColor(hue: next(), saturation: 0.6, brightness: 0.4 + next() * 0.6, alpha: 1).cgColor)
-            context.fill(CGRect(x: next() * 1500, y: next() * 900, width: 10 + next() * 120, height: 6 + next() * 50))
+            context.fill(CGRect(
+                x: next() * CGFloat(width - 100), y: next() * CGFloat(height - 100),
+                width: 10 + next() * 120, height: 6 + next() * 50
+            ))
         }
         addPhotoNoise(to: context, width: width, height: height, state: &state)
         guard let image = context.makeImage() else { return Data() }

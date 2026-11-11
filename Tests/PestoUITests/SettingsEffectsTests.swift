@@ -129,6 +129,32 @@ final class SettingsEffectsTests: PestoUITestCase {
         )
     }
 
+    /// Paste As keeps common case transforms flat while grouping escaping and lines into tidy submenus.
+    func test_contextMenuPasteAs_keepsCaseFlatAndGroupsEscaping() {
+        launch()
+        showOverlay()
+        let target = card(containing: "Team lunch")
+        XCTAssertTrue(target.waitForExistence(timeout: 5))
+
+        target.rightClick()
+        let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
+        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+
+        let pasteAs = cardMenu.menuItems["Paste As\u{2026}"].firstMatch
+        XCTAssertTrue(pasteAs.waitForExistence(timeout: 3), "no Paste As menu item")
+        pasteAs.hover()
+
+        let uppercase = pasteAs.menuItems["UPPERCASE"].firstMatch
+        XCTAssertTrue(uppercase.waitForExistence(timeout: 3), "UPPERCASE must stay at the top level of Paste As")
+        let escaping = pasteAs.menuItems["Escape and unescape"].firstMatch
+        XCTAssertTrue(escaping.waitForExistence(timeout: 3), "no Escape and unescape submenu")
+        escaping.hover()
+
+        let jsonEscape = escaping.menuItems["JSON Escape"].firstMatch
+        XCTAssertTrue(jsonEscape.waitForExistence(timeout: 3), "no JSON Escape item inside Escape and unescape")
+        app.typeKey(.escape, modifierFlags: [])
+    }
+
     /// The size slider in Settings changes the real cards: its smallest position is the Small size.
     func test_cardSizeSlider_resizesTheShelfCards() {
         launch()

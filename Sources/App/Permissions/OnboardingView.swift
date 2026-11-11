@@ -11,8 +11,6 @@ struct OnboardingView: View {
     @State private var shelfTried = false
     @State var pastingConfirmed = false
     @State private var moreOptionsOpen = false
-    @AppStorage(Setting.showMenuBarIcon) private var showsMenuBarIcon: Bool
-    @AppStorage(Setting.keepsRemoteCopies) private var keepsRemoteCopies: Bool
     @AppStorage(Setting.biometricLockEnabled) private var biometricLockEnabled: Bool
     private let lockMethod = LockMethod.current()
     @State var accessibilityGranted = false
@@ -214,7 +212,9 @@ struct OnboardingView: View {
                     .foregroundStyle(.primary.opacity(0.75))
             }
 
-            OnboardingCardStrip()
+            if !moreOptionsOpen {
+                OnboardingCardStrip()
+            }
 
             choicesCard
         }
@@ -241,25 +241,10 @@ struct OnboardingView: View {
             .accessibilityIdentifier(AccessibilityID.onboardingMoreOptions)
             .accessibilityValue(moreOptionsOpen ? "Expanded" : "Collapsed")
             if moreOptionsOpen {
-                Toggle(isOn: $showsMenuBarIcon) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Show Pesto in the menu bar")
-                        Text("You can always open the shelf with the shortcut.").pestoCaption()
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .accessibilityIdentifier(AccessibilityID.onboardingMenuBarToggle)
-                Toggle(isOn: $keepsRemoteCopies) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Keep copies from other devices")
-                        Text("Clips you copy on an iPhone or iPad arrive through Universal Clipboard.")
-                            .pestoCaption()
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .accessibilityIdentifier(AccessibilityID.onboardingDevicesToggle)
+                OnboardingMoreOptions(appState: appState)
             }
         }
+        .onAppear { OnboardingDefaults.applyOnce() }
         .toggleStyle(.switch)
         .controlSize(.small)
         .padding(.horizontal, 16)

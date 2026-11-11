@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-/// Loading a link's preview contacts the linked page, so it is off until the person turns it on (H-03).
+/// Loading a link's preview contacts the linked page; setup turns it on for new installs (ADR 0005, ADR 0042).
 public enum LinkPreviewPolicy {
     public static let defaultsKey = "linkPreviewsEnabled"
 

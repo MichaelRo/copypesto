@@ -32,7 +32,7 @@ A short setup window appears with three steps. It takes about a minute:
    and shows a small "Press ⌘V to paste" notice, and the double-⌘C setting stays off. Choose *Continue Without Auto-Paste* to skip it; you can grant it later
    in *System Settings → Privacy & Security → Accessibility*.
 3. **Make it yours.** Both choices are optional: require Touch ID to view your history (it appears only on a Mac that can
-   ask), and *Launch Pesto at login*, which starts on when this Mac allows it. Pesto lives in the menu bar, so without it Pesto only remembers what you copy while it is running; switch it off if you would rather open Pesto yourself. *More options* adds the menu bar icon and copies from other devices. Then choose *Get Started*.
+   ask), and *Launch Pesto at login*, which starts on when this Mac allows it. Pesto lives in the menu bar, so without it Pesto only remembers what you copy while it is running; switch it off if you would rather open Pesto yourself. *More options* adds the menu bar icon, copies from other devices, link previews, how long clips are kept and automatic update checks; link previews and copies from other devices start on. Then choose *Get Started*.
 
 ![Pesto's last setup step, showing the Touch ID and Launch Pesto at login choices and a Get Started button.](../images/onboarding-ready.png)
 
@@ -52,7 +52,7 @@ Press **Esc** to close the shelf without pasting.
 |---|---|
 | **⇧⌘V** | Open the shelf. Arrow keys move, Return pastes. (*Settings → General* can open a small mouse-only menu at the cursor instead.) |
 
-You can change it in *Settings → Shortcuts*, where you can also record shortcuts for pasting the previous copy and for the floating window. To paste without formatting, choose *Paste As → Plain Text* in a clip's menu.
+You can change it in *Settings → Shortcuts*, where you can also record shortcuts for pasting the previous copy and for the floating window. To paste without formatting, choose *Paste as Plain Text* in a clip's menu.
 
 ## Updates
 Pesto checks for updates on its own. When you have it download and install them automatically, a new version installs when Pesto next quits; otherwise it asks first. You can also choose *Check for Updates…* from the menu

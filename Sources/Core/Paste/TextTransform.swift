@@ -25,6 +25,16 @@ public enum TextTransform: String, CaseIterable, Sendable {
     case base64Decode = "Base64 Decode"
     case urlEncode = "URL Encode"
     case urlDecode = "URL Decode"
+    case htmlEncode = "HTML Encode"
+    case htmlDecode = "HTML Decode"
+    case jsonEscape = "JSON Escape"
+    case jsonUnescape = "JSON Unescape"
+    case backslashEscape = "Backslash Escape"
+    case backslashUnescape = "Backslash Unescape"
+    case unicodeEscape = "Unicode Escape"
+    case unicodeUnescape = "Unicode Unescape"
+    case regexEscape = "Regex Escape"
+    case shellQuote = "Shell Quote"
     case removeTrackingParams = "Remove Tracking Parameters"
     case slugCase = "Slug-Case"
     case camelCase
@@ -57,6 +67,54 @@ public enum TextTransform: String, CaseIterable, Sendable {
         }
     }
 
+    public enum Group: Hashable, CaseIterable, Sendable {
+        case plainText, caseAndNaming, lines, encoding, escaping, hashing
+
+        public var isSubmenu: Bool {
+            switch self {
+            case .plainText, .caseAndNaming: false
+            case .lines, .encoding, .escaping, .hashing: true
+            }
+        }
+
+        public var title: String {
+            switch self {
+            case .plainText: String(localized: "Plain")
+            case .caseAndNaming: String(localized: "Case")
+            case .lines: String(localized: "Lines")
+            case .encoding: String(localized: "Encode and convert")
+            case .escaping: String(localized: "Escape and unescape")
+            case .hashing: String(localized: "Hash")
+            }
+        }
+    }
+
+    public var group: Group {
+        switch self {
+        case .stripFormatting, .markdownCodeBlock, .urlMarkdownLink:
+            .plainText
+        case .uppercase, .lowercase, .titleCase, .sentenceCase, .slugCase, .camelCase, .pascalCase:
+            .caseAndNaming
+        case .trimWhitespace, .unwrapLines, .removeDuplicateLines, .sortLinesAZ, .sortLinesZA, .reverseLines:
+            .lines
+        case .json, .jsonMinify, .stripHTML, .base64Encode, .base64Decode, .urlEncode, .urlDecode,
+             .htmlEncode, .htmlDecode, .removeTrackingParams, .markdown:
+            .encoding
+        case .jsonEscape, .jsonUnescape, .backslashEscape, .backslashUnescape, .unicodeEscape, .unicodeUnescape,
+             .regexEscape, .shellQuote:
+            .escaping
+        case .sha256Hash, .md5Hash:
+            .hashing
+        }
+    }
+
+    public static func grouped(_ transforms: [TextTransform]) -> [(group: Group, transforms: [TextTransform])] {
+        Group.allCases.compactMap { group in
+            let members = transforms.filter { $0.group == group }
+            return members.isEmpty ? nil : (group, members)
+        }
+    }
+
     public var symbolName: String {
         switch self {
         case .stripFormatting: "textformat.alt"
@@ -77,6 +135,11 @@ public enum TextTransform: String, CaseIterable, Sendable {
         case .base64Decode: "lock.open.doc"
         case .urlEncode: "link"
         case .urlDecode: "link.badge.plus"
+        case .htmlEncode, .htmlDecode: "chevron.left.forwardslash.chevron.right"
+        case .jsonEscape, .jsonUnescape, .backslashEscape, .backslashUnescape: "textformat.abc.dottedunderline"
+        case .unicodeEscape, .unicodeUnescape: "character"
+        case .regexEscape: "asterisk"
+        case .shellQuote: "terminal"
         case .removeTrackingParams: "line.diagonal.arrow"
         case .slugCase: "minus"
         case .camelCase: "character.cursor.ibeam"
@@ -98,6 +161,9 @@ public enum TextTransform: String, CaseIterable, Sendable {
         case .json, .jsonMinify, .stripHTML,
              .base64Encode, .base64Decode, .urlEncode, .urlDecode, .removeTrackingParams:
             applyEncodeOrFormat(to: text)
+        case .htmlEncode, .htmlDecode, .jsonEscape, .jsonUnescape, .backslashEscape, .backslashUnescape,
+             .unicodeEscape, .unicodeUnescape, .regexEscape, .shellQuote:
+            applyEscaping(to: text)
         case .slugCase, .camelCase, .pascalCase:
             applyWordCase(to: text)
         case .sha256Hash, .md5Hash:
@@ -168,6 +234,22 @@ public enum TextTransform: String, CaseIterable, Sendable {
         case .urlDecode: return text.removingPercentEncoding ?? text
         case .removeTrackingParams: return TrackingParameters.removed(from: text)
         default: return text
+        }
+    }
+
+    private func applyEscaping(to text: String) -> String {
+        switch self {
+        case .htmlEncode: TextEscaping.htmlEncode(text)
+        case .htmlDecode: TextEscaping.htmlDecode(text)
+        case .jsonEscape: TextEscaping.jsonEscape(text)
+        case .jsonUnescape: TextEscaping.jsonUnescape(text) ?? text
+        case .backslashEscape: TextEscaping.backslashEscape(text)
+        case .backslashUnescape: TextEscaping.backslashUnescape(text) ?? text
+        case .unicodeEscape: TextEscaping.unicodeEscape(text)
+        case .unicodeUnescape: TextEscaping.unicodeUnescape(text) ?? text
+        case .regexEscape: TextEscaping.regexEscape(text)
+        case .shellQuote: TextEscaping.shellQuote(text)
+        default: text
         }
     }
 

@@ -69,7 +69,7 @@ theme; the app icon follows the one you picked for light.
   *Show*. It is removed when the allowance ends, and at the latest a day after you copied it; whatever is still kept
   when Pesto starts is removed then. Pin a clip to keep it.
 - **Other devices:** whether copies from your iPhone, iPad or another Mac signed in to the same Apple Account (they reach
-  your Mac through Universal Clipboard) are kept in your history. Off by default. On, those clips get a phone icon and
+  your Mac through Universal Clipboard) are kept in your history. On from setup on a new install; a Mac that finished setup earlier keeps it off until you turn it on. On, those clips get a phone icon and
   the **Other Devices** chip in the search filter bar shows only them. The chip stays in search while any such clip is in
   your history, even after you turn the setting off. Photos and files copied on another device are not kept: macOS keeps
   them where Pesto may not read them and deletes them as soon as the clipboard changes (⌘V still pastes them, and they
@@ -82,7 +82,7 @@ theme; the app icon follows the one you picked for light.
   recording app being open, or the sharing bar of Chrome, Firefox, Edge, Brave or Arc; it cannot see a share of one tab or one
   from Safari; for those, choose *Hide Clip Contents* in
   the menu bar, in Shortcuts or with the shortcut you record in Shortcuts).
-- **Outside Pesto:** load link previews (off by default; a preview asks the linked site for its title and picture).
+- **Outside Pesto:** load link previews (on from setup on a new install; a preview asks the linked site for its title and picture).
 
 ## Shortcuts
 ![The Shortcuts pane: a recorder for each global shortcut, with the keys of the shelf listed below.](../images/settings-shortcuts.png)

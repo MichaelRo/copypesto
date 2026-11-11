@@ -51,6 +51,16 @@ struct RemoteCopyPolicyTests {
                 == .concealedMarker
         )
     }
+
+    @Test(
+        "sensitive and transient markers also drop a copy from another device",
+        arguments: ["com.apple.is-sensitive", "org.nspasteboard.TransientType"]
+    )
+    func whenRemoteCopyHasSensitiveOrTransientMarker_thenBlocked(marker: String) {
+        let rules = ExclusionRules(keepsRemoteCopies: true)
+
+        #expect(rules.blockReason(typeIdentifiers: [marker], sources: [], isRemote: true) == .concealedMarker)
+    }
 }
 
 private struct RemoteFilesResult {

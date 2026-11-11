@@ -132,8 +132,8 @@ struct CaptureSettings: View {
             Text("Outside Pesto")
         } footer: {
             Text(
-                "Link previews show a link\u{2019}s title and picture on its card. They are off until you turn them " +
-                    "on, because Pesto has to ask the website, so the site can see a request from your Mac."
+                "Link previews show a link\u{2019}s title and picture on its card. Setup turns them on; " +
+                    "switch them off here. Pesto has to ask the website, so the site can see a request from your Mac."
             )
             .pestoCaption()
         }

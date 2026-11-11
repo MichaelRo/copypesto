@@ -23,6 +23,8 @@ public enum SeedProfile: String, Equatable, Sendable {
     case latency
     /// Only large pictures, for measuring memory over a shelf scrolled through to its end (`MixedSeed`).
     case pictures
+    /// What a Paste import leaves: years of clips, collections, unfetched links, many pictures (`ImportedSeed`).
+    case imported
     /// Three text clips, one of them pasted often enough for a shortcut offer (`SeedFixtures.suggestionClipID`).
     case suggestion
 }
@@ -94,6 +96,10 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     /// Stands in for Sparkle, which a UI-test launch never starts: a check stages a fake update after a moment, and the
     /// install action only writes a line to the command log. UI-test mode only.
     public var fakeUpdates: Bool
+    /// Answers every link preview from a generated card after this many milliseconds, with no network, so a benchmark
+    /// can
+    /// keep Link Previews on and still measure the same shelf each run (`scripts/bench-shelf.sh`). UI-test mode only.
+    public var linkPreviewStubMillis: Int?
 
     static let defaultOverridePrefix = "PESTO_UITEST_DEFAULT_"
 
@@ -114,7 +120,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         keyLossFixture: Bool = false,
         aiFixture: Bool = false,
         suggestionsLive: Bool = false,
-        fakeUpdates: Bool = false
+        fakeUpdates: Bool = false,
+        linkPreviewStubMillis: Int? = nil
     ) {
         self.mode = mode
         self.session = session
@@ -131,6 +138,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         self.aiFixture = aiFixture
         self.fakeUpdates = fakeUpdates
         self.suggestionsLive = suggestionsLive
+        self.linkPreviewStubMillis = linkPreviewStubMillis
     }
 
     public static let current = parse(
@@ -166,7 +174,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             keyLossFixture: environment["PESTO_UITEST_KEYLOSS"] == "1",
             aiFixture: environment["PESTO_UITEST_AI_FIXTURE"] == "1",
             suggestionsLive: environment["PESTO_UITEST_SUGGESTIONS_LIVE"] == "1",
-            fakeUpdates: environment["PESTO_UITEST_UPDATES"] == "1"
+            fakeUpdates: environment["PESTO_UITEST_UPDATES"] == "1",
+            linkPreviewStubMillis: environment["PESTO_UITEST_LINK_STUB_MS"].flatMap(Int.init)
         )
     }
 

@@ -162,6 +162,8 @@ struct OverlayRootView: View {
 
     var body: some View {
         ZStack {
+            // swiftlint:disable:next redundant_discardable_let
+            let _ = RenderProbe.hit("OverlayRootView")
             VStack(spacing: 0) {
                 if let notice = StorageNotice.message(
                     hasStorage: appState.historyContainer != nil, isOnDisk: appState.storeIsOnDisk

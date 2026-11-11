@@ -20,6 +20,12 @@ public enum UITestCommand: String, CaseIterable, Sendable {
     case walkShelfToEnd
     /// The person's own ⌘V while a paste stack runs; the global key monitor is not installed under test.
     case stackUserPaste
+    /// Benchmark drivers (`scripts/bench-shelf.sh`): the shelf moves its focus as arrow keys do, timing each step to
+    /// the
+    /// frame it appears in, and writes `bench-done` when it has finished.
+    case benchArrowSteps
+    case benchArrowHold
+    case benchCycleCollections
 }
 
 /// A directory-backed queue between the runner and the app. The runner is sandboxed and cannot post
@@ -51,5 +57,24 @@ public enum UITestCommandQueue {
             try? FileManager.default.removeItem(at: file)
         }
         return commands
+    }
+}
+
+public struct UITestBenchRequest: Equatable, Sendable {
+    public enum Kind: Sendable { case arrowSteps, arrowHold, cycleCollections }
+    public let kind: Kind
+    public let serial = UUID()
+
+    public init(kind: Kind) {
+        self.kind = kind
+    }
+
+    public init?(_ command: UITestCommand) {
+        switch command {
+        case .benchArrowSteps: self.init(kind: .arrowSteps)
+        case .benchArrowHold: self.init(kind: .arrowHold)
+        case .benchCycleCollections: self.init(kind: .cycleCollections)
+        default: return nil
+        }
     }
 }

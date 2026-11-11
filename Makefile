@@ -342,6 +342,10 @@ bench-sync: ## [Benchmarks] Measure what sync costs over 5,000 clips (a copy wit
 	@mkdir -p $(BUILD_DIR)
 	DEVELOPER_DIR=$(DEVELOPER_DIR) PESTO_SYNC_PERF_CLIPS=5000 swift test --filter SyncPerformanceTests 2>&1 | tee $(BUILD_DIR)/bench-sync.log | grep -E "PERF|error:|Test run with|✘"
 
+.PHONY: bench-shelf
+bench-shelf: ## [Benchmarks] Measure an arrow press, a held arrow and a collection switch (commit time, view bodies run, link previews on, stubbed) on an imported-shaped history; the Mac must be unlocked
+	scripts/bench-shelf.sh
+
 .PHONY: bench-scroll
 bench-scroll: ## [Benchmarks] Measure shelf scrolling (hitches) on a mixed history and a long text history; the Mac must be unlocked
 	scripts/bench-scroll.sh

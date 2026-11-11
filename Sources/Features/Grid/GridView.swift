@@ -181,6 +181,8 @@ struct GridView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // swiftlint:disable:next redundant_discardable_let
+            let _ = RenderProbe.hit("GridView")
             KeyboardNavigationWrapper(
                 focusedIndex: $focusedIndex,
                 itemCount: displayedItems.count,
@@ -197,16 +199,7 @@ struct GridView: View {
                 onEscapeFromSearch: {
                     appState.isSearchActive = false
                 },
-                onArrowKey: { isRepeat in
-                    if isRepeat {
-                        if keyboardRevealedID != nil { keyboardRevealedID = nil }
-                        scrollToFocused(animated: false)
-                    } else {
-                        keyboardRevealedID = displayedItems.indices.contains(focusedIndex)
-                            ? displayedItems[focusedIndex].id : nil
-                        scrollToFocused(animated: true)
-                    }
-                },
+                onArrowKey: arrowKeyMoved,
                 onPrevPinboard: { cyclePinboard(forward: false) },
                 onNextPinboard: { cyclePinboard(forward: true) },
                 onDelete: requestDeleteForKey,
@@ -338,6 +331,9 @@ struct GridView: View {
         // Single consolidated handler — three separate handlers existed before, making it
         // hard to reason about ordering and easy to accidentally add a fourth.
         .onChange(of: appState.uiTestWalkRequest) { _, _ in walkShelfToEnd() }
+        .onChange(of: appState.uiTestBench) { _, request in
+            if let request { runBench(request) }
+        }
         .onChange(of: appState.isOverlayVisible) { _, visible in
             guard !isPinnedHost else { return }
             keyboardRevealedID = nil

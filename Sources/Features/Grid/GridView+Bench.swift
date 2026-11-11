@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: MIT
+import PestoCore
+import SwiftUI
+
+extension GridView {
+    /// What the shelf does after an arrow key moved the focus: one place, so a benchmark drives the same code a key
+    /// does.
+    func arrowKeyMoved(isRepeat: Bool) {
+        if isRepeat {
+            if keyboardRevealedID != nil { keyboardRevealedID = nil }
+            scrollToFocused(animated: false)
+        } else {
+            keyboardRevealedID = displayedItems.indices.contains(focusedIndex) ? displayedItems[focusedIndex].id : nil
+            scrollToFocused(animated: true)
+        }
+    }
+
+    /// UI-test only (`scripts/bench-shelf.sh`): moves the focus and switches collections as the keys do, and times
+    /// each step to the commit that shows it. Each step's body counts land in the timeline as a `renders` event.
+    func runBench(_ request: UITestBenchRequest) {
+        Task { @MainActor in
+            switch request.kind {
+            case .arrowSteps: await benchArrows(count: 20, pauseMillis: 150, isRepeat: false)
+            case .arrowHold: await benchArrows(count: 60, pauseMillis: 33, isRepeat: true)
+            case .cycleCollections: await benchCollectionCycle()
+            }
+            let marker = AppPaths.supportDirectory.appendingPathComponent("bench-done")
+            try? Data("\(request.serial)".utf8).write(to: marker)
+        }
+    }
+
+    private func benchArrows(count: Int, pauseMillis: Int, isRepeat: Bool) async {
+        focusedIndex = 0
+        try? await Task.sleep(for: .milliseconds(500))
+        RenderProbe.reset()
+        for step in 0..<count where focusedIndex < displayedItems.count - 1 {
+            let move = PerfSignposts.shelf.begin("focusMove")
+            focusedIndex += 1
+            arrowKeyMoved(isRepeat: isRepeat && step > 0)
+            move.endAfterNextCommit()
+            try? await Task.sleep(for: .milliseconds(pauseMillis))
+            RenderProbe.report(after: "focusMove")
+        }
+    }
+
+    private func benchCollectionCycle() async {
+        try? await Task.sleep(for: .milliseconds(500))
+        let rounds = (pinboards.count + 1) * 2
+        RenderProbe.reset()
+        for _ in 0..<rounds {
+            let switching = PerfSignposts.shelf.begin("collectionSwitch")
+            cyclePinboard(forward: true)
+            switching.endAfterNextCommit()
+            try? await Task.sleep(for: .milliseconds(600))
+            RenderProbe.report(after: "collectionSwitch")
+        }
+    }
+}
+
+extension View {
+    /// Counts a body run for `RenderProbe` and returns the view unchanged.
+    func renderProbe(_ name: StaticString) -> some View {
+        RenderProbe.hit(name)
+        return self
+    }
+}

@@ -7,7 +7,7 @@
 # stay ON and are answered by a local stub after a fixed wait (`PESTO_UITEST_LINK_STUB_MS`), so no request leaves the Mac.
 #
 #   scripts/bench-shelf.sh [label]            # SEEDS="imported mixed" to choose histories, DRIVES="benchCycleCollections" to
-#                                             # choose drives, JSON=1 to keep summaries
+#                                             # choose drives, RECORD=1 to append the run to docs/perf/history/shelf.jsonl
 #
 # PROFILE=1 also records a Time Profiler trace of one drive (PROFILE_DRIVE, default benchCycleCollections) and prints
 # where the main thread spent its time (`profile-scroll/top_frames.py`).
@@ -75,11 +75,19 @@ for seed in ${SEEDS:-imported mixed large}; do
     fi
     tail -n +"$((START + 1))" "$W/perf-timeline.tsv" > "$OUT/$LABEL-$seed-$drive.tsv"
     echo "== $LABEL / $seed / $drive"
-    python3 "$HERE/profile-scroll/shelf_report.py" "$OUT/$LABEL-$seed-$drive.tsv" ${JSON:+--json "$OUT/$LABEL-$seed-$drive.json"}
+    python3 "$HERE/profile-scroll/shelf_report.py" "$OUT/$LABEL-$seed-$drive.tsv" --json "$OUT/$LABEL-$seed-$drive.json"
   done
   kill $PID 2>/dev/null || true
   wait $PID 2>/dev/null || true
   rm -rf "$W"
 done
+# The `imported` history is judged against its budgets (render counts tightly, times by a multiple); RECORD=1 also appends the run
+# to docs/perf/history/shelf.jsonl, with the machine, so a number can be followed over time (`perf_history.py trend`).
+shopt -s nullglob
+JSONS=("$OUT"/*.json)
+if [ ${#JSONS[@]} -gt 0 ]; then
+  python3 "$HERE/profile-scroll/check-shelf-budget.py" "${JSONS[@]}" || FAILED=1
+  [ -n "${RECORD:-}" ] && python3 "$HERE/profile-scroll/perf_history.py" record "${JSONS[@]}" --note "${NOTE:-$LABEL}"
+fi
 echo "logs: $OUT"
 exit $FAILED

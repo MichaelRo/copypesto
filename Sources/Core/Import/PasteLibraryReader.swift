@@ -110,6 +110,8 @@ public enum PasteLibraryReader {
 /// store Core Data wrote; Apple does not document it. Pictures and files in Paste are the values that go external.
 enum PasteExternalPayload {
     static let externalMarker: UInt8 = 0x02
+    /// The marker, a 36-character UUID and a NUL.
+    static let referenceLength = 38
 
     static func folder(besideDatabaseAt url: URL) -> URL {
         url.deletingLastPathComponent()

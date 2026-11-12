@@ -15,6 +15,8 @@ Paste is a Core Data app, and its payload column allows external storage. Core D
 - Clips still go through `PasteMigrator` and `StorageService.ingest`.
 
 ## Consequences
+- The other SQLite importers do not follow external files (no library of those apps is known to use them; Maccy's `value` is inline). `ClipboardAppLibraryReader.blob` returns nil for a value that is exactly a reference, so a clip that holds only one is left out and counted instead of stored as a 38-byte broken picture.
+- The old Paste import stored nothing broken: an unreadable payload failed to unarchive and was counted, never ingested. There is nothing to clean up in an existing Pesto.
 - A file Paste deletes between the plan and the read is counted as left out in the summary.
 - The importer now reads one folder the person did not pick by hand, a sibling of the library they chose.
 

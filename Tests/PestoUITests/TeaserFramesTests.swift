@@ -80,7 +80,8 @@ final class TeaserFramesTests: PestoUITestCase {
         ]
         do {
             let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
-            let attachment = XCTAttachment(string: String(decoding: data, as: UTF8.self))
+            let text = try XCTUnwrap(String(bytes: data, encoding: .utf8))
+            let attachment = XCTAttachment(string: text)
             attachment.name = String(format: "teaser-%@-%02d-layout", scene, number)
             attachment.lifetime = .keepAlways
             add(attachment)

@@ -507,6 +507,11 @@ paste on B does not move the clip inside it (ADR 0021). Edit a snippet on both a
 - **SwiftLint's analyzer rules are not used** (`unused_import`, `unused_declaration`): they propose removals that do not compile in a package built two ways, and flag App Intents, AppleScript commands and framework overrides. `.swiftlint.yml` carries the lint rules only.
 - **Entitlements stay minimal.** `Pesto.entitlements` is empty on purpose (no sandbox, sync off, no Developer ID provisioning until one exists); the Control Center extension has its own sandbox entitlement. `Package.swift` sets no `StrictConcurrency` flag because tools version 6.0 already checks every target strictly.
 
+## The first-open bench in the gate (`first open, imported`)
+`scripts/bench-first-open.sh 3 imported` launches the app three times with the pre-warm off and three with it on, interleaved, opens the shelf once
+per launch and fails when the pre-warmed median is 100 ms or more (85.8 ms measured on 2026-11-12, against 221.6 ms cold). It is the figure
+the website's speed strip states, so a change to the number there starts here.
+
 ## The shelf bench in the gate (`shelf bench, imported`)
 `scripts/verify.sh` runs `SEEDS=imported RECORD=1 scripts/bench-shelf.sh` after the memory steps (not with `--fast` or `--skip-ui`;
 it needs an unlocked Mac). It judges the imported-shaped history (`scripts/profile-scroll/check-shelf-budget.py`): view bodies per

@@ -30,6 +30,7 @@ def parse(path):
     intervals = defaultdict(list)
     renders = defaultdict(lambda: defaultdict(list))
     scroll_offsets = []
+    variant = None
     with open(path) as handle:
         for line in handle:
             parts = line.rstrip("\n").split("\t")
@@ -37,6 +38,10 @@ def parse(path):
                 continue
             _, name, start, end = parts
             duration_ms = (int(end) - int(start)) / 1e6
+            marker = re.match(r"variant\((\S+)\)$", name)
+            if marker:
+                variant = marker.group(1)
+                continue
             match = re.match(r"renders\((\S+) (.*)\)$", name)
             if match:
                 for pair in match.group(2).split():
@@ -48,7 +53,7 @@ def parse(path):
                 scroll_offsets.append(int(offset.group(1)))
                 continue
             if name in INTERVALS:
-                intervals[name].append(duration_ms)
+                intervals[f"{name}@{variant}" if variant else name].append(duration_ms)
     return intervals, renders, scroll_offsets
 
 
@@ -71,10 +76,10 @@ def main():
         sys.exit(__doc__)
     summary = summarise(*parse(sys.argv[1]))
     print(f"{'interval':<18}{'count':>6}{'p50 ms':>9}{'p95 ms':>9}{'max ms':>9}")
-    for name in INTERVALS:
+    for name in [*INTERVALS, *sorted(key for key in summary["intervals"] if "@" in key)]:
         row = summary["intervals"].get(name)
         if row:
-            print(f"{name:<18}{row['count']:>6}{row['p50']:>9}{row['p95']:>9}{row['max']:>9}")
+            print(f"{name:<20}{row['count']:>6}{row['p50']:>9}{row['p95']:>9}{row['max']:>9}")
     for interaction, views in summary["renders"].items():
         cells = "  ".join(f"{view}: mean {c['mean']} max {c['max']}" for view, c in sorted(views.items()))
         print(f"body runs per {interaction}: {cells}")

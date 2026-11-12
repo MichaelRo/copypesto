@@ -28,6 +28,9 @@ public enum UITestCommand: String, CaseIterable, Sendable {
     case benchCycleCollections
     /// ⌘] held down: 40 switches at key-repeat pace.
     case benchCycleHold
+    /// Cycles the collections 4 rounds with `PESTO_AB_FLAGS` off, then on, alternately, marking each with a `variant`
+    /// event.
+    case benchCycleAB
 }
 
 /// A directory-backed queue between the runner and the app. The runner is sandboxed and cannot post
@@ -63,7 +66,7 @@ public enum UITestCommandQueue {
 }
 
 public struct UITestBenchRequest: Equatable, Sendable {
-    public enum Kind: Sendable { case arrowSteps, arrowHold, cycleCollections, cycleHold }
+    public enum Kind: Sendable { case arrowSteps, arrowHold, cycleCollections, cycleHold, cycleAB }
     public let kind: Kind
     public let serial = UUID()
 
@@ -77,6 +80,7 @@ public struct UITestBenchRequest: Equatable, Sendable {
         case .benchArrowHold: self.init(kind: .arrowHold)
         case .benchCycleCollections: self.init(kind: .cycleCollections)
         case .benchCycleHold: self.init(kind: .cycleHold)
+        case .benchCycleAB: self.init(kind: .cycleAB)
         default: return nil
         }
     }

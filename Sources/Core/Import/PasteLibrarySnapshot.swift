@@ -21,10 +21,14 @@ public actor PasteLibrarySnapshot {
     private let folder: URL
     private var isDiscarded = false
     private let join: PasteLibraryReader.JoinTable
+    /// Paste's external-data folder, read in place and read-only: pictures and files are not copied with the database,
+    /// which could double the disk the import needs. Nil when the library has none.
+    private let externalFolder: URL?
 
-    private init(folder: URL, join: PasteLibraryReader.JoinTable) {
+    private init(folder: URL, join: PasteLibraryReader.JoinTable, externalFolder: URL?) {
         self.folder = folder
         self.join = join
+        self.externalFolder = externalFolder
     }
 
     deinit {
@@ -75,7 +79,9 @@ public actor PasteLibrarySnapshot {
             try? fileManager.removeItem(at: folder)
             throw PasteLibraryReader.ReadError.notAPasteLibrary
         }
-        return PasteLibrarySnapshot(folder: folder, join: join)
+        return PasteLibrarySnapshot(
+            folder: folder, join: join, externalFolder: PasteExternalPayload.folder(besideDatabaseAt: url)
+        )
     }
 
     public func discard() {
@@ -107,8 +113,9 @@ public actor PasteLibrarySnapshot {
         let db = try connect()
         defer { sqlite3_close(db) }
         var planner = PasteImportPlanner(cap: cap)
-        try Self.rows(in: db, sql: metadataQuery(history: false)) { planner.addPinboard($0) }
-        try Self.rows(in: db, sql: metadataQuery(history: true)) { planner.addHistory($0) }
+        let external = externalFolder
+        try Self.rows(in: db, sql: metadataQuery(history: false), externalFolder: external) { planner.addPinboard($0) }
+        try Self.rows(in: db, sql: metadataQuery(history: true), externalFolder: external) { planner.addHistory($0) }
         return planner.plan(retention: retention, existing: existing, now: now)
     }
 
@@ -142,10 +149,17 @@ public actor PasteLibrarySnapshot {
             }
             // Unarchiving makes Foundation objects that are only released when an autorelease pool drains, and a loop
             // inside one task never drains the task's own: a pool per clip keeps the peak to one group.
+            let external = externalFolder
             let decoded = autoreleasepool { () -> [PasteImportRecord.Representation]? in
                 guard let blob = PasteLibraryReader.blob(rows, 2),
                       blob.count <= PasteLibraryReader.maxRecordBytes else { return nil }
-                return PasteArchiveDecoder.representations(in: blob)
+                guard blob.first == PasteExternalPayload.externalMarker else {
+                    return PasteArchiveDecoder.representations(in: blob)
+                }
+                guard let archive = PasteExternalPayload.read(
+                    PasteExternalPayload.fileName(in: blob), in: external, limit: PasteLibraryReader.maxRecordBytes
+                ) else { return nil }
+                return PasteArchiveDecoder.representations(inArchive: archive)
             }
             guard let representations = decoded else {
                 undecodable += 1
@@ -168,7 +182,9 @@ public actor PasteLibrarySnapshot {
             ? "ORDER BY COALESCE(s.ZCREATEDAT, s.ZTIMESTAMP) DESC, s.Z_PK DESC"
             : "ORDER BY l.ZDISPLAYORDER, s.ZDISPLAYORDERINPINBOARD, s.Z_PK"
         return """
-        SELECT s.Z_PK, d.Z_PK, length(d.ZPASTEBOARDITEMS), COALESCE(s.ZCREATEDAT, s.ZTIMESTAMP), l.ZNAME
+        SELECT s.Z_PK, d.Z_PK, length(d.ZPASTEBOARDITEMS), COALESCE(s.ZCREATEDAT, s.ZTIMESTAMP), l.ZNAME,
+            CASE WHEN length(d.ZPASTEBOARDITEMS) BETWEEN 2 AND 63 AND substr(d.ZPASTEBOARDITEMS, 1, 1) = X'02'
+                THEN d.ZPASTEBOARDITEMS END
         FROM ZSNIPPETLIST l
         JOIN \(join.table) j ON j.\(join.lists) = l.Z_PK
         JOIN ZSNIPPET s ON s.Z_PK = j.\(join.snippets)
@@ -179,7 +195,7 @@ public actor PasteLibrarySnapshot {
     }
 
     private static func rows(
-        in db: OpaquePointer, sql: String, _ body: (PasteImportPlanner.Row) -> Void
+        in db: OpaquePointer, sql: String, externalFolder: URL?, _ body: (PasteImportPlanner.Row) -> Void
     ) throws {
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, let rows = statement else {
@@ -190,12 +206,21 @@ public actor PasteLibrarySnapshot {
         while status == SQLITE_ROW {
             let hasData = sqlite3_column_type(rows, 1) != SQLITE_NULL
             let hasLength = sqlite3_column_type(rows, 2) != SQLITE_NULL
+            var bytes = hasLength ? Int(sqlite3_column_int64(rows, 2)) : nil
+            var externalFileIsUnusable = false
+            if let reference = PasteLibraryReader.blob(rows, 5) {
+                switch PasteExternalPayload.size(of: PasteExternalPayload.fileName(in: reference), in: externalFolder) {
+                case let .bytes(size): bytes = size
+                case .unusable: (bytes, externalFileIsUnusable) = (nil, true)
+                }
+            }
             body(PasteImportPlanner.Row(
                 snippetKey: sqlite3_column_int64(rows, 0),
                 dataKey: hasData ? sqlite3_column_int64(rows, 1) : nil,
-                bytes: hasLength ? Int(sqlite3_column_int64(rows, 2)) : nil,
+                bytes: bytes,
                 timestamp: Date(timeIntervalSinceReferenceDate: sqlite3_column_double(rows, 3)),
-                pinboard: PasteLibraryReader.text(rows, 4) ?? "Imported from Paste"
+                pinboard: PasteLibraryReader.text(rows, 4) ?? "Imported from Paste",
+                externalFileIsUnusable: externalFileIsUnusable
             ))
             status = sqlite3_step(rows)
         }

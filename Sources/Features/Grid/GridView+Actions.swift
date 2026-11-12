@@ -86,6 +86,8 @@ extension GridView {
     /// scroll view did) re-ran every card's tasks and kept two rows alive during the move.
     func collectionSwitched(from old: UUID?, to new: UUID?) {
         scrollToStart()
+        // With Reduce Motion the row simply shows the new clips: no dip, no ease.
+        guard Motion.animation(ShelfMotion.switchEase) != nil else { return }
         let order: [UUID?] = [nil] + pinboards.map { Optional($0.id) }
         let direction = ShelfMotion.switchDirection(order: order, from: old, to: new)
         var instant = Transaction()
@@ -94,9 +96,14 @@ extension GridView {
             collectionShift = (layoutDirection == .rightToLeft ? -direction : direction) * ShelfMotion.collectionSlide
             collectionOpacity = 0
         }
-        withAnimation(Motion.animation(ShelfMotion.switchEase)) {
-            collectionShift = 0
-            collectionOpacity = 1
+        // Both writes in one turn would be one transaction that ends where it began. The return waits one frame, so the
+        // row is drawn once at the start and then eased in.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(16))
+            withAnimation(Motion.animation(ShelfMotion.switchEase)) {
+                collectionShift = 0
+                collectionOpacity = 1
+            }
         }
     }
 

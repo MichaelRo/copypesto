@@ -13,16 +13,6 @@ enum ImportedSeed {
         "Reading", "Shopping", "Team", "Notes", "Misc"
     ]
 
-    static let smartCollections: [(name: String, rules: PredicateRuleSet)] = [
-        ("Pictures", PredicateRuleSet(combinator: .and, groups: [.init(combinator: .and, rules: [
-            PredicateRule(field: .contentShape, op: .equals, value: .string("image"))
-        ])])),
-        ("Links this year", PredicateRuleSet(combinator: .and, groups: [.init(combinator: .and, rules: [
-            PredicateRule(field: .contentShape, op: .equals, value: .string("link")),
-            PredicateRule(field: .previewText, op: .contains, value: .string("example"))
-        ])]))
-    ]
-
     private static let installedSources = [
         "com.apple.Safari", "com.apple.Notes", "com.apple.mail", "com.apple.TextEdit", "com.apple.dt.Xcode",
         "com.apple.Terminal", "com.apple.MobileSMS", "com.apple.finder", "com.apple.Preview", "com.apple.iCal"
@@ -108,9 +98,5 @@ enum ImportedSeed {
 public extension SeedFixtures {
     static func importedRecords(now: Date = .now) -> [PasteImportRecord] {
         ImportedSeed.records(now: now)
-    }
-
-    static func importedSmartCollections() -> [(name: String, rules: PredicateRuleSet)] {
-        ImportedSeed.smartCollections
     }
 }

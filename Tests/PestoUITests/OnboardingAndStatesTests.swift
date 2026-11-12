@@ -96,8 +96,8 @@ final class OnboardingAndStatesTests: PestoUITestCase {
     }
 
     /// The welcome screen stays minimal, and a person who wants to decide a little more opens More options.
-    func test_onboarding_moreOptions_opensTwoMoreChoices_insideTheWindow() {
-        launch(accessibility: "trusted")
+    func test_onboarding_moreOptions_opensChoices_insideTheWindow() {
+        launch(accessibility: "trusted", updates: true)
         send(.showOnboarding)
         XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
         continueFromShelfStep()
@@ -110,14 +110,17 @@ final class OnboardingAndStatesTests: PestoUITestCase {
 
         let menuBar = element(AccessibilityID.onboardingMenuBarToggle)
         let devices = element(AccessibilityID.onboardingDevicesToggle)
+        let linkPreviews = element(AccessibilityID.onboardingLinkPreviewsToggle)
+        let retention = element(AccessibilityID.onboardingRetentionPicker)
+        let updates = element(AccessibilityID.onboardingUpdatesToggle)
         XCTAssertTrue(menuBar.waitForExistence(timeout: 5), "no menu bar choice under More options")
         XCTAssertTrue(devices.waitForExistence(timeout: 5), "no other-devices choice under More options")
+        XCTAssertTrue(linkPreviews.waitForExistence(timeout: 5), "no link-previews choice under More options")
+        XCTAssertTrue(retention.waitForExistence(timeout: 5), "no retention picker under More options")
+        XCTAssertTrue(updates.waitForExistence(timeout: 5), "no automatic updates toggle under More options")
         capture("onboarding-more-options", of: onboardingWindow)
         let window = onboardingWindow.frame
-        let lastChoice = element(AccessibilityID.onboardingLockToggle).exists
-            ? element(AccessibilityID.onboardingLockToggle)
-            : devices
-        XCTAssertLessThanOrEqual(lastChoice.frame.maxY, window.maxY, "the last choice is cut off by the window")
+        XCTAssertLessThanOrEqual(updates.frame.maxY, window.maxY, "the last choice is cut off by the window")
         XCTAssertLessThanOrEqual(
             element(AccessibilityID.onboardingGetStartedButton).frame.maxY, window.maxY, "Get Started left the window"
         )
@@ -230,5 +233,21 @@ final class OnboardingAndStatesTests: PestoUITestCase {
             app.terminate()
             try? FileManager.default.removeItem(at: workDirectory.appendingPathComponent(UITestSupport.readyFileName))
         }
+    }
+
+    func test_onboarding_moreOptions_showsCustomRetentionSelection() {
+        launch(accessibility: "trusted", defaults: ["retentionDays": "14"])
+        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        app.activate()
+        continueFromShelfStep()
+        continueFromPastingStep()
+
+        let moreOptions = element(AccessibilityID.onboardingMoreOptions)
+        XCTAssertTrue(moreOptions.waitForExistence(timeout: 5))
+        moreOptions.click()
+
+        let picker = element(AccessibilityID.onboardingRetentionPicker)
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        XCTAssertEqual(picker.value as? String, "Custom (14 days)")
     }
 }

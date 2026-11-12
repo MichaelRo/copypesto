@@ -21,8 +21,8 @@ public struct HotkeyBinding: Equatable, Sendable {
 /// zero is the A key.
 public enum GlobalShortcut: CaseIterable, Sendable {
     case openShelf
-    case pastePrevious
     case pastePlainText
+    case pastePrevious
     case togglePinnedWindow
     case toggleCapture
     case toggleClipContents

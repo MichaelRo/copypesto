@@ -5,12 +5,19 @@ import XCTest
 /// The pictures behind the website teaser: settled states of the real shelf on the plain backdrop, taken in the order
 /// the film tells its story (one test, so each scene starts from the shelf the scene before left: a copy or a paste
 /// moves that clip to the front), attached at 2x as `teaser-<scene>-<nn>@2x` and exported from the result bundle like
-/// the marketing pictures.
+/// the marketing pictures. Beside each picture goes `teaser-<scene>-<nn>-layout`: where every card of the row is, so
+/// the film can cut the cards out of the picture and move them from one state to the next.
 /// `TEST_RUNNER_PESTO_TEASER_MODE=dark` takes them in dark. Motion is off, so a run gives the same pictures every time;
 /// the edit animates between them. What a paste wrote is
 /// attached as `teaser-<scene>-paste`, because a paste target cannot be a real app in a UI-test launch.
 @MainActor
 final class TeaserFramesTests: PestoUITestCase {
+    /// How the film tells one state's card from the next state's: a clip keeps its spoken label when it moves, but a
+    /// covered card speaks differently, so states that only cover the row in place go by position.
+    private enum CardKey: String {
+        case label, position
+    }
+
     private var backdropWindow: XCUIElement {
         app.descendants(matching: .any).matching(identifier: "marketing-backdrop").firstMatch
     }
@@ -47,12 +54,40 @@ final class TeaserFramesTests: PestoUITestCase {
         copyToClipboard(text)
     }
 
-    private func frame(_ scene: String, _ number: Int) {
-        let image = backdropWindow.screenshot().image
-        let attachment = XCTAttachment(image: image)
+    /// One state of the shelf: its picture and where its cards are.
+    private func frame(_ scene: String, _ number: Int, cardsBy key: CardKey = .label) {
+        let attachment = XCTAttachment(image: backdropWindow.screenshot().image)
         attachment.name = String(format: "teaser-%@-%02d@2x", scene, number)
         attachment.lifetime = .keepAlways
         add(attachment)
+        layout(scene, number, cardsBy: key)
+    }
+
+    /// Card frames are the row's own layout, in the backdrop's points: the lift and the ring of the focused card are
+    /// not in them, and the importer finds that card in the picture.
+    private func layout(_ scene: String, _ number: Int, cardsBy key: CardKey) {
+        let backdrop = backdropWindow.frame
+        let row: [[String: Any]] = cards.allElementsBoundByIndex.filter(\.exists).map { card in
+            let frame = card.frame
+            return [
+                "label": card.label,
+                "x": frame.minX - backdrop.minX, "y": frame.minY - backdrop.minY,
+                "width": frame.width, "height": frame.height
+            ]
+        }
+        let body: [String: Any] = [
+            "backdrop": ["width": backdrop.width, "height": backdrop.height], "cardsBy": key.rawValue, "cards": row
+        ]
+        do {
+            let data = try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
+            let text = try XCTUnwrap(String(bytes: data, encoding: .utf8))
+            let attachment = XCTAttachment(string: text)
+            attachment.name = String(format: "teaser-%@-%02d-layout", scene, number)
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        } catch {
+            XCTFail("no layout for \(scene) \(number): \(error)")
+        }
     }
 
     private func attachPaste(_ scene: String) {
@@ -65,41 +100,23 @@ final class TeaserFramesTests: PestoUITestCase {
         add(attachment)
     }
 
+    /// Opens search (one frame) and types the word, a frame after every letter, so the film shows the row thinning.
     private func search(_ words: String, frames scene: String, from number: Int) {
         element(AccessibilityID.searchButton).click()
         XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5), "no search field")
-        var shown = ""
-        var next = number
-        for character in words {
+        settle(0.6)
+        frame(scene, number)
+        for (index, character) in words.enumerated() {
             overlay.typeText(String(character))
-            shown.append(character)
-            if shown.count % 2 == 0 || shown == words {
-                settle(0.5)
-                frame(scene, next)
-                next += 1
-            }
+            settle(0.6)
+            frame(scene, number + 1 + index)
         }
         XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10), "nothing found for \(words)")
-        settle()
-    }
-
-    /// The shelf's first frame on its own: the glass is yellower until the focus has moved once (the story's
-    /// later frames all follow a move), so the focus goes one card along and back and the frame matches the ones that
-    /// follow.
-    func test_shelfFirstFrameMatchesTheRest() {
-        start()
-        showOverlay()
-        settleGlass()
-        overlay.typeKey(.rightArrow, modifierFlags: [])
-        settle(0.6)
-        overlay.typeKey(.leftArrow, modifierFlags: [])
-        settle(1.4)
-        frame("shelf", 1)
     }
 
     /// The whole story in order. Mamma Mia asks what time she lands; the flight time and the tracking number were
-    /// copied, the tracking number last (the seed). Each scene ends with its clip pasted or copied, and the next one
-    /// opens on a shelf with that clip first.
+    /// copied, the tracking number last (the seed). Each scene ends with its clip pasted, and the next one opens on a
+    /// shelf with that clip first.
     func test_film_story() {
         start()
         shelfScene()
@@ -110,33 +127,34 @@ final class TeaserFramesTests: PestoUITestCase {
     }
 
     private func shelfScene() {
-        frame("shelf", 0)
         showOverlay()
         settleGlass()
+        // The ground keeps a different tint until the focus has moved once: along and back before the first frame.
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        settle(0.6)
+        overlay.typeKey(.leftArrow, modifierFlags: [])
+        settle(1.4)
+        frame("shelf", 1)
         overlay.typeKey(.rightArrow, modifierFlags: [])
         settle(0.7)
         frame("shelf", 2)
         overlay.typeKey(.return, modifierFlags: [])
         settle(1.5)
         attachPaste("shelf")
-        showOverlay()
-        settleGlass()
-        frame("shelf", 3)
     }
 
     private func findScene() {
-        search("gate", frames: "gate", from: 0)
-        frame("gate", 9)
+        showOverlay()
+        settleGlass()
+        frame("gate", 0)
+        search("gate", frames: "gate", from: 1)
         overlay.typeKey(.return, modifierFlags: [])
         settle(1.5)
         attachPaste("gate")
-        showOverlay()
-        settleGlass()
-        frame("gate", 10)
-        overlay.typeKey(.escape, modifierFlags: [])
-        settle(0.8)
     }
 
+    /// The tracking number is copied from its own card, which brings it to the front, and the snippet that reads the
+    /// clipboard is found by its name: a frame after every step, so the film shows the row moving each time.
     private func snippetScene() {
         showOverlay()
         settleGlass()
@@ -145,43 +163,43 @@ final class TeaserFramesTests: PestoUITestCase {
         settle(0.3)
         overlay.typeKey(.rightArrow, modifierFlags: [])
         settle(0.8)
-        frame("snippet", 10)
+        frame("snippet", 1)
         overlay.typeKey("c", modifierFlags: .command)
         settle(1.2)
-        frame("snippet", 11)
-        search("order update", frames: "snippet", from: 1)
-        frame("snippet", 7)
+        frame("snippet", 2)
+        search("order update", frames: "snippet", from: 3)
         overlay.typeKey(.return, modifierFlags: [])
         settle(1.5)
         XCTAssertFalse(app.windows["Fill in snippet"].exists, "this snippet asks nothing")
         attachPaste("snippet")
     }
 
+    /// The card number is copied while the shelf is open, so the film has the row before and after it lands.
     private func secretScene() {
-        copyFrom("com.apple.MobileSMS", "4242 4242 4242 4242")
-        settle(2.2)
         showOverlay()
-        let masked = card(containing: "4242")
-        XCTAssertTrue(masked.waitForExistence(timeout: 10))
-        XCTAssertFalse((masked.value as? String ?? "").contains("4242 4242 4242 4242"), "the card must stay masked")
         settleGlass()
         frame("secret", 0)
-        overlay.typeKey(.return, modifierFlags: [])
+        copyFrom("com.apple.MobileSMS", "5555 5555 5555 4444")
+        let masked = card(containing: "4444")
+        XCTAssertTrue(masked.waitForExistence(timeout: 10))
+        XCTAssertFalse((masked.value as? String ?? "").contains("5555"), "the card must stay masked")
+        XCTAssertFalse(masked.label.contains("5555"), "the card must stay masked")
+        settleGlass()
+        frame("secret", 1)
+        masked.doubleClick()
         settle(1.5)
         attachPaste("secret")
-        showOverlay()
-        settleGlass()
     }
 
     private func hideScene() {
-        frame("hide", 0)
-        send(.toggleHideContents)
-        settle(0.35)
-        frame("hide", 1)
-        settle(1.0)
-        frame("hide", 2)
+        showOverlay()
+        settleGlass()
+        frame("hide", 0, cardsBy: .position)
         send(.toggleHideContents)
         settle(1.2)
-        frame("hide", 3)
+        frame("hide", 1, cardsBy: .position)
+        send(.toggleHideContents)
+        settle(1.2)
+        frame("hide", 2, cardsBy: .position)
     }
 }

@@ -252,13 +252,7 @@ extension ClipboardCard {
                             item: item, offered: actions.structuredTransforms, perform: actions.copyTransformed
                         )
                     }
-                    ForEach(pasteAsTransforms, id: \.self) { transform in
-                        Button {
-                            actions.copyTransformed?(item, transform)
-                        } label: {
-                            Label(transform.rawValue, systemImage: transform.symbolName)
-                        }
-                    }
+                    TransformRows(transforms: pasteAsTransforms) { actions.copyTransformed?(item, $0) }
                 } label: {
                     Label("Copy As\u{2026}", systemImage: "doc.on.doc.badge.gearshape")
                 }
@@ -271,12 +265,8 @@ extension ClipboardCard {
                             item: item, offered: actions.structuredTransforms, perform: actions.pasteAs
                         )
                     }
-                    ForEach(pasteAsTransforms.filter { $0 != .stripFormatting }, id: \.self) { transform in
-                        Button {
-                            actions.pasteAs?(item, transform)
-                        } label: {
-                            Label(transform.rawValue, systemImage: transform.symbolName)
-                        }
+                    TransformRows(transforms: pasteAsTransforms.filter { $0 != .stripFormatting }) {
+                        actions.pasteAs?(item, $0)
                     }
                 } label: {
                     Label("Paste As\u{2026}", systemImage: "text.badge.chevron.right")

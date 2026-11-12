@@ -11,7 +11,7 @@ import SwiftUI
 /// `pinnedWindowAutoPaste` in Settings → General.
 struct PinnedWindowRootView: View {
     @Environment(AppState.self) private var appState: AppState
-    @State private var focusedDominantColor: Color = .clear
+    @State private var glow = ShelfGlow()
     @AppStorage(Setting.accentColorHex) private var accentColorHex: String
     @AppStorage(Setting.appTheme) private var appThemeRaw: String
     @AppStorage(Setting.appThemeDark) private var appThemeDarkRaw: String
@@ -32,11 +32,11 @@ struct PinnedWindowRootView: View {
                     GridView(
                         copyOnly: !pinnedWindowAutoPaste,
                         pasteImmediately: pinnedWindowAutoPaste,
-                        onFocusChanged: { color, _ in focusedDominantColor = color }
+                        onFocusChanged: { [glow] color, _ in glow.focusChanged(to: color) }
                     )
                 }
             }
-            .background(ShelfBackground(dominantColor: focusedDominantColor))
+            .background(ShelfBackground(glow: glow))
         }
         .ignoresSafeArea()
         .accessibilityElement(children: .contain)

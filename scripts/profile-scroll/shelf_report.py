@@ -14,7 +14,7 @@ import re
 import sys
 from collections import defaultdict
 
-INTERVALS = ["focusMove", "collectionSwitch", "collectionFilter", "collectionApply", "linkFetch", "metadataSave",
+INTERVALS = ["focusMove", "collectionKey", "collectionSwitch", "collectionFilter", "collectionApply", "linkFetch", "metadataSave",
              "historyApply", "historyRefresh", "retentionSweep"]
 
 

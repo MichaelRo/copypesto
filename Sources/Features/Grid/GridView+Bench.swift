@@ -23,7 +23,8 @@ extension GridView {
             switch request.kind {
             case .arrowSteps: await benchArrows(count: 20, pauseMillis: 150, isRepeat: false)
             case .arrowHold: await benchArrows(count: 60, pauseMillis: 33, isRepeat: true)
-            case .cycleCollections: await benchCollectionCycle()
+            case .cycleCollections: await benchCollectionCycle(rounds: (pinboards.count + 1) * 2, pauseMillis: 600)
+            case .cycleHold: await benchCollectionCycle(rounds: 40, pauseMillis: 33)
             }
             let marker = AppPaths.supportDirectory.appendingPathComponent("bench-done")
             try? Data("\(request.serial)".utf8).write(to: marker)
@@ -44,15 +45,14 @@ extension GridView {
         }
     }
 
-    private func benchCollectionCycle() async {
+    private func benchCollectionCycle(rounds: Int, pauseMillis: Int) async {
         try? await Task.sleep(for: .milliseconds(500))
-        let rounds = (pinboards.count + 1) * 2
         RenderProbe.reset()
         for _ in 0..<rounds {
             let switching = PerfSignposts.shelf.begin("collectionSwitch")
             cyclePinboard(forward: true)
             switching.endAfterNextCommit()
-            try? await Task.sleep(for: .milliseconds(600))
+            try? await Task.sleep(for: .milliseconds(pauseMillis))
             RenderProbe.report(after: "collectionSwitch")
         }
     }

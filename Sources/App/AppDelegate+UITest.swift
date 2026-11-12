@@ -133,7 +133,8 @@ extension AppDelegate {
         case .showOnboarding: showOnboarding()
         case .openAbout: openAboutWindow()
         case .toggleHideContents: statusToggleContentHidden()
-        case .walkShelfToEnd, .benchArrowSteps, .benchArrowHold, .benchCycleCollections: driveShelf(command)
+        case .walkShelfToEnd, .benchArrowSteps, .benchArrowHold, .benchCycleCollections, .benchCycleHold:
+            driveShelf(command)
         case .showToast: toastController.show(.manualPaste(.pressCommandV), holds: true)
         case .stackUserPaste: stackUserPasted()
         }

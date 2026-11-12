@@ -6,7 +6,8 @@
 # synthetic key events are needed, but the Mac must be unlocked and awake: a locked screen draws no frames. Link previews
 # stay ON and are answered by a local stub after a fixed wait (`PESTO_UITEST_LINK_STUB_MS`), so no request leaves the Mac.
 #
-#   scripts/bench-shelf.sh [label]            # SEEDS="imported mixed" to choose histories, JSON=1 to keep summaries
+#   scripts/bench-shelf.sh [label]            # SEEDS="imported mixed" to choose histories, DRIVES="benchCycleCollections" to
+#                                             # choose drives, JSON=1 to keep summaries
 #
 # PROFILE=1 also records a Time Profiler trace of one drive (PROFILE_DRIVE, default benchCycleCollections) and prints
 # where the main thread spent its time (`profile-scroll/top_frames.py`).
@@ -50,7 +51,7 @@ for seed in ${SEEDS:-imported mixed large}; do
   [ -f "$W/ready.json" ] || { echo "== $seed: the app never became ready" >&2; FAILED=1; kill $PID 2>/dev/null || true; continue; }
   enqueue "$W" showOverlay
   sleep 4
-  for drive in benchArrowSteps benchArrowHold benchCycleCollections benchCycleHold; do
+  for drive in ${DRIVES:-benchArrowSteps benchArrowHold benchCycleCollections benchCycleHold}; do
     rm -f "$W/bench-done"
     START=$(wc -l < "$W/perf-timeline.tsv" 2>/dev/null || echo 0)
     TRACE=""

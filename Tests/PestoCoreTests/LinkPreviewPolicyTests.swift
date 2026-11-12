@@ -34,6 +34,16 @@ struct LinkPreviewPolicyTests {
         }
     }
 
+    @Test("a UI-test launch loads previews only from the stub a benchmark names, which makes no request")
+    func whenUITestLaunchHasAStub_thenPreviewsFollowTheStoredChoice() {
+        let defaults = suite()
+        #expect(!LinkPreviewPolicy.isEnabled(in: defaults, mode: .uiTest, stubbed: true))
+        defaults.set(true, forKey: LinkPreviewPolicy.defaultsKey)
+        #expect(LinkPreviewPolicy.isEnabled(in: defaults, mode: .uiTest, stubbed: true))
+        #expect(!LinkPreviewPolicy.isEnabled(in: defaults, mode: .uiTest, stubbed: false))
+        #expect(!LinkPreviewPolicy.isEnabled(in: defaults, mode: .hostedTests, stubbed: true))
+    }
+
     @Test("a browser's GIF is fetched only with previews on, for an eligible address, and never while locked")
     func whenFetchingAGIF_thenSwitchAddressAndLockAllMustAgree() {
         #expect(LinkPreviewPolicy.mayFetchGIF(isEnabled: true, isEligible: true, isHistoryLocked: false))

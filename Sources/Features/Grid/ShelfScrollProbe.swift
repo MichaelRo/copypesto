@@ -2,9 +2,10 @@
 import PestoCore
 import SwiftUI
 
-/// Reports the shelf's horizontal scroll offset to the perf timeline, so `scripts/profile-scroll.sh` can fail a run in
+/// Tells `ActivityGate` that the shelf is moving (work that can wait starts when it stops) and reports the shelf's
+/// horizontal scroll offset to the perf timeline, so `scripts/profile-scroll.sh` can fail a run in
 /// which the shelf never moved: hitches are counted only while frames are produced, so a shelf that did not scroll
-/// would otherwise read as a pass (P-06). Does nothing outside a bench launch (`PerfTimeline` is not recording).
+/// would otherwise read as a pass (P-06). The report is written only in a bench launch (`PerfTimeline` is recording).
 private final class ScrollReport: @unchecked Sendable {
     private var last = -Double.infinity
 
@@ -30,6 +31,7 @@ private struct ScrollOffsetReporter: ViewModifier {
 
     func body(content: Content) -> some View {
         content.onScrollGeometryChange(for: Double.self, of: { Double($0.contentOffset.x) }, action: { _, offset in
+            ActivityGate.shared.noteActivity()
             if isRecording { report.note(offset) }
         })
     }

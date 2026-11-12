@@ -115,6 +115,10 @@ struct ClipboardCard: View {
     }
 
     var body: some View {
+        RenderProbe.timed("CardBodyUs") { cardWithModifiers }
+    }
+
+    private var cardWithModifiers: some View {
         popoverCard
             .renderProbe("ClipboardCard")
             .modifier(CardClickGestures(

@@ -49,9 +49,7 @@ extension GridView {
         try? await Task.sleep(for: .milliseconds(500))
         RenderProbe.reset()
         for _ in 0..<rounds {
-            let switching = PerfSignposts.shelf.begin("collectionSwitch")
             cyclePinboard(forward: true)
-            switching.endAfterNextCommit()
             try? await Task.sleep(for: .milliseconds(pauseMillis))
             RenderProbe.report(after: "collectionSwitch")
         }

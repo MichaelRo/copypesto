@@ -7,6 +7,8 @@ enum ShelfMotion {
     static let change = 0.22
     static let switchEase = Animation.easeOut(duration: 0.18)
     static let collectionSlide: CGFloat = 18
+    /// ⌘[ and ⌘] presses closer together than this become one switch (`cyclePinboard`).
+    static let cycleCoalesce = Duration.milliseconds(80)
 
     /// A list change is animated only when it is one the eye can follow: one clip added or removed, a swap of one for
     /// another, or one clip brought to the front. A search, filter or sort rewrites the whole list and must not

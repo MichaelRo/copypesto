@@ -148,7 +148,7 @@ struct ClipboardCard: View {
                 missingFileCount = await FileClip.missing(inText: item.displayPreviewText).count
             }
             .background { if isFocused, let focusAnchor { FocusedCardAnchorView(anchor: focusAnchor) } }
-            .contextMenu { cardContextMenu }
+            .contextMenu { DeferredCardContextMenu(card: self) }
             .gatedDrag(allowed: concealment.allowsDrag) {
                 closeDetailForGood()
                 actions.dragStarted?(item)

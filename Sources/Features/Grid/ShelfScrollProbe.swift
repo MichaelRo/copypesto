@@ -32,7 +32,10 @@ private struct ScrollOffsetReporter: ViewModifier {
     func body(content: Content) -> some View {
         content.onScrollGeometryChange(for: Double.self, of: { Double($0.contentOffset.x) }, action: { _, offset in
             ActivityGate.shared.noteActivity()
-            if isRecording { report.note(offset) }
+            if isRecording {
+                PerfSignposts.shelf.event("scrollFrame", "")
+                report.note(offset)
+            }
         })
     }
 }

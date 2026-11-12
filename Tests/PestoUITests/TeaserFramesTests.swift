@@ -120,6 +120,7 @@ final class TeaserFramesTests: PestoUITestCase {
         start()
         shelfScene()
         findScene()
+        snippetScene()
         secretScene()
         hideScene()
     }
@@ -149,6 +150,27 @@ final class TeaserFramesTests: PestoUITestCase {
         overlay.typeKey(.return, modifierFlags: [])
         settle(1.5)
         attachPaste("gate")
+    }
+
+    /// The tracking number is copied from its own card, which brings it to the front, and the snippet that reads the
+    /// clipboard is found by its name: a frame after every step, so the film shows the row moving each time.
+    private func snippetScene() {
+        showOverlay()
+        settleGlass()
+        frame("snippet", 0)
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        settle(0.3)
+        overlay.typeKey(.rightArrow, modifierFlags: [])
+        settle(0.8)
+        frame("snippet", 1)
+        overlay.typeKey("c", modifierFlags: .command)
+        settle(1.2)
+        frame("snippet", 2)
+        search("order update", frames: "snippet", from: 3)
+        overlay.typeKey(.return, modifierFlags: [])
+        settle(1.5)
+        XCTAssertFalse(app.windows["Fill in snippet"].exists, "this snippet asks nothing")
+        attachPaste("snippet")
     }
 
     /// The card number is copied while the shelf is open, so the film has the row before and after it lands.

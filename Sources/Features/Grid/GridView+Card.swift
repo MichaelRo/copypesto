@@ -41,6 +41,7 @@ extension GridView {
             suggestedHotkeySlot: suggestedHotkeySlot,
             showsFirstCopyTime: showsFirstCopyTime
         )
+        .equatable()
         .onDrop(
             of: [
                 UTType.utf8PlainText.identifier, UTType.plainText.identifier,

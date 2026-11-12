@@ -8,6 +8,9 @@
 #
 #   scripts/bench-shelf.sh [label]            # SEEDS="imported mixed" to choose histories, JSON=1 to keep summaries
 #
+# PROFILE=1 also records a Time Profiler trace of one drive (PROFILE_DRIVE, default benchCycleCollections) and prints
+# where the main thread spent its time (`profile-scroll/top_frames.py`).
+#
 # Prints, per history and drive: commit time per step (p50, p95, max) and how many view bodies ran per step.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -50,10 +53,25 @@ for seed in ${SEEDS:-imported mixed large}; do
   for drive in benchArrowSteps benchArrowHold benchCycleCollections; do
     rm -f "$W/bench-done"
     START=$(wc -l < "$W/perf-timeline.tsv" 2>/dev/null || echo 0)
+    TRACE=""
+    if [ -n "${PROFILE:-}" ] && [ "$drive" = "${PROFILE_DRIVE:-benchCycleCollections}" ]; then
+      TRACE="$OUT/$LABEL-$seed-$drive.trace"
+      xcrun xctrace record --template 'Time Profiler' --attach "$PID" --time-limit "${PROFILE_SECONDS:-30}s" \
+        --output "$TRACE" --no-prompt < /dev/null > "$OUT/$seed-$drive.xctrace.log" 2>&1 &
+      TRACE_PID=$!
+      sleep 5
+    fi
     enqueue "$W" "$drive"
     for _ in $(seq 1 120); do [ -f "$W/bench-done" ] && break; sleep 1; done
     [ -f "$W/bench-done" ] || { echo "== $seed/$drive: did not finish in 120 s" >&2; FAILED=1; continue; }
     sleep 1
+    if [ -n "$TRACE" ]; then
+      wait "$TRACE_PID" || true
+      xcrun xctrace export --input "$TRACE" --xpath '/trace-toc/run/data/table[@schema="time-profile"]' \
+        < /dev/null > "$OUT/$LABEL-$seed-$drive.tp.xml" 2>/dev/null || true
+      echo "-- main-thread profile of $drive"
+      python3 "$HERE/profile-scroll/top_frames.py" "$OUT/$LABEL-$seed-$drive.tp.xml" --top "${PROFILE_TOP:-30}" || true
+    fi
     tail -n +"$((START + 1))" "$W/perf-timeline.tsv" > "$OUT/$LABEL-$seed-$drive.tsv"
     echo "== $LABEL / $seed / $drive"
     python3 "$HERE/profile-scroll/shelf_report.py" "$OUT/$LABEL-$seed-$drive.tsv" ${JSON:+--json "$OUT/$LABEL-$seed-$drive.json"}

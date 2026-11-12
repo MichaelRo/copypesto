@@ -27,7 +27,7 @@ extension ClipboardCard {
         if ThumbnailCache.shared.entry(for: item.id, byteSize: byteSize) != nil { return }
         defer { PerfSignposts.shelf.event("cardThumbnail", item.id.uuidString) }
         let id = item.id
-        let service = ThumbnailService(modelContainer: modelContext.container)
+        let service = await ThumbnailServices.shared.service(for: modelContext.container)
         // Twice the card width covers a Retina display; the full-resolution bitmap is never decoded.
         guard let result = await service.thumbnail(for: id, maxPixel: 480),
               let image = await PreparedImage.image(from: result.data, animated: result.isAnimated) else { return }

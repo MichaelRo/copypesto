@@ -60,7 +60,7 @@ enum CopyKind: String, CaseIterable {
     func write(run: Int, to board: NSPasteboard) {
         // Everything slow is built before the board is touched: setData does not bump the change count, so a poll that
         // lands between clearContents and setData would see an empty board and never see the clip.
-        let png = switch self {
+        let png: Data? = switch self {
         case .picture: Self.picture(width: 1600, height: 1000, salt: run)
         case .screenshot: Self.picture(width: 5120, height: 2880, salt: run + 100)
         default: nil

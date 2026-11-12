@@ -16,12 +16,14 @@ struct SwitchQualityPolicyTests {
         #expect(policy.quality(at: at(0)) == .full)
     }
 
-    @Test("a quick second switch after a slow full one is drawn light")
-    func whenTheLastFullSwitchWasSlowAndAnotherFollowsQuickly_thenLight() {
+    @Test("only the third quick switch in a row after a slow one is drawn light")
+    func whenSwitchesFollowQuicklyAfterASlowOne_thenTheThirdIsLight() {
         var policy = SwitchQualityPolicy()
         #expect(policy.quality(at: at(0)) == .full)
         policy.committed(.full, millis: 55)
-        #expect(policy.quality(at: at(200)) == .light)
+        #expect(policy.quality(at: at(200)) == .full)
+        policy.committed(.full, millis: 55)
+        #expect(policy.quality(at: at(350)) == .light)
     }
 
     @Test("a switch after a pause is drawn in full, so a person who switches once always sees real cards")
@@ -47,9 +49,11 @@ struct SwitchQualityPolicyTests {
         var policy = SwitchQualityPolicy()
         _ = policy.quality(at: at(0))
         policy.committed(.full, millis: 55)
-        #expect(policy.quality(at: at(150)) == .light)
-        policy.committed(.light, millis: 9)
+        #expect(policy.quality(at: at(150)) == .full)
+        policy.committed(.full, millis: 55)
         #expect(policy.quality(at: at(300)) == .light)
+        policy.committed(.light, millis: 9)
+        #expect(policy.quality(at: at(450)) == .light)
     }
 
     @Test("when a full switch turns out quick, later quick switches stay full")

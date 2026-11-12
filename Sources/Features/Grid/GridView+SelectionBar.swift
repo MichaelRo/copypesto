@@ -77,7 +77,7 @@ extension GridView {
             settleTask = Task { @MainActor in
                 try? await Task.sleep(for: switchPolicy.settle)
                 guard !Task.isCancelled else { return }
-                detail.isLight = false
+                withAnimation(Motion.animation(.easeOut(duration: 0.14))) { detail.isLight = false }
             }
         }
         // Filtered here, in the same step as the switch: left to `onChange` the first frame built the new row from the

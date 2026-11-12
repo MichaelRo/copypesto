@@ -18,15 +18,23 @@ public struct SwitchQualityPolicy: Sendable, Equatable {
     /// How long the shelf is still before the real cards replace the placeholders.
     public var settle = Duration.milliseconds(150)
 
+    /// Switches in a row, each within `quickWindow` of the one before, that must have happened before one is drawn
+    /// light: a
+    /// second switch is a person choosing a collection, a third is a person going through them.
+    public var quickRunToEngage = 2
+
     public private(set) var fullCommitMillis: Double?
     private var lastSwitch: ContinuousClock.Instant?
+    private var quickRun = 0
 
     public init() {}
 
     public mutating func quality(at now: ContinuousClock.Instant) -> Quality {
         defer { lastSwitch = now }
-        guard let last = lastSwitch, let cost = fullCommitMillis else { return .full }
-        return cost > slowMillis && now - last < quickWindow ? .light : .full
+        guard let last = lastSwitch else { return .full }
+        quickRun = now - last < quickWindow ? quickRun + 1 : 0
+        guard let cost = fullCommitMillis else { return .full }
+        return cost > slowMillis && quickRun >= quickRunToEngage ? .light : .full
     }
 
     /// What a switch took to reach the screen. Only a full one says what a full one costs: a light one is quick by

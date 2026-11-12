@@ -52,12 +52,13 @@ extension GridView {
         let flags = Set((ProcessInfo.processInfo.environment["PESTO_AB_FLAGS"] ?? "").split(separator: ",")
             .map(String.init))
         let sweep = pinboards.count + 1
+        let abPause = Int(ProcessInfo.processInfo.environment["PESTO_AB_PAUSE_MS"] ?? "") ?? 500
         for _ in 0..<4 {
             for variant in ["A", "B"] {
                 ShelfExperiments.shared.set(variant == "B" ? flags : [])
                 try? await Task.sleep(for: .milliseconds(400))
                 PerfSignposts.shelf.event("variant", variant)
-                await benchCollectionCycle(rounds: sweep, pauseMillis: 500)
+                await benchCollectionCycle(rounds: sweep, pauseMillis: abPause)
             }
         }
         ShelfExperiments.shared.set([])

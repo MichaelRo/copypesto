@@ -51,6 +51,9 @@ struct GridView: View {
     @AppStorage(Setting.nsfwMode) var nsfwModeRaw: String
     @State var previousCollectionID: UUID?
     @State var collectionShift: CGFloat = 0
+    @State var detail = ShelfDetail()
+    @State var switchPolicy = SwitchQualityPolicy()
+    @State var settleTask: Task<Void, Never>?
     @State var pendingCycleSteps = 0
     @State var lastCycleApplied = ContinuousClock.now - .seconds(1)
     @State var cycleTask: Task<Void, Never>?

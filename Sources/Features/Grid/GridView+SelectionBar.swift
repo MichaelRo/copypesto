@@ -48,6 +48,15 @@ extension GridView {
         key.endAfterNextCommit()
     }
 
+    /// Placeholders during quick switches (`SwitchQualityPolicy`). Off in a UI-test launch, whose tests read the cards
+    /// a
+    /// moment after a key, unless a benchmark is recording; `alwaysFull` is the benchmark's way to compare.
+    private var adaptsSwitchQuality: Bool {
+        let configuration = RuntimeConfiguration.current
+        let allowed = configuration.mode != .uiTest || configuration.recordsPerfTimeline
+        return allowed && !ShelfExperiments.shared.isOn("alwaysFull")
+    }
+
     private func applyPendingCycle() {
         let steps = pendingCycleSteps
         pendingCycleSteps = 0
@@ -58,6 +67,18 @@ extension GridView {
         let next = ((current + steps) % ids.count + ids.count) % ids.count
         let switching = PerfSignposts.shelf.begin("collectionSwitch")
         defer { switching.endAfterNextCommit() }
+        let quality = adaptsSwitchQuality ? switchPolicy.quality(at: .now) : .full
+        detail.isLight = quality == .light
+        settleTask?.cancel()
+        let started = ContinuousClock.now
+        CommitClock.afterNextCommit(from: started) { millis in switchPolicy.committed(quality, millis: millis) }
+        if quality == .light {
+            settleTask = Task { @MainActor in
+                try? await Task.sleep(for: switchPolicy.settle)
+                guard !Task.isCancelled else { return }
+                detail.isLight = false
+            }
+        }
         // Filtered here, in the same step as the switch: left to `onChange` the first frame built the new row from the
         // previous collection's clips and the right ones replaced them a frame later.
         appState.selectedCollectionID = ids[next]

@@ -88,6 +88,17 @@ final class OverlayWindowController {
         }
     }
 
+    /// Lays the shelf out once while it is hidden, so the first open is not the first time SwiftUI builds it
+    /// (`ShelfPrewarm`).
+    /// The panel is not ordered in: nothing is drawn, and `show()` sets the frame again.
+    func prewarmLayout() {
+        guard !panel.isVisible, !appState.isOverlayVisible else { return }
+        let interval = PerfSignposts.shelf.begin("prewarmLayout")
+        panel.setFrame(BottomShelfPositioning.frame(), display: false)
+        panel.contentView?.layoutSubtreeIfNeeded()
+        interval.end()
+    }
+
     func show() {
         PerfSignposts.shelf.begin("overlayShow").endAfterNextCommit()
         isHiding = false

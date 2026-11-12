@@ -268,7 +268,7 @@ extension AppDelegate {
         guard let container = appState.historyContainer else { return nil }
         let ctx = ModelContext(container)
         let all = (try? ctx.fetch(FetchDescriptor<Pinboard>())) ?? []
-        return all.first { $0.triggerBundleID == bundleID }?.id
+        return CollectionTrigger.collectionID(for: bundleID, in: all)
     }
 }
 

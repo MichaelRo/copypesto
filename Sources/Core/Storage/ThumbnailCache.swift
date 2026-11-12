@@ -32,7 +32,7 @@ public final class ThumbnailCache {
 
     private let storage = NSCache<NSUUID, Box>()
 
-    public init(byteLimit: Int = 24 * 1024 * 1024, countLimit: Int = 40) {
+    public init(byteLimit: Int = 48 * 1024 * 1024, countLimit: Int = 100) {
         storage.totalCostLimit = byteLimit
         storage.countLimit = countLimit
     }

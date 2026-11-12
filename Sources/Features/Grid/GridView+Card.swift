@@ -7,7 +7,26 @@ import UniformTypeIdentifiers
 extension GridView {
     /// One card. What it can ask the shelf to do arrives through `cardActions` in the environment, built once for the
     /// whole row; only the values that differ per card are parameters.
+    @ViewBuilder
     func cardView(
+        for item: ClipboardItem,
+        at idx: Int,
+        collections: [CollectionRef],
+        showsFirstCopyTime: Bool,
+        isBlurred: Bool
+    )
+    -> some View {
+        if detail.isLight {
+            LightCard(item: item, isFocused: idx == focusedIndex)
+        } else {
+            fullCard(
+                for: item, at: idx, collections: collections, showsFirstCopyTime: showsFirstCopyTime,
+                isBlurred: isBlurred
+            )
+        }
+    }
+
+    private func fullCard(
         for item: ClipboardItem,
         at idx: Int,
         collections: [CollectionRef],
@@ -41,6 +60,7 @@ extension GridView {
             suggestedHotkeySlot: suggestedHotkeySlot,
             showsFirstCopyTime: showsFirstCopyTime
         )
+        .equatable()
         .onDrop(
             of: [
                 UTType.utf8PlainText.identifier, UTType.plainText.identifier,

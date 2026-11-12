@@ -115,7 +115,12 @@ struct ClipboardCard: View {
     }
 
     var body: some View {
+        RenderProbe.timed("CardBodyUs") { cardWithModifiers }
+    }
+
+    private var cardWithModifiers: some View {
         popoverCard
+            .renderProbe("ClipboardCard")
             .modifier(CardClickGestures(
                 onClick: actions.click.map { click in { click(item, $0) } },
                 isFlashing: isFlashing
@@ -147,7 +152,7 @@ struct ClipboardCard: View {
                 missingFileCount = await FileClip.missing(inText: item.displayPreviewText).count
             }
             .background { if isFocused, let focusAnchor { FocusedCardAnchorView(anchor: focusAnchor) } }
-            .contextMenu { cardContextMenu }
+            .contextMenu { DeferredCardContextMenu(card: self) }
             .gatedDrag(allowed: concealment.allowsDrag) {
                 closeDetailForGood()
                 actions.dragStarted?(item)
@@ -381,32 +386,6 @@ struct ClipboardCard: View {
     /// Built from gridPreview so a masked secret is never read out or exposed to automation.
     var playsAnimations: Bool {
         AnimatedImagePlayback.shouldAnimate(autoPlayAllowed: autoPlayAllowed, isActive: isPointed || isFocused)
-    }
-
-    var concealment: CardConcealment {
-        CardConcealment(
-            screenShareBlur: isCoveredForPrivacy,
-            nsfwBlurred: isBlurredAsSensitive,
-            maskedSecret: item.sensitivity != nil,
-            secretShown: revealedSecret != nil,
-            pendingAnalysis: item.analysisPending && item.type != .image
-        )
-    }
-
-    /// Covered for a screen share or by hand, until the person shows this card with its Show. Showing it is not
-    /// permanent: the cover coming back, or the shelf closing, covers it again.
-    var isCoveredForPrivacy: Bool {
-        isPrivacyBlurred && !(isNSFWRevealed || revealedFromOutside)
-    }
-
-    /// Anything that keeps the card's text from being drawn: a content-filter blur, a secret's mask, or the cover for a
-    /// screen share.
-    var hidesItsContent: Bool {
-        isBlurredAsSensitive || isCoveredForPrivacy || item.sensitivity != nil
-    }
-
-    var isBlurredAsSensitive: Bool {
-        item.isNSFW && nsfwMode.blursCards && !(isNSFWRevealed || revealedFromOutside)
     }
 
     func reveal() {

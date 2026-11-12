@@ -506,3 +506,17 @@ paste on B does not move the clip inside it (ADR 0021). Edit a snippet on both a
 - **The gate reads the logs.** `scripts/verify.sh` fails on any `warning:` in this repository's `Sources/` or `Tests/` in the Core build (`swift test`), the Debug app build and the hosted-test build, besides compiling Debug with warnings as errors (`SWIFT_TREAT_WARNINGS_AS_ERRORS` does not turn Swift 6's isolation diagnostics into errors). SwiftPM's incremental build prints only the warnings of files it recompiles, so a clean CI run is where the Core build is read in full. Release does not treat warnings as errors, so a new SDK diagnostic cannot block an archive.
 - **SwiftLint's analyzer rules are not used** (`unused_import`, `unused_declaration`): they propose removals that do not compile in a package built two ways, and flag App Intents, AppleScript commands and framework overrides. `.swiftlint.yml` carries the lint rules only.
 - **Entitlements stay minimal.** `Pesto.entitlements` is empty on purpose (no sandbox, sync off, no Developer ID provisioning until one exists); the Control Center extension has its own sandbox entitlement. `Package.swift` sets no `StrictConcurrency` flag because tools version 6.0 already checks every target strictly.
+
+## The first-open bench in the gate (`first open, imported`)
+`scripts/bench-first-open.sh 3 imported` launches the app three times with the pre-warm off and three with it on, interleaved, opens the shelf once
+per launch and fails when the pre-warmed median is 100 ms or more (85.8 ms measured on 2026-11-12, against 221.6 ms cold). It is the figure
+the website's speed strip states, so a change to the number there starts here.
+
+## The shelf bench in the gate (`shelf bench, imported`)
+`scripts/verify.sh` runs `SEEDS=imported RECORD=1 scripts/bench-shelf.sh` after the memory steps (not with `--fast` or `--skip-ui`;
+it needs an unlocked Mac). It judges the imported-shaped history (`scripts/profile-scroll/check-shelf-budget.py`): view bodies per
+arrow press tightly (about 3 cards, 1 grid, 0 overlay; a focus move that re-runs the overlay or every card fails), commit times by
+a multiple of a developer Mac's (arrow step p95 35 ms, collection switch p50 80 ms and p95 100 ms, held ⌘] key-to-commit p95 50 ms).
+Nothing fails under CI. `RECORD=1` appends the run to `docs/perf/history/shelf.jsonl` with the machine; `python3
+scripts/profile-scroll/perf_history.py trend` prints the last runs of each figure and flags one more than 25% (and 3 ms) worse than
+the median of the previous five on the same machine. Commit the history file with the change that produced the numbers.

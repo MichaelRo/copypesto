@@ -105,3 +105,34 @@ extension AppDelegate {
 enum MarketingBackdropHolder {
     static var window: NSWindow?
 }
+
+extension AppDelegate {
+    private static let importedSmartCollections: [(name: String, rules: PredicateRuleSet)] = [
+        ("Pictures", PredicateRuleSet(combinator: .and, groups: [.init(combinator: .and, rules: [
+            PredicateRule(field: .contentShape, op: .equals, value: .string("image"))
+        ])])),
+        ("Links this year", PredicateRuleSet(combinator: .and, groups: [.init(combinator: .and, rules: [
+            PredicateRule(field: .contentShape, op: .equals, value: .string("link")),
+            PredicateRule(field: .previewText, op: .contains, value: .string("example"))
+        ])]))
+    ]
+
+    /// The `imported` profile: a Paste-shaped history through the importer, then two smart collections.
+    func seedImported() async -> Int {
+        guard let container = appState.historyContainer else { return 0 }
+        let records = SeedFixtures.importedRecords()
+        _ = try? await PasteMigrator(modelContainer: container).migrate(records: records)
+        let context = ModelContext(container)
+        let existing = (try? context.fetch(FetchDescriptor<Pinboard>()))?.count ?? 0
+        for (offset, smart) in Self.importedSmartCollections.enumerated() {
+            guard let data = try? SmartCollectionPredicate.encodeRuleSet(smart.rules) else { continue }
+            context.insert(Pinboard(
+                name: smart.name, symbolName: "sparkles", colorHex: "#2F7A49", sortOrder: existing + offset,
+                isSmart: true, smartPredicateData: data
+            ))
+        }
+        try? context.saveOrRollback()
+        await storageService?.waitForBackgroundWork()
+        return records.count
+    }
+}

@@ -3,6 +3,7 @@
 # Measures paste and copy latency per kind of clip end to end, with a real target app and the real clipboard.
 #
 #   scripts/bench-latency.sh [paste|copy|open|hover|memory|both|all] [runs-per-kind]     (default: both = paste and copy, 7)
+#   BENCH_SEED=imported scripts/bench-latency.sh open     # the open, copy and memory scenarios over another history (default: large)
 #
 # Builds a signed Profile copy of Pesto (Release, plus the test hooks), seeds an isolated history, and runs a small target
 # app (scripts/bench-latency/BenchTarget.swift) that presses ⌘1 to ⌘8 for the paste bench and writes one clip of each kind
@@ -73,10 +74,10 @@ run_scenario() {
 { echo "machine: $(sysctl -n hw.model) / $(sw_vers -productVersion) / load $(uptime | sed 's/.*load averages*: //')"; } | tee "$OUT/env.txt"
 case "$MODE" in
   paste) run_scenario paste latency ;;
-  copy) run_scenario copy large ;;
-  open) run_scenario open large ;;
+  copy) run_scenario copy "${BENCH_SEED:-large}" ;;
+  open) run_scenario open "${BENCH_SEED:-large}" ;;
   hover) run_scenario hover latency ;;
-  memory) run_scenario memory large ;;
+  memory) run_scenario memory "${BENCH_SEED:-large}" ;;
   both) run_scenario paste latency; run_scenario copy large ;;
   all) run_scenario paste latency; run_scenario copy large; run_scenario open large; run_scenario hover latency ;;
   *) echo "bench-latency: unknown mode $MODE" >&2; exit 2 ;;

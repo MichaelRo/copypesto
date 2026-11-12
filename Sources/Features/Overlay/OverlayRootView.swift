@@ -8,7 +8,7 @@ import SwiftUI
 struct OverlayRootView: View {
     @Environment(AppState.self) var appState: AppState
     @Environment(\.colorSchemeContrast) private var contrast
-    @State private var focusedDominantColor: Color = .clear
+    @State private var glow = ShelfGlow()
     @AppStorage(Setting.accentColorHex) private var accentColorHex: String
     @AppStorage(Setting.appTheme) private var appThemeRaw: String
     @AppStorage(Setting.appThemeDark) private var appThemeDarkRaw: String
@@ -162,6 +162,8 @@ struct OverlayRootView: View {
 
     var body: some View {
         ZStack {
+            // swiftlint:disable:next redundant_discardable_let
+            let _ = RenderProbe.hit("OverlayRootView")
             VStack(spacing: 0) {
                 if let notice = StorageNotice.message(
                     hasStorage: appState.historyContainer != nil, isOnDisk: appState.storeIsOnDisk
@@ -189,11 +191,7 @@ struct OverlayRootView: View {
 
                 BiometricLockOverlay {
                     GridView(
-                        onFocusChanged: { dominantColor, _ in
-                            if focusedDominantColor != dominantColor {
-                                focusedDominantColor = dominantColor
-                            }
-                        }
+                        onFocusChanged: { [glow] dominantColor, _ in glow.focusChanged(to: dominantColor) }
                     )
                 }
                 // The error banner that comes and goes sits in the room above the cards (where a focused card lifts),
@@ -231,7 +229,7 @@ struct OverlayRootView: View {
                     .offset(y: -8)
                 }
             }
-            .background(ShelfBackground(dominantColor: focusedDominantColor))
+            .background(ShelfBackground(glow: glow))
         }
         .ignoresSafeArea()
         // The panel is not exposed to accessibility as a window, so the root view carries the identifier.

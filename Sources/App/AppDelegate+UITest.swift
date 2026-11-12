@@ -69,6 +69,7 @@ extension AppDelegate {
             await service.clearModelContext()
             return seeded
         }
+        if profile == .imported { return await seedImported() }
         let captures = SeedFixtures.captures(for: profile)
         for (index, capture) in captures.enumerated() {
             do {
@@ -111,6 +112,14 @@ extension AppDelegate {
         }
     }
 
+    private func driveShelf(_ command: UITestCommand) {
+        if let bench = UITestBenchRequest(command) {
+            appState.uiTestBench = bench
+        } else {
+            appState.uiTestWalkRequest += 1
+        }
+    }
+
     private func perform(_ command: UITestCommand) {
         switch command {
         case .showOverlay: showOverlay()
@@ -124,7 +133,9 @@ extension AppDelegate {
         case .showOnboarding: showOnboarding()
         case .openAbout: openAboutWindow()
         case .toggleHideContents: statusToggleContentHidden()
-        case .walkShelfToEnd: appState.uiTestWalkRequest += 1
+        case .walkShelfToEnd, .benchArrowSteps, .benchArrowHold, .benchCycleCollections, .benchCycleHold,
+             .benchCycleAB:
+            driveShelf(command)
         case .showToast: toastController.show(.manualPaste(.pressCommandV), holds: true)
         case .stackUserPaste: stackUserPasted()
         }

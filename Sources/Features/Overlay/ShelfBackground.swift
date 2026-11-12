@@ -6,7 +6,7 @@ import SwiftUI
 /// macOS 26), either carrying a wash of the focused card's source app colour. Reduce Transparency always gives the
 /// plain ground; the glass is chrome and never goes on a card.
 struct ShelfBackground: View {
-    var dominantColor: Color = .clear
+    var glow = ShelfGlow()
     @State private var animatedColor: Color = .clear
     @AppStorage(Setting.appTheme) private var themeRaw: String
     @AppStorage(Setting.appThemeDark) private var darkThemeRaw: String
@@ -20,7 +20,7 @@ struct ShelfBackground: View {
     var body: some View {
         base
             .overlay { wash }
-            .onChange(of: dominantColor) { _, newColor in
+            .onChange(of: glow.color) { _, newColor in
                 withAnimation(Motion.animation(.smooth(duration: 0.6))) { animatedColor = newColor }
             }
     }

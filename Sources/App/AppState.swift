@@ -197,6 +197,8 @@ final class AppState {
     var pendingSettingsSection: String?
     /// Bumped by the `walkShelfToEnd` UI-test command; the grid walks its focus to the last clip.
     var uiTestWalkRequest = 0
+    /// Set by the `bench…` UI-test commands; the grid runs the named drive.
+    var uiTestBench: UITestBenchRequest?
     /// The lost-key recovery window and its delegate, kept alive while it is on screen.
     @ObservationIgnored var keyRecoveryWindow: (NSWindow, KeyRecoveryWindowCloser)?
     /// The installed apps the shelf offers to import from, until the person answers; empty when there is no offer.

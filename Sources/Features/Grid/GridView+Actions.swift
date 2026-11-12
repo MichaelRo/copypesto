@@ -80,18 +80,31 @@ extension GridView {
         )
     }
 
-    /// The row slides in from the side the new collection's chip is on and the old row fades away.
-    var collectionSwitchTransition: AnyTransition {
+    /// The same row stays on screen and shows the new collection's clips: it starts at the first clip, offset toward
+    /// the
+    /// side the new collection's chip is on and clear, and eases in. A row thrown away and rebuilt (what `.id` on the
+    /// scroll view did) re-ran every card's tasks and kept two rows alive during the move.
+    func collectionSwitched(from old: UUID?, to new: UUID?) {
+        scrollToStart()
+        // With Reduce Motion the row simply shows the new clips: no dip, no ease.
+        guard Motion.animation(ShelfMotion.switchEase) != nil else { return }
         let order: [UUID?] = [nil] + pinboards.map { Optional($0.id) }
-        let direction = ShelfMotion.switchDirection(
-            order: order, from: previousCollectionID, to: appState.selectedCollectionID
-        )
-        return .asymmetric(
-            insertion: .opacity
-                .combined(with: .offset(x: (layoutDirection == .rightToLeft ? -direction : direction) * ShelfMotion
-                        .collectionSlide)),
-            removal: .opacity
-        )
+        let direction = ShelfMotion.switchDirection(order: order, from: old, to: new)
+        var instant = Transaction()
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            collectionShift = (layoutDirection == .rightToLeft ? -direction : direction) * ShelfMotion.collectionSlide
+            collectionOpacity = 0
+        }
+        // Both writes in one turn would be one transaction that ends where it began. The return waits one frame, so the
+        // row is drawn once at the start and then eased in.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(16))
+            withAnimation(Motion.animation(ShelfMotion.switchEase)) {
+                collectionShift = 0
+                collectionOpacity = 1
+            }
+        }
     }
 
     func pasteNth(_ number: Int) {
@@ -163,7 +176,7 @@ extension GridView {
         }
         let (container, id) = (modelContext.container, item.id)
         Task {
-            let service = ThumbnailService(modelContainer: container)
+            let service = await ThumbnailServices.shared.service(for: container)
             guard let image = await service.thumbnail(for: id, maxPixel: 1024) else {
                 appState.aiResult = AIResult(
                     action: action, sourcePreview: "Image", result: "That picture couldn\u{2019}t be read.",

@@ -11,6 +11,10 @@ public actor ThumbnailService {
         public let isAnimated: Bool
     }
 
+    public func isRunningOnMainThread() -> Bool {
+        Thread.isMainThread
+    }
+
     private static let maxAnimatedFrames = 60
     private nonisolated(unsafe) static let animatedPreviews: NSCache<NSUUID, NSData> = {
         let cache = NSCache<NSUUID, NSData>()

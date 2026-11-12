@@ -52,7 +52,7 @@ public enum SeedFixtures {
     /// are stable and the grid order is deterministic.
     public static func captures(for profile: SeedProfile, now: Date = .now) -> [PasteboardCapture] {
         let captures = switch profile {
-        case .empty: [PasteboardCapture]()
+        case .empty, .imported: [PasteboardCapture]()
         case .basic: basicCaptures()
         case .large: largeCaptures()
         case .files: fileCaptures()

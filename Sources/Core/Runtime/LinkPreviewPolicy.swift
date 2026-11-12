@@ -6,8 +6,16 @@ public enum LinkPreviewPolicy {
     public static let defaultsKey = "linkPreviewsEnabled"
 
     /// Only a normal launch contacts the network: a test host or UI-test launch shows no previews, whatever is stored.
-    public static func isEnabled(in store: UserDefaults = AppDefaults.store, mode: LaunchMode = .current) -> Bool {
-        guard mode == .normal else { return false }
+    /// A benchmark's UI-test launch is the one exception: it names a stub
+    /// (`RuntimeConfiguration.linkPreviewStubMillis`)
+    /// that answers from memory, so Link Previews can stay on while it measures the shelf and nothing leaves the Mac.
+    public static func isEnabled(
+        in store: UserDefaults = AppDefaults.store,
+        mode: LaunchMode = .current,
+        stubbed: Bool = RuntimeConfiguration.current.linkPreviewStubMillis != nil
+    )
+    -> Bool {
+        guard mode == .normal || (mode == .uiTest && stubbed) else { return false }
         return store.bool(forKey: defaultsKey)
     }
 

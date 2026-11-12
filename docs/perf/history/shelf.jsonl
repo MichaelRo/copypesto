@@ -1,0 +1,1 @@
+{"branch": "perf/shelf-cards", "commit": "76c5120", "date": "2026-11-12T18:37Z", "dirty": true, "machine": "Apple M5 Pro / macOS 27.3", "note": "first recorded run, after placeholders", "values": {"arrowHold.p95": 18.15, "arrowStep.cards": 3.0, "arrowStep.p95": 20.18, "switch.p50": 53.09, "switch.p95": 70.76, "switchHold.keyP95": 16.77}}

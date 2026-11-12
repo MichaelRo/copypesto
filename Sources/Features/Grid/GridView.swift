@@ -50,6 +50,14 @@ struct GridView: View {
     @AppStorage(Setting.cardWidth) var cardWidth: Int
     @AppStorage(Setting.nsfwMode) var nsfwModeRaw: String
     @State var previousCollectionID: UUID?
+    @State var collectionShift: CGFloat = 0
+    @State var detail = ShelfDetail()
+    @State var switchPolicy = SwitchQualityPolicy()
+    @State var settleTask: Task<Void, Never>?
+    @State var pendingCycleSteps = 0
+    @State var lastCycleApplied = ContinuousClock.now - .seconds(1)
+    @State var cycleTask: Task<Void, Never>?
+    @State var collectionOpacity: Double = 1
     /// Number of filtered items currently shown. Extends by 500 when the user reaches the
     /// last visible card, giving infinite-scroll pagination.
     @State var displayLimit = 1000
@@ -181,6 +189,8 @@ struct GridView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // swiftlint:disable:next redundant_discardable_let
+            let _ = RenderProbe.hit("GridView")
             KeyboardNavigationWrapper(
                 focusedIndex: $focusedIndex,
                 itemCount: displayedItems.count,
@@ -197,16 +207,7 @@ struct GridView: View {
                 onEscapeFromSearch: {
                     appState.isSearchActive = false
                 },
-                onArrowKey: { isRepeat in
-                    if isRepeat {
-                        if keyboardRevealedID != nil { keyboardRevealedID = nil }
-                        scrollToFocused(animated: false)
-                    } else {
-                        keyboardRevealedID = displayedItems.indices.contains(focusedIndex)
-                            ? displayedItems[focusedIndex].id : nil
-                        scrollToFocused(animated: true)
-                    }
-                },
+                onArrowKey: arrowKeyMoved,
                 onPrevPinboard: { cyclePinboard(forward: false) },
                 onNextPinboard: { cyclePinboard(forward: true) },
                 onDelete: requestDeleteForKey,
@@ -247,8 +248,8 @@ struct GridView: View {
                         // it,
                         // where padding on the row let the first card sit flush against the screen edge.
                         .contentMargins(.horizontal, 16, for: .scrollContent)
-                        .id(appState.selectedCollectionID)
-                        .transition(collectionSwitchTransition)
+                        .offset(x: collectionShift)
+                        .opacity(collectionOpacity)
                         .onChange(of: scrollRequest) { _, request in
                             guard let request else { return }
                             if request.animated {
@@ -287,7 +288,6 @@ struct GridView: View {
                         .accessibilityValue(CountText.clips(cachedFilteredItems.count))
                 }
             )
-            .animation(Motion.animation(ShelfMotion.switchEase), value: appState.selectedCollectionID)
             .frame(height: cardDimensions.height + ShelfHeight.liftRoom)
             .onChange(of: noResultsAdvice, initial: true) { _, advice in
                 appState.noResultsAdvice = advice
@@ -338,6 +338,9 @@ struct GridView: View {
         // Single consolidated handler — three separate handlers existed before, making it
         // hard to reason about ordering and easy to accidentally add a fourth.
         .onChange(of: appState.uiTestWalkRequest) { _, _ in walkShelfToEnd() }
+        .onChange(of: appState.uiTestBench) { _, request in
+            if let request { runBench(request) }
+        }
         .onChange(of: appState.isOverlayVisible) { _, visible in
             guard !isPinnedHost else { return }
             keyboardRevealedID = nil
@@ -377,9 +380,10 @@ struct GridView: View {
             }
         }
         .task(id: appState.searchText) { await updateSemanticResults() }
-        .onChange(of: appState.selectedCollectionID) { _, new in
+        .onChange(of: appState.selectedCollectionID) { old, new in
             displayLimit = 1000
             previousCollectionID = new
+            collectionSwitched(from: old, to: new)
         }
         .onChange(of: appState.isPinnedWindowVisible) { _, visible in
             guard isPinnedHost else { return }

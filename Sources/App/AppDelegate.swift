@@ -251,6 +251,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             retentionPruner = pruner
             lastRetentionPolicy = RetentionPolicy.fromDefaults(AppDefaults.store)
             Self.sweepRetention(pruner)
+            Task { await ShelfPrewarm.run(appState: appState) { [weak self] in
+                self?.ensureOverlayController().prewarmLayout()
+            } }
             retentionTimer = Timer.scheduledTimer(withTimeInterval: 6 * 3600, repeats: true) { _ in
                 Self.sweepRetention(pruner)
             }
@@ -481,16 +484,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        if overlayWindowController == nil {
-            let controller = OverlayWindowController(appState: appState)
-            controller.onClickOutside = { [weak self] in self?.hideOverlay() }
-            overlayWindowController = controller
-        }
-        overlayWindowController?.show()
+        ensureOverlayController().show()
         appState.resetShelfContextIfStale(restingCollectionID: workspacePinboardID(for: frontmost?.bundleIdentifier))
         appState.isOverlayVisible = true
         appState.checkAndApplyBiometricLock()
         appState.shelfDidOpen()
+    }
+
+    @discardableResult
+    func ensureOverlayController() -> OverlayWindowController {
+        if let existing = overlayWindowController { return existing }
+        let controller = OverlayWindowController(appState: appState)
+        controller.onClickOutside = { [weak self] in self?.hideOverlay() }
+        overlayWindowController = controller
+        return controller
     }
 
     /// Closes the overlay without pasting (Escape / hotkey toggle path); any paste that was waiting is dropped.

@@ -155,6 +155,26 @@ retry_host_crashes() {
   echo "host crashed and passed on retry: $(sed 's/: Test crashed.*//' <<<"$failures" | tr '\n' ' ')(concurrent.log)"
 }
 
+# What an arrow press, a held arrow and a collection switch cost the shelf on a history shaped like a Paste import
+# (docs/perf/shelf-2026-11.md): render counts tightly, times by a multiple of a developer Mac's. Needs an unlocked Mac.
+step_shelf_bench() {
+  if SEEDS=imported RECORD=1 NOTE=verify scripts/bench-shelf.sh verify >"$LOGS/shelf-bench.log" 2>&1; then
+    record "shelf bench, imported" "PASS" "$(grep -m1 'benchCycleCollections' "$LOGS/shelf-bench.log" | cut -c1-90)"
+  else
+    record "shelf bench, imported" "FAIL" "$(grep -E 'OVER|budget: FAILED|never became|did not finish' "$LOGS/shelf-bench.log" | head -3 | tr '\n' ' ')"
+  fi
+}
+
+# The first shelf open of a launch, pre-warmed, over the imported-shaped history: the website's "under 100 ms to open" is this
+# median (docs/perf/shelf-2026-11.md). Needs an unlocked Mac; three launches a side, about three minutes.
+step_first_open() {
+  if scripts/bench-first-open.sh 3 imported >"$LOGS/first-open.log" 2>&1; then
+    record "first open, imported" "PASS" "$(grep -m1 '^== warm' "$LOGS/first-open.log" | cut -c1-90)"
+  else
+    record "first open, imported" "FAIL" "$(grep -E '^== warm|over [0-9]+ ms' "$LOGS/first-open.log" | head -2 | tr '\n' ' ')"
+  fi
+}
+
 step_hosted_and_ui() {
   # The suites that only draw pictures (make pictures, make teaser-frames) judge no behavior and take 8 minutes.
   UI_SKIP_ARGS=(
@@ -360,6 +380,8 @@ else
     step_release_build
     [[ $SKIP_UI -eq 0 ]] && step_memory
     [[ $SKIP_UI -eq 0 ]] && step_memory_pictures
+    [[ $SKIP_UI -eq 0 ]] && step_shelf_bench
+    [[ $SKIP_UI -eq 0 ]] && step_first_open
     step_hosted_and_ui
   fi
 fi

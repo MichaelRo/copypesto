@@ -508,10 +508,11 @@ extension ClipboardCard {
         .foregroundStyle(AdaptiveContrast.quiet(contrast))
         .padding(.horizontal, 5)
         .padding(.vertical, 2)
-        // Not GlassChipModifier: that fallback renders `.clear` at rest (fine for CollectionChip's
-        // command-bar context), but this badge sits directly on arbitrary card content/imagery and
-        // needs to stay visibly frosted on macOS 15 for legibility.
-        .glassPanelBackground(in: Capsule())
+        // A material, not glass: cards are content and Liquid Glass is chrome, and a `.glassEffect` on every card in a
+        // collection cost about 8 ms of a 60 ms collection switch over a long history (docs/perf/shelf-2026-11.md). Not
+        // GlassChipModifier: that fallback renders `.clear` at rest, and this badge sits directly on arbitrary card
+        // content and imagery, so it stays visibly frosted.
+        .adaptiveMaterialBackground(in: Capsule())
         .padding(5)
     }
 }

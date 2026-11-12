@@ -44,7 +44,7 @@ undocumented setting, so the fix is not to build the buffers.
 
 ## What the 2026-10-10 review changed
 
-The end-to-end numbers and the stage splits are in `review-2026-10-10.md`. Footprint after long copies was dominated by
+Footprint after long copies was dominated by
 libmalloc keeping the large buffers of picture decodes (+110 MB); `MallocLargeCache=0` in `LSEnvironment` returns them at
 once (the earlier note that this was "undocumented, so the fix is not to build the buffers" stands as the first choice, but the
 buffers come from ImageIO and Vision, which Pesto does not control). Check once by hand that a LaunchServices launch carries

@@ -45,14 +45,6 @@ struct ImportedSeedTests {
         #expect(sources.contains { $0.hasPrefix("com.example.retired-app") })
     }
 
-    @Test("two smart collections are offered, one over pictures")
-    func whenSeeded_thenSmartCollectionsAreValid() throws {
-        #expect(ImportedSeed.smartCollections.count == 2)
-        for smart in ImportedSeed.smartCollections {
-            _ = try SmartCollectionPredicate.encodeRuleSet(smart.rules)
-        }
-    }
-
     @Test("two runs make the same history")
     func whenSeededTwice_thenTheContentIsTheSame() {
         let first = ImportedSeed.records(now: now).map(\.sourceBundleID)

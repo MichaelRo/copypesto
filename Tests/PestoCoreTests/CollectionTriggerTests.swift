@@ -22,9 +22,7 @@ struct CollectionTriggerTests {
         #expect(CollectionTrigger.collectionID(for: "com.apple.Safari", in: [mail]) == nil)
     }
 
-    @Test(
-        "no frontmost app, or one with no bundle identifier, never opens a collection, though most collections have no trigger"
-    )
+    @Test("no bundle identifier never opens a collection, though most collections have no trigger")
     func whenThereIsNoBundleIdentifier_thenNoCollectionMatchesTheEmptyTriggers() {
         let boards = [board("Work"), board("Recipes"), board("Mail", trigger: "com.apple.mail")]
         #expect(CollectionTrigger.collectionID(for: nil, in: boards) == nil)

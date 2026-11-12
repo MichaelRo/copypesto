@@ -25,6 +25,7 @@ extension GridView {
             case .arrowHold: await benchArrows(count: 60, pauseMillis: 33, isRepeat: true)
             case .cycleCollections: await benchCollectionCycle(rounds: (pinboards.count + 1) * 2, pauseMillis: 600)
             case .cycleHold: await benchCollectionCycle(rounds: 40, pauseMillis: 33)
+            case .cycleAB: await benchCycleAB()
             }
             let marker = AppPaths.supportDirectory.appendingPathComponent("bench-done")
             try? Data("\(request.serial)".utf8).write(to: marker)
@@ -43,6 +44,23 @@ extension GridView {
             try? await Task.sleep(for: .milliseconds(pauseMillis))
             RenderProbe.report(after: "focusMove")
         }
+    }
+
+    /// Alternates the flags in `PESTO_AB_FLAGS` (comma separated) off and on, `rounds` times, one sweep through the
+    /// collections each; every sweep starts with a `variant` event so `shelf_report.py` can tell the two apart.
+    private func benchCycleAB() async {
+        let flags = Set((ProcessInfo.processInfo.environment["PESTO_AB_FLAGS"] ?? "").split(separator: ",")
+            .map(String.init))
+        let sweep = pinboards.count + 1
+        for _ in 0..<4 {
+            for variant in ["A", "B"] {
+                ShelfExperiments.shared.set(variant == "B" ? flags : [])
+                try? await Task.sleep(for: .milliseconds(400))
+                PerfSignposts.shelf.event("variant", variant)
+                await benchCollectionCycle(rounds: sweep, pauseMillis: 500)
+            }
+        }
+        ShelfExperiments.shared.set([])
     }
 
     private func benchCollectionCycle(rounds: Int, pauseMillis: Int) async {

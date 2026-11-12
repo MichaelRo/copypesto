@@ -48,13 +48,14 @@ extension GridView {
         key.endAfterNextCommit()
     }
 
-    /// Placeholders during quick switches (`SwitchQualityPolicy`). Off in a UI-test launch, whose tests read the cards
-    /// a
-    /// moment after a key, unless a benchmark is recording; `alwaysFull` is the benchmark's way to compare.
+    /// Placeholders during quick switches (`SwitchQualityPolicy`). Off with VoiceOver, which would hear nothing while
+    /// the
+    /// row is light, and in a UI-test launch, whose tests read the cards a moment after a key, unless a benchmark is
+    /// recording; `alwaysFull` is the benchmark's way to compare.
     private var adaptsSwitchQuality: Bool {
         let configuration = RuntimeConfiguration.current
         let allowed = configuration.mode != .uiTest || configuration.recordsPerfTimeline
-        return allowed && !ShelfExperiments.shared.isOn("alwaysFull")
+        return allowed && !NSWorkspace.shared.isVoiceOverEnabled && !ShelfExperiments.shared.isOn("alwaysFull")
     }
 
     private func applyPendingCycle() {

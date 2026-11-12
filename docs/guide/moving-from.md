@@ -40,6 +40,8 @@ are not pinned, so your retention setting may remove the older ones. Clips you a
   looked for); it is a hidden folder, so press ⇧⌘. in the chooser if you have to look for it yourself.
 Pesto imports at most 20,000 clips or 1 GB of them at a time. A bigger Paste library is not refused: your pinboards come first, as collections, then the newest history, and before anything is imported the sheet says how many of the clips will come in ("4,200 of 30,000 clips will be imported: your collections and the newest 3,200"). Clips that are older than *Keep clips for* or past *Keep at most* in *Settings → Data* are not imported either, because Pesto would remove them at the next cleanup; raise those settings first to bring in more. The import then tells you how many stayed in Paste. For the other apps below, a library of more than 20,000 clips is refused whole ("That file is too large to import"); trim that app's history first.
 
+Pictures and files are included: Paste keeps the large ones in a hidden folder beside its library (`.Paste_SUPPORT/_EXTERNAL_DATA`), and Pesto reads them from there, read-only. Earlier versions of Pesto did not, so a library imported before has its pictures and files missing. Run *Import… → From Paste…* again: clips you already have are skipped, and only what is new comes in. The sheet says how many clips cannot be imported and why (empty, over 50 MB, or a picture or file that Paste no longer has in that folder).
+
 The import tells you how many clips came in and how many were left out.
 
 ## Moving from Maccy or Alfred

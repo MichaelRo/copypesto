@@ -129,9 +129,39 @@ struct PasteFixture {
         try run("COMMIT;")
     }
 
+    /// Where Core Data keeps a value too large for the column: `.<store name>_SUPPORT/_EXTERNAL_DATA/<UUID>` beside the
+    /// store.
+    var externalFolder: URL {
+        url.deletingLastPathComponent()
+            .appendingPathComponent(".\(url.deletingPathExtension().lastPathComponent)_SUPPORT/_EXTERNAL_DATA")
+    }
+
+    /// A snippet whose payload Core Data moved out of the column: the column holds marker 0x02, the file name and a
+    /// NUL (checked against a store built by Core Data), and the file holds the archive without the 0x01 marker.
+    @discardableResult
+    func addExternalSnippet(
+        id: Int, list: Int, archive: Data?, name: String = UUID().uuidString, seconds: Double = 1000
+    ) throws
+    -> URL {
+        try addSnippet(
+            id: id,
+            list: list,
+            title: nil,
+            blob: Data([0x02]) + Data(name.utf8) + Data([0]),
+            seconds: seconds
+        )
+        let file = externalFolder.appendingPathComponent(name)
+        if let archive {
+            try FileManager.default.createDirectory(at: externalFolder, withIntermediateDirectories: true)
+            try archive.write(to: file)
+        }
+        return file
+    }
+
     func close() {
         sqlite3_close(db)
         try? FileManager.default.removeItem(at: url)
+        try? FileManager.default.removeItem(at: externalFolder.deletingLastPathComponent())
     }
 }
 
@@ -240,6 +270,70 @@ struct PasteLibraryReaderTests {
         #expect(library.plan.unusable == 1)
         #expect(library.records.count == 1 && library.undecodable == 1)
         #expect(library.plan.libraryClips == 3)
+    }
+
+    @Test("a payload Core Data moved to the external folder is read from the file, and the plan counts its real size")
+    func whenPayloadIsExternal_thenReadFromFile() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        let archive = try PasteFixture.archive("big picture").dropFirst()
+        try fixture.addExternalSnippet(id: 1, list: 2, archive: Data(archive))
+        try fixture.addSnippet(id: 2, list: 2, title: nil, blob: PasteFixture.archive("inline"))
+
+        let library = try await readEverything(fixture.url)
+
+        #expect(library.plan.unusable == 0)
+        #expect(library.plan.pinboards.first { $0.snippetKey == 1 }?.bytes == archive.count)
+        #expect(library.records.count == 2 && library.undecodable == 0)
+        let texts = library.records.compactMap { Data(base64Encoded: $0.representations[0].dataBase64) }
+        #expect(Set(texts) == [Data("big picture".utf8), Data("inline".utf8)])
+    }
+
+    @Test("an external payload whose file is gone is counted as missing, not as an unreadable archive")
+    func whenExternalFileIsMissing_thenCountedAsMissing() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        try fixture.addExternalSnippet(id: 1, list: 2, archive: nil)
+
+        let library = try await readEverything(fixture.url)
+
+        #expect(library.plan.unusable == 1 && library.plan.unusableMissingFile == 1)
+        #expect(library.records.isEmpty)
+    }
+
+    @Test("an external file over the record limit is counted as too large and never read")
+    func whenExternalFileIsTooLarge_thenCountedAsTooLarge() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        let file = try fixture.addExternalSnippet(id: 1, list: 2, archive: Data([0]))
+        let handle = try FileHandle(forWritingTo: file)
+        try handle.truncate(atOffset: UInt64(PasteLibraryReader.maxRecordBytes + 1))
+        try handle.close()
+
+        let library = try await readEverything(fixture.url)
+
+        #expect(library.plan.unusable == 1 && library.plan.unusableTooLarge == 1)
+        #expect(library.records.isEmpty)
+    }
+
+    @Test("an external reference that is not a plain file name, or a file that is a link, is never followed")
+    func whenExternalReferenceEscapesTheFolder_thenNotRead() async throws {
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        let secret = FileManager.default.temporaryDirectory.appendingPathComponent("secret-\(UUID().uuidString)")
+        try PasteFixture.archive("secret").dropFirst().write(to: secret)
+        defer { try? FileManager.default.removeItem(at: secret) }
+        try fixture.addExternalSnippet(id: 1, list: 2, archive: nil, name: "../../\(secret.lastPathComponent)")
+        let linkName = UUID().uuidString
+        try fixture.addExternalSnippet(id: 2, list: 2, archive: Data([0]), name: linkName)
+        let link = fixture.externalFolder.appendingPathComponent(linkName)
+        try FileManager.default.removeItem(at: link)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: secret)
+
+        let library = try await readEverything(fixture.url)
+
+        #expect(library.records.isEmpty)
+        #expect(library.plan.unusableMissingFile == 2)
     }
 
     @Test("history is newest first, ties go to the later row, and pinboards keep Paste's board and in-board order")

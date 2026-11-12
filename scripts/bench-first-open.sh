@@ -51,7 +51,7 @@ PY
     kill $PID 2>/dev/null || true; wait $PID 2>/dev/null || true; rm -rf "$W"
   done
 done
-BUDGET_MS=${BUDGET_MS:-120}   # the pre-warmed first open; the budget in AGENTS.md is 100 ms on a developer Mac, with headroom for noise
+BUDGET_MS=${BUDGET_MS:-100}   # the budget in AGENTS.md and the figure on the website: the median pre-warmed first open of a launch
 python3 - "$OUT/results.txt" "$BUDGET_MS" <<'PY'
 import statistics, sys
 by = {}

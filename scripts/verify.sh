@@ -165,6 +165,16 @@ step_shelf_bench() {
   fi
 }
 
+# The first shelf open of a launch, pre-warmed, over the imported-shaped history: the website's "under 100 ms to open" is this
+# median (docs/perf/shelf-2026-11.md). Needs an unlocked Mac; three launches a side, about three minutes.
+step_first_open() {
+  if scripts/bench-first-open.sh 3 imported >"$LOGS/first-open.log" 2>&1; then
+    record "first open, imported" "PASS" "$(grep -m1 '^== warm' "$LOGS/first-open.log" | cut -c1-90)"
+  else
+    record "first open, imported" "FAIL" "$(grep -E '^== warm|over [0-9]+ ms' "$LOGS/first-open.log" | head -2 | tr '\n' ' ')"
+  fi
+}
+
 step_hosted_and_ui() {
   # The suites that only draw pictures (make pictures, make teaser-frames) judge no behavior and take 8 minutes.
   UI_SKIP_ARGS=(
@@ -371,6 +381,7 @@ else
     [[ $SKIP_UI -eq 0 ]] && step_memory
     [[ $SKIP_UI -eq 0 ]] && step_memory_pictures
     [[ $SKIP_UI -eq 0 ]] && step_shelf_bench
+    [[ $SKIP_UI -eq 0 ]] && step_first_open
     step_hosted_and_ui
   fi
 fi

@@ -50,7 +50,7 @@ for seed in ${SEEDS:-imported mixed large}; do
   [ -f "$W/ready.json" ] || { echo "== $seed: the app never became ready" >&2; FAILED=1; kill $PID 2>/dev/null || true; continue; }
   enqueue "$W" showOverlay
   sleep 4
-  for drive in benchArrowSteps benchArrowHold benchCycleCollections; do
+  for drive in benchArrowSteps benchArrowHold benchCycleCollections benchCycleHold; do
     rm -f "$W/bench-done"
     START=$(wc -l < "$W/perf-timeline.tsv" 2>/dev/null || echo 0)
     TRACE=""

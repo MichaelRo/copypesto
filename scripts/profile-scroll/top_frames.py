@@ -6,7 +6,7 @@
     top_frames.py tp.xml [--top 25] [--match Pesto]
 
 Prints the frames present in the most main-thread samples (inclusive), then the ones that were the innermost frame
-(self), as a share of all main-thread samples. `--under NAME` keeps only samples that have a frame named NAME and counts the frames called below it (where
+(self), as a share of all main-thread samples. `--leaf NAME` lists the callers (eight frames up) of samples whose innermost frame contains NAME. `--under NAME` keeps only samples that have a frame named NAME and counts the frames called below it (where
 a view's body spends its time). `--match` keeps only frames whose name or library contains the text in the
 inclusive list, which is how to see Pesto's own and SwiftUI's frames without the run loop above them.
 """
@@ -27,7 +27,7 @@ def frame_name(frame, names):
     return name
 
 
-def analyse(path, match=None, under=None):
+def analyse(path, match=None, under=None, leaf=None, leaf_callers=None):
     """xctrace writes each thread, frame and backtrace once and refers to it by id afterwards, so all three are kept."""
     names, threads, stacks = {}, {}, {}
     inclusive, own = Counter(), Counter()
@@ -64,6 +64,8 @@ def analyse(path, match=None, under=None):
                 continue
         total += 1
         own[frames[0]] += 1
+        if leaf is not None and leaf in frames[0] and leaf_callers is not None:
+            leaf_callers[tuple(name[:70] for name in frames[1:9])] += 1
         for name in set(frames):
             if match is None or match in name:
                 inclusive[name] += 1
@@ -77,7 +79,14 @@ def main():
     top = int(sys.argv[sys.argv.index("--top") + 1]) if "--top" in sys.argv else 25
     match = sys.argv[sys.argv.index("--match") + 1] if "--match" in sys.argv else None
     under = sys.argv[sys.argv.index("--under") + 1] if "--under" in sys.argv else None
-    total, inclusive, own = analyse(sys.argv[1], match, under)
+    leaf = sys.argv[sys.argv.index("--leaf") + 1] if "--leaf" in sys.argv else None
+    leaf_callers = Counter()
+    total, inclusive, own = analyse(sys.argv[1], match, under, leaf, leaf_callers)
+    if leaf is not None:
+        print(f"-- callers of {leaf} (innermost first)")
+        for stack, count in leaf_callers.most_common(top):
+            print(f"{count:4d}  " + "  <-  ".join(stack))
+        return
     print(f"main-thread samples: {total}")
     print("-- inclusive")
     for name, count in inclusive.most_common(top):

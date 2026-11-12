@@ -6,6 +6,7 @@ extension GridView {
     /// What the shelf does after an arrow key moved the focus: one place, so a benchmark drives the same code a key
     /// does.
     func arrowKeyMoved(isRepeat: Bool) {
+        ActivityGate.shared.noteActivity()
         if isRepeat {
             if keyboardRevealedID != nil { keyboardRevealedID = nil }
             scrollToFocused(animated: false)

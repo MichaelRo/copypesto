@@ -75,6 +75,10 @@ extension ClipboardCard {
         guard !item.linkPreviewFetched else { return }
 
         // Fetch metadata if we don't have anything yet (first time this item is seen).
+        // The fetch ends in a save and a rebuild of the history index; it starts when the shelf is still, not
+        // mid-scroll.
+        await ActivityGate.shared.waitUntilQuiet()
+        guard !Task.isCancelled else { return }
         let fetching = PerfSignposts.shelf.begin("linkFetch")
         let fetchResult = try? await URLMetadataFetcher.shared.fetch(url: url)
         fetching.end()

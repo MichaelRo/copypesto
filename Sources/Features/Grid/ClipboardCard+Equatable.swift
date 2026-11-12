@@ -10,7 +10,7 @@ import SwiftUI
 /// SwiftUI compares views on the main thread, which is why the comparison may assume it.
 extension ClipboardCard: Equatable {
     nonisolated static func == (lhs: ClipboardCard, rhs: ClipboardCard) -> Bool {
-        return MainActor.assumeIsolated { sameInputs(lhs, rhs) }
+        MainActor.assumeIsolated { sameInputs(lhs, rhs) }
     }
 
     private static func sameInputs(_ lhs: ClipboardCard, _ rhs: ClipboardCard) -> Bool {

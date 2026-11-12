@@ -1,6 +1,6 @@
 # The website film
 
-The film on copypesto.net (light and dark, 26 s) shows the real shelf, and its cards move. Its frames are taken from this app by a UI test, so
+The film on copypesto.net (light and dark, 40 s) shows the real shelf, and its cards move. Its frames are taken from this app by a UI test, so
 a change to what the shelf looks like needs the film remade. The film's own edit (script, timing, scenes, music) is in the
 website repo's `video/teaser/`.
 
@@ -25,7 +25,7 @@ make teaser TEASER_MUSIC=~/Downloads/morning_in_the_piazza.mp4   # frames, then 
 - Quit Pesto and other apps first: the test drives real windows, and a second app behind the backdrop spoils the glass.
 - The website checkout is found at `../copypesto-website` or `~/Projects/copypesto-website`; set `PESTO_WEBSITE` for another place.
 - The music is not in either repository (`video/LICENSES.md` in the website repo says where it came from). The track's key decides
-  the shift; `make_film.sh --semitones` changes it (the default fits `morning_in_the_piazza`), and `--bar` picks where its 13 bars start.
+  the shift; `make_film.sh --semitones` changes it (the default fits `morning_in_the_piazza`), and `--bar` picks the bar the film starts on (0, the default, is the track's very start).
 - `scripts/teaser.sh` writes the app commit it took the frames from to `video/teaser/FRAMES-SOURCE` in the website repo.
 - After `make teaser`, in the website repo: `npm run build`, then `npm run poster` (the poster is remade every time the film is:
   it draws the same shelf frames), then `npx vitest run`, look at both films and both posters, then commit the changed files
@@ -33,7 +33,7 @@ make teaser TEASER_MUSIC=~/Downloads/morning_in_the_piazza.mp4   # frames, then 
 
 ## What the frame test does
 
-`TeaserFramesTests` is one story in order (`test_film_story`: the shelf, find, a secret, hide): every scene starts on the shelf
+`TeaserFramesTests` is one story in order (`test_film_story`: the shelf, find, a snippet, a secret, hide): every scene starts on the shelf
 the scene before left, because a copy or a paste moves a clip to the front (ADR 0021). The frames are named `<scene>-<nn>` and
 the film's shot list in `video/teaser/src/copy.json` (`timeline.shots`) says when each one is on screen. Beside every frame the
 test attaches `<scene>-<nn>-layout`: where each card is, in the backdrop's points, under the name the film knows the card by.

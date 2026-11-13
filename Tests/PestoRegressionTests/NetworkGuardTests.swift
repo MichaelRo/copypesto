@@ -25,7 +25,8 @@ struct NetworkGuardTests {
     /// Sample clipboard text for UI tests, not endpoints.
     private static let seedFiles: Set<String> = [
         "Sources/Core/Seeding/SeedFixtures.swift", "Sources/Core/Seeding/MarketingSeed.swift",
-        "Sources/Core/Seeding/MixedSeed.swift", "Sources/Core/Seeding/LatencySeed.swift",
+        "Sources/Core/Seeding/MixedSeed.swift", "Sources/Core/Seeding/EverydaySeed.swift",
+        "Sources/Core/Seeding/LatencySeed.swift",
         "Sources/Core/Seeding/ImportedSeed.swift",
         "Sources/Core/Seeding/LunchRushSeed.swift",
         "Sources/Features/Grid/SampleCardStrip.swift" // the sample cards on the ready screen and in Appearance

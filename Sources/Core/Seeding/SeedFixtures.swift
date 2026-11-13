@@ -58,11 +58,10 @@ public enum SeedFixtures {
         case .files: fileCaptures()
         case .showcase: showcaseCaptures()
         case .marketing, .lunchRush: storyCaptures(for: profile)
-        case .mixed: MixedSeed.captures()
+        case .mixed, .everyday, .pictures: historyCaptures(for: profile)
         case .animated: animatedCaptures()
         case .remote: remoteCaptures()
         case .latency: LatencySeed.captures()
-        case .pictures: MixedSeed.pictureCaptures()
         case .suggestion: suggestionCaptures()
         }
         return captures.enumerated().map { index, capture in
@@ -75,6 +74,15 @@ public enum SeedFixtures {
         let capture = MixedSeed.pictureCapture(at: index)
         let age = age(ofCapture: index, of: count, in: .pictures)
         return capture.with(timestamp: now.addingTimeInterval(-age))
+    }
+
+    /// The long histories: what the benches measure (`mixed`, `pictures`), and the everyday look (`everyday`).
+    private static func historyCaptures(for profile: SeedProfile) -> [PasteboardCapture] {
+        switch profile {
+        case .everyday: EverydaySeed.captures()
+        case .pictures: MixedSeed.pictureCaptures()
+        default: MixedSeed.captures()
+        }
     }
 
     private static func storyCaptures(for profile: SeedProfile) -> [PasteboardCapture] {

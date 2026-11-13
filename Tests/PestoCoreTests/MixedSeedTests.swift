@@ -25,6 +25,17 @@ struct MixedSeedTests {
         #expect(first == second)
     }
 
+    @Test("the mixed profile is MixedSeed's 1,200 clips and nothing else: the benches compare runs over time on it")
+    func whenMixedProfile_thenItIsExactlyMixedSeed() {
+        let profile = SeedFixtures.captures(for: .mixed)
+        #expect(profile.count == 1200, "changing the size of .mixed breaks every recorded bench; add a new profile")
+        #expect(MixedSeed.count == 1200)
+        #expect(
+            profile.map(\.contentHash) == MixedSeed.captures().map(\.contentHash),
+            ".mixed no longer hands out MixedSeed: add a new SeedProfile for another history"
+        )
+    }
+
     @Test("every clip is distinct")
     func clipsAreDistinct() {
         let hashes = MixedSeed.captures(count: 120).map(\.contentHash)

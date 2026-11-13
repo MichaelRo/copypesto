@@ -19,12 +19,13 @@ extension HistoryExporter {
         case unreadable
     }
 
-    private static let waitsAfterEvery = 25
+    private static let batchSize = 25
     private static let envelopeAllowance = 1_048_576
-    private static let recordOverhead = 1024
+    private static let recordOverhead = 700
 
-    /// The collection as a version 2 file: each clip with its original data, except a secret, a hidden clip, one not
-    /// yet judged and one over `CollectionFilePolicy.maxPayloadBytes`, which are left out and counted (ADR 0045).
+    /// The collection as a version 2 file: each clip with its original data, except a secret, a hidden clip, a file
+    /// clip, one not yet judged and one over `CollectionFilePolicy.maxPayloadBytes`, which are left out and counted, as
+    /// are clips past the file's `maxClips` (ADR 0045). The newest clips are kept.
     public func exportCollectionFile(id: UUID) throws -> CollectionExportFile {
         let boards = try modelContext.fetch(FetchDescriptor<Pinboard>())
         guard let board = boards.first(where: { $0.id == id }) else {
@@ -38,11 +39,16 @@ extension HistoryExporter {
         var skippedTooLarge = 0
         var skippedUnreadable = 0
         var skippedFiles = 0
+        var skippedOverLimit = 0
         var estimatedBytes = Self.envelopeAllowance
         for item in allItems where item.collectionID == id {
+            if records.count >= CollectionFilePolicy.maxClips {
+                skippedOverLimit += 1
+                continue
+            }
             switch exportOutcome(for: item) {
             case let .record(record):
-                let size = (record.payload?.utf8.count ?? 0) + record.previewText.utf8.count + Self.recordOverhead
+                let size = Self.estimatedSize(of: record)
                 guard estimatedBytes + size <= Self.maxImportBytes - Self.envelopeAllowance else {
                     skippedTooLarge += 1
                     continue
@@ -60,15 +66,13 @@ extension HistoryExporter {
                 id: board.id,
                 name: board.name,
                 symbolName: board.symbolName,
-                colorHex: board.colorHex,
-                isSmart: board.isSmart,
-                smartPredicateData: board.smartPredicateData
+                colorHex: board.colorHex
             ),
             items: records
         )
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let data = try encoder.encode(payload)
         guard data.count <= Self.maxImportBytes else { throw ImportError.fileTooLarge }
         return CollectionExportFile(
@@ -77,8 +81,22 @@ extension HistoryExporter {
             skippedSensitive: skippedSensitive,
             skippedTooLarge: skippedTooLarge,
             skippedUnreadable: skippedUnreadable,
-            skippedFiles: skippedFiles
+            skippedFiles: skippedFiles,
+            skippedOverLimit: skippedOverLimit
         )
+    }
+
+    /// What a record adds to the file, the free text included, so a near-cap export skips a clip instead of failing.
+    private static func estimatedSize(of record: HistoryRecord) -> Int {
+        let texts = [
+            record.payload,
+            record.previewText,
+            record.customTitle,
+            record.userNote,
+            record.sourceApp,
+            record.sourceBundleID
+        ] + record.tags.map(Optional.some)
+        return texts.reduce(recordOverhead) { $0 + ($1?.utf8.count ?? 0) * 2 }
     }
 
     private func exportOutcome(for item: ClipboardItem) -> ExportOutcome {
@@ -97,10 +115,7 @@ extension HistoryExporter {
             if SensitiveContentDetector.detectAnywhere(in: text) != nil { return .sensitive }
         }
         return .record(record(
-            for: item,
-            preview: isTextual ? item.displayPreviewText : "",
-            payload: data,
-            payloadType: blob.mimeType
+            for: item, preview: isTextual ? item.displayPreviewText : "", payload: data, payloadType: blob.mimeType
         ))
     }
 
@@ -130,35 +145,43 @@ extension HistoryExporter {
         )
     }
 
+    /// A record waiting for its collection and notes, which are written in a fresh context once the background analysis
+    /// has finished: this actor's cached copy of the clip would carry the flags from before it did.
+    private struct Pending {
+        let id: UUID
+        let record: HistoryRecord
+    }
+
     /// Records that carry data go through `StorageService.ingest` as a live copy would (ADR 0045): the type is read
     /// from the data, never from the file, the data is sealed under the history key, and a secret in text is masked.
-    /// Returns the ids of the clips added.
+    /// Each record's data is dropped once it is stored, and the ids added so far are in `insertedIDs` whatever happens
+    /// next, so a failure part-way still leaves an Undo that covers them.
     func importPayloadRecords(
-        _ records: [HistoryRecord],
-        collectionID: UUID,
+        _ records: inout [HistoryRecord],
         storage: StorageService,
         exclusionRules: ExclusionRules,
-        result: inout CollectionImportResult
-    ) async throws
-    -> [UUID] {
-        guard !records.isEmpty else { return [] }
-        var known = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>()).map(\.id))
-        try known.formUnion(modelContext.fetch(FetchDescriptor<DeletedItemTombstone>()).map(\.id))
+        result: inout CollectionImportResult,
+        insertedIDs: inout [UUID]
+    ) async throws {
+        guard !records.isEmpty else { return }
+        let collectionID = result.collectionID
+        // A key that cannot be had fails the import: clips are never stored under a plain hash.
         let key = try BlobEncryption().loadOrCreateKey()
-        var accepted: [HistoryRecord] = []
-        for record in records {
-            guard !known.contains(record.id) else {
-                result.alreadyPresent += 1
-                continue
-            }
+        var pending: [Pending] = []
+        var adopted: [UUID] = []
+        for index in records.indices {
+            var record = records[index]
+            records[index].payload = nil
             guard let (data, type) = Self.screened(record, exclusionRules: exclusionRules, result: &result) else {
                 continue
             }
+            record.payload = nil
             let hash = data.sha256Hex
             let forms = ContentHash.candidates(for: hash, key: key)
             let sameContent = FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
-            guard try modelContext.fetch(sameContent).isEmpty else {
+            if let existing = try modelContext.fetch(sameContent).first {
                 result.alreadyPresent += 1
+                if existing.collectionID == nil { adopted.append(existing.id) }
                 continue
             }
             let capture = PasteboardCapture(
@@ -166,30 +189,63 @@ extension HistoryExporter {
                 payload: data,
                 payloadString: CollectionFilePolicy.isText(type) ? String(data: data, encoding: .utf8) : nil,
                 frontmostBundleID: record.sourceBundleID,
-                timestamp: min(record.timestamp, .now),
                 contentHash: hash
             )
+            let newID = UUID()
             do {
                 try await storage.ingest(
-                    capture, preferredItemID: record.id, rewritesText: false, popsLookalikePicture: false
+                    capture, preferredItemID: newID, rewritesText: false, popsLookalikePicture: false
                 )
             } catch is ClipSizePolicy.TooLarge {
                 result.skippedTooLarge += 1
                 continue
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                result.skippedUnreadable += 1
+                continue
             }
-            let id = record.id
             guard try ModelContext(modelContainer).fetchCount(
-                FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
+                FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == newID })
             ) > 0 else {
                 result.alreadyPresent += 1
                 continue
             }
-            accepted.append(record)
-            if accepted.count.isMultiple(of: Self.waitsAfterEvery) { await storage.waitForBackgroundWork() }
+            insertedIDs.append(newID)
+            pending.append(Pending(id: newID, record: record))
+            if pending.count == Self.batchSize {
+                await storage.waitForBackgroundWork()
+                try flush(&pending, adopted: &adopted, collectionID: collectionID, result: &result)
+            }
         }
         await storage.waitForBackgroundWork()
-        try applyFields(of: accepted, collectionID: collectionID)
-        return accepted.map(\.id)
+        try flush(&pending, adopted: &adopted, collectionID: collectionID, result: &result)
+    }
+
+    private func flush(
+        _ pending: inout [Pending], adopted: inout [UUID], collectionID: UUID, result: inout CollectionImportResult
+    ) throws {
+        defer {
+            pending.removeAll()
+            adopted.removeAll()
+        }
+        guard !pending.isEmpty || !adopted.isEmpty else { return }
+        let context = ModelContext(modelContainer)
+        for entry in pending {
+            let id = entry.id
+            guard let item = try context.fetch(
+                FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
+            ).first else { continue }
+            apply(entry.record, to: item, collectionID: collectionID)
+        }
+        for id in adopted {
+            guard let item = try context.fetch(
+                FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
+            ).first, item.collectionID == nil else { continue }
+            item.collectionID = collectionID
+            result.addedToCollection += 1
+        }
+        try context.saveOrRollback()
     }
 
     /// The record's data and type, or nil after counting why it is left out.
@@ -213,25 +269,13 @@ extension HistoryExporter {
         return nil
     }
 
-    /// In a fresh context after the background analysis has finished: this actor's cached copies would be older.
-    private func applyFields(of records: [HistoryRecord], collectionID: UUID) throws {
-        let context = ModelContext(modelContainer)
-        for record in records {
-            let id = record.id
-            guard let item = try context.fetch(
-                FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
-            ).first else { continue }
-            apply(record, to: item, collectionID: collectionID)
-        }
-        try context.saveOrRollback()
-    }
-
     private func apply(_ record: HistoryRecord, to item: ClipboardItem, collectionID: UUID) {
         item.collectionID = collectionID
         item.customTitle = record.customTitle
         item.userNote = record.userNote
         item.tags = record.tags
         item.isPinned = record.isPinned
+        item.adoptFirstCopy(record.timestamp)
         if item.sourceAppName == nil { item.sourceAppName = record.sourceApp }
     }
 
@@ -246,6 +290,8 @@ extension HistoryExporter {
         if CollectionFilePolicy.isText(type) {
             guard let text = String(data: data, encoding: .utf8),
                   !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return .unreadable }
+        } else if CollectionFilePolicy.isPDF(type) {
+            guard CollectionFilePolicy.opensAsPDF(data) else { return .unreadable }
         } else if CollectionFilePolicy.isRaster(type) {
             guard let pixels = pixelCount(of: data) else { return .unreadable }
             guard pixels <= CollectionFilePolicy.maxPixels else { return .tooLarge }

@@ -71,11 +71,14 @@ struct CollectionFileV2Tests {
         try ModelContext(side.container).fetch(FetchDescriptor<ClipboardItem>())
     }
 
-    private func fileJSON(version: Int = 2, items: [[String: Any]]) throws -> Data {
+    private func fileJSON(
+        version: Int = 2, board overrides: [String: Any] = [:], items: [[String: Any]]
+    ) throws
+    -> Data {
         let board: [String: Any] = [
             "id": boardID.uuidString, "name": "Hand made", "symbolName": "star", "colorHex": "#3DAF60",
             "isSmart": false
-        ]
+        ].merging(overrides) { $1 }
         let object: [String: Any] = ["version": version, "collection": board, "items": items]
         return try JSONSerialization.data(withJSONObject: object)
     }
@@ -116,10 +119,10 @@ struct CollectionFileV2Tests {
         await destination.storage.waitForBackgroundWork()
 
         #expect(result.itemsImported == 2)
-        #expect(result.collectionID == boardID)
+        #expect(result.collectionName == "Mixed")
         let imported = try clips(destination)
         #expect(Set(imported.map(\.typeRaw)) == ["text", "image"])
-        #expect(imported.allSatisfy { $0.collectionID == boardID })
+        #expect(imported.allSatisfy { $0.collectionID == result.collectionID })
         let text = try #require(imported.first { $0.type == .text })
         #expect(text.blob?.decryptedText() == longText)
         let picture = try #require(imported.first { $0.type == .image })

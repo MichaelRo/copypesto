@@ -73,7 +73,7 @@ public actor HistoryExporter {
     }
 
     /// Matches the watcher's hash of a text payload, so an imported item dedupes against a live copy.
-    private static func contentHash(of text: String) -> String {
+    static func contentHash(of text: String) -> String {
         Data(text.utf8).sha256Hex
     }
 
@@ -87,6 +87,7 @@ public actor HistoryExporter {
         case fileTooLarge
         case tooManyRecords
         case unsupportedVersion
+        case notARegularFile
     }
 
     private var sealPreview: @Sendable (Data, UUID) throws -> BlobEncryption.EncryptedEnvelope = { data, id in
@@ -97,11 +98,9 @@ public actor HistoryExporter {
         sealPreview = sealer
     }
 
-    /// Reads an import file, refusing one over `maxImportBytes` before any of it is loaded.
+    /// Reads an import file: a regular file only, refused over `maxImportBytes` before any of it is loaded.
     static func boundedContents(of url: URL) throws -> Data {
-        let size = try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int ?? 0
-        guard size <= maxImportBytes else { throw ImportError.fileTooLarge }
-        return try Data(contentsOf: url)
+        try CollectionFileReader.read(url, maxBytes: maxImportBytes)
     }
 
     private static func decodeRecords(_ data: Data) throws -> [HistoryRecord] {
@@ -187,68 +186,108 @@ public actor HistoryExporter {
         undoHistory: UndoHistory? = nil
     ) async throws
     -> CollectionImportResult {
-        try await importCollection(
-            from: Self.boundedContents(of: url), storage: storage, exclusionRules: exclusionRules,
+        // The file's bytes end with this expression: only the decoded records are alive while clips are added.
+        let payload = try Self.decodeCollection(Self.boundedContents(of: url))
+        return try await importCollection(
+            payload,
+            storage: storage,
+            exclusionRules: exclusionRules,
             undoHistory: undoHistory
         )
     }
 
-    /// Adds a collection file's clips (and its collection, when none by that id or name exists). A clip with a payload
-    /// goes through `StorageService.ingest` like a live copy (ADR 0045); one without (a version 1 file) takes the
-    /// text-only path. With an `undoHistory` the import is remembered as one action that Undo takes back.
     @discardableResult
     public func importCollection(
         from data: Data, storage: StorageService, exclusionRules: ExclusionRules = ExclusionRules(),
         undoHistory: UndoHistory? = nil
     ) async throws
     -> CollectionImportResult {
+        let payload = try Self.decodeCollection(data)
+        return try await importCollection(
+            payload,
+            storage: storage,
+            exclusionRules: exclusionRules,
+            undoHistory: undoHistory
+        )
+    }
+
+    /// What the person is asked before a file is imported: the collection's name, how many clips can come in, and how
+    /// many of their oldest unpinned clips the retention limit would then remove (an upper bound: a clip already in the
+    /// history is not added). Runs on this actor, off the main thread.
+    public func importPreview(fromFile url: URL, policy: RetentionPolicy) throws -> CollectionImportPreview {
+        let summary = try CollectionFileType.summary(ofFile: url)
+        let unpinned = try modelContext
+            .fetchCount(FetchDescriptor<ClipboardItem>(predicate: #Predicate { !$0.isPinned }))
+        let over = unpinned + summary.importableUnpinnedCount - policy.maxItemCount
+        return CollectionImportPreview(
+            name: summary.name,
+            importableCount: summary.importableCount,
+            wouldRemove: max(0, min(over, unpinned)),
+            limit: policy.maxItemCount
+        )
+    }
+
+    static func decodeCollection(_ data: Data) throws -> CollectionExportPayload {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let payload = try decoder.decode(CollectionExportPayload.self, from: data)
         guard payload.version <= CollectionFilePolicy.currentVersion else { throw ImportError.unsupportedVersion }
-        guard payload.items.count <= Self.maxRecords else { throw ImportError.tooManyRecords }
+        guard payload.items.count <= CollectionFilePolicy.maxClips else { throw ImportError.tooManyRecords }
+        return payload
+    }
 
+    /// Adds a collection file's clips to the collection of the same name, or to a new one. Nothing from the file's ids
+    /// is kept: clips and the collection get new ids, and a clip the history already holds (by content) is not added
+    /// twice. A clip with a payload goes through `StorageService.ingest` like a live copy (ADR 0045); one without (a
+    /// version 1 file) takes the text-only path. With an `undoHistory` the import is one action that Undo takes back.
+    private func importCollection(
+        _ payload: CollectionExportPayload, storage: StorageService, exclusionRules: ExclusionRules,
+        undoHistory: UndoHistory?
+    ) async throws
+    -> CollectionImportResult {
+        let name = CollectionFilePolicy.sanitizedName(payload.collection.name)
+        let boardName = name.isEmpty ? CollectionFilePolicy.defaultName : name
         let existingBoards = try modelContext.fetch(FetchDescriptor<Pinboard>())
         let targetBoard: Pinboard
         var createdBoard: PinboardSnapshot?
-        if let existing = existingBoards.first(where: {
-            $0.id == payload.collection.id || $0.name == payload.collection.name
-        }) {
+        if let existing = existingBoards.first(where: { $0.name == boardName }) {
             targetBoard = existing
         } else {
-            let maxSort = (existingBoards.map(\.sortOrder).max() ?? 0) + 1
             let newBoard = Pinboard(
-                id: payload.collection.id,
-                name: payload.collection.name,
-                symbolName: payload.collection.symbolName,
-                colorHex: payload.collection.colorHex,
-                sortOrder: maxSort,
-                isSmart: payload.collection.isSmart,
-                smartPredicateData: payload.collection.smartPredicateData
+                name: boardName,
+                symbolName: CollectionFilePolicy.validSymbol(payload.collection.symbolName),
+                colorHex: CollectionFilePolicy.validColor(payload.collection.colorHex)
+                    ?? CollectionPalette.nextUnused(used: existingBoards.map(\.colorHex)),
+                sortOrder: (existingBoards.map(\.sortOrder).max() ?? 0) + 1
             )
             modelContext.insert(newBoard)
             targetBoard = newBoard
             createdBoard = PinboardSnapshot(newBoard)
         }
 
-        var result = CollectionImportResult(collectionID: targetBoard.id)
+        var result = CollectionImportResult(collectionID: targetBoard.id, collectionName: boardName)
         var insertedIDs: [UUID] = []
         func commit() throws {
-            let changedSomething = !insertedIDs.isEmpty || createdBoard != nil
+            let changedSomething = !insertedIDs.isEmpty || createdBoard != nil || result.addedToCollection > 0
             if changedSomething { try modelContext.saveOrRollback() }
-            if let undoHistory, changedSomething, insertedIDs.count <= UndoPolicy.maxClipsPerEntry {
+            if let undoHistory, !insertedIDs.isEmpty || createdBoard != nil,
+               insertedIDs.count <= UndoPolicy.maxClipsPerEntry
+            {
                 let added = AddedClips(kind: .collection, ids: insertedIDs, boards: createdBoard.map { [$0] } ?? [])
                 undoHistory.record(UndoEntry(.clipsAdded(added)))
             }
         }
+        // Oldest first, so the file's newest clip is the newest in the history.
+        var records = payload.items.sorted { $0.timestamp < $1.timestamp }
         do {
-            let withPayload = payload.items.filter { $0.payload != nil }
-            insertedIDs += try insertNew(
-                payload.items.filter { $0.payload == nil }, collectionID: targetBoard.id, result: &result
+            try insertText(
+                records.filter { $0.payload == nil }, collectionID: targetBoard.id, mintsIDs: true,
+                result: &result, insertedIDs: &insertedIDs
             )
-            insertedIDs += try await importPayloadRecords(
-                withPayload, collectionID: targetBoard.id, storage: storage, exclusionRules: exclusionRules,
-                result: &result
+            records.removeAll { $0.payload == nil }
+            try await importPayloadRecords(
+                &records, storage: storage, exclusionRules: exclusionRules,
+                result: &result, insertedIDs: &insertedIDs
             )
         } catch {
             try? commit()
@@ -266,24 +305,51 @@ public actor HistoryExporter {
         _ records: [HistoryRecord], collectionID: UUID?, result: inout CollectionImportResult
     ) throws
     -> [UUID] {
-        let existingIDs = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>()).map(\.id))
-        let tombstonedIDs = try Set(modelContext.fetch(FetchDescriptor<DeletedItemTombstone>()).map(\.id))
-        let key = try BlobEncryption().loadOrCreateKey()
         var inserted: [UUID] = []
+        try insertText(records, collectionID: collectionID, mintsIDs: false, result: &result, insertedIDs: &inserted)
+        return inserted
+    }
+
+    /// `mintsIDs` is for a collection file: the clips get new ids and are matched to the history by content. A history
+    /// file keeps its ids and is matched by id.
+    private func insertText(
+        _ records: [HistoryRecord], collectionID: UUID?, mintsIDs: Bool, result: inout CollectionImportResult,
+        insertedIDs: inout [UUID]
+    ) throws {
+        // A key that cannot be had fails the import: clips are never stored under a plain hash.
+        let key = try BlobEncryption().loadOrCreateKey()
+        let existingIDs = mintsIDs ? [] : try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>()).map(\.id))
+        let tombstonedIDs = mintsIDs ? [] :
+            try Set(modelContext.fetch(FetchDescriptor<DeletedItemTombstone>()).map(\.id))
+        var seenHashes = Set<String>()
         for record in records {
             guard Self.isTextual(record.type) else {
                 result.skippedUnreadable += 1
-                continue
-            }
-            guard !existingIDs.contains(record.id), !tombstonedIDs.contains(record.id) else {
-                result.alreadyPresent += 1
                 continue
             }
             guard record.previewText.count <= Self.maxRecordCharacters else {
                 result.skippedTooLarge += 1
                 continue
             }
-            guard let item = makeItem(from: record, key: key) else {
+            if mintsIDs {
+                let forms = ContentHash.candidates(for: Self.contentHash(of: record.previewText), key: key)
+                let sameContent =
+                    FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
+                let existing = try modelContext.fetch(sameContent).first
+                if existing != nil || !seenHashes.insert(forms[0]).inserted {
+                    result.alreadyPresent += 1
+                    if let existing, existing.collectionID == nil, let collectionID {
+                        existing.collectionID = collectionID
+                        result.addedToCollection += 1
+                    }
+                    continue
+                }
+            } else if existingIDs.contains(record.id) || tombstonedIDs.contains(record.id) {
+                result.alreadyPresent += 1
+                continue
+            }
+            let id = mintsIDs ? UUID() : record.id
+            guard let item = makeItem(from: record, id: id, key: key, atFirstCopy: mintsIDs) else {
                 result.skippedUnreadable += 1
                 continue
             }
@@ -293,27 +359,34 @@ public actor HistoryExporter {
                 item.blob = blob
                 modelContext.insert(blob)
             }
-            inserted.append(record.id)
+            insertedIDs.append(id)
         }
-        return inserted
     }
 
-    private func makeItem(from record: HistoryRecord, key: SymmetricKey?) -> ClipboardItem? {
+    /// `atFirstCopy` is a collection file's clip: it enters the history now, and the file's date is only when it was
+    /// first copied (ADR 0021). Otherwise a date after now is brought back to now.
+    private func makeItem(
+        from record: HistoryRecord,
+        id: UUID,
+        key: SymmetricKey?,
+        atFirstCopy: Bool
+    )
+    -> ClipboardItem? {
         let preview = record.previewText
         let clipType = ContentClassifier.classify(text: preview).type
         let sensitivity = SensitiveContentDetector.detect(in: preview)
         var storedPreview = sensitivity?.maskedPreview ?? preview
         var envelope: BlobEncryption.EncryptedEnvelope?
         if sensitivity == nil, ColorPreviewPolicy.sealsPreview(of: clipType, preview: preview) {
-            guard let data = preview.data(using: .utf8), let sealed = try? sealPreview(data, record.id) else {
+            guard let data = preview.data(using: .utf8), let sealed = try? sealPreview(data, id) else {
                 return nil
             }
             envelope = sealed
             storedPreview = ""
         }
         let item = ClipboardItem(
-            id: record.id,
-            timestamp: min(record.timestamp, .now),
+            id: id,
+            timestamp: atFirstCopy ? .now : min(record.timestamp, .now),
             type: clipType,
             sourceBundleID: record.sourceBundleID,
             sourceAppName: record.sourceApp,
@@ -334,6 +407,7 @@ public actor HistoryExporter {
         item.userNote = record.userNote
         item.tags = record.tags
         item.isPinned = record.isPinned
+        if atFirstCopy { item.adoptFirstCopy(record.timestamp) }
         return item
     }
 }

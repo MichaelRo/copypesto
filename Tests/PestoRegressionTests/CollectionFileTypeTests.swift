@@ -79,12 +79,12 @@ struct CollectionFileTypeTests {
                     "colorHex": "#3DAF60",
                     "isSmart": false
                 ],
-                "items": [["id": UUID().uuidString], ["id": UUID().uuidString]]
+                "items": [["type": "text"], ["type": "file", "payloadType": "public.file-url"]]
             ] as [String: Any])
         }
 
         let summary = try CollectionFileType.summary(of: file(version: 2))
-        #expect(summary == .init(name: "Recipes", clipCount: 2))
+        #expect(summary == .init(name: "Recipes", clipCount: 2, importableCount: 1, importableUnpinnedCount: 1))
         #expect(throws: HistoryExporter.ImportError.unsupportedVersion) {
             try CollectionFileType.summary(of: file(version: 9))
         }
@@ -110,6 +110,6 @@ struct CollectionFileTypeTests {
             fromFile: url, storage: StorageService(modelContainer: destination, environment: .testing())
         )
 
-        #expect(result.collectionID == boardID)
+        #expect(result.collectionName == "Shared")
     }
 }

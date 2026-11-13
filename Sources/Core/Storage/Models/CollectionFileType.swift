@@ -38,17 +38,30 @@ public enum CollectionFileType {
     public struct Summary: Equatable, Sendable {
         public let name: String
         public let clipCount: Int
+        /// Clips an import can add: not a file reference, and a kind it can read.
+        public let importableCount: Int
+        public let importableUnpinnedCount: Int
     }
 
     /// The collection's name and how many clips a file holds, for the question asked before an import. Throws for a
-    /// file that is not a collection file or is from a newer version.
+    /// file that is not a collection file, is from a newer version or holds more clips than a file may.
     public static func summary(of data: Data) throws -> Summary {
         guard data.count <= HistoryExporter.maxImportBytes else { throw HistoryExporter.ImportError.fileTooLarge }
         let outline = try JSONDecoder().decode(CollectionOutline.self, from: data)
         guard outline.version <= CollectionFilePolicy.currentVersion else {
             throw HistoryExporter.ImportError.unsupportedVersion
         }
-        return Summary(name: outline.collection.name, clipCount: outline.items.count)
+        guard outline.items.count <= CollectionFilePolicy.maxClips else {
+            throw HistoryExporter.ImportError.tooManyRecords
+        }
+        let importable = outline.items.filter(\.isImportable)
+        let name = CollectionFilePolicy.sanitizedName(outline.collection.name)
+        return Summary(
+            name: name.isEmpty ? CollectionFilePolicy.defaultName : name,
+            clipCount: outline.items.count,
+            importableCount: importable.count,
+            importableUnpinnedCount: importable.count(where: { $0.isPinned != true })
+        )
     }
 
     public static func summary(ofFile url: URL) throws -> Summary {
@@ -58,7 +71,17 @@ public enum CollectionFileType {
 
 private struct CollectionOutline: Decodable {
     struct Board: Decodable { let name: String }
-    struct Entry: Decodable {}
+    struct Entry: Decodable {
+        let type: String?
+        let payloadType: String?
+        let isPinned: Bool?
+
+        var isImportable: Bool {
+            if payloadType == CollectionFilePolicy.fileURLType { return false }
+            return payloadType != nil || HistoryExporter.isTextual(type ?? "text")
+        }
+    }
+
     let version: Int
     let collection: Board
     let items: [Entry]

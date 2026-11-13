@@ -55,7 +55,7 @@ extension AppDelegate {
         alert.messageText = CollectionTransferText.exported(file.exported)
         alert.informativeText = CollectionTransferText.skippedLines(
             tooLarge: file.skippedTooLarge, sensitive: file.skippedSensitive, unreadable: file.skippedUnreadable,
-            files: file.skippedFiles
+            files: file.skippedFiles, overLimit: file.skippedOverLimit
         )
         alert.addButton(withTitle: String(localized: "OK"))
         NSApp.activate()

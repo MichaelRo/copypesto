@@ -39,50 +39,62 @@ extension AppDelegate {
     private static let collectionImports = CollectionImportQueue()
 
     private func importCollectionFile(at url: URL, asksFirst: Bool) async {
-        guard let container = appState.historyContainer, let storage = appState.storageService else { return }
+        guard AppDefaults.store.value(for: Setting.hasOnboarded), !appState.isEncryptionKeyUnresolved else {
+            presentCollectionImportProblem(
+                String(localized: "Finish setting up Pesto first, then open the file again.")
+            )
+            return
+        }
+        guard let container = appState.historyContainer, let storage = appState.storageService else {
+            presentCollectionImportProblem(String(localized: "Pesto isn\u{2019}t ready yet. Try again in a moment."))
+            return
+        }
+        let exporter = HistoryExporter(modelContainer: container)
+        let preview: CollectionImportPreview
         do {
-            guard await ProtectedAction.permitted(reason: String(localized: "Import a collection")) else {
-                presentCollectionImportProblem(
-                    String(localized: "Pesto is locked. Unlock your history, then open the file again.")
-                )
-                return
-            }
-            let summary: CollectionFileType.Summary
-            do {
-                summary = try CollectionFileType.summary(ofFile: url)
-            } catch {
-                Self.logger.error("Collection file unreadable: \(error.localizedDescription, privacy: .public)")
-                presentCollectionImportProblem(String(localized: "That file is not a Pesto collection."))
-                return
-            }
-            if asksFirst, !confirmCollectionImport(summary) { return }
-            do {
-                let result = try await HistoryExporter(modelContainer: container).importCollection(
-                    fromFile: url, storage: storage, exclusionRules: currentExclusionRules(),
-                    undoHistory: appState.undoHistory
-                )
-                presentCollectionImportResult(result, name: summary.name)
-            } catch {
-                Self.logger.error("Collection import failed: \(error.localizedDescription, privacy: .public)")
-                presentCollectionImportProblem(String(localized: "Pesto couldn\u{2019}t import that file."))
-            }
+            preview = try await exporter.importPreview(
+                fromFile: url, policy: RetentionPolicy.fromDefaults(AppDefaults.store)
+            )
+        } catch {
+            Self.logger.error("Collection file unreadable: \(error.localizedDescription, privacy: .public)")
+            presentCollectionImportProblem(CollectionTransferText.unreadable(error))
+            return
+        }
+        // Asked before anything else: a file opened from Finder is never imported unasked, and one that would push the
+        // person's own clips out of the history is never imported without saying so.
+        if asksFirst || preview.wouldRemove > 0, !confirmCollectionImport(preview) { return }
+        guard await ProtectedAction.permitted(reason: String(localized: "Import a collection")) else {
+            presentCollectionImportProblem(
+                String(localized: "Pesto is locked. Unlock your history, then open the file again.")
+            )
+            return
+        }
+        do {
+            let result = try await exporter.importCollection(
+                fromFile: url, storage: storage, exclusionRules: currentExclusionRules(),
+                undoHistory: appState.undoHistory
+            )
+            presentCollectionImportResult(result)
+        } catch {
+            Self.logger.error("Collection import failed: \(error.localizedDescription, privacy: .public)")
+            presentCollectionImportProblem(String(localized: "Pesto couldn\u{2019}t import that file."))
         }
     }
 
-    private func confirmCollectionImport(_ summary: CollectionFileType.Summary) -> Bool {
+    private func confirmCollectionImport(_ preview: CollectionImportPreview) -> Bool {
         let alert = NSAlert()
-        alert.messageText = CollectionTransferText.importQuestion(name: summary.name)
-        alert.informativeText = CollectionTransferText.importDetail(clipCount: summary.clipCount)
+        alert.messageText = CollectionTransferText.importQuestion(name: preview.name)
+        alert.informativeText = CollectionTransferText.importDetail(preview)
         alert.addButton(withTitle: String(localized: "Import"))
         alert.addButton(withTitle: String(localized: "Cancel"))
         NSApp.activate()
         return alert.runModal() == .alertFirstButtonReturn
     }
 
-    private func presentCollectionImportResult(_ result: CollectionImportResult, name: String) {
+    private func presentCollectionImportResult(_ result: CollectionImportResult) {
         let alert = NSAlert()
         alert.messageText = CollectionTransferText.imported(result)
-        alert.informativeText = CollectionTransferText.importDetail(result, name: name)
+        alert.informativeText = CollectionTransferText.importDetail(result)
         alert.addButton(withTitle: String(localized: "OK"))
         NSApp.activate()
         alert.runModal()

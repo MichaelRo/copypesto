@@ -1545,7 +1545,7 @@
         }
       }
     },
-    "This file holds %lld clips. They are added to your history and to the collection.": {
+    "This file holds %lld clips. They are added to your history.": {
       "localizations": {
         "en": {
           "variations": {
@@ -1553,13 +1553,13 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "This file holds %lld clip. It is added to your history and to the collection."
+                  "value": "This file holds %lld clip. It is added to your history."
                 }
               },
               "other": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "This file holds %lld clips. They are added to your history and to the collection."
+                  "value": "This file holds %lld clips. They are added to your history."
                 }
               }
             }
@@ -1648,6 +1648,72 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld were files, which are not shared."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Up to %lld of your oldest clips will be removed to fit your limit.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Up to %lld of your oldest clips will be removed to fit your limit."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Up to %lld of your oldest clips will be removed to fit your limit."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld of them were put into the collection.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld of them was put into the collection."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld of them were put into the collection."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld were left out: a file holds at most 1,000 clips.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld was left out: a file holds at most 1,000 clips."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld were left out: a file holds at most 1,000 clips."
                 }
               }
             }

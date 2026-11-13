@@ -18,7 +18,7 @@ struct CollectionExporterTests {
         let board = Pinboard(
             id: collectionID,
             name: "Family Info",
-            symbolName: "house",
+            symbolName: "folder",
             colorHex: "#3DAF60",
             sortOrder: 1
         )
@@ -57,17 +57,17 @@ struct CollectionExporterTests {
         )
 
         #expect(result.itemsImported == 1)
-        #expect(result.collectionID == collectionID)
+        #expect(result.collectionName == "Family Info")
 
         let importedBoards = try destContainer.mainContext.fetch(FetchDescriptor<Pinboard>())
         #expect(importedBoards.count == 1)
         #expect(importedBoards.first?.name == "Family Info")
-        #expect(importedBoards.first?.symbolName == "house")
+        #expect(importedBoards.first?.symbolName == "folder")
 
         let importedItems = try destContainer.mainContext.fetch(FetchDescriptor<ClipboardItem>())
         #expect(importedItems.count == 1)
         #expect(importedItems.first?.customTitle == "Home Postal Code")
-        #expect(importedItems.first?.collectionID == collectionID)
+        #expect(importedItems.first?.collectionID == importedBoards.first?.id)
     }
 
     @Test("exporting a nonexistent collection throws an error")
@@ -101,7 +101,7 @@ struct CollectionExporterTests {
             from: Data(contentsOf: file),
             storage: StorageService(modelContainer: destination, environment: .testing())
         )
-        #expect(result.collectionID == collectionID)
+        #expect(result.collectionName == "Snippets")
 
         let missing = folder.appendingPathComponent("Missing.json")
         await #expect(throws: Error.self) { try await exporter.writeCollection(id: UUID(), to: missing) }

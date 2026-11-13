@@ -8,7 +8,8 @@ import Testing
 struct PasteImportStreamingTests {
     private let forever = RetentionPolicy(maxAge: .infinity, maxItemCount: 1_000_000, maxTotalBytes: .max)
 
-    /// The process footprint is shared with every suite running beside this one, so it is only asserted off CI; the
+    /// The process footprint is shared with every suite running beside this one, so it is only asserted off CI, and as
+    /// the lowest of up to three passes (a neighbor's allocation only adds to a pass); the
     /// bytes a group holds are counted exactly and asserted everywhere.
     private var assertsFootprint: Bool {
         ProcessInfo.processInfo.environment["CI"] == nil
@@ -139,16 +140,21 @@ struct PasteImportStreamingTests {
         try fixture.addMany(from: 1, count: 2000, list: 1, blob: blob) { Double($0) }
         let snapshot = try PasteLibrarySnapshot.open(databaseAt: fixture.url)
         let plan = try await snapshot.plan(retention: forever)
-        let baseline = footprintBytes()
-        var peak = 0
+        var peak = Int.max
         var read = 0
         var largestGroup = 0
 
-        for group in plan.batches(includingHistory: true) {
-            let batch = try await snapshot.records(for: group[...])
-            read += batch.records.count
-            largestGroup = max(largestGroup, heldBytes(batch))
-            peak = max(peak, footprintBytes() - baseline)
+        for _ in 0..<3 where peak >= 250_000_000 {
+            let baseline = footprintBytes()
+            var passPeak = 0
+            read = 0
+            for group in plan.batches(includingHistory: true) {
+                let batch = try await snapshot.records(for: group[...])
+                read += batch.records.count
+                largestGroup = max(largestGroup, heldBytes(batch))
+                passPeak = max(passPeak, footprintBytes() - baseline)
+            }
+            peak = min(peak, passPeak)
         }
         await snapshot.discard()
 

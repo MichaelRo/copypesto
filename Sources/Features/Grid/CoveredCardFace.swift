@@ -18,7 +18,7 @@ struct CoveredCardFace: View {
         RoundedRectangle(cornerRadius: cornerRadius)
             .fill(Color.opaqueSurface)
             .overlay { RoundedRectangle(cornerRadius: cornerRadius).adaptiveMaterialFill() }
-            .overlay(alignment: .top) { top }
+            .overlay(alignment: .bottomLeading) { foot }
             .overlay { centre }
             .overlay {
                 if let ringColor {
@@ -27,21 +27,20 @@ struct CoveredCardFace: View {
             }
     }
 
-    private var top: some View {
-        HStack {
+    /// The number and the age, at the foot where every other card keeps its line of facts (ADR 0044). Never the app:
+    /// ADR 0028 allows the cover three facts.
+    private var foot: some View {
+        HStack(spacing: 6) {
             if let number = facts.numberLabel {
-                Text(number)
-                    .font(.caption2.weight(.medium))
-                    .padding(.horizontal, 4)
-                    .overlay { RoundedRectangle(cornerRadius: 4).strokeBorder(.secondary.opacity(0.6)) }
+                Keycap(symbol: number, size: .compact)
             }
-            Spacer(minLength: 4)
             Text(facts.age)
-                .font(.caption2)
+                .font(.caption2.weight(.medium))
                 .foregroundStyle(AdaptiveContrast.quiet(contrast))
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, 10)
-        .padding(.top, 9)
+        .padding(.bottom, 6)
     }
 
     private var centre: some View {

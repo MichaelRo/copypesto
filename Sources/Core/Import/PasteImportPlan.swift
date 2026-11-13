@@ -42,6 +42,11 @@ public struct PasteImportPlan: Sendable, Equatable {
     public let history: [Entry]
     public let libraryClips: Int
     public let unusable: Int
+    /// Of `unusable`: clips whose payload is larger than one record may be, and clips whose payload Core Data moved to
+    /// a
+    /// file in Paste's external folder that is not there, not a plain file or not readable.
+    public var unusableTooLarge = 0
+    public var unusableMissingFile = 0
     public let pinboardsLeftByCap: Int
     public let historyLeftByCap: Int
     public let historyLeftByRetention: Int
@@ -128,13 +133,19 @@ public struct PasteImportPlanner: Sendable {
         public let bytes: Int?
         public let timestamp: Date
         public let pinboard: String?
+        /// Set when the payload lives in an external file that cannot be used; `bytes` is nil then.
+        public let externalFileIsUnusable: Bool
 
-        public init(snippetKey: Int64, dataKey: Int64?, bytes: Int?, timestamp: Date, pinboard: String?) {
+        public init(
+            snippetKey: Int64, dataKey: Int64?, bytes: Int?, timestamp: Date, pinboard: String?,
+            externalFileIsUnusable: Bool = false
+        ) {
             self.snippetKey = snippetKey
             self.dataKey = dataKey
             self.bytes = bytes
             self.timestamp = timestamp
             self.pinboard = pinboard
+            self.externalFileIsUnusable = externalFileIsUnusable
         }
     }
 
@@ -147,6 +158,8 @@ public struct PasteImportPlanner: Sendable {
     private var usedBytes = 0
     private var closed = false
     private var unusable = 0
+    private var tooLarge = 0
+    private var missingFile = 0
     private var pinboardsLeft = 0
     private var historyLeft = 0
 
@@ -191,6 +204,8 @@ public struct PasteImportPlanner: Sendable {
             history: kept,
             libraryClips: pinboardKeys.count + historyKeys.count,
             unusable: unusable,
+            unusableTooLarge: tooLarge,
+            unusableMissingFile: missingFile,
             pinboardsLeftByCap: pinboardsLeft,
             historyLeftByCap: historyLeft,
             historyLeftByRetention: fresh.count - kept.count,
@@ -202,6 +217,11 @@ public struct PasteImportPlanner: Sendable {
     private mutating func usable(_ row: Row, pinboard: String?) -> PasteImportPlan.Entry? {
         guard let dataKey = row.dataKey, let bytes = row.bytes, bytes > 0, bytes <= maxRecordBytes else {
             unusable += 1
+            if row.externalFileIsUnusable {
+                missingFile += 1
+            } else if (row.bytes ?? 0) > maxRecordBytes {
+                tooLarge += 1
+            }
             return nil
         }
         return .init(

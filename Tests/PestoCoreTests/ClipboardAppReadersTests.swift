@@ -68,6 +68,23 @@ struct MaccyLibraryReaderTests {
         #expect(library.records[0].representations.map(\.uti) == ["public.rtf", "public.utf8-plain-text"])
     }
 
+    @Test("a value that is only a Core Data external-file reference is left out and counted, never imported as data")
+    func externalReferenceIsNotImportedAsData() throws {
+        let reference = "02" + hex("5A438128-3203-4167-B824-9AE50648B842") + "00"
+        let fixture = try maccy("""
+        INSERT INTO ZHISTORYITEM VALUES (1, NULL, 1, 2, 1, NULL, 't');
+        INSERT INTO ZHISTORYITEMCONTENT VALUES (1, 1, 'public.png', x'\(reference)');
+        INSERT INTO ZHISTORYITEM VALUES (2, NULL, 1, 3, 1, NULL, 't');
+        INSERT INTO ZHISTORYITEMCONTENT VALUES (2, 2, 'public.png', x'\(reference)');
+        INSERT INTO ZHISTORYITEMCONTENT VALUES (3, 2, 'public.utf8-plain-text', x'\(hex("kept"))');
+        """)
+
+        let library = try MaccyLibraryReader.read(databaseAt: fixture.url)
+
+        #expect(library.records.count == 1 && library.skipped == 1)
+        #expect(library.records[0].representations.map(\.uti) == ["public.utf8-plain-text"])
+    }
+
     @Test("a pinned item lands in a collection of Maccy's pins")
     func pinnedItemsAreCollected() throws {
         let fixture = try maccy("""

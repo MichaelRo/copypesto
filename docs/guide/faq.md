@@ -44,8 +44,8 @@ brings the default back. Pesto refuses a combination macOS already uses, and say
 
 ## I use ⇧⌘V to paste as plain text. How do I do that now?
 
-Pesto uses **⇧⌘V** to open the shelf. Press it, then **⇧Return**: the shelf opens on the newest clip, and **⇧Return**
-pastes it as plain text, so the app you paste into applies its own style, as Paste and Match Style does. It works for
+Pesto uses **⇧⌘V** to open the shelf. Press it, then **⇧Return**: the shelf opens on the newest clip (unless it is showing a
+collection), and **⇧Return** pastes it as plain text, so the app you paste into applies its own style, as Paste and Match Style does. It works for
 text, code, links and colors. To paste what is on the clipboard now as plain text in one press, use **⌃⌥⌘V**. If you
 would rather have ⇧⌘V for something else, record a different shortcut for *Open the shelf* in *Settings → Shortcuts*.
 

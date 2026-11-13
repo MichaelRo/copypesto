@@ -400,6 +400,18 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 2))
     }
 
+    func test_gifCard_whenNarrowAndFocused_thenTheAgeOutlastsTheGIFLabel() throws {
+        defer { ThumbnailCache.shared.clear() }
+        try withCardWidth(160) {
+            let ctx = try makeContext()
+            let item = pictureItem(in: ctx, aspect: 1.0, animated: true, source: "Safari")
+            snapshotCard(
+                ClipboardCard(item: item, isFocused: true, shortcutNumber: 3),
+                cardSize: CardMetrics.dimensions(width: 160)
+            )
+        }
+    }
+
     func test_pictureCard_small() throws {
         defer { ThumbnailCache.shared.clear() }
         try withCardWidth(160) {

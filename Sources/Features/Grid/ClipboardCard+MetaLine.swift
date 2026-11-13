@@ -10,6 +10,12 @@ struct MetaLineStyle {
     var onPicture = false
     var showsGIF = false
     var wholeClip = false
+
+    var withoutGIFLabel: MetaLineStyle {
+        var style = self
+        style.showsGIF = false
+        return style
+    }
 }
 
 @MainActor
@@ -41,6 +47,8 @@ extension ClipboardCard {
                     metaRow(text: text, namesCollection: true, style: style)
                 }
                 metaRow(text: texts.last, namesCollection: false, style: style)
+                // A GIF says what it is by moving; the age is worth more than its label on a narrow card.
+                metaRow(text: texts.last, namesCollection: false, style: style.withoutGIFLabel)
                 metaRow(text: nil, namesCollection: false, style: style)
             }
         }

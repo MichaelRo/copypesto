@@ -23,6 +23,7 @@ make teaser TEASER_MUSIC=~/Downloads/morning_in_the_piazza.mp4   # frames, then 
 ```
 
 - Quit Pesto and other apps first: the test drives real windows, and a second app behind the backdrop spoils the glass.
+- `scripts/teaser.sh` takes a mode's frames a second time if the first attempt fails (a first launch after a build once missed the 90 s seeding wait); the first attempt's log stays as `<mode>-attempt1.log`. Two failures stop the run.
 - The website checkout is found at `../copypesto-website` or `~/Projects/copypesto-website`; set `PESTO_WEBSITE` for another place.
 - The music is not in either repository (`video/LICENSES.md` in the website repo says where it came from). The track's key decides
   the shift; `make_film.sh --semitones` changes it (the default fits `morning_in_the_piazza`), and `--bar` picks the bar the film starts on (0, the default, is the track's very start).

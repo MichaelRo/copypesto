@@ -1456,6 +1456,72 @@
           }
         }
       }
+    },
+    "%lld clips lost their picture or file in Paste's folder and are left out.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clip lost its picture or file in Paste's folder and is left out."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clips lost their picture or file in Paste's folder and are left out."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld clips are over 50 MB and are left out.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clip is over 50 MB and is left out."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clips are over 50 MB and are left out."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld clips have no content and are left out.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clip has no content and is left out."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld clips have no content and are left out."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.0"

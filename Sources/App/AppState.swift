@@ -330,6 +330,8 @@ final class AppState {
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?
     /// Exports a collection to a file the person chooses; closes the shelf first when it is open. Set by the delegate.
     @ObservationIgnored var exportCollection: (@MainActor (UUID) -> Void)?
+    /// Asks for a collection file and imports it; closes the shelf first when it is open. Set by the delegate.
+    @ObservationIgnored var importCollection: (@MainActor () -> Void)?
     @ObservationIgnored var resumeCapturing: (@MainActor () -> Void)?
     /// Opens the About window; set by the app delegate. Settings' General pane has the button for it.
     @ObservationIgnored var openAbout: (@MainActor () -> Void)?

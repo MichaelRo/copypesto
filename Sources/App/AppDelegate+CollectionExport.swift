@@ -21,14 +21,15 @@ extension AppDelegate {
             FetchDescriptor<Pinboard>(predicate: #Predicate { $0.id == id })
         ))?.first?.name ?? String(localized: "Collection")
         let panel = NSSavePanel()
-        panel.nameFieldStringValue = "\(name).json"
-        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "\(name).\(CollectionFileType.fileExtension)"
+        panel.allowedContentTypes = [CollectionFileType.utType]
         panel.canCreateDirectories = true
         NSApp.activate()
         guard panel.runModal() == .OK, let url = panel.url else { return }
         Task { @MainActor in
             do {
-                try await HistoryExporter(modelContainer: container).writeCollection(id: id, to: url)
+                let file = try await HistoryExporter(modelContainer: container).writeCollection(id: id, to: url)
+                if file.skipped > 0 { presentCollectionExportSkips(file: file) }
             } catch {
                 Self.logger.error("Collection export failed: \(error.localizedDescription, privacy: .public)")
                 presentCollectionExportFailure(name: name)
@@ -43,6 +44,20 @@ extension AppDelegate {
         alert
             .informativeText =
             String(localized: "Pesto couldn\u{2019}t write the file. Choose another folder and try again.")
+        alert.addButton(withTitle: String(localized: "OK"))
+        NSApp.activate()
+        alert.runModal()
+    }
+
+    private func presentCollectionExportSkips(file: CollectionExportFile) {
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = CollectionTransferText.exported(file.exported)
+        alert.informativeText = CollectionTransferText.skippedLines(
+            tooLarge: file.skippedTooLarge, sensitive: file.skippedSensitive, unreadable: file.skippedUnreadable,
+            files: file.skippedFiles, overLimit: file.skippedOverLimit,
+            pictures: file.skippedPictures
+        )
         alert.addButton(withTitle: String(localized: "OK"))
         NSApp.activate()
         alert.runModal()

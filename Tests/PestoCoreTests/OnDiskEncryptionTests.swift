@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import AppKit
 import CryptoKit
 import Foundation
 import SwiftData
@@ -166,5 +167,72 @@ struct OnDiskEncryptionTests {
         #expect(contains(colour, in: files), "control: a real colour is the one preview kept in the clear")
         #expect(!contains(first, in: files), "a wrapped password is on disk in plaintext")
         #expect(!contains(second, in: files), "a wrapped key is on disk in plaintext")
+    }
+
+    @MainActor
+    @Test("a picture and a long text brought in from a collection file are ciphertext on disk")
+    func store_importedCollectionPayloadsAreSealed() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-ondisk-collection-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let rep = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 40, pixelsHigh: 30, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .calibratedRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSColor(calibratedRed: 0.9, green: 0.1, blue: 0.4, alpha: 1).setFill()
+        NSBezierPath(rect: NSRect(x: 0, y: 0, width: 40, height: 30)).fill()
+        NSGraphicsContext.restoreGraphicsState()
+        let png = try #require(rep.representation(using: .png, properties: [:]))
+        let text = "imported notes \(UUID().uuidString)"
+        let file = try JSONSerialization.data(withJSONObject: [
+            "version": 2,
+            "collection": [
+                "id": UUID().uuidString,
+                "name": "Imported",
+                "symbolName": "star",
+                "colorHex": "#3DAF60",
+                "isSmart": false
+            ],
+            "items": [
+                [
+                    "id": UUID().uuidString,
+                    "timestamp": "2026-11-01T10:00:00Z",
+                    "type": "image",
+                    "previewText": "",
+                    "tags": [String](),
+                    "isPinned": false,
+                    "payloadType": "public.png",
+                    "payload": png.base64EncodedString()
+                ],
+                [
+                    "id": UUID().uuidString,
+                    "timestamp": "2026-11-01T10:00:00Z",
+                    "type": "text",
+                    "previewText": text,
+                    "tags": [String](),
+                    "isPinned": false,
+                    "payloadType": "public.utf8-plain-text",
+                    "payload": Data(text.utf8).base64EncodedString()
+                ]
+            ]
+        ] as [String: Any])
+        let container = try ModelContainer(
+            for: ClipboardItem.self, ClipboardBlob.self, DeletedItemTombstone.self, Pinboard.self,
+            configurations: ModelConfiguration(
+                "clips", url: directory.appendingPathComponent("clips.store"), cloudKitDatabase: .none
+            )
+        )
+        let service = StorageService(modelContainer: container, environment: .testing())
+
+        let result = try await HistoryExporter(modelContainer: container).importCollection(from: file, storage: service)
+        await service.waitForBackgroundWork()
+        let files = try allBytes(under: directory)
+
+        #expect(result.itemsImported == 2)
+        #expect(!files.contains { $0.data.range(of: png) != nil }, "an imported picture is on disk in plaintext")
+        #expect(!contains(text, in: files), "an imported text is on disk in plaintext")
     }
 }

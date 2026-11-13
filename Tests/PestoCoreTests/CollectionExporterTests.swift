@@ -18,7 +18,7 @@ struct CollectionExporterTests {
         let board = Pinboard(
             id: collectionID,
             name: "Family Info",
-            symbolName: "house",
+            symbolName: "folder",
             colorHex: "#3DAF60",
             sortOrder: 1
         )
@@ -52,20 +52,22 @@ struct CollectionExporterTests {
 
         let destContainer = try setupContainer()
         let importer = HistoryExporter(modelContainer: destContainer)
-        let result = try await importer.importCollection(from: exportedData)
+        let result = try await importer.importCollection(
+            from: exportedData, storage: StorageService(modelContainer: destContainer, environment: .testing())
+        )
 
         #expect(result.itemsImported == 1)
-        #expect(result.collectionID == collectionID)
+        #expect(result.collectionName == "Family Info")
 
         let importedBoards = try destContainer.mainContext.fetch(FetchDescriptor<Pinboard>())
         #expect(importedBoards.count == 1)
         #expect(importedBoards.first?.name == "Family Info")
-        #expect(importedBoards.first?.symbolName == "house")
+        #expect(importedBoards.first?.symbolName == "folder")
 
         let importedItems = try destContainer.mainContext.fetch(FetchDescriptor<ClipboardItem>())
         #expect(importedItems.count == 1)
         #expect(importedItems.first?.customTitle == "Home Postal Code")
-        #expect(importedItems.first?.collectionID == collectionID)
+        #expect(importedItems.first?.collectionID == importedBoards.first?.id)
     }
 
     @Test("exporting a nonexistent collection throws an error")
@@ -94,9 +96,12 @@ struct CollectionExporterTests {
         try await exporter.writeCollection(id: collectionID, to: file)
         let mode = try #require(FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as? Int)
         #expect(mode & 0o077 == 0, "a collection export carries titles, notes and tags: owner-only (R-08)")
-        let result = try await HistoryExporter(modelContainer: setupContainer())
-            .importCollection(from: Data(contentsOf: file))
-        #expect(result.collectionID == collectionID)
+        let destination = try setupContainer()
+        let result = try await HistoryExporter(modelContainer: destination).importCollection(
+            from: Data(contentsOf: file),
+            storage: StorageService(modelContainer: destination, environment: .testing())
+        )
+        #expect(result.collectionName == "Snippets")
 
         let missing = folder.appendingPathComponent("Missing.json")
         await #expect(throws: Error.self) { try await exporter.writeCollection(id: UUID(), to: missing) }

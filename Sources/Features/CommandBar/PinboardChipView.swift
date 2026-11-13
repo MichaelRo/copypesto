@@ -92,6 +92,7 @@ struct PinboardChipView: View {
                 Button("Edit…") { isEditing = true }
                 Button("Duplicate") { onDuplicate() }
                 Button("Export Collection\u{2026}") { onExport() }
+                Button("Import Collection\u{2026}") { appState.importCollection?() }
                 Divider()
                 Button("Move Left") { onMove?(-1) }.disabled(!canMoveLeft)
                 Button("Move Right") { onMove?(1) }.disabled(!canMoveRight)
@@ -101,6 +102,7 @@ struct PinboardChipView: View {
             .accessibilityAction(named: "Edit") { isEditing = true }
             .accessibilityAction(named: "Duplicate") { onDuplicate() }
             .accessibilityAction(named: "Export") { onExport() }
+            .accessibilityAction(named: "Import") { appState.importCollection?() }
             .accessibilityAction(named: "Delete") { onDelete() }
             .accessibilityAction(named: "Move Left") { if canMoveLeft { onMove?(-1) } }
             .accessibilityAction(named: "Move Right") { if canMoveRight { onMove?(1) } }

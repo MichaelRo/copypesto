@@ -53,6 +53,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0042](0042-link-previews-and-other-device-copies-start-on-for-a-new-install.md) | Setup turns link previews and copies from other devices on, once, for a new install; an existing Mac keeps its answer. |
 | [0043](0043-paste-import-reads-external-data.md) | A Paste import reads the payloads Core Data keeps in external files, in place and read-only, and says why a clip cannot come in |
 | [0044](0044-a-card-has-no-header-one-line-of-facts-at-its-foot.md) | A card has no header: the content starts at the top and one line of facts sits at its foot (number, source icon, age and size; the app's name on focus). Supersedes the header of 0026. |
+| [0045](0045-collection-files.md) | A collection is shared as a `.pesto` file that carries its pictures and whole texts (secrets never written); import from the shelf and by opening the file |
 
 ## Template
 

@@ -68,6 +68,43 @@
     <true/>
     <key>OSAScriptingDefinition</key>
     <string>Pesto.sdef</string>
+    <!-- A shared collection: one JSON file with the extension .pesto (ADR 0045). The identifier is AppIdentity.bundleID + ".collection" (CollectionFileTypeTests). -->
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>net.copypesto.pesto.collection</string>
+            <key>UTTypeDescription</key>
+            <string>Pesto Collection</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.json</string>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>pesto</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Pesto Collection</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>net.copypesto.pesto.collection</string>
+            </array>
+        </dict>
+    </array>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>

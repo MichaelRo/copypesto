@@ -363,6 +363,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appState.openAbout = { [weak self] in self?.openAboutWindow() }
         appState.showWelcome = { [weak self] in self?.showOnboarding() }
         appState.exportCollection = { [weak self] id in self?.requestCollectionExport(id: id) }
+        appState.importCollection = { [weak self] in self?.requestCollectionImport() }
         appState.openFloatingWindowFromOverlay = { [weak self] in
             guard let self else { return }
             self.appState.close(.afterHide { [weak self] in
@@ -434,9 +435,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_: NSApplication, open urls: [URL]) {
-        for url in urls where url.scheme == "pesto" {
-            urlSchemeHandler.handle(url)
-        }
+        urls.filter { $0.scheme == "pesto" }.forEach(urlSchemeHandler.handle)
+        urls.filter(\.isFileURL).forEach(openCollectionFile)
     }
 
     func togglePinnedWindow() {

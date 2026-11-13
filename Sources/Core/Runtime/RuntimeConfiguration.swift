@@ -104,6 +104,9 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     /// can
     /// keep Link Previews on and still measure the same shelf each run (`scripts/bench-shelf.sh`). UI-test mode only.
     public var linkPreviewStubMillis: Int?
+    /// Makes the menu bar icon read as left out of a full menu bar, which a test Mac's bar cannot be relied on to be.
+    /// UI-test mode only.
+    public var menuBarIsFull: Bool
 
     static let defaultOverridePrefix = "PESTO_UITEST_DEFAULT_"
 
@@ -125,7 +128,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         aiFixture: Bool = false,
         suggestionsLive: Bool = false,
         fakeUpdates: Bool = false,
-        linkPreviewStubMillis: Int? = nil
+        linkPreviewStubMillis: Int? = nil,
+        menuBarIsFull: Bool = false
     ) {
         self.mode = mode
         self.session = session
@@ -143,6 +147,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         self.fakeUpdates = fakeUpdates
         self.suggestionsLive = suggestionsLive
         self.linkPreviewStubMillis = linkPreviewStubMillis
+        self.menuBarIsFull = menuBarIsFull
     }
 
     public static let current = parse(
@@ -179,7 +184,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             aiFixture: environment["PESTO_UITEST_AI_FIXTURE"] == "1",
             suggestionsLive: environment["PESTO_UITEST_SUGGESTIONS_LIVE"] == "1",
             fakeUpdates: environment["PESTO_UITEST_UPDATES"] == "1",
-            linkPreviewStubMillis: environment["PESTO_UITEST_LINK_STUB_MS"].flatMap(Int.init)
+            linkPreviewStubMillis: environment["PESTO_UITEST_LINK_STUB_MS"].flatMap(Int.init),
+            menuBarIsFull: environment["PESTO_UITEST_MENUBAR_FULL"] == "1"
         )
     }
 

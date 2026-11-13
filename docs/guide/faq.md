@@ -30,6 +30,13 @@ Yes: *Settings → General → Show Pesto in the menu bar*. Then ⇧⌘V (or the
 shortcut you chose) opens the shelf, and opening Pesto again from Applications shows Settings, so you can bring the icon
 back.
 
+## Pesto's icon is not in my menu bar, though it is turned on
+
+When the menu bar is full (many menu bar apps, or a notch), macOS can leave an icon out. Pesto keeps working: ⇧⌘V (or
+the shortcut you chose) opens the shelf, which has a Settings button, and opening Pesto again from Applications shows
+Settings, where *Show Pesto in the menu bar* then says so. Quitting another menu bar app, or holding ⌘ and dragging
+icons together, makes room.
+
 ## Can I turn a shortcut off?
 
 Yes. Every shortcut in *Settings → Shortcuts* has a menu at the end of its row with *Turn Off*, and *Reset to Default*

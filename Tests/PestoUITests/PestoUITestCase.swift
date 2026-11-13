@@ -31,6 +31,11 @@ class PestoUITestCase: XCTestCase {
 
     // MARK: - Launch
 
+    private func addLaunchSwitches(to environment: inout [String: String], menuBarIsFull: Bool, linkStubMillis: Int?) {
+        if menuBarIsFull { environment["PESTO_UITEST_MENUBAR_FULL"] = "1" }
+        if let linkStubMillis { environment["PESTO_UITEST_LINK_STUB_MS"] = "\(linkStubMillis)" }
+    }
+
     func launch(
         seed: String = "basic",
         accessibility: String = "trusted",
@@ -45,6 +50,7 @@ class PestoUITestCase: XCTestCase {
         updates: Bool = false,
         recordsPerfTimeline: Bool = false,
         linkStubMillis: Int? = nil,
+        menuBarIsFull: Bool = false,
         timeout: TimeInterval = 90
     ) {
         app = XCUIApplication()
@@ -67,7 +73,7 @@ class PestoUITestCase: XCTestCase {
         }
         if let backdrop { environment["PESTO_UITEST_BACKDROP"] = backdrop }
         if realDevice { environment["PESTO_UITEST_REAL_DEVICE"] = "1" }
-        if let linkStubMillis { environment["PESTO_UITEST_LINK_STUB_MS"] = "\(linkStubMillis)" }
+        addLaunchSwitches(to: &environment, menuBarIsFull: menuBarIsFull, linkStubMillis: linkStubMillis)
         if let importFixture { environment["PESTO_UITEST_IMPORT_FIXTURE"] = importFixture }
         if keyLoss { environment["PESTO_UITEST_KEYLOSS"] = "1" }
         if aiFixture { environment["PESTO_UITEST_AI_FIXTURE"] = "1" }

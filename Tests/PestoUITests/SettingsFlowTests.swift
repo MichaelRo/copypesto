@@ -143,13 +143,23 @@ final class SettingsFlowTests: PestoUITestCase {
         showOverlay()
     }
 
-    func test_menuBarIcon_canBeHidden_andComesBack() {
+    func test_menuBarIcon_canBeHidden_andComesBack() throws {
         launch()
         send(.openSettings)
         XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
         element(AccessibilityID.settingsSidebar("General")).click()
         let statusItem = app.statusItems.firstMatch
-        XCTAssertTrue(statusItem.waitForExistence(timeout: 10), "no menu-bar icon to hide")
+        guard statusItem.waitForExistence(timeout: 10) else {
+            // A full menu bar (Spotify, podcasts, ...) leaves Pesto's icon out; Settings then says so.
+            let hint = element(AccessibilityID.settingsChoice("menuBarIcon", "crowdedHint"))
+            XCTAssertTrue(
+                hint.waitForExistence(timeout: 10),
+                "no icon in the menu bar and no word about it in Settings"
+            )
+            throw XCTSkip(
+                "This Mac's menu bar has no room for Pesto's icon, so hiding and showing it cannot be checked."
+            )
+        }
 
         let toggle = element(AccessibilityID.settingsChoice("menuBarIcon", "toggle"))
         XCTAssertEqual("\(toggle.value ?? "")", "1")
@@ -161,6 +171,21 @@ final class SettingsFlowTests: PestoUITestCase {
         toggle.click()
         expectation(for: NSPredicate(format: "exists == true"), evaluatedWith: app.statusItems.firstMatch)
         waitForExpectations(timeout: 8)
+    }
+
+    func test_menuBarIcon_whenTheBarIsFull_settingsSaysWhereToGo() {
+        launch(menuBarIsFull: true)
+        send(.openSettings)
+        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        element(AccessibilityID.settingsSidebar("General")).click()
+
+        let hint = element(AccessibilityID.settingsChoice("menuBarIcon", "crowdedHint"))
+        XCTAssertTrue(
+            hint.waitForExistence(timeout: 10),
+            "a full menu bar leaves the icon out and Settings says nothing"
+        )
+        XCTAssertTrue("\(hint.value ?? hint.label)".contains("full"), "the hint does not name the cause")
+        capture("settings-menu-bar-full", of: settingsWindow)
     }
 
     func test_dataImport_isOneMenuOfSources_notAButtonForOneApp() {

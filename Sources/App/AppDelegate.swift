@@ -374,6 +374,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appState.askFillIns = { [weak self] title, fields, initial in
             await self?.fillInPrompt.ask(title: title, fields: fields, initial: initial)
         }
+        appState.menuBarIconIsOnScreen = { [weak self] in self?.menuBarIconIsOnScreen ?? false }
         appState.openSettingsFromOverlay = { [weak self] in
             guard let self else { return }
             let shelfFrame = self.overlayWindowController?.overlayWindow.frame

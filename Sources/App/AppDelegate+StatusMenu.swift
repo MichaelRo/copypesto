@@ -219,13 +219,23 @@ extension AppDelegate: NSMenuDelegate {
     }
 
     /// The menu-bar icon can be hidden in Settings → General. Pesto is then reached with the shelf shortcut, and
-    /// opening Pesto again from Applications shows Settings (`applicationShouldHandleReopen`).
+    /// opening Pesto again from Applications shows Settings (`applicationShouldHandleReopen`), as it does when a
+    /// crowded
+    /// menu bar leaves the icon out.
     func applyStatusItemVisibility() {
         statusItem?.isVisible = AppDefaults.store.value(for: Setting.showMenuBarIcon)
     }
 
+    /// False when the icon is turned off, and also when it is on but macOS left it out of a crowded menu bar.
+    var menuBarIconIsOnScreen: Bool {
+        guard !(LaunchMode.current == .uiTest && RuntimeConfiguration.current.menuBarIsFull),
+              statusItem?.isVisible == true, let window = statusItem?.button?.window,
+              window.occlusionState.contains(.visible) else { return false }
+        return MenuBarIconPlace.isOnScreen(frame: window.frame, screens: NSScreen.screens.map(\.frame))
+    }
+
     func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows _: Bool) -> Bool {
-        if !AppDefaults.store.value(for: Setting.showMenuBarIcon) { openSettingsWindow() }
+        if !menuBarIconIsOnScreen { openSettingsWindow() }
         return true
     }
 

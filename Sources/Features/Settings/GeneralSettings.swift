@@ -21,6 +21,7 @@ struct GeneralSettings: View {
     @AppStorage(Setting.shelfSuggestionsEnabled) private var shelfSuggestionsEnabled: Bool
     @AppStorage(Setting.doubleCopyAppend) private var doubleCopyAppend: Bool
     @State private var isAXTrusted = AccessibilityAccess.isTrusted
+    @State private var iconIsLeftOut = false
     @Environment(AppState.self) private var appState: AppState
     @State private var checksForUpdates = true
     @State private var installsUpdates = false
@@ -43,10 +44,26 @@ struct GeneralSettings: View {
     }
 
     private var hiddenIconHint: String {
+        iconHint(lead: "With the icon hidden, ", startsSentence: false)
+    }
+
+    private var crowdedBarHint: String {
+        iconHint(lead: "Your menu bar is full, so macOS left Pesto's icon out. ", startsSentence: true)
+    }
+
+    private func iconHint(lead: String, startsSentence: Bool) -> String {
         let reopen = "open Pesto again from Applications to see Settings."
-        guard !openShelfShortcut.isEmpty else { return "With the icon hidden, \(reopen)" }
-        return "With the icon hidden, press \(openShelfShortcut) to open the shelf and choose Settings there, " +
-            "or \(reopen)"
+        guard !openShelfShortcut.isEmpty else { return lead + (startsSentence ? "Open" + reopen.dropFirst(4) : reopen) }
+        return lead + (startsSentence ? "Press" : "press")
+            + " \(openShelfShortcut) to open the shelf and choose Settings there, or \(reopen)"
+    }
+
+    /// A status item takes a moment to be placed, and the person may free room in the bar, so this looks again when
+    /// Settings opens and when the toggle changes.
+    private func checkWhetherTheIconIsSeen() async {
+        guard showMenuBarIcon, let isOnScreen = appState.menuBarIconIsOnScreen else { return iconIsLeftOut = false }
+        try? await Task.sleep(for: .milliseconds(600))
+        iconIsLeftOut = showMenuBarIcon && !isOnScreen()
     }
 
     private var startupSection: some View {
@@ -57,9 +74,13 @@ struct GeneralSettings: View {
                     Text("Show Pesto in the menu bar")
                     if !showMenuBarIcon {
                         Text(hiddenIconHint).pestoCaption()
+                    } else if iconIsLeftOut {
+                        Text(crowdedBarHint).pestoCaption()
+                            .accessibilityIdentifier(AccessibilityID.settingsChoice("menuBarIcon", "crowdedHint"))
                     }
                 }
             }
+            .task(id: showMenuBarIcon) { await checkWhetherTheIconIsSeen() }
             .accessibilityIdentifier(AccessibilityID.settingsChoice("menuBarIcon", "toggle"))
             .settingsRow("Menu bar icon")
             if let updates = appState.automaticUpdateChecks {

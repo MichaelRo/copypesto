@@ -28,8 +28,8 @@ struct ThemeShelfMiniature: View {
                     RoundedRectangle(cornerRadius: 5, style: .continuous)
                         .fill(dark ? Color.white.opacity(0.13) : Color.black.opacity(0.07))
                         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-                        // A card has no header (ADR 0044): its line of facts at the foot, an app's mark and a line of
-                        // text, and its clip drawn as text lines at the top.
+                        // A card has no header band: its clip drawn as text lines at the top, and at the foot the app's
+                        // mark and a line of text.
                         .overlay(alignment: .topLeading) {
                             VStack(alignment: .leading, spacing: 2.5) {
                                 Capsule().fill(Self.ink(dark, 0.55)).frame(width: 22, height: 2.5)

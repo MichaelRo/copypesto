@@ -14,6 +14,10 @@ struct ThemeShelfMiniature: View {
         accentOverride ?? Color(hex: theme.accentHex(dark: dark)) ?? .clear
     }
 
+    private static func ink(_ dark: Bool, _ opacity: Double) -> Color {
+        dark ? Color.white.opacity(opacity * 0.75) : Color.black.opacity(opacity * 0.5)
+    }
+
     var body: some View {
         let tint = theme.tint(dark: dark)
         ZStack {
@@ -23,17 +27,22 @@ struct ThemeShelfMiniature: View {
                 ForEach(0..<3, id: \.self) { index in
                     RoundedRectangle(cornerRadius: 5, style: .continuous)
                         .fill(dark ? Color.white.opacity(0.13) : Color.black.opacity(0.07))
-                        .overlay(alignment: .top) {
-                            Rectangle().fill(accent.opacity(0.22)).frame(height: 13)
-                        }
                         .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                        // A card has no header band: its clip drawn as text lines at the top, and at the foot the app's
+                        // mark and a line of text.
                         .overlay(alignment: .topLeading) {
-                            Circle().fill(accent).frame(width: 5, height: 5).padding(4)
+                            VStack(alignment: .leading, spacing: 2.5) {
+                                Capsule().fill(Self.ink(dark, 0.55)).frame(width: 22, height: 2.5)
+                                Capsule().fill(Self.ink(dark, 0.4)).frame(width: 15, height: 2.5)
+                            }
+                            .padding(5)
                         }
                         .overlay(alignment: .bottomLeading) {
-                            Capsule()
-                                .fill(dark ? Color.white.opacity(0.4) : Color.black.opacity(0.25))
-                                .frame(width: 14, height: 2.5).padding(4)
+                            HStack(spacing: 3) {
+                                Circle().fill(accent).frame(width: 5, height: 5)
+                                Capsule().fill(Self.ink(dark, 0.4)).frame(width: 12, height: 2.5)
+                            }
+                            .padding(4)
                         }
                         .overlay {
                             if index == 1 {
@@ -46,7 +55,7 @@ struct ThemeShelfMiniature: View {
                 }
             }
             .padding(.horizontal, 12)
-            .padding(.top, 16)
+            .padding(.top, 14)
             .padding(.bottom, 8)
         }
         .accessibilityHidden(true)

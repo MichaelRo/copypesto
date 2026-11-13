@@ -116,18 +116,18 @@ struct OnboardingView: View {
             Image(art)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 180, height: 120)
+                .frame(width: 228, height: 152)
                 .settleOnAppear(.hop)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 6)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 10)
                 .background(BrandBackdropView().clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous)))
                 .accessibilityHidden(true)
         } else {
             Image(systemName: symbol)
-                .font(.system(size: 44))
+                .font(.system(size: 60))
                 .foregroundStyle(accent)
-                .frame(width: 96, height: 96)
-                .background(RoundedRectangle(cornerRadius: 28).fill(Color.primary.opacity(0.07)))
+                .frame(width: 136, height: 136)
+                .background(RoundedRectangle(cornerRadius: 36).fill(Color.primary.opacity(0.07)))
                 .accessibilityHidden(true)
         }
     }
@@ -456,6 +456,11 @@ private extension OnboardingView {
                 text: accessibilityDescription
             )
             .accessibilityIdentifier(AccessibilityID.onboardingAccessibilityStep)
+            // The keys it presses for you, drawn as the first step draws the shortcut that opens the shelf.
+            ShortcutKeycaps(label: "\u{2318}V")
+                .scaleEffect(1.5)
+                .padding(.vertical, 14)
+                .accessibilityHidden(true)
             if PasteboardCaptureAccess.current().asksOrWillAsk {
                 Text(
                     "macOS will also ask whether Pesto may read what you copy. Choose Allow, or it cannot remember."

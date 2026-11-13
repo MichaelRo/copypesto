@@ -42,7 +42,7 @@ struct ShelfSurfacePreview: View {
             ForEach(0..<3, id: \.self) { index in
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
                     .fill(cardFill)
-                    .overlay(alignment: .topLeading) {
+                    .overlay(alignment: .bottomLeading) {
                         Circle().fill(accent).frame(width: 3, height: 3).padding(2)
                     }
                     .overlay {

@@ -57,6 +57,25 @@ struct ImportPreviewSheet: View {
     }
 
     @ViewBuilder
+    private func unusableCaptions(_ plan: PasteImportPlan) -> some View {
+        if plan.unusableMissingFile > 0 {
+            Text(
+                "\(plan.unusableMissingFile) clips lost their picture or file in Paste's folder and are left out."
+            )
+            .pestoCaption()
+        }
+        if plan.unusableTooLarge > 0 {
+            Text("\(plan.unusableTooLarge) clips are over 50 MB and are left out.")
+                .pestoCaption()
+        }
+        let empty = plan.unusable - plan.unusableMissingFile - plan.unusableTooLarge
+        if empty > 0 {
+            Text("\(empty) clips have no content and are left out.")
+                .pestoCaption()
+        }
+    }
+
+    @ViewBuilder
     private func limitCaptions(_ plan: PasteImportPlan) -> some View {
         if plan.historyLeftByRetention > 0, importsHistory {
             Text(
@@ -112,8 +131,15 @@ struct ImportPreviewSheet: View {
             if let plan = preview.plan, plan.alreadyInPesto > 0 {
                 Text("\(plan.alreadyInPesto) are already in Pesto and will be skipped.")
                     .pestoCaption()
+                Text(
+                    "Imported before? Pictures and files an earlier import left out come in now, "
+                        + "and clips you already have are skipped."
+                )
+                .pestoCaption()
             }
-            if preview.skipped > 0 {
+            if let plan = preview.plan {
+                unusableCaptions(plan)
+            } else if preview.skipped > 0 {
                 Text("\(preview.skipped) clips cannot be imported (pictures or empty).")
                     .pestoCaption()
             }

@@ -88,8 +88,19 @@ public enum ClipboardAppLibraryReader {
         sqlite3_column_text(statement, column).map { String(cString: $0) }
     }
 
+    /// A value that is only Core Data's reference to an external file (`PasteExternalPayload`) is nil: it is a file
+    /// name
+    /// of 38 bytes, never the clip's data, and importing it would store a broken picture. The clip is counted as left
+    /// out.
     static func blob(_ statement: OpaquePointer, _ column: Int32) -> Data? {
         guard let bytes = sqlite3_column_blob(statement, column) else { return nil }
-        return Data(bytes: bytes, count: Int(sqlite3_column_bytes(statement, column)))
+        let count = Int(sqlite3_column_bytes(statement, column))
+        if count == PasteExternalPayload.referenceLength,
+           bytes.load(as: UInt8.self) == PasteExternalPayload.externalMarker
+        {
+            let value = Data(bytes: bytes, count: count)
+            if PasteExternalPayload.fileName(in: value) != nil { return nil }
+        }
+        return Data(bytes: bytes, count: count)
     }
 }

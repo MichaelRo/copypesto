@@ -158,8 +158,9 @@ final class SearchAndCollectionsTests: PestoUITestCase {
 }
 
 final class FilterBarLayoutTests: PestoUITestCase {
-    /// The four chip groups were told apart by hairlines only, and "Any time" read as part of the type group.
-    func test_filterGroups_areCaptioned() {
+    /// The chip groups are one row told apart by dividers, and each is a named group for VoiceOver: "Any time" must
+    /// not read as part of the type group.
+    func test_filterGroups_areNamedAndHoldTheirChips() {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
@@ -168,7 +169,7 @@ final class FilterBarLayoutTests: PestoUITestCase {
         for caption in ["Kind", "When", "Other"] {
             XCTAssertTrue(
                 element(AccessibilityID.filterGroup(caption)).waitForExistence(timeout: 5),
-                "no caption \(caption)"
+                "no group named \(caption)"
             )
         }
         let when = element(AccessibilityID.filterGroup("When")).frame

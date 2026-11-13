@@ -308,32 +308,32 @@ struct CommandBarView: View {
     private var filterBar: some View {
         let entries = allFilterEntries
         let indexOf = Dictionary(entries.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+        /// One row: the groups are told apart by a thin divider, and named for VoiceOver (a sighted person reads the
+        /// chips themselves).
         func group(_ caption: LocalizedStringKey, id: String, _ group: [FilterEntry]) -> some View {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(caption)
-                    .font(.caption2)
-                    .foregroundStyle(.primary.opacity(0.7))
-                    .accessibilityHidden(true)
-                HStack(spacing: 4) {
-                    ForEach(group, id: \.id) { filterChip($0, hasCursor: appState.filterChipCursor == indexOf[$0.id]) }
-                }
+            HStack(spacing: 4) {
+                ForEach(group, id: \.id) { filterChip($0, hasCursor: appState.filterChipCursor == indexOf[$0.id]) }
             }
             .accessibilityElement(children: .contain)
             .accessibilityLabel(caption)
             .accessibilityIdentifier(AccessibilityID.filterGroup(id))
         }
         return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .bottom, spacing: 14) {
+            HStack(alignment: .center, spacing: 10) {
                 group("Kind", id: "Kind", typeEntries)
 
+                filterGroupDivider
                 group("Format", id: "Format", [formatEntry])
 
+                filterGroupDivider
                 group("When", id: "When", dayEntries + [whenMoreEntry])
 
                 if let fromEntry {
+                    filterGroupDivider
                     group("From", id: "From", [fromEntry])
                 }
 
+                filterGroupDivider
                 group("Other", id: "Other", [sensitiveEntry] + remoteEntries + hiddenEntries)
             }
             .padding(.horizontal, 4)
@@ -343,6 +343,10 @@ struct CommandBarView: View {
         .onChange(of: entries.map(\.id)) { _, _ in registerFilterChipActions() }
         .onChange(of: appState.noResultsAdvice) { _, _ in registerFilterChipActions() }
         .onAppear { registerFilterChipActions() }
+    }
+
+    private var filterGroupDivider: some View {
+        Divider().frame(height: 16).accessibilityHidden(true)
     }
 
     /// Hands the keyboard the chips as they are now, so Tab and Return can act on them (`AppState.filterChipActions`).
@@ -578,12 +582,7 @@ private func stableHue(for tag: String) -> Double {
 
 struct SearchButtonStyle: ViewModifier {
     func body(content: Content) -> some View {
-        if #available(macOS 26, *) {
-            // Neutral glass: the root tint (the user's accent) would otherwise fill these buttons.
-            content.buttonStyle(.glass).tint(nil)
-        } else {
-            content.buttonStyle(.plain)
-        }
+        content.buttonStyle(ShelfBarButtonStyle())
     }
 }
 

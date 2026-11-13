@@ -40,11 +40,23 @@ for mode in light dark; do
   echo "taking the $mode frames..."
   result="$raw/$mode.xcresult"
   if [ "$mode" = dark ]; then export TEST_RUNNER_PESTO_TEASER_MODE=dark; else unset TEST_RUNNER_PESTO_TEASER_MODE; fi
-  xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Debug -destination 'platform=macOS' \
-    -derivedDataPath .build/xcode \
-    CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
-    -only-testing:PestoUITests/TeaserFramesTests -resultBundlePath "$result" test >"$raw/$mode.log" 2>&1 \
-    || { echo "teaser.sh: the $mode frames failed, see $raw/$mode.log" >&2; exit 1; }
+  # The first launch after a build can miss the app's 90 s seeding wait (2026-11-13); the frames are one story from a
+  # clean launch, so a second attempt starts over, and a second failure is real.
+  for attempt in 1 2; do
+    rm -rf "$result"
+    if xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Debug -destination 'platform=macOS' \
+      -derivedDataPath .build/xcode \
+      CODE_SIGN_IDENTITY=- CODE_SIGNING_ALLOWED=YES CODE_SIGNING_REQUIRED=YES CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+      -only-testing:PestoUITests/TeaserFramesTests -resultBundlePath "$result" test >"$raw/$mode.log" 2>&1; then
+      break
+    fi
+    if [ "$attempt" = 2 ]; then
+      echo "teaser.sh: the $mode frames failed twice, see $raw/$mode.log" >&2
+      exit 1
+    fi
+    echo "teaser.sh: the $mode frames failed once, taking them again (log: $raw/$mode.log)" >&2
+    mv "$raw/$mode.log" "$raw/$mode-attempt1.log"
+  done
   rm -rf "$website/video/teaser/public/frames/$mode"
   python3 "$website/video/teaser/scripts/import_frames.py" "$result" "$mode"
 done

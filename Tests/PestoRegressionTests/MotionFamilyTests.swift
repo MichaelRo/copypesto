@@ -22,9 +22,12 @@ struct MotionFamilyTests {
         let literal = try NSRegularExpression(pattern: #"Motion\.animation\(\s*\.(?:"# + Self.curves + #")\b"#)
         var offenders: [String] = []
         for file in try SourceTree.everySwiftFile() {
-            let text = try String(contentsOf: file, encoding: .utf8)
-            let found = literal.numberOfMatches(in: text, range: NSRange(text.startIndex..., in: text))
-            if found > 0 { offenders.append("\(path(file)): \(found)") }
+            try autoreleasepool {
+                let text = try String(contentsOf: file, encoding: .utf8)
+                guard text.contains("Motion.animation(") else { return }
+                let found = literal.numberOfMatches(in: text, range: NSRange(text.startIndex..., in: text))
+                if found > 0 { offenders.append("\(path(file)): \(found)") }
+            }
         }
 
         #expect(offenders.isEmpty, "curves outside the motion family: \(offenders.sorted().joined(separator: "; "))")
@@ -35,9 +38,12 @@ struct MotionFamilyTests {
         let definition = try NSRegularExpression(pattern: #"\bAnimation\s*\.\s*(?:"# + Self.curves + #")\b"#)
         var offenders: [String] = []
         for file in try SourceTree.everySwiftFile() where !Self.definitionFiles.contains(path(file)) {
-            let text = try String(contentsOf: file, encoding: .utf8)
-            if definition.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil {
-                offenders.append(path(file))
+            try autoreleasepool {
+                let text = try String(contentsOf: file, encoding: .utf8)
+                guard text.contains("Animation") else { return }
+                if definition.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil {
+                    offenders.append(path(file))
+                }
             }
         }
 

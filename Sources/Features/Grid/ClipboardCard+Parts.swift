@@ -7,24 +7,8 @@ import UniformTypeIdentifiers
 
 @MainActor
 extension ClipboardCard {
-    static let neutralAppColorHex = "#888888"
-    /// The theme's own wash across every header, and how much of the source app's colour stays on top of it: the
-    /// app colour still says where a clip came from, but the shelf reads in the theme's colour, not a rainbow.
-    static let themeWashOpacity = 0.08
-    static let appWashShare = 0.32
-
-    /// The source app's colour as a soft tint under the header. A neutral icon (no real colour could be sampled)
-    /// gets a quiet grey instead of a colour it does not have.
-    var headerTint: Color {
-        if item.isRemote { return accent.opacity(colorScheme == .dark ? 0.22 : 0.20) }
-        guard let hex = item.sourceDominantColorHex, hex != Self.neutralAppColorHex, let color = Color(hex: hex) else {
-            return Color.gray.opacity(0.16)
-        }
-        return color.opacity(colorScheme == .dark ? 0.26 : 0.36)
-    }
-
     @ViewBuilder
-    var headerBadges: some View {
+    var stateBadges: some View {
         if let expiry = item.expiresAt {
             let isBurnAfterPaste = expiry == .distantPast
             Image(systemName: isBurnAfterPaste ? "flame.fill" : "clock.fill")
@@ -36,105 +20,6 @@ extension ClipboardCard {
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(accent.opacity(0.9))
         }
-    }
-
-    var headerTitle: String {
-        if let title = item.customTitle { return title }
-        if shownThumbnail?.isAnimated == true { return "GIF" }
-        if item.headerNamesTheApp, let app = item.knownSourceAppName { return app }
-        return typeMeta.label
-    }
-
-    @ViewBuilder
-    func headerTexts(over: HeaderOverlay?) -> some View {
-        if let over {
-            if let name = overlayTitle {
-                Text(name)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(over.ink.opacity(PictureScrim.nameOpacity))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .help(name)
-            }
-            Text(timeAgo)
-                .font(.caption2)
-                .foregroundStyle(over.ink.opacity(over.ageOpacity))
-                .lineLimit(1)
-        } else {
-            Text(headerTitle)
-                .font(.caption.weight(.medium))
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .help(headerTitle)
-            Text(isPointed && !item.headerNamesTheApp ? (item.knownSourceAppName ?? timeAgo) : timeAgo)
-                .font(.caption2)
-                .foregroundStyle(AdaptiveContrast.quiet(contrast))
-                .lineLimit(1)
-        }
-    }
-
-    var cardHeader: some View {
-        header(over: nil)
-    }
-
-    /// What the header of a picture or color card shows as its name: the title the person gave it, else the app it
-    /// came from, never the kind word.
-    var overlayTitle: String? {
-        if let title = item.customTitle { return title }
-        return item.isRemote ? String(localized: "Another device") : item.sourceAppName
-    }
-
-    /// The header band, or, with `over`, the header of a card whose picture or color fills it: no band wash, the app
-    /// name in place of the kind word, and `over.ink` for text (a dark scheme for white ink, so the badges follow).
-    func header(over: HeaderOverlay?) -> some View {
-        HStack(alignment: .center, spacing: 9) {
-            if let customSymbol = item.customSymbolName {
-                CollectionIcon(symbolName: customSymbol)
-                    .font(.system(size: 10, weight: .semibold))
-                    .frame(width: CardLayout.appTileSize, height: CardLayout.appTileSize)
-                    .background(headerTint, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
-            } else if item.isRemote {
-                RemoteSourceTile()
-            } else {
-                SourceAppIconView(
-                    bundleID: item.sourceBundleID,
-                    appName: item.sourceAppName,
-                    size: CardLayout.appTileSize
-                )
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                headerTexts(over: over)
-            }
-            Spacer(minLength: 2)
-            headerBadges
-            if let slot = item.pinnedHotkeyIndex {
-                Keycap(symbol: "⌃\(slot)", size: .compact).accessibilityHidden(true)
-            } else if let slot = suggestedHotkeySlot {
-                Keycap(symbol: "⌃\(slot)", size: .compact, style: .ghost)
-                    .accessibilityHidden(true)
-                    .animation(Motion.animation(.pestoPop), value: slot)
-            }
-            if item.isPinned {
-                Image(systemName: "pin.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.tint)
-                    .symbolEffect(.bounce, options: .nonRepeating, value: Motion.reduceMotion ? false : item.isPinned)
-            }
-        }
-        .padding(.horizontal, 10)
-        .frame(height: CardLayout.headerHeight)
-        .background {
-            if over == nil {
-                ZStack {
-                    accent.opacity(Self.themeWashOpacity)
-                    LinearGradient(
-                        colors: [headerTint.opacity(Self.appWashShare), .clear], startPoint: .top, endPoint: .bottom
-                    )
-                }
-            }
-        }
-        .environment(\.colorScheme, over?.scheme ?? colorScheme)
-        .animation(Motion.animation(.easeOut(duration: 0.14)), value: isPointed)
     }
 
     @ViewBuilder
@@ -316,49 +201,6 @@ extension ClipboardCard {
         }
     }
 
-    var cardFooter: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            if !item.tags.isEmpty {
-                tagChipsRow()
-            }
-            ViewThatFits(in: .horizontal) {
-                footerLine(detail: footerDetail(withLines: true))
-                footerLine(detail: footerDetail(withLines: false))
-                footerLine(detail: nil)
-            }
-        }
-    }
-
-    func footerLine(detail: String?) -> some View {
-        HStack(alignment: .center, spacing: 6) {
-            if let number = shortcutNumber {
-                shortcutKeycap(number)
-            }
-            if let detail {
-                Text(detail)
-                    .font(item.type == .color ? .system(.caption2, design: .monospaced) : .caption2)
-                    .foregroundStyle(AdaptiveContrast.quiet(contrast))
-                    .lineLimit(1)
-                    .fixedSize()
-            }
-            Spacer(minLength: 4)
-            if item.pasteCount >= 2 {
-                Text("\u{2191}\(item.pasteCount)")
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(AdaptiveContrast.quiet(contrast))
-            }
-            if let collectionID = item.collectionID,
-               let collection = availableCollections.first(where: { $0.id == collectionID })
-            {
-                collectionBadge(collection)
-                    .lineLimit(1)
-            }
-            if let cat = item.sensitivity {
-                sensitivityBadge(cat)
-            }
-        }
-    }
-
     func footerDetail(withLines: Bool) -> String? {
         switch item.type {
         case .text, .code: characterCountText(withLines: withLines)
@@ -497,13 +339,16 @@ extension ClipboardCard {
         }
     }
 
-    func collectionBadge(_ collection: CollectionRef) -> some View {
+    func collectionBadge(_ collection: CollectionRef, showsName: Bool = true) -> some View {
         HStack(spacing: 3) {
             CollectionIcon(symbolName: collection.symbolName)
                 .font(.caption2.weight(.medium))
-            Text(collection.name)
-                .font(.caption2.weight(.medium))
-                .lineLimit(1)
+            if showsName {
+                Text(collection.name)
+                    .font(.caption2.weight(.medium))
+                    .lineLimit(1)
+                    .fixedSize()
+            }
         }
         .foregroundStyle(AdaptiveContrast.quiet(contrast))
         .padding(.horizontal, 5)

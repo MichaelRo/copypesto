@@ -7,6 +7,12 @@ public enum CardTreatment: Equatable, Sendable {
     case largeText(points: Double)
     case hostFirstLink(LinkDisplay)
 
+    /// A short text set large is all of the clip, so its card has no size to state.
+    public var showsWholeClip: Bool {
+        if case .largeText = self { return true }
+        return false
+    }
+
     public static let shortTextLimit = 48
     public static let lineHeightFactor = 1.25
     public static let headlineLimit = 24

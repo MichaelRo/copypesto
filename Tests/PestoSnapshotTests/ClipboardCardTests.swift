@@ -192,7 +192,7 @@ final class ClipboardCardTests: XCTestCase {
 
     private static let longText = (1...12).map { "Line \($0) of a long note that keeps going" }.joined(separator: "\n")
 
-    private func withCardWidth(_ width: Int, _ body: () throws -> Void) rethrows {
+    func withCardWidth(_ width: Int, _ body: () throws -> Void) rethrows {
         let previous = AppDefaults.store.value(for: Setting.cardWidth)
         AppDefaults.store.set(width, for: Setting.cardWidth)
         defer { AppDefaults.store.set(previous, for: Setting.cardWidth) }
@@ -478,11 +478,10 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }
 
-    func test_pictureCard_pasteCountPillOverABrightPicture() throws {
+    func test_pictureCard_whenOverABrightPicture_thenTheFactsSitOnThePillGround() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()
         let item = pictureItem(in: ctx, aspect: 1.0)
-        item.pasteCount = 4
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }
 

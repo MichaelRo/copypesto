@@ -377,9 +377,9 @@ struct ClipboardCard: View {
                 }
             }
             .offset(y: isLifted ? -6 : 0)
-            .animation(Motion.animation(.spring(response: 0.22, dampingFraction: 0.72)), value: isLifted)
-            .animation(Motion.animation(.easeOut(duration: 0.12)), value: isFocused)
-            .animation(Motion.animation(.spring(response: 0.18, dampingFraction: 0.75)), value: isSelected)
+            .animation(Motion.animation(.pestoMove), value: isLifted)
+            .animation(Motion.animation(.pestoQuick), value: isFocused)
+            .animation(Motion.animation(.pestoQuick), value: isSelected)
             .animation(Motion.animation(.pestoPop), value: isSuggested)
     }
 
@@ -513,8 +513,6 @@ struct ClipboardCard: View {
 
     private func classicCard(_ treatment: CardTreatment) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            cardHeader
-
             if hasFullWidthBody {
                 cardContent(treatment)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -525,11 +523,11 @@ struct ClipboardCard: View {
                 cardContent(treatment)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .padding(.horizontal, 10)
-                    .padding(.top, CardLayout.bodyTopPadding)
+                    .padding(.top, CardLayout.contentTopInset)
                 Spacer(minLength: 4)
             }
 
-            cardFooter
+            metaLine(MetaLineStyle(wholeClip: treatment.showsWholeClip))
                 .padding(.horizontal, 10)
                 .padding(.bottom, 6)
         }

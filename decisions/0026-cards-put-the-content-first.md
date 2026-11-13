@@ -1,6 +1,6 @@
 # 0026. Cards put the content first: a picture, a color, short text and a link's host are the loudest thing on their card
 
-Status: Accepted; the sizes of short text and of a link's host are superseded by 0031, and the range for fitting a picture by 0041
+Status: Accepted; the sizes of short text and of a link's host are superseded by 0031, the range for fitting a picture by 0041, and the header (the band, and the header over a picture or a color on its scrim) by 0044
 
 Relates to `docs/design/card-typography.md` (the header stays the quiet band for every card that keeps one). Nothing about storage, encryption, sync or the network changes.
 

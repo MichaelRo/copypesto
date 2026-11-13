@@ -7,6 +7,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-13
+### Changed
+- A clip card has no header any more: the clip starts at the top of the card, and one line at the foot shows its ⌘ number, the app it came from (icon and name) and how long ago. The size joins that line on the card you are looking at. Text cards show more lines. ([ADR 0044](decisions/0044-a-card-has-no-header-one-line-of-facts-at-its-foot.md))
+- The shelf's buttons are chip-shaped, the search filters sit in one row, a hidden or covered card shows its number and age at the foot, and the search field grows out of its button.
+- Every animation in Pesto now uses the same four motions, so the shelf, the search bar, toasts and settings move alike.
+- The setup steps and the theme pictures in Settings fill their space.
+- Switching collections quickly and holding the collection shortcuts are smoother, and the first open after a launch is faster.
+
+### Fixed
+- A GIF on a page named for it (a Tenor or GIPHY link) plays on its card, and a picture copied from a browser that sends the animation as WebP is kept as a GIF.
+- After Show, a hidden clip's menu says Hide.
+- Importing from Paste reads the pictures and files it keeps outside its database.
+- An app with no bundle identifier no longer opens a random collection.
+- New installs start with better defaults, and token-like names are no longer taken for API keys.
+
 ## [1.6.0] - 2026-11-08
 ### Changed
 - Popovers for animated GIFs preserve their full bounds and aspect ratio without letterbox clipping.

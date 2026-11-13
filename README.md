@@ -100,7 +100,7 @@ The full list of what is stored and sent, including what encryption does *not* p
   protects your history, no list of Macs to manage, *Reset Sync* if one is lost, and secrets staying on the Mac that
   copied them unless you choose. Deleting a clip on one Mac deletes it on all, so it is not a backup. Pesto has no
   server that receives the files.
-- **Collections**, shared as `.pesto` files that carry pictures and files (never secrets), imported from the shelf or by opening the file; paste as plain text, and drag a clip into any app or onto the Desktop. A click picks a clip and a
+- **Collections**, shared as `.pesto` files that carry pictures (never secrets or file paths), imported from the shelf or by opening the file; paste as plain text, and drag a clip into any app or onto the Desktop. A click picks a clip and a
   double click pastes it.
 - **Paste As and Copy As.** 37 transforms (case, lines, Base64, escaping, hashes and more), and two that appear only when a clip
   fits: *JSON* (a JSON document indented, or spreadsheet rows as a JSON list) and *Markdown* (formatted text, links,

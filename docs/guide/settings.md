@@ -101,7 +101,7 @@ Keys that work in every app, and the keys that work on the shelf.
 ## Collections
 ![The Collections pane: the list of collections, with a button to create one.](../images/settings-collections.png)
 
-Create, edit, reorder (drag) and delete collections, and build smart collections from rules. *Import…* reads a `.pesto` collection file (or a `.json` one from an earlier version); a collection's *Export Collection…* writes one, with pictures and file paths but never a secret (see [Using Pesto](using-pesto.md)). Pesto also suggests smart
+Create, edit, reorder (drag) and delete collections, and build smart collections from rules. *Import…* reads a `.pesto` collection file (or a `.json` one from an earlier version); a collection's *Export Collection…* writes one, with pictures but never a secret or a file clip (see [Using Pesto](using-pesto.md)). Pesto also suggests smart
 collections, which fill themselves and never move a clip out of the collection it is in: **From your clips** (Links,
 Code, Pictures, Colors and Files when you have enough of them, the apps most of your clips come from, and other
 devices), each with how many clips match; **Topics**, groups of clips about the same thing, found on this Mac; and

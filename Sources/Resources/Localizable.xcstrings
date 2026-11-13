@@ -1632,6 +1632,28 @@
           }
         }
       }
+    },
+    "%lld were files, which are not shared.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld was a file, which is not shared."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld were files, which are not shared."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -10,6 +10,7 @@ extension HistoryExporter {
         case sensitive
         case tooLarge
         case unreadable
+        case fileReference
     }
 
     private enum PayloadVerdict {
@@ -36,6 +37,7 @@ extension HistoryExporter {
         var skippedSensitive = 0
         var skippedTooLarge = 0
         var skippedUnreadable = 0
+        var skippedFiles = 0
         var estimatedBytes = Self.envelopeAllowance
         for item in allItems where item.collectionID == id {
             switch exportOutcome(for: item) {
@@ -50,6 +52,7 @@ extension HistoryExporter {
             case .sensitive: skippedSensitive += 1
             case .tooLarge: skippedTooLarge += 1
             case .unreadable: skippedUnreadable += 1
+            case .fileReference: skippedFiles += 1
             }
         }
         let payload = CollectionExportPayload(
@@ -73,12 +76,14 @@ extension HistoryExporter {
             exported: records.count,
             skippedSensitive: skippedSensitive,
             skippedTooLarge: skippedTooLarge,
-            skippedUnreadable: skippedUnreadable
+            skippedUnreadable: skippedUnreadable,
+            skippedFiles: skippedFiles
         )
     }
 
     private func exportOutcome(for item: ClipboardItem) -> ExportOutcome {
         if item.sensitivityRaw != nil || item.analysisPending { return .sensitive }
+        if item.type == .file { return .fileReference }
         if item.byteSize > CollectionFilePolicy.maxPayloadBytes { return .tooLarge }
         let isTextual = Self.isTextual(item.typeRaw)
         guard let blob = item.blob, let data = blob.decryptedData(),
@@ -139,7 +144,7 @@ extension HistoryExporter {
         guard !records.isEmpty else { return [] }
         var known = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>()).map(\.id))
         try known.formUnion(modelContext.fetch(FetchDescriptor<DeletedItemTombstone>()).map(\.id))
-        let key = try? BlobEncryption().loadOrCreateKey()
+        let key = try BlobEncryption().loadOrCreateKey()
         var accepted: [HistoryRecord] = []
         for record in records {
             guard !known.contains(record.id) else {
@@ -159,10 +164,9 @@ extension HistoryExporter {
             let capture = PasteboardCapture(
                 typeIdentifier: type,
                 payload: data,
-                payloadString: CollectionFilePolicy.isText(type) || type == "public.file-url"
-                    ? String(data: data, encoding: .utf8) : nil,
+                payloadString: CollectionFilePolicy.isText(type) ? String(data: data, encoding: .utf8) : nil,
                 frontmostBundleID: record.sourceBundleID,
-                timestamp: record.timestamp,
+                timestamp: min(record.timestamp, .now),
                 contentHash: hash
             )
             do {
@@ -193,6 +197,10 @@ extension HistoryExporter {
         _ record: HistoryRecord, exclusionRules: ExclusionRules, result: inout CollectionImportResult
     )
     -> (Data, String)? {
+        if record.payloadType == CollectionFilePolicy.fileURLType {
+            result.skippedFiles += 1
+            return nil
+        }
         if let bundleID = record.sourceBundleID, exclusionRules.isExcluded(bundleID) {
             result.skippedSensitive += 1
             return nil
@@ -238,10 +246,6 @@ extension HistoryExporter {
         if CollectionFilePolicy.isText(type) {
             guard let text = String(data: data, encoding: .utf8),
                   !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return .unreadable }
-        } else if type == "public.file-url" {
-            guard let text = String(data: data, encoding: .utf8), URL(string: text)?.isFileURL == true else {
-                return .unreadable
-            }
         } else if CollectionFilePolicy.isRaster(type) {
             guard let pixels = pixelCount(of: data) else { return .unreadable }
             guard pixels <= CollectionFilePolicy.maxPixels else { return .tooLarge }

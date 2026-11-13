@@ -22,7 +22,7 @@ extension AppDelegate {
         panel.canChooseDirectories = false
         NSApp.activate()
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        importCollectionFile(at: url, asksFirst: false)
+        Self.collectionImports.enqueue { await self.importCollectionFile(at: url, asksFirst: false) }
     }
 
     /// A `.pesto` file handed to the app by Finder, AirDrop or a double click. Nothing is imported until the person
@@ -31,13 +31,16 @@ extension AppDelegate {
         switch CollectionFileType.openVerdict(for: url) {
         case .notACollectionFile: return
         case .tooLarge: presentCollectionImportProblem(String(localized: "That file is too large to be a collection."))
-        case .accept: importCollectionFile(at: url, asksFirst: true)
+        case .accept: Self.collectionImports.enqueue { await self.importCollectionFile(at: url, asksFirst: true) }
         }
     }
 
-    private func importCollectionFile(at url: URL, asksFirst: Bool) {
+    /// Files opened together are imported one after another, so no two questions or results are on screen at once.
+    private static let collectionImports = CollectionImportQueue()
+
+    private func importCollectionFile(at url: URL, asksFirst: Bool) async {
         guard let container = appState.historyContainer, let storage = appState.storageService else { return }
-        Task { @MainActor in
+        do {
             guard await ProtectedAction.permitted(reason: String(localized: "Import a collection")) else {
                 presentCollectionImportProblem(
                     String(localized: "Pesto is locked. Unlock your history, then open the file again.")
@@ -93,5 +96,23 @@ extension AppDelegate {
         alert.addButton(withTitle: String(localized: "OK"))
         NSApp.activate()
         alert.runModal()
+    }
+}
+
+@MainActor
+final class CollectionImportQueue {
+    private var pending: [() async -> Void] = []
+    private var isRunning = false
+
+    func enqueue(_ job: @escaping () async -> Void) {
+        pending.append(job)
+        guard !isRunning else { return }
+        isRunning = true
+        Task { @MainActor in
+            while !pending.isEmpty {
+                await pending.removeFirst()()
+            }
+            isRunning = false
+        }
     }
 }

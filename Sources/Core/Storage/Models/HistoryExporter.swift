@@ -268,7 +268,7 @@ public actor HistoryExporter {
     -> [UUID] {
         let existingIDs = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>()).map(\.id))
         let tombstonedIDs = try Set(modelContext.fetch(FetchDescriptor<DeletedItemTombstone>()).map(\.id))
-        let key = try? BlobEncryption().loadOrCreateKey()
+        let key = try BlobEncryption().loadOrCreateKey()
         var inserted: [UUID] = []
         for record in records {
             guard Self.isTextual(record.type) else {
@@ -313,7 +313,7 @@ public actor HistoryExporter {
         }
         let item = ClipboardItem(
             id: record.id,
-            timestamp: record.timestamp,
+            timestamp: min(record.timestamp, .now),
             type: clipType,
             sourceBundleID: record.sourceBundleID,
             sourceAppName: record.sourceApp,

@@ -95,8 +95,8 @@ struct CollectionFileV2Tests {
 
     // MARK: Round trip
 
-    @Test("a text, a picture and a file come back with their bytes, a long text whole")
-    func whenExported_thenTextPictureAndFileRoundTrip() async throws {
+    @Test("a text and a picture come back with their bytes, a long text whole, and a file clip is left out")
+    func whenExported_thenTextAndPictureRoundTripAndFileIsLeftOut() async throws {
         let png = try pngData()
         let longText = String(repeating: "A long paragraph that the old preview cut at 500 characters. ", count: 40)
         let fileURL = "file:///Users/someone/Documents/report.pdf"
@@ -107,25 +107,24 @@ struct CollectionFileV2Tests {
         ])
 
         let file = try await source.exporter.exportCollectionFile(id: boardID)
-        #expect(file.exported == 3)
-        #expect(file.skipped == 0)
+        #expect(file.exported == 2)
+        #expect(file.skippedFiles == 1)
+        #expect(!(String(bytes: file.data, encoding: .utf8) ?? "").contains(Data(fileURL.utf8).base64EncodedString()))
 
         let destination = try side()
         let result = try await destination.exporter.importCollection(from: file.data, storage: destination.storage)
         await destination.storage.waitForBackgroundWork()
 
-        #expect(result.itemsImported == 3)
+        #expect(result.itemsImported == 2)
         #expect(result.collectionID == boardID)
         let imported = try clips(destination)
-        #expect(Set(imported.map(\.typeRaw)) == ["text", "image", "file"])
+        #expect(Set(imported.map(\.typeRaw)) == ["text", "image"])
         #expect(imported.allSatisfy { $0.collectionID == boardID })
         let text = try #require(imported.first { $0.type == .text })
         #expect(text.blob?.decryptedText() == longText)
         let picture = try #require(imported.first { $0.type == .image })
         #expect(picture.blob?.decryptedData() == png)
         #expect(picture.blob?.mimeType == "public.png")
-        let reference = try #require(imported.first { $0.type == .file })
-        #expect(reference.blob?.decryptedText() == fileURL)
     }
 
     @Test("title, note, tags and pin travel with a picture")
@@ -309,7 +308,8 @@ struct CollectionFileV2Tests {
         let result = try await destination.exporter.importCollection(from: data, storage: destination.storage)
 
         #expect(result.itemsImported == 1)
-        #expect(result.skippedUnreadable == 6)
+        #expect(result.skippedUnreadable == 5)
+        #expect(result.skippedFiles == 1)
         #expect(try clips(destination).count == 1)
     }
 
@@ -322,6 +322,36 @@ struct CollectionFileV2Tests {
         try await destination.exporter.importCollection(from: data, storage: destination.storage)
 
         #expect(try clips(destination).first?.type == .text)
+    }
+
+    @Test("a file reference in a received file is skipped and counted, never made into a clip")
+    func whenAFileReferenceArrives_thenNoFileClipIsMade() async throws {
+        let path = Data("file:///Users/someone/Documents/report.pdf".utf8).base64EncodedString()
+        let data = try fileJSON(items: [item(type: "file", payloadType: "public.file-url", payload: path)])
+        let destination = try side()
+
+        let result = try await destination.exporter.importCollection(from: data, storage: destination.storage)
+
+        #expect(result.itemsImported == 0)
+        #expect(result.skippedFiles == 1)
+        #expect(try clips(destination).isEmpty)
+    }
+
+    @Test("a date in the future in a file is brought back to now, so the clip does not stay at the front")
+    func whenTheDateIsInTheFuture_thenItIsClamped() async throws {
+        let words = Data("from the future".utf8).base64EncodedString()
+        var future = item(type: "text", payloadType: "public.utf8-plain-text", payload: words)
+        future["timestamp"] = "2999-01-01T00:00:00Z"
+        var v1 = item(type: "text", payloadType: nil, payload: nil, preview: "old style, also future")
+        v1["timestamp"] = "2999-01-01T00:00:00Z"
+        let data = try fileJSON(items: [future, v1])
+        let destination = try side()
+
+        let result = try await destination.exporter.importCollection(from: data, storage: destination.storage)
+
+        #expect(result.itemsImported == 2)
+        let newest = try #require(clips(destination).map(\.timestamp).max())
+        #expect(newest <= .now)
     }
 
     // MARK: Undo

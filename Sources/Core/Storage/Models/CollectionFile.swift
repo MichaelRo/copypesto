@@ -8,10 +8,13 @@ public enum CollectionFilePolicy {
     public static let maxPixels = 50_000_000
 
     private static let payloadTypes: Set<String> = [
-        "public.utf8-plain-text", "public.url", "public.file-url", "public.png", "public.tiff", "public.jpeg",
+        "public.utf8-plain-text", "public.url", "public.png", "public.tiff", "public.jpeg",
         "public.heic", "org.webmproject.webp", "public.webp", "com.compuserve.gif", "public.gif", "com.adobe.pdf",
         "public.svg-image"
     ]
+    /// A file clip is a path, which names folders on this Mac and points at nothing on another: never written, never
+    /// made.
+    static let fileURLType = "public.file-url"
     private static let vectorTypes: Set<String> = ["com.adobe.pdf", "public.svg-image"]
 
     static func isAllowedPayloadType(_ identifier: String) -> Bool {
@@ -19,7 +22,7 @@ public enum CollectionFilePolicy {
     }
 
     static func isRaster(_ identifier: String) -> Bool {
-        isAllowedPayloadType(identifier) && !isText(identifier) && identifier != "public.file-url"
+        isAllowedPayloadType(identifier) && !isText(identifier) && identifier != fileURLType
             && !vectorTypes.contains(identifier)
     }
 
@@ -40,9 +43,10 @@ public struct CollectionExportFile: Sendable {
     public let skippedSensitive: Int
     public let skippedTooLarge: Int
     public let skippedUnreadable: Int
+    public let skippedFiles: Int
 
     public var skipped: Int {
-        skippedSensitive + skippedTooLarge + skippedUnreadable
+        skippedSensitive + skippedTooLarge + skippedUnreadable + skippedFiles
     }
 }
 
@@ -54,8 +58,9 @@ public struct CollectionImportResult: Sendable, Equatable {
     public internal(set) var skippedTooLarge = 0
     public internal(set) var skippedSensitive = 0
     public internal(set) var skippedUnreadable = 0
+    public internal(set) var skippedFiles = 0
 
     public var skipped: Int {
-        skippedTooLarge + skippedSensitive + skippedUnreadable
+        skippedTooLarge + skippedSensitive + skippedUnreadable + skippedFiles
     }
 }

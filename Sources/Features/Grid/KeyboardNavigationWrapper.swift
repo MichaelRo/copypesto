@@ -19,6 +19,8 @@ struct KeyboardNavigationWrapper<Content: View>: View {
     var onArrowKey: ((Bool) -> Void)?
     var onPrevPinboard: (() -> Void)?
     var onNextPinboard: (() -> Void)?
+    var onPrevAppChip: (() -> Void)?
+    var onNextAppChip: (() -> Void)?
     var onDelete: (() -> Void)?
     var onSelectAll: (() -> Void)?
     var onReturnFromSearch: (() -> Void)?
@@ -126,6 +128,8 @@ struct KeyboardNavigationWrapper<Content: View>: View {
         coordinator.onEscapeFromSearch = onEscapeFromSearch
         coordinator.onPrevPinboard = onPrevPinboard
         coordinator.onNextPinboard = onNextPinboard
+        coordinator.onPrevAppChip = onPrevAppChip
+        coordinator.onNextAppChip = onNextAppChip
         coordinator.onDelete = onDelete
         coordinator.onSelectAll = onSelectAll
         coordinator.onReturnFromSearch = onReturnFromSearch

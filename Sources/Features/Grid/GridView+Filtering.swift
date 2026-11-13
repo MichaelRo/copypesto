@@ -8,6 +8,16 @@ extension GridView {
         var ids: [UUID] = []
     }
 
+    /// ⌥⌘[ and ⌥⌘]: moves the app filter along the chips the bar shows (`AppChipCycle`).
+    func cycleAppChip(forward: Bool) {
+        let chips = appState.appChipLists[isPinnedHost ? .pinnedWindow : .shelf]
+        let next = AppChipCycle.next(current: appState.appChipFilter, chips: chips.map(\.bundleID), forward: forward)
+        guard next != appState.appChipFilter else { return }
+        appState.appChipFilter = next
+        let name = chips.first { next.contains($0.bundleID) }?.name
+        Announcer.announce(name.map { String(localized: "Showing clips from \($0)") } ?? String(localized: "All apps"))
+    }
+
     /// Runs the filter and returns the result. Called from `onChange(of: filterKey)`, so the work is decoupled from
     /// body,
     /// which fires on every hover and focus event. The typed text, the scope and the chips are decided on the history

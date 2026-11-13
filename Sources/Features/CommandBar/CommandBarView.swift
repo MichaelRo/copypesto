@@ -11,7 +11,9 @@ struct CommandBarView: View {
     @Environment(\.pestoAccent) private var accent
     @Environment(AppState.self) var appState: AppState
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Pinboard.sortOrder) private var pinboards: [Pinboard]
+    /// The window this bar is in; each publishes its own app chips (`AppState.appChipLists`).
+    var host: GridHost = .shelf
+    @Query(sort: \Pinboard.sortOrder) var pinboards: [Pinboard]
     @FocusState private var searchFocused: Bool
     /// Whether the recent searches are showing. Set from what changes it (focus, the text, the history), not read
     /// from a binding that only runs when something else happens to redraw the bar. It used to work only because
@@ -24,11 +26,12 @@ struct CommandBarView: View {
     @State var suggestionsModel = CommandBarSuggestionsModel()
     /// Bumped by a chip's keyboard action to open that chip's menu.
     @State var openRequests: [String: Int] = [:]
-    @State private var chipLiveOrder: [UUID]?
-    @State private var chipInsertionBar: CollectionReorder.InsertionBar?
-    @State private var chipFrozenFrames: [UUID: CGRect]?
-    @State private var chipFrames: [UUID: CGRect] = [:]
+    @State var chipLiveOrder: [UUID]?
+    @State var chipInsertionBar: CollectionReorder.InsertionBar?
+    @State var chipFrozenFrames: [UUID: CGRect]?
+    @State var chipFrames: [UUID: CGRect] = [:]
     @State private var isAllDropTarget = false
+    @State var chipsContentWidth: CGFloat?
 
     /// The tag currently selected via `@tag` search syntax, if any.
     var selectedTag: String? {
@@ -66,6 +69,7 @@ struct CommandBarView: View {
             }
         }
         .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
+        .onChange(of: appChips, initial: true) { appState.appChipLists[host] = appChips }
         .onAppear { suggestionsModel.start(appState) }
         .onDisappear { suggestionsModel.stop() }
         .onChange(of: appState.isOverlayVisible) { _, visible in if visible { suggestionsModel.refresh() } }
@@ -89,17 +93,7 @@ struct CommandBarView: View {
         }
     }
 
-    private var chipsRow: some View {
-        HStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                scrollableChips
-            }
-            .accessibilityLabel("Collections")
-            rightToolbar
-        }
-    }
-
-    private var scrollableChips: some View {
+    var scrollableChips: some View {
         let creating = appState.isCreatingCollection
         return HStack(spacing: 8) {
             CollectionChip(
@@ -111,6 +105,7 @@ struct CommandBarView: View {
             ) {
                 appState.selectedCollectionID = nil
             }
+            .id(Self.allChipID)
             .overlay { if isAllDropTarget, appState.isDragging { Capsule().strokeBorder(
                 Color.primary.opacity(0.5),
                 lineWidth: 1.5
@@ -172,6 +167,7 @@ struct CommandBarView: View {
                     }
                     appState.selectedCollectionID = new.id
                 }
+                .id(Self.creatorID)
                 .transition(.scale(scale: 0.85).combined(with: .opacity))
             }
 
@@ -183,11 +179,6 @@ struct CommandBarView: View {
                     tagChip(tag)
                 }
             }
-
-            AppChipsRow(
-                recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost,
-                collapsesLabels: !shownPinboards.isEmpty
-            )
         }
         .animation(Motion.animation(.pestoMove), value: creating)
         .animation(Motion.animation(.pestoPop), value: pinboards.map(\.id))
@@ -202,20 +193,13 @@ struct CommandBarView: View {
         }
         .coordinateSpace(name: ChipFramesKey.space)
         .onPreferenceChange(ChipFramesKey.self) { chipFrames = $0 }
-        .onDrop(
-            of: [UTType.text, UTType.data],
-            delegate: ChipRowDropDelegate(
-                appState: appState, baseOrder: pinboards.map(\.id), frames: chipFrames,
-                frozenFrames: $chipFrozenFrames, liveOrder: $chipLiveOrder, insertionBar: $chipInsertionBar,
-                onCommit: { persistPinboardOrder($0, moved: appState.draggingPinboardID) }
-            )
-        )
+        .background { chipRowDropLayer }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Collections and filters")
         .frame(minHeight: 26)
     }
 
-    private var rightToolbar: some View {
+    var rightToolbar: some View {
         HStack(spacing: 4) {
             Button {
                 appState.isSearchActive = true
@@ -538,11 +522,11 @@ struct CommandBarView: View {
     }
 
     /// Collection chips stay in place while one is dragged; `chipInsertionBar` marks where it will land.
-    private var shownPinboards: [Pinboard] {
+    var shownPinboards: [Pinboard] {
         pinboards
     }
 
-    private func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
+    func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
         let ids = pinboards.map(\.id)
         guard order != ids else { return }
         let reordered = order.compactMap { id in pinboards.first { $0.id == id } }

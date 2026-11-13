@@ -24,6 +24,8 @@ private final class HandlerLog {
         coordinator.onReturnPlainFromSearch = { self.fired.append("onReturnPlainFromSearch") }
         coordinator.onPrevPinboard = { self.fired.append("onPrevPinboard") }
         coordinator.onNextPinboard = { self.fired.append("onNextPinboard") }
+        coordinator.onPrevAppChip = { self.fired.append("onPrevAppChip") }
+        coordinator.onNextAppChip = { self.fired.append("onNextAppChip") }
         coordinator.onOpenSettings = { self.fired.append("onOpenSettings") }
         coordinator.onNewCollection = { self.fired.append("onNewCollection") }
         coordinator.onPasteAllSelected = { self.fired.append("onPasteAllSelected") }
@@ -78,6 +80,7 @@ struct ShelfKeyReferenceBindingTests {
         "⌘ Y Quick Look the focused clip": ["onQuickLook"],
         "⌘ S Save the focused picture to Downloads": ["onSaveImage"],
         "⌘ [ ] Switch collections": ["onPrevPinboard", "onNextPinboard"],
+        "⌥ ⌘ [ ] Switch app filter": ["onPrevAppChip", "onNextAppChip"],
         "⌘ N Add a collection": ["onNewCollection"],
         "⌘ P Paste the selected clips all at once": ["onPasteAllSelected"],
         "⇧ ⌘ P Paste the selected clips one by one": ["onPasteSelectedOneByOne"],
@@ -210,6 +213,48 @@ struct ShelfKeyReferenceBindingTests {
             let event = try press(code, for: entry, in: rig.window)
             _ = rig.coordinator.handle(event)
             #expect(rig.log.fired == [expected], "key code \(code) ran \(rig.log.fired)")
+        }
+    }
+
+    @Test("⌥⌘[ and ⌥⌘] as macOS delivers them (⌥ changes the typed character, not the one ignoring modifiers)")
+    func optionCommandBrackets_switchTheAppFilterNotTheCollection() throws {
+        let rig = armed()
+        struct Key {
+            let code: UInt16
+            let typed: String
+            let base: String
+            let expected: String
+        }
+        let keys = [
+            Key(code: 33, typed: "\u{201C}", base: "[", expected: "onPrevAppChip"),
+            Key(code: 30, typed: "\u{2018}", base: "]", expected: "onNextAppChip")
+        ]
+        for key in keys {
+            rig.log.fired = []
+            let event = try #require(NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [.command, .option], timestamp: 0,
+                windowNumber: rig.window.windowNumber, context: nil, characters: key.typed,
+                charactersIgnoringModifiers: key.base, isARepeat: false, keyCode: key.code
+            ))
+            #expect(rig.coordinator.handle(event) == nil)
+            #expect(rig.log.fired == [key.expected], "\(key.base) ran \(rig.log.fired)")
+        }
+    }
+
+    @Test("⌘[ and ⌘] without ⌥ still switch collections")
+    func commandBrackets_stillSwitchCollections() throws {
+        let rig = armed()
+        let keys: [UInt16: (String, String)] = [33: ("[", "onPrevPinboard"), 30: ("]", "onNextPinboard")]
+        for (code, key) in keys {
+            let (base, expected) = key
+            rig.log.fired = []
+            let event = try #require(NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [.command], timestamp: 0,
+                windowNumber: rig.window.windowNumber, context: nil, characters: base,
+                charactersIgnoringModifiers: base, isARepeat: false, keyCode: code
+            ))
+            #expect(rig.coordinator.handle(event) == nil)
+            #expect(rig.log.fired == [expected])
         }
     }
 }

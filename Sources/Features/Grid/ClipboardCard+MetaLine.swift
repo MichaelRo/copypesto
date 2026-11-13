@@ -25,7 +25,8 @@ extension ClipboardCard {
     }
 
     /// The one line of facts at the foot of every card (ADR 0044): the shortcut number, where the clip came from, its
-    /// age and size, then what the person did to it (expiry, snippet, shortcut, pin, collection).
+    /// age (and its size on the card being looked at), then what the person did to it (expiry, snippet, shortcut, pin,
+    /// collection).
     func metaLine(_ style: MetaLineStyle) -> some View {
         var facts = metaFacts
         facts.showsWholeClip = style.wholeClip

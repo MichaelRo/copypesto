@@ -31,10 +31,10 @@ struct CardLayoutTests {
         }
     }
 
-    @Test("the content starts at the side margin's distance from the top, and the app icon is 16 points")
+    @Test("the content starts at the side margin's distance from the top, and the app icon is 18 points")
     func whenNoHeader_thenContentStartsAtTheTop() {
         #expect(CardLayout.contentTopInset == 10)
-        #expect(CardLayout.sourceTileSize == 16)
+        #expect(CardLayout.sourceTileSize == 18)
     }
 
     @Test("a paragraph gap costs a third of a line at the medium size, and the block holds the line limit exactly")

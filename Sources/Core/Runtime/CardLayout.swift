@@ -3,9 +3,10 @@ import CoreGraphics
 
 /// The vertical budget of a text card: header band, the gap under it, the footer, and what is left for text.
 public enum CardLayout {
-    /// The source app's icon in the line of facts at the foot of the card: 16 points is a size every app icon is
-    /// drawn for, so it stays sharp, and it is the height of the keycap beside it.
-    public static let sourceTileSize: CGFloat = 16
+    /// The source app's icon in the line of facts at the foot of the card. 18 points: the height of the keycap beside
+    /// it, so the line keeps one height; 16 read as a dot next to the text and 20 outweighed the keycap (both drawn on
+    /// the real shelf, 2026-11-13). Every app icon carries a 32 pt drawing, so 18 is a sharp reduction.
+    public static let sourceTileSize: CGFloat = 18
     /// The content starts this far under the card's top edge, the same as its side margins. No header band sits
     /// above it (ADR 0044).
     public static let contentTopInset: CGFloat = 10

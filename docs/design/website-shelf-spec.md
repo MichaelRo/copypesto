@@ -32,13 +32,13 @@ pull request** (`CardSpecDriftTests` fails when the numbers in the first table s
 | Part | App | Website |
 |---|---|---|
 | Space above the content | 10 pt | 0.625rem |
-| Source tile | 16 pt | 1rem |
+| Source tile | 18 pt | 1.125rem |
 | Gap between paragraphs | 6 pt | 0.375rem |
 | Footer reserve | 36 pt | 2.25rem |
 
 **No header band since ADR 0044 (2026-11-12):** the content starts 10 pt under the card's top edge and one line of
-facts sits at the foot (shortcut number, a 16 pt source tile, the age and the size; the app's name joins on focus or
-hover; then expiry, snippet, shortcut, pin, paste count and collection). On a picture every part of that line sits on
+facts sits at the foot (shortcut number, an 18 pt source tile, the app's name and the age; the size joins on focus or
+hover; then expiry, snippet, shortcut, pin and collection). On a picture every part of that line sits on
 the pill ground and there is no scrim; on a color it is the fill's own ink. The sections below that still describe a
 header, a tile in it, a wash or a scrim are out of date until the site's shelf is redrawn from the app's new pictures.
 

@@ -2,9 +2,9 @@
 import Foundation
 
 /// The one line of facts at the foot of a card, which took the place of the header band (ADR 0044): what the line may
-/// say, from the fullest wording to the shortest, so the view shows the first that fits. At rest it is the age and the
-/// size of the clip; the app's name joins when the card is focused or pointed at; a title the person gave always
-/// leads.
+/// say, from the fullest wording to the shortest, so the view shows the first that fits. At rest it is the app's name
+/// and the age; the clip's size joins on the card that is focused or pointed at; a title the person gave takes the
+/// app's place and is the last thing given up.
 public enum CardMetaLine {
     public struct Facts: Equatable, Sendable {
         public var title: String?
@@ -36,8 +36,8 @@ public enum CardMetaLine {
     public static let separator = " \u{00B7} "
 
     public static func candidates(_ facts: Facts) -> [String] {
-        let lead = facts.title ?? (facts.isActive ? facts.source : nil)
-        let measures = facts.showsWholeClip ? [] : facts.measure
+        let lead = facts.title ?? facts.source
+        let measures = facts.isActive && !facts.showsWholeClip ? facts.measure : []
         var lines = measures.map { join([lead, facts.age, $0]) }
         lines.append(join([lead, facts.age]))
         lines.append(facts.title ?? facts.age)

@@ -10,14 +10,16 @@ import XCTest
 /// (see `ClipboardCardTests`).
 @MainActor
 final class BackupSettingsSnapshotTests: XCTestCase {
-    private let savedAt = Calendar.current.date(from: DateComponents(
-        year: 2026,
-        month: 11,
-        day: 4,
-        hour: 14,
-        minute: 5
-    ))
-        ?? .distantPast
+    /// Dates are drawn in the locale and zone the baselines were recorded in, so they hold on any Mac and in any
+    /// season.
+    private static var baselineCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(identifier: "en_US")
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        return calendar
+    }
+
+    private let savedAt = Date(timeIntervalSince1970: 1_793_801_100)
 
     private func snapshot(
         _ view: some View, size: CGSize, file: StaticString = #filePath, testName: String = #function,
@@ -29,6 +31,8 @@ final class BackupSettingsSnapshotTests: XCTestCase {
             .frame(width: size.width, height: size.height)
             .background(Color(white: 0.16))
             .environment(\.colorScheme, .dark)
+            .environment(\.locale, Locale(identifier: "en_US"))
+            .environment(\.calendar, Self.baselineCalendar)
         let controller = NSHostingController(rootView: root.inBrandAccent())
         controller.view.appearance = NSAppearance(named: .darkAqua)
         withSnapshotTesting(record: .missing) {

@@ -11,6 +11,15 @@ import XCTest
 final class JWTDecodePopoverTests: XCTestCase {
     private let now = Date(timeIntervalSince1970: 1_800_000_000)
 
+    /// Dates are drawn in the locale and zone the baselines were recorded in, so they hold on any Mac and in any
+    /// season.
+    private static var baselineCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(identifier: "en_US")
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        return calendar
+    }
+
     private func decoding(alg: String = "HS256") -> JWTDecoding {
         JWTDecoding(
             headerJSON: "{\n  \"alg\" : \"\(alg)\",\n  \"typ\" : \"JWT\"\n}",
@@ -30,6 +39,8 @@ final class JWTDecodePopoverTests: XCTestCase {
             .padding(20)
             .background(scheme == .light ? Color(red: 0.92, green: 0.85, blue: 0.71) : Color(white: 0.13))
             .environment(\.colorScheme, scheme)
+            .environment(\.locale, Locale(identifier: "en_US"))
+            .environment(\.calendar, Self.baselineCalendar)
         let controller = NSHostingController(rootView: root.inBrandAccent())
         controller.view.appearance = NSAppearance(named: scheme == .light ? .aqua : .darkAqua)
         withSnapshotTesting(record: .missing) {

@@ -22,6 +22,8 @@ struct JWTDecodePopover: View {
     var onCopyPayload: (String) -> Void = { _ in }
 
     @Environment(\.pestoAccent) private var accent
+    @Environment(\.calendar) private var calendar
+    @Environment(\.locale) private var locale
     @FocusState private var copyFocused: Bool
 
     var body: some View {
@@ -45,13 +47,14 @@ struct JWTDecodePopover: View {
                 Text("Decoded JWT")
                     .font(.headline)
                 Spacer()
-                Self.validityText(decoding.validity(at: now), now: now).map { text in
-                    Text(text)
-                        .font(.caption.weight(.semibold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(.quaternary, in: Capsule())
-                }
+                Self.validityText(decoding.validity(at: now), now: now, calendar: calendar, locale: locale)
+                    .map { text in
+                        Text(text)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(.quaternary, in: Capsule())
+                    }
             }
             section("Header", json: decoding.headerJSON)
             section("Payload", json: decoding.payloadJSON)
@@ -109,7 +112,7 @@ struct JWTDecodePopover: View {
                 ForEach(facts, id: \.0) { label, date in
                     GridRow {
                         Text(label).pestoQuiet()
-                        Text(date.formatted(date: .abbreviated, time: .shortened))
+                        Text(Self.dateText(date, calendar: calendar, locale: locale))
                     }
                     .font(.callout)
                 }
@@ -117,14 +120,28 @@ struct JWTDecodePopover: View {
         }
     }
 
-    static func validityText(_ validity: JWTDecoding.Validity, now: Date) -> String? {
+    /// In the environment's calendar and locale, so a snapshot draws the same on any Mac; on a person's Mac those are
+    /// their own.
+    static func dateText(_ date: Date, calendar: Calendar, locale: Locale) -> String {
+        date.formatted(Date.FormatStyle(
+            date: .abbreviated, time: .shortened, locale: locale, calendar: calendar, timeZone: calendar.timeZone
+        ))
+    }
+
+    static func validityText(
+        _ validity: JWTDecoding.Validity,
+        now: Date,
+        calendar: Calendar = .autoupdatingCurrent,
+        locale: Locale = .autoupdatingCurrent
+    )
+    -> String? {
         let relative = RelativeDateTimeFormatter()
         relative.unitsStyle = .full
         switch validity {
         case let .expired(date):
             return String(localized: "Expired \(relative.localizedString(for: date, relativeTo: now))")
         case let .notYetValid(date):
-            return String(localized: "Not valid until \(date.formatted(date: .abbreviated, time: .shortened))")
+            return String(localized: "Not valid until \(dateText(date, calendar: calendar, locale: locale))")
         case let .validUntil(date):
             let formatter = DateComponentsFormatter()
             formatter.unitsStyle = .full

@@ -157,7 +157,11 @@ public actor HistoryExporter {
         public let collection: CollectionMetadata
         public let items: [HistoryRecord]
 
-        public init(version: Int = CollectionFilePolicy.currentVersion, collection: CollectionMetadata, items: [HistoryRecord]) {
+        public init(
+            version: Int = CollectionFilePolicy.currentVersion,
+            collection: CollectionMetadata,
+            items: [HistoryRecord]
+        ) {
             self.version = version
             self.collection = collection
             self.items = items

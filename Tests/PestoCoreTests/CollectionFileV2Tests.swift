@@ -27,7 +27,8 @@ struct CollectionFileV2Tests {
 
     private func capture(
         _ type: String, _ payload: Data, text: String? = nil, concealed: Bool = false
-    ) -> PasteboardCapture {
+    )
+    -> PasteboardCapture {
         PasteboardCapture(
             typeIdentifier: type, payload: payload, payloadString: text,
             contentHash: payload.sha256Hex, isConcealed: concealed
@@ -81,7 +82,8 @@ struct CollectionFileV2Tests {
 
     private func item(
         type: String = "image", payloadType: String?, payload: String?, preview: String = ""
-    ) -> [String: Any] {
+    )
+    -> [String: Any] {
         var record: [String: Any] = [
             "id": UUID().uuidString, "timestamp": "2026-11-01T10:00:00Z", "type": type, "previewText": preview,
             "tags": [String](), "isPinned": false, "somethingNew": "ignored"
@@ -260,7 +262,7 @@ struct CollectionFileV2Tests {
         #expect(masks.count == 2)
 
         let file = try await source.exporter.exportCollectionFile(id: boardID)
-        let text = String(decoding: file.data, as: UTF8.self)
+        let text = try #require(String(bytes: file.data, encoding: .utf8))
 
         #expect(file.exported == 1)
         #expect(file.skippedSensitive == 2)

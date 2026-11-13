@@ -112,6 +112,8 @@ Hide during screen sharing is off until you turn it on (*Settings → Privacy*).
 ## Exports
 *Settings → Data → Import and export → Text history → Export…* writes a plain, **unencrypted** JSON file of your text, code, link and color clips: the first 500 characters of each, the app it came from, the time, and any title, note, tags and pin you added. Clips containing secrets are masked in it. Pictures and files are left out (a picture's text and a file's path would otherwise be in it), but keep the file as private as you would the text it holds.
 
+*Export Collection…* writes a `.pesto` file (JSON, **unencrypted**) with the whole text of each clip, its pictures and the paths of its files, up to 4 MB a clip. A clip with a secret, a hidden copy from a password manager and a clip over the limit are left out, never masked into the file, and the alert after saving says how many. The file is for whoever you give it to, so share it as you would the clips themselves. Opening a `.pesto` file asks before importing, and asks for Touch ID or your password first when the History Lock is on.
+
 ## The Privacy pane
 *Settings → Privacy* opens with what stays on this Mac, shows how many copies Pesto has refused (excluded apps, concealed sources and other devices; counts only, never what was copied) and lets you turn link previews off. **Clear Everything** is in *Settings → Data → Start over*: it removes every clip, pinned ones too, and your collections and snippets, after authenticating.
 

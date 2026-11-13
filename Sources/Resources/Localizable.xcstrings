@@ -1522,6 +1522,116 @@
           }
         }
       }
+    },
+    "Exported %lld clips": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Exported %lld clip"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Exported %lld clips"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "This file holds %lld clips. They are added to your history and to the collection.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This file holds %lld clip. It is added to your history and to the collection."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This file holds %lld clips. They are added to your history and to the collection."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld were too large and were left out.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld was too large and was left out."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld were too large and were left out."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld were left out: a secret or a private app.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld was left out: a secret or a private app."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld were left out: a secret or a private app."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld could not be read and were left out.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld could not be read and was left out."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld could not be read and were left out."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.0"

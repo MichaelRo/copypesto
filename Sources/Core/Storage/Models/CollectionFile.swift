@@ -58,8 +58,4 @@ public struct CollectionImportResult: Sendable, Equatable {
     public var skipped: Int {
         skippedTooLarge + skippedSensitive + skippedUnreadable
     }
-
-    init(collectionID: UUID) {
-        self.collectionID = collectionID
-    }
 }

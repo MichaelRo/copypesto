@@ -65,7 +65,7 @@ struct CollectionListView: View {
             showingEditor = true
         }
         .onChange(of: importRequest) {
-            importCollection()
+            appState.importCollection?()
         }
         .sheet(isPresented: $showingEditor) {
             CollectionEditor(existing: editing) { name, symbol, color, triggerBundleID, isSmart, predicateData in
@@ -261,21 +261,5 @@ struct CollectionListView: View {
         NSWorkspace.shared.runningApplications
             .first { $0.bundleIdentifier == bundleID }?
             .localizedName
-    }
-
-    private func importCollection() {
-        guard let container = appState.historyContainer else { return }
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.json]
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-        let undoHistory = appState.undoHistory
-        Task {
-            await appState.attempt("Couldn\u{2019}t import the collection") {
-                _ = try await HistoryExporter(modelContainer: container)
-                    .importCollection(fromFile: url, undoHistory: undoHistory)
-            }
-        }
     }
 }

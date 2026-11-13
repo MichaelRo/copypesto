@@ -187,18 +187,36 @@ struct OnDiskEncryptionTests {
         NSGraphicsContext.restoreGraphicsState()
         let png = try #require(rep.representation(using: .png, properties: [:]))
         let text = "imported notes \(UUID().uuidString)"
-        let boardID = UUID()
         let file = try JSONSerialization.data(withJSONObject: [
             "version": 2,
-            "collection": ["id": boardID.uuidString, "name": "Imported", "symbolName": "star", "colorHex": "#3DAF60",
-                           "isSmart": false],
+            "collection": [
+                "id": UUID().uuidString,
+                "name": "Imported",
+                "symbolName": "star",
+                "colorHex": "#3DAF60",
+                "isSmart": false
+            ],
             "items": [
-                ["id": UUID().uuidString, "timestamp": "2026-11-01T10:00:00Z", "type": "image", "previewText": "",
-                 "tags": [String](), "isPinned": false, "payloadType": "public.png",
-                 "payload": png.base64EncodedString()],
-                ["id": UUID().uuidString, "timestamp": "2026-11-01T10:00:00Z", "type": "text", "previewText": text,
-                 "tags": [String](), "isPinned": false, "payloadType": "public.utf8-plain-text",
-                 "payload": Data(text.utf8).base64EncodedString()]
+                [
+                    "id": UUID().uuidString,
+                    "timestamp": "2026-11-01T10:00:00Z",
+                    "type": "image",
+                    "previewText": "",
+                    "tags": [String](),
+                    "isPinned": false,
+                    "payloadType": "public.png",
+                    "payload": png.base64EncodedString()
+                ],
+                [
+                    "id": UUID().uuidString,
+                    "timestamp": "2026-11-01T10:00:00Z",
+                    "type": "text",
+                    "previewText": text,
+                    "tags": [String](),
+                    "isPinned": false,
+                    "payloadType": "public.utf8-plain-text",
+                    "payload": Data(text.utf8).base64EncodedString()
+                ]
             ]
         ] as [String: Any])
         let container = try ModelContainer(

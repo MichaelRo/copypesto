@@ -224,6 +224,9 @@ struct CommandBarView: View {
                     .pestoQuiet()
             }
             .modifier(SearchButtonStyle())
+            .contextMenu {
+                Button("Import Collection\u{2026}") { appState.importCollection?() }
+            }
             .help("New collection")
             .accessibilityLabel("New collection")
             .accessibilityIdentifier(AccessibilityID.newCollectionButton)

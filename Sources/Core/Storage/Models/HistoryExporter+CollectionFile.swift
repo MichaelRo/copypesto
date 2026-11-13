@@ -82,7 +82,8 @@ extension HistoryExporter {
         if item.byteSize > CollectionFilePolicy.maxPayloadBytes { return .tooLarge }
         let isTextual = Self.isTextual(item.typeRaw)
         guard let blob = item.blob, let data = blob.decryptedData(),
-              CollectionFilePolicy.isAllowedPayloadType(blob.mimeType) else {
+              CollectionFilePolicy.isAllowedPayloadType(blob.mimeType) else
+        {
             return previewOnlyOutcome(for: item, isTextual: isTextual)
         }
         guard data.count <= CollectionFilePolicy.maxPayloadBytes else { return .tooLarge }
@@ -90,8 +91,12 @@ extension HistoryExporter {
             guard let text = String(data: data, encoding: .utf8) else { return .unreadable }
             if SensitiveContentDetector.detectAnywhere(in: text) != nil { return .sensitive }
         }
-        return .record(record(for: item, preview: isTextual ? item.displayPreviewText : "", payload: data,
-                              payloadType: blob.mimeType))
+        return .record(record(
+            for: item,
+            preview: isTextual ? item.displayPreviewText : "",
+            payload: data,
+            payloadType: blob.mimeType
+        ))
     }
 
     /// A text clip whose data cannot be read still has its preview, as in a version 1 file; any other kind has nothing
@@ -132,27 +137,16 @@ extension HistoryExporter {
     ) async throws
     -> [UUID] {
         guard !records.isEmpty else { return [] }
-        let existingIDs = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>()).map(\.id))
-        let tombstonedIDs = try Set(modelContext.fetch(FetchDescriptor<DeletedItemTombstone>()).map(\.id))
+        var known = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>()).map(\.id))
+        try known.formUnion(modelContext.fetch(FetchDescriptor<DeletedItemTombstone>()).map(\.id))
         let key = try? BlobEncryption().loadOrCreateKey()
         var accepted: [HistoryRecord] = []
         for record in records {
-            guard !existingIDs.contains(record.id), !tombstonedIDs.contains(record.id) else {
+            guard !known.contains(record.id) else {
                 result.alreadyPresent += 1
                 continue
             }
-            if let bundleID = record.sourceBundleID, exclusionRules.isExcluded(bundleID) {
-                result.skippedSensitive += 1
-                continue
-            }
-            let (data, type): (Data, String)
-            switch Self.verdict(for: record) {
-            case let .accepted(accepted, acceptedType): (data, type) = (accepted, acceptedType)
-            case .tooLarge:
-                result.skippedTooLarge += 1
-                continue
-            case .unreadable:
-                result.skippedUnreadable += 1
+            guard let (data, type) = Self.screened(record, exclusionRules: exclusionRules, result: &result) else {
                 continue
             }
             let hash = data.sha256Hex
@@ -190,9 +184,31 @@ extension HistoryExporter {
             if accepted.count.isMultiple(of: Self.waitsAfterEvery) { await storage.waitForBackgroundWork() }
         }
         await storage.waitForBackgroundWork()
-        // A fresh context after the background analysis has finished: this actor's cached copies would be older.
+        try applyFields(of: accepted, collectionID: collectionID)
+        return accepted.map(\.id)
+    }
+
+    /// The record's data and type, or nil after counting why it is left out.
+    private static func screened(
+        _ record: HistoryRecord, exclusionRules: ExclusionRules, result: inout CollectionImportResult
+    )
+    -> (Data, String)? {
+        if let bundleID = record.sourceBundleID, exclusionRules.isExcluded(bundleID) {
+            result.skippedSensitive += 1
+            return nil
+        }
+        switch verdict(for: record) {
+        case let .accepted(data, type): return (data, type)
+        case .tooLarge: result.skippedTooLarge += 1
+        case .unreadable: result.skippedUnreadable += 1
+        }
+        return nil
+    }
+
+    /// In a fresh context after the background analysis has finished: this actor's cached copies would be older.
+    private func applyFields(of records: [HistoryRecord], collectionID: UUID) throws {
         let context = ModelContext(modelContainer)
-        for record in accepted {
+        for record in records {
             let id = record.id
             guard let item = try context.fetch(
                 FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
@@ -200,7 +216,6 @@ extension HistoryExporter {
             apply(record, to: item, collectionID: collectionID)
         }
         try context.saveOrRollback()
-        return accepted.map(\.id)
     }
 
     private func apply(_ record: HistoryRecord, to item: ClipboardItem, collectionID: UUID) {

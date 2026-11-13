@@ -8,7 +8,7 @@ a preview, the app it came from, and when.
 
 A text clip that is exactly one emoji or symbol (🍝, a flag, →, ©, ✓, €) is drawn large and centered on its card; two glyphs, a letter or a digit stay ordinary text.
 
-A text clip shows its paragraphs, with a slim dotted gap for a blank line. When the whole clip is shown, the footer adds its size, such as "64 characters · 8 lines". A card shows 4, 5 or 6 lines at the Small, Medium and Large sizes.
+A text clip shows its paragraphs, with a slim dotted gap for a blank line. A card has no header: the clip starts at the top, and one line at the foot says where it came from (the app's icon and name) and how long ago, after its ⌘ number. The clip's size, such as "64 characters · 8 lines", joins that line on the card you are looking at. A card shows 6, 7 or 8 lines at the Small, Medium and Large sizes.
 
 - **← →** move between clips, **Return** pastes the selected clip, **Esc** closes the shelf.
 - **Start typing** to search. Search matches the first 500 characters of each clip, its title, note and tags, a link's page title and site name, and the text inside pictures; search by meaning works in English.

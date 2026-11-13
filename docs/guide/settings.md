@@ -39,7 +39,7 @@ menu bar at the top of the screen (below the notch, if your Mac has one). It sli
 **Theme** sets the look in one choice: Basil (Pesto as it has always looked), Parmesan (warm
 cream with a gold accent), Pine nut (sand and toasted amber) or Mortar (cool stone and sage). Each card is drawn half light and half dark, so you see
 the theme as it will look either way. A theme sets the accent and the app icon that
-goes with it (Parmesan, Pine nut and Mortar also put a light wash over the shelf, and every theme tints the card headers in its color while the app's own color stays on top, lighter), and you can still change the accent or the icon on their own afterwards. The themes are checked so that no
+goes with it (Parmesan, Pine nut and Mortar also put a light wash over the shelf, and every theme sets its color on the shelf), and you can still change the accent or the icon on their own afterwards. The themes are checked so that no
 two look alike and every one keeps its text and accent readable in light and dark. **App icon** sits under the themes,
 with one icon for each theme, named after it and in the same order: Basil, Parmesan, Pine nut and Mortar. The icon's ground carries the theme and its P is the theme's accent. It shows in the Dock and the app switcher while a Pesto window is open; Finder and
 Launchpad keep the default Basil icon, because changing the icon of the installed app would break its code signature.

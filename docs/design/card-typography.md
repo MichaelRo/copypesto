@@ -1,5 +1,8 @@
 # Shelf card typography: let the clip be the loudest thing on its card
 
+> **History.** ADR 0044 (2026-11-12) removed the card header this note designs; what it says about the header band,
+> its wash and the lines the body gets is no longer true. The reasoning about type sizes still holds.
+
 **Design only: needs your
 eye before any SwiftUI changes.**
 

@@ -11,7 +11,7 @@ struct CommandBarView: View {
     @Environment(\.pestoAccent) private var accent
     @Environment(AppState.self) var appState: AppState
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Pinboard.sortOrder) private var pinboards: [Pinboard]
+    @Query(sort: \Pinboard.sortOrder) var pinboards: [Pinboard]
     @FocusState private var searchFocused: Bool
     /// Whether the recent searches are showing. Set from what changes it (focus, the text, the history), not read
     /// from a binding that only runs when something else happens to redraw the bar. It used to work only because
@@ -24,11 +24,12 @@ struct CommandBarView: View {
     @State var suggestionsModel = CommandBarSuggestionsModel()
     /// Bumped by a chip's keyboard action to open that chip's menu.
     @State var openRequests: [String: Int] = [:]
-    @State private var chipLiveOrder: [UUID]?
-    @State private var chipInsertionBar: CollectionReorder.InsertionBar?
-    @State private var chipFrozenFrames: [UUID: CGRect]?
-    @State private var chipFrames: [UUID: CGRect] = [:]
+    @State var chipLiveOrder: [UUID]?
+    @State var chipInsertionBar: CollectionReorder.InsertionBar?
+    @State var chipFrozenFrames: [UUID: CGRect]?
+    @State var chipFrames: [UUID: CGRect] = [:]
     @State private var isAllDropTarget = false
+    @State private var chipsContentWidth: CGFloat?
 
     /// The tag currently selected via `@tag` search syntax, if any.
     var selectedTag: String? {
@@ -95,7 +96,11 @@ struct CommandBarView: View {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     scrollableChips
+                        .onGeometryChange(for: CGFloat.self, of: \.size.width) { chipsContentWidth = $0 }
                 }
+                // Hugs its chips so the app chips sit right after the last collection, and only scrolls (with the app
+                // chips held at the bar's end) once the collections run past the room there is.
+                .frame(maxWidth: chipsContentWidth.map { $0 + 1 } ?? .infinity, alignment: .leading)
                 .accessibilityLabel("Collections")
                 .onChange(of: appState.selectedCollectionID) { _, id in
                     withAnimation(Motion.animation(.pestoMove)) {
@@ -106,6 +111,7 @@ struct CommandBarView: View {
             if !appChips.isEmpty {
                 pinnedAppChips
             }
+            Spacer(minLength: 0)
             rightToolbar
         }
     }
@@ -209,14 +215,7 @@ struct CommandBarView: View {
         }
         .coordinateSpace(name: ChipFramesKey.space)
         .onPreferenceChange(ChipFramesKey.self) { chipFrames = $0 }
-        .onDrop(
-            of: [UTType.text, UTType.data],
-            delegate: ChipRowDropDelegate(
-                appState: appState, baseOrder: pinboards.map(\.id), frames: chipFrames,
-                frozenFrames: $chipFrozenFrames, liveOrder: $chipLiveOrder, insertionBar: $chipInsertionBar,
-                onCommit: { persistPinboardOrder($0, moved: appState.draggingPinboardID) }
-            )
-        )
+        .background { chipRowDropLayer }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Collections and filters")
         .frame(minHeight: 26)
@@ -549,7 +548,7 @@ struct CommandBarView: View {
         pinboards
     }
 
-    private func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
+    func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
         let ids = pinboards.map(\.id)
         guard order != ids else { return }
         let reordered = order.compactMap { id in pinboards.first { $0.id == id } }

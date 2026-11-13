@@ -9,7 +9,8 @@ extension CommandBarView {
 
     static let allChipID = AnyHashable("all-collections")
 
-    /// Outside the scroll view, so the apps stay in reach however many collections push the row past the bar.
+    /// Outside the scroll view, right after it, so the apps stay in reach however many collections push the row past
+    /// the bar.
     var pinnedAppChips: some View {
         HStack(spacing: 6) {
             Divider()

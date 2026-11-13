@@ -500,6 +500,8 @@ paste on B does not move the clip inside it (ADR 0021). Edit a snippet on both a
 - **A git worktree has a `.git` *file* holding the path of the main checkout**, which a scan of top-level files (`PersonalDataTests`) used to flag as the owner's home folder.
 - **A recompile can surface old warnings.** The gate counts warnings as failures, and an incremental build had hidden three for weeks.
 
+- **A seed profile a bench measures is frozen.** `.mixed` (`MixedSeed`, 1,200 clips) is what `make bench-scroll` and `make bench-shelf` compare over weeks; pointing it at a different history in the middle of a design spike nearly invalidated every recorded number (2026-11-13). A different look (an everyday clipboard for pictures) is a new `SeedProfile`. `MixedSeedTests.whenMixedProfile_thenItIsExactlyMixedSeed` fails on a changed size or content.
+
 ## Test hooks, warnings and entitlements
 
 - **Test hooks are an `Info.plist` property.** `PestoAllowsTestHooks` is `$(PESTO_ALLOWS_TEST_HOOKS)`, set in `Pesto.yml`: `NO` in the base settings, `YES` in Debug and in the `Profile` configuration (Release, optimized, with the hooks, for the scroll, memory and latency benchmarks). `LaunchMode.detect` ignores `-UITestMode` unless `TestHooks.allowedInThisBuild` is true, so a Release app cannot be put into test mode by its launch arguments, and a benchmark of an optimized build uses `-configuration Profile`. `scripts/check-release-build.sh` fails when the built app's `PestoAllowsTestHooks` is anything but `NO`; `TestHooksConfigurationTests` fails when `Pesto.yml` turns the hooks on anywhere but Debug and Profile; `LaunchModeTests` covers `TestHooks.allowed`.

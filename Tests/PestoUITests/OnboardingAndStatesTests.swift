@@ -60,6 +60,8 @@ final class OnboardingAndStatesTests: PestoUITestCase {
         continueFromShelfStep()
         XCTAssertTrue(element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 5))
         app.activate()
+        // The pointer rests where Continue was, which is where Back is now: its tooltip would be in the picture.
+        onboardingWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.04)).hover()
         RunLoop.current.run(until: Date().addingTimeInterval(1))
         capture("onboarding-accessibility-denied", of: onboardingWindow)
 

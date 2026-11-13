@@ -7,6 +7,12 @@ struct BackupSummaryRow: View {
     let chip: BackupChip
     let now: Date
     var sync: SyncStatus?
+    @Environment(\.calendar) private var calendar
+    @Environment(\.locale) private var locale
+
+    private var summary: String {
+        chip.summaryText(now: now, calendar: calendar, locale: locale)
+    }
 
     private var headline: some View {
         Text("Your clips stay on this Mac.").font(.headline)
@@ -14,7 +20,7 @@ struct BackupSummaryRow: View {
 
     private var chips: some View {
         HStack(spacing: 8) {
-            chipView(color: chip.dotColor, text: chip.summaryText(now: now))
+            chipView(color: chip.dotColor, text: summary)
             if let sync { chipView(color: sync.dotColor, text: sync.chipText) }
         }
     }
@@ -32,14 +38,14 @@ struct BackupSummaryRow: View {
             }
             VStack(alignment: .leading, spacing: 8) {
                 headline
-                chipView(color: chip.dotColor, text: chip.summaryText(now: now))
+                chipView(color: chip.dotColor, text: summary)
                 if let sync { chipView(color: sync.dotColor, text: sync.chipText) }
             }
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
-            "Your clips stay on this Mac. \(chip.summaryText(now: now)).\(sync.map { " \($0.chipText)." } ?? "")"
+            "Your clips stay on this Mac. \(summary).\(sync.map { " \($0.chipText)." } ?? "")"
         )
         .accessibilityAddTraits(.isStaticText)
         .accessibilityIdentifier(AccessibilityID.backupStatus)

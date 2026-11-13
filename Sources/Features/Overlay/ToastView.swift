@@ -73,7 +73,7 @@ private struct ToastView: View {
             withAnimation(Motion.animation(.pestoQuick)) { opacity = 1 }
             guard !holds, !Motion.reduceMotion else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + toast.visibleSeconds - 0.6) {
-                withAnimation(Motion.animation(.easeOut(duration: 0.5))) { opacity = 0 }
+                withAnimation(Motion.animation(.pestoWash)) { opacity = 0 }
             }
         }
     }

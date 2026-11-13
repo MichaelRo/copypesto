@@ -253,7 +253,7 @@ struct GridView: View {
                         .onChange(of: scrollRequest) { _, request in
                             guard let request else { return }
                             if request.animated {
-                                withAnimation(Motion.animation(.snappy(duration: ShelfMotion.glide))) {
+                                withAnimation(Motion.animation(.pestoMove)) {
                                     proxy.scrollTo(request.id, anchor: .center)
                                 }
                             } else {
@@ -334,7 +334,7 @@ struct GridView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.96)))
             }
         }
-        .animation(Motion.animation(.easeOut(duration: 0.15)), value: pendingDelete != nil)
+        .animation(Motion.animation(.pestoQuick), value: pendingDelete != nil)
         // Single consolidated handler — three separate handlers existed before, making it
         // hard to reason about ordering and easy to accidentally add a fourth.
         .onChange(of: appState.uiTestWalkRequest) { _, _ in walkShelfToEnd() }

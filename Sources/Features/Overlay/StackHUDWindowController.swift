@@ -84,7 +84,7 @@ struct StackHUDView: View {
             shape.strokeBorder(.primary.opacity(contrast == .increased ? 0.4 : 0.14), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
-        .animation(Motion.animation(.easeInOut(duration: 0.2)), value: model.progress)
+        .animation(Motion.animation(.pestoMove), value: model.progress)
     }
 }
 

@@ -65,7 +65,7 @@ struct ThemePicker: View {
             }
         }
         .buttonStyle(.plain)
-        .animation(Motion.animation(.easeOut(duration: 0.15)), value: isSelected)
+        .animation(Motion.animation(.pestoQuick), value: isSelected)
         .help(accentHex == nil
             ? "\(option.displayName): the theme for dark mode"
             : "\(option.displayName): sets the accent, the shelf tint and Pesto\u{2019}s icon")

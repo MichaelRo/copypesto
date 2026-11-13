@@ -3,9 +3,8 @@ import CoreGraphics
 import SwiftUI
 
 enum ShelfMotion {
-    static let glide = 0.2
-    static let change = 0.22
-    static let switchEase = Animation.easeOut(duration: 0.18)
+    /// A collection switch is one quick change of state, so it takes the family's.
+    static let switchEase = Animation.pestoQuick
     static let collectionSlide: CGFloat = 18
     /// ⌘[ and ⌘] presses closer together than this become one switch (`cyclePinboard`).
     static let cycleCoalesce = Duration.milliseconds(80)

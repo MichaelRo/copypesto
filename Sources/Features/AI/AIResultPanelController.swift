@@ -205,7 +205,7 @@ private struct AIResultView: View {
                             .scaledFont(size: 11.5, weight: .medium)
                     }
                     .buttonStyle(.pestoCapsule(.secondary))
-                    .animation(Motion.animation(.easeOut(duration: 0.15)), value: copied)
+                    .animation(Motion.animation(.pestoQuick), value: copied)
                 }
                 Spacer()
                 Button("Done") { onClose() }

@@ -7,29 +7,10 @@ struct MotionFamilyTests {
     private static let curves = "easeInOut|easeIn|easeOut|linear|spring|snappy|smooth|bouncy|interactiveSpring"
         + "|interpolatingSpring"
 
-    /// Files that still hand `Motion.animation` a curve of their own, and how many. A count may only go down: move the
-    /// call to one of the names in `Motion.swift` and lower it here, and remove the entry at zero.
-    private static let literalAllowlist: [String: Int] = [
-        "Features/Settings/ThemePicker.swift": 1,
-        "Features/Settings/AppearancePreviews.swift": 1,
-        "Features/CommandBar/CommandBarView.swift": 3,
-        "Features/AI/AIResultPanelController.swift": 1,
-        "Features/Overlay/BiometricLockOverlay.swift": 3,
-        "Features/Overlay/StackHUDWindowController.swift": 1,
-        "Features/Overlay/ToastView.swift": 1,
-        "Features/Overlay/ShelfBackground.swift": 1,
-        "Features/Grid/GridView+SelectionBar.swift": 1,
-        "Features/Grid/GridView+Filtering.swift": 1,
-        "Features/Grid/GridView.swift": 2,
-        "Shared/Components/PreviewPicker.swift": 1
-    ]
-
-    /// Where a curve may be defined: the family, the pictures' settle springs, and the shelf's switch ease until it
-    /// joins the family.
+    /// Where a curve may be defined: the family and the pictures' settle springs.
     private static let definitionFiles: Set<String> = [
         "Shared/Extensions/Motion.swift",
-        "Shared/Components/SettleOnAppear.swift",
-        "Features/Grid/ShelfMotion.swift"
+        "Shared/Components/SettleOnAppear.swift"
     ]
 
     private func path(_ file: URL) -> String {
@@ -40,18 +21,12 @@ struct MotionFamilyTests {
     func whenAViewAnimates_thenTheCurveIsOneOfTheFamily() throws {
         let literal = try NSRegularExpression(pattern: #"Motion\.animation\(\s*\.(?:"# + Self.curves + #")\b"#)
         var offenders: [String] = []
-        var scanned: Set<String> = []
         for file in try SourceTree.everySwiftFile() {
-            let relative = path(file)
-            scanned.insert(relative)
             let text = try String(contentsOf: file, encoding: .utf8)
             let found = literal.numberOfMatches(in: text, range: NSRange(text.startIndex..., in: text))
-            let allowed = Self.literalAllowlist[relative] ?? 0
-            if found != allowed { offenders.append("\(relative): \(found) found, \(allowed) allowed") }
+            if found > 0 { offenders.append("\(path(file)): \(found)") }
         }
-        let stale = Self.literalAllowlist.keys.filter { !scanned.contains($0) }.sorted()
 
-        #expect(stale.isEmpty, "the allowlist names files that do not exist: \(stale.joined(separator: ", "))")
         #expect(offenders.isEmpty, "curves outside the motion family: \(offenders.sorted().joined(separator: "; "))")
     }
 

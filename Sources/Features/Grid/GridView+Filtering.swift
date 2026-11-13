@@ -62,7 +62,7 @@ extension GridView {
     func applyFiltered(_ filtered: Filtered, isUpdate: Bool) {
         let sliced = Array(filtered.items.prefix(displayLimit))
         if isUpdate, ShelfMotion.shouldAnimateChange(from: cachedFilteredIDs, to: filtered.ids) {
-            withAnimation(Motion.animation(.snappy(duration: ShelfMotion.change))) {
+            withAnimation(Motion.animation(.pestoMove)) {
                 cachedFilteredItems = filtered.items
                 cachedFilteredIDs = filtered.ids
                 displayedItems = sliced

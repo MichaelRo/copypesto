@@ -47,7 +47,7 @@ struct PreviewPicker<Value: Hashable, Preview: View>: View {
             }
         }
         .buttonStyle(.plain)
-        .animation(Motion.animation(.easeOut(duration: 0.15)), value: isSelected)
+        .animation(Motion.animation(.pestoQuick), value: isSelected)
         .accessibilityElement(children: .ignore)
         .selectableTile(verbatim: "\(title): \(label(option))", isSelected: isSelected) { selection = option }
         .accessibilityIdentifier(identifier(option))

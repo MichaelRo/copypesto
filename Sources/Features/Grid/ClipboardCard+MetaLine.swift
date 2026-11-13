@@ -6,7 +6,7 @@ import SwiftUI
 /// text colors would not read: on a picture everything sits on the pill ground (ADR 0026's contrast rule), on a color
 /// it is the fill's own ink.
 struct MetaLineStyle {
-    var over: HeaderOverlay?
+    var over: CardInkOverlay?
     var onPicture = false
     var showsGIF = false
     var wholeClip = false
@@ -20,6 +20,11 @@ struct MetaLineStyle {
 
 @MainActor
 extension ClipboardCard {
+    /// `showsFirstCopyTime` is set on a collection's own shelf, where every card would carry the same collection badge.
+    private var isOnCollectionsOwnShelf: Bool {
+        showsFirstCopyTime
+    }
+
     var metaFacts: CardMetaLine.Facts {
         CardMetaLine.Facts(
             title: item.customTitle,
@@ -72,8 +77,7 @@ extension ClipboardCard {
             if hasStateMarks {
                 stateMarks.metaGround(style, surface: surface)
             }
-            // On a collection's own shelf every card would carry the same badge.
-            if !showsFirstCopyTime, let collectionID = item.collectionID,
+            if !isOnCollectionsOwnShelf, let collectionID = item.collectionID,
                let collection = availableCollections.first(where: { $0.id == collectionID })
             {
                 if let over = style.over {

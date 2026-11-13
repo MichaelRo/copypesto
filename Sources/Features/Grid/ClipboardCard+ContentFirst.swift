@@ -3,16 +3,16 @@ import AppKit
 import PestoCore
 import SwiftUI
 
-struct HeaderOverlay {
+struct CardInkOverlay {
     let ink: Color
     let scheme: ColorScheme
     let ageOpacity: Double
 
-    static func onPicture(scheme: ColorScheme) -> HeaderOverlay {
+    static func onPicture(scheme: ColorScheme) -> CardInkOverlay {
         let ink = scheme == .dark
             ? (Color(hex: BrandPalette.parmesan) ?? .white)
             : (Color(hex: BrandPalette.mortar) ?? .black)
-        return HeaderOverlay(ink: ink, scheme: scheme, ageOpacity: PictureScrim.ageOpacity)
+        return CardInkOverlay(ink: ink, scheme: scheme, ageOpacity: PictureScrim.ageOpacity)
     }
 
     init(ink: Color, scheme: ColorScheme, ageOpacity: Double) {
@@ -29,8 +29,8 @@ struct HeaderOverlay {
 
 @MainActor
 extension ClipboardCard {
-    var pictureOverlay: HeaderOverlay {
-        HeaderOverlay.onPicture(scheme: colorScheme)
+    var pictureOverlay: CardInkOverlay {
+        CardInkOverlay.onPicture(scheme: colorScheme)
     }
 
     // MARK: - Which treatment
@@ -79,7 +79,7 @@ extension ClipboardCard {
     }
 
     func fullBleedColorCard(ink: CardInk) -> some View {
-        let over = HeaderOverlay(ink)
+        let over = CardInkOverlay(ink)
         let label = CardPreviewText.display(item.gridPreview)
         return ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 8)

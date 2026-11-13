@@ -51,6 +51,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0040](0040-backup-passphrase-must-be-strong.md) | A backup passphrase must be strong: twelve characters at least, no common word or run, and only a strong one is accepted. |
 | [0041](0041-a-picture-fills-the-card-only-near-its-shape.md) | A picture fills the card only near the card's shape (aspect 0.8 to 1.35); anything else is shown whole over a blurred copy of itself. |
 | [0042](0042-link-previews-and-other-device-copies-start-on-for-a-new-install.md) | Setup turns link previews and copies from other devices on, once, for a new install; an existing Mac keeps its answer. |
+| [0043](0043-paste-import-reads-external-data.md) | A Paste import reads the payloads Core Data keeps in external files, in place and read-only, and says why a clip cannot come in |
 | [0044](0044-a-card-has-no-header-one-line-of-facts-at-its-foot.md) | A card has no header: the content starts at the top and one line of facts sits at its foot (number, source icon, age and size; the app's name on focus). Supersedes the header of 0026. |
 
 ## Template

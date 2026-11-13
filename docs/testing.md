@@ -122,7 +122,7 @@ A UI-test launch runs the real UI on isolated data. `RuntimeConfiguration` (Core
 |---|---|
 | `PESTO_UITEST_SESSION` | Names the pasteboard and command queue; the private defaults file lives in `PESTO_UITEST_DIR`, so it goes when the test's directory does |
 | `PESTO_UITEST_DIR` | Working directory shared by the app and the runner (store, paste log, commands, ready marker) |
-| `PESTO_UITEST_SEED` | `empty`, `basic` (14 items: text, code, URL, color, images, two masked secrets), `large` (5,000) or `suggestion` (three text clips, the first pasted 6 times) |
+| `PESTO_UITEST_SEED` | `empty`, `basic` (14 items: text, code, URL, color, images, two masked secrets), `large` (5,000), `everyday` (a dozen clips like a real clipboard, `EverydaySeed`; `mixed` is the benches' history and never changes) or `suggestion` (three text clips, the first pasted 6 times) |
 | `PESTO_UITEST_ACCESSIBILITY` | `trusted` or `denied`: the stubbed Accessibility state |
 | `PESTO_UITEST_IMPORT_FIXTURE` `otherfile` | Other File… reads a built-in CSV instead of opening a file panel |
 | `PESTO_UITEST_AI_FIXTURE` | `1` swaps the on-device model for a fake that answers at once (budget 300 characters) and reports AI as available, so `AIPartsUITests` drives the panel on any Mac |

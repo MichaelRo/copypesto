@@ -50,6 +50,7 @@ Read them after a change to the surface (the gate's screenshots, or the result b
 |---|---|
 | The lost-key alert, its restore window, a wrong passphrase, the preview | `KeyLossRecoveryUITests`: `key-loss-alert`, `key-loss-restore-window`, `key-loss-wrong-passphrase`, `key-loss-preview` |
 | The restore sheet in Settings → Data | `BackupSettingsTests.test_restoreSheet_opensFromTheDataPane`: `restore-sheet` |
+| The shelf on everyday clips (white screenshots, long links, chat, code, a secret), light and dark, Large and Compact, at rest and with the third card focused | `EverydayShelfTests`: `everyday-<light\|dark>-<large\|compact>` and `-focused`. Judge a change to the cards or the shelf on these as well as on the pictures above: the pesto-coloured sample clips flatter it |
 | The status menu, the Paste One by One HUD | not captured: XCUITest gives the status menu an empty frame and the HUD is not in the window tree, and a crop of the screen would show the developer's desktop. A hand look, or a drawing of the panel in a snapshot test |
 
 ## Website (`.build/marketing`, then `src/assets/marketing` in the website repo)

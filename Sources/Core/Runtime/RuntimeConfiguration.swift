@@ -17,6 +17,8 @@ public enum SeedProfile: String, Equatable, Sendable {
     /// `make bench-shelf` compare runs over time on exactly this history: never change what it holds, add a profile
     /// for a different look (`MixedSeedTests` fails if it drifts).
     case mixed
+    /// What a real clipboard holds, a dozen clips of every kind, for judging how the shelf looks (`EverydaySeed`).
+    case everyday
     /// A copied animated GIF between two text clips, to check that the shelf plays it (`SeedFixtures`).
     case animated
     /// Two clips copied on this Mac and one that came from another device (`SeedFixtures`).

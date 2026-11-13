@@ -122,8 +122,8 @@ extension GridView {
                 appState.isDragging = true
                 appState.draggingItemID = item.id
                 Task { @MainActor in
-                    while true {
-                        try? await Task.sleep(for: .seconds(3))
+                    while !Task.isCancelled {
+                        do { try await Task.sleep(for: .seconds(3)) } catch { return }
                         switch DragStateFallback.decide(
                             stillThisDrag: appState.draggingItemID == item.id,
                             buttonDown: NSEvent.pressedMouseButtons & 1 == 1

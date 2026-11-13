@@ -29,14 +29,16 @@ struct ShelfDragClearanceTests {
     @Test("moving up first reaches the collection chips with the shelf live all the way")
     func whenPointerGoesUpFirst_thenChipsStayLive() {
         let steps = run([onCards, CGPoint(x: 400, y: 300), onChips])
-        #expect(steps.allSatisfy { $0.isLive })
+        let live = steps.map(\.isLive)
+        #expect(!live.contains(false))
         #expect(steps.allSatisfy { $0.phase == .insidePanel })
     }
 
     @Test("moving sideways first keeps the shelf live while inside the panel")
     func whenPointerGoesSidewaysFirst_thenLive() {
         let steps = run([onCards, CGPoint(x: 900, y: 200), CGPoint(x: 900, y: 390)])
-        #expect(steps.allSatisfy { $0.isLive })
+        let live = steps.map(\.isLive)
+        #expect(!live.contains(false))
     }
 
     @Test("leaving the panel clears the shelf so the app behind takes the drop")

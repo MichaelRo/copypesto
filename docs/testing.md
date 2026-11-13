@@ -332,6 +332,9 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
   chip takes the ring and the drop moves the clip; after leaving the panel the chip strip reappears when the pointer
   returns to it; a drop behind the cards (over the shelf's area, after leaving) lands in the app behind. Also hold the
   button still for over 3 s mid-drag: the shelf must not close.
+- Drag a clip sideways and drop it on another card in a plain collection (reachable now that the shelf stays live inside
+  the panel). Pass: it reorders there, and ⌘Z undoes it. A drag cancelled with Esc inside the shelf leaves the shelf
+  closing normally on a click outside straight afterwards.
 - Copy a GIF with Copy Image in Chrome, Arc and Edge. Pass: it plays on the card.
 - Quick-menu position on a second monitor. Pass: it opens on that monitor and Escape dismisses it while typing in another app.
 - Open the shelf from the menu bar item, `open pesto://open`, a Shortcut (Open Pesto) and the Control Center button while

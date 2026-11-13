@@ -84,11 +84,20 @@ final class OverlayWindowController {
     }
 
     /// A shelf that is closing after the drop stays invisible (`show()` resets it); one that stays open comes back.
+    /// The drag flags are cleared after the drop handlers have had their 0.2 s (they run on mouse-up and read
+    /// `draggingItemID`), and only if this drag is still the current one: a drag cancelled inside the panel would
+    /// otherwise keep `isDragging` set and suppress the resign-key and app-activate closes.
     private func endDragClearance() {
         dragClearanceTimer?.invalidate()
         dragClearanceTimer = nil
+        let endedDragID = appState.draggingItemID
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            guard let self, !isHiding, appState.isOverlayVisible else { return }
+            guard let self else { return }
+            if let endedDragID, appState.draggingItemID == endedDragID {
+                appState.draggingItemID = nil
+                appState.isDragging = false
+            }
+            guard !isHiding, appState.isOverlayVisible else { return }
             panel.alphaValue = 1
             panel.ignoresMouseEvents = false
         }
@@ -166,6 +175,8 @@ final class OverlayWindowController {
             return
         }
         isHiding = true
+        dragClearanceTimer?.invalidate()
+        dragClearanceTimer = nil
         let hideGeneration = showGeneration
         HoverCardHost.shared.dismissAll()
         removeClickMonitor()

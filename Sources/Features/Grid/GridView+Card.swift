@@ -121,14 +121,22 @@ extension GridView {
             dragStarted: { item in
                 appState.isDragging = true
                 appState.draggingItemID = item.id
-                // Safety fallback: if the drag ends without a chip accepting the drop
-                // (cancelled inside the panel), clear the ID after 3s so the next drag
-                // doesn't accidentally move the wrong item.
                 Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(3))
-                    if appState.draggingItemID == item.id {
-                        appState.draggingItemID = nil
-                        appState.isDragging = false
+                    while !Task.isCancelled {
+                        do { try await Task.sleep(for: .seconds(3)) } catch { return }
+                        switch DragStateFallback.decide(
+                            stillThisDrag: appState.draggingItemID == item.id,
+                            buttonDown: NSEvent.pressedMouseButtons & 1 == 1
+                        ) {
+                        case .checkAgain:
+                            continue
+                        case .clear:
+                            appState.draggingItemID = nil
+                            appState.isDragging = false
+                            return
+                        case .stop:
+                            return
+                        }
                     }
                 }
             },

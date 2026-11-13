@@ -19,6 +19,7 @@ final class OverlayWindowController {
     private var appActivateObserver: (any NSObjectProtocol)?
     private var isHiding = false
     private var dragClearanceTimer: Timer?
+    private var dragClearancePhase = ShelfDragClearance.Phase.insidePanel
     /// Bumped by every show() so a hide animation that finishes after a re-show cannot order the panel out.
     private var showGeneration = 0
     private var pendingCompletion: (() -> Void)?
@@ -57,11 +58,13 @@ final class OverlayWindowController {
         appState.onClipDragStarted = { [weak self] in self?.beginDragClearance() }
     }
 
-    /// While a clip is dragged out, only the command bar keeps the drag (`ShelfDragZone`): the rest of the shelf
-    /// becomes invisible and click-through, so the app behind it, an input box under the glass, can take the drop. The
-    /// button state is read directly because a drag session swallows the mouse events.
+    /// The shelf stays live while the dragged clip is inside it, then becomes invisible and click-through so the app
+    /// behind it, an input box under the glass, can take the drop; the chip strip comes back live when the pointer
+    /// returns to it (`ShelfDragClearance`). The button state is read directly because a drag session swallows the
+    /// mouse events.
     private func beginDragClearance() {
         dragClearanceTimer?.invalidate()
+        dragClearancePhase = .insidePanel
         updateDragClearance()
         let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.updateDragClearance() }
@@ -72,17 +75,29 @@ final class OverlayWindowController {
 
     private func updateDragClearance() {
         guard NSEvent.pressedMouseButtons & 1 == 1 else { return endDragClearance() }
-        let live = ShelfDragZone.isOverDropZone(pointer: NSEvent.mouseLocation, panelFrame: panel.frame)
-        panel.alphaValue = live ? 1 : 0
-        panel.ignoresMouseEvents = !live
+        let step = ShelfDragClearance.step(
+            pointer: NSEvent.mouseLocation, panelFrame: panel.frame, phase: dragClearancePhase
+        )
+        dragClearancePhase = step.phase
+        panel.alphaValue = step.isLive ? 1 : 0
+        panel.ignoresMouseEvents = !step.isLive
     }
 
     /// A shelf that is closing after the drop stays invisible (`show()` resets it); one that stays open comes back.
+    /// The drag flags are cleared after the drop handlers have had their 0.2 s (they run on mouse-up and read
+    /// `draggingItemID`), and only if this drag is still the current one: a drag cancelled inside the panel would
+    /// otherwise keep `isDragging` set and suppress the resign-key and app-activate closes.
     private func endDragClearance() {
         dragClearanceTimer?.invalidate()
         dragClearanceTimer = nil
+        let endedDragID = appState.draggingItemID
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            guard let self, !isHiding, appState.isOverlayVisible else { return }
+            guard let self else { return }
+            if let endedDragID, appState.draggingItemID == endedDragID {
+                appState.draggingItemID = nil
+                appState.isDragging = false
+            }
+            guard !isHiding, appState.isOverlayVisible else { return }
             panel.alphaValue = 1
             panel.ignoresMouseEvents = false
         }
@@ -160,6 +175,8 @@ final class OverlayWindowController {
             return
         }
         isHiding = true
+        dragClearanceTimer?.invalidate()
+        dragClearanceTimer = nil
         let hideGeneration = showGeneration
         HoverCardHost.shared.dismissAll()
         removeClickMonitor()

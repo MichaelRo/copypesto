@@ -44,6 +44,7 @@ class PestoUITestCase: XCTestCase {
         suggestionsLive: Bool = false,
         updates: Bool = false,
         recordsPerfTimeline: Bool = false,
+        linkStubMillis: Int? = nil,
         timeout: TimeInterval = 90
     ) {
         app = XCUIApplication()
@@ -66,6 +67,7 @@ class PestoUITestCase: XCTestCase {
         }
         if let backdrop { environment["PESTO_UITEST_BACKDROP"] = backdrop }
         if realDevice { environment["PESTO_UITEST_REAL_DEVICE"] = "1" }
+        if let linkStubMillis { environment["PESTO_UITEST_LINK_STUB_MS"] = "\(linkStubMillis)" }
         if let importFixture { environment["PESTO_UITEST_IMPORT_FIXTURE"] = importFixture }
         if keyLoss { environment["PESTO_UITEST_KEYLOSS"] = "1" }
         if aiFixture { environment["PESTO_UITEST_AI_FIXTURE"] = "1" }

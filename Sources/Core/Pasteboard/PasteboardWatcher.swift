@@ -547,7 +547,7 @@ public actor PasteboardWatcher {
     /// The GIF a browser's Copy Image came from, named in the HTML flavour next to the still picture.
     private static func gifAddress(on pasteboard: any PasteboardReading, types: [NSPasteboard.PasteboardType]) -> URL? {
         guard types.contains(.html), let html = pasteboard.string(forType: .html) else { return nil }
-        return ImageSourceAddress.gifURL(inHTML: html)
+        return ImageSourceAddress.animatedPictureURL(inHTML: html)
     }
 
     /// Rich text is parsed in this process, on content any local program can put on the board. Past this size it is

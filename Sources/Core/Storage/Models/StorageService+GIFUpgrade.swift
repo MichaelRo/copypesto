@@ -23,8 +23,13 @@ extension StorageService {
     /// Stores the GIF as the clip's data, so the card plays it and a paste carries it. Anything that is not a GIF, or
     /// is
     /// too large, or arrives for a clip that has gone, changes nothing.
-    func upgrade(_ itemID: UUID, toGIF data: Data) {
-        guard data.isGIF, data.count <= Self.largestUpgradedGIFBytes else { return }
+    func upgrade(_ itemID: UUID, toGIF fetched: Data) {
+        guard fetched.count <= Self.largestUpgradedGIFBytes,
+              let data = fetched.isGIF ? fetched : ImageDownsampler.animatedGIF(
+                  from: fetched,
+                  maxPixel: 600,
+                  maxFrames: 60
+              ) else { return }
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID })
         descriptor.fetchLimit = 1
         guard let item = try? modelContext.fetch(descriptor).first, item.type == .image,

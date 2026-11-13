@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import AppKit
 import CryptoKit
+import ImageIO
 import SwiftData
 import Testing
 @testable import PestoCore
@@ -20,6 +21,26 @@ private final class FetchLog: @unchecked Sendable {
 
 private func animatedGIF() -> Data {
     SeedFixtures.animatedGIFData(side: 32)
+}
+
+private func animatedAPNG() -> Data? {
+    let gif = animatedGIF()
+    guard let source = CGImageSourceCreateWithData(gif as CFData, nil) else { return nil }
+    let output = NSMutableData()
+    let count = CGImageSourceGetCount(source)
+    guard let destination = CGImageDestinationCreateWithData(output, "public.png" as CFString, count, nil) else {
+        return nil
+    }
+    CGImageDestinationSetProperties(
+        destination, [kCGImagePropertyPNGDictionary: [kCGImagePropertyAPNGLoopCount: 0]] as CFDictionary
+    )
+    for index in 0..<count {
+        guard let frame = CGImageSourceCreateImageAtIndex(source, index, nil) else { return nil }
+        CGImageDestinationAddImage(
+            destination, frame, [kCGImagePropertyPNGDictionary: [kCGImagePropertyAPNGDelayTime: 0.1]] as CFDictionary
+        )
+    }
+    return CGImageDestinationFinalize(destination) ? output as Data : nil
 }
 
 private func stillPNG() -> Data {
@@ -81,6 +102,31 @@ struct GIFUpgradeTests {
         #expect(item.blob?.mimeType == "com.compuserve.gif")
         #expect(item.blob?.decryptedData() == gif)
         #expect(item.byteSize == gif.count)
+    }
+
+    @Test("an animation that arrives as another format is stored as a GIF with all its frames")
+    func whenFetchedAnimationIsNotAGIF_thenItIsStoredAsGIF() async throws {
+        let apng = try #require(animatedAPNG(), "this system cannot write an animated PNG")
+        let service = Self.makeService(container: container, fetching: { _ in apng })
+
+        try await service.ingest(capture(source: address))
+        await service.waitForBackgroundWork()
+
+        let item = try onlyItem()
+        let stored = try #require(item.blob?.decryptedData())
+        #expect(item.blob?.mimeType == "com.compuserve.gif")
+        #expect(stored.isGIF)
+        #expect(try CGImageSourceGetCount(#require(CGImageSourceCreateWithData(stored as CFData, nil))) > 1)
+    }
+
+    @Test("a still picture fetched in place of the animation changes nothing")
+    func whenFetchedPictureIsStill_thenTheClipStaysAsItWas() async throws {
+        let service = Self.makeService(container: container, fetching: { _ in stillPNG() })
+
+        try await service.ingest(capture(source: address))
+        await service.waitForBackgroundWork()
+
+        #expect(try onlyItem().blob?.mimeType == "public.png")
     }
 
     @Test("when upgraded to GIF, thumbnail service returns animated thumbnail instead of stale still cache")
@@ -200,6 +246,27 @@ struct GIFAddressCaptureTests {
         await watcher.tick()
 
         #expect(captures.first?.sourceImageURL?.absoluteString == "https://media.example.com/cats/dance.gif")
+    }
+
+    @Test("a still picture with an img tag naming an animated WebP carries that address")
+    func whenPNGAndWebPAddress_thenAddressCaptured() async {
+        let board = FakePasteboard()
+        let watcher = PasteboardWatcher(
+            pasteboard: board,
+            frontmostProvider: FakeFrontmost(bundleID: "com.google.Chrome")
+        )
+        let captures = CaptureCollector()
+        await watcher.onCapture { captures.append($0) }
+        let html = "<meta charset='utf-8'><img src=\"https://media0.example.com/media/abc/giphy.webp?ct=g\"/>"
+
+        board.write(
+            types: [.png, .tiff, .html],
+            data: [.png: stillPNG(), .tiff: stillPNG(), .html: Data(html.utf8)],
+            strings: [.html: html]
+        )
+        await watcher.tick()
+
+        #expect(captures.first?.sourceImageURL?.pathExtension == "webp")
     }
 
     @Test("a picture without such a tag carries none")

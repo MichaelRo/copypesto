@@ -12,8 +12,10 @@ public enum ImageSourceAddress {
         pattern: #"<img\b[^>]*?\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)')"#, options: [.caseInsensitive]
     )
 
-    public static func gifURL(inHTML html: String) -> URL? {
-        imageURLs(inHTML: html).first(where: { $0.pathExtension.lowercased() == "gif" })
+    /// Sites such as GIPHY and Tenor send a browser the animation as WebP, so a Copy Image names `.webp` as often as
+    /// `.gif`; both can hold the whole animation, and a still one is refused when it arrives.
+    public static func animatedPictureURL(inHTML html: String) -> URL? {
+        imageURLs(inHTML: html).first(where: { ["gif", "webp"].contains($0.pathExtension.lowercased()) })
     }
 
     public static func imageURL(inHTML html: String) -> URL? {

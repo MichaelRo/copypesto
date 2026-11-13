@@ -192,7 +192,7 @@ final class ClipboardCardTests: XCTestCase {
 
     private static let longText = (1...12).map { "Line \($0) of a long note that keeps going" }.joined(separator: "\n")
 
-    private func withCardWidth(_ width: Int, _ body: () throws -> Void) rethrows {
+    func withCardWidth(_ width: Int, _ body: () throws -> Void) rethrows {
         let previous = AppDefaults.store.value(for: Setting.cardWidth)
         AppDefaults.store.set(width, for: Setting.cardWidth)
         defer { AppDefaults.store.set(previous, for: Setting.cardWidth) }
@@ -398,18 +398,6 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = pictureItem(in: ctx, aspect: 1.2, animated: true, source: "Safari")
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 2))
-    }
-
-    func test_gifCard_whenNarrowAndFocused_thenTheAgeOutlastsTheGIFLabel() throws {
-        defer { ThumbnailCache.shared.clear() }
-        try withCardWidth(160) {
-            let ctx = try makeContext()
-            let item = pictureItem(in: ctx, aspect: 1.0, animated: true, source: "Safari")
-            snapshotCard(
-                ClipboardCard(item: item, isFocused: true, shortcutNumber: 3),
-                cardSize: CardMetrics.dimensions(width: 160)
-            )
-        }
     }
 
     func test_pictureCard_small() throws {

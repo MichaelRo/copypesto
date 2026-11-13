@@ -19,8 +19,13 @@ struct AppChipsRow: View {
     static let spacing: CGFloat = 8
     private static let restWidth: CGFloat = 24
 
-    private var chips: [SourceApp] {
+    /// The row, in order. The command bar publishes the same list to `AppState.appChips` for ⌥⌘[ and ⌥⌘].
+    static func chips(recent: [SourceApp], frontmost: SourceApp?) -> [SourceApp] {
         AppChips.chips(frontmost: frontmost, recent: recent, ownBundleID: Bundle.main.bundleIdentifier)
+    }
+
+    private var chips: [SourceApp] {
+        Self.chips(recent: recent, frontmost: frontmost)
     }
 
     var body: some View {

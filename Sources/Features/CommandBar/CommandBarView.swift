@@ -91,10 +91,20 @@ struct CommandBarView: View {
 
     private var chipsRow: some View {
         HStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                scrollableChips
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    scrollableChips
+                }
+                .accessibilityLabel("Collections")
+                .onChange(of: appState.selectedCollectionID) { _, id in
+                    withAnimation(Motion.animation(.pestoMove)) {
+                        proxy.scrollTo(id.map { AnyHashable($0) } ?? Self.allChipID, anchor: .center)
+                    }
+                }
             }
-            .accessibilityLabel("Collections")
+            if !appChips.isEmpty {
+                pinnedAppChips
+            }
             rightToolbar
         }
     }
@@ -111,6 +121,7 @@ struct CommandBarView: View {
             ) {
                 appState.selectedCollectionID = nil
             }
+            .id(Self.allChipID)
             .overlay { if isAllDropTarget, appState.isDragging { Capsule().strokeBorder(
                 Color.primary.opacity(0.5),
                 lineWidth: 1.5
@@ -183,11 +194,6 @@ struct CommandBarView: View {
                     tagChip(tag)
                 }
             }
-
-            AppChipsRow(
-                recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost,
-                collapsesLabels: !shownPinboards.isEmpty
-            )
         }
         .animation(Motion.animation(.pestoMove), value: creating)
         .animation(Motion.animation(.pestoPop), value: pinboards.map(\.id))
@@ -538,7 +544,7 @@ struct CommandBarView: View {
     }
 
     /// Collection chips stay in place while one is dragged; `chipInsertionBar` marks where it will land.
-    private var shownPinboards: [Pinboard] {
+    var shownPinboards: [Pinboard] {
         pinboards
     }
 

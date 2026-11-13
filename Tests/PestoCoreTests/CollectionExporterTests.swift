@@ -52,7 +52,9 @@ struct CollectionExporterTests {
 
         let destContainer = try setupContainer()
         let importer = HistoryExporter(modelContainer: destContainer)
-        let result = try await importer.importCollection(from: exportedData)
+        let result = try await importer.importCollection(
+            from: exportedData, storage: StorageService(modelContainer: destContainer, environment: .testing())
+        )
 
         #expect(result.itemsImported == 1)
         #expect(result.collectionID == collectionID)
@@ -94,8 +96,11 @@ struct CollectionExporterTests {
         try await exporter.writeCollection(id: collectionID, to: file)
         let mode = try #require(FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as? Int)
         #expect(mode & 0o077 == 0, "a collection export carries titles, notes and tags: owner-only (R-08)")
-        let result = try await HistoryExporter(modelContainer: setupContainer())
-            .importCollection(from: Data(contentsOf: file))
+        let destination = try setupContainer()
+        let result = try await HistoryExporter(modelContainer: destination).importCollection(
+            from: Data(contentsOf: file),
+            storage: StorageService(modelContainer: destination, environment: .testing())
+        )
         #expect(result.collectionID == collectionID)
 
         let missing = folder.appendingPathComponent("Missing.json")

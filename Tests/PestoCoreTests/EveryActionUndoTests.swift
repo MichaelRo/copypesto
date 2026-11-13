@@ -234,7 +234,9 @@ struct EveryActionUndoTests {
         try sourceContext.save()
         let file = try await HistoryExporter(modelContainer: source).exportCollection(id: shared.id)
 
-        try await HistoryExporter(modelContainer: container).importCollection(from: file, undoHistory: history)
+        try await HistoryExporter(modelContainer: container).importCollection(
+            from: file, storage: service, undoHistory: history
+        )
         #expect(history.undoLabel == .importCollection("Shared"))
         #expect(try boards().count == 1)
         #expect(try clips().count == 1)

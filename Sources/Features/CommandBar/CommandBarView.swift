@@ -11,6 +11,8 @@ struct CommandBarView: View {
     @Environment(\.pestoAccent) private var accent
     @Environment(AppState.self) var appState: AppState
     @Environment(\.modelContext) private var modelContext
+    /// The window this bar is in; each publishes its own app chips (`AppState.appChipLists`).
+    var host: GridHost = .shelf
     @Query(sort: \Pinboard.sortOrder) var pinboards: [Pinboard]
     @FocusState private var searchFocused: Bool
     /// Whether the recent searches are showing. Set from what changes it (focus, the text, the history), not read
@@ -29,7 +31,7 @@ struct CommandBarView: View {
     @State var chipFrozenFrames: [UUID: CGRect]?
     @State var chipFrames: [UUID: CGRect] = [:]
     @State private var isAllDropTarget = false
-    @State private var chipsContentWidth: CGFloat?
+    @State var chipsContentWidth: CGFloat?
 
     /// The tag currently selected via `@tag` search syntax, if any.
     var selectedTag: String? {
@@ -67,7 +69,7 @@ struct CommandBarView: View {
             }
         }
         .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
-        .onChange(of: appChips.map(\.bundleID), initial: true) { appState.appChips = appChips }
+        .onChange(of: appChips, initial: true) { appState.appChipLists[host] = appChips }
         .onAppear { suggestionsModel.start(appState) }
         .onDisappear { suggestionsModel.stop() }
         .onChange(of: appState.isOverlayVisible) { _, visible in if visible { suggestionsModel.refresh() } }
@@ -91,32 +93,7 @@ struct CommandBarView: View {
         }
     }
 
-    private var chipsRow: some View {
-        HStack(spacing: 0) {
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    scrollableChips
-                        .onGeometryChange(for: CGFloat.self, of: \.size.width) { chipsContentWidth = $0 }
-                }
-                // Hugs its chips so the app chips sit right after the last collection, and only scrolls (with the app
-                // chips held at the bar's end) once the collections run past the room there is.
-                .frame(maxWidth: chipsContentWidth.map { $0 + 1 } ?? .infinity, alignment: .leading)
-                .accessibilityLabel("Collections")
-                .onChange(of: appState.selectedCollectionID) { _, id in
-                    withAnimation(Motion.animation(.pestoMove)) {
-                        proxy.scrollTo(id.map { AnyHashable($0) } ?? Self.allChipID, anchor: .center)
-                    }
-                }
-            }
-            if !appChips.isEmpty {
-                pinnedAppChips
-            }
-            Spacer(minLength: 0)
-            rightToolbar
-        }
-    }
-
-    private var scrollableChips: some View {
+    var scrollableChips: some View {
         let creating = appState.isCreatingCollection
         return HStack(spacing: 8) {
             CollectionChip(
@@ -190,6 +167,7 @@ struct CommandBarView: View {
                     }
                     appState.selectedCollectionID = new.id
                 }
+                .id(Self.creatorID)
                 .transition(.scale(scale: 0.85).combined(with: .opacity))
             }
 
@@ -221,7 +199,7 @@ struct CommandBarView: View {
         .frame(minHeight: 26)
     }
 
-    private var rightToolbar: some View {
+    var rightToolbar: some View {
         HStack(spacing: 4) {
             Button {
                 appState.isSearchActive = true

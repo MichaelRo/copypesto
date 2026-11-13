@@ -23,7 +23,7 @@ struct PinnedWindowRootView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                CommandBarView()
+                CommandBarView(host: .pinnedWindow)
                     .padding(.horizontal, 16)
                     .padding(.top, Self.titlebarClearance)
                     .padding(.bottom, 8)

@@ -10,7 +10,7 @@ extension GridView {
 
     /// ⌥⌘[ and ⌥⌘]: moves the app filter along the chips the bar shows (`AppChipCycle`).
     func cycleAppChip(forward: Bool) {
-        let chips = appState.appChips
+        let chips = appState.appChipLists[isPinnedHost ? .pinnedWindow : .shelf]
         let next = AppChipCycle.next(current: appState.appChipFilter, chips: chips.map(\.bundleID), forward: forward)
         guard next != appState.appChipFilter else { return }
         appState.appChipFilter = next

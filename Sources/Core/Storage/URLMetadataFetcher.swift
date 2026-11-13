@@ -175,7 +175,7 @@ public final class URLMetadataFetcher {
 
         do {
             let result = try await loader(url)
-            let withGIF = await addingDirectGIF(to: result, for: url)
+            let withGIF = await addingPageGIF(to: addingDirectGIF(to: result, for: url), for: url)
             cachePreview(withGIF, originalURL: originalURL, unwrapped: url, isNegative: false)
             return withGIF
         } catch {
@@ -209,6 +209,22 @@ public final class URLMetadataFetcher {
         }
     }
 
+    /// A page named for a GIF (a Tenor or Giphy link) has one as its picture, which LinkPresentation hands over as a
+    /// still. Only such a page is read once more, for the address of that picture; any other link costs nothing extra.
+    private func addingPageGIF(to result: URLPreviewResult, for url: URL) async -> URLPreviewResult {
+        guard result.ogImageData?.isGIF != true, Self.pageNamesAGIF(url) else { return result }
+        let scraped = await Self.scrapePageHead(from: url, session: session)
+        guard let gif = scraped.ogImageData, gif.isGIF else { return result }
+        return URLPreviewResult(
+            title: result.title ?? scraped.title, ogImageData: gif, faviconData: result.faviconData,
+            siteName: result.siteName
+        )
+    }
+
+    public nonisolated static func pageNamesAGIF(_ url: URL) -> Bool {
+        !isDirectGIFLink(url) && url.path.lowercased().contains("gif")
+    }
+
     /// LinkPresentation returns no picture for a link straight to a GIF, and re-encodes page pictures as still images.
     private func addingDirectGIF(to result: URLPreviewResult, for url: URL) async -> URLPreviewResult {
         guard result.ogImageData == nil, Self.isDirectGIFLink(url),
@@ -229,14 +245,19 @@ public final class URLMetadataFetcher {
 
     /// The GIF at `url`, or nil for an error status, a body that is not a GIF, or one over `maxDownloadBytes`.
     public nonisolated static func downloadGIF(from url: URL, session: URLSession = .shared) async -> Data? {
+        await downloadPicture(from: url, session: session).flatMap { $0.isGIF ? $0 : nil }
+    }
+
+    /// What is at `url` as a picture request gets it (a GIF, an animated WebP), or nil for an error status or a body
+    /// over `maxDownloadBytes`. The caller decides whether it is the animation it wanted.
+    public nonisolated static func downloadPicture(from url: URL, session: URLSession = .shared) async -> Data? {
         var request = URLRequest(url: url, timeoutInterval: 15)
         request.setValue(defaultUserAgent, forHTTPHeaderField: "User-Agent")
-        request.setValue("image/gif,image/*;q=0.8", forHTTPHeaderField: "Accept")
+        request.setValue("image/gif,image/webp,image/*;q=0.8", forHTTPHeaderField: "Accept")
         let download = BoundedDownload(limit: maxDownloadBytes)
         let owned = URLSession(configuration: session.configuration, delegate: download, delegateQueue: nil)
         defer { owned.finishTasksAndInvalidate() }
-        let data = await download.run(owned.dataTask(with: request))
-        return data?.isGIF == true ? data : nil
+        return await download.run(owned.dataTask(with: request))
     }
 
     /// nonisolated so LPLinkMetadata (non-Sendable in macOS 15 SDK) never crosses an
@@ -267,8 +288,10 @@ public final class URLMetadataFetcher {
         var ogImageData: Data?
         if let imageProvider = meta?.imageProvider {
             let box = Box(value: imageProvider)
+            let kind = imageProvider.registeredTypeIdentifiers.contains(UTType.gif.identifier)
+                ? UTType.gif.identifier : UTType.image.identifier
             let raw = await withCheckedContinuation { (cont: CheckedContinuation<Data?, Never>) in
-                box.value.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) { data, _ in
+                box.value.loadDataRepresentation(forTypeIdentifier: kind) { data, _ in
                     cont.resume(returning: data)
                 }
             }

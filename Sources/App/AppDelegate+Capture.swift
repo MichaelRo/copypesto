@@ -157,7 +157,7 @@ extension AppDelegate {
                 isEligible: LinkPreviewEligibility.isEligible(address),
                 isHistoryLocked: locked
             ) else { return nil }
-            return await URLMetadataFetcher.downloadGIF(from: address)
+            return await URLMetadataFetcher.downloadPicture(from: address)
         }
     }
 }

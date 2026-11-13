@@ -30,4 +30,23 @@ final class AnimatedGIFCardTests: PestoUITestCase {
         }
         XCTAssertGreaterThan(frames.count, 1, "the GIF file card never changed: it is not playing")
     }
+
+    /// A link to a GIF (copied from a browser's address bar or a chat) is a link clip whose picture is the GIF.
+    func test_gifLinkCard_playsOnTheShelf() {
+        launch(
+            seed: "animated",
+            defaults: ["hasOnboarded": "true", "linkPreviewsEnabled": "true"], motion: true, linkStubMillis: 50
+        )
+        showOverlay()
+        let linkCard = cards.matching(NSPredicate(format: "label CONTAINS[c] 'pesto-link-dance'")).firstMatch
+        XCTAssertTrue(linkCard.waitForExistence(timeout: 10), "no card for the GIF link")
+
+        var frames = Set<Data>()
+        let deadline = Date().addingTimeInterval(8)
+        while Date() < deadline, frames.count < 2 {
+            frames.insert(linkCard.screenshot().pngRepresentation)
+            Thread.sleep(forTimeInterval: 0.13)
+        }
+        XCTAssertGreaterThan(frames.count, 1, "the GIF link card never changed: its picture is a still")
+    }
 }

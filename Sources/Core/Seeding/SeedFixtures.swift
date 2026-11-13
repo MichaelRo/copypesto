@@ -255,7 +255,8 @@ public enum SeedFixtures {
                 contentHash: hash(of: gif)
             ),
             textCapture("Toast the pine nuts 3 min, not 4.", app: "com.apple.Notes"),
-            animatedFileCapture(gif)
+            animatedFileCapture(gif),
+            textCapture("https://example.com/gifs/pesto-link-dance", app: "com.google.Chrome")
         ]
     }
 

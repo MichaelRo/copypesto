@@ -268,7 +268,7 @@ public actor HistoryExporter {
         var result = CollectionImportResult(collectionID: targetBoard.id, collectionName: boardName)
         var insertedIDs: [UUID] = []
         func commit() throws {
-            let changedSomething = !insertedIDs.isEmpty || createdBoard != nil || result.addedToCollection > 0
+            let changedSomething = !insertedIDs.isEmpty || createdBoard != nil
             if changedSomething { try modelContext.saveOrRollback() }
             if let undoHistory, !insertedIDs.isEmpty || createdBoard != nil,
                insertedIDs.count <= UndoPolicy.maxClipsPerEntry
@@ -335,13 +335,8 @@ public actor HistoryExporter {
                 let forms = ContentHash.candidates(for: Self.contentHash(of: record.previewText), key: key)
                 let sameContent =
                     FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
-                let existing = try modelContext.fetch(sameContent).first
-                if existing != nil || !seenHashes.insert(forms[0]).inserted {
+                if try modelContext.fetchCount(sameContent) > 0 || !seenHashes.insert(forms[0]).inserted {
                     result.alreadyPresent += 1
-                    if let existing, existing.collectionID == nil, let collectionID {
-                        existing.collectionID = collectionID
-                        result.addedToCollection += 1
-                    }
                     continue
                 }
             } else if existingIDs.contains(record.id) || tombstonedIDs.contains(record.id) {

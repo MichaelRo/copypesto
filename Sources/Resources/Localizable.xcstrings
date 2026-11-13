@@ -1677,28 +1677,6 @@
         }
       }
     },
-    "%lld of them were put into the collection.": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld of them was put into the collection."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld of them were put into the collection."
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "%lld were left out: a file holds at most 1,000 clips.": {
       "localizations": {
         "en": {
@@ -1714,6 +1692,28 @@
                 "stringUnit": {
                   "state": "translated",
                   "value": "%lld were left out: a file holds at most 1,000 clips."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld were pictures Pesto can’t share.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld was a picture Pesto can’t share."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld were pictures Pesto can’t share."
                 }
               }
             }

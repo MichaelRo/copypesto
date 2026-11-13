@@ -11,6 +11,7 @@ extension HistoryExporter {
         case tooLarge
         case unreadable
         case fileReference
+        case unsharablePicture
     }
 
     private enum PayloadVerdict {
@@ -40,6 +41,7 @@ extension HistoryExporter {
         var skippedUnreadable = 0
         var skippedFiles = 0
         var skippedOverLimit = 0
+        var skippedPictures = 0
         var estimatedBytes = Self.envelopeAllowance
         for item in allItems where item.collectionID == id {
             if records.count >= CollectionFilePolicy.maxClips {
@@ -59,6 +61,7 @@ extension HistoryExporter {
             case .tooLarge: skippedTooLarge += 1
             case .unreadable: skippedUnreadable += 1
             case .fileReference: skippedFiles += 1
+            case .unsharablePicture: skippedPictures += 1
             }
         }
         let payload = CollectionExportPayload(
@@ -82,7 +85,8 @@ extension HistoryExporter {
             skippedTooLarge: skippedTooLarge,
             skippedUnreadable: skippedUnreadable,
             skippedFiles: skippedFiles,
-            skippedOverLimit: skippedOverLimit
+            skippedOverLimit: skippedOverLimit,
+            skippedPictures: skippedPictures
         )
     }
 
@@ -104,6 +108,9 @@ extension HistoryExporter {
         if item.type == .file { return .fileReference }
         if item.byteSize > CollectionFilePolicy.maxPayloadBytes { return .tooLarge }
         let isTextual = Self.isTextual(item.typeRaw)
+        if item.type == .image, let mime = item.blob?.mimeType, !CollectionFilePolicy.isAllowedPayloadType(mime) {
+            return .unsharablePicture
+        }
         guard let blob = item.blob, let data = blob.decryptedData(),
               CollectionFilePolicy.isAllowedPayloadType(blob.mimeType) else
         {
@@ -168,7 +175,6 @@ extension HistoryExporter {
         // A key that cannot be had fails the import: clips are never stored under a plain hash.
         let key = try BlobEncryption().loadOrCreateKey()
         var pending: [Pending] = []
-        var adopted: [UUID] = []
         for index in records.indices {
             var record = records[index]
             records[index].payload = nil
@@ -179,9 +185,8 @@ extension HistoryExporter {
             let hash = data.sha256Hex
             let forms = ContentHash.candidates(for: hash, key: key)
             let sameContent = FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
-            if let existing = try modelContext.fetch(sameContent).first {
+            if try modelContext.fetchCount(sameContent) > 0 {
                 result.alreadyPresent += 1
-                if existing.collectionID == nil { adopted.append(existing.id) }
                 continue
             }
             let capture = PasteboardCapture(
@@ -215,21 +220,16 @@ extension HistoryExporter {
             pending.append(Pending(id: newID, record: record))
             if pending.count == Self.batchSize {
                 await storage.waitForBackgroundWork()
-                try flush(&pending, adopted: &adopted, collectionID: collectionID, result: &result)
+                try flush(&pending, collectionID: collectionID)
             }
         }
         await storage.waitForBackgroundWork()
-        try flush(&pending, adopted: &adopted, collectionID: collectionID, result: &result)
+        try flush(&pending, collectionID: collectionID)
     }
 
-    private func flush(
-        _ pending: inout [Pending], adopted: inout [UUID], collectionID: UUID, result: inout CollectionImportResult
-    ) throws {
-        defer {
-            pending.removeAll()
-            adopted.removeAll()
-        }
-        guard !pending.isEmpty || !adopted.isEmpty else { return }
+    private func flush(_ pending: inout [Pending], collectionID: UUID) throws {
+        defer { pending.removeAll() }
+        guard !pending.isEmpty else { return }
         let context = ModelContext(modelContainer)
         for entry in pending {
             let id = entry.id
@@ -237,13 +237,6 @@ extension HistoryExporter {
                 FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
             ).first else { continue }
             apply(entry.record, to: item, collectionID: collectionID)
-        }
-        for id in adopted {
-            guard let item = try context.fetch(
-                FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
-            ).first, item.collectionID == nil else { continue }
-            item.collectionID = collectionID
-            result.addedToCollection += 1
         }
         try context.saveOrRollback()
     }

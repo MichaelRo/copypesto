@@ -290,8 +290,8 @@ struct CollectionFileSafetyTests {
         #expect(try clips(destination).first?.id != recordID)
     }
 
-    @Test("a clip the history holds outside any collection is put into the collection; one in another is left")
-    func whenAClipIsAlreadyHere_thenItJoinsTheCollectionIfItHasNone() async throws {
+    @Test("a clip the history already holds stays where it is, in no collection or in another")
+    func whenAClipIsAlreadyHere_thenItIsNeverMoved() async throws {
         let destination = try side()
         for text in ["loose clip", "filed clip"] {
             try await destination.storage.ingest(PasteboardCapture(
@@ -313,11 +313,35 @@ struct CollectionFileSafetyTests {
 
         #expect(result.itemsImported == 1)
         #expect(result.alreadyPresent == 2)
-        #expect(result.addedToCollection == 1)
         let byText = try Dictionary(uniqueKeysWithValues: clips(destination).map { ($0.displayPreviewText, $0) })
-        #expect(byText["loose clip"]?.collectionID == result.collectionID)
+        #expect(byText["loose clip"]?.collectionID == nil)
         #expect(byText["filed clip"]?.collectionID == elsewhere)
         #expect(byText["brand new"]?.collectionID == result.collectionID)
+    }
+
+    @Test("an SVG picture is left out of an export and counted, so a file never carries what its reader refuses")
+    func whenAnSVGIsInTheCollection_thenExportLeavesItOut() async throws {
+        let source = try side()
+        let boardID = UUID()
+        let context = ModelContext(source.container)
+        context.insert(Pinboard(id: boardID, name: "Art", symbolName: "star", colorHex: "007AFF", sortOrder: 0))
+        let svg = ClipboardItem(
+            type: .image, previewText: "", contentHash: "svg-hash", byteSize: 90, deviceID: "test",
+            sequenceNumber: 1, collectionID: boardID
+        )
+        svg.blob = ClipboardBlob(
+            encryptedData: Data(count: 40),
+            nonceData: Data(count: 12),
+            mimeType: "public.svg-image"
+        )
+        context.insert(svg)
+        try context.save()
+
+        let file = try await source.exporter.exportCollectionFile(id: boardID)
+
+        #expect(file.exported == 0)
+        #expect(file.skippedPictures == 1)
+        #expect(file.skipped == 1)
     }
 
     @Test("a version 1 file imported twice adds its clips once")

@@ -88,9 +88,11 @@ public struct CollectionExportFile: Sendable {
     public let skippedUnreadable: Int
     public let skippedFiles: Int
     public let skippedOverLimit: Int
+    /// Pictures in a format the import does not take (SVG), so a file never carries data its own reader refuses.
+    public let skippedPictures: Int
 
     public var skipped: Int {
-        skippedSensitive + skippedTooLarge + skippedUnreadable + skippedFiles + skippedOverLimit
+        skippedSensitive + skippedTooLarge + skippedUnreadable + skippedFiles + skippedOverLimit + skippedPictures
     }
 }
 
@@ -99,9 +101,8 @@ public struct CollectionImportResult: Sendable, Equatable {
     public let collectionID: UUID
     public let collectionName: String
     public internal(set) var itemsImported = 0
-    /// Clips the history already held, and how many of those were put into the collection.
+    /// Clips the history already held (by content): left where they are, never moved into the collection.
     public internal(set) var alreadyPresent = 0
-    public internal(set) var addedToCollection = 0
     public internal(set) var skippedTooLarge = 0
     public internal(set) var skippedSensitive = 0
     public internal(set) var skippedUnreadable = 0

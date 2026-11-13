@@ -32,13 +32,10 @@ enum CollectionTransferText {
     static func importDetail(_ result: CollectionImportResult) -> String {
         var lines: [String] = []
         let name = result.collectionName
-        if result.itemsImported > 0 || result.addedToCollection > 0 {
+        if result.itemsImported > 0 {
             lines.append(String(localized: "Added to \u{201C}\(name)\u{201D}."))
         }
         if result.alreadyPresent > 0 { lines.append(CountText.alreadyHere(result.alreadyPresent)) }
-        if result.addedToCollection > 0 {
-            lines.append(String(localized: "\(result.addedToCollection) of them were put into the collection."))
-        }
         lines.append(skippedLines(
             tooLarge: result.skippedTooLarge, sensitive: result.skippedSensitive, unreadable: result.skippedUnreadable,
             files: result.skippedFiles
@@ -46,7 +43,10 @@ enum CollectionTransferText {
         return lines.filter { !$0.isEmpty }.joined(separator: "\n")
     }
 
-    static func skippedLines(tooLarge: Int, sensitive: Int, unreadable: Int, files: Int, overLimit: Int = 0) -> String {
+    static func skippedLines(
+        tooLarge: Int, sensitive: Int, unreadable: Int, files: Int, overLimit: Int = 0, pictures: Int = 0
+    )
+    -> String {
         var lines: [String] = []
         if tooLarge > 0 { lines.append(String(localized: "\(tooLarge) were too large and were left out.")) }
         if sensitive > 0 { lines.append(String(localized: "\(sensitive) were left out: a secret or a private app.")) }
@@ -54,6 +54,7 @@ enum CollectionTransferText {
         if overLimit > 0 {
             lines.append(String(localized: "\(overLimit) were left out: a file holds at most 1,000 clips."))
         }
+        if pictures > 0 { lines.append(String(localized: "\(pictures) were pictures Pesto can\u{2019}t share.")) }
         if unreadable > 0 { lines.append(String(localized: "\(unreadable) could not be read and were left out.")) }
         return lines.joined(separator: "\n")
     }

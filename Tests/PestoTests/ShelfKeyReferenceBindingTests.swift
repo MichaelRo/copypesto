@@ -24,6 +24,8 @@ private final class HandlerLog {
         coordinator.onReturnPlainFromSearch = { self.fired.append("onReturnPlainFromSearch") }
         coordinator.onPrevPinboard = { self.fired.append("onPrevPinboard") }
         coordinator.onNextPinboard = { self.fired.append("onNextPinboard") }
+        coordinator.onPrevAppChip = { self.fired.append("onPrevAppChip") }
+        coordinator.onNextAppChip = { self.fired.append("onNextAppChip") }
         coordinator.onOpenSettings = { self.fired.append("onOpenSettings") }
         coordinator.onNewCollection = { self.fired.append("onNewCollection") }
         coordinator.onPasteAllSelected = { self.fired.append("onPasteAllSelected") }
@@ -78,6 +80,7 @@ struct ShelfKeyReferenceBindingTests {
         "⌘ Y Quick Look the focused clip": ["onQuickLook"],
         "⌘ S Save the focused picture to Downloads": ["onSaveImage"],
         "⌘ [ ] Switch collections": ["onPrevPinboard", "onNextPinboard"],
+        "⌥ ⌘ [ ] Switch app filter": ["onPrevAppChip", "onNextAppChip"],
         "⌘ N Add a collection": ["onNewCollection"],
         "⌘ P Paste the selected clips all at once": ["onPasteAllSelected"],
         "⇧ ⌘ P Paste the selected clips one by one": ["onPasteSelectedOneByOne"],

@@ -85,4 +85,21 @@ struct ShelfCommandTests {
     func whenM_thenNothing() {
         #expect(ShelfCommand.resolve(characters: "m", keyCode: 46) == nil)
     }
+
+    @Test("⌥⌘[ and ⌥⌘] switch the app filter, and without ⌥ the same keys still switch collections")
+    func whenOption_thenAppChipInsteadOfCollection() {
+        #expect(ShelfCommand.resolve(characters: "[", keyCode: 33, option: true) == .previousAppChip)
+        #expect(ShelfCommand.resolve(characters: "]", keyCode: 30, option: true) == .nextAppChip)
+        #expect(ShelfCommand.resolve(characters: nil, keyCode: 33, option: true) == .previousAppChip)
+        #expect(ShelfCommand.resolve(characters: "[", keyCode: 33, option: false) == .previousCollection)
+        #expect(ShelfCommand.resolve(characters: "]", keyCode: 30) == .nextCollection)
+    }
+
+    @Test("⌥ changes nothing else: every other command resolves as it did")
+    func whenOption_thenOtherCommandsUnchanged() {
+        #expect(ShelfCommand.resolve(characters: "f", keyCode: 3, option: true) == .search)
+        #expect(ShelfCommand.resolve(characters: "c", keyCode: 8, option: true) == .copy)
+        #expect(ShelfCommand.resolve(characters: "p", keyCode: 35, shift: true, option: true) == .pasteOneByOne)
+        #expect(ShelfCommand.resolve(characters: "&", keyCode: 18, option: true) == .pasteNth(1))
+    }
 }

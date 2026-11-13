@@ -210,6 +210,8 @@ struct GridView: View {
                 onArrowKey: arrowKeyMoved,
                 onPrevPinboard: { cyclePinboard(forward: false) },
                 onNextPinboard: { cyclePinboard(forward: true) },
+                onPrevAppChip: { cycleAppChip(forward: false) },
+                onNextAppChip: { cycleAppChip(forward: true) },
                 onDelete: requestDeleteForKey,
                 onSelectAll: selectAllShown,
                 onReturnFromSearch: handleReturnFromSearch,

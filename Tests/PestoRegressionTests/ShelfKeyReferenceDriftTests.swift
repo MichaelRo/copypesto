@@ -12,6 +12,7 @@ struct ShelfKeyReferenceDriftTests {
         switch command {
         case .search: "⌘ F"
         case .previousCollection, .nextCollection: "⌘ [ ]"
+        case .previousAppChip, .nextAppChip: "⌥ ⌘ [ ]"
         case .settings: "⌘ ,"
         case .newCollection: "⌘ N"
         case .pasteAll: "⌘ P"
@@ -32,8 +33,9 @@ struct ShelfKeyReferenceDriftTests {
     // swiftlint:enable cyclomatic_complexity
 
     private static let commands: [ShelfCommand] = [
-        .search, .previousCollection, .nextCollection, .settings, .newCollection, .pasteAll, .pasteOneByOne, .undo,
-        .redo, .actions, .copy, .saveImage, .quickLook, .selectAll, .pasteNth(1), .returnKey, .showHidden
+        .search, .previousCollection, .nextCollection, .previousAppChip, .nextAppChip, .settings, .newCollection,
+        .pasteAll, .pasteOneByOne, .undo, .redo, .actions, .copy, .saveImage, .quickLook, .selectAll, .pasteNth(1),
+        .returnKey, .showHidden
     ]
 
     @Test("every command the shelf takes is listed in Settings")
@@ -50,7 +52,9 @@ struct ShelfKeyReferenceDriftTests {
         for entry in ShelfKeyReference.entries where entry.needsCommand && !entry.keyCodes.isEmpty {
             for code in entry.keyCodes {
                 #expect(
-                    ShelfCommand.resolve(characters: nil, keyCode: UInt16(code), shift: entry.needsShift) != nil,
+                    ShelfCommand.resolve(
+                        characters: nil, keyCode: UInt16(code), shift: entry.needsShift, option: entry.needsOption
+                    ) != nil,
                     "\(entry.id): key code \(code) is no ⌘ command"
                 )
             }

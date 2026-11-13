@@ -37,6 +37,8 @@ final class KeyNavCoordinator {
     var onEscapeFromSearch: (() -> Void)?
     var onPrevPinboard: (() -> Void)?
     var onNextPinboard: (() -> Void)?
+    var onPrevAppChip: (() -> Void)?
+    var onNextAppChip: (() -> Void)?
     var onDelete: (() -> Void)?
     var onSelectAll: (() -> Void)?
     var onReturnFromSearch: (() -> Void)?
@@ -132,7 +134,8 @@ final class KeyNavCoordinator {
     private func consumeCommandShortcut(_ event: NSEvent) -> Bool {
         let characters = event.charactersIgnoringModifiers
         guard let command = ShelfCommand.resolve(
-            characters: characters, keyCode: event.keyCode, shift: event.modifierFlags.contains(.shift)
+            characters: characters, keyCode: event.keyCode, shift: event.modifierFlags.contains(.shift),
+            option: event.modifierFlags.contains(.option)
         ) else { return false }
         switch command {
         // The shelf has no Save, so ⌘S on a clip that is not a picture is swallowed instead of beeping.
@@ -209,7 +212,8 @@ final class KeyNavCoordinator {
         case .quickLook: onQuickLook?()
         case .showHidden: onShowHidden?()
         case .saveImage, .selectAll, .undo, .redo,
-             .search, .previousCollection, .nextCollection, .settings, .newCollection: break
+             .search, .previousCollection, .nextCollection, .previousAppChip, .nextAppChip,
+             .settings, .newCollection: break
         }
     }
 
@@ -218,6 +222,8 @@ final class KeyNavCoordinator {
         case .search: onSearch?()
         case .previousCollection: onPrevPinboard?()
         case .nextCollection: onNextPinboard?()
+        case .previousAppChip: onPrevAppChip?()
+        case .nextAppChip: onNextAppChip?()
         case .settings: onOpenSettings?()
         case .newCollection: onNewCollection?()
         default: return false

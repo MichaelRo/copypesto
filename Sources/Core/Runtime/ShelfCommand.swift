@@ -8,6 +8,8 @@ public enum ShelfCommand: Equatable, Sendable {
     case search
     case previousCollection
     case nextCollection
+    case previousAppChip
+    case nextAppChip
     case settings
     case newCollection
     case pasteAll
@@ -37,8 +39,12 @@ public enum ShelfCommand: Equatable, Sendable {
     private static let digitKeyCodes: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9]
 
     /// `shift` only changes two pairs: ⌘P pastes the selection at once and ⇧⌘P one clip at a time, ⌘Z undoes and ⇧⌘Z
-    /// redoes. Every other command ignores it, as it always has.
-    public static func resolve(characters: String?, keyCode: UInt16, shift: Bool = false) -> ShelfCommand? {
+    /// redoes. `option` moves the two bracket keys from collections to app chips (⌥⌘[ and ⌥⌘]). Every other command
+    /// ignores both, as it always has.
+    public static func resolve(
+        characters: String?, keyCode: UInt16, shift: Bool = false, option: Bool = false
+    )
+    -> ShelfCommand? {
         if keyCode == 36 { return .returnKey }
         if let number = digitKeyCodes[keyCode] { return .pasteNth(number) }
         let command: ShelfCommand? = if let characters, !characters.isEmpty {
@@ -47,10 +53,11 @@ public enum ShelfCommand: Equatable, Sendable {
             byUSKeyCode[keyCode]
         }
 
-        guard shift else { return command }
         return switch command {
-        case .pasteAll: .pasteOneByOne
-        case .undo: .redo
+        case .pasteAll where shift: .pasteOneByOne
+        case .undo where shift: .redo
+        case .previousCollection where option: .previousAppChip
+        case .nextCollection where option: .nextAppChip
         default: command
         }
     }

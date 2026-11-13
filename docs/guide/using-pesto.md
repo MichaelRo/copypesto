@@ -51,7 +51,7 @@ ones that contain the words. This runs on your Mac.
 Collections keep related clips together.
 
 - Click **+** in the chip bar to create one without leaving the shelf. Pick a name and an icon; Pesto gives it a color you can change later.
-- **⌘[** and **⌘]** switch between collections while the shelf is open.
+- **⌘[** and **⌘]** switch between collections while the shelf is open. **⌥⌘[** and **⌥⌘]** step through the app chips, one app at a time and then back to all apps.
 - The shelf remembers the collection and filters you left it in for 90 seconds. Reopen it later and it starts on *All* (or on the collection of the app in front, if you gave it one).
 - A collection keeps its clips where they are: pasting or copying a clip does not move it inside the collection, only in *All*, which follows what you used last. Inside a collection the age under a card's title is when you first copied the clip, so a paste does not change it either. Drag a card to put it where you want it.
 - **⌘1 to ⌘9** paste the first nine clips, the number shown on each card.

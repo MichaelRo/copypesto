@@ -66,6 +66,7 @@ struct CommandBarView: View {
             }
         }
         .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
+        .onChange(of: appChips.map(\.bundleID), initial: true) { appState.appChips = appChips }
         .onAppear { suggestionsModel.start(appState) }
         .onDisappear { suggestionsModel.stop() }
         .onChange(of: appState.isOverlayVisible) { _, visible in if visible { suggestionsModel.refresh() } }

@@ -43,6 +43,7 @@ These work while the shelf is open.
 | **⌘C** | Copy the focused clip to the clipboard without pasting (it moves to the front); with several text clips selected, copy them joined by a blank line as Paste All does; in the search field it copies the selected text |
 | **⌘Y** | Quick Look the focused clip (not for a covered or hidden one); **Esc** closes the preview and leaves the shelf open |
 | **⌘[** **⌘]** | Switch collections |
+| **⌥⌘[** **⌥⌘]** | Switch app filter: no filter, then each app chip in turn |
 | **⌘N** | Add a collection |
 | **⌘P** | Paste the selected clips all at once, joined by a blank line |
 | **⇧⌘P** | Paste the selected clips one by one, one for each ⌘V |

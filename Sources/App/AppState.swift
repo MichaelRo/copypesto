@@ -80,6 +80,9 @@ final class AppState {
     var hasAccessibilityPermission = false
     /// The app chips switched on; a clip from any of them stays. Cleared when the shelf closes.
     var appChipFilter: Set<String> = []
+    /// The app chips on the bar, in order, for ⌥⌘[ and ⌥⌘]. Written by the command bar; not observed, so the grid is
+    /// not redrawn when the row changes.
+    @ObservationIgnored var appChips: [SourceApp] = []
     @ObservationIgnored var frontmostAppBundleID: String?
     @ObservationIgnored var frontmostAppName: String?
     var isScreenBeingShared = false

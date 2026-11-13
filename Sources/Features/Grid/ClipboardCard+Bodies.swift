@@ -102,7 +102,7 @@ extension ClipboardCard {
                 }
             }
             .padding(.horizontal, 10)
-            .padding(.bottom, shortcutNumber != nil || item.pasteCount >= 2 || item.collectionID != nil ? 28 : 8)
+            .padding(.bottom, 30)
         }
     }
 }

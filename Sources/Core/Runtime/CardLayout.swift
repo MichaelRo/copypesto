@@ -3,25 +3,29 @@ import CoreGraphics
 
 /// The vertical budget of a text card: header band, the gap under it, the footer, and what is left for text.
 public enum CardLayout {
-    public static let headerHeight: CGFloat = 34
-    public static let appTileSize: CGFloat = 20
-    public static let bodyTopPadding: CGFloat = 6
+    /// The source app's icon in the line of facts at the foot of the card: 16 points is a size every app icon is
+    /// drawn for, so it stays sharp, and it is the height of the keycap beside it.
+    public static let sourceTileSize: CGFloat = 16
+    /// The content starts this far under the card's top edge, the same as its side margins. No header band sits
+    /// above it (ADR 0044).
+    public static let contentTopInset: CGFloat = 10
 
     /// The footer row (a keycap or badge, about 18), its bottom padding (6), the spacer above it (4) and 8 of air, so
     /// the last line of text never touches the footer.
     public static let footerReserve: CGFloat = 36
 
-    public static let glyphTopInset: CGFloat = 12
+    public static let glyphTopInset: CGFloat = 16
     public static let glyphTopInsetAllowance: CGFloat = 4
 
-    /// Extra top padding that puts a large text's capital letters `glyphTopInset` under the header whatever its size:
+    /// Extra top padding that puts a large text's capital letters `glyphTopInset` under the card's top edge whatever
+    /// its size:
     /// the line box starts above the glyphs by `spaceAboveCaps` (ascender less cap height), more for a bigger size.
     public static func largeTextTopPadding(spaceAboveCaps: CGFloat) -> CGFloat {
-        min(max(0, glyphTopInset - bodyTopPadding - spaceAboveCaps), glyphTopInsetAllowance)
+        min(max(0, glyphTopInset - contentTopInset - spaceAboveCaps), glyphTopInsetAllowance)
     }
 
     public static func textHeightBudget(for size: CGSize) -> CGFloat {
-        max(0, size.height - headerHeight - bodyTopPadding - footerReserve)
+        max(0, size.height - contentTopInset - footerReserve)
     }
 
     public static func textLineLimit(for size: CGSize) -> Int {

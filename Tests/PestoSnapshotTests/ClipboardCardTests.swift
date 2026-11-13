@@ -478,11 +478,10 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }
 
-    func test_pictureCard_pasteCountPillOverABrightPicture() throws {
+    func test_pictureCard_whenOverABrightPicture_thenTheFactsSitOnThePillGround() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()
         let item = pictureItem(in: ctx, aspect: 1.0)
-        item.pasteCount = 4
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
     }
 

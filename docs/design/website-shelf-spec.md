@@ -31,14 +31,19 @@ pull request** (`CardSpecDriftTests` fails when the numbers in the first table s
 ## Values (from `CardLayout`, tested)
 | Part | App | Website |
 |---|---|---|
-| Header height | 34 pt | 2.125rem |
-| App tile | 20 pt | 1.25rem |
-| Space under the header | 6 pt | 0.375rem |
+| Space above the content | 10 pt | 0.625rem |
+| Source tile | 16 pt | 1rem |
 | Gap between paragraphs | 6 pt | 0.375rem |
 | Footer reserve | 36 pt | 2.25rem |
 
-Medium card, 200 × 180 pt (aspect 10 / 9): header 34, then 6, then 5 lines of text (5 × 18 = 90), then the footer. Small
-(160 × 140) shows 4 lines, Large (240 × 220) shows 6.
+**No header band since ADR 0044 (2026-11-12):** the content starts 10 pt under the card's top edge and one line of
+facts sits at the foot (shortcut number, a 16 pt source tile, the age and the size; the app's name joins on focus or
+hover; then expiry, snippet, shortcut, pin, paste count and collection). On a picture every part of that line sits on
+the pill ground and there is no scrim; on a color it is the fill's own ink. The sections below that still describe a
+header, a tile in it, a wash or a scrim are out of date until the site's shelf is redrawn from the app's new pictures.
+
+Medium card, 200 × 180 pt (aspect 10 / 9): 10, then 7 lines of text (7 × 18 = 126), then the line of facts. Small
+(160 × 140) shows 6 lines, Large (240 × 220) shows 8.
 
 ## `src/styles/home.css`
 | Rule | Now | Change to |

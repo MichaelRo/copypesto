@@ -6,21 +6,20 @@ import SwiftUI
 import XCTest
 @testable import Pesto
 
-/// D-07: the age under the app name is quiet text on the card's header tint, which sits on the shelf ground of the
-/// theme. Measured from the drawn card: the pixel furthest from the header's own colour in the age line is the text
-/// colour at full coverage, so the ratio is a little conservative.
+/// D-07, after ADR 0044: the age in the line of facts at the foot of a card is quiet text on the card's own fill, which
+/// sits on the shelf ground of the theme. Measured from the drawn card: the pixel furthest from the fill's colour in
+/// that line is the text colour at full coverage, so the ratio is a little conservative.
 @MainActor
-final class CardHeaderTimeContrastTests: XCTestCase {
+final class CardMetaLineContrastTests: XCTestCase {
     private let cardSize = CGSize(width: 200, height: 180)
     private let padding: CGFloat = 20
 
-    private func item(tint: String?) throws -> ClipboardItem {
+    private func item() throws -> ClipboardItem {
         let ctx = try ModelContext(ModelContainerSetup.makeInMemory())
         let item = ClipboardItem(
             type: .text, sourceAppName: "Notes", previewText: "Quick brown fox", contentHash: UUID().uuidString,
             byteSize: 15, deviceID: "test-device", sequenceNumber: 1
         )
-        item.sourceDominantColorHex = tint
         ctx.insert(item)
         return item
     }
@@ -32,9 +31,9 @@ final class CardHeaderTimeContrastTests: XCTestCase {
         return byte(color.redComponent) + byte(color.greenComponent) + byte(color.blueComponent)
     }
 
-    private func render(theme: AppTheme, dark: Bool, tint: String?) throws -> NSBitmapImageRep {
+    private func render(theme: AppTheme, dark: Bool) throws -> NSBitmapImageRep {
         let ground = Color(hex: theme.groundHex(dark: dark)) ?? .black
-        let root = try ClipboardCard(item: item(tint: tint))
+        let root = try ClipboardCard(item: item())
             .environment(\.shelfDrawsGlass, false)
             .preferredColorScheme(dark ? .dark : .light)
             .frame(width: cardSize.width, height: cardSize.height)
@@ -45,8 +44,16 @@ final class CardHeaderTimeContrastTests: XCTestCase {
         controller.view.frame = NSRect(
             x: 0, y: 0, width: cardSize.width + 2 * padding, height: cardSize.height + 2 * padding
         )
-        let rep = try XCTUnwrap(controller.view.bitmapImageRepForCachingDisplay(in: controller.view.bounds))
-        controller.view.cacheDisplay(in: controller.view.bounds, to: rep)
+        // Drawn at 2x, as on a Retina display: a view outside a window draws at 1x, where 10 pt text set on a half
+        // point never reaches full coverage and reads as a lighter colour than it is.
+        let bounds = controller.view.bounds
+        let rep = try XCTUnwrap(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(bounds.width * 2), pixelsHigh: Int(bounds.height * 2),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+            bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        rep.size = bounds.size
+        controller.view.cacheDisplay(in: bounds, to: rep)
         return rep
     }
 
@@ -54,10 +61,16 @@ final class CardHeaderTimeContrastTests: XCTestCase {
         rep.colorAt(x: column, y: row)?.usingColorSpace(.sRGB)
     }
 
-    /// The pixel rows of the header band that hold text: they differ clearly in brightness from the header.
+    /// Right of the source tile, left of the trailing marks.
+    private func ageColumns(scale: CGFloat) -> Range<Int> {
+        Int((padding + 32) * scale)..<Int((padding + 110) * scale)
+    }
+
+    /// The pixel rows of the line of facts that hold text: they differ clearly in brightness from the card's fill.
     private func textRows(_ rep: NSBitmapImageRep, scale: CGFloat, background: CGFloat) -> [Int] {
-        let columns = Int((padding + 40) * scale)..<Int((padding + cardSize.width - 40) * scale)
-        return (Int((padding + 8) * scale)..<Int((padding + 62) * scale)).filter { row in
+        let columns = ageColumns(scale: scale)
+        let bottom = padding + cardSize.height
+        return (Int((bottom - 28) * scale)..<Int((bottom - 3) * scale)).filter { row in
             columns.contains { column in
                 guard let color = pixel(rep, column, row) else { return false }
                 return abs(color.brightnessComponent - background) > 0.2
@@ -65,7 +78,7 @@ final class CardHeaderTimeContrastTests: XCTestCase {
         }
     }
 
-    /// The age is the last line of text in the header: the rows of the last unbroken run.
+    /// The age is the last line of text on the card: the rows of the last unbroken run.
     private func lastRun(of rows: [Int]) -> [Int] {
         var run: [Int] = []
         for row in rows.reversed() {
@@ -75,34 +88,34 @@ final class CardHeaderTimeContrastTests: XCTestCase {
         return run
     }
 
-    /// The contrast of the age line against the header, or nil when no text was found there.
-    private func ageContrast(theme: AppTheme, dark: Bool, tint: String?) throws -> Double? {
-        let rep = try render(theme: theme, dark: dark, tint: tint)
+    /// The contrast of the age against the card's fill, or nil when no text was found there.
+    private func ageContrast(theme: AppTheme, dark: Bool) throws -> (ratio: Double, colors: String)? {
+        let rep = try render(theme: theme, dark: dark)
         let scale = CGFloat(rep.pixelsWide) / (cardSize.width + 2 * padding)
         let column = Int((padding + cardSize.width - 12) * scale)
-        let backgroundColor = try XCTUnwrap(pixel(rep, column, Int((padding + 30) * scale)))
+        let backgroundColor = try XCTUnwrap(pixel(rep, column, Int((padding + cardSize.height - 14) * scale)))
         let run = lastRun(of: textRows(rep, scale: scale, background: backgroundColor.brightnessComponent))
-        let columns = Int((padding + 40) * scale)..<Int((padding + cardSize.width - 40) * scale)
+        let columns = ageColumns(scale: scale)
         let candidates = run.flatMap { row in columns.compactMap { pixel(rep, $0, row) } }
         let text = candidates.max {
             abs($0.brightnessComponent - backgroundColor.brightnessComponent)
                 < abs($1.brightnessComponent - backgroundColor.brightnessComponent)
         }
-        return text.map { ContrastRatio.between(hex($0), hex(backgroundColor)) }
+        return text.map {
+            (ContrastRatio.between(hex($0), hex(backgroundColor)), "\(hex($0)) on \(hex(backgroundColor))")
+        }
     }
 
-    func test_theAgeInTheHeader_readsOnEveryThemeAndHeaderColour() throws {
+    func test_whenAnyThemeAndAppearance_thenTheAgeInTheLineOfFactsReads() throws {
         var report: [String] = []
         var failures: [String] = []
         for theme in AppTheme.allCases {
             for dark in [false, true] {
-                for tint in [nil, "D9A521", "3B82C4", "8A4F8F"] {
-                    let ratio = try XCTUnwrap(ageContrast(theme: theme, dark: dark, tint: tint), "no age text found")
-                    let line = "\(theme) \(dark ? "dark" : "light") \(tint ?? "plain"): "
-                        + String(format: "%.2f", ratio)
-                    report.append(line)
-                    if ratio < 4.5 { failures.append(line) }
-                }
+                let measured = try XCTUnwrap(ageContrast(theme: theme, dark: dark), "no age text found")
+                let line = "\(theme) \(dark ? "dark" : "light"): " + String(format: "%.2f", measured.ratio)
+                    + " (\(measured.colors))"
+                report.append(line)
+                if measured.ratio < 4.5 { failures.append(line) }
             }
         }
         add(XCTAttachment(string: report.joined(separator: "\n")))

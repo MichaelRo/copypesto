@@ -16,9 +16,8 @@ struct CardSpecDriftTests {
             encoding: .utf8
         )
         let rows: [(String, CGFloat)] = [
-            ("Header height", CardLayout.headerHeight),
-            ("App tile", CardLayout.appTileSize),
-            ("Space under the header", CardLayout.bodyTopPadding),
+            ("Space above the content", CardLayout.contentTopInset),
+            ("Source tile", CardLayout.sourceTileSize),
             ("Gap between paragraphs", CardLayout.paragraphGap),
             ("Footer reserve", CardLayout.footerReserve)
         ]
@@ -47,20 +46,6 @@ struct CardSpecDriftTests {
             Range(match.range(at: 1), in: bar).map { String(bar[$0]) }
         }
         #expect(drawn == listed, "the search bar draws \(drawn) but website-shelf-spec.md lists \(listed)")
-    }
-
-    @Test("the app wash share in the spec is the one the card draws")
-    func specMatchesWash() throws {
-        let card = try String(
-            contentsOf: SourceTree.sources.appendingPathComponent("Features/Grid/ClipboardCard+Parts.swift"),
-            encoding: .utf8
-        )
-        let match = try #require(card.firstMatch(of: /static let appWashShare = 0\.(\d+)/))
-        let spec = try String(
-            contentsOf: SourceTree.repositoryRoot.appendingPathComponent("docs/design/website-shelf-spec.md"),
-            encoding: .utf8
-        )
-        #expect(spec.contains("\(match.1) %") || spec.contains("\(match.1)%"), "spec must name the \(match.1)% wash")
     }
 
     @Test("only a standalone color card computes detectedColor or badges as Color")

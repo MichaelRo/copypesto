@@ -3,8 +3,8 @@ import AppKit
 import PestoCore
 import SwiftUI
 
-/// Source-app icon shown in the card header.
-/// `size` defaults to 16 pt (image/URL overlay rows); pass 22 for the standard-card header.
+/// The source app's icon in a card's line of facts; an app macOS cannot find shows a quiet clipboard glyph, drawn at
+/// its own proportions.
 struct SourceAppIconView: View {
     let bundleID: String?
     let appName: String?
@@ -19,7 +19,7 @@ struct SourceAppIconView: View {
                     .frame(width: size, height: size)
             } else {
                 Image(systemName: "doc.on.clipboard")
-                    .resizable()
+                    .font(.caption)
                     .frame(width: size, height: size)
                     .pestoQuiet()
             }

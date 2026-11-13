@@ -9,19 +9,7 @@ public enum PictureScrim {
     public static let nameOpacity = 1.0
     public static let ageOpacity = 0.85
     public static let pillOpacity = 0.85
-    public static let pasteCountOpacity = 1.0
     public static let badgeOpacity = 1.0
-
-    public static func opacity(atHeight height: Double) -> Double {
-        let header = Double(CardLayout.headerHeight)
-        guard height > 0 else { return topOpacity }
-        if height <= header {
-            let t = height / header
-            return topOpacity + (headerBottomOpacity - topOpacity) * t
-        }
-        guard height < header + fadeHeight else { return 0 }
-        return headerBottomOpacity * (1 - (height - header) / fadeHeight)
-    }
 
     /// WCAG contrast of `textHex` at `textOpacity` over a picture covered by `coverHex` at `coverOpacity`.
     public static func worstCaseContrast(

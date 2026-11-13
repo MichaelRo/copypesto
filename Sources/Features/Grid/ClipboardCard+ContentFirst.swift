@@ -65,8 +65,7 @@ extension ClipboardCard {
         return ZStack(alignment: .top) {
             surface
             pictureLayer(fit: fit)
-            pictureScrim
-            contentFirstChrome(over: over, onPicture: true, showsGIF: isAnimated, label: nil)
+            contentFirstChrome(MetaLineStyle(over: over, onPicture: true, showsGIF: isAnimated), label: nil)
         }
     }
 
@@ -75,14 +74,7 @@ extension ClipboardCard {
         return ZStack(alignment: .top) {
             surface
             urlImageBody
-            pictureScrim
-            VStack(alignment: .leading, spacing: 0) {
-                header(over: over)
-                Spacer(minLength: 0)
-                contentFirstFooter(over: over, onPicture: true, showsGIF: urlOGImageIsAnimated)
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 8)
-            }
+            contentFirstChrome(MetaLineStyle(over: over, onPicture: true, showsGIF: urlOGImageIsAnimated), label: nil)
         }
     }
 
@@ -92,7 +84,7 @@ extension ClipboardCard {
         return ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 8)
                 .fill(detectedColor ?? Color.purple.opacity(0.5))
-            contentFirstChrome(over: over, onPicture: false, showsGIF: false, label: label)
+            contentFirstChrome(MetaLineStyle(over: over), label: label)
         }
     }
 
@@ -115,28 +107,10 @@ extension ClipboardCard {
         }
     }
 
-    private var pictureScrim: some View {
-        let solid = Double(CardLayout.headerHeight)
-        let total = solid + PictureScrim.fadeHeight
-        return LinearGradient(
-            stops: [
-                .init(color: surface.opacity(PictureScrim.topOpacity), location: 0),
-                .init(color: surface.opacity(PictureScrim.headerBottomOpacity), location: solid / total),
-                .init(color: surface.opacity(0), location: 1)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .frame(height: total)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .allowsHitTesting(false)
-    }
-
-    private func contentFirstChrome(over: HeaderOverlay, onPicture: Bool, showsGIF: Bool, label: String?) -> some View {
+    private func contentFirstChrome(_ style: MetaLineStyle, label: String?) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            header(over: over)
             Spacer(minLength: 0)
-            if let label {
+            if let label, let over = style.over {
                 Text(label)
                     .scaledFont(size: CardInk.labelPoints(forLength: label.count), weight: .semibold, maxScale: 1.15)
                     .foregroundStyle(over.ink)
@@ -144,53 +118,9 @@ extension ClipboardCard {
                     .padding(.horizontal, 12)
                     .padding(.bottom, 4)
             }
-            contentFirstFooter(over: over, onPicture: onPicture, showsGIF: showsGIF)
+            metaLine(style)
                 .padding(.horizontal, 10)
                 .padding(.bottom, 8)
-        }
-    }
-
-    private func contentFirstFooter(over: HeaderOverlay, onPicture: Bool, showsGIF: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            if !item.tags.isEmpty {
-                tagChipsRow(onDark: onPicture)
-            }
-            HStack(alignment: .center, spacing: 6) {
-                if let number = shortcutNumber {
-                    ContentFirstPill(text: "\u{2318}\(number)", ink: over.ink, onPicture: onPicture)
-                }
-                if showsGIF {
-                    ContentFirstPill(text: "GIF", ink: over.ink, onPicture: onPicture)
-                }
-                Spacer(minLength: 4)
-                if item.pasteCount >= 2 {
-                    ContentFirstPill(text: "\u{2191}\(item.pasteCount)", ink: over.ink, onPicture: onPicture)
-                }
-                if let collectionID = item.collectionID,
-                   let collection = availableCollections.first(where: { $0.id == collectionID })
-                {
-                    contentFirstCollectionBadge(collection, ink: over.ink, onPicture: onPicture)
-                }
-            }
-        }
-        .environment(\.colorScheme, over.scheme)
-    }
-
-    /// The collection badge without the frosted ground the standard card gives it, which no contrast can be promised
-    /// for over a picture: white on the pill ground there, the fill's own ink on a color.
-    private func contentFirstCollectionBadge(_ collection: CollectionRef, ink: Color, onPicture: Bool) -> some View {
-        HStack(spacing: 3) {
-            CollectionIcon(symbolName: collection.symbolName)
-                .font(.caption2.weight(.medium))
-            Text(collection.name)
-                .font(.caption2.weight(.medium))
-                .lineLimit(1)
-        }
-        .foregroundStyle(ink.opacity(PictureScrim.badgeOpacity))
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background {
-            if onPicture { Capsule().fill(surface.opacity(PictureScrim.pillOpacity)) }
         }
     }
 

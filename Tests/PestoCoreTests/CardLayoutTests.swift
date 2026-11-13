@@ -5,9 +5,12 @@ import Testing
 
 @Suite("Card layout")
 struct CardLayoutTests {
-    @Test("the three card sizes show 4, 5 and 6 lines of text", arguments: [
-        (160, 4), (200, 5), (240, 6)
-    ])
+    @Test(
+        "without a header band the three card sizes show 6, 7 and 8 lines of text (they showed 4, 5 and 6)",
+        arguments: [
+            (160, 6), (200, 7), (240, 8)
+        ]
+    )
     func whenCardSize_thenLineLimit(width: Int, lines: Int) {
         #expect(CardLayout.textLineLimit(for: CardMetrics.dimensions(width: width)) == lines)
     }
@@ -28,16 +31,16 @@ struct CardLayoutTests {
         }
     }
 
-    @Test("the header band is 34 points, with a 20 point app tile")
-    func whenHeader_thenQuietBand() {
-        #expect(CardLayout.headerHeight == 34)
-        #expect(CardLayout.appTileSize == 20)
+    @Test("the content starts at the side margin's distance from the top, and the app icon is 16 points")
+    func whenNoHeader_thenContentStartsAtTheTop() {
+        #expect(CardLayout.contentTopInset == 10)
+        #expect(CardLayout.sourceTileSize == 16)
     }
 
     @Test("a paragraph gap costs a third of a line at the medium size, and the block holds the line limit exactly")
     func whenBlock_thenLinesTimesLineHeight() {
         let medium = CardMetrics.dimensions(width: 200)
-        #expect(CardLayout.textBlockHeight(for: medium) == 90 + CardLayout.lineTolerance)
+        #expect(CardLayout.textBlockHeight(for: medium) == 126 + CardLayout.lineTolerance)
         #expect(CardLayout.paragraphGap * 3 == CardTextScale.lineHeight(cardWidth: 200))
     }
 
@@ -53,14 +56,14 @@ struct CardLayoutTests {
         }
     }
 
-    @Test("the glyph tops of both steps sit the same distance under the header", arguments: [5.9, 4.4, 5.0])
+    @Test("the glyph tops of both steps sit the same distance under the card's top edge", arguments: [5.9, 4.4, 5.0])
     func whenSizes_thenCapTopFixed(spaceAboveCaps: Double) {
         let padding = CardLayout.largeTextTopPadding(spaceAboveCaps: CGFloat(spaceAboveCaps))
-        let capTop = CardLayout.bodyTopPadding + padding + CGFloat(spaceAboveCaps)
+        let capTop = CardLayout.contentTopInset + padding + CGFloat(spaceAboveCaps)
         #expect(abs(capTop - CardLayout.glyphTopInset) < 0.001)
     }
 
-    @Test("the offset never pulls the text up into the header and stays inside the allowance")
+    @Test("the offset never pulls the text up past the top inset and stays inside the allowance")
     func whenTallSpace_thenNoNegativePadding() {
         #expect(CardLayout.largeTextTopPadding(spaceAboveCaps: 40) == 0)
         #expect(CardLayout.largeTextTopPadding(spaceAboveCaps: 3) <= CardLayout.glyphTopInsetAllowance)

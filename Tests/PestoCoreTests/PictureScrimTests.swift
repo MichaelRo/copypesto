@@ -51,23 +51,12 @@ struct PictureScrimTests {
     @Test("the paste count and the collection badge sit on the pill ground and pass over a white picture")
     func whenWhitePicture_thenFooterTextPassesAA() {
         let ground = PictureScrim.pillOpacity
-        #expect(PictureScrim
-            .worstCaseContrast(coverOpacity: ground, textOpacity: PictureScrim.pasteCountOpacity) >= 4.5)
         #expect(PictureScrim.worstCaseContrast(coverOpacity: ground, textOpacity: PictureScrim.badgeOpacity) >= 4.5)
     }
 
     @Test("a weaker scrim would fail, so the numbers are what keep the guarantee")
     func whenScrimTooWeak_thenContrastFails() {
         #expect(PictureScrim.worstCaseContrast(coverOpacity: 0.4, textOpacity: 1) < 4.5)
-    }
-
-    @Test("the scrim eases across the header band and fades to clear below it")
-    func whenOpacityAtHeight_thenEasesThenFading() {
-        #expect(PictureScrim.opacity(atHeight: 0) == PictureScrim.topOpacity)
-        #expect(PictureScrim.opacity(atHeight: Double(CardLayout.headerHeight)) == PictureScrim.headerBottomOpacity)
-        #expect(PictureScrim.opacity(atHeight: Double(CardLayout.headerHeight) + PictureScrim.fadeHeight) == 0)
-        let middle = PictureScrim.opacity(atHeight: Double(CardLayout.headerHeight) + PictureScrim.fadeHeight / 2)
-        #expect(middle > 0 && middle < PictureScrim.headerBottomOpacity)
     }
 }
 

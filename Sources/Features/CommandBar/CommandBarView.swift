@@ -56,14 +56,14 @@ struct CommandBarView: View {
                         .transition(.opacity.combined(with: .move(edge: .trailing)))
                 }
             }
-            .animation(Motion.animation(.easeInOut(duration: 0.2)), value: appState.isSearchActive)
+            .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
 
             if appState.isSearchActive {
                 filterBar
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .animation(Motion.animation(.easeInOut(duration: 0.2)), value: appState.isSearchActive)
+        .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
         .onAppear { suggestionsModel.start(appState) }
         .onDisappear { suggestionsModel.stop() }
         .onChange(of: appState.isOverlayVisible) { _, visible in if visible { suggestionsModel.refresh() } }
@@ -187,7 +187,7 @@ struct CommandBarView: View {
                 collapsesLabels: !shownPinboards.isEmpty
             )
         }
-        .animation(Motion.animation(.spring(response: 0.22, dampingFraction: 0.85)), value: creating)
+        .animation(Motion.animation(.pestoMove), value: creating)
         .animation(Motion.animation(.pestoPop), value: pinboards.map(\.id))
         .animation(Motion.animation(.pestoQuick), value: appState.draggingPinboardID)
         .animation(Motion.animation(.pestoQuick), value: chipInsertionBar)

@@ -166,7 +166,7 @@ struct SettingsShelfPreview: View {
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.primary.opacity(0.10)))
         .environment(\.colorScheme, scheme)
         .shelfSurfaceEnvironment()
-        .animation(Motion.animation(.easeOut(duration: 0.2)), value: cardDimensions.width)
+        .animation(Motion.animation(.pestoMove), value: cardDimensions.width)
         // The tint, the dots and the borders change together, so a theme reads as one change and not as a tint that
         // lags behind colours that jumped.
         .animation(Motion.animation(.pestoWash), value: themeRaw)

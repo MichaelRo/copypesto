@@ -21,7 +21,7 @@ struct ShelfBackground: View {
         base
             .overlay { wash }
             .onChange(of: glow.color) { _, newColor in
-                withAnimation(Motion.animation(.smooth(duration: 0.6))) { animatedColor = newColor }
+                withAnimation(Motion.animation(.pestoWash)) { animatedColor = newColor }
             }
     }
 

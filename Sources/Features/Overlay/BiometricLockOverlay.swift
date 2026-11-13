@@ -49,7 +49,7 @@ struct BiometricLockOverlay<Content: View>: View {
         .onChange(of: appState.isOverlayVisible) { _, visible in
             if !visible { shelfActions.finishShelfAuthentication(false) }
         }
-        .animation(Motion.animation(.easeInOut(duration: 0.2)), value: appState.isHistoryLocked)
+        .animation(Motion.animation(.pestoMove), value: appState.isHistoryLocked)
         .task(id: shouldPromptAutomatically) {
             biometricFailed = false
             embeddedAttempt = 0
@@ -71,7 +71,7 @@ struct BiometricLockOverlay<Content: View>: View {
     /// The password or fallback unlock; a refusal shakes the glyph like a wrong password does.
     private func attemptUnlock() async {
         await shelfActions.performBiometricUnlock()
-        if appState.isHistoryLocked { withAnimation(Motion.animation(.easeOut(duration: 0.4))) { shake += 1 } }
+        if appState.isHistoryLocked { withAnimation(Motion.animation(.pestoWash)) { shake += 1 } }
     }
 
     private var lockScreen: some View {
@@ -106,7 +106,7 @@ struct BiometricLockOverlay<Content: View>: View {
                     embeddedAttempt += 1
                 } else {
                     biometricFailed = true
-                    withAnimation(Motion.animation(.easeOut(duration: 0.4))) { shake += 1 }
+                    withAnimation(Motion.animation(.pestoWash)) { shake += 1 }
                 }
             }
             .id(embeddedAttempt)

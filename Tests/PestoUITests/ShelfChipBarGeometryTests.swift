@@ -46,9 +46,9 @@ final class ShelfChipBarGeometryTests: PestoUITestCase {
             "the first app chip should sit right after the last collection or tag chip"
         )
         let search = element(AccessibilityID.searchButton).frame
-        let windowButton = element(AccessibilityID.floatingWindowButton).frame
+        let lastToolbarButton = element(AccessibilityID.settingsButton).frame
         XCTAssertGreaterThan(search.minX, appChips.last?.frame.maxX ?? .infinity, "the search button follows the chips")
-        XCTAssertLessThan(overlay.frame.maxX - windowButton.maxX, 48, "the toolbar belongs at the bar's right end")
+        XCTAssertLessThan(overlay.frame.maxX - lastToolbarButton.maxX, 32, "the toolbar belongs at the bar's right end")
     }
 
     func test_whenTheCollectionsOverflow_thenEveryAppChipStaysInReachLeftOfTheToolbar() {

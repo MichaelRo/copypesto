@@ -49,18 +49,20 @@ struct CommandBarView: View {
         VStack(spacing: 4) {
             HStack(spacing: 0) {
                 if appState.isSearchActive {
+                    // Opens from the search button's end of the bar. Focus is set the moment search starts, before this
+                    // motion, so a key typed straight away goes into the field.
                     searchField
-                        .transition(.opacity.combined(with: .move(edge: .leading)))
+                        .transition(.scale(scale: 0.6, anchor: .trailing).combined(with: .opacity))
                 } else {
                     chipsRow
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
+                        .transition(.opacity)
                 }
             }
             .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
 
             if appState.isSearchActive {
                 filterBar
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(.opacity.animation(Motion.animation(.pestoQuick.delay(0.06))))
             }
         }
         .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)

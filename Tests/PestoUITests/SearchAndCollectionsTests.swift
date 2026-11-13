@@ -157,6 +157,21 @@ final class SearchAndCollectionsTests: PestoUITestCase {
     }
 }
 
+final class SearchOpeningMotionTests: PestoUITestCase {
+    /// Search opens with motion (the field grows from the search button's end, the filters arrive after it), and the
+    /// field takes keys from the first frame: a word typed at once must arrive whole.
+    func test_whenSearchOpensWithMotion_thenAWordTypedAtOnceIsNotLost() {
+        launch(motion: true)
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        app.typeText("pine nuts")
+        let field = element(AccessibilityID.searchField)
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertEqual(field.value as? String, "pine nuts", "keys typed during the opening were lost")
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
+    }
+}
+
 final class FilterBarLayoutTests: PestoUITestCase {
     /// The chip groups are one row told apart by dividers, and each is a named group for VoiceOver: "Any time" must
     /// not read as part of the type group.

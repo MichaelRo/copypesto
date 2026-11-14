@@ -301,11 +301,16 @@ Run on two physical Macs signed in to the same Apple Account with iCloud Drive o
 ## The iPhone and iPad app
 
 `make test-mobile` runs the iOS test target on an iPhone and then an iPad simulator (`IPHONE_SIMULATOR`, `IPAD_SIMULATOR`
-name them); `make test-mobile-ui` runs `LibrarySmokeUITests`, one smoke test per idiom, each skipping on the other idiom.
-A `-UITestMode` launch of the iOS app honors the flag only because `Sources/Resources/PestoMobile-Info.plist` carries
-`PestoAllowsTestHooks`, and it seeds a few clips through ingest (`MobileSeed`, Debug only) unless `PESTO_UITEST_SEED` is
-`empty`. The iPad test turns the simulator to landscape, where a three-column split view shows its sidebar; the
-screenshot it attaches comes out rotated (`sips -r 270` puts it upright). The tests are hosted in the iOS app, so the runtime seams keep them off real data as on the Mac. The target
+name them); `make test-mobile-ui` runs `LibrarySmokeUITests`: two iPhone tests (copy, search, Pinned, the detail sheet;
+dark and an accessibility text size) and one iPad test (sidebar, a collection, the inspector, the chip row with the
+sidebar hidden), each skipping on the other idiom. A `-UITestMode` launch of the iOS app honors the flag only because
+`Sources/Resources/PestoMobile-Info.plist` carries `PestoAllowsTestHooks`, and it seeds a clip of each kind through
+ingest, pins one and files one in the collection "Trip" (`MobileSeed`, Debug only) unless `PESTO_UITEST_SEED` is
+`empty`. `PESTO_UITEST_DEFAULT_appearanceMode=dark` gives a dark launch and `-UIPreferredContentSizeCategoryName
+UICTContentSizeCategoryAccessibilityL` a large text size. The iPad test turns the simulator to landscape, where the split
+view shows its sidebar; the screenshot it attaches comes out rotated. After a long press or a sheet, XCTest waits about
+60 seconds for an "animations complete" notice that never comes (the app is idle, measured at 0% CPU), so each of the
+longer tests takes over two minutes. The tests are hosted in the iOS app, so the runtime seams keep them off real data as on the Mac. The target
 also compiles `Tests/PestoCoreTests/Sync`, which proves the sync format and its keys on iOS; a helper there that needs
 AppKit is left out in `Pesto.yml`. The gate does not run these tests yet. A simulator has no iCloud Keychain, no real
 iCloud Drive and no Face ID hardware: those are hand checks on a device.

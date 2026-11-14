@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-import AppKit
 import CryptoKit
+import Foundation
 import ImageIO
 import SwiftData
 
@@ -51,7 +51,7 @@ public actor StorageService: ModelActor {
     let nsfwModeProvider: @Sendable () -> NSFWMode
     let encryption = BlobEncryption()
     let keyRotator: @Sendable () throws -> Void
-    let resolver = SourceAppResolver()
+    let resolver: any SourceAppResolving = SourceApps.resolver()
     /// Tracks the single most-recently-ingested hash with its timestamp. Used only to suppress
     /// the very-rapid re-capture of the *current latest* item (e.g. multiple paste echoes within
     /// a few hundred ms). Any other re-copy — including copying an older item again — must
@@ -188,8 +188,9 @@ public actor StorageService: ModelActor {
 
         stages.next("classify")
         // 2. Classify type from pasteboard UTI, then ContentClassifier for text.
-        let pbType = NSPasteboard.PasteboardType(capture.typeIdentifier)
-        let (clipType, classifiedLanguage) = clipboardType(for: pbType, payloadString: capture.payloadString)
+        let (clipType, classifiedLanguage) = clipboardType(
+            for: capture.typeIdentifier, payloadString: capture.payloadString
+        )
 
         // 3. For images, compute pHash and skip if visually identical to a recent capture
         //    (runs before OCR so duplicates are never OCR-processed twice)
@@ -538,21 +539,14 @@ public actor StorageService: ModelActor {
 }
 
 private func clipboardType(
-    for pbType: NSPasteboard.PasteboardType,
+    for typeIdentifier: String,
     payloadString: String?
 )
 -> (type: ClipboardType, detectedLanguage: String?) {
-    switch pbType {
-    case .png, .tiff,
-         NSPasteboard.PasteboardType("public.jpeg"),
-         NSPasteboard.PasteboardType("public.heic"),
-         NSPasteboard.PasteboardType("org.webmproject.webp"),
-         NSPasteboard.PasteboardType("public.webp"),
-         NSPasteboard.PasteboardType("com.compuserve.gif"),
-         NSPasteboard.PasteboardType("public.gif"),
-         NSPasteboard.PasteboardType("com.adobe.pdf"),
-         NSPasteboard.PasteboardType("public.svg-image"): return (.image, nil)
-    case .fileURL: return (.file, nil)
+    switch typeIdentifier {
+    case "public.png", "public.tiff", "public.jpeg", "public.heic", "org.webmproject.webp", "public.webp",
+         "com.compuserve.gif", "public.gif", "com.adobe.pdf", "public.svg-image": return (.image, nil)
+    case "public.file-url": return (.file, nil)
     default:
         let result = ContentClassifier.classify(text: payloadString ?? "")
         return (result.type, result.detectedLanguage)

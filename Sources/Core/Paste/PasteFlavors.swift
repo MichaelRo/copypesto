@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// A clip is stored under one pasteboard type, but the app receiving the paste may read only the plain-text one:
@@ -71,3 +72,4 @@ public enum PasteFlavors {
         try? NSAttributedString(data: data, options: [.documentType: type], documentAttributes: nil).string
     }
 }
+#endif

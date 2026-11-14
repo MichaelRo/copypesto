@@ -62,8 +62,16 @@ public enum SyncEntitlement {
     /// True when this build was signed with the application-identifier entitlement a provisioning profile grants, which
     /// is what the iCloud Keychain item needs. A self-signed or profile-less build answers false.
     public static var isPresent: Bool {
+        #if os(macOS)
         guard let task = SecTaskCreateFromSelf(nil) else { return false }
         return SecTaskCopyValueForEntitlement(task, "com.apple.application-identifier" as CFString, nil) != nil
+        #elseif targetEnvironment(simulator)
+        // The simulator has no iCloud Keychain, so a key stored as synchronizable there would never arrive anywhere.
+        false
+        #else
+        // Every signed iOS app carries its application identifier.
+        true
+        #endif
     }
 
     public static func keyStore(

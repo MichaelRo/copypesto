@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 public enum ClipboardAppSource: String, CaseIterable, Sendable {
@@ -62,3 +63,4 @@ public enum ClipboardAppSource: String, CaseIterable, Sendable {
         }
     }
 }
+#endif

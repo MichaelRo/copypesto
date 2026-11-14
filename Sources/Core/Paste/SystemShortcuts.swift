@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 import Foundation
 
@@ -27,3 +28,4 @@ public enum SystemShortcuts {
         return wanted != 0 && list.contains { $0.keyCode == binding.keyCode && $0.modifiers & carried == wanted }
     }
 }
+#endif

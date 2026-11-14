@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Stands in for the real paste (focus restore, Accessibility write, ⌘V) under UI test: it appends what
@@ -55,3 +56,4 @@ public struct PasteRecorder: Sendable {
         return content.split(separator: "\n").compactMap { try? JSONDecoder().decode(Entry.self, from: Data($0.utf8)) }
     }
 }
+#endif

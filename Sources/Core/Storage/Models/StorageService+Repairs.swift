@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#endif
 import CryptoKit
+import Foundation
 import SwiftData
 
 public extension StorageService {
@@ -10,7 +13,11 @@ public extension StorageService {
     /// preview, so its card showed a title and nothing else. Idempotent; a clip that cannot be fixed is left alone.
     func repairMisreadClips() async throws -> (reclassified: Int, rebuilt: Int) {
         let reclassified = try await reclassifyNumbersStoredAsColours()
+        #if os(macOS)
         let rebuilt = try await rebuildEmptyRichTextClips()
+        #else
+        let rebuilt = 0
+        #endif
         try removeSampleSnippetsPinboard()
         try ensureSnippetsCollection()
         return (reclassified, rebuilt)
@@ -86,6 +93,7 @@ public extension StorageService {
         return changed
     }
 
+    #if os(macOS)
     private func rebuildEmptyRichTextClips() async throws -> Int {
         let textRaw = ClipboardType.text.rawValue
         let ids = try modelContext.fetchIdentifiers(FetchDescriptor<ClipboardItem>(
@@ -158,4 +166,5 @@ public extension StorageService {
         default: nil
         }
     }
+    #endif
 }

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import CoreGraphics
 import CryptoKit
@@ -87,7 +88,7 @@ public enum SeedFixtures {
 
     private static func storyCaptures(for profile: SeedProfile) -> [PasteboardCapture] {
         #if DEBUG
-            if profile == .lunchRush { return LunchRushSeed.captures() }
+        if profile == .lunchRush { return LunchRushSeed.captures() }
         #endif
         return MarketingSeed.captures()
     }
@@ -365,3 +366,4 @@ public enum SeedFixtures {
         return NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) ?? Data()
     }
 }
+#endif

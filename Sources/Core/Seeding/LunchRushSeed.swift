@@ -1,151 +1,153 @@
 // SPDX-License-Identifier: MIT
 #if DEBUG
-    import Foundation
+#if os(macOS)
+import Foundation
 
-    /// The clips behind the website's pictures and the teaser's shelf frames (first made for the retired film
-    /// "The Lunch Rush"). Nothing is real: Apple's own apps are the sources,
-    /// every
-    /// address is example.com, the card is the published test number and no clip says anything about health.
-    public enum LunchRushSeed {
-        public struct Snippet: Sendable {
-            public let title: String
-            public let text: String
-            public let shortcut: Int
-        }
-
-        public struct ExtraCollection: Sendable {
-            public let name: String
-            public let symbol: String
-            public let colorHex: String
-        }
-
-        public struct Link: Sendable {
-            public let title: String
-            public let url: String
-        }
-
-        public static let cardNumber = "4242 4242 4242 4242"
-        public static let supplierCollection = "Supplier links"
-        /// Two more chips for the shelf's row, so it reads as a life and not a demo (the teaser never opens them).
-        public static let extraCollections = [
-            ExtraCollection(name: "Travel", symbol: "airplane", colorHex: "#E8A33D"),
-            ExtraCollection(name: "Home", symbol: "house", colorHex: "#7BAE7F")
-        ]
-        public static let trackingNumber = "1Z999AA10123456784"
-        public static let flightTime = "Lands 6:40 pm"
-        public static let debateLink = "https://example.com/is-it-pesto-without-basil"
-        public static let codeLine = #"let pesto = blend(basil, nuts, oil) // never "pestos""#
-
-        public static let ingredients = [
-            "2 cups basil", "1 cup parmesan", "1/2 cup pine nuts", "1/2 cup olive oil", "2 cloves garlic",
-            "a pinch of salt"
-        ]
-
-        public static let snippets = [
-            Snippet(title: "Restart staging", text: "kubectl rollout restart deploy/basil-api -n staging", shortcut: 1),
-            Snippet(
-                title: "Order reply",
-                text: #"Thanks {{input:Name}}, your order of {{input:Jars}} jars ships "#
-                    + #"{{choice:Day options="Thursday|Friday"}}."#,
-                shortcut: 2
-            ),
-            Snippet(
-                title: "Order update",
-                text: "Your pesto ships {{date+3d}}. Tracking: {{clipboard}}{{cursor}}",
-                shortcut: 5
-            ),
-            Snippet(title: "Quick thanks", text: "Thanks, I\u{2019}ll get back to you today.", shortcut: 4),
-            Snippet(
-                title: "Failing test",
-                text: #"Write a failing test for {{input:Function}} that reproduces "#
-                    + #"{{input:Ticket default="PEST-142"}}. Do not fix it."#,
-                shortcut: 3
-            )
-        ]
-
-        public static let supplierLinks = [
-            Link(title: "Supplier portal", url: "https://example.com/supplier/portal"),
-            Link(title: "Invoice template", url: "https://example.com/invoices/template"),
-            Link(title: "Health inspection checklist", url: "https://example.com/kitchen/inspection-checklist"),
-            Link(title: "Lunch rota", url: "https://example.com/team/lunch-rota")
-        ]
-
-        private static let notes = "com.apple.Notes"
-        private static let safari = "com.apple.Safari"
-        private static let messages = "com.apple.MobileSMS"
-        private static let mail = "com.apple.mail"
-
-        /// Oldest first, which is the order `SeedFixtures` ingests in.
-        static func captures() -> [PasteboardCapture] {
-            var captures: [PasteboardCapture] = []
-            let chatter: [(String, String)] = [
-                ("Wi-Fi password: ask Mamma Mia", messages),
-                ("Meeting could have been this clip.", notes),
-                ("v2_final_FINAL_use-this-one.docx", notes),
-                ("Reading list: 212 tabs, 3 read", safari),
-                ("Sorry for the late reply, I was copying.", notes),
-                ("Order #4417: one jar, no questions", messages),
-                ("Does it keep? Ask the jar.", messages),
-                ("Yes. The pine nut supplier passed the September audit.", messages)
-            ]
-            captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
-            captures.append(SeedFixtures.pictureCapture(ShowcaseArt.boardingPass()))
-            captures += supplierLinks.map { SeedFixtures.textCapture($0.url, app: safari) }
-            // The card reaches the shelf as a copy from a message, so the card is a Messages clip in the film.
-            captures += richClips().reversed().map {
-                $0.payloadString == cardNumber ? SeedFixtures.textCapture(cardNumber, app: messages) : $0
-            }
-            // The two clips the film copies in its first scene, from the flight email and the order email, the tracking
-            // number last so it is the newest: they open the shelf in the next one.
-            captures += [
-                SeedFixtures.textCapture(flightTime, app: mail),
-                SeedFixtures.textCapture(trackingNumber, app: mail)
-            ]
-            return captures
-        }
-
-        /// The film's first eight clips, newest first: the masked card, a photo, a GIF, a colour, a link, a line of
-        /// code, a
-        /// PDF and a video. The website's screenshots start with them (`MarketingSeed`).
-        static func filmClips() -> [PasteboardCapture] {
-            Array(richClips().prefix(8))
-        }
-
-        /// Newest first, as the shelf shows them: the masked card opens it, then the six clips of the finale
-        /// side by side (a photo, a GIF, a colour, a link, a line of code and a PDF), then the rest of the
-        /// kinds.
-        private static func richClips() -> [PasteboardCapture] {
-            let gif = LunchRushMedia.pestoGIF
-            var clips: [PasteboardCapture] = [
-                SeedFixtures.textCapture(cardNumber, app: safari),
-                SeedFixtures.pictureCapture(ShowcaseArt.basilInSunglasses()),
-                PasteboardCapture(
-                    typeIdentifier: "com.compuserve.gif", payload: gif, frontmostBundleID: safari,
-                    contentHash: SeedFixtures.hash(of: gif)
-                ),
-                SeedFixtures.textCapture("#C9A227", app: "com.apple.ColorSyncUtility"),
-                SeedFixtures.textCapture(debateLink, app: safari),
-                SeedFixtures.textCapture(codeLine, app: "com.apple.dt.Xcode")
-            ]
-            if let pdf = LunchRushMedia.recipePDF { clips.append(SeedFixtures.fileCapture([pdf.path])) }
-            if let video = LunchRushMedia.jarVideo { clips.append(SeedFixtures.fileCapture([video.path])) }
-            clips += [
-                SeedFixtures.textCapture("\u{1F33F}\u{1F9C4}\u{1F9C0} Pesto night!", app: messages),
-                SeedFixtures.textCapture(
-                    "## Pesto for four\n\n- **60 g** basil\n- **50 g** pine nuts\n- 1 clove garlic\n\n"
-                        + "Toast the nuts first.",
-                    app: notes
-                ),
-                SeedFixtures.pictureCapture(ShowcaseArt.recipeCard()),
-                SeedFixtures.textCapture(
-                    "func scale(_ grams: Double, by servings: Int) -> Double {\n    grams * Double(servings) / 4\n}",
-                    app: "com.apple.dt.Xcode"
-                ),
-                SeedFixtures.textCapture("{ \"recipe\": \"pesto\",\n  \"servings\": 4 }", app: "com.apple.Terminal"),
-                SeedFixtures.pictureCapture(ShowcaseArt.pineNuts()),
-                SeedFixtures.textCapture("#2F7A49", app: "com.apple.ColorSyncUtility")
-            ]
-            return clips
-        }
+/// The clips behind the website's pictures and the teaser's shelf frames (first made for the retired film
+/// "The Lunch Rush"). Nothing is real: Apple's own apps are the sources,
+/// every
+/// address is example.com, the card is the published test number and no clip says anything about health.
+public enum LunchRushSeed {
+    public struct Snippet: Sendable {
+        public let title: String
+        public let text: String
+        public let shortcut: Int
     }
+
+    public struct ExtraCollection: Sendable {
+        public let name: String
+        public let symbol: String
+        public let colorHex: String
+    }
+
+    public struct Link: Sendable {
+        public let title: String
+        public let url: String
+    }
+
+    public static let cardNumber = "4242 4242 4242 4242"
+    public static let supplierCollection = "Supplier links"
+    /// Two more chips for the shelf's row, so it reads as a life and not a demo (the teaser never opens them).
+    public static let extraCollections = [
+        ExtraCollection(name: "Travel", symbol: "airplane", colorHex: "#E8A33D"),
+        ExtraCollection(name: "Home", symbol: "house", colorHex: "#7BAE7F")
+    ]
+    public static let trackingNumber = "1Z999AA10123456784"
+    public static let flightTime = "Lands 6:40 pm"
+    public static let debateLink = "https://example.com/is-it-pesto-without-basil"
+    public static let codeLine = #"let pesto = blend(basil, nuts, oil) // never "pestos""#
+
+    public static let ingredients = [
+        "2 cups basil", "1 cup parmesan", "1/2 cup pine nuts", "1/2 cup olive oil", "2 cloves garlic",
+        "a pinch of salt"
+    ]
+
+    public static let snippets = [
+        Snippet(title: "Restart staging", text: "kubectl rollout restart deploy/basil-api -n staging", shortcut: 1),
+        Snippet(
+            title: "Order reply",
+            text: #"Thanks {{input:Name}}, your order of {{input:Jars}} jars ships "#
+                + #"{{choice:Day options="Thursday|Friday"}}."#,
+            shortcut: 2
+        ),
+        Snippet(
+            title: "Order update",
+            text: "Your pesto ships {{date+3d}}. Tracking: {{clipboard}}{{cursor}}",
+            shortcut: 5
+        ),
+        Snippet(title: "Quick thanks", text: "Thanks, I\u{2019}ll get back to you today.", shortcut: 4),
+        Snippet(
+            title: "Failing test",
+            text: #"Write a failing test for {{input:Function}} that reproduces "#
+                + #"{{input:Ticket default="PEST-142"}}. Do not fix it."#,
+            shortcut: 3
+        )
+    ]
+
+    public static let supplierLinks = [
+        Link(title: "Supplier portal", url: "https://example.com/supplier/portal"),
+        Link(title: "Invoice template", url: "https://example.com/invoices/template"),
+        Link(title: "Health inspection checklist", url: "https://example.com/kitchen/inspection-checklist"),
+        Link(title: "Lunch rota", url: "https://example.com/team/lunch-rota")
+    ]
+
+    private static let notes = "com.apple.Notes"
+    private static let safari = "com.apple.Safari"
+    private static let messages = "com.apple.MobileSMS"
+    private static let mail = "com.apple.mail"
+
+    /// Oldest first, which is the order `SeedFixtures` ingests in.
+    static func captures() -> [PasteboardCapture] {
+        var captures: [PasteboardCapture] = []
+        let chatter: [(String, String)] = [
+            ("Wi-Fi password: ask Mamma Mia", messages),
+            ("Meeting could have been this clip.", notes),
+            ("v2_final_FINAL_use-this-one.docx", notes),
+            ("Reading list: 212 tabs, 3 read", safari),
+            ("Sorry for the late reply, I was copying.", notes),
+            ("Order #4417: one jar, no questions", messages),
+            ("Does it keep? Ask the jar.", messages),
+            ("Yes. The pine nut supplier passed the September audit.", messages)
+        ]
+        captures += chatter.map { SeedFixtures.textCapture($0.0, app: $0.1) }
+        captures.append(SeedFixtures.pictureCapture(ShowcaseArt.boardingPass()))
+        captures += supplierLinks.map { SeedFixtures.textCapture($0.url, app: safari) }
+        // The card reaches the shelf as a copy from a message, so the card is a Messages clip in the film.
+        captures += richClips().reversed().map {
+            $0.payloadString == cardNumber ? SeedFixtures.textCapture(cardNumber, app: messages) : $0
+        }
+        // The two clips the film copies in its first scene, from the flight email and the order email, the tracking
+        // number last so it is the newest: they open the shelf in the next one.
+        captures += [
+            SeedFixtures.textCapture(flightTime, app: mail),
+            SeedFixtures.textCapture(trackingNumber, app: mail)
+        ]
+        return captures
+    }
+
+    /// The film's first eight clips, newest first: the masked card, a photo, a GIF, a colour, a link, a line of
+    /// code, a
+    /// PDF and a video. The website's screenshots start with them (`MarketingSeed`).
+    static func filmClips() -> [PasteboardCapture] {
+        Array(richClips().prefix(8))
+    }
+
+    /// Newest first, as the shelf shows them: the masked card opens it, then the six clips of the finale
+    /// side by side (a photo, a GIF, a colour, a link, a line of code and a PDF), then the rest of the
+    /// kinds.
+    private static func richClips() -> [PasteboardCapture] {
+        let gif = LunchRushMedia.pestoGIF
+        var clips: [PasteboardCapture] = [
+            SeedFixtures.textCapture(cardNumber, app: safari),
+            SeedFixtures.pictureCapture(ShowcaseArt.basilInSunglasses()),
+            PasteboardCapture(
+                typeIdentifier: "com.compuserve.gif", payload: gif, frontmostBundleID: safari,
+                contentHash: SeedFixtures.hash(of: gif)
+            ),
+            SeedFixtures.textCapture("#C9A227", app: "com.apple.ColorSyncUtility"),
+            SeedFixtures.textCapture(debateLink, app: safari),
+            SeedFixtures.textCapture(codeLine, app: "com.apple.dt.Xcode")
+        ]
+        if let pdf = LunchRushMedia.recipePDF { clips.append(SeedFixtures.fileCapture([pdf.path])) }
+        if let video = LunchRushMedia.jarVideo { clips.append(SeedFixtures.fileCapture([video.path])) }
+        clips += [
+            SeedFixtures.textCapture("\u{1F33F}\u{1F9C4}\u{1F9C0} Pesto night!", app: messages),
+            SeedFixtures.textCapture(
+                "## Pesto for four\n\n- **60 g** basil\n- **50 g** pine nuts\n- 1 clove garlic\n\n"
+                    + "Toast the nuts first.",
+                app: notes
+            ),
+            SeedFixtures.pictureCapture(ShowcaseArt.recipeCard()),
+            SeedFixtures.textCapture(
+                "func scale(_ grams: Double, by servings: Int) -> Double {\n    grams * Double(servings) / 4\n}",
+                app: "com.apple.dt.Xcode"
+            ),
+            SeedFixtures.textCapture("{ \"recipe\": \"pesto\",\n  \"servings\": 4 }", app: "com.apple.Terminal"),
+            SeedFixtures.pictureCapture(ShowcaseArt.pineNuts()),
+            SeedFixtures.textCapture("#2F7A49", app: "com.apple.ColorSyncUtility")
+        ]
+        return clips
+    }
+}
+#endif
 #endif

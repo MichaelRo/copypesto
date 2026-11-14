@@ -175,7 +175,7 @@ public struct AIActionCoordinator: Sendable {
             return AIResult(action: .describeImage, sourcePreview: "Image", result: state.message, isError: true)
         }
         do {
-            guard #available(macOS 27, *) else { throw AppleIntelligenceClient.ClientError.visionUnavailable }
+            guard #available(macOS 27, iOS 27, *) else { throw AppleIntelligenceClient.ClientError.visionUnavailable }
             let description = try await AppleIntelligenceClient().describe(imageData: imageData)
             return AIResult(action: .describeImage, sourcePreview: "Image", result: description)
         } catch {
@@ -186,7 +186,7 @@ public struct AIActionCoordinator: Sendable {
     }
 
     public static let onDevice: Completion = { system, message in
-        guard #available(macOS 26, *) else { throw AppleIntelligenceClient.ClientError.unavailable }
+        guard #available(macOS 26, iOS 26, *) else { throw AppleIntelligenceClient.ClientError.unavailable }
         return try await AppleIntelligenceClient().complete(system: system, userMessage: message)
     }
 

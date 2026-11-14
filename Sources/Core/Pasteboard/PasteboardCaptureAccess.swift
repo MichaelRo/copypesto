@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 public protocol PasteboardAccessProviding: Sendable {
@@ -54,3 +55,4 @@ public enum PasteboardCaptureAccess: String, Equatable, Sendable {
         self == .prompting || self == .blocked
     }
 }
+#endif

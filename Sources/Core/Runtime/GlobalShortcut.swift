@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 import Foundation
 
@@ -115,3 +116,4 @@ public extension Notification.Name {
     /// hotkeys follow it.
     static let hotkeySettingsChanged = AppIdentity.notificationName("hotkeySettingsChanged")
 }
+#endif

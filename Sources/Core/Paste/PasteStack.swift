@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// An ordered, ephemeral queue of clipboard payloads for sequential pasting.
@@ -102,3 +103,4 @@ public struct PasteStack: Sendable {
         }
     }
 }
+#endif

@@ -73,8 +73,10 @@ public enum StructuredPaste {
            let payload = blob.decryptedRichPayload()
         {
             if let html = payload.html, let text = HTMLMarkdown.convert(html) { return text }
+            #if os(macOS)
             if let rtfd = payload.rtfd, let text = RTFMarkdown.convert(rtfd, isRTFD: true) { return text }
             if let rtf = payload.rtf, let text = RTFMarkdown.convert(rtf) { return text }
+            #endif
             return nil
         }
         guard item.type == .code, item.detectedLanguage == "html", let text = plainText(of: item),

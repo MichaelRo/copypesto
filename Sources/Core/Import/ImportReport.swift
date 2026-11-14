@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// What an import of another app's library comes to, for the line the person reads afterwards: how many clips came
@@ -29,3 +30,4 @@ public struct ImportReport: Equatable, Sendable {
         expiring = min(older, summary.imported)
     }
 }
+#endif

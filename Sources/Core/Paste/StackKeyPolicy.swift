@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// A paste stack is pasted by the person's own ⌘V in whatever app they are in: after each paste Pesto puts the next
@@ -13,3 +14,4 @@ public enum StackKeyPolicy {
         return modifiers.intersection([.command, .shift, .option, .control]) == .command
     }
 }
+#endif

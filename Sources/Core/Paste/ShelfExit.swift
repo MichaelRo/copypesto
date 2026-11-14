@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Why the shelf is closing, decided by whoever closes it and acted on once, when the hide has happened. It replaces
@@ -41,3 +42,4 @@ public enum ShelfExit {
         return true
     }
 }
+#endif

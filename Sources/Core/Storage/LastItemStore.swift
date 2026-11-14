@@ -20,17 +20,17 @@ public enum LastItemStore {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "LastItemStore")
 
     #if DEBUG
-        /// Override point for tests: swapped to a temp-dir URL in test suites. It does not exist in a Release build, so
-        /// nothing shipped can redirect where the last-item file is written.
-        nonisolated(unsafe) static var testFileURL: URL?
+    /// Override point for tests: swapped to a temp-dir URL in test suites. It does not exist in a Release build, so
+    /// nothing shipped can redirect where the last-item file is written.
+    nonisolated(unsafe) static var testFileURL: URL?
 
-        static var fileURL: URL {
-            testFileURL ?? AppPaths.supportDirectory.appendingPathComponent("last-item.json")
-        }
+    static var fileURL: URL {
+        testFileURL ?? AppPaths.supportDirectory.appendingPathComponent("last-item.json")
+    }
     #else
-        static var fileURL: URL {
-            AppPaths.supportDirectory.appendingPathComponent("last-item.json")
-        }
+    static var fileURL: URL {
+        AppPaths.supportDirectory.appendingPathComponent("last-item.json")
+    }
     #endif
 
     /// Atomically writes item metadata to the shared last-item file.

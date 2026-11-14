@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import Foundation
 
@@ -245,3 +246,4 @@ public enum RTFMarkdown {
         }
     }
 }
+#endif

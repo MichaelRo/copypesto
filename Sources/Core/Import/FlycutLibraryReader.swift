@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Flycut stores clippings in a preference plist file (`com.generalarcade.flycut.plist`).
@@ -74,3 +75,4 @@ public enum FlycutLibraryReader {
         }
     }
 }
+#endif

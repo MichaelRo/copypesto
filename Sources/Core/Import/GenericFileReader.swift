@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Reads a CSV, JSON or text file of clips (ADR 0011: a copy, read-only, bounded, nothing imported until confirmed).
@@ -285,3 +286,4 @@ public enum GenericFileReader {
         return nil
     }
 }
+#endif

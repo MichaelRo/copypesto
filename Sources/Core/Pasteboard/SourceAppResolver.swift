@@ -1,29 +1,12 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
-
-public struct SourceAppRecord: Sendable, Equatable {
-    /// The name of a bundle ID this Mac cannot resolve (an app that is not installed here, as with a synced clip).
-    public static let unknownDisplayName = "Unknown app"
-    public let bundleID: String
-    public let displayName: String
-    /// 48×48 PNG, ≤5 KB. Shared through `SourceIconCache`; ingest does not use it.
-    public let iconData: Data
-    /// Hex `"#RRGGBB"` — drives the overlay mesh-gradient glow.
-    public let dominantColorHex: String
-
-    public init(bundleID: String, displayName: String, iconData: Data, dominantColorHex: String) {
-        self.bundleID = bundleID
-        self.displayName = displayName
-        self.iconData = iconData
-        self.dominantColorHex = dominantColorHex
-    }
-}
 
 /// Resolves a bundle ID to a small, cacheable record containing the app's display name,
 /// downscaled icon (48×48 PNG), and dominant icon color. Resolution happens at ingest time
 /// — never at render — because the frontmost app may have changed by then. The drawing is AppKit image work, so it
 /// runs on the main actor, and `SourceIconCache` holds it so that ingest and the cards draw an app once between them.
-public actor SourceAppResolver {
+public actor SourceAppResolver: SourceAppResolving {
     public static let iconPixelDimension: Int = 48
     /// The size the icon is drawn at once to read both its thumbnail and its colour.
     private static let sampleDimension = 96
@@ -170,3 +153,4 @@ public actor SourceAppResolver {
         return String(format: "#%02X%02X%02X", min(max(r, 0), 255), min(max(g, 0), 255), min(max(b, 0), 255))
     }
 }
+#endif

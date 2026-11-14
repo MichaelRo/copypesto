@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 // swiftlint:disable:next large_tuple
@@ -240,3 +241,4 @@ public struct PasteImportPlanner: Sendable {
         return true
     }
 }
+#endif

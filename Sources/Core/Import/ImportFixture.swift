@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Libraries made up for a UI test: the import menu opens a file panel, which a test cannot drive, so a UI-test launch
@@ -70,3 +71,4 @@ public enum ImportFixture {
         return configuration.mode == .uiTest ? configuration.importFixture : nil
     }
 }
+#endif

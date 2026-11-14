@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import CryptoKit
 import SwiftData
@@ -281,3 +282,4 @@ public actor PasteMigrator {
         }
     }
 }
+#endif

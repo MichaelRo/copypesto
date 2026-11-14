@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import CoreGraphics
 import ImageIO
@@ -60,3 +61,4 @@ enum LinkPreviewStub {
             .flatMap { NSBitmapImageRep(cgImage: $0).representation(using: .png, properties: [:]) }
     }
 }
+#endif

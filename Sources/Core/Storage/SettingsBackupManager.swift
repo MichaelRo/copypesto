@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Exports and restores Pesto's `UserDefaults`-backed settings to/from JSON.
@@ -205,3 +206,4 @@ public enum SettingsBackupManager {
         }
     }
 }
+#endif

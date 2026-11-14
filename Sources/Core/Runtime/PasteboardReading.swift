@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// Minimal pasteboard protocol so we can drive the watcher from tests.
@@ -27,9 +28,4 @@ public enum PasteboardFiles {
 }
 
 extension NSPasteboard: ChangeCounting {}
-
-/// The part of a pasteboard `OwnWriteGate` needs. `NSPasteboard` is not `Sendable` and does not claim to be; code that
-/// reads from several threads goes through `SystemPasteboard`.
-public protocol ChangeCounting {
-    var changeCount: Int { get }
-}
+#endif

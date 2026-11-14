@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import CoreGraphics
 
 public struct WindowSnapshot: Sendable, Equatable {
@@ -70,3 +71,4 @@ public enum BrowserShareSignature {
         }
     }
 }
+#endif

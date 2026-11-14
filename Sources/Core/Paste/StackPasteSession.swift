@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// What a running paste stack needs from the system (ADR 0009): a watch for the person's own ⌘V, which pastes the clip
@@ -57,3 +58,4 @@ public final class StackPasteSession {
         isWatching = false
     }
 }
+#endif

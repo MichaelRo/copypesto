@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 import CoreGraphics
 import Foundation
@@ -45,3 +46,4 @@ public enum KeyboardLayoutKeyCode {
         }
     }
 }
+#endif

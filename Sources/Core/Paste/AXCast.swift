@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import ApplicationServices
 import Foundation
 
@@ -15,3 +16,4 @@ enum AXCast {
         return unsafeDowncast(ref, to: AXValue.self)
     }
 }
+#endif

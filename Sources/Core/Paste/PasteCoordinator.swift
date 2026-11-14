@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import CoreGraphics
 import os
@@ -205,3 +206,4 @@ public final class PasteCoordinator {
         }
     }
 }
+#endif

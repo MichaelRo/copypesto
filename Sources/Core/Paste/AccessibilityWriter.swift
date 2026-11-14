@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import ApplicationServices
 import os
@@ -100,3 +101,4 @@ private struct AXElementTextTarget: AXTextTarget, @unchecked Sendable {
         _ = AXUIElementSetAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, value)
     }
 }
+#endif

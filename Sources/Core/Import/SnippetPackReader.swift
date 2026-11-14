@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 public struct ImportedSnippet: Equatable, Sendable {
@@ -76,3 +77,4 @@ public enum SnippetPackReader {
         return text.range(of: #"(?<!\{)\{("# + tokens + #")[^}]*\}(?!\})"#, options: .regularExpression) != nil
     }
 }
+#endif

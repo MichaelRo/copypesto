@@ -132,6 +132,7 @@ public struct AutoBackupSettings {
         nonmutating set { defaults.set(newValue, forKey: Self.includeSecretsKey) }
     }
 
+    #if os(macOS)
     /// A folder named Pesto in iCloud Drive, when this Mac has iCloud Drive turned on; the suggested place for the
     /// file.
     public static func iCloudDriveFolder(
@@ -142,6 +143,7 @@ public struct AutoBackupSettings {
         guard FileManager.default.fileExists(atPath: drive.path) else { return nil }
         return drive.appendingPathComponent("Pesto", isDirectory: true)
     }
+    #endif
 
     /// One file per Mac, named for it and for its device id, so two Macs that share a folder never overwrite each
     /// other even when they have the same name.

@@ -32,7 +32,8 @@ Sources/
 
 All of `Core/` is the SwiftPM module `PestoCore`, tested without a built app by `make test-core`, the storage layer
 (`Core/Storage/Models` and `Migration`: the SwiftData models, ingest, delete, encrypt, restore) included. SwiftData's
-macros need Xcode's toolchain, which every supported build uses. The hosted tests (`PestoTests`) are the ones that need
+macros need Xcode's toolchain, which every supported build uses. `PestoCore` builds for macOS 15 and iOS 26 (ADR 0046): what only a Mac can run is inside `#if os(macOS)`, and
+`xcodebuild build -scheme PestoCore -destination 'generic/platform=iOS Simulator'` checks the iOS side. The hosted tests (`PestoTests`) are the ones that need
 the app itself: its state, windows and launch. `AppDelegate`, `ClipboardCard` and `GridView` are split into `+Something.swift` extension files; preferences are typed `Setting` keys (ADR 0012); `AppState` is `@Observable` and the shelf's history is one `HistoryStore` (ADR 0007). The app build uses an `xcodegen`-generated project (`Pesto.yml`).
 
 ## Tech stack

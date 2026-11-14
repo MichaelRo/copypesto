@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 #if canImport(FoundationModels) && compiler(>=6.4)
-    import FoundationModels
+import FoundationModels
 #endif
 
 public protocol ImageSensitivityScreening: Sendable {
@@ -18,7 +18,7 @@ public struct OnDeviceImageScreener: ImageSensitivityScreening {
     public init() {}
 
     public func isSensitive(imageData: Data) async -> Bool {
-        guard #available(macOS 27, *), AppleIntelligenceClient.supportsVision,
+        guard #available(macOS 27, iOS 27, *), AppleIntelligenceClient.supportsVision,
               let small = ImageDownsampler.thumbnailPNG(from: imageData, maxPixel: Self.maxPixel) else { return false }
         do {
             try await AppleIntelligenceClient().screen(imageData: small)
@@ -31,12 +31,12 @@ public struct OnDeviceImageScreener: ImageSensitivityScreening {
     /// True for the model declining or tripping its guardrails; any other failure says nothing about the picture.
     static func isSafetyStop(_ error: any Error) -> Bool {
         #if canImport(FoundationModels) && compiler(>=6.4)
-            if #available(macOS 27, *), let modelError = error as? LanguageModelError {
-                switch modelError {
-                case .guardrailViolation, .refusal: return true
-                default: break
-                }
+        if #available(macOS 27, iOS 27, *), let modelError = error as? LanguageModelError {
+            switch modelError {
+            case .guardrailViolation, .refusal: return true
+            default: break
             }
+        }
         #endif
         // The earlier error type of the same framework reads "The model's safety guardrails were triggered."
         return (error as? any LocalizedError)?.errorDescription?.localizedCaseInsensitiveContains("guardrail") == true

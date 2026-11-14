@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import os
 import ServiceManagement
 
@@ -107,3 +108,4 @@ public struct LoginItemService: Sendable {
         return LoginItemChange(status: backend.status, failure: failure)
     }
 }
+#endif

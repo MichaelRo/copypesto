@@ -5,7 +5,7 @@ import ImageIO
 import Testing
 import UniformTypeIdentifiers
 #if canImport(FoundationModels)
-    import FoundationModels
+import FoundationModels
 #endif
 @testable import PestoCore
 
@@ -42,11 +42,11 @@ struct ImageDescriptionTests {
 
     static var modelCanSee: Bool {
         #if canImport(FoundationModels) && compiler(>=6.4)
-            guard #available(macOS 27, *) else { return false }
-            let model = SystemLanguageModel.default
-            return model.availability == .available && model.capabilities.contains(.vision)
+        guard #available(macOS 27, *) else { return false }
+        let model = SystemLanguageModel.default
+        return model.availability == .available && model.capabilities.contains(.vision)
         #else
-            return false
+        return false
         #endif
     }
 

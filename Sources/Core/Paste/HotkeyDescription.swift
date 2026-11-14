@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 
 /// A global shortcut as a menu item can show it: one character and the modifiers held.
@@ -87,3 +88,4 @@ public enum HotkeyDescription {
         return map[keyCode] ?? "?"
     }
 }
+#endif

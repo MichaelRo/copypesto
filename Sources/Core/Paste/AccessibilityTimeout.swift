@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import ApplicationServices
 
 /// A hung target app would otherwise block an Accessibility call for the system default of several seconds.
@@ -9,3 +10,4 @@ enum AccessibilityTimeout {
         AXUIElementSetMessagingTimeout(element, seconds)
     }
 }
+#endif

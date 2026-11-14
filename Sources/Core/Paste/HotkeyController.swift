@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import Carbon.HIToolbox
 import os
@@ -228,3 +229,4 @@ private struct CarbonSlotRegistrar: SlotHotkeyRegistering {
         controller.unregisterPinnedSlot(slot)
     }
 }
+#endif

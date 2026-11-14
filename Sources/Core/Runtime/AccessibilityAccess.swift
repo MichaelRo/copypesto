@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import ApplicationServices
 import Foundation
 import Synchronization
@@ -33,3 +34,4 @@ public enum AccessibilityAccess {
         configuration.mode == .normal
     }
 }
+#endif

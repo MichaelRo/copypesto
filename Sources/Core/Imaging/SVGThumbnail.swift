@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
-import UniformTypeIdentifiers
+#else
+import Foundation
+#endif
 
 /// ImageIO cannot read SVG, so cards for SVG clips are drawn by `NSImage`, which can. AppKit images are main-actor
 /// only.
@@ -32,6 +35,7 @@ public enum SVGThumbnail {
     }
 
     public static func png(from data: Data, maxPixel: Int) -> Data? {
+        #if os(macOS)
         guard data.count <= maxBytes, looksLikeSVG(data), let image = NSImage(data: data), image.size.width > 0,
               image.size.height > 0 else { return nil }
         let scale = CGFloat(min(maxPixel, Self.maxPixel)) / max(image.size.width, image.size.height)
@@ -46,5 +50,9 @@ public enum SVGThumbnail {
         image.draw(in: NSRect(x: 0, y: 0, width: width, height: height))
         NSGraphicsContext.restoreGraphicsState()
         return rep.representation(using: .png, properties: [:])
+        #else
+        // iOS has no public SVG rasterizer, so an SVG clip there has no picture and shows as its text.
+        return nil
+        #endif
     }
 }

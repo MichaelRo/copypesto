@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// The single access point for the pasteboard Pesto watches and writes. Tests get a private named
@@ -16,3 +17,19 @@ public enum AppPasteboard {
         return NSPasteboard(name: NSPasteboard.Name(configuration.pasteboardName))
     }
 }
+#else
+import UIKit
+
+/// The single access point for the pasteboard Pesto reads and writes on iOS. Tests get a private named pasteboard, so
+/// a run never reads or overwrites what the person has copied.
+public enum AppPasteboard {
+    @MainActor public static let general = make(for: RuntimeConfiguration.current)
+
+    @MainActor
+    static func make(for configuration: RuntimeConfiguration) -> UIPasteboard {
+        guard configuration.mode != .normal else { return .general }
+        if configuration.mode == .uiTest, configuration.usesRealPasteboard { return .general }
+        return UIPasteboard(name: UIPasteboard.Name(configuration.pasteboardName), create: true) ?? .withUniqueName()
+    }
+}
+#endif

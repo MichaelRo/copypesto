@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 import SQLite3
 
@@ -87,3 +88,4 @@ public enum PastebotLibraryReader {
         var reps: [PasteImportRecord.Representation] = []
     }
 }
+#endif

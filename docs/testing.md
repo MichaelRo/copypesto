@@ -310,6 +310,12 @@ also compiles `Tests/PestoCoreTests/Sync`, which proves the sync format and its 
 AppKit is left out in `Pesto.yml`. The gate does not run these tests yet. A simulator has no iCloud Keychain, no real
 iCloud Drive and no Face ID hardware: those are hand checks on a device.
 
+Sync on iOS is tested in `MobileSyncTests` against a Mac built as `SyncMac` (`Tests/PestoCoreTests/Sync`): the iPhone
+side is a `MobileSync` on a `BookmarkedSyncFolder` with `FakeBookmarks` (counts every start and stop of the security
+scope, and stages a stale link), a this-device key in `MemorySecrets` and a temp folder, never the Keychain or iCloud
+Drive. A real iCloud Drive folder picked in the file picker, the sync key arriving through iCloud Keychain on a
+device, file-presenter callbacks from the iCloud daemon and the app's return from the background are hand checks.
+
 ## Lessons from the test suite
 
 - **A run that prints nothing may be stuck, not slow.** `swift test` with its output in a file looks the same either

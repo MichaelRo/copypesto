@@ -1,63 +1,32 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
+import SwiftData
 import SwiftUI
 
+/// A tab bar where the width is compact (iPhone, a narrow iPad window) and a split view where it is regular. The
+/// size class decides, not the device, so an iPad in Split View or Stage Manager gets the layout that fits.
 struct LibraryRootView: View {
     @Environment(MobileAppState.self) private var appState
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Pesto")
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if let store = appState.historyStore {
-            ClipList(store: store, isOnDisk: appState.storeIsOnDisk)
+        if let container = appState.historyContainer, let store = appState.historyStore {
+            Group {
+                if sizeClass == .regular {
+                    PadLibraryView(store: store)
+                } else {
+                    PhoneLibraryView(store: store)
+                }
+            }
+            .modelContainer(container)
         } else if appState.hasBooted {
             ContentUnavailableView(
                 "History Unavailable",
                 systemImage: "exclamationmark.triangle",
-                description: Text("Pesto could not open its history. Restart the app to try again.")
+                description: Text("Pesto could not open its history. Restart Pesto to try again.")
             )
         } else {
             ProgressView()
         }
-    }
-}
-
-private struct ClipList: View {
-    let store: HistoryStore
-    let isOnDisk: Bool
-
-    var body: some View {
-        List {
-            if !isOnDisk {
-                Label(
-                    "Nothing is saved this session: the history could not be opened on disk.",
-                    systemImage: "bolt.slash"
-                )
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            }
-            ForEach(store.items, id: \.id) { item in
-                Text(item.gridPreview)
-                    .lineLimit(3)
-                    .accessibilityIdentifier("clip-row")
-            }
-        }
-        .overlay {
-            if store.items.isEmpty {
-                ContentUnavailableView(
-                    "No Clips Yet",
-                    systemImage: "doc.on.clipboard",
-                    description: Text("Clips you add here, or copy on a Mac that syncs, appear in this list.")
-                )
-            }
-        }
-        .onAppear { store.setVisible(true) }
-        .onDisappear { store.setVisible(false) }
     }
 }

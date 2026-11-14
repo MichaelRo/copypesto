@@ -301,7 +301,11 @@ Run on two physical Macs signed in to the same Apple Account with iCloud Drive o
 ## The iPhone and iPad app
 
 `make test-mobile` runs the iOS test target on an iPhone and then an iPad simulator (`IPHONE_SIMULATOR`, `IPAD_SIMULATOR`
-name them). The tests are hosted in the iOS app, so the runtime seams keep them off real data as on the Mac. The target
+name them); `make test-mobile-ui` runs `LibrarySmokeUITests`, one smoke test per idiom, each skipping on the other idiom.
+A `-UITestMode` launch of the iOS app honors the flag only because `Sources/Resources/PestoMobile-Info.plist` carries
+`PestoAllowsTestHooks`, and it seeds a few clips through ingest (`MobileSeed`, Debug only) unless `PESTO_UITEST_SEED` is
+`empty`. The iPad test turns the simulator to landscape, where a three-column split view shows its sidebar; the
+screenshot it attaches comes out rotated (`sips -r 270` puts it upright). The tests are hosted in the iOS app, so the runtime seams keep them off real data as on the Mac. The target
 also compiles `Tests/PestoCoreTests/Sync`, which proves the sync format and its keys on iOS; a helper there that needs
 AppKit is left out in `Pesto.yml`. The gate does not run these tests yet. A simulator has no iCloud Keychain, no real
 iCloud Drive and no Face ID hardware: those are hand checks on a device.

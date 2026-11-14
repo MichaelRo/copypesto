@@ -234,6 +234,20 @@ struct HistoryIndexTests {
             ]
         )
     }
+
+    @Test("pinned only keeps the pinned clips, whether or not a search is open")
+    func whenPinnedOnly_thenOnlyPinnedClipsMatch() throws {
+        let fixture = try Fixture()
+        let pinned = try fixture.add("kept", at: 1)
+        pinned.isPinned = true
+        try fixture.context.save()
+        _ = try fixture.add("loose", at: 2)
+        let index = try HistoryIndex(items: fixture.items())
+
+        #expect(index.matching(HistoryCriteria(pinnedOnly: true)) == [pinned.id])
+        #expect(index.matching(HistoryCriteria(searchActive: true, pinnedOnly: true, query: "kept")) == [pinned.id])
+        #expect(index.matching(HistoryCriteria(pinnedOnly: true, query: "loose")).isEmpty)
+    }
 }
 
 @Suite("History save change")

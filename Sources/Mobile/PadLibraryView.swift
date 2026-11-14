@@ -23,8 +23,11 @@ struct PadLibraryView: View {
                 .navigationTitle(LibraryTitle.text(for: library.filter.scope, collections: collections))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { LibraryToolbar(showsSettings: library.columns == .detailOnly) }
+                .searchable(
+                    text: $library.query, isPresented: $library.isSearching,
+                    placement: .toolbar, prompt: Text("Search clips")
+                )
             }
-            .searchable(text: $library.query, isPresented: $library.isSearching, prompt: Text("Search clips"))
             .inspector(isPresented: inspectorBinding) {
                 if let id = library.openClipID {
                     ClipDetailView(store: store, itemID: id, isSheet: false)

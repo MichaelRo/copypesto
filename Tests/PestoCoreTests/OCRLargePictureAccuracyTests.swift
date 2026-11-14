@@ -71,14 +71,24 @@ struct OCRLargePictureAccuracyTests {
         return (png, expected)
     }
 
-    private static func fullSizeRead(_ png: Data) -> String {
-        guard let source = CGImageSourceCreateWithData(png as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return "" }
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
-        try? VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
-        return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+    /// Off Swift's thread pool, as `OCRService` reads: Vision's `perform` blocks its thread.
+    private static func fullSizeRead(_ png: Data) async -> String {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .utility).async {
+                guard let source = CGImageSourceCreateWithData(png as CFData, nil),
+                      let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else
+                {
+                    continuation.resume(returning: "")
+                    return
+                }
+                let request = VNRecognizeTextRequest()
+                request.recognitionLevel = .accurate
+                request.usesLanguageCorrection = true
+                try? VNImageRequestHandler(cgImage: image, options: [:]).perform([request])
+                let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
+                continuation.resume(returning: lines.joined(separator: "\n"))
+            }
+        }
     }
 
     private static func recall(of words: [String], in text: String) -> Double {
@@ -93,7 +103,7 @@ struct OCRLargePictureAccuracyTests {
         #expect(7680 * 4320 > ImageDownsampler.maxDecodedPixels)
         let words = Self.rowFontSizes.flatMap { expected[$0] ?? [] }
 
-        let full = Self.recall(of: words, in: Self.fullSizeRead(png))
+        let full = await Self.recall(of: words, in: Self.fullSizeRead(png))
         let scaled = try Self.recall(of: words, in: #require(await OCRService().recognize(imageData: png)))
 
         #expect(full > 0.02, "the full-size read found almost nothing, so the comparison proves nothing")

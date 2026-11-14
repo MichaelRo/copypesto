@@ -25,9 +25,10 @@ Sources/
 │   ├── Paste/        — focus restoration, AX direct-write, CGEvent fallback
 │   └── Predicate/    — smart-pinboard DSL
 ├── Features/     — SwiftUI views (may import Core, never the reverse); `Marketing/` draws the documentation pictures
+├── Mobile/       — the iPhone and iPad app (target `PestoMobile`, ADR 0046); never compiled into the Mac app
 ├── CLI/          — the `pesto` command-line tool (`make build-cli`)
 ├── Controls/     — the Control Center extension
-└── Shared/       — extensions and utilities
+└── Shared/       — extensions and utilities, compiled into the Mac app and the iOS app
 ```
 
 All of `Core/` is the SwiftPM module `PestoCore`, tested without a built app by `make test-core`, the storage layer
@@ -66,6 +67,8 @@ make build      # generate + xcodebuild debug build (no signing)
 make run        # build + sign with stable cert + open Pesto.app
 make test-core  # swift test on PestoCore — fast, no Xcode project needed
 make test       # xcodebuild hosted tests (snapshot + UITests skipped)
+make build-mobile  # the iPhone and iPad app, for the simulator
+make test-mobile   # its tests on an iPhone and an iPad simulator (needs an iOS simulator runtime)
 make verify     # the full gate: lint, Core + hosted + UI tests, screenshots (docs/testing.md)
 make lint       # swiftformat --lint + swiftlint --strict
 make format     # auto-format all Swift sources

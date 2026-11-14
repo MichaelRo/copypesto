@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 /// Every animation goes through here so Reduce Motion is honoured in one place. A state change with no animation still
@@ -10,7 +14,11 @@ enum Motion {
     static var reduceMotionOverride: Bool?
 
     static var reduceMotion: Bool {
+        #if os(macOS)
         reduceMotionOverride ?? NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        #else
+        reduceMotionOverride ?? UIAccessibility.isReduceMotionEnabled
+        #endif
     }
 
     static func animation(_ animation: Animation = .default) -> Animation? {

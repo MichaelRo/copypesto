@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import SwiftUI
 
@@ -78,3 +79,4 @@ private final class MenuActionTargets: NSObject {
         actions[sender.tag]()
     }
 }
+#endif

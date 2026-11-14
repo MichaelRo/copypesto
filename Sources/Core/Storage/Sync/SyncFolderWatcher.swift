@@ -58,7 +58,7 @@ final class SyncFolderWatcher: NSObject, NSFilePresenter, Sendable {
     let presentedItemOperationQueue: OperationQueue
     private let onChange: @Sendable () -> Void
 
-    init(url: URL, onChange: @escaping @Sendable () -> Void) {
+    init(url: URL, latency _: TimeInterval = 0.3, onChange: @escaping @Sendable () -> Void) {
         presentedItemURL = url
         self.onChange = onChange
         let queue = OperationQueue()

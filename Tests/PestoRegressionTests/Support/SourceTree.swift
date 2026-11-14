@@ -60,5 +60,7 @@ enum SourceTree {
         try folders.sorted { $0.key < $1.key }.flatMap { try swiftFiles(in: $0.key, minimum: $0.value) }
     }
 
-    static let minimumFileCounts: [String: Int] = ["App": 30, "Core": 120, "Features": 60, "Shared": 15, "CLI": 1]
+    static let minimumFileCounts: [String: Int] = [
+        "App": 30, "Core": 120, "Features": 60, "Shared": 15, "CLI": 1, "Mobile": 3
+    ]
 }

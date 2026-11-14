@@ -16,7 +16,7 @@ struct SyncWordingTests {
     @Test("no string a person can read in the app calls sync a group")
     func appStrings() throws {
         var offenders: [String] = []
-        for (folder, minimum) in [("Features", 50), ("App", 10), ("Core", 100)] {
+        for (folder, minimum) in [("Features", 50), ("App", 10), ("Core", 100), ("Mobile", 3)] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 let text = try String(contentsOf: file, encoding: .utf8)
                 for (number, line) in text.components(separatedBy: "\n").enumerated() {

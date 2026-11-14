@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import SwiftUI
 
@@ -16,3 +17,4 @@ struct HostWindowReader: NSViewRepresentable {
         DispatchQueue.main.async { [weak view] in onChange(view?.window) }
     }
 }
+#endif

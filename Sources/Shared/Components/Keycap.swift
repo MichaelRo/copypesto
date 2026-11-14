@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import SwiftUI
 
 /// One key as the website draws it: a small rounded cap with a hairline border over a faint fill, in a monospaced
@@ -65,3 +66,4 @@ struct Keycap: View {
             )
     }
 }
+#endif

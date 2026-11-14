@@ -65,13 +65,6 @@ struct ShelfBackground: View {
     }
 }
 
-extension EnvironmentValues {
-    /// Whether the shelf is drawn on glass, set once at each shelf root so a card never reads the setting. Nil outside
-    /// a
-    /// shelf (a snapshot, a preview), where a card keeps its glass-friendly fill.
-    @Entry var shelfDrawsGlass: Bool?
-}
-
 extension View {
     /// Tells the shelf and its cards which surface is chosen, folding in Reduce Transparency.
     func shelfSurfaceEnvironment() -> some View {

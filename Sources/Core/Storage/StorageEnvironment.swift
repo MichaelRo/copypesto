@@ -66,6 +66,17 @@ public struct StorageEnvironment: Sendable {
         self.nsfwMode = nsfwMode
     }
 
+    /// The last-item file is the one preview kept in the clear, for the `pesto` command and AppleScript (ADR 0002).
+    /// Neither exists on iOS, so there it is never written.
+    static func lastItemStore(for mode: LaunchMode) -> any LastItemStoring {
+        #if os(macOS)
+        if mode == .hostedTests { return NoLastItemFile() }
+        return FileLastItemStore()
+        #else
+        return NoLastItemFile()
+        #endif
+    }
+
     /// The app's choices. Outside a normal launch (a test host, a UI-test launch) the last-item file is not written
     /// and no language model is loaded.
     public static func live(
@@ -83,7 +94,7 @@ public struct StorageEnvironment: Sendable {
             }
         }
         return StorageEnvironment(
-            lastItemStore: mode == .hostedTests ? NoLastItemFile() : FileLastItemStore(),
+            lastItemStore: lastItemStore(for: mode),
             linkPreviews: LinkPreviewImageStore(),
             imageScreener: OnDeviceImageScreener(),
             textRecognizer: OCRService(),

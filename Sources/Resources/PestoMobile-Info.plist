@@ -4,5 +4,18 @@
 <dict>
     <key>PestoAllowsTestHooks</key>
     <string>$(PESTO_ALLOWS_TEST_HOOKS)</string>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>net.copypesto.pesto.clip-id</string>
+            <key>UTTypeDescription</key>
+            <string>Pesto clip</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>

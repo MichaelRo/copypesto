@@ -7,6 +7,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(MobileAppState.self) private var appState
     @AppStorage(Setting.appTheme) private var theme: String
+    @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @State private var clearCount = 0
     @State private var isConfirmingClear = false
@@ -17,6 +18,11 @@ struct SettingsView: View {
                 Picker("Theme", selection: $theme) {
                     ForEach(AppTheme.allCases, id: \.rawValue) { choice in
                         Text(choice.displayName).tag(choice.rawValue)
+                    }
+                }
+                Picker("Appearance", selection: $appearance) {
+                    ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
+                        Text(mode.label).tag(mode.rawValue)
                     }
                 }
             }
@@ -71,6 +77,25 @@ struct SettingsView: View {
         case .touchID: String(localized: "Ask for Touch ID again after")
         case .opticID: String(localized: "Ask for Optic ID again after")
         default: String(localized: "Ask for the passcode again after")
+        }
+    }
+}
+
+struct SettingsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.pestoSurface) private var ground
+
+    var body: some View {
+        NavigationStack {
+            SettingsView()
+                .scrollContentBackground(.hidden)
+                .background(ground.ignoresSafeArea())
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
+                }
         }
     }
 }

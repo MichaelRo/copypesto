@@ -19,7 +19,7 @@ struct LibraryScopeTests {
         #expect(LibraryScope.all.ids(in: index, query: "nothing like it").isEmpty)
     }
 
-    @Test("a kind shows only clips of that kind, and Pinned only pinned clips")
+    @Test("a kind narrows the scope to clips of that kind, and Pinned shows only pinned clips")
     func whenScoped_thenOnlyThatKindOrPinnedShows() async throws {
         let library = try await MobileTestLibrary()
         let link = try await library.add("https://www.apple.com/ipad/")
@@ -28,9 +28,10 @@ struct LibraryScopeTests {
         try await library.refreshed()
         let index = try #require(library.store.searchIndex())
 
-        #expect(LibraryScope.kind(.url).ids(in: index, query: "") == [link.id])
-        #expect(LibraryScope.kind(.image).ids(in: index, query: "").isEmpty)
+        #expect(LibraryScope.all.ids(in: index, query: "", kind: .url) == [link.id])
+        #expect(LibraryScope.all.ids(in: index, query: "", kind: .image).isEmpty)
         #expect(LibraryScope.pinned.ids(in: index, query: "") == [note.id])
+        #expect(LibraryScope.pinned.ids(in: index, query: "", kind: .url).isEmpty)
     }
 
     @Test("a collection shows the clips moved into it")

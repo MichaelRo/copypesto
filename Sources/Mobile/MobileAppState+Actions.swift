@@ -166,6 +166,26 @@ extension MobileAppState {
         return added ? board : nil
     }
 
+    func renameCollection(_ board: Pinboard, to name: String, existing: [Pinboard]) {
+        guard let context = board.modelContext else { return }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != board.name else { return }
+        let others = existing.filter { $0.id != board.id }.map(\.name)
+        let unique = CollectionNaming.uniqueName(trimmed, existing: others)
+        report("Couldn\u{2019}t rename the collection.") {
+            try collectionStore(context: context).edit(.edit, [board]) { board.name = unique }
+        }
+    }
+
+    func deleteCollection(_ id: UUID) async {
+        guard let service = storageService else { return }
+        let mark = service.undoHistory.recordedCount
+        await reportAsync("Couldn\u{2019}t delete the collection.") {
+            try await service.deleteCollection(id: id)
+            offerUndo(since: mark)
+        }
+    }
+
     func nonPinnedCount() async -> Int {
         guard let service = storageService else { return 0 }
         return await (try? service.nonPinnedCount(in: .all)) ?? 0

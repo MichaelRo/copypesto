@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 import SwiftUI
 
-/// What the focused list and the focused clip can do, for the keyboard shortcuts and the iPad's menu bar.
+/// What the library page and the focused card can do, for the keyboard shortcuts and the iPad's menu bar (and the
+/// list a held ⌘ shows).
 struct ListCommandActions {
     let newNote: () -> Void
     let search: () -> Void
+    let toggleDetail: () -> Void
 }
 
 struct ClipCommandActions {
@@ -43,6 +45,11 @@ struct LibraryCommands: Commands {
         CommandGroup(after: .textEditing) {
             Button("Search") { list?.search() }
                 .keyboardShortcut("f", modifiers: .command)
+                .disabled(list == nil)
+        }
+        CommandGroup(after: .sidebar) {
+            Button("Show Details") { list?.toggleDetail() }
+                .keyboardShortcut("i", modifiers: .command)
                 .disabled(list == nil)
         }
     }

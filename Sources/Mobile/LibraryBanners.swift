@@ -21,8 +21,9 @@ struct LibraryBanners: View {
                     Image(systemName: notice.isProblem ? "exclamationmark.circle" : "checkmark.circle")
                         .accessibilityHidden(true)
                     Text(notice.text)
-                    Spacer(minLength: 0)
+                    if notice.isProblem { Spacer(minLength: 0) }
                 }
+                .fixedSize(horizontal: !notice.isProblem, vertical: false)
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier(MobileAccessibilityID.noticeBanner)
             }

@@ -3,11 +3,12 @@ import PestoCore
 import SwiftData
 import SwiftUI
 
-/// A tab bar where the width is compact (iPhone, a narrow iPad window) and a split view where it is regular. The
-/// size class decides, not the device, so an iPad in Split View or Stage Manager gets the layout that fits.
+/// One page for the library and search. The width decides the frame, not the device: a compact width (an iPhone, an
+/// iPad in a narrow window) gets one navigation stack with the chip row, a regular one a sidebar beside the grid.
 struct LibraryRootView: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @State private var library = LibraryModel()
 
     var body: some View {
         if let container = appState.historyContainer, let store = appState.historyStore {
@@ -18,6 +19,7 @@ struct LibraryRootView: View {
                     PhoneLibraryView(store: store)
                 }
             }
+            .environment(library)
             .modelContainer(container)
         } else if appState.hasBooted {
             ContentUnavailableView(

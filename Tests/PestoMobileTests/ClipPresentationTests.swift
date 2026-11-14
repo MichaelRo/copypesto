@@ -59,4 +59,37 @@ struct ClipPresentationTests {
         #expect(draft.cleanNote == "Kept")
         #expect(draft.cleanTags == ["x", "y"])
     }
+
+    @Test("a draft edited in place saves only when its cleaned text differs from the clip's")
+    func whenDraftIsCompared_thenOnlyRealChangesCount() {
+        var draft = ClipDetailsDraft(title: "Old", note: nil, tags: ["a"])
+        #expect(!draft.differs(title: "Old", note: nil, tags: ["a"]))
+        draft.title = "  Old  "
+        draft.note = "   "
+        draft.tags = "a, "
+        #expect(!draft.differs(title: "Old", note: nil, tags: ["a"]))
+        draft.note = "New note"
+        #expect(draft.differs(title: "Old", note: nil, tags: ["a"]))
+    }
+
+    @Test("a card speaks as one element: kind, content, source, age and pin")
+    func whenACardIsSpoken_thenOneSentenceSaysItAll() {
+        let label = CardSpeech.label(
+            kind: "Link", summary: "copypesto.net", source: "Safari", age: "4 minutes ago", isPinned: true
+        )
+        #expect(label == "Link, copypesto.net, Safari, 4 minutes ago, Pinned")
+        let bare = CardSpeech.label(kind: "Text", summary: "Hidden clip", source: nil, age: "just now", isPinned: false)
+        #expect(bare == "Text, Hidden clip, just now")
+    }
+
+    @Test("copying a hidden secret puts the real text on the clipboard and leaves it masked")
+    func whenACoveredSecretIsCopied_thenItIsNotShown() async throws {
+        let library = try await MobileTestLibrary()
+        try await library.service.ingest(#require(ClipCapture.text("ghp_8fK2mQ9xLr4TzW7nB1vC6yH3sJ5dE0aGpU2i")))
+        let secret = try await library.settle()
+        #expect(library.state.secretReveal.concealment(for: secret).isConcealed)
+        #expect(library.state.copy(secret))
+        #expect(!library.state.secretReveal.isShown(secret.id))
+        #expect(library.state.secretReveal.concealment(for: secret).isConcealed)
+    }
 }

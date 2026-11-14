@@ -2,35 +2,35 @@
 import PestoCore
 import SwiftUI
 
-/// The commands a clip offers, the same in a row's context menu and the detail view's More menu.
-struct ClipMenuItems: View {
-    let item: ClipboardItem
-    let collections: [Pinboard]
-    @Environment(MobileAppState.self) private var appState
+struct CardMenu: View {
+    let card: ClipCard
 
     var body: some View {
-        Button("Copy", systemImage: "doc.on.doc") { appState.copy(item) }
-        Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") {
-            let id = item.id
-            Task { await appState.togglePin(id) }
+        let item = card.item
+        let concealment = card.concealment
+        Button("Copy", systemImage: "doc.on.doc") { card.copy() }
+        Button("Edit Details", systemImage: "info.circle") { card.library.open(item.id) }
+        if !concealment.isConcealed {
+            Button("Share", systemImage: "square.and.arrow.up") { card.share() }
         }
-        MoveToCollectionMenu(item: item, collections: collections)
+        Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") { card.togglePin() }
+        AddToCollectionMenu(item: item, collections: card.collections)
+        if item.sensitivityRaw != nil, concealment.isConcealed, card.appState.secretReveal.canAuthenticate {
+            Button("Show", systemImage: "eye") { card.show() }
+        }
         Divider()
-        Button("Delete", systemImage: "trash", role: .destructive) {
-            let id = item.id
-            Task { await appState.delete([id]) }
-        }
+        Button("Delete", systemImage: "trash", role: .destructive) { card.delete() }
     }
 }
 
-struct MoveToCollectionMenu: View {
+struct AddToCollectionMenu: View {
     let item: ClipboardItem
     let collections: [Pinboard]
     @Environment(MobileAppState.self) private var appState
 
     var body: some View {
         let plain = collections.filter { !$0.isSmart }
-        Menu("Move to Collection", systemImage: "folder") {
+        Menu("Add to Collection", systemImage: "folder.badge.plus") {
             ForEach(plain, id: \.id) { board in
                 Button {
                     appState.moveToCollection(item, collectionID: board.id)

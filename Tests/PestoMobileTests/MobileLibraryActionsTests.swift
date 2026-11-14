@@ -109,4 +109,33 @@ struct MobileLibraryActionsTests {
         #expect(item.legacyCustomTitle == nil)
         #expect(library.state.undoHistory?.undoLabel != nil)
     }
+
+    @Test("a collection is renamed to a unique name and deleted with an Undo offer")
+    func whenACollectionIsRenamedAndDeleted_thenBothGoThroughUndo() async throws {
+        let library = try await MobileTestLibrary()
+        let trip = try #require(library.state.addCollection(named: "Trip", existing: []))
+        let work = try #require(library.state.addCollection(named: "Work", existing: [trip]))
+
+        library.state.renameCollection(work, to: " Trip ", existing: [trip, work])
+        #expect(work.name != "Trip")
+        #expect(work.name.hasPrefix("Trip"))
+        #expect(library.state.undoHistory?.undoLabel == .editCollection(work.name))
+
+        await library.state.deleteCollection(trip.id)
+        #expect(library.state.undoOffer == .deleteCollection("Trip"))
+    }
+
+    @Test("a pin saved by the storage actor reaches the clip the grid draws, and changes the card's revision")
+    func whenPinnedByTheActor_thenTheGridsClipSaysSo() async throws {
+        let library = try await MobileTestLibrary()
+        let item = try await library.add("pin me")
+        let before = ClipCard.Revision(item)
+
+        await library.state.togglePin(item.id)
+        try await library.refreshed()
+
+        let drawn = try #require(library.store.item(for: item.id))
+        #expect(drawn.isPinned)
+        #expect(ClipCard.Revision(drawn) != before)
+    }
 }

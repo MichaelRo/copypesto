@@ -28,6 +28,10 @@ struct ClipDetailsDraft: Equatable {
             .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
     }
 
+    func differs(title: String?, note: String?, tags: [String]) -> Bool {
+        cleanTitle != Self.clean(title ?? "") || cleanNote != Self.clean(note ?? "") || cleanTags != tags
+    }
+
     private static func clean(_ text: String) -> String? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed

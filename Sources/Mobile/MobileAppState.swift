@@ -68,7 +68,7 @@ final class MobileAppState {
         launchWork = Task(priority: .utility) {
             await LaunchMigrator.run(LaunchMigration.standard(service: service))
             #if DEBUG
-            await MobileSeed.runIfAsked(service: service)
+            await MobileSeed.runIfAsked(state: self)
             #endif
         }
     }

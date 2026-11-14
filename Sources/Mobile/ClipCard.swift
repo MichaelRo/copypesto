@@ -1,0 +1,155 @@
+// SPDX-License-Identifier: MIT
+import PestoCore
+import SwiftUI
+import UIKit
+
+/// One clip as a Pesto card: the content is the card, one quiet line of facts at its foot. A tap copies (a secret too,
+/// without showing it), a long press opens the menu, a drag hands the content to another app unless the card is
+/// covered (ADR 0003).
+struct ClipCard: View {
+    let item: ClipboardItem
+    let width: CGFloat
+    let collections: [Pinboard]
+    var isFocused = false
+    /// A change saved by the storage actor (a pin, a sync) reaches this context's objects without telling the card,
+    /// so the grid hands the fields the card draws from as a value; a new value redraws it.
+    var revision: Revision?
+
+    @Environment(MobileAppState.self) var appState
+    @Environment(LibraryModel.self) var library
+    @Environment(\.pestoAccent) private var accent
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @State var media = CardMediaState()
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
+    }
+
+    var concealment: CardConcealment {
+        appState.secretReveal.concealment(for: item)
+    }
+
+    var face: CardFace {
+        CardFace.decide(.init(
+            type: item.type,
+            text: item.type == .text || item.type == .url || item.type == .color ? item.gridPreview : "",
+            isConcealed: concealment.isConcealed,
+            isSecret: item.sensitivityRaw != nil,
+            pictureAspect: pictureAspect,
+            isAnimated: media.picture?.isAnimated ?? (item.mimeType?.contains("gif") == true),
+            hasLinkPicture: media.linkPicture != nil,
+            isDark: colorScheme == .dark
+        ))
+    }
+
+    private var pictureAspect: Double? {
+        if let width = item.pixelWidth, let height = item.pixelHeight, width > 0, height > 0 {
+            return Double(width) / Double(height)
+        }
+        guard let size = media.picture?.image.size, size.height > 0 else { return nil }
+        return size.width / size.height
+    }
+
+    var body: some View {
+        let face = face
+        card(face: face, width: width)
+            .contentShape(.contextMenuPreview, shape)
+            .contentShape(.dragPreview, shape)
+            .onTapGesture { copy() }
+            .onKeyPress(.return) {
+                copy()
+                return .handled
+            }
+            .contextMenu {
+                CardMenu(card: self)
+            } preview: {
+                card(face: face, width: 300).frame(width: 300)
+            }
+            .modifier(CardDragSource(card: self))
+            .focusedValue(\.clipCommands, isFocused ? commands : nil)
+            .task(id: CardMediaState.Key(id: item.id, isShown: appState.secretReveal.isShown(item.id))) {
+                await media.load(
+                    item, container: appState.historyContainer, isShown: appState.secretReveal.isShown(item.id)
+                )
+            }
+            .modifier(CardAccessibility(card: self))
+            .accessibilityIdentifier(MobileAccessibilityID.clipCard)
+    }
+
+    func card(face: CardFace, width: CGFloat) -> some View {
+        Color.clear
+            .aspectRatio(CardGridLayout.aspectRatio, contentMode: .fit)
+            .overlay {
+                ClipCardFace(item: item, face: face, media: media, width: width)
+                    .environment(\.clipRevision, revision ?? Revision(item))
+            }
+            .background(cardFill, in: shape)
+            .clipShape(shape)
+            .overlay { shape.strokeBorder(borderColor, lineWidth: ringed ? 2 : 0.75) }
+            .animation(Motion.animation(.pestoQuick), value: ringed)
+    }
+
+    private var ringed: Bool {
+        isFocused || library.flashedClipID == item.id
+    }
+
+    private var borderColor: Color {
+        if ringed { return accent }
+        return Color.primary.opacity(contrast == .increased ? 0.45 : 0.14)
+    }
+
+    /// As the Mac's card on a solid shelf: opaque white on a light ground, white at 10 percent on a dark one.
+    private var cardFill: Color {
+        colorScheme == .dark ? Color.white.opacity(0.10) : .white
+    }
+
+    private var commands: ClipCommandActions {
+        ClipCommandActions(
+            isPinned: item.isPinned,
+            copy: copy,
+            togglePin: togglePin,
+            delete: { library.pendingDelete = item.id }
+        )
+    }
+
+    func copy() {
+        guard appState.copy(item) else { return }
+        library.didCopy(item.id)
+        Announcer.announce(String(localized: "Copied"))
+    }
+
+    func togglePin() {
+        let id = item.id
+        Task { await appState.togglePin(id) }
+    }
+
+    func delete() {
+        let id = item.id
+        Task { await appState.delete([id]) }
+    }
+
+    func show() {
+        let id = item.id
+        Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
+    }
+
+    func share() {
+        guard !concealment.isConcealed, let content = ClipContent.of(item) else { return }
+        library.sharing = ClipShare(content)
+    }
+
+    struct Revision: Equatable {
+        let isPinned: Bool
+        let collectionID: UUID?
+        let timestamp: Date
+        let isCovered: Bool
+
+        init(_ item: ClipboardItem) {
+            isPinned = item.isPinned
+            collectionID = item.collectionID
+            timestamp = item.timestamp
+            isCovered = item.analysisPending || item.isNSFW
+        }
+    }
+}

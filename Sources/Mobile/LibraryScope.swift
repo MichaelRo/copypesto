@@ -5,7 +5,6 @@ import PestoCore
 enum LibraryScope: Hashable {
     case all
     case pinned
-    case kind(ClipboardType)
     case collection(UUID)
 
     static let filteredKinds: [ClipboardType] = [.text, .url, .image, .color, .code, .file]
@@ -14,7 +13,6 @@ enum LibraryScope: Hashable {
         switch self {
         case .all: String(localized: "All Clips")
         case .pinned: String(localized: "Pinned")
-        case let .kind(type): Self.kindTitle(type)
         case .collection: String(localized: "Collection")
         }
     }
@@ -23,7 +21,6 @@ enum LibraryScope: Hashable {
         switch self {
         case .all: "tray.full"
         case .pinned: "pin"
-        case let .kind(type): type.presentation.symbolName
         case .collection: "folder"
         }
     }
@@ -39,24 +36,26 @@ enum LibraryScope: Hashable {
         }
     }
 
-    /// The clips this scope shows for `query`, newest first (a plain collection keeps its own order). A smart
-    /// collection's rule reads the clip, so it arrives as `smartRule`; everything else is decided on the index.
+    /// The clips this scope shows for `query`, newest first (a plain collection keeps its own order), narrowed to one
+    /// kind while a search offers kinds. A smart collection's rule reads the clip, so it arrives as `smartRule`;
+    /// everything else is decided on the index.
     func ids(
-        in index: HistoryIndex, query: String, smartRule: ((UUID) -> Bool)? = nil, hidesSensitive: Bool = false,
-        now: Date = .now
+        in index: HistoryIndex, query: String, kind: ClipboardType? = nil, smartRule: ((UUID) -> Bool)? = nil,
+        hidesSensitive: Bool = false, now: Date = .now
     )
     -> [UUID] {
         var criteria = HistoryCriteria(
             hidesSensitive: hidesSensitive, query: query.trimmingCharacters(in: .whitespaces), now: now
         )
+        if let kind {
+            criteria.searchActive = true
+            criteria.types = [kind.rawValue]
+        }
         switch self {
         case .all:
             break
         case .pinned:
             criteria.pinnedOnly = true
-        case let .kind(type):
-            criteria.searchActive = true
-            criteria.types = [type.rawValue]
         case let .collection(id):
             if smartRule == nil { criteria.collectionID = id }
         }

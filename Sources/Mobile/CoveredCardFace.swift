@@ -22,7 +22,7 @@ struct CoveredCardFace: View {
             Image(systemName: "lock.fill").font(.caption).foregroundStyle(.secondary)
             Text(item.gridPreview)
                 .font(.callout.monospaced())
-                .lineLimit(2)
+                .lineLimit(3)
             Spacer(minLength: 4)
             if appState.secretReveal.canAuthenticate {
                 Button("Show", systemImage: "eye") { show() }
@@ -31,8 +31,8 @@ struct CoveredCardFace: View {
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 44, minHeight: 44, alignment: .topTrailing)
                     .contentShape(.rect)
-                    .padding(.top, -12)
-                    .padding(.trailing, -6)
+                    .padding(.top, -2)
+                    .padding(.trailing, -4)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

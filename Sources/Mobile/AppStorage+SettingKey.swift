@@ -9,6 +9,10 @@ extension AppStorage {
         self.init(wrappedValue: key.defaultValue, key.name)
     }
 
+    init(_ key: SettingKey<Bool>) where Value == Bool {
+        self.init(wrappedValue: key.defaultValue, key.name)
+    }
+
     init(_ key: SettingKey<String>) where Value == String {
         self.init(wrappedValue: key.defaultValue, key.name)
     }

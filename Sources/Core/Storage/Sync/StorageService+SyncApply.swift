@@ -186,6 +186,12 @@ extension StorageService {
             preferredItemID: meta.id, rewritesText: false, popsLookalikePicture: false
         )
         guard let inserted = try item(id: meta.id) else { return }
+        if let arrived = meta.sourceAppName, !arrived.isEmpty,
+           inserted.sourceAppName == nil || inserted.sourceAppName == SourceAppRecord.unknownDisplayName
+        {
+            // This device cannot name the app (iOS, or a Mac without it): keep the name the sender knew.
+            inserted.sourceAppName = arrived
+        }
         apply(meta.curation, to: inserted)
         inserted.adoptFirstCopy(meta.curation.copiedAt)
         markApplied(inserted, stamp: stamp)

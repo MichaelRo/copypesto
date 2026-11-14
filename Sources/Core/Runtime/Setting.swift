@@ -45,6 +45,8 @@ public enum Setting {
     public static let syncEnabled = SettingKey("syncEnabled", default: false)
     public static let syncIncludesSecrets = SettingKey("syncIncludesSecrets", default: false)
     public static let syncFolderPath = SettingKey("syncFolderPath", default: "")
+    /// The folder an iPhone or iPad was given in the file picker, as a security-scoped bookmark in base64.
+    public static let syncFolderBookmark = SettingKey("syncFolderBookmark", default: "")
     public static let syncDeviceSerial = SettingKey("syncDeviceSerial", default: 0)
     public static let deviceID = SettingKey("deviceID", default: "")
     public static let opensQuickMenuAtCursor = SettingKey("opensQuickMenuAtCursor", default: false)
@@ -135,7 +137,7 @@ public enum Setting {
         ruleStripTracking.name, ruleTrimWhitespace.name, ruleNormalizeLineEndings.name,
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
-        syncDeviceSerial.name, deviceID.name,
+        syncFolderBookmark.name, syncDeviceSerial.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,

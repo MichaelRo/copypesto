@@ -12,4 +12,10 @@ enum MobileAccessibilityID {
     static let undoButton = "undo-button"
     static let newNoteButton = "new-note"
     static let emptyDetail = "empty-detail"
+    static let syncStatus = "sync-status"
+    static let syncTurnOnButton = "sync-turn-on"
+    static let syncChooseFolderButton = "sync-choose-folder"
+    static let syncNowButton = "sync-now"
+    static let syncRecoveryKey = "sync-recovery-key"
+    static let syncRecoveryKeyField = "sync-recovery-key-field"
 }

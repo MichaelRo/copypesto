@@ -14,7 +14,9 @@ final class SyncMac {
     let controller: SyncController
     let site: SyncSite
 
-    init(name: String, folder: URL, time: TimeBox, keyStore: SyncKeyStoring? = nil) throws {
+    init(
+        name: String, folder: URL, time: TimeBox, keyStore: SyncKeyStoring? = nil, deviceKind: SyncDeviceKind = .mac
+    ) throws {
         site = try SyncSite(name: name, layout: SyncFolderLayout(root: folder), time: time)
         container = site.container
         storage = site.storage
@@ -25,6 +27,7 @@ final class SyncMac {
             deviceID: name, deviceName: "\(name)’s Mac"
         )
         environment.now = { time.now }
+        environment.deviceKind = deviceKind
         environment.timing.batchWindow = .milliseconds(20)
         environment.timing.pollInterval = .seconds(3600)
         controller = SyncController(environment)

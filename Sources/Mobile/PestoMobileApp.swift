@@ -12,11 +12,20 @@ struct PestoMobileApp: App {
             LibraryRootView()
                 .environment(appState)
                 .modifier(MobileAccent())
-                .task { appState.boot() }
+                .task {
+                    appState.boot()
+                    appState.syncDidBecomeActive()
+                }
                 .defaultAppStorage(AppDefaults.store)
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { appState.didLeaveForeground() }
+            switch phase {
+            case .active: appState.syncDidBecomeActive()
+            case .background:
+                appState.didLeaveForeground()
+                appState.syncDidEnterBackground()
+            default: break
+            }
         }
         .commands { LibraryCommands() }
     }

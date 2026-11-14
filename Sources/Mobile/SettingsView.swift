@@ -33,10 +33,7 @@ struct SettingsView: View {
                 Text("Hidden clips stay masked until you show them. Copying one never shows it.")
             }
             Section {
-                LabeledContent("Sync", value: String(localized: "Not set up"))
-                    .foregroundStyle(.secondary)
-            } footer: {
-                Text("Syncing with your Macs comes in a later version.")
+                NavigationLink("Sync") { SyncSettingsView() }
             }
             Section {
                 Button("Clear History", role: .destructive) { Task { await askToClear() } }

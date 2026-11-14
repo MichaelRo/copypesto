@@ -33,6 +33,8 @@ public struct StorageEnvironment: Sendable {
     public var wipeSuggestionLedger: (@Sendable () -> Void)?
     /// Provides the current NSFWMode for content screening. Defaults to reading AppDefaults.store in live mode.
     public var nsfwMode: (@Sendable () -> NSFWMode)?
+    /// Names the app a bundle ID belongs to. iOS cannot look one up (`UnknownSourceApps`).
+    public var sourceApps: any SourceAppResolving = SourceApps.resolver()
 
     public init(
         lastItemStore: any LastItemStoring, linkPreviews: LinkPreviewImageStore,

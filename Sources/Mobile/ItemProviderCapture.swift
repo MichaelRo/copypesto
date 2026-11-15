@@ -34,9 +34,7 @@ enum ItemProviderCapture {
             guard let png = UIImage(data: raw)?.pngData() else { throw Unreadable() }
             return ClipCapture.picture(png, typeIdentifier: UTType.png.identifier)
         case .link:
-            let raw = try await data(of: UTType.url.identifier, from: provider)
-            guard let url = URL(dataRepresentation: raw, relativeTo: nil) else { throw Unreadable() }
-            return ClipCapture.link(url)
+            return try await ClipCapture.link(url(from: provider))
         case .text:
             let registered = provider.registeredTypeIdentifiers
             let utf8 = UTType.utf8PlainText.identifier
@@ -46,6 +44,20 @@ enum ItemProviderCapture {
             let encoding: String.Encoding = type == UTType.utf16PlainText.identifier ? .utf16 : .utf8
             guard let text = String(data: raw, encoding: encoding) else { throw Unreadable() }
             return ClipCapture.text(text)
+        }
+    }
+
+    // A URL object's `public.url` data is an archive, not its text (Safari's drag, the Paste button), so the provider is
+    // asked for the object, as the share extension does.
+    private static func url(from provider: NSItemProvider) async throws -> URL {
+        try await withCheckedThrowingContinuation { continuation in
+            _ = provider.loadObject(ofClass: NSURL.self) { object, error in
+                if let url = (object as? NSURL)?.absoluteURL {
+                    continuation.resume(returning: url)
+                } else {
+                    continuation.resume(throwing: error ?? Unreadable())
+                }
+            }
         }
     }
 

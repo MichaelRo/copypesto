@@ -52,4 +52,12 @@ struct ClipCaptureTests {
         let capture = try await ItemProviderCapture.capture(from: [provider])
         #expect(capture?.payloadString == "dropped words")
     }
+
+    @Test("a link handed over as a URL object (Safari's drag, the Paste button) is kept as its whole address")
+    func whenAProviderHoldsAURLObject_thenTheAddressIsCaptured() async throws {
+        let url = try #require(URL(string: "https://copypesto.net/guide?ref=share"))
+        let provider = NSItemProvider(object: url as NSURL)
+        let capture = try await ItemProviderCapture.capture(from: [provider])
+        #expect(capture?.payloadString == "https://copypesto.net/guide?ref=share")
+    }
 }

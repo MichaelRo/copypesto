@@ -102,4 +102,40 @@ struct ShelfCommandTests {
         #expect(ShelfCommand.resolve(characters: "p", keyCode: 35, shift: true, option: true) == .pasteOneByOne)
         #expect(ShelfCommand.resolve(characters: "&", keyCode: 18, option: true) == .pasteNth(1))
     }
+
+    @Test("on layouts where [ and ] sit under ⌥ on the number row, ⌘[ and ⌘] switch collections instead of pasting")
+    func whenBracketNeedsOptionOnDigitKey_thenSwitchesCollectionAndPlainDigitStillPastes() {
+        // German: [ is ⌥5 (keyCode 23), ] is ⌥6 (keyCode 22).
+        #expect(
+            ShelfCommand.resolve(characters: "5", keyCode: 23, option: true, typedCharacters: "[")
+                == .previousCollection
+        )
+        #expect(
+            ShelfCommand.resolve(characters: "6", keyCode: 22, option: true, typedCharacters: "]")
+                == .nextCollection
+        )
+        #expect(ShelfCommand.resolve(characters: "[", keyCode: 23, option: true) == .previousCollection)
+        #expect(ShelfCommand.resolve(characters: "]", keyCode: 22, option: true) == .nextCollection)
+        // Plain ⌘5 and ⌘6 without ⌥ still paste clips 5 and 6.
+        #expect(ShelfCommand.resolve(characters: "5", keyCode: 23, option: false, typedCharacters: "5") == .pasteNth(5))
+        #expect(ShelfCommand.resolve(characters: "6", keyCode: 22, option: false, typedCharacters: "6") == .pasteNth(6))
+        // French: [ is ⌥⇧( on keyCode 23, ] is ⌥⇧) on keyCode 27.
+        #expect(
+            ShelfCommand.resolve(characters: "5", keyCode: 23, shift: true, option: true, typedCharacters: "[")
+                == .previousCollection
+        )
+        #expect(
+            ShelfCommand.resolve(characters: "°", keyCode: 27, shift: true, option: true, typedCharacters: "]")
+                == .nextCollection
+        )
+    }
+
+    @Test("⌥⌘← and ⌥⌘→ switch the app filter on every layout, while plain ⌘← and ⌘→ are left alone")
+    func whenOptionCommandArrows_thenSwitchesAppFilter() {
+        #expect(ShelfCommand.resolve(characters: nil, keyCode: 123, option: true) == .previousAppChip)
+        #expect(ShelfCommand.resolve(characters: nil, keyCode: 124, option: true) == .nextAppChip)
+        #expect(ShelfCommand.resolve(characters: nil, keyCode: 123, option: false) == nil)
+        #expect(ShelfCommand.resolve(characters: nil, keyCode: 124, option: false) == nil)
+        #expect(ShelfCommand.resolve(characters: nil, keyCode: 123, shift: true, option: true) == nil)
+    }
 }

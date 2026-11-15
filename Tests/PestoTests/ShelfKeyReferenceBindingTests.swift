@@ -80,7 +80,9 @@ struct ShelfKeyReferenceBindingTests {
         "⌘ Y Quick Look the focused clip": ["onQuickLook"],
         "⌘ S Save the focused picture to Downloads": ["onSaveImage"],
         "⌘ [ ] Switch collections": ["onPrevPinboard", "onNextPinboard"],
-        "⌥ ⌘ [ ] Switch app filter": ["onPrevAppChip", "onNextAppChip"],
+        "⌥ ⌘ [ ] Switch app filter (⌥⌘← and ⌥⌘→ do too)": [
+            "onPrevAppChip", "onNextAppChip", "onPrevAppChip", "onNextAppChip"
+        ],
         "⌘ N Add a collection": ["onNewCollection"],
         "⌘ P Paste the selected clips all at once": ["onPasteAllSelected"],
         "⇧ ⌘ P Paste the selected clips one by one": ["onPasteSelectedOneByOne"],
@@ -255,6 +257,33 @@ struct ShelfKeyReferenceBindingTests {
             ))
             #expect(rig.coordinator.handle(event) == nil)
             #expect(rig.log.fired == [expected])
+        }
+    }
+
+    @Test("on a German layout, ⌥⌘5 and ⌥⌘6 switch collections instead of pasting, and ⌥⌘← / ⌥⌘→ switch the app filter")
+    func germanBracketsAndOptionCommandArrows_reachTheirHandlers() throws {
+        let rig = armed()
+        struct KeyCase {
+            let code: UInt16
+            let typed: String
+            let base: String
+            let expected: String
+        }
+        let cases = [
+            KeyCase(code: 23, typed: "[", base: "5", expected: "onPrevPinboard"),
+            KeyCase(code: 22, typed: "]", base: "6", expected: "onNextPinboard"),
+            KeyCase(code: 123, typed: "", base: "", expected: "onPrevAppChip"),
+            KeyCase(code: 124, typed: "", base: "", expected: "onNextAppChip")
+        ]
+        for item in cases {
+            rig.log.fired = []
+            let event = try #require(NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [.command, .option], timestamp: 0,
+                windowNumber: rig.window.windowNumber, context: nil, characters: item.typed,
+                charactersIgnoringModifiers: item.base, isARepeat: false, keyCode: item.code
+            ))
+            #expect(rig.coordinator.handle(event) == nil)
+            #expect(rig.log.fired == [item.expected], "keyCode \(item.code) ran \(rig.log.fired)")
         }
     }
 }

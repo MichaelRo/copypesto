@@ -50,6 +50,10 @@ final class MobileAppState {
         self.clock = clock
     }
 
+    isolated deinit {
+        if let quickInsertObserver { NotificationCenter.default.removeObserver(quickInsertObserver) }
+    }
+
     static var standardOpeners: StorageBoot.Openers {
         .init(
             clips: { try ModelContainerSetup.openClips() },

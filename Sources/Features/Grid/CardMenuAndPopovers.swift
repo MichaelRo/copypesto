@@ -54,7 +54,14 @@ struct AIActionsMenuSection: View {
 
 struct NotePopover: View {
     @Binding var noteText: String
+    var onRemove: (() -> Void)?
     var onSave: () -> Void
+
+    init(noteText: Binding<String>, onRemove: (() -> Void)? = nil, onSave: @escaping () -> Void) {
+        _noteText = noteText
+        self.onRemove = onRemove
+        self.onSave = onSave
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -68,6 +75,12 @@ struct NotePopover: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 6))
             HStack {
+                if let onRemove {
+                    Button("Remove", role: .destructive, action: onRemove)
+                        .buttonStyle(.plain)
+                        .pestoQuiet()
+                        .pestoHitTarget()
+                }
                 Spacer()
                 Button("Save", action: onSave)
                     .buttonStyle(.pestoProminent)

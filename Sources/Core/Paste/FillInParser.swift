@@ -45,7 +45,7 @@ public enum FillInParser {
             let isDoubleBrace = match.range(at: 1).location != NSNotFound
             let rawBody = ns.substring(with: isDoubleBrace ? match.range(at: 1) : match.range(at: 2))
             let label = rawBody.trimmingCharacters(in: .whitespaces)
-            guard validLabel(label), label != "selection", label != "selected text" else { continue }
+            guard validLabel(label), label != "selected text" else { continue }
             if isDoubleBrace {
                 if TemplateExpander.isFill(rawBody) || field(fromToken: rawBody) != nil || rawBody == "/optional" {
                     continue
@@ -112,7 +112,7 @@ public enum FillInParser {
         for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
             let body = ns.substring(with: match.range(at: 1))
             var marker: String?
-            if body == "app" || body == "clipboard" {
+            if body == "app" || body == "clipboard" || body == "selection" {
                 marker = fieldStart + "context" + fieldSeparator + body + fieldSeparator + fieldEnd
             } else if body == "/optional" {
                 marker = optionalClose

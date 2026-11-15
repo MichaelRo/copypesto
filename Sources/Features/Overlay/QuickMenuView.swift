@@ -13,11 +13,14 @@ struct QuickMenuView: View {
     @Environment(\.modelContext) private var modelContext
     @AppStorage(Setting.screenSharingPrivacy) private var screenSharingPrivacy: Bool
 
-    /// Called with the payload kind when the user selects an item.
-    var onSelect: ((PasteCoordinator.PayloadKind) -> Void)?
+    /// Called with the chosen item and raw payload kind when the user selects an item.
+    var onSelect: ((ClipboardItem, PasteCoordinator.PayloadKind) -> Void)?
     var onDismiss: (() -> Void)?
 
-    init(onSelect: ((PasteCoordinator.PayloadKind) -> Void)? = nil, onDismiss: (() -> Void)? = nil) {
+    init(
+        onSelect: ((ClipboardItem, PasteCoordinator.PayloadKind) -> Void)? = nil,
+        onDismiss: (() -> Void)? = nil
+    ) {
         self.onSelect = onSelect
         self.onDismiss = onDismiss
         _items = Query(Self.descriptor(hidesSensitive: NSFWMode.current().hidesFromGrid))
@@ -93,7 +96,7 @@ struct QuickMenuView: View {
             return
         }
         appState.notePasted(item, in: modelContext)
-        onSelect?(payloadKind)
+        onSelect?(item, payloadKind)
         onDismiss?()
     }
 }

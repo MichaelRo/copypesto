@@ -11,6 +11,13 @@ public enum CardLayout {
     /// above it (ADR 0044).
     public static let contentTopInset: CGFloat = 10
 
+    /// Vertical space claimed by a 1-line title kicker and its gap above the body.
+    public static let titleBlockReserve: CGFloat = 18
+
+    public static func titleBlockReserve(cardWidth width: CGFloat) -> CGFloat {
+        titleBlockReserve * CardTextScale.factor(forWidth: width)
+    }
+
     /// The footer row (a keycap or badge, about 18), its bottom padding (6), the spacer above it (4) and 8 of air, so
     /// the last line of text never touches the footer.
     public static let footerReserve: CGFloat = 36
@@ -25,19 +32,21 @@ public enum CardLayout {
         min(max(0, glyphTopInset - contentTopInset - spaceAboveCaps), glyphTopInsetAllowance)
     }
 
-    public static func textHeightBudget(for size: CGSize) -> CGFloat {
-        max(0, size.height - contentTopInset - footerReserve)
+    public static func textHeightBudget(for size: CGSize, hasTitle: Bool = false) -> CGFloat {
+        let titleReserve = hasTitle ? titleBlockReserve(cardWidth: size.width) : 0
+        return max(0, size.height - contentTopInset - titleReserve - footerReserve)
     }
 
-    public static func textLineLimit(for size: CGSize) -> Int {
+    public static func textLineLimit(for size: CGSize, hasTitle: Bool = false) -> Int {
         let line = CardTextScale.lineHeight(cardWidth: size.width)
-        return max(2, Int(textHeightBudget(for: size) / line))
+        return max(2, Int(textHeightBudget(for: size, hasTitle: hasTitle) / line))
     }
 
     /// The height the lines of text may take: the line limit times the line height, so a card of paragraphs shows no
     /// more than a card of one, and a blank-line gap (`paragraphGap`) costs the third of a line it is.
-    public static func textBlockHeight(for size: CGSize) -> CGFloat {
-        CGFloat(textLineLimit(for: size)) * CardTextScale.lineHeight(cardWidth: size.width) + lineTolerance
+    public static func textBlockHeight(for size: CGSize, hasTitle: Bool = false) -> CGFloat {
+        CGFloat(textLineLimit(for: size, hasTitle: hasTitle))
+            * CardTextScale.lineHeight(cardWidth: size.width) + lineTolerance
     }
 
     /// A rendered line is a little taller than the 18 point convention (13 pt text, 2 pt spacing, scaled), so a block

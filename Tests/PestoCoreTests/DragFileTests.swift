@@ -44,5 +44,19 @@ struct DragFileTests {
         #expect(DragFile.fileName(title: "Recipe", date: .now, fileExtension: "txt") == "Recipe.txt")
         #expect(DragFile.fileName(title: "../../etc/passwd", date: .now, fileExtension: "txt").contains("/") == false)
         #expect(DragFile.fileName(title: nil, date: .now, fileExtension: "png").hasPrefix("Pesto picture "))
+        #expect(DragFile.fileName(title: nil, date: .now, fileExtension: "txt").hasPrefix("Pesto clip "))
+        #expect(ImageExport.baseName(title: nil, date: .now).hasPrefix("Pesto picture "))
+        #expect(ImageExport.baseName(title: nil, date: .now, untitledPrefix: "Pesto clip").hasPrefix("Pesto clip "))
+    }
+
+    @Test("file extensions follow clip type and image UTI")
+    func whenChoosingExtension_thenMatchesTypeAndMime() {
+        #expect(DragFile.fileExtension(for: .text, mimeType: "public.utf8-plain-text") == "txt")
+        #expect(DragFile.fileExtension(for: .code, mimeType: nil) == "txt")
+        #expect(DragFile.fileExtension(for: .url, mimeType: nil) == "txt")
+        #expect(DragFile.fileExtension(for: .color, mimeType: nil) == "txt")
+        #expect(DragFile.fileExtension(for: .image, mimeType: "public.png") == "png")
+        #expect(DragFile.fileExtension(for: .image, mimeType: "public.jpeg") == "jpeg")
+        #expect(DragFile.fileExtension(for: .image, mimeType: nil) == "png")
     }
 }

@@ -17,7 +17,7 @@ snippets exist (reorderable, deletable without re-spawning, and re-offered in Se
 `snippet` or `@snippet` on the shelf finds them.
 
 - Placeholders (`TemplateExpander`): `{{date}}`, `{{time}}`, `{{datetime}}` in the person's locale, short style,
-  `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}`/`{{date-Nd}}`, `{{clipboard}}`, `{{uuid}}`, `{{app}}` (the paste target's name)
+  `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}`/`{{date-Nd}}`, `{{clipboard}}`, `{{selection}}`, `{{uuid}}`, `{{app}}` (the paste target's name)
   and `{{cursor}}`. Unknown tokens such as `{{name}}` are left as typed.
 - **Fill-ins** (ADR 0017, `FillInParser`, `SnippetField`): `{{input:Label}}` (attributes `default="…"` and `multiline`),
   `{{choice:Label options="a|b"}}` and `{{optional:Label}}…{{/optional}}` are asked in a small non-activating panel
@@ -50,7 +50,7 @@ snippets exist (reorderable, deletable without re-spawning, and re-offered in Se
 - **Snippet files** (`SnippetPackReader`) read the JSON array of `{name, text, keyword}` that Raycast exports and that
   TextExpander and Alfred converters write, at most 5 MB, 1,000 entries and 20,000 characters per entry. Single braces
   become Pesto's. An entry with no placeholder is pinned as a plain clip and counted; a token Pesto does not fill in
-  (clipboard, selection, a custom date format) is counted and left as typed; empty or oversized entries are skipped and
+  (such as a custom date format) is counted and left as typed; empty or oversized entries are skipped and
   counted. It is reached from the importers' menu (ADR 0011).
 - **Collection suggestions** (`CollectionSuggester`, Settings → Collections) are always smart collections, so creating
   one moves no clip out of another collection. *From your clips*: Links, Code, Pictures, Colors and Files when there are

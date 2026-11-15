@@ -67,4 +67,43 @@ struct CardMetaLineTests {
         let lines = CardMetaLine.candidates(.init(age: "1h ago", measure: ["1.2 MB"], isActive: true))
         #expect(Set(lines).count == lines.count)
     }
+
+    @Test("when the title sits on the card face, the foot line keeps the source app and age")
+    func whenTitleShownOnFace_thenSourceStaysLead() {
+        let rest = CardMetaLine.candidates(
+            .init(
+                title: "API Key Docs",
+                source: "Xcode",
+                age: "4m ago",
+                measure: measure,
+                showsTitleOnFace: true
+            )
+        )
+        #expect(rest == ["Xcode \u{00B7} 4m ago", "4m ago"])
+
+        let active = CardMetaLine.candidates(
+            .init(
+                title: "API Key Docs",
+                source: "Xcode",
+                age: "4m ago",
+                measure: measure,
+                isActive: true,
+                showsTitleOnFace: true
+            )
+        )
+        #expect(active == [
+            "Xcode \u{00B7} 4m ago \u{00B7} 149 characters \u{00B7} 5 lines",
+            "Xcode \u{00B7} 4m ago \u{00B7} 149 characters",
+            "Xcode \u{00B7} 4m ago",
+            "4m ago"
+        ])
+    }
+
+    @Test("when the title sits on the card face and no source app is known, only the age remains")
+    func whenTitleShownOnFaceAndNoSource_thenAgeOnly() {
+        let lines = CardMetaLine.candidates(
+            .init(title: "Scratch", source: nil, age: "2d ago", showsTitleOnFace: true)
+        )
+        #expect(lines == ["2d ago"])
+    }
 }

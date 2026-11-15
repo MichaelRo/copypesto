@@ -35,6 +35,9 @@ extension AppDelegate {
     }
 
     private func hideThenPaste(_ item: ClipboardItem, _ chosen: PasteCoordinator.PayloadKind) {
+        if overlayWindowController?.overlayWindow.isVisible != true {
+            appState.pasteCoordinator.focusRestoration.capture()
+        }
         // If the Mac sleeps or locks before the hide animation finishes, this selection is stale.
         let requestedAtEpoch = pasteTasks.interruptionEpoch
         // Fire paste in the hide() completion block, which runs after orderOut(nil).
@@ -130,17 +133,11 @@ extension AppDelegate {
         guard isSnippet, TemplateExpander.containsPlaceholders(str) else {
             return (payload, nil)
         }
-        let fields = FillInParser.fields(in: str)
-        let remembers = AppDefaults.store.value(for: Setting.rememberFillIns)
-        var fills = SnippetFills.initial(for: fields, remembered: remembers ? item.metadata.fieldMemory ?? [:] : [:])
-        if !fields.isEmpty {
-            guard let asked = await fillInPrompt.ask(title: title, fields: fields, initial: fills) else {
-                Self.pasteLogger.notice("[end] outcome=fill-in-cancelled")
-                return nil
-            }
-            fills = asked
-            appState.pasteCoordinator.focusRestoration.markHidden()
-            if remembers { rememberFillIns(fills, fields: fields, in: item) }
+        let selectedText = TemplateExpander.referencesSelection(in: str)
+            ? appState.pasteCoordinator.focusRestoration.currentSelectedText()
+            : ""
+        guard let fills = await resolveFills(for: str, title: title, in: item) else {
+            return nil
         }
         let targetApp = appState.pasteCoordinator.focusRestoration.targetName
         guard let expanded = TemplateExpander.expansionWithCaret(
@@ -148,7 +145,8 @@ extension AppDelegate {
             isSnippet: true,
             fills: fills,
             targetApp: targetApp,
-            clipboardProvider: { priorClipboard }
+            clipboardProvider: { priorClipboard },
+            selectionProvider: { selectedText }
         ) else {
             return (payload, nil)
         }
@@ -156,7 +154,11 @@ extension AppDelegate {
         if wasRichText, item.type != .code,
            let rich = item.blob?.decryptedRichPayload(),
            let expandedRich = TemplateExpander.expandRichPayload(
-               rich, fills: fills, targetApp: targetApp, clipboardProvider: { priorClipboard }
+               rich,
+               fills: fills,
+               targetApp: targetApp,
+               clipboardProvider: { priorClipboard },
+               selectionProvider: { selectedText }
            )
         {
             appState.writeRichText(expanded.text, richPayload: expandedRich, protected: isProtected)
@@ -164,6 +166,20 @@ extension AppDelegate {
         }
         appState.writeText(expanded.text, protected: isProtected)
         return (.text(expanded.text), expanded.charactersAfterCursor)
+    }
+
+    private func resolveFills(for text: String, title: String, in item: ClipboardItem) async -> SnippetFills? {
+        let fields = FillInParser.fields(in: text)
+        let remembers = AppDefaults.store.value(for: Setting.rememberFillIns)
+        let initial = SnippetFills.initial(for: fields, remembered: remembers ? item.metadata.fieldMemory ?? [:] : [:])
+        guard !fields.isEmpty else { return initial }
+        guard let asked = await fillInPrompt.ask(title: title, fields: fields, initial: initial) else {
+            Self.pasteLogger.notice("[end] outcome=fill-in-cancelled")
+            return nil
+        }
+        appState.pasteCoordinator.focusRestoration.markHidden()
+        if remembers { rememberFillIns(asked, fields: fields, in: item) }
+        return asked
     }
 }
 

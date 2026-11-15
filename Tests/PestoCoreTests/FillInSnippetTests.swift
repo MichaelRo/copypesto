@@ -242,6 +242,17 @@ struct StackSnippetTests {
         #expect(result.richPayload == nil)
     }
 
+    @Test("an item with {{selection}} substitutes the provided selection")
+    @MainActor
+    func whenStackItemHasSelection_thenExpandsWithSelection() {
+        let result = item("Wrap {{selection}}").expandingSnippet(
+            fills: SnippetFills(), targetApp: "Mail", clipboard: "", selection: "picked"
+        )
+
+        #expect(result.payloadKind == .text("Wrap picked"))
+        #expect(result.pasteboardData == Data("Wrap picked".utf8))
+    }
+
     @Test("a rich-text snippet keeps proportional styling when expanded and drops monospaced code-block RTF")
     @MainActor
     func whenRichTextExpanded_thenProportionalKeptAndMonospacedDropped() throws {
@@ -364,6 +375,13 @@ struct SnippetRichPreviewTests {
         #expect(pieces == [.text("Re: "), .field(label: "clipboard", hint: nil, kind: .context)])
     }
 
+    @Test("the selection is a named context piece without reading any live text")
+    func whenSelectionToken_thenItIsNamedPiece() {
+        let pieces = SnippetPreview.pieces(from: "Re: {{selection}}")
+
+        #expect(pieces == [.text("Re: "), .field(label: "selection", hint: nil, kind: .context)])
+    }
+
     @Test("dates and the clock are filled in as before, and plain text is one piece")
     func whenOnlyPlaceholders_thenFilledIn() {
         #expect(SnippetPreview.pieces(from: "Just text") == [.text("Just text")])
@@ -425,5 +443,16 @@ struct FillInEditTests {
                 "Hi {{input:Customer name}}, order {{input:order_id}} ships on {{date}}. "
                 + "Already {{input:Ready}} and {{isodate}}."
         )
+    }
+
+    @Test("{selection} converts to a fill while {selected text} stays excluded")
+    func whenSelectionVariableDetected_thenSelectionConvertsWhileSelectedTextExcluded() {
+        let raw = "Wrap {selection} and {selected text}"
+        let detected = FillInParser.detectedVariables(in: raw)
+
+        #expect(detected.map(\.rawToken) == ["{selection}"])
+        #expect(detected.map(\.replacementToken) == ["{{selection}}"])
+        #expect(detected.map(\.isFill) == [true])
+        #expect(FillInParser.convertingAllVariables(in: raw) == "Wrap {{selection}} and {selected text}")
     }
 }

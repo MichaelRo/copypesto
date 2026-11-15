@@ -65,7 +65,11 @@ extension ClipboardCard {
         return ZStack(alignment: .top) {
             surface
             pictureLayer(fit: fit)
-            contentFirstChrome(MetaLineStyle(over: over, onPicture: true, showsGIF: isAnimated), label: nil)
+            contentFirstChrome(
+                MetaLineStyle(over: over, onPicture: true, showsGIF: isAnimated),
+                title: trimmedCustomTitle,
+                label: nil
+            )
         }
     }
 
@@ -74,7 +78,11 @@ extension ClipboardCard {
         return ZStack(alignment: .top) {
             surface
             urlImageBody
-            contentFirstChrome(MetaLineStyle(over: over, onPicture: true, showsGIF: urlOGImageIsAnimated), label: nil)
+            contentFirstChrome(
+                MetaLineStyle(over: over, onPicture: true, showsGIF: urlOGImageIsAnimated),
+                title: item.ogTitle == nil ? trimmedCustomTitle : nil,
+                label: nil
+            )
         }
     }
 
@@ -84,7 +92,7 @@ extension ClipboardCard {
         return ZStack(alignment: .top) {
             RoundedRectangle(cornerRadius: 8)
                 .fill(detectedColor ?? Color.purple.opacity(0.5))
-            contentFirstChrome(MetaLineStyle(over: over), label: label)
+            contentFirstChrome(MetaLineStyle(over: over), title: trimmedCustomTitle, label: label)
         }
     }
 
@@ -107,10 +115,43 @@ extension ClipboardCard {
         }
     }
 
-    private func contentFirstChrome(_ style: MetaLineStyle, label: String?) -> some View {
+    private func contentFirstChrome(_ style: MetaLineStyle, title: String?, label: String?) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer(minLength: 0)
+            if style.onPicture, let title, let over = style.over {
+                renameableTitleChip {
+                    Text(title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(over.ink)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(
+                            surface.opacity(PictureScrim.pillOpacity),
+                            in: RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        )
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.32), lineWidth: 1)
+                        }
+                        .environment(\.colorScheme, over.scheme)
+                }
+                .padding(.horizontal, 10)
+                .padding(.bottom, 4)
+            }
             if let label, let over = style.over {
+                if let title {
+                    renameableTitleChip {
+                        Text(title)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(over.ink)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 2)
+                }
                 Text(label)
                     .scaledFont(size: CardInk.labelPoints(forLength: label.count), weight: .semibold, maxScale: 1.15)
                     .foregroundStyle(over.ink)
@@ -128,11 +169,12 @@ extension ClipboardCard {
 
     func largeTextBody(points: Double) -> some View {
         let shown = bodySize(CGFloat(points))
+        let hasTitle = hasTopTitleSlot
         let spaceAboveCaps = Self.spaceAboveCaps(size: shown, weight: .semibold)
-        let extra = CardLayout.largeTextTopPadding(spaceAboveCaps: spaceAboveCaps)
+        let extra = hasTitle ? 0 : CardLayout.largeTextTopPadding(spaceAboveCaps: spaceAboveCaps)
         let lines = CardTreatment.largeTextLineLimit(
             points: Double(shown),
-            heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions) - extra),
+            heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions, hasTitle: hasTitle) - extra),
             maxLines: CardTreatment.maxLines(forPoints: points)
         )
         return Text(CardPreviewText.display(item.gridPreview))
@@ -147,14 +189,15 @@ extension ClipboardCard {
     func hostFirstBody(_ link: LinkDisplay) -> some View {
         let hostPoints = bodySize(CGFloat(LinkDisplay.hostPoints(forLength: link.host.count)))
         let pathPoints = bodySize(11)
-        let extra = CardLayout.largeTextTopPadding(spaceAboveCaps: Self.spaceAboveCaps(
+        let hasTitle = hasTopTitleSlot
+        let extra = hasTitle ? 0 : CardLayout.largeTextTopPadding(spaceAboveCaps: Self.spaceAboveCaps(
             size: hostPoints,
             weight: .semibold
         ))
         let pathLines = LinkDisplay.pathLineLimit(
             hostPoints: Double(hostPoints),
             pathPoints: Double(pathPoints),
-            heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions) - extra)
+            heightBudget: Double(CardLayout.textHeightBudget(for: cardDimensions, hasTitle: hasTitle) - extra)
         )
         return VStack(alignment: .leading, spacing: 4) {
             Text(link.host)

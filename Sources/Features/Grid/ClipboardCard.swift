@@ -130,12 +130,17 @@ struct ClipboardCard: View {
             .onDisappear {
                 hideSecret()
                 releaseOffscreenThumbnail()
+                isRenamingTitle = false
             }
-            .onChange(of: hideSecretsGeneration) { hideSecret() }
+            .onChange(of: hideSecretsGeneration) {
+                hideSecret()
+                isRenamingTitle = false
+            }
             .onChange(of: isPrivacyBlurred) { _, covered in
                 if covered {
                     hideSecret()
                     hideAgain()
+                    isRenamingTitle = false
                 }
             }
             // The shelf clears what it revealed when it closes; a card that was shown by its own click must follow.
@@ -192,10 +197,7 @@ struct ClipboardCard: View {
             .accessibilityAction(named: "Delete") { actions.delete?(item) }
             .modifier(moreActions)
             .modifier(CardEditActions(
-                rename: {
-                    renameText = item.customTitle ?? ""
-                    isRenamingTitle = true
-                },
+                rename: beginRenamingTitle,
                 addNote: {
                     noteText = item.userNote ?? ""
                     showNotePopover = true
@@ -231,7 +233,13 @@ struct ClipboardCard: View {
                     }
                 }
                 .popover(isPresented: $showNotePopover, arrowEdge: .top) {
-                    NotePopover(noteText: $noteText) {
+                    NotePopover(
+                        noteText: $noteText,
+                        onRemove: item.userNote == nil ? nil : {
+                            edit { $0.userNote = nil }
+                            showNotePopover = false
+                        }
+                    ) {
                         let trimmed = noteText.trimmingCharacters(in: .whitespaces)
                         edit { $0.userNote = trimmed.isEmpty ? nil : trimmed }
                         showNotePopover = false
@@ -518,16 +526,26 @@ struct ClipboardCard: View {
     private func classicCard(_ treatment: CardTreatment) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             if hasFullWidthBody {
-                cardContent(treatment)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 4)
+                VStack(alignment: .leading, spacing: 3) {
+                    if hasTopTitleSlot {
+                        classicTitleSlot
+                            .padding(.horizontal, 4)
+                            .padding(.top, CardLayout.contentTopInset - 4)
+                    }
+                    cardContent(treatment)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
             } else {
                 // Text starts at the top, as in a note; centring it left short clips floating in the middle.
-                cardContent(treatment)
-                    .frame(maxWidth: .infinity, alignment: .topLeading)
-                    .padding(.horizontal, 10)
-                    .padding(.top, CardLayout.contentTopInset)
+                VStack(alignment: .leading, spacing: 3) {
+                    classicTitleSlot
+                    cardContent(treatment)
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 10)
+                .padding(.top, CardLayout.contentTopInset)
                 Spacer(minLength: 4)
             }
 

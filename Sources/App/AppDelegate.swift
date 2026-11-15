@@ -272,12 +272,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupWorkspaceActivationObserver()
 
         screenLockClearing = ScreenLockClearing { [weak self] in
-            guard let service = self?.storageService else { return }
-            do {
-                try await service.clearNonPinned(in: .all)
-            } catch {
-                Self.logger.error("Clear on lock failed: \(error.localizedDescription, privacy: .public)")
-            }
+            await self?.clearNonPinnedAndTempFiles("Clear on lock")
         }
 
         // Cancel any pending paste task when the Mac wakes from sleep or the screen unlocks.
@@ -407,14 +402,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
               ClearOnQuitPolicy.shouldClear(
                   enabled: AppDefaults.store.value(for: Setting.clearOnQuit), hasStorage: storageService != nil,
                   keyUnresolved: appState.isEncryptionKeyUnresolved
-              ),
-              let service = storageService else { return .terminateNow }
+              ) else { return .terminateNow }
         Task { @MainActor in
-            do {
-                try await service.clearNonPinned(in: .all)
-            } catch {
-                Self.logger.error("clearOnQuit deletion failed: \(error.localizedDescription, privacy: .public)")
-            }
+            await clearNonPinnedAndTempFiles("clearOnQuit deletion")
             NSApp.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater

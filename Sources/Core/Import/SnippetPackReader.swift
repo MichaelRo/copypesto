@@ -13,8 +13,7 @@ public struct SnippetPack: Equatable, Sendable {
     public let snippets: [ImportedSnippet]
     /// Entries with no placeholder: kept as pinned clips, not listed as snippets.
     public let plainText: [ImportedSnippet]
-    /// Entries that use something Pesto does not fill in (the selection, a custom date format); the token is left as
-    /// typed.
+    /// Entries that use something Pesto does not fill in (such as a custom date format); the token is left as typed.
     public let withUnsupportedTokens: Int
     /// Entries left out: empty, or longer than a snippet can be.
     public let skipped: Int
@@ -67,13 +66,13 @@ public enum SnippetPackReader {
     /// Raycast writes `{date}`; Pesto writes `{{date}}`. Text that already has double braces is left alone.
     static func convertingPlaceholders(_ text: String) -> String {
         text.replacingOccurrences(
-            of: #"(?<!\{)\{(date|time|datetime|cursor|clipboard|uuid)\}(?!\})"#, with: "{{$1}}",
+            of: #"(?<!\{)\{(date|time|datetime|cursor|clipboard|selection|uuid)\}(?!\})"#, with: "{{$1}}",
             options: .regularExpression
         )
     }
 
     private static func usesUnsupportedToken(_ text: String) -> Bool {
-        let tokens = #"selection|selected text|day|month|year|(date|time|datetime) [^}]+"#
+        let tokens = #"selected text|day|month|year|(date|time|datetime) [^}]+"#
         return text.range(of: #"(?<!\{)\{("# + tokens + #")[^}]*\}(?!\})"#, options: .regularExpression) != nil
     }
 }

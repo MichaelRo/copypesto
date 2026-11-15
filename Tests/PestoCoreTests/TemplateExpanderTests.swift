@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
+    import AppKit
+#endif
 import Foundation
 import Testing
 @testable import PestoCore
@@ -179,5 +182,69 @@ struct TemplateExpanderTests {
     ])
     func whenText_thenReferencesClipboardOnlyForThePlaceholder(text: String, expected: Bool) {
         #expect(TemplateExpander.referencesClipboard(in: text) == expected)
+    }
+
+    @Test("only text with the selection placeholder asks for the active selection", arguments: [
+        ("hello {{selection}} world", true), ("{{selection}}", true), ("{{selected text}}", false),
+        ("{{ selection }}", false), ("{{clipboard}}", false), ("plain text", false)
+    ])
+    func whenText_thenReferencesSelectionOnlyForExactPlaceholder(text: String, expected: Bool) {
+        #expect(TemplateExpander.referencesSelection(in: text) == expected)
+    }
+
+    @Test("{{selection}} expands lazily once per pass without recursing into braces inside the selection")
+    @MainActor
+    func whenSelectionPlaceholder_thenExpandsLazilyAndLiterally() throws {
+        var calls = 0
+        let absent = TemplateExpander.expand(
+            "Today {{isodate}}",
+            at: Self.fixedDate,
+            selectionProvider: {
+                calls += 1
+                return "unused"
+            }
+        )
+        #expect(absent == "Today 2026-05-15")
+        #expect(calls == 0)
+
+        var repeatedCalls = 0
+        let repeated = TemplateExpander.expand(
+            "{{selection}} / {{selection}} on {{isodate}}",
+            at: Self.fixedDate,
+            selectionProvider: {
+                repeatedCalls += 1
+                return "literal {{date}} and {{cursor}}"
+            }
+        )
+        #expect(repeated == "literal {{date}} and {{cursor}} / literal {{date}} and {{cursor}} on 2026-05-15")
+        #expect(repeatedCalls == 1)
+
+        let withCaret = TemplateExpander.expansionWithCaret(
+            of: "Sel: {{selection}} -> {{cursor}}done",
+            isSnippet: true,
+            at: Self.fixedDate,
+            selectionProvider: { "{{cursor}}" }
+        )
+        #expect(withCaret?.text == "Sel: {{cursor}} -> done")
+        #expect(withCaret?.charactersAfterCursor == 4)
+
+        #if os(macOS)
+            let styled = NSMutableAttributedString(
+                string: "Wrap {{selection}}",
+                attributes: [.font: NSFont.boldSystemFont(ofSize: 14)]
+            )
+            let rtfData = try #require(styled.rtf(
+                from: NSRange(location: 0, length: styled.length), documentAttributes: [:]
+            ))
+            let rich = RichTextPayload(rtf: rtfData)
+            let expandedRich = try #require(TemplateExpander.expandRichPayload(
+                rich,
+                at: Self.fixedDate,
+                selectionProvider: { "chosen" }
+            ))
+            let decoded = try #require(expandedRich.rtf
+                .flatMap { NSAttributedString(rtf: $0, documentAttributes: nil) })
+            #expect(decoded.string == "Wrap chosen")
+        #endif
     }
 }

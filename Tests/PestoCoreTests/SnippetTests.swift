@@ -121,18 +121,20 @@ struct SnippetPackReaderTests {
     @Test("tokens Pesto does not fill in are counted and left as typed")
     func whenUnsupportedToken_thenCountedAndKept() throws {
         let pack =
-            try read(#"[{"name":"P","text":"Re: {selection} on {date}"},{"name":"Q","text":"{date format=\"yyyy\"}"}]"#)
+            try read(
+                #"[{"name":"P","text":"Re: {selected text} on {date}"},{"name":"Q","text":"{date format=\"yyyy\"}"}]"#
+            )
 
         #expect(pack.withUnsupportedTokens == 2)
-        #expect(pack.snippets.first?.text == "Re: {selection} on {{date}}")
+        #expect(pack.snippets.first?.text == "Re: {selected text} on {{date}}")
     }
 
-    @Test("Raycast's clipboard and uuid placeholders are converted, because Pesto fills them in")
-    func whenClipboardOrUUID_thenConverted() throws {
-        let pack = try read(#"[{"name":"R","text":"Re: {clipboard} id {uuid}"}]"#)
+    @Test("Raycast's clipboard, selection, and uuid placeholders are converted, because Pesto fills them in")
+    func whenClipboardSelectionOrUUID_thenConverted() throws {
+        let pack = try read(#"[{"name":"R","text":"Re: {selection} / {clipboard} id {uuid}"}]"#)
 
         #expect(pack.withUnsupportedTokens == 0)
-        #expect(pack.snippets.first?.text == "Re: {{clipboard}} id {{uuid}}")
+        #expect(pack.snippets.first?.text == "Re: {{selection}} / {{clipboard}} id {{uuid}}")
     }
 
     @Test("empty and oversized entries are skipped and counted")

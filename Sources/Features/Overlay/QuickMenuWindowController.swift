@@ -24,7 +24,7 @@ final class QuickMenuWindowController {
 
     func show(
         near cursorRect: CGRect,
-        onSelect: @escaping (PasteCoordinator.PayloadKind) -> Void,
+        onSelect: @escaping (ClipboardItem, PasteCoordinator.PayloadKind) -> Void,
         onDismiss: @escaping () -> Void
     ) {
         // Hide any previously orphaned panel before creating a new one.
@@ -163,7 +163,7 @@ final class QuickMenuWindowController {
     }
 
     private func makePanel(
-        onSelect: @escaping (PasteCoordinator.PayloadKind) -> Void,
+        onSelect: @escaping (ClipboardItem, PasteCoordinator.PayloadKind) -> Void,
         onDismiss: @escaping () -> Void
     )
     -> NSPanel {

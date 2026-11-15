@@ -19,18 +19,33 @@ public extension PasteStack.Item {
     /// This item with a snippet's tokens filled in. Genuine rich-text styling is kept; code-block formatting is
     /// dropped.
     @MainActor
-    func expandingSnippet(fills: SnippetFills, targetApp: String, clipboard: String) -> PasteStack.Item {
+    func expandingSnippet(
+        fills: SnippetFills,
+        targetApp: String,
+        clipboard: String,
+        selection: String = ""
+    )
+    -> PasteStack.Item {
         let text: String
         switch payloadKind {
         case let .text(str), let .richText(str): text = str
         case .nonText: return self
         }
         guard let expanded = TemplateExpander.expansion(
-            of: text, isSnippet: true, fills: fills, targetApp: targetApp, clipboardProvider: { clipboard }
+            of: text,
+            isSnippet: true,
+            fills: fills,
+            targetApp: targetApp,
+            clipboardProvider: { clipboard },
+            selectionProvider: { selection }
         ) else { return self }
         let expandedRich = richPayload.flatMap {
             TemplateExpander.expandRichPayload(
-                $0, fills: fills, targetApp: targetApp, clipboardProvider: { clipboard }
+                $0,
+                fills: fills,
+                targetApp: targetApp,
+                clipboardProvider: { clipboard },
+                selectionProvider: { selection }
             )
         }
         return PasteStack.Item(

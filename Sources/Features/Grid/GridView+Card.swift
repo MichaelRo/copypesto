@@ -155,7 +155,12 @@ extension GridView {
                 if shown { revealedIDs.insert(item.id) } else { revealedIDs.remove(item.id) }
             }
         )
-        if copyOnly { actions.paste = nil }
+        actions.copyAsFile = { copyAsFile($0) }
+        if copyOnly {
+            actions.paste = nil
+        } else {
+            actions.pasteAsFile = { pasteAsFile($0) }
+        }
         return actions
     }
 
@@ -221,5 +226,17 @@ extension GridView {
         currentItems.insert(moved, at: toIndex)
         let order = Dictionary(currentItems.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
         clipEditor.edit(currentItems) { $0.collectionOrder = order[$0.id] }
+    }
+
+    private func copyAsFile(_ item: ClipboardItem) {
+        guard appState.writeAsFile(item) != nil else { return }
+        appState.noteCopied(item, in: modelContext)
+        Announcer.announce("Copied as file")
+    }
+
+    private func pasteAsFile(_ item: ClipboardItem) {
+        guard !appState.isHistoryLockedNow(), let payloadKind = appState.writeAsFile(item) else { return }
+        appState.notePastedInBackground(item, in: modelContext)
+        appState.close(.paste(item, payloadKind))
     }
 }

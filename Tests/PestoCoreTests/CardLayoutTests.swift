@@ -68,4 +68,25 @@ struct CardLayoutTests {
         #expect(CardLayout.largeTextTopPadding(spaceAboveCaps: 40) == 0)
         #expect(CardLayout.largeTextTopPadding(spaceAboveCaps: 3) <= CardLayout.glyphTopInsetAllowance)
     }
+
+    @Test("a title kicker subtracts the scaled title reserve from the text budget across every card width")
+    func whenHasTitle_thenReserveSubtractedAndLinesFit() {
+        #expect(CardLayout.titleBlockReserve(cardWidth: 200) == 18)
+        for width in CardMetrics.sliderRange {
+            let size = CardMetrics.dimensions(width: width)
+            let reserve = CardLayout.titleBlockReserve(cardWidth: size.width)
+            let budgetWithTitle = CardLayout.textHeightBudget(for: size, hasTitle: true)
+            #expect(abs(budgetWithTitle - max(0, CardLayout.textHeightBudget(for: size) - reserve)) < 0.0001)
+
+            let linesWithTitle = CardLayout.textLineLimit(for: size, hasTitle: true)
+            let line = CardTextScale.lineHeight(cardWidth: size.width)
+            #expect(linesWithTitle >= 2)
+            #expect(linesWithTitle == max(2, CardLayout.textLineLimit(for: size) - 1))
+            #expect(CGFloat(linesWithTitle) * line <= budgetWithTitle)
+
+            let blockWithTitle = CardLayout.textBlockHeight(for: size, hasTitle: true)
+            #expect(blockWithTitle < CGFloat(linesWithTitle + 1) * line)
+            #expect(blockWithTitle <= budgetWithTitle + CardLayout.lineTolerance)
+        }
+    }
 }

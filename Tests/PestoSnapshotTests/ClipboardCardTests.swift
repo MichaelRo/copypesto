@@ -21,7 +21,7 @@ final class ClipboardCardTests: XCTestCase {
         return ModelContext(container)
     }
 
-    private func makeItem(
+    func makeItem(
         in ctx: ModelContext,
         type: ClipboardType,
         preview: String = "Sample preview text",
@@ -190,7 +190,7 @@ final class ClipboardCardTests: XCTestCase {
 
     // MARK: - Card sizes and themes (docs/design/card-typography.md, option B)
 
-    private static let longText = (1...12).map { "Line \($0) of a long note that keeps going" }.joined(separator: "\n")
+    static let longText = (1...12).map { "Line \($0) of a long note that keeps going" }.joined(separator: "\n")
 
     func withCardWidth(_ width: Int, _ body: () throws -> Void) rethrows {
         let previous = AppDefaults.store.value(for: Setting.cardWidth)

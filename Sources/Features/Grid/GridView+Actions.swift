@@ -580,6 +580,9 @@ extension GridView {
             StackSnippetSource(id: $0.id, isSnippet: $0.isTemplate, remembered: $0.metadata.fieldMemory ?? [:])
         }
         Task {
+            if !appState.isOverlayVisible {
+                appState.pasteCoordinator.focusRestoration.capture()
+            }
             guard let ready = await appState.expandedStackItems(stackItems, sources: sources) else { return }
             let stack = PasteStack(items: ready)
             selection.clear()

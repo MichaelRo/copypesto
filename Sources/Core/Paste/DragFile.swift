@@ -8,7 +8,17 @@ public enum DragFile {
     public static let folderPrefix = "pesto-drag-"
 
     public static func fileName(title: String?, date: Date, fileExtension: String) -> String {
-        "\(ImageExport.baseName(title: title, date: date)).\(fileExtension)"
+        let prefix = fileExtension == "txt" ? "Pesto clip" : "Pesto picture"
+        return "\(ImageExport.baseName(title: title, date: date, untitledPrefix: prefix)).\(fileExtension)"
+    }
+
+    public static func fileExtension(for type: ClipboardType, mimeType: String?) -> String {
+        switch type {
+        case .image:
+            mimeType.map { ImageExport.fileExtension(forUTI: $0) } ?? "png"
+        case .text, .code, .url, .color, .file:
+            "txt"
+        }
     }
 
     /// Writes `data` as `name` in a fresh folder under `directory` and returns the file, or nil when it cannot be

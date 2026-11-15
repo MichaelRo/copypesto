@@ -21,9 +21,10 @@ public enum CardMenuItem: CaseIterable, Sendable {
     case note
     case icon
     case tag
-    case clearCustomizations
     case copyTransformed
     case pasteTransformed
+    case copyAsFile
+    case pasteAsFile
     case entityActions
     case aiActions
     case markSensitive

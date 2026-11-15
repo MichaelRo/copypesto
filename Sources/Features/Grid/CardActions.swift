@@ -34,6 +34,10 @@ struct CardActions: Equatable {
     var pasteAs: (@MainActor (ClipboardItem, TextTransform) -> Void)?
     /// Writes the transformed text to the pasteboard without closing the shelf or pasting.
     var copyTransformed: (@MainActor (ClipboardItem, TextTransform) -> Void)?
+    /// Writes the clip to a temporary file and puts that file on the pasteboard without pasting.
+    var copyAsFile: (@MainActor (ClipboardItem) -> Void)?
+    /// Writes the clip to a temporary file and pastes it into the app behind the shelf.
+    var pasteAsFile: (@MainActor (ClipboardItem) -> Void)?
     /// The JSON and Markdown entries this clip qualifies for (ADR 0033). Asked when the menu opens, never while the
     /// card draws; empty while the history is locked.
     var structuredTransforms: (@MainActor (ClipboardItem) -> [TextTransform])?

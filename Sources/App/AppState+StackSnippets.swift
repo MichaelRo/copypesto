@@ -17,6 +17,16 @@ extension AppState {
         let isSnippet = sources.map(\.isSnippet)
         let fields = PasteStack.fields(of: items, isSnippet: isSnippet)
         guard isSnippet.contains(true) else { return items }
+        let needsSelection = zip(items, isSnippet).contains { item, snippet in
+            guard snippet else { return false }
+            switch item.payloadKind {
+            case let .text(str), let .richText(str):
+                return TemplateExpander.referencesSelection(in: str)
+            case .nonText:
+                return false
+            }
+        }
+        let selectedText = needsSelection ? pasteCoordinator.focusRestoration.currentSelectedText() : ""
         let remembers = AppDefaults.store.value(for: Setting.rememberFillIns)
         let remembered = remembers ? sources.reduce(into: [String: String]()) { $0.merge($1.remembered) { $1 } } : [:]
         var fills = SnippetFills.initial(for: fields, remembered: remembered)
@@ -29,7 +39,9 @@ extension AppState {
         let app = pasteCoordinator.focusRestoration.targetName
         let clipboard = TemplateExpander.liveClipboardText()
         return zip(items, isSnippet).map { item, snippet in
-            snippet ? item.expandingSnippet(fills: fills, targetApp: app, clipboard: clipboard) : item
+            snippet
+                ? item.expandingSnippet(fills: fills, targetApp: app, clipboard: clipboard, selection: selectedText)
+                : item
         }
     }
 

@@ -190,10 +190,7 @@ extension ClipboardCard {
         }
 
         if offers(.rename) {
-            Button {
-                renameText = item.customTitle ?? ""
-                isRenamingTitle = true
-            } label: {
+            Button(action: beginRenamingTitle) {
                 Label("Rename\u{2026}", systemImage: "pencil")
             }
         }
@@ -227,20 +224,6 @@ extension ClipboardCard {
             }
         }
 
-        if offers(.clearCustomizations),
-           item.customTitle != nil || item.userNote != nil || item.customSymbolName != nil
-        {
-            Button(role: .destructive) {
-                edit { clip in
-                    clip.customTitle = nil
-                    clip.userNote = nil
-                    clip.customSymbolName = nil
-                }
-            } label: {
-                Label("Clear Customizations", systemImage: "trash")
-            }
-        }
-
         Divider()
 
         let pasteAsTransforms = TextTransform.available(for: item.type)
@@ -270,6 +253,23 @@ extension ClipboardCard {
                     }
                 } label: {
                     Label("Paste As\u{2026}", systemImage: "text.badge.chevron.right")
+                }
+            }
+        }
+
+        if item.type != .file, item.sensitivity == nil, !concealment.isConcealed, !item.analysisPending {
+            if offers(.copyAsFile), let copyAsFile = actions.copyAsFile {
+                Button {
+                    copyAsFile(item)
+                } label: {
+                    Label("Copy as File", systemImage: "doc")
+                }
+            }
+            if offers(.pasteAsFile), let pasteAsFile = actions.pasteAsFile {
+                Button {
+                    pasteAsFile(item)
+                } label: {
+                    Label("Paste as File", systemImage: "doc.on.clipboard")
                 }
             }
         }

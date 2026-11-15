@@ -110,6 +110,26 @@ final class CardDetailPopoverTests: XCTestCase {
         snapshot(item)
     }
 
+    func test_text_titled() throws {
+        let item = try makeItem(
+            .text,
+            preview: "Dinner is at 7:30. Bring the basil from the balcony, the good olive oil."
+        )
+        item.customTitle = "Shopping list"
+        snapshot(item)
+        snapshot(item, scheme: .dark)
+    }
+
+    func test_code_titled() throws {
+        let item = try makeItem(
+            .code,
+            preview: "def pesto(basil, nuts, oil=0.5):\n    paste = grind(basil + nuts)\n    return paste.fold(oil)",
+            language: "Python"
+        )
+        item.customTitle = "Pesto helper"
+        snapshot(item)
+    }
+
     func test_copyTextButton_whenAtRest_thenItsWashHugsTheLabel() {
         func width(of view: some View) -> CGFloat {
             NSHostingController(rootView: view.inBrandAccent()).view.fittingSize.width

@@ -75,7 +75,7 @@ extension ClipboardCard {
             .frame(height: 84)
             .frame(maxHeight: .infinity, alignment: .bottom)
             VStack(alignment: .leading, spacing: 2) {
-                if let title = item.ogTitle ?? item.customTitle {
+                if let title = item.ogTitle ?? trimmedCustomTitle {
                     Text(title)
                         // Text size capped: fills a fixed-size card's image scrim.
                             .scaledFont(size: 11, weight: .semibold, maxScale: 1.3)

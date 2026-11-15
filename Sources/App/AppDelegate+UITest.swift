@@ -14,11 +14,18 @@ extension AppDelegate {
         guard !appState.isHistoryLockedNow() else { return showOverlay() }
         quickMenuController.show(
             near: cursorRect,
-            onSelect: { [weak self] payloadKind in
+            onSelect: { [weak self] item, chosen in
                 guard let self else { return }
+                self.appState.pasteCoordinator.focusRestoration.capture()
                 self.runPasteTask(.quickMenu) { delegate in
-                    await delegate.appState.pasteCoordinator.executePaste(payload: payloadKind)
+                    guard let (payloadKind, caretOffset) = await delegate.expandedPayload(from: chosen, of: item) else {
+                        return nil
+                    }
+                    return await delegate.appState.pasteCoordinator.executePaste(
+                        payload: payloadKind, caretOffsetFromEnd: caretOffset
+                    )
                 }
+                self.deleteIfExpired(item)
             },
             onDismiss: {}
         )

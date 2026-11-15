@@ -4,6 +4,18 @@ import os
 import PestoCore
 
 extension AppDelegate {
+    /// Clears all non-pinned clips and any staged temporary preview or copy-as-file files, logging failures under
+    /// `context`.
+    func clearNonPinnedAndTempFiles(_ context: String) async {
+        guard let service = storageService else { return }
+        do {
+            try await service.clearNonPinned(in: .all)
+            QuickLookPreviewController.sweepStaleTempFiles()
+        } catch {
+            Self.logger.error("\(context, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     /// Every way of clearing history (status menu, `pesto://clear`, AppleScript) comes through here, so
     /// nothing is deleted without the user confirming what will go.
     func requestClearHistory(_ range: ClearRange) {
@@ -13,6 +25,7 @@ extension AppDelegate {
             guard count > 0, confirmClear(count: count, range: range) else { return }
             do {
                 let ids = try await service.clearNonPinned(in: range)
+                QuickLookPreviewController.sweepStaleTempFiles()
                 AutoBackupSettings().lowerBaseline(by: ids.count)
                 if range == .all {
                     appState.clearShelfSuggestions()

@@ -21,11 +21,13 @@ struct CardMenuItemTests {
     func coveredCardNamesNothing() {
         let named: [CardMenuItem] = [
             .entityActions, .openLink, .showInFinder, .colorCopyFormats, .rename, .note, .setExpiry,
-            .assignShortcut, .pin, .tag, .icon, .clearCustomizations, .moveToCollection, .aiActions,
-            .copyLinkPreview, .copyTransformed, .pasteTransformed, .markSensitive, .quickLook
+            .assignShortcut, .pin, .tag, .icon, .moveToCollection, .aiActions,
+            .copyLinkPreview, .copyTransformed, .pasteTransformed, .copyAsFile, .pasteAsFile,
+            .markSensitive, .quickLook
         ]
         for item in named {
             #expect(!item.isOffered(covered: true), "\(item) is offered on a covered card")
         }
+        #expect(!CardMenuItem.allCases.map(String.init(describing:)).contains("clearCustomizations"))
     }
 }

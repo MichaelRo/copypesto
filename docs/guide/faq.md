@@ -1,5 +1,9 @@
 # FAQ
 
+## Is Pesto free?
+
+Yes. Pesto is free and open source under the MIT license, with no paid tiers or subscriptions.
+
 ## How to see clipboard history on a Mac
 
 Press **⇧⌘V** to open Pesto's shelf along the bottom of the screen. Scroll through recent clips with the arrow keys or trackpad, or start typing to search. Press **Return** or double-click a card to paste it into your active app.
@@ -7,10 +11,6 @@ Press **⇧⌘V** to open Pesto's shelf along the bottom of the screen. Scroll t
 ## What is the Mac clipboard history shortcut?
 
 The default shortcut is **⇧⌘V** (Shift-Command-V). Change it to any key combination in *Settings → Shortcuts*.
-
-## Is Pesto free?
-
-Yes. Pesto is free and open source under the MIT license, with no paid tiers or subscriptions.
 
 ## Does it sync between my Macs?
 

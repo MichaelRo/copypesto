@@ -125,6 +125,7 @@ A snippet holds at least one placeholder, which is filled in or removed when you
 | `{{date+Nd}}` | The date N days from now: `{{date+3d}}` | 5/18/2026 |
 | `{{date-Nd}}` | The date N days ago: `{{date-1d}}` | 5/14/2026 |
 | `{{clipboard}}` | The text on the clipboard when you paste | whatever you copied last |
+| `{{selection}}` | Selected text in the active app | selected text |
 | `{{uuid}}` | A new random ID each time | 3f2b8c1e-9a47-4d0e-b6a5-1c2d3e4f5a6b |
 | `{{app}}` | The name of the app you paste into | Mail |
 | `{{cursor}}` | Nothing: after a plain-text paste, the caret lands here | |
@@ -177,8 +178,8 @@ Three tiles at the top: how many clips, how much disk they take and the oldest c
 - **Found on this Mac** (shown when another clipboard manager is installed): one row per app with its own *Import…*; it reads nothing until you choose that app's file and confirm. The same imports are under *Another app's library* below, for apps Pesto cannot find.
 - **Import and export:** your text clips as a JSON file (the first 500 characters of each; unencrypted, secrets masked, no pictures) and back. *Import…*
   under **Another app's library** brings in clips from Paste (see [Moving from another app](moving-from.md#moving-from-paste)), Maccy, Alfred,
-  CleanClip, PasteNow, CopyClip, PastePal, Pastebot, Clipy, Flycut or Unclutter, or a CSV, JSON or text file of clips from any other app (**Other File…**: you say which column is the text, when it was copied and what is pinned, or what one clip is in a text file, and the usual preview follows), or snippets from a Raycast export file (TextExpander and Alfred can convert theirs to it): single-brace placeholders such as `{date}`, `{clipboard}` and `{uuid}` become Pesto's, text
-  with no placeholder is pinned as a clip, and anything Pesto cannot fill in (like `{selection}`) is left as typed.
+  CleanClip, PasteNow, CopyClip, PastePal, Pastebot, Clipy, Flycut or Unclutter, or a CSV, JSON or text file of clips from any other app (**Other File…**: you say which column is the text, when it was copied and what is pinned, or what one clip is in a text file, and the usual preview follows), or snippets from a Raycast export file (TextExpander and Alfred can convert theirs to it): single-brace placeholders such as `{date}`, `{clipboard}`, `{selection}` and `{uuid}` become Pesto's, text
+  with no placeholder is pinned as a clip, and anything Pesto cannot fill in (like `{date format="yyyy"}`) is left as typed.
 - **Maintenance:** rebuild the semantic search index if results feel stale.
 - **Activity:** copies per day, what types you copy, your most pasted clips and which apps you copy from, for the last
   7 or 30 days.

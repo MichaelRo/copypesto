@@ -31,7 +31,8 @@ extension ClipboardCard {
             source: item.isRemote ? String(localized: "Another device") : item.knownSourceAppName,
             age: timeAgo,
             measure: [footerDetail(withLines: true), footerDetail(withLines: false)].compactMap(\.self),
-            isActive: isFocused || isPointed
+            isActive: isFocused || isPointed,
+            showsTitleOnFace: showsTitleOnCardFace
         )
     }
 

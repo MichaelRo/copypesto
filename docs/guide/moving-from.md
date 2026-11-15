@@ -99,9 +99,9 @@ and clips you already have are skipped.
 ## Moving snippets from another app
 *Settings → Data → Another app's library → Import… → Snippets File…* reads the JSON file Raycast exports (Pesto does not
 read Alfred's own `.alfredsnippets` file or TextExpander's directly, and has no abbreviation expansion: a snippet is a pinned
-clip you paste from the shelf). Single-brace placeholders such as `{date}`, `{clipboard}` and `{uuid}` become Pesto's `{{date}}`, `{{clipboard}}` and `{{uuid}}`. Raycast `{argument}` placeholders and TextExpander `%filltext`, `%fillarea`, `%fillpopup` and `%fillpart` fill-ins become snippets that ask when you paste.
+clip you paste from the shelf). Single-brace placeholders such as `{date}`, `{clipboard}`, `{selection}` and `{uuid}` become Pesto's `{{date}}`, `{{clipboard}}`, `{{selection}}` and `{{uuid}}`. Raycast `{argument}` placeholders and TextExpander `%filltext`, `%fillarea`, `%fillpopup` and `%fillpart` fill-ins become snippets that ask when you paste.
 A snippet with no placeholder is pinned as an ordinary clip, and one that uses something Pesto does not fill in, such as
-`{selection}`, keeps that text as typed; the sheet counts both.
+`{date format="yyyy"}`, keeps that text as typed; the sheet counts both.
 
 ## Raycast
 Raycast encrypts its local clipboard database with SQLCipher using a key stored in your login Keychain, so Pesto cannot read its clipboard history directly. You can import Raycast snippets via JSON export: see *Moving snippets from another app* above.

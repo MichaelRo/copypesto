@@ -202,4 +202,33 @@ struct FocusRestorationTests {
 
         #expect(waited < .seconds(10), "the ceiling is 30 s, so returning well before it proves the cancel")
     }
+
+    // MARK: - Reading the active selection lazily
+
+    private final class SpySelectedTextReader: SelectedTextReading, @unchecked Sendable {
+        var requestedPIDs: [pid_t] = []
+        var reply = "selected snippet"
+
+        @MainActor
+        func selectedText(inProcess pid: pid_t) -> String {
+            requestedPIDs.append(pid)
+            return reply
+        }
+    }
+
+    @Test("capture never reads the active selection; currentSelectedText reads lazily for the captured app")
+    func whenCaptured_thenSelectedTextIsOnlyReadLazilyWhenAsked() throws {
+        let spy = SpySelectedTextReader()
+        let other = try anotherApp()
+        let restoration = FocusRestoration(frontmostApplication: { other }, selectedTextReader: spy)
+
+        #expect(restoration.currentSelectedText().isEmpty)
+        #expect(spy.requestedPIDs.isEmpty)
+
+        restoration.capture()
+        #expect(spy.requestedPIDs.isEmpty)
+
+        #expect(restoration.currentSelectedText() == "selected snippet")
+        #expect(spy.requestedPIDs == [other.processIdentifier])
+    }
 }

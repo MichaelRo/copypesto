@@ -35,7 +35,7 @@ Pesto asks for the Accessibility permission so that it can paste for you. It use
 - Two optional features watch keystrokes while they are on (and the small menu at the cursor, if you turn it on, watches for Escape while it is open): the append shortcut (a second ⌘C) and Paste One by One (each plain
   ⌘V pastes the next clip). Their monitors look at the key and its modifiers and ignore everything else; they do not
   record or store what you type, and they run only while the feature is on.
-- Pesto never reads what is in a text field. It asks where the caret or selection is, not what the field holds.
+- Unless you paste a snippet that uses `{{selection}}`, Pesto never reads what is in a text field—it only asks where the caret or selection is, not what the field holds. When a snippet holds `{{selection}}`, Pesto reads only the active selection at paste time to fill it in and keeps nothing of it.
 
 Without the permission, Pesto still keeps your history, and pasting from the shelf copies the clip and tells you to
 press ⌘V yourself.

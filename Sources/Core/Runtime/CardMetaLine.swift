@@ -15,6 +15,8 @@ public enum CardMetaLine {
         /// A card that shows all of a short text has nothing to measure for the reader.
         public var showsWholeClip: Bool
         public var isActive: Bool
+        /// True when the card face already shows the custom title, so the foot line keeps the source app and age.
+        public var showsTitleOnFace: Bool
 
         public init(
             title: String? = nil,
@@ -22,7 +24,8 @@ public enum CardMetaLine {
             age: String,
             measure: [String] = [],
             showsWholeClip: Bool = false,
-            isActive: Bool = false
+            isActive: Bool = false,
+            showsTitleOnFace: Bool = false
         ) {
             self.title = title
             self.source = source
@@ -30,17 +33,19 @@ public enum CardMetaLine {
             self.measure = measure
             self.showsWholeClip = showsWholeClip
             self.isActive = isActive
+            self.showsTitleOnFace = showsTitleOnFace
         }
     }
 
     public static let separator = " \u{00B7} "
 
     public static func candidates(_ facts: Facts) -> [String] {
-        let lead = facts.title ?? facts.source
+        let footTitle = facts.showsTitleOnFace ? nil : facts.title
+        let lead = footTitle ?? facts.source
         let measures = facts.isActive && !facts.showsWholeClip ? facts.measure : []
         var lines = measures.map { join([lead, facts.age, $0]) }
         lines.append(join([lead, facts.age]))
-        lines.append(facts.title ?? facts.age)
+        lines.append(footTitle ?? facts.age)
         var seen: Set<String> = []
         return lines.filter { seen.insert($0).inserted }
     }

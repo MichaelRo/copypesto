@@ -110,18 +110,9 @@ final class KeyNavCoordinator {
         let flags = event.modifierFlags.intersection([.command, .control])
         // Cmd+[ / Cmd+], and the toolbar shortcuts below, work even while search is active.
         if isLocked { return handleLocked(event) }
-        if let keys = decodePopoverKeys?(), flags.isEmpty, !event.modifierFlags.contains(.option) {
-            switch event.keyCode {
-            case 53:
-                MainActor.assumeIsolated { keys.close() }
-                return nil
-            case 36, 76:
-                MainActor.assumeIsolated { keys.copy() }
-                return nil
-            default: break
-            }
-        }
+        if let disposition = decodePopoverDisposition(event, flags: flags) { return disposition.event }
         if isConfirming { return handleConfirming(event) }
+        if let disposition = nonSearchFieldDisposition(event) { return disposition.event }
         if flags == .command, consumeCommandShortcut(event) { return nil }
         if isSearchActive {
             if flags == .command, searchTextIsEmpty?() == true, consumeHistoryCommand(event) { return nil }
@@ -469,5 +460,50 @@ final class KeyNavCoordinator {
         default: onLast?()
         }
         return nil
+    }
+}
+
+private extension KeyNavCoordinator {
+    enum FieldDisposition {
+        case passThrough(NSEvent)
+        case swallow
+        var event: NSEvent? {
+            if case let .passThrough(event) = self { event } else { nil }
+        }
+    }
+
+    func decodePopoverDisposition(_ event: NSEvent, flags: NSEvent.ModifierFlags) -> FieldDisposition? {
+        guard let keys = decodePopoverKeys?(), flags.isEmpty, !event.modifierFlags.contains(.option) else {
+            return nil
+        }
+        switch event.keyCode {
+        case 53:
+            MainActor.assumeIsolated { keys.close() }
+            return .swallow
+        case 36, 76:
+            MainActor.assumeIsolated { keys.copy() }
+            return .swallow
+        default:
+            return nil
+        }
+    }
+
+    /// Routes text-editing shortcuts (`⌘A`/`⌘X`/`⌘C`/`⌘V`/`⌘Z`) to non-search field editors (card rename, note/tag
+    /// popovers) before shelf-level `⌘` shortcuts steal them.
+    func nonSearchFieldDisposition(_ event: NSEvent) -> FieldDisposition? {
+        nonisolated(unsafe) let unsafeEvent = event
+        guard !isSearchActive, MainActor.assumeIsolated({ unsafeEvent.window?.firstResponder is NSText }) else {
+            return nil
+        }
+        if isCommandWithoutOption(event),
+           ShelfCommand.resolve(
+               characters: event.charactersIgnoringModifiers, keyCode: event.keyCode,
+               shift: event.modifierFlags.contains(.shift), option: event.modifierFlags.contains(.option)
+           ) == .selectAll
+        {
+            MainActor.assumeIsolated { Self.fieldEditor(of: unsafeEvent)?.selectAll(nil) }
+            return .swallow
+        }
+        return performFieldEdit(event) ? .swallow : .passThrough(event)
     }
 }

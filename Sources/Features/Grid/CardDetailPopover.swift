@@ -80,12 +80,20 @@ struct CardDetailPopover: View {
         item.sensitivity != nil && !isRevealed
     }
 
+    private var trimmedCustomTitle: String? {
+        guard !isSensitive,
+              let raw = item.customTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty else { return nil }
+        return raw
+    }
+
     private var bodyKind: DetailPopoverContent.Body {
         DetailPopoverContent.body(type: item.type, isSensitive: isSensitive, text: shownText.text)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            titleRow
             content
             noteRow
             footer
@@ -249,7 +257,7 @@ struct CardDetailPopover: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
             }
-            if let title = item.ogTitle ?? item.customTitle {
+            if let title = item.ogTitle ?? trimmedCustomTitle {
                 Text(title).scaledFont(size: 13, weight: .semibold).fixedSize(horizontal: false, vertical: true)
             }
             if let site = item.ogSiteName {
@@ -351,7 +359,18 @@ struct CardDetailPopover: View {
         )
     }
 
-    // MARK: - Note and footer
+    // MARK: - Title, note and footer
+
+    @ViewBuilder
+    private var titleRow: some View {
+        if item.type != .url, let title = trimmedCustomTitle {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, 6)
+        }
+    }
 
     @ViewBuilder
     private var noteRow: some View {

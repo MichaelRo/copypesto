@@ -12,6 +12,7 @@ import Foundation
 ///   {{weekday}}   — full weekday name ("EEEE")
 ///   {{date+Nd}} / {{date-Nd}} — date offset by N days in locale-aware short format
 ///   {{clipboard}} — live plain-text clipboard content (single-pass, never recursively expanded)
+///   {{selection}} — selected text in the active app at paste time (single-pass, never recursively expanded)
 ///   {{uuid}}      — fresh lowercase UUID
 ///   {{cursor}}    — removed; the caret is moved back to it after the paste (`expansionWithCaret`)
 ///   {{app}}       — name of the app being pasted into
@@ -33,11 +34,18 @@ public enum TemplateExpander {
         text.contains("{{clipboard}}")
     }
 
+    /// Whether pasting `text` will read the active selection from the target app.
+    public static func referencesSelection(in text: String) -> Bool {
+        text.contains("{{selection}}")
+    }
+
     /// Whether `token` (the text between the braces) is something Pesto fills in by itself: a date, the clipboard, the
-    /// app,
+    /// selection, the app,
     /// a new ID or the caret.
     public static func isFill(_ token: String) -> Bool {
-        ["date", "time", "datetime", "isodate", "weekday", "clipboard", "uuid", "cursor", "app"].contains(token)
+        [
+            "date", "time", "datetime", "isodate", "weekday", "clipboard", "selection", "uuid", "cursor", "app"
+        ].contains(token)
             || relativeDayOffset(from: token) != nil
     }
 
@@ -49,6 +57,12 @@ public enum TemplateExpander {
         pattern: #"\{\{optional:([^\n}]+)\}\}"#
     )
 
+    private struct ExpansionOptions {
+        let date: Date
+        let fills: SnippetFills
+        let targetApp: String
+    }
+
     /// The text after expansion, or nil when nothing should change: only a snippet is expanded, so Helm, Jinja or
     /// Handlebars text that contains double braces pastes as it was copied.
     public static func expansion(
@@ -57,12 +71,17 @@ public enum TemplateExpander {
         at date: Date = .now,
         fills: SnippetFills = SnippetFills(),
         targetApp: String = "",
-        clipboardProvider: () -> String = liveClipboardText
+        clipboardProvider: () -> String = liveClipboardText,
+        selectionProvider: () -> String = { "" }
     )
-    -> String? {
+        -> String?
+    {
         guard isSnippet, containsPlaceholders(text) else { return nil }
         return expandSinglePass(
-            text, at: date, fills: fills, targetApp: targetApp, clipboardProvider: clipboardProvider
+            text,
+            options: ExpansionOptions(date: date, fills: fills, targetApp: targetApp),
+            clipboardProvider: clipboardProvider,
+            selectionProvider: selectionProvider
         ).text
     }
 
@@ -74,12 +93,17 @@ public enum TemplateExpander {
         at date: Date = .now,
         fills: SnippetFills = SnippetFills(),
         targetApp: String = "",
-        clipboardProvider: () -> String = liveClipboardText
+        clipboardProvider: () -> String = liveClipboardText,
+        selectionProvider: () -> String = { "" }
     )
-    -> (text: String, charactersAfterCursor: Int?)? {
+        -> (text: String, charactersAfterCursor: Int?)?
+    {
         guard isSnippet, containsPlaceholders(text) else { return nil }
         let result = expandSinglePass(
-            text, at: date, fills: fills, targetApp: targetApp, clipboardProvider: clipboardProvider
+            text,
+            options: ExpansionOptions(date: date, fills: fills, targetApp: targetApp),
+            clipboardProvider: clipboardProvider,
+            selectionProvider: selectionProvider
         )
         return (result.text, result.charactersAfterCursor)
     }
@@ -92,9 +116,11 @@ public enum TemplateExpander {
         at date: Date = .now,
         fills: SnippetFills = SnippetFills(),
         targetApp: String = "",
-        clipboardProvider: () -> String = liveClipboardText
+        clipboardProvider: () -> String = liveClipboardText,
+        selectionProvider: () -> String = { "" }
     )
-    -> RichTextPayload? {
+        -> RichTextPayload?
+    {
         guard let regex = tokenRegex else { return nil }
         let attributed: NSAttributedString? = if let rtfd = rich.rtfd {
             NSAttributedString(rtfd: rtfd, documentAttributes: nil)
@@ -108,20 +134,26 @@ public enum TemplateExpander {
         resolveOptionalSections(in: mutable, included: fills.included)
         let nsText = mutable.string as NSString
         let matches = regex.matches(in: mutable.string, range: NSRange(location: 0, length: nsText.length))
+        let options = ExpansionOptions(date: date, fills: fills, targetApp: targetApp)
         var cachedClipboard: String?
+        var cachedSelection: String?
         for match in matches.reversed() {
             let token = (mutable.string as NSString).substring(with: match.range(at: 1))
             if token == "cursor" {
                 mutable.deleteCharacters(in: match.range)
             } else if let replaced = replacement(
                 for: token,
-                at: date,
-                fills: fills,
-                targetApp: targetApp,
+                options: options,
                 clipboard: {
                     if let cachedClipboard { return cachedClipboard }
                     let value = clipboardProvider()
                     cachedClipboard = value
+                    return value
+                },
+                selection: {
+                    if let cachedSelection { return cachedSelection }
+                    let value = selectionProvider()
+                    cachedSelection = value
                     return value
                 }
             ) {
@@ -185,30 +217,31 @@ public enum TemplateExpander {
     public static func expand(
         _ text: String,
         at date: Date = .now,
-        clipboardProvider: () -> String = liveClipboardText
+        clipboardProvider: () -> String = liveClipboardText,
+        selectionProvider: () -> String = { "" }
     )
-    -> String {
+        -> String
+    {
         guard containsPlaceholders(text) else { return text }
         return expandSinglePass(
             text,
-            at: date,
-            fills: SnippetFills(),
-            targetApp: "",
-            clipboardProvider: clipboardProvider
+            options: ExpansionOptions(date: date, fills: SnippetFills(), targetApp: ""),
+            clipboardProvider: clipboardProvider,
+            selectionProvider: selectionProvider
         )
         .text
     }
 
     private static func expandSinglePass(
         _ source: String,
-        at date: Date,
-        fills: SnippetFills,
-        targetApp: String,
-        clipboardProvider: () -> String
+        options: ExpansionOptions,
+        clipboardProvider: () -> String,
+        selectionProvider: () -> String
     )
-    -> (text: String, charactersAfterCursor: Int?) {
+        -> (text: String, charactersAfterCursor: Int?)
+    {
         guard let regex = tokenRegex else { return (source, nil) }
-        let text = resolvingOptionalSections(in: source, included: fills.included)
+        let text = resolvingOptionalSections(in: source, included: options.fills.included)
         let nsText = text as NSString
         let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
         guard !matches.isEmpty else { return (text, nil) }
@@ -217,6 +250,7 @@ public enum TemplateExpander {
         var afterCursor = ""
         var sawCursor = false
         var cachedClipboard: String?
+        var cachedSelection: String?
         var cursorLocation = 0
 
         func appendChunk(_ chunk: String) {
@@ -238,13 +272,17 @@ public enum TemplateExpander {
                 sawCursor = true
             } else if let replaced = replacement(
                 for: token,
-                at: date,
-                fills: fills,
-                targetApp: targetApp,
+                options: options,
                 clipboard: {
                     if let cachedClipboard { return cachedClipboard }
                     let value = clipboardProvider()
                     cachedClipboard = value
+                    return value
+                },
+                selection: {
+                    if let cachedSelection { return cachedSelection }
+                    let value = selectionProvider()
+                    cachedSelection = value
                     return value
                 }
             ) {
@@ -289,35 +327,37 @@ public enum TemplateExpander {
 
     private static func replacement(
         for token: String,
-        at date: Date,
-        fills: SnippetFills,
-        targetApp: String,
-        clipboard: () -> String
+        options: ExpansionOptions,
+        clipboard: () -> String,
+        selection: () -> String
     )
-    -> String? {
+        -> String?
+    {
         if let field = FillInParser.field(fromToken: token), field.kind != .optional {
-            return fillValue(for: field, in: fills)
+            return fillValue(for: field, in: options.fills)
         }
         switch token {
         case "app":
-            return targetApp
+            return options.targetApp
         case "date":
-            return dateString(from: date)
+            return dateString(from: options.date)
         case "time":
-            return timeString(from: date)
+            return timeString(from: options.date)
         case "datetime":
-            return dateTimeString(from: date)
+            return dateTimeString(from: options.date)
         case "isodate":
-            return isoDateString(from: date)
+            return isoDateString(from: options.date)
         case "weekday":
-            return weekdayString(from: date)
+            return weekdayString(from: options.date)
         case "clipboard":
             return clipboard()
+        case "selection":
+            return selection()
         case "uuid":
             return UUID().uuidString.lowercased()
         default:
             if let offsetDays = relativeDayOffset(from: token),
-               let shifted = Calendar.current.date(byAdding: .day, value: offsetDays, to: date)
+               let shifted = Calendar.current.date(byAdding: .day, value: offsetDays, to: options.date)
             {
                 return dateString(from: shifted)
             }

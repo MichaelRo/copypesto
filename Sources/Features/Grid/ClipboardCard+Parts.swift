@@ -22,15 +22,83 @@ extension ClipboardCard {
         }
     }
 
+    var trimmedCustomTitle: String? {
+        guard !isRenamingTitle, !concealment.isConcealed,
+              let raw = item.customTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty else { return nil }
+        return raw
+    }
+
+    var showsTitleOnCardFace: Bool {
+        guard trimmedCustomTitle != nil else { return false }
+        if item.type == .url, item.ogTitle != nil { return false }
+        return true
+    }
+
+    var showsTopTitleKicker: Bool {
+        guard showsTitleOnCardFace else { return false }
+        if item.type == .url, urlOGImage != nil || usesRichURLBody { return false }
+        if case .fullBleedPicture = treatment { return false }
+        if case .fullBleedColor = treatment { return false }
+        return true
+    }
+
+    var hasTopTitleSlot: Bool {
+        showsTopTitleKicker || isRenamingTitle
+    }
+
     @ViewBuilder
-    var cardBody: some View {
+    var classicTitleSlot: some View {
         if isRenamingTitle {
             renameOverlay
-        } else if item.sensitivity != nil {
+        } else if showsTopTitleKicker, let title = trimmedCustomTitle {
+            titleKicker(title)
+        }
+    }
+
+    private var usesRichURLBody: Bool {
+        item.type == .url && (item.ogTitle != nil || item.ogSiteName != nil || urlFavicon != nil)
+    }
+
+    func beginRenamingTitle() {
+        renameText = item.customTitle ?? ""
+        isRenamingTitle = true
+        renameFieldFocused = true
+    }
+
+    @ViewBuilder
+    func renameableTitleChip<Content: View>(enabled: Bool = true, @ViewBuilder content: () -> Content) -> some View {
+        if enabled, isFocused, offers(.rename) {
+            Button {
+                guard NSEvent.modifierFlags.isDisjoint(with: [.command, .shift, .option, .control]) else { return }
+                beginRenamingTitle()
+            } label: {
+                content()
+            }
+            .buttonStyle(.plain)
+            .help("Rename")
+        } else {
+            content()
+        }
+    }
+
+    func titleKicker(_ title: String) -> some View {
+        renameableTitleChip {
+            Text(title)
+                .scaledFont(size: bodySize(12), weight: .semibold, maxScale: 1.2)
+                .foregroundStyle(.primary.opacity(0.95))
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
+    }
+
+    @ViewBuilder
+    var cardBody: some View {
+        if item.sensitivity != nil {
             sensitiveBody
         } else if isGlyphCard {
             glyphBody
-        } else if item.type == .url, item.ogTitle != nil || item.ogSiteName != nil || urlFavicon != nil {
+        } else if usesRichURLBody {
             urlRichBody
         } else if item.type == .file {
             FileCardBody(text: item.displayPreviewText, animates: playsAnimations)
@@ -46,7 +114,7 @@ extension ClipboardCard {
             paragraphs: CardPreviewText.paragraphs(item.gridPreview),
             fontSize: bodySize(item.type == .code ? 12 : 13),
             design: item.type == .code ? .monospaced : .default,
-            budget: CardLayout.textBlockHeight(for: cardDimensions)
+            budget: CardLayout.textBlockHeight(for: cardDimensions, hasTitle: hasTopTitleSlot)
         )
     }
 
@@ -62,7 +130,7 @@ extension ClipboardCard {
 
     /// How many lines of text fit between the header and the footer at the chosen card size.
     var textLineLimit: Int {
-        CardLayout.textLineLimit(for: cardDimensions)
+        CardLayout.textLineLimit(for: cardDimensions, hasTitle: hasTopTitleSlot)
     }
 
     /// Body text follows the card-size setting (`CardTextScale`): larger cards draw larger text.
@@ -70,26 +138,54 @@ extension ClipboardCard {
         CardTextScale.size(base, cardWidth: cardDimensions.width)
     }
 
+    func commitTitleRename() {
+        guard isRenamingTitle else { return }
+        let trimmed = renameText.trimmingCharacters(in: .whitespacesAndNewlines)
+        edit { $0.customTitle = trimmed.isEmpty ? nil : trimmed }
+        isRenamingTitle = false
+    }
+
     var renameOverlay: some View {
-        TextField("Title", text: $renameText)
-            .focused($renameFieldFocused)
-            // The context menu that started the rename is still closing, and hands the keyboard back to the shelf
-            // when it has gone, so the field asks for it a moment later.
-            .task {
-                try? await Task.sleep(for: .milliseconds(200))
-                renameFieldFocused = true
+        HStack(spacing: 6) {
+            TextField("Title", text: $renameText)
+                .focused($renameFieldFocused)
+                // The context menu that started the rename is still closing, and hands the keyboard back to the shelf
+                // when it has gone, so the field asks for it a moment later.
+                .task {
+                    try? await Task.sleep(for: .milliseconds(200))
+                    renameFieldFocused = true
+                }
+                // Text size capped: fills a fixed-size card.
+                .scaledFont(size: bodySize(12), weight: .semibold, maxScale: 1.2)
+                .textFieldStyle(.plain)
+                .onSubmit(commitTitleRename)
+                .onChange(of: renameFieldFocused) { wasFocused, nowFocused in
+                    if wasFocused, !nowFocused {
+                        commitTitleRename()
+                    }
+                }
+                .onChange(of: isFocused) { wasFocused, nowFocused in
+                    if wasFocused, !nowFocused {
+                        commitTitleRename()
+                    }
+                }
+                .onExitCommand {
+                    isRenamingTitle = false
+                }
+            if !renameText.isEmpty || item.customTitle != nil {
+                Button {
+                    isRenamingTitle = false
+                    edit { $0.customTitle = nil }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .pestoQuiet()
+                        .pestoHitTarget()
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Remove Title")
+                .help("Remove Title")
             }
-            // Text size capped: fills a fixed-size card.
-            .scaledFont(size: bodySize(13), maxScale: 1.3)
-            .textFieldStyle(.plain)
-            .onSubmit {
-                let trimmed = renameText.trimmingCharacters(in: .whitespaces)
-                edit { $0.customTitle = trimmed.isEmpty ? nil : trimmed }
-                isRenamingTitle = false
-            }
-            .onExitCommand {
-                isRenamingTitle = false
-            }
+        }
     }
 
     var urlRichBody: some View {
@@ -110,11 +206,13 @@ extension ClipboardCard {
                     .pestoQuiet()
                     .lineLimit(1)
             }
-            if let title = item.ogTitle {
-                Text(title)
-                    .scaledFont(size: bodySize(13), weight: .semibold, maxScale: 1.3)
-                    .lineLimit(3)
-                    .foregroundStyle(.primary.opacity(0.9))
+            if let title = item.ogTitle ?? trimmedCustomTitle {
+                renameableTitleChip(enabled: item.ogTitle == nil) {
+                    Text(title)
+                        .scaledFont(size: bodySize(13), weight: .semibold, maxScale: 1.3)
+                        .lineLimit(3)
+                        .foregroundStyle(.primary.opacity(0.9))
+                }
             }
         }
     }

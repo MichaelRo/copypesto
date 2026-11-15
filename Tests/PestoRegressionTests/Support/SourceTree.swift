@@ -31,7 +31,9 @@ enum SourceTree {
         guard let enumerator = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: nil) else {
             throw Missing(description: "\(relativePath(directory)) does not exist")
         }
-        let found = enumerator.compactMap { $0 as? URL }.filter { extensions.contains($0.pathExtension) }
+        let found = enumerator.compactMap { $0 as? URL }.filter {
+            !$0.path.contains("/.claude/worktrees/") && extensions.contains($0.pathExtension)
+        }
         guard found.count >= minimum else {
             throw Missing(
                 description: "\(relativePath(directory)) holds \(found.count) files, expected at least \(minimum)"

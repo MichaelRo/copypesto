@@ -19,13 +19,13 @@ public enum ImageExport {
         UTType(identifier)?.preferredFilenameExtension ?? "png"
     }
 
-    public static func baseName(title: String?, date: Date) -> String {
+    public static func baseName(title: String?, date: Date, untitledPrefix: String = "Pesto picture") -> String {
         let forbidden = CharacterSet(charactersIn: "/:\\").union(.controlCharacters)
         let cleaned = (title ?? "").components(separatedBy: forbidden).joined()
             .split(whereSeparator: \.isWhitespace).joined(separator: " ")
             .trimmingCharacters(in: CharacterSet(charactersIn: "."))
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        if cleaned.isEmpty { return "Pesto picture \(stamp(date))" }
+        if cleaned.isEmpty { return "\(untitledPrefix) \(stamp(date))" }
         return String(cleaned.prefix(longestName))
     }
 

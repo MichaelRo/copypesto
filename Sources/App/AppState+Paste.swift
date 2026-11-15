@@ -180,6 +180,52 @@ extension AppState {
         }
     }
 
+    /// Writes `item` to a private temporary file and puts that file's URL on the pasteboard so the target app
+    /// receives a file attachment instead of text or raw image data. Never runs for secrets, `.file` clips or locked
+    /// histories, and fails closed when stored bytes cannot be read.
+    @discardableResult
+    func writeAsFile(_ item: ClipboardItem) -> PasteCoordinator.PayloadKind? {
+        guard !isHistoryLockedNow(), item.sensitivityRaw == nil, item.type != .file else { return nil }
+        let plaintext = item.blob.map { $0.decryptedData() }
+        if let readable = plaintext, readable == nil {
+            attempt("Couldn\u{2019}t prepare this clip as a file.") { throw UnreadableClip() }
+            return nil
+        }
+        let fileData: Data
+        let fileExtension = DragFile.fileExtension(for: item.type, mimeType: item.blob?.mimeType)
+        if item.type == .image {
+            guard let data = plaintext.flatMap(\.self) else {
+                attempt("Couldn\u{2019}t prepare this clip as a file.") { throw UnreadableClip() }
+                return nil
+            }
+            fileData = data
+        } else if let blob = item.blob, let data = plaintext.flatMap(\.self) {
+            guard let text = PasteFlavors.plainText(forStoredType: blob.mimeType, data: data)
+                ?? String(data: data, encoding: .utf8) else
+            {
+                attempt("Couldn\u{2019}t prepare this clip as a file.") { throw UnreadableClip() }
+                return nil
+            }
+            fileData = Data(text.utf8)
+        } else if item.type == .color {
+            fileData = Data(item.displayPreviewText.utf8)
+        } else {
+            attempt("Couldn\u{2019}t prepare this clip as a file.") { throw UnreadableClip() }
+            return nil
+        }
+        let fileName = DragFile.fileName(title: item.customTitle, date: item.timestamp, fileExtension: fileExtension)
+        guard let fileURL = DragFile.write(fileData, named: fileName) else {
+            attempt("Couldn\u{2019}t prepare this clip as a file.") { throw UnreadableClip() }
+            return nil
+        }
+        clipboardBeforeLastItemWrite = ""
+        return writeToPasteboard { pb in
+            Self.beginWrite(on: pb, protected: false)
+            pb.writeObjects([fileURL as NSURL])
+            return .nonText
+        }
+    }
+
     /// Only a snippet whose text holds `{{clipboard}}` reads the board before it is overwritten; any other paste keeps
     /// nothing of what was on it (P-03).
     private static func needsLiveClipboard(_ item: ClipboardItem, data: Data?) -> Bool {

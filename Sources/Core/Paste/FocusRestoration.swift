@@ -22,6 +22,7 @@ public final class FocusRestoration {
     private let now: @Sendable () -> Date
     private let ownProcessIdentifier: pid_t
     private let focusProbe: any KeyboardFocusProbing
+    private let selectedTextReader: any SelectedTextReading
     private let pollInterval: Duration
 
     public init(
@@ -31,9 +32,11 @@ public final class FocusRestoration {
         now: @escaping @Sendable () -> Date = { .now },
         ownProcessIdentifier: pid_t = ProcessInfo.processInfo.processIdentifier,
         focusProbe: any KeyboardFocusProbing = SystemKeyboardFocusProbe(),
+        selectedTextReader: any SelectedTextReading = SystemSelectedTextReader(),
         pollInterval: Duration = .milliseconds(5)
     ) {
         self.focusProbe = focusProbe
+        self.selectedTextReader = selectedTextReader
         self.pollInterval = pollInterval
         self.ownProcessIdentifier = ownProcessIdentifier
         self.frontmostApplication = frontmostApplication
@@ -44,6 +47,12 @@ public final class FocusRestoration {
     /// The name of the app being pasted into, for `{{app}}`.
     public var targetName: String {
         capturedTarget?.localizedName ?? ""
+    }
+
+    /// Selected text in the captured target app, read on demand only when a snippet asks for `{{selection}}`.
+    public func currentSelectedText() -> String {
+        guard let target = capturedTarget else { return "" }
+        return selectedTextReader.selectedText(inProcess: target.processIdentifier)
     }
 
     /// Pesto is never the target: a paste into Pesto's own window would land in Pesto's own field.

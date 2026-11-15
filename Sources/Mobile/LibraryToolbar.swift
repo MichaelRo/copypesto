@@ -14,14 +14,19 @@ struct LibraryToolbar: ToolbarContent {
                     .accessibilityIdentifier(MobileAccessibilityID.settingsButton)
             }
         }
-        ToolbarItemGroup(placement: .primaryAction) {
+        ToolbarItem(placement: .primaryAction) {
+            Button("New Note", systemImage: "square.and.pencil") { library.isComposing = true }
+                .accessibilityIdentifier(MobileAccessibilityID.newNoteButton)
+        }
+        ToolbarSpacer(.fixed, placement: .primaryAction)
+        ToolbarItem(placement: .primaryAction) {
             PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
                 Task { await appState.add(from: providers) }
             }
             .labelStyle(.iconOnly)
-            Button("New Note", systemImage: "square.and.pencil") { library.isComposing = true }
-                .accessibilityIdentifier(MobileAccessibilityID.newNoteButton)
+            .buttonBorderShape(.circle)
         }
+        .sharedBackgroundVisibility(.hidden)
     }
 }
 

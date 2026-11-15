@@ -5,8 +5,9 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 
 ## The page
 - **Compact width** (an iPhone, an iPad window that is narrow): one `NavigationStack`, no tab bar. Inline title "Pesto"
-  (or Pinned, or the collection's name); Settings (gear, a sheet) on the leading side; the system Paste button and New
-  Note on the trailing side. Under the bar a chip row, then the grid. Search is `.searchable` on the stack: iOS 26 puts
+  (or Pinned, or the collection's name); Settings (gear, a sheet) on the leading side; New Note in its glass circle and, on its own, the
+  system Paste button as a filled accent capsule on the trailing side (in one glass group with New Note its square
+  background stuck out; `PasteButton` takes no glass style). Under the bar a chip row, then the grid. Search is `.searchable` on the stack: iOS 26 puts
   it in the bottom toolbar on iPhone (seen in the UI tests' hierarchy: the field sits above the keyboard with a close
   button beside it).
 - **Regular width** (`PadLibraryView`): a two-column `NavigationSplitView`. The sidebar lists All Clips, Pinned and the

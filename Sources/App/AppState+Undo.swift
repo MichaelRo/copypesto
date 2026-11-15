@@ -84,6 +84,8 @@ extension AppState {
     private func run(redo: Bool) {
         guard let service = storageService, !isHistoryLockedNow() else { return }
         dismissUndoOffer()
+        let label = redo ? service.undoHistory.redoLabel : service.undoHistory.undoLabel
+        let hashes = label == .editText || label == .editSnippet ? shownContentHashes() : [:]
         Task {
             await attempt(redo ? "Couldn\u{2019}t redo" : "Couldn\u{2019}t undo") {
                 guard let outcome = try await (redo ? service.redo() : service.undo()) else { return }
@@ -91,6 +93,7 @@ extension AppState {
                 dropSelectedCollectionIfGone()
                 Announcer.announce(UndoText.done(outcome), priority: .high)
             }
+            if !hashes.isEmpty { await redrawWhenTextArrives(changedFrom: hashes) }
         }
     }
 

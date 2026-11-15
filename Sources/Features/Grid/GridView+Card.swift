@@ -210,8 +210,10 @@ extension GridView {
                     showsFirstCopyTime: showsFirstCopy,
                     isBlurred: blurred
                 )
-                .id(item.id)
-                .transition(cardTransition)
+                // A new text is a new card: the main context's merge alone does not redraw it (ADR 0050).
+                .id(item.contentHash)
+                    .id(item.id)
+                    .transition(cardTransition)
             }
             if cachedFilteredItems.count > displayedItems.count {
                 Color.clear

@@ -46,6 +46,8 @@ final class AppState {
     /// Counts the undos and redos that were applied, so the shelf filters again (a clip moved in or out of a
     /// collection).
     var undoGeneration = 0
+    /// Counts the text edits, and the undos of one, that reached the main context, so the shelf draws the new text.
+    var textEditGeneration = 0
     /// `true` while the pinned floating window is on screen.
     var isPinnedWindowVisible = false {
         didSet { historyStore?.setVisible(isOverlayVisible || isPinnedWindowVisible) }

@@ -59,6 +59,31 @@ extension HostedGlobals {
             #expect(try text(of: id) == "draft one")
         }
 
+        @Test("a save and its undo each tell the shelf to draw the clip again once the new text has arrived")
+        func whenSavedAndUndone_thenTheShelfIsToldToRedraw() async throws {
+            let id = try await ingest("before the edit")
+            let store = HistoryStore(container: container)
+            store.refresh()
+            state.historyStore = store
+
+            #expect(await state.saveEditedText(id: id, text: "after the edit") == .saved)
+            try await waitUntil { state.textEditGeneration == 1 }
+            #expect(store.item(for: id)?.blob?.decryptedText() == "after the edit")
+
+            state.performUndo()
+            try await waitUntil { state.textEditGeneration == 2 }
+            #expect(store.item(for: id)?.blob?.decryptedText() == "before the edit")
+        }
+
+        private func waitUntil(_ condition: () -> Bool) async throws {
+            var attempts = 0
+            while !condition(), attempts < 200 {
+                try await Task.sleep(for: .milliseconds(25))
+                attempts += 1
+            }
+            #expect(condition())
+        }
+
         @Test("another clip's text is refused in plain words and nothing changes")
         func whenTextBelongsToAnotherClip_thenRefused() async throws {
             let first = try await ingest("first clip", at: 0)

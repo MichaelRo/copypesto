@@ -379,6 +379,7 @@ struct GridView: View {
             }
         }
         .onChange(of: appState.undoGeneration) { _, _ in filterEditGeneration += 1 }
+        .onChange(of: appState.textEditGeneration) { _, _ in filterEditGeneration += 1 }
         .onChange(of: appState.searchText) { _, _ in
             displayLimit = 1000
             keyboardRevealedID = nil

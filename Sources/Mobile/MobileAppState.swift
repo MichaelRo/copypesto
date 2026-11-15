@@ -25,6 +25,8 @@ final class MobileAppState {
     var undoOffer: UndoLabel?
     /// The clipboard's change count offered as "Add what you copied" (`MobileAppState+ClipboardOffer.swift`).
     var clipboardOfferCount: Int?
+    /// Counts saved text edits; the grid reads it to draw an edited card again (`MobileAppState+TextEdit.swift`).
+    var textEdits = 0
     /// Sync with the person's other devices, once the history is open (`MobileAppState+Sync.swift`).
     var sync: MobileSync?
     let secretReveal: SecretReveal

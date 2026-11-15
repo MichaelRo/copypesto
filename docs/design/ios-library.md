@@ -25,8 +25,8 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
   white on a light ground and white at 10 percent on a dark one, on the theme's solid ground.
 - **Order while looking** (`GridOrder`): a copy moves the clip to the front of the history at once, but the grid keeps
   the order it had until the app returns to the front, a pull to refresh, or a change of scope or search; a clip new to
-  the grid (a capture, a sync) shows at the top. Ages at the cards' feet move once a minute (one `TimelineView` for the
-  grid).
+  the grid (a capture, a sync) shows at the top. Ages at the cards' feet move once a minute (one task in the grid moves
+  the minute its cards read; a `TimelineView` around the grid kept it from drawing any change until its next tick).
 - **Pull to refresh** runs one sync exchange when sync is on, then takes the history's order again. There is no Sync
   Now; a background refresh exchanges now and then while the app is away (`SyncExchange`).
 - **New Collection and Edit Collection** are one sheet: a name, an icon from Core's `CollectionSymbols` and a color from

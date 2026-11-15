@@ -16,6 +16,9 @@ struct LibraryGrid: View {
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @State private var rowWidth: CGFloat = 0
     @FocusState private var focusedClip: UUID?
+    /// The minute the cards' ages are read at. A `TimelineView` around the grid kept the grid from drawing any change
+    /// until its next tick (an edited card kept its old text), so one task moves this instead.
+    @State private var minute = Date.now
 
     var body: some View {
         let ids = visibleIDs()
@@ -25,10 +28,8 @@ struct LibraryGrid: View {
             VStack(alignment: .leading, spacing: 14) {
                 if showsChipRow { LibraryChipRow() }
                 if !appState.storeIsOnDisk { notSavedBanner }
-                TimelineView(.periodic(from: .now, by: 60)) { timeline in
-                    grid(ids, columns: count, cardWidth: cardWidth)
-                        .environment(\.cardClock, timeline.date)
-                }
+                grid(ids, columns: count, cardWidth: cardWidth)
+                    .environment(\.cardClock, minute)
             }
             .padding(.top, 8)
             .padding(.bottom, 24)
@@ -42,6 +43,12 @@ struct LibraryGrid: View {
         .overlay { LibraryEmptyState(isEmpty: ids.isEmpty, hasClips: !store.items.isEmpty) }
         .libraryBanners()
         .sensoryFeedback(.success, trigger: library.copyCount)
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                minute = .now
+            }
+        }
         .onDrop(of: ItemProviderCapture.acceptedTypes + [ClipDrag.clipIDType], isTargeted: nil) { providers in
             guard !ClipDrag.isOwnDrag(providers) else { return false }
             Task { await appState.add(from: providers, method: .drop) }
@@ -66,6 +73,7 @@ struct LibraryGrid: View {
                     .focusable()
                     .focused($focusedClip, equals: id)
                     .focusEffectDisabled()
+                    .id(CardIdentity(id: id, content: item.contentHash))
                 }
             }
         }
@@ -81,6 +89,7 @@ struct LibraryGrid: View {
     private func visibleIDs() -> [UUID] {
         _ = store.items.count
         _ = library.orderVersion
+        _ = appState.textEdits
         guard let index = store.searchIndex() else { return [] }
         let kind = library.isSearching ? library.filter.kind : nil
         let fresh = library.filter.scope.ids(
@@ -118,4 +127,10 @@ struct LibraryGrid: View {
             .foregroundStyle(.secondary)
             .padding(.horizontal, CardGridLayout.margin)
     }
+}
+
+/// A card's identity in the grid: its clip and that clip's content, so an edited card is a new view.
+struct CardIdentity: Hashable {
+    let id: UUID
+    let content: String
 }

@@ -18,9 +18,11 @@ extension MobileAppState {
     func editText(of item: ClipboardItem, to text: String) async -> Bool {
         guard let service = storageService, canEditText(item) else { return false }
         let mark = service.undoHistory.recordedCount
+        let before = item.contentHash
         do {
             switch try await service.updateText(id: item.id, text: text) {
             case .saved:
+                await drawAgain(item, after: before)
                 offerUndo(since: mark)
                 return true
             case .unchanged:
@@ -39,5 +41,18 @@ extension MobileAppState {
             tell(String(localized: "Couldn\u{2019}t save the change."), isProblem: true)
         }
         return false
+    }
+
+    /// The actor's save reaches this context's copy of the clip a moment later, and neither that merge nor a new read
+    /// of
+    /// the history redrew the card (seen in the simulator). So once the copy holds the new content (a second at most)
+    /// the history is read again, for the search text, and `textEdits` makes the grid give the card a new identity.
+    private func drawAgain(_ item: ClipboardItem, after oldHash: String) async {
+        let deadline = ContinuousClock.now + .seconds(1)
+        while item.contentHash == oldHash, ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        historyStore?.refresh()
+        textEdits += 1
     }
 }

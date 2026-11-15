@@ -86,11 +86,6 @@ final class LibraryEditingUITests: XCTestCase {
         XCTAssertTrue(element(MobileAccessibilityID.editTextButton, in: app).waitForExistence(timeout: timeout))
         capture("iphone-text-edited")
         app.buttons["Done"].firstMatch.tap()
-        sleep(2)
-        capture("diag-after-done")
-        app.swipeUp()
-        app.swipeDown()
-        capture("diag-after-scroll")
         XCTAssertTrue(card(containing: "sunscreen", in: app).waitForExistence(timeout: timeout))
     }
 

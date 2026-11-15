@@ -61,6 +61,17 @@ public enum TemplateExpander {
         text.contains("{{")
     }
 
+    /// Whether every placeholder in `text` is one Pesto fills alone, without the person, the clipboard or the target
+    /// app: a date, a time, a new ID or the caret. AutoFill inserts only such a snippet (ADR 0051).
+    public static func fillsWithoutAsking(_ text: String) -> Bool {
+        guard let regex = tokenRegex else { return false }
+        let ns = text as NSString
+        return regex.matches(in: text, range: NSRange(location: 0, length: ns.length)).allSatisfy { match in
+            let token = ns.substring(with: match.range(at: 1))
+            return isFill(token) && !["clipboard", "app"].contains(token)
+        }
+    }
+
     private static let optionalOpen: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"\{\{optional:([^\n}]+)\}\}"#
     )

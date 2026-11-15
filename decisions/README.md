@@ -59,6 +59,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0048](0048-a-clips-text-can-be-edited.md) | A text, code, link or color clip's content can be edited: it stays the same clip, is sealed and judged again, keeps its curation and place, is one Undo and one sync change, and is refused when another clip holds the text |
 | [0049](0049-capture-method-stays-on-the-device.md) | How a clip was made on an iPhone or iPad (pasted, a note, shared, dropped, a Shortcut) is sealed in its metadata on that device only, never synced or backed up, and leads its foot line |
 | [0050](0050-the-mac-edits-a-clips-text-in-its-own-window.md) | The Mac edits a text, code, link or color clip in an Edit Text window of its own, opened from the card's menu after the shelf closes; a covered card offers nothing, a secret only while shown, and one Undo takes the edit back |
+| [0051](0051-autofill-inserts-from-a-sealed-quick-insert-set.md) | AutoFill inserts a clip on iPhone and iPad from a small sealed set of pinned, snippet and recent text the app keeps ready under a key only it and its AutoFill extension hold; text insertion only, never passwords, never a secret |
 
 ## Template
 

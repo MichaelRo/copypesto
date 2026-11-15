@@ -47,6 +47,12 @@ struct AppIdentityTests {
         #expect(AppIdentity.legacyBlobKeyAccount == "io.pesto.app.blobKey")
         #expect(AppIdentity.inboxKeyAccount.hasPrefix(AppIdentity.bundleID))
         #expect(AppIdentity.shareBundleID == "net.copypesto.pesto.share")
+        #expect(AppIdentity.autofillBundleID == "net.copypesto.pesto.autofill")
+        #expect(AppIdentity.quickInsertKeyAccount == "net.copypesto.pesto.quickInsertKey")
+        #expect(AppIdentity.quickInsertKeychainGroupName == "net.copypesto.pesto.quick-insert")
+        #expect(AppIdentity
+            .quickInsertKeychainGroup(prefix: "ABCDE12345.") == "ABCDE12345.net.copypesto.pesto.quick-insert")
+        #expect(AppIdentity.quickInsertFileName != AppIdentity.inboxPublicKeyFileName)
     }
 
     @Test("the app group the iOS app and its share extension name is the bundle ID's, in both entitlements files")

@@ -11,10 +11,13 @@ struct MobileTextEditTests {
     func whenTextSaved_thenUndoIsOffered() async throws {
         let library = try await MobileTestLibrary()
         let item = try await library.add("old words")
+        let drawn = ClipCard.Revision(item)
 
         #expect(await library.state.editText(of: item, to: "new words"))
         try await library.refreshed()
-        #expect(library.store.item(for: item.id)?.displayPreviewText == "new words")
+        let edited = try #require(library.store.item(for: item.id))
+        #expect(edited.displayPreviewText == "new words")
+        #expect(ClipCard.Revision(edited) != drawn, "the card is drawn again with the new text")
         #expect(library.state.undoOffer == .editText)
 
         await library.state.undo()
@@ -54,5 +57,27 @@ struct MobileTextEditTests {
             let item = try await library.add(text)
             #expect(library.state.canEditText(item), "\(text)")
         }
+    }
+
+    @Test("the grid's clip shows the new text from the save alone, with no refresh asked for, on a store on disk")
+    func whenSaved_thenTheStoreFollowsWithoutARefresh() async throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("pesto-edit-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let library = try await MobileTestLibrary(storeURL: folder.appendingPathComponent("clips.store"))
+        let item = try await library.add("before the edit")
+        _ = item.gridPreview
+        let drawn = ClipCard.Revision(item)
+
+        #expect(await library.state.editText(of: item, to: "after the edit"))
+
+        let deadline = ContinuousClock.now + .seconds(3)
+        while library.store.item(for: item.id)?.gridPreview != "after the edit", ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        let shown = try #require(library.store.item(for: item.id))
+        #expect(shown.gridPreview == "after the edit")
+        #expect(ClipCard.Revision(shown) != drawn)
+        #expect(library.store.items.contains { $0.id == item.id && $0.gridPreview == "after the edit" })
     }
 }

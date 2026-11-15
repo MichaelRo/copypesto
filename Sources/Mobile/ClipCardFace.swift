@@ -2,11 +2,14 @@
 import PestoCore
 import SwiftUI
 
+/// `revision` is a stored value so the face is drawn again when the storage actor changes the clip: a change merged
+/// into this context does not notify the views that read the model, and every other input here would compare equal.
 struct ClipCardFace: View {
     let item: ClipboardItem
     let face: CardFace
     let media: CardMediaState
     let width: CGFloat
+    let revision: ClipCard.Revision
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {

@@ -81,7 +81,7 @@ struct ClipCard: View {
         Color.clear
             .aspectRatio(CardGridLayout.aspectRatio, contentMode: .fit)
             .overlay {
-                ClipCardFace(item: item, face: face, media: media, width: width)
+                ClipCardFace(item: item, face: face, media: media, width: width, revision: revision ?? Revision(item))
                     .environment(\.clipRevision, revision ?? Revision(item))
             }
             .background(cardFill, in: shape)
@@ -144,12 +144,16 @@ struct ClipCard: View {
         let collectionID: UUID?
         let timestamp: Date
         let isCovered: Bool
+        let content: String
+        let metadata: Data?
 
         init(_ item: ClipboardItem) {
             isPinned = item.isPinned
             collectionID = item.collectionID
             timestamp = item.timestamp
             isCovered = item.analysisPending || item.isNSFW
+            content = item.contentHash
+            metadata = item.metadataCiphertext
         }
     }
 }

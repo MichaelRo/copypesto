@@ -419,6 +419,28 @@
         }
       }
     },
+    "%lld shared clips couldn’t be added.": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld shared clip couldn’t be added."
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld shared clips couldn’t be added."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld shortcut conflicts: %@": {
       "localizations": {
         "en": {

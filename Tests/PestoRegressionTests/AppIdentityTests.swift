@@ -10,10 +10,12 @@ struct AppIdentityTests {
             .deletingLastPathComponent()
     }
 
-    @Test("Pesto.yml gives the app, its controls and the CLI the identifiers the code uses")
+    @Test("Pesto.yml gives the app, its controls, the share extension and the CLI the identifiers the code uses")
     func projectMatchesAppIdentity() throws {
         let project = try String(contentsOf: root.appendingPathComponent("Pesto.yml"), encoding: .utf8)
-        for id in [AppIdentity.bundleID, AppIdentity.controlsBundleID, AppIdentity.cliBundleID] {
+        for id in [
+            AppIdentity.bundleID, AppIdentity.controlsBundleID, AppIdentity.cliBundleID, AppIdentity.shareBundleID
+        ] {
             #expect(project.contains("PRODUCT_BUNDLE_IDENTIFIER: \(id)\n"), "\(id) missing from Pesto.yml")
         }
     }
@@ -43,5 +45,18 @@ struct AppIdentityTests {
         #expect(AppIdentity.deviceIDAccount.hasPrefix(AppIdentity.bundleID))
         #expect(AppIdentity.controlsBundleID == "net.copypesto.pesto.controls")
         #expect(AppIdentity.legacyBlobKeyAccount == "io.pesto.app.blobKey")
+        #expect(AppIdentity.inboxKeyAccount.hasPrefix(AppIdentity.bundleID))
+        #expect(AppIdentity.shareBundleID == "net.copypesto.pesto.share")
+    }
+
+    @Test("the app group the iOS app and its share extension name is the bundle ID's, in both entitlements files")
+    func appGroupMatchesTheEntitlements() throws {
+        #expect(AppIdentity.appGroupID == "group.net.copypesto.pesto")
+        for path in ["Sources/Resources/PestoMobile.entitlements", "Sources/MobileShare/PestoShare.entitlements"] {
+            let data = try Data(contentsOf: root.appendingPathComponent(path))
+            let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+            let groups = plist?["com.apple.security.application-groups"] as? [String]
+            #expect(groups == [AppIdentity.appGroupID], "\(path) names \(groups ?? [])")
+        }
     }
 }

@@ -18,7 +18,8 @@ struct TimestampWritersTests {
             ("Shared", 15),
             ("Core", 200),
             ("CLI", 1),
-            ("Mobile", 3)
+            ("Mobile", 3),
+            ("MobileShare", 3)
         ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 scanned += 1

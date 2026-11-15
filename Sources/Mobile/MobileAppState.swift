@@ -30,6 +30,8 @@ final class MobileAppState {
     @ObservationIgnored private(set) var launchWork: Task<Void, Never>?
     @ObservationIgnored var noticeDismissal: Task<Void, Never>?
     @ObservationIgnored var undoOfferDismissal: Task<Void, Never>?
+    /// The running pass over the share extension's inbox (`MobileAppState+Inbox.swift`), so two never overlap.
+    @ObservationIgnored var inboxDrain: Task<InboxDrain.Report?, Never>?
     @ObservationIgnored let clock: @MainActor () -> Date
 
     static let noticeDuration: Duration = .seconds(4)

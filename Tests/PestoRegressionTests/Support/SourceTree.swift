@@ -61,6 +61,6 @@ enum SourceTree {
     }
 
     static let minimumFileCounts: [String: Int] = [
-        "App": 30, "Core": 120, "Features": 60, "Shared": 15, "CLI": 1, "Mobile": 3
+        "App": 30, "Core": 120, "Features": 60, "Shared": 15, "CLI": 1, "Mobile": 3, "MobileShare": 3
     ]
 }

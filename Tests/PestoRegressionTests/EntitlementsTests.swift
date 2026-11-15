@@ -34,6 +34,31 @@ struct EntitlementsTests {
         #expect(try plist("Sources/Resources/Pesto.entitlements").isEmpty, "a build without the profile claims nothing")
     }
 
+    @Test("the iOS app and its share extension claim only the app group, and the Mac files do not name it")
+    func iOSEntitlements_areOnlyTheAppGroup() throws {
+        for path in ["Sources/Resources/PestoMobile.entitlements", "Sources/MobileShare/PestoShare.entitlements"] {
+            #expect(try Set(plist(path).keys) == ["com.apple.security.application-groups"], "\(path)")
+        }
+        for path in ["Sources/Resources/Pesto.entitlements", "Sources/Resources/PestoSync.entitlements"] {
+            #expect(try plist(path)["com.apple.security.application-groups"] == nil, "\(path)")
+        }
+    }
+
+    @Test("the share extension is offered only for text, one link and one picture, never for everything")
+    func shareExtension_activatesForTextLinksAndPictures() throws {
+        let info = try plist("Sources/MobileShare/Info.plist")
+        let extensionInfo = try #require(info["NSExtension"] as? [String: Any])
+        #expect(extensionInfo["NSExtensionPointIdentifier"] as? String == "com.apple.share-services")
+        let attributes = try #require(extensionInfo["NSExtensionAttributes"] as? [String: Any])
+        let rule = try #require(attributes["NSExtensionActivationRule"] as? [String: Any])
+        #expect(Set(rule.keys) == [
+            "NSExtensionActivationSupportsText", "NSExtensionActivationSupportsWebURLWithMaxCount",
+            "NSExtensionActivationSupportsImageWithMaxCount"
+        ])
+        #expect(rule["NSExtensionActivationSupportsWebURLWithMaxCount"] as? Int == 1)
+        #expect(rule["NSExtensionActivationSupportsImageWithMaxCount"] as? Int == 1)
+    }
+
     @Test("Info.plist has no Apple Events purpose string, since nothing sends Apple Events")
     func infoPlist_hasNoAppleEventsPurpose() throws {
         let info = try plist("Sources/Resources/Info.plist")

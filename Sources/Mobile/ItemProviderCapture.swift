@@ -4,28 +4,15 @@ import PestoCore
 import UIKit
 import UniformTypeIdentifiers
 
-/// Reads what the Paste button or a drop delivered. A picture wins over a link and a link over text: Safari offers a
-/// copied address as both a URL and its text, and a copied picture often carries a name as text beside it.
+/// Reads what the Paste button or a drop delivered, choosing as the share extension does (`SharedContentChoice`).
 @MainActor
 enum ItemProviderCapture {
-    enum Choice: Equatable {
-        case picture(String)
-        case pictureToConvert(String)
-        case link
-        case text
-    }
+    typealias Choice = SharedContentChoice
 
     nonisolated static let acceptedTypes: [UTType] = [.image, .url, .plainText]
 
     nonisolated static func choose(typeIdentifiers: [String]) -> Choice? {
-        let types = typeIdentifiers.compactMap(UTType.init)
-        if let stored = typeIdentifiers.first(where: ClipCapture.storedPictureTypes.contains) {
-            return .picture(stored)
-        }
-        if let image = types.first(where: { $0.conforms(to: .image) }) { return .pictureToConvert(image.identifier) }
-        if types.contains(where: { $0.conforms(to: .url) && !$0.conforms(to: .fileURL) }) { return .link }
-        if types.contains(where: { $0.conforms(to: .plainText) }) { return .text }
-        return nil
+        SharedContentChoice.choose(typeIdentifiers: typeIdentifiers)
     }
 
     struct Unreadable: Error {}

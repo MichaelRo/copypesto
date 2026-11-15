@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: MIT
+import AppIntents
 import PestoCore
 import SwiftUI
 
 @main
 struct PestoMobileApp: App {
-    @State private var appState = MobileAppState()
+    @State private var appState: MobileAppState
     @Environment(\.scenePhase) private var scenePhase
+
+    init() {
+        let state = MobileAppState()
+        _appState = State(initialValue: state)
+        AppDependencyManager.shared.add(dependency: state)
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -15,12 +22,15 @@ struct PestoMobileApp: App {
                 .task {
                     appState.boot()
                     appState.syncDidBecomeActive()
+                    appState.inboxDidBecomeActive()
                 }
                 .defaultAppStorage(AppDefaults.store)
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
-            case .active: appState.syncDidBecomeActive()
+            case .active:
+                appState.syncDidBecomeActive()
+                appState.inboxDidBecomeActive()
             case .background:
                 appState.didLeaveForeground()
                 appState.syncDidEnterBackground()

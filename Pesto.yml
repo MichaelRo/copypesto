@@ -130,11 +130,15 @@ targets:
     dependencies:
       - package: PestoCore
         product: PestoCore
+      - target: PestoShare
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto
         PRODUCT_NAME: Pesto
         PRODUCT_MODULE_NAME: PestoMobile
+        # The app group it shares with PestoShare (ADR 0047); nothing else.
+        CODE_SIGN_ENTITLEMENTS: Sources/Resources/PestoMobile.entitlements
         MARKETING_VERSION: "1.7.0"
         CURRENT_PROJECT_VERSION: "9"
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -150,6 +154,31 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
         ASSETCATALOG_COMPILER_APPICON_NAME: Pesto
+        ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+
+  # The iOS share extension (ADR 0047): it seals what is shared to the app's public key and writes it to the app
+  # group's inbox. It never opens the store and never reads the history key.
+  PestoShare:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources/MobileShare
+        excludes: ["Info.plist", "*.entitlements"]
+    dependencies:
+      - package: PestoCore
+        product: PestoCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.share
+        PRODUCT_NAME: PestoShare
+        MARKETING_VERSION: "1.7.0"
+        CURRENT_PROJECT_VERSION: "9"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_HARDENED_RUNTIME: "NO"
+        INFOPLIST_FILE: Sources/MobileShare/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/MobileShare/PestoShare.entitlements
+        APPLICATION_EXTENSION_API_ONLY: "YES"
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"
 
   PestoMobileTests:

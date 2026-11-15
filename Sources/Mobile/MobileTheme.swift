@@ -16,12 +16,4 @@ struct MobileTheme: Equatable {
         }
         return MobileTheme(accentHex: accent, groundHex: ground)
     }
-
-    static func colorScheme(appearance stored: String) -> ColorScheme? {
-        switch AppearanceMode(rawValue: stored) {
-        case .light: .light
-        case .dark: .dark
-        case .system, nil: nil
-        }
-    }
 }

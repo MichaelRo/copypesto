@@ -30,5 +30,6 @@ enum MobileClipboard {
         _ content: ClipContent, protected: Bool, to pasteboard: UIPasteboard = AppPasteboard.general, now: Date = .now
     ) {
         pasteboard.setItems(items(for: content), options: options(protected: protected, now: now))
+        AppDefaults.store.set(pasteboard.changeCount, for: Setting.lastSeenPasteboardChange)
     }
 }

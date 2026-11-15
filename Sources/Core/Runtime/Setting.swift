@@ -48,6 +48,11 @@ public enum Setting {
     /// The folder an iPhone or iPad was given in the file picker, as a security-scoped bookmark in base64.
     public static let syncFolderBookmark = SettingKey("syncFolderBookmark", default: "")
     public static let syncDeviceSerial = SettingKey("syncDeviceSerial", default: 0)
+    /// iOS: read the clipboard and add what is new when Pesto opens. Off, what is new is offered with the Paste button,
+    /// and the clipboard's content is never read.
+    public static let addsCopiesOnOpen = SettingKey("addsCopiesOnOpen", default: false)
+    /// iOS: the clipboard's change count last offered, added or written by Pesto, so one copy is offered once.
+    public static let lastSeenPasteboardChange = SettingKey("lastSeenPasteboardChange", default: -1)
     public static let deviceID = SettingKey("deviceID", default: "")
     public static let opensQuickMenuAtCursor = SettingKey("opensQuickMenuAtCursor", default: false)
     public static let screenSharingPrivacy = SettingKey("screenSharingPrivacy", default: false)
@@ -137,7 +142,8 @@ public enum Setting {
         ruleStripTracking.name, ruleTrimWhitespace.name, ruleNormalizeLineEndings.name,
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
-        syncFolderBookmark.name, syncDeviceSerial.name, deviceID.name,
+        syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
+        deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,

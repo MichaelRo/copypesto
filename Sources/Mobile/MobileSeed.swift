@@ -38,6 +38,11 @@ enum MobileSeed {
         }
         await service.waitForBackgroundWork()
         await arrange(state)
+        if let copied = ProcessInfo.processInfo.environment["PESTO_UITEST_CLIPBOARD"] {
+            MobileClipboard.write(.text(copied), protected: false)
+            AppDefaults.store.set(-1, for: Setting.lastSeenPasteboardChange)
+            await state.clipboardDidBecomeActive()
+        }
     }
 
     @MainActor

@@ -32,6 +32,11 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 - **New Collection and Edit Collection** are one sheet: a name, an icon from Core's `CollectionSymbols` and a color from
   `CollectionPalette` (the Mac's lists; an emoji or another icon a Mac set stays offered), saved through
   `CollectionStore` as one undoable change. Sidebar rows and chips show the icon in the collection's color.
+- **Clipboard on open** (`ClipboardOffer`): when the clipboard changed while Pesto was away (only its change count and
+  whether it holds text, a link or a picture are read, which iOS does not ask about), a banner "Add what you copied"
+  offers it with the system Paste button. With Settings → Clipboard → "Add copies when Pesto opens" on (off by
+  default) it is read and added at once, and iOS asks for permission. One change is handled once; Pesto's own copy
+  is never offered.
 - A cold launch lands on All at the top with no keyboard. Empty: the Paste button and one line. The "nothing is saved
   this session" line stays above the grid.
 

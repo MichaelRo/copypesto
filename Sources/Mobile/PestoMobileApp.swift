@@ -24,6 +24,7 @@ struct PestoMobileApp: App {
                     appState.boot()
                     appState.syncDidBecomeActive()
                     appState.inboxDidBecomeActive()
+                    await appState.clipboardDidBecomeActive()
                 }
                 .defaultAppStorage(AppDefaults.store)
         }
@@ -32,6 +33,7 @@ struct PestoMobileApp: App {
             case .active:
                 appState.syncDidBecomeActive()
                 appState.inboxDidBecomeActive()
+                Task { await appState.clipboardDidBecomeActive() }
             case .background:
                 appState.didLeaveForeground()
                 appState.syncDidEnterBackground()

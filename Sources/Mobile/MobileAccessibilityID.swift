@@ -25,4 +25,6 @@ enum MobileAccessibilityID {
     static let collectionNameField = "collection-name"
     static let collectionIconPicker = "collection-icon-picker"
     static let saveCollectionButton = "collection-save"
+    static let clipboardOffer = "clipboard-offer"
+    static let addsCopiesToggle = "adds-copies-on-open"
 }

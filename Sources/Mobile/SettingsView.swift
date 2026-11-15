@@ -9,6 +9,7 @@ struct SettingsView: View {
     @AppStorage(Setting.appTheme) private var theme: String
     @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
+    @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @State private var clearCount = 0
     @State private var isConfirmingClear = false
 
@@ -25,6 +26,17 @@ struct SettingsView: View {
                         Text(mode.label).tag(mode.rawValue)
                     }
                 }
+            }
+            Section {
+                Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
+                    .accessibilityIdentifier(MobileAccessibilityID.addsCopiesToggle)
+            } header: {
+                Text("Clipboard")
+            } footer: {
+                Text(
+                    "Pesto adds what you copied in another app each time it opens, and iOS asks for permission to " +
+                        "paste. Off, Pesto offers it with a Paste button and never reads the clipboard on its own."
+                )
             }
             Section {
                 Picker(Self.graceLabel, selection: $graceMinutes) {

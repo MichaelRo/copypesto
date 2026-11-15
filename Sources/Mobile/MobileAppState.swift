@@ -23,6 +23,8 @@ final class MobileAppState {
     var notice: Notice?
     /// The newest action Undo can take back, offered in a banner after a delete (ADR 0008).
     var undoOffer: UndoLabel?
+    /// The clipboard's change count offered as "Add what you copied" (`MobileAppState+ClipboardOffer.swift`).
+    var clipboardOfferCount: Int?
     /// Sync with the person's other devices, once the history is open (`MobileAppState+Sync.swift`).
     var sync: MobileSync?
     let secretReveal: SecretReveal

@@ -145,4 +145,15 @@ final class LibraryEditingUITests: XCTestCase {
         XCTAssertTrue(chip.waitForExistence(timeout: timeout))
         capture("iphone-collection-chip", element(MobileAccessibilityID.chipRow, in: app).screenshot())
     }
+
+    func test_whenSomethingWasCopiedElsewhere_thenItIsOfferedWithThePasteButton() {
+        let app = launch(environment: ["PESTO_UITEST_CLIPBOARD": "Copied in another app"])
+        XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout))
+        let banner = element(MobileAccessibilityID.clipboardOffer, in: app)
+        XCTAssertTrue(banner.waitForExistence(timeout: timeout), "the copy is offered")
+        XCTAssertTrue(banner.staticTexts["Add what you copied"].exists)
+        capture("iphone-clipboard-offer")
+        banner.buttons["Not Now"].tap()
+        XCTAssertFalse(banner.waitForExistence(timeout: 2), "Not Now takes the offer down")
+    }
 }

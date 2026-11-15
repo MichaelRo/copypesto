@@ -47,6 +47,25 @@ public enum ImageDownsampler {
         return CGImageDestinationFinalize(destination) ? output as Data : nil
     }
 
+    /// As `thumbnailPNG(from:maxPixel:)`, reading the file as ImageIO needs it rather than loading it whole: what the
+    /// share extension uses, under its memory limit, for a picture too large or in a format ingest does not store.
+    public static func thumbnailPNG(contentsOf url: URL, maxPixel: Int) -> Data? {
+        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixel
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        let output = NSMutableData()
+        let png = UTType.png.identifier as CFString
+        guard let destination = CGImageDestinationCreateWithData(output, png, 1, nil) else { return nil }
+        CGImageDestinationAddImage(destination, image, nil)
+        return CGImageDestinationFinalize(destination) ? output as Data : nil
+    }
+
     /// The first page of a PDF, scaled to fit `maxPixel`. ImageIO does not read PDF, so the page is drawn directly.
     private static func pdfThumbnailPNG(from data: Data, maxPixel: Int) -> Data? {
         guard let provider = CGDataProvider(data: data as CFData),

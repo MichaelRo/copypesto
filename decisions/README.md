@@ -55,6 +55,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0044](0044-a-card-has-no-header-one-line-of-facts-at-its-foot.md) | A card has no header: the content starts at the top and one line of facts sits at its foot (number, source icon, age and size; the app's name on focus). Supersedes the header of 0026. |
 | [0045](0045-collection-files.md) | A collection is shared as a `.pesto` file that carries its pictures and whole texts (secrets never written); import from the shelf and by opening the file |
 | [0046](0046-pesto-on-iphone-and-ipad.md) | Pesto runs on iPhone and iPad as one more sync device: Core is one module for both platforms, capture is always the person's act, no keyboard extension |
+| [0047](0047-share-extension-sealed-inbox.md) | The iOS share extension seals what is shared to the app's public key in an app-group inbox and never holds the history key; Shortcuts never hand out a secret |
 
 ## Template
 

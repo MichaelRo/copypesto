@@ -101,8 +101,8 @@ public enum ShelfKeyReference {
         ShelfKey(keys: ["⌘", "S"], action: "Save the focused picture to Downloads", keyCodes: [1], needsCommand: true),
         ShelfKey(keys: ["⌘", "[", "]"], action: "Switch collections", keyCodes: [33, 30], needsCommand: true),
         ShelfKey(
-            keys: ["⌥", "⌘", "[", "]"], action: "Switch app filter", keyCodes: [33, 30], needsCommand: true,
-            needsOption: true
+            keys: ["⌥", "⌘", "[", "]"], action: "Switch app filter (⌥⌘← and ⌥⌘→ do too)",
+            keyCodes: [33, 30, 123, 124], needsCommand: true, needsOption: true
         ),
         ShelfKey(keys: ["⌘", "N"], action: "Add a collection", keyCodes: [45], needsCommand: true),
         ShelfKey(keys: ["⌘", "P"], action: "Paste the selected clips all at once", keyCodes: [35], needsCommand: true),

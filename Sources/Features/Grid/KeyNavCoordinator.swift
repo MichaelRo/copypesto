@@ -126,7 +126,7 @@ final class KeyNavCoordinator {
         let characters = event.charactersIgnoringModifiers
         guard let command = ShelfCommand.resolve(
             characters: characters, keyCode: event.keyCode, shift: event.modifierFlags.contains(.shift),
-            option: event.modifierFlags.contains(.option)
+            option: event.modifierFlags.contains(.option), typedCharacters: event.characters
         ) else { return false }
         switch command {
         // The shelf has no Save, so ⌘S on a clip that is not a picture is swallowed instead of beeping.

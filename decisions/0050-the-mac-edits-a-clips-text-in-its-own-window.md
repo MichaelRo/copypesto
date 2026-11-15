@@ -30,12 +30,15 @@ other window the shelf opens (Settings, the floating window) closes the shelf fi
   `TextEditPolicy.result(for:)`. A refusal (empty, "Another clip already has this text.", the size limit's message, a
   locked history, a failed save) is shown in the editor, which stays open; a save closes it and offers Undo the next
   time the shelf shows. ⌘Z on the shelf restores the old text and, for a formatted copy, its formatting: an edit drops the
-  rich flavours (`sealText`), so a paste never carries formatted text that differs from the card.
+  rich flavors (`sealText`), so a paste never carries formatted text that differs from the card.
 
 ## Consequences
 - `TextEditPolicyTests` (Core), `TextEditSaveTests` and `TextEditWindowControllerTests` (hosted) and `EditTextUITests`
-  pin it; `ClipTextEditTests` pins the rich flavours.
+  pin it; `ClipTextEditTests` pins the rich flavors.
 - The Undo words read "Changed the text" and "Undo Edit Text", like "Edit Snippet" and "Edit Note".
+- The storage actor's save does not redraw a card by itself, so a save, and an undo or redo of a text or snippet edit,
+  wait for the main context to hold the new content hash and then read the history again; the shelf gives each card
+  its content hash as an inner identity (`Features/Overlay/CLAUDE.md`).
 
 ## Docs affected
-`README.md`, `docs/guide/`, `decisions/README.md`.
+`README.md`, `docs/guide/using-pesto.md`, `decisions/README.md`, `Sources/Features/Overlay/CLAUDE.md`.

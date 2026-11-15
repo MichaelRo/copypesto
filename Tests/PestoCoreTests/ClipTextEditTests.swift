@@ -222,6 +222,31 @@ struct ClipTextEditTests {
         #expect(try clip(id).blob?.decryptedText() == "rewritten words")
     }
 
+    @Test("an edit drops the formatted copy so a paste matches the card, and Undo brings it back with the old text")
+    func whenFormattedClipEdited_thenRichPayloadIsDroppedAndUndoRestoresIt() async throws {
+        let text = "Formatted heading"
+        let rich = RichTextPayload(rtf: Data("{\\rtf1\\ansi \\b Formatted heading}".utf8))
+        try await service.ingest(PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text", payload: Data(text.utf8), payloadString: text,
+            contentHash: sha(text), richPayload: rich
+        ))
+        await service.waitForBackgroundWork()
+        let id = try #require(clips().first { $0.blob?.decryptedText() == text }).id
+        #expect(try clip(id).blob?.decryptedRichPayload() == rich)
+
+        #expect(try await service.updateText(id: id, text: "Plain heading") == .saved)
+
+        let edited = try clip(id)
+        #expect(edited.blob?.decryptedRichPayload() == nil)
+        #expect(edited.blob?.encryptedRichData == nil)
+        #expect(edited.blob?.decryptedText() == "Plain heading")
+
+        try await service.undo()
+        let undone = try clip(id)
+        #expect(undone.blob?.decryptedText() == text)
+        #expect(undone.blob?.decryptedRichPayload() == rich)
+    }
+
     @Test("a clip that expires on its own is edited but never held by Undo")
     func whenClipExpires_thenTheEditIsNotUndoable() async throws {
         let id = try await ingest("burn after reading")

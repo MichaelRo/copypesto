@@ -25,6 +25,14 @@ extension ClipboardCard {
         isBlurredAsSensitive || isCoveredForPrivacy || item.sensitivity != nil
     }
 
+    /// Asked when the menu opens: a covered card offers nothing, a masked secret only while it is shown (ADR 0050).
+    var offersTextEdit: Bool {
+        TextEditPolicy.isOffered(
+            type: item.type, analysisPending: item.analysisPending, hasBlob: item.blob != nil,
+            byteSize: item.byteSize, concealment: concealment
+        )
+    }
+
     var isBlurredAsSensitive: Bool {
         item.isNSFW && nsfwMode.blursCards && !(isNSFWRevealed || revealedFromOutside)
     }

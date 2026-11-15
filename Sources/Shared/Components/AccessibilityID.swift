@@ -94,6 +94,11 @@ enum AccessibilityID {
     static let settingsWindow = "net.copypesto.pesto.settings"
     static let onboardingWindow = "pesto-onboarding"
     static let aboutWindow = "pesto-about"
+    static let textEditWindow = "pesto-edit-text"
+    static let textEditor = "edit-text-editor"
+    static let textEditSaveButton = "edit-text-save"
+    static let textEditCancelButton = "edit-text-cancel"
+    static let textEditMessage = "edit-text-message"
 
     static let accessibilityBanner = "overlay-accessibility-banner"
     static let userErrorBanner = "overlay-user-error-banner"

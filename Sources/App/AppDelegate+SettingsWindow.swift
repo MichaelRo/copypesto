@@ -66,7 +66,7 @@ extension AppDelegate {
     /// Opened from the shelf (a non-activating panel), another app is still the active one and macOS refuses a
     /// cooperative `activate()`, which left Settings behind it. Activating with ignoringOtherApps brings it to front
     /// immediately; asking Launch Services is the resilient fallback if the process has not become active.
-    private func bringToFront(_ window: NSWindow) {
+    func bringToFront(_ window: NSWindow) {
         NSApp.activate(ignoringOtherApps: true)
         window.orderFrontRegardless()
         window.makeKeyAndOrderFront(nil)

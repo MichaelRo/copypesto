@@ -336,6 +336,10 @@ final class AppState {
     /// Floats a notice that does not need the shelf (set by the delegate).
     @ObservationIgnored var showToast: (@MainActor (StatusToast) -> Void)?
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?
+    /// Opens the Edit Text window for a clip, closing the shelf first (ADR 0050). Set by the delegate.
+    @ObservationIgnored var openTextEditor: (@MainActor (ClipboardItem) -> Void)?
+    /// Closes the Edit Text window and drops its draft: the History Lock calls it. Set by the delegate.
+    @ObservationIgnored var closeTextEditor: (@MainActor () -> Void)?
     /// Exports a collection to a file the person chooses; closes the shelf first when it is open. Set by the delegate.
     @ObservationIgnored var exportCollection: (@MainActor (UUID) -> Void)?
     /// Asks for a collection file and imports it; closes the shelf first when it is open. Set by the delegate.
@@ -461,6 +465,7 @@ final class AppState {
         )
         // Decrypted previews must not outlive the lock, and neither may what could be undone.
         if isHistoryLocked {
+            closeTextEditor?()
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
             stopSimilarityWork()
@@ -503,6 +508,7 @@ final class AppState {
         guard AppDefaults.store.value(for: Setting.biometricLockEnabled) else { return }
         lastBiometricUnlock = nil
         isHistoryLocked = true
+        closeTextEditor?()
         clipboardBeforeLastItemWrite = ""
         aiResult = nil
         storageService?.undoHistory.clear()

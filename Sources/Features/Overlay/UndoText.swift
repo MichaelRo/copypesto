@@ -56,7 +56,7 @@ enum UndoText {
                 String(localized: "Import")
             }
         case .editSnippet: String(localized: "Edit Snippet")
-        case .editText: String(localized: "Text Change")
+        case .editText: String(localized: "Edit Text")
         }
     }
 

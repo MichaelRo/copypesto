@@ -206,6 +206,7 @@ struct ClipboardCard: View {
                     tagText = ""
                     showTagPopover = true
                 },
+                editText: actions.editText.flatMap { edit in offersTextEdit ? { edit(item) } : nil },
                 offers: offers
             ))
     }

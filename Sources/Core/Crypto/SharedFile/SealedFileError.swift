@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-public enum QuickInsertError: Error, Equatable, Sendable {
-    /// No set has been written: the feature is off, or the app has not run since it was turned on.
+public enum SealedFileError: Error, Equatable, Sendable {
+    /// No file has been written: the feature is off, or the app has not written it yet.
     case missing
     /// The app group container is missing (an unsigned build, or a device without the group).
     case unavailable
@@ -13,3 +13,5 @@ public enum QuickInsertError: Error, Equatable, Sendable {
     case damaged
     case tooLarge
 }
+
+public typealias QuickInsertError = SealedFileError

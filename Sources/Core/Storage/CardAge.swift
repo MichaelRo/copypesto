@@ -21,6 +21,17 @@ public enum CardAge {
         }
     }
 
+    /// How long until `text(interval:)` reads differently: the widget's timeline has an entry at each such moment.
+    public static func untilNextChange(interval: TimeInterval) -> TimeInterval {
+        let elapsed = max(interval, 0)
+        let step: TimeInterval = switch elapsed {
+        case ..<3600: 60
+        case 3600..<86_400: 3600
+        default: 86_400
+        }
+        return step - elapsed.truncatingRemainder(dividingBy: step)
+    }
+
     public static func spoken(interval seconds: TimeInterval) -> String {
         switch seconds {
         case ..<60: "just now"

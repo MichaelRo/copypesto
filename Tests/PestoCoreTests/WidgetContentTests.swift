@@ -1,0 +1,59 @@
+// SPDX-License-Identifier: MIT
+import Foundation
+import Testing
+@testable import PestoCore
+
+@Suite("What each widget family draws")
+struct WidgetContentTests {
+    private let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func snapshot(clips count: Int) -> WidgetSnapshot {
+        let clips = (0..<count).map { index in
+            WidgetClip(id: UUID(), kind: .text, text: "clip \(index)", date: now - Double(index) * 90)
+        }
+        return WidgetSnapshot(createdAt: now, theme: .brand, clips: clips)
+    }
+
+    @Test("small shows the latest clip, medium three, large six, fewer at an accessibility text size")
+    func whenTheFamilyDiffers_thenTheCountFollows() {
+        let full = snapshot(clips: 8)
+
+        #expect(WidgetContent(snapshot: full, size: .small).clips.map(\.text) == ["clip 0"])
+        #expect(WidgetContent(snapshot: full, size: .medium).clips.count == 3)
+        #expect(WidgetContent(snapshot: full, size: .large).clips.count == 6)
+        #expect(WidgetContent(snapshot: full, size: .medium, accessibilityText: true).clips.count == 2)
+        #expect(WidgetContent(snapshot: full, size: .large, accessibilityText: true).clips.count == 3)
+        #expect(WidgetContent(snapshot: snapshot(clips: 2), size: .large).clips.count == 2)
+        for size in WidgetSize.allCases {
+            #expect(WidgetContent(snapshot: full, size: size).state == .clips)
+        }
+    }
+
+    @Test("no snapshot is unavailable in the brand's colors; an empty one is empty in its own theme")
+    func whenThereIsNothingToShow_thenTheStateSaysWhy() {
+        let theme = WidgetSnapshot.Theme(
+            lightGround: "FFFFFF", darkGround: "000000", lightAccent: "8A4F16", darkAccent: "E2A15E"
+        )
+        let unavailable = WidgetContent(snapshot: nil, size: .medium)
+        let empty = WidgetContent(snapshot: .empty(theme: theme, at: now), size: .medium)
+
+        #expect(unavailable.state == .unavailable)
+        #expect(unavailable.theme == .brand)
+        #expect(unavailable.clips.isEmpty)
+        #expect(empty.state == .empty)
+        #expect(empty.theme == theme)
+    }
+
+    @Test("the timeline has an entry each time an age reads differently, soonest first and bounded")
+    func whenAgesMove_thenTheEntriesFollow() {
+        let fresh = WidgetClip(id: UUID(), kind: .text, text: "a", date: now - 30)
+        let hourOld = WidgetClip(id: UUID(), kind: .text, text: "b", date: now - 3700)
+
+        let dates = WidgetContent.refreshDates(for: [fresh, hourOld], after: now, limit: 5)
+
+        #expect(dates == [now + 30, now + 90, now + 150, now + 210, now + 270])
+        #expect(CardAge.text(interval: dates[0].timeIntervalSince(fresh.date)) == "1m ago")
+        #expect(WidgetContent.refreshDates(for: [hourOld], after: now, limit: 2) == [now + 3500, now + 7100])
+        #expect(WidgetContent.refreshDates(for: [], after: now).isEmpty)
+    }
+}

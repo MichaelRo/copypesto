@@ -47,6 +47,35 @@ public enum ImageDownsampler {
         return CGImageDestinationFinalize(destination) ? output as Data : nil
     }
 
+    /// A small JPEG of the first image, at most `maxPixel` on its longer side and `maxBytes` long: the quality steps
+    /// down
+    /// until it fits, and there is none when even the lowest does not. Transparency is lost, which a thumbnail on a
+    /// widget does not need.
+    public static func thumbnailJPEG(from data: Data, maxPixel: Int, maxBytes: Int) -> Data? {
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            [kCGImageSourceShouldCache: false] as CFDictionary
+        ) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixel
+        ]
+        guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        for quality in [0.75, 0.55, 0.35] {
+            let output = NSMutableData()
+            guard let destination = CGImageDestinationCreateWithData(
+                output, UTType.jpeg.identifier as CFString, 1, nil
+            ) else { return nil }
+            let properties = [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary
+            CGImageDestinationAddImage(destination, image, properties)
+            guard CGImageDestinationFinalize(destination) else { return nil }
+            if output.length <= maxBytes { return output as Data }
+        }
+        return nil
+    }
+
     /// As `thumbnailPNG(from:maxPixel:)`, reading the file as ImageIO needs it rather than loading it whole: what the
     /// share extension uses, under its memory limit, for a picture too large or in a format ingest does not store.
     public static func thumbnailPNG(contentsOf url: URL, maxPixel: Int) -> Data? {

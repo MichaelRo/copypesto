@@ -54,6 +54,20 @@ struct AppIdentityTests {
         #expect(AppIdentity
             .quickInsertKeychainGroup(prefix: "ABCDE12345.") == "ABCDE12345.net.copypesto.pesto.quick-insert")
         #expect(AppIdentity.quickInsertFileName != AppIdentity.inboxPublicKeyFileName)
+        #expect(AppIdentity.widgetBundleID == "net.copypesto.pesto.widget")
+        #expect(AppIdentity.widgetKind == "net.copypesto.pesto.recent-clips")
+        #expect(AppIdentity.widgetKeyAccount == "net.copypesto.pesto.widgetKey")
+        #expect(AppIdentity.widgetKeychainGroupName == "net.copypesto.pesto.widget")
+        #expect(AppIdentity.widgetKeychainGroup(prefix: "ABCDE12345.") == "ABCDE12345.net.copypesto.pesto.widget")
+        #expect(AppIdentity.widgetSnapshotFileName == "widget-snapshot.pestowidget")
+        #expect(AppIdentity.urlScheme == "pesto")
+        #expect(Set([
+            AppIdentity.widgetKeyAccount, AppIdentity.quickInsertKeyAccount, AppIdentity.blobKeyAccount,
+            AppIdentity.inboxKeyAccount, AppIdentity.deviceIDAccount
+        ]).count == 5)
+        #expect(Set([
+            AppIdentity.widgetSnapshotFileName, AppIdentity.quickInsertFileName, AppIdentity.inboxPublicKeyFileName
+        ]).count == 3)
     }
 
     @Test("the app group the iOS app and its extensions name is the bundle ID's, in every entitlements file")

@@ -35,8 +35,29 @@ public enum AppIdentity {
     }
 
     public static func quickInsertKeychainGroup(in bundle: Bundle) -> String {
-        quickInsertKeychainGroup(prefix: bundle
-            .object(forInfoDictionaryKey: appIdentifierPrefixInfoKey) as? String ?? "")
+        quickInsertKeychainGroup(prefix: appIdentifierPrefix(in: bundle))
+    }
+
+    /// The scheme of `pesto://` links: the Mac's automation links and the iOS widget's links to a clip (ADR 0052).
+    public static let urlScheme = "pesto"
+    public static let widgetBundleID = "\(bundleID).widget"
+    /// The kind of the iOS Recent Clips widget, which the app names when it reloads its timelines.
+    public static let widgetKind = "\(bundleID).recent-clips"
+    public static let widgetKeyAccount = "\(bundleID).widgetKey"
+    public static let widgetSnapshotFileName = "widget-snapshot.pestowidget"
+    /// The Keychain group the iOS app and its widget share (ADR 0052), after the team prefix.
+    public static let widgetKeychainGroupName = "\(bundleID).widget"
+
+    public static func widgetKeychainGroup(prefix: String) -> String {
+        prefix + widgetKeychainGroupName
+    }
+
+    public static func widgetKeychainGroup(in bundle: Bundle) -> String {
+        widgetKeychainGroup(prefix: appIdentifierPrefix(in: bundle))
+    }
+
+    private static func appIdentifierPrefix(in bundle: Bundle) -> String {
+        bundle.object(forInfoDictionaryKey: appIdentifierPrefixInfoKey) as? String ?? ""
     }
 
     public static let legacySupportDirectoryName = legacyBundleID

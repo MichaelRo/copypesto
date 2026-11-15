@@ -12,14 +12,10 @@ struct CardFootLineView: View {
     var showsGIF = false
     var trailingMark: String?
     @Environment(\.clipRevision) private var revision
+    @Environment(\.cardClock) private var clock
 
     var body: some View {
-        let line = CardFootLine.make(
-            .init(isRemote: item.isRemote, appName: item.knownSourceAppName, arrivedBySync: item.syncOrigin != nil),
-            title: item.customTitle,
-            age: CardAge.text(for: item, inCollection: false),
-            device: Self.device
-        )
+        let line = Self.line(for: item, now: clock ?? .now, device: Self.device)
         HStack(spacing: 6) {
             lead(line).modifier(PillGround(isOn: onPicture))
             Spacer(minLength: 4)
@@ -69,7 +65,19 @@ struct CardFootLineView: View {
         }
     }
 
-    private static var device: CardFootLine.Device {
+    static func line(for item: ClipboardItem, now: Date, device: CardFootLine.Device) -> CardFootLine {
+        CardFootLine.make(
+            .init(
+                isRemote: item.isRemote, appName: item.knownSourceAppName, arrivedBySync: item.syncOrigin != nil,
+                captureMethod: item.captureMethod
+            ),
+            title: item.customTitle,
+            age: CardAge.text(for: item, inCollection: false, now: now),
+            device: device
+        )
+    }
+
+    static var device: CardFootLine.Device {
         UIDevice.current.userInterfaceIdiom == .pad
             ? .init(name: String(localized: "iPad"), symbol: "ipad")
             : .init(name: String(localized: "iPhone"), symbol: "iphone")
@@ -96,4 +104,7 @@ private struct PillGround: ViewModifier {
 
 extension EnvironmentValues {
     @Entry var clipRevision: ClipCard.Revision?
+    /// The minute the grid last ticked (`LibraryGrid`), so every visible card's age moves together without a timer
+    /// each.
+    @Entry var cardClock: Date?
 }

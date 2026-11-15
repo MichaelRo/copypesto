@@ -16,13 +16,22 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
   (`LibraryChrome.showsChipRow`, driven by the size class and the column visibility, never by the device).
 - **Chips** (`LibraryChip.row`): All, Pinned, each collection, then "+". While a search is open the row adds the six
   kinds (Text, Links, Pictures, Colors, Code, Files) after a divider and drops "+"; kinds appear nowhere else. A kind
-  narrows the scope; ending the search clears it (`LibraryFilter`). A collection chip's menu renames or deletes it
+  narrows the scope; ending the search clears it (`LibraryFilter`). A collection chip's menu edits (name, icon, color) or deletes it
   (both undoable). Chips are Pesto's own: a wash of the accent or the collection's color, stronger with a check mark
   when chosen; never glass.
 - **Grid** (`CardGridLayout`): `LazyVGrid`, 12 pt gaps and 16 pt margins, columns of at least 190 pt: two on an iPhone
   in portrait, three in landscape, four or five on an iPad, one at an accessibility text size. Cards keep the Mac
   card's 10 by 9 shape and 12 pt continuous corners, a 0.75 pt hairline (0.45 under Increase Contrast), no shadow,
   white on a light ground and white at 10 percent on a dark one, on the theme's solid ground.
+- **Order while looking** (`GridOrder`): a copy moves the clip to the front of the history at once, but the grid keeps
+  the order it had until the app returns to the front, a pull to refresh, or a change of scope or search; a clip new to
+  the grid (a capture, a sync) shows at the top. Ages at the cards' feet move once a minute (one `TimelineView` for the
+  grid).
+- **Pull to refresh** runs one sync exchange when sync is on, then takes the history's order again. There is no Sync
+  Now; a background refresh exchanges now and then while the app is away (`SyncExchange`).
+- **New Collection and Edit Collection** are one sheet: a name, an icon from Core's `CollectionSymbols` and a color from
+  `CollectionPalette` (the Mac's lists; an emoji or another icon a Mac set stays offered), saved through
+  `CollectionStore` as one undoable change. Sidebar rows and chips show the icon in the collection's color.
 - A cold launch lands on All at the top with no keyboard. Empty: the Paste button and one line. The "nothing is saved
   this session" line stays above the grid.
 
@@ -39,7 +48,8 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 | Covered otherwise | The eye-slash symbol and the kind, nothing else. |
 
 **The foot line** (`CardFootLine`, on Core's `CardMetaLine`): the app's name, or "Another device", or for a clip made on
-this device the device's symbol and name; a synced clip without a name shows only its age; a title the person gave
+this device the device's symbol and how it came in (Pasted, Note, Shared, Dropped, Shortcut; ADR 0049), or the device's
+name for one made before that was kept; a synced clip without a name shows only its age; a title the person gave
 leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 
 ## What a person does
@@ -66,11 +76,11 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 ## Theme
 `MobileAccent` resolves the ground and the accent with `MobileTheme` (Core's `AppTheme`, `AccentChoice` and
 `ContrastRatio.readable`, as the Mac's roots do) and sets `pestoAccent`, `pestoAccentLabel` and `pestoSurface` once.
-Settings → Appearance has the theme and System, Light or Dark, applied once with `.preferredColorScheme` at the root.
+Settings → Appearance has the theme and System, Light or Dark, set on every window's `overrideUserInterfaceStyle`
+(`MobileAppearanceBridge`).
 Per device: these preferences are not synced. Liquid Glass is only the system's bars, search field, sheets and menus.
 
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds
 section, onboarding, widgets, a keyboard extension, glass on a card. Source-app chips: Core's index keeps the bundle id
-private and iOS cannot name an app, so there is no cheap list to show. The capture method (Paste, Note, Drop) is not
-stored with a clip, so a clip made here names the device instead.
+private and iOS cannot name an app, so there is no cheap list to show.

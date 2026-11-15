@@ -9,6 +9,8 @@ public enum AppIdentity {
     public static let cliBundleID = "\(bundleID).cli"
     public static let shareBundleID = "\(bundleID).share"
     public static let appGroupID = "group.\(bundleID)"
+    /// The iOS app's background refresh for sync; the same string is in `PestoMobile-Info.plist`.
+    public static let syncRefreshTaskID = "\(bundleID).sync-refresh"
 
     public static let logSubsystem = bundleID
     public static let supportDirectoryName = bundleID

@@ -73,9 +73,9 @@ extension MobileAppState {
     }
 
     /// What the Paste button or a drop delivered.
-    func add(from providers: [NSItemProvider]) async {
+    func add(from providers: [NSItemProvider], method: CaptureMethod) async {
         do {
-            try await add(ItemProviderCapture.capture(from: providers))
+            try await add(ItemProviderCapture.capture(from: providers)?.with(captureMethod: method))
         } catch {
             Self.logger.error("Reading a paste or drop failed: \(error.localizedDescription, privacy: .public)")
             tell(String(localized: "Couldn\u{2019}t read what was pasted."), isProblem: true)
@@ -148,14 +148,20 @@ extension MobileAppState {
     }
 
     func addCollection(named name: String, existing: [Pinboard]) -> Pinboard? {
+        var draft = CollectionDraft.new(existing: existing)
+        draft.name = name
+        return addCollection(draft, existing: existing)
+    }
+
+    func addCollection(_ draft: CollectionDraft, existing: [Pinboard]) -> Pinboard? {
         guard let context = historyContainer?.mainContext else { return nil }
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = draft.trimmedName
         let board = Pinboard(
             name: CollectionNaming.uniqueName(
-                trimmed.isEmpty ? CollectionNaming.defaultName : trimmed, existing: existing.map(\.name)
+                name.isEmpty ? CollectionNaming.defaultName : name, existing: existing.map(\.name)
             ),
-            symbolName: "folder",
-            colorHex: CollectionPalette.nextUnused(used: existing.map(\.colorHex)),
+            symbolName: draft.symbol,
+            colorHex: draft.colorHex,
             sortOrder: (existing.map(\.sortOrder).max() ?? -1) + 1
         )
         var added = false
@@ -167,13 +173,26 @@ extension MobileAppState {
     }
 
     func renameCollection(_ board: Pinboard, to name: String, existing: [Pinboard]) {
-        guard let context = board.modelContext else { return }
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed != board.name else { return }
+        var draft = CollectionDraft(board)
+        draft.name = name
+        updateCollection(board, to: draft, existing: existing)
+    }
+
+    /// Name, icon and color in one change, which one Undo takes back.
+    func updateCollection(_ board: Pinboard, to draft: CollectionDraft, existing: [Pinboard]) {
+        guard let context = board.modelContext, draft.differs(from: board) else { return }
+        let name = draft.trimmedName
         let others = existing.filter { $0.id != board.id }.map(\.name)
-        let unique = CollectionNaming.uniqueName(trimmed, existing: others)
-        report("Couldn\u{2019}t rename the collection.") {
-            try collectionStore(context: context).edit(.edit, [board]) { board.name = unique }
+        let unique = name.isEmpty || name == board.name ? board.name : CollectionNaming.uniqueName(
+            name,
+            existing: others
+        )
+        report("Couldn\u{2019}t save the collection.") {
+            try collectionStore(context: context).edit(.edit, [board]) {
+                board.name = unique
+                board.symbolName = draft.symbol
+                board.colorHex = draft.colorHex
+            }
         }
     }
 

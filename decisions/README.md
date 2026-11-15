@@ -57,6 +57,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0046](0046-pesto-on-iphone-and-ipad.md) | Pesto runs on iPhone and iPad as one more sync device: Core is one module for both platforms, capture is always the person's act, no keyboard extension |
 | [0047](0047-share-extension-sealed-inbox.md) | The iOS share extension seals what is shared to the app's public key in an app-group inbox and never holds the history key; Shortcuts never hand out a secret |
 | [0048](0048-a-clips-text-can-be-edited.md) | A text, code, link or color clip's content can be edited: it stays the same clip, is sealed and judged again, keeps its curation and place, is one Undo and one sync change, and is refused when another clip holds the text |
+| [0049](0049-capture-method-stays-on-the-device.md) | How a clip was made on an iPhone or iPad (pasted, a note, shared, dropped, a Shortcut) is sealed in its metadata on that device only, never synced or backed up, and leads its foot line |
 
 ## Template
 

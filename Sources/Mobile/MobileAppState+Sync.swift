@@ -8,19 +8,22 @@ import UIKit
 /// stopped when it leaves. A hosted test builds its own; a UI-test launch keeps every key in memory.
 extension MobileAppState {
     func syncDidBecomeActive() {
-        if let sync {
-            sync.activate()
-            return
-        }
-        let mode = LaunchMode.current
-        guard mode != .hostedTests, let container = historyContainer, let storage = storageService else { return }
-        let created = MobileSync(Self.liveSyncEnvironment(container: container, storage: storage, mode: mode))
-        sync = created
-        created.activate()
+        madeSync()?.activate()
     }
 
     func syncDidEnterBackground() {
         sync?.deactivate()
+        scheduleBackgroundRefresh()
+    }
+
+    /// The app's sync, made once the history is open; nil in a hosted test or without a history.
+    func madeSync() -> MobileSync? {
+        if let sync { return sync }
+        let mode = LaunchMode.current
+        guard mode != .hostedTests, let container = historyContainer, let storage = storageService else { return nil }
+        let created = MobileSync(Self.liveSyncEnvironment(container: container, storage: storage, mode: mode))
+        sync = created
+        return created
     }
 
     static var currentDeviceKind: SyncDeviceKind {

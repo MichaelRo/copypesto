@@ -6,7 +6,7 @@ import SwiftData
 
 /// Sync on an iPhone or iPad (ADR 0046): the folder the person picked, held open while the app is in front, and Core's
 /// `SyncController` on it. Exchanges run on turning sync on, at launch, on each return to the foreground, when the
-/// folder reports a change and on the controller's poll; nothing runs in the background.
+/// folder reports a change, on the controller's poll, on pull to refresh and in a background refresh (`SyncExchange`).
 @MainActor
 @Observable
 final class MobileSync {

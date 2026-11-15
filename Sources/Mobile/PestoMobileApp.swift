@@ -12,6 +12,7 @@ struct PestoMobileApp: App {
         let state = MobileAppState()
         _appState = State(initialValue: state)
         AppDependencyManager.shared.add(dependency: state)
+        state.registerBackgroundRefresh()
     }
 
     var body: some Scene {

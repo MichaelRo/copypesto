@@ -21,7 +21,7 @@ struct LibraryToolbar: ToolbarContent {
         ToolbarSpacer(.fixed, placement: .primaryAction)
         ToolbarItem(placement: .primaryAction) {
             PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
-                Task { await appState.add(from: providers) }
+                Task { await appState.add(from: providers, method: .paste) }
             }
             .labelStyle(.iconOnly)
             .buttonBorderShape(.circle)

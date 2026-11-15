@@ -33,7 +33,7 @@ extension MobileAppState {
             throw ShortcutFailure.nothingToAdd
         }
         do {
-            try await service.ingest(capture)
+            try await service.ingest(capture.with(captureMethod: .shortcut))
         } catch let refusal as ClipSizePolicy.TooLarge {
             throw ShortcutFailure.refused(refusal.message)
         } catch {

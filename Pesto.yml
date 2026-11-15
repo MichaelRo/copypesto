@@ -144,7 +144,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         GENERATE_INFOPLIST_FILE: "YES"
-        # Only PestoAllowsTestHooks (as the Mac's Info.plist has it); everything else is generated.
+        # PestoAllowsTestHooks (as the Mac's Info.plist has it), the clip-id type and the background sync refresh
+        # (BGTaskSchedulerPermittedIdentifiers, UIBackgroundModes fetch); everything else is generated.
         INFOPLIST_FILE: Sources/Resources/PestoMobile-Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Pesto
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"

@@ -122,6 +122,18 @@ public extension ClipboardItem {
         set { if metadata.linkPreviewFetched != newValue { updateMetadata { $0.linkPreviewFetched = newValue } } }
     }
 
+    /// How the clip was made on this iPhone or iPad; nil for a Mac copy, a synced clip and one made before it was kept.
+    var captureMethod: CaptureMethod? {
+        metadata.captureMethod
+    }
+
+    /// Where a new clip came from: another device over Universal Clipboard, and how it was handed over on iOS (sealed,
+    /// this device only, ADR 0049).
+    internal func takeOrigin(of capture: PasteboardCapture) {
+        isRemote = capture.isRemote
+        if let method = capture.captureMethod { updateMetadata { $0.captureMethod = method } }
+    }
+
     /// When the clip was first copied. `timestamp` is when it was last used, which is what puts it in front in the
     /// history; a collection orders by this one so a paste does not move a clip inside it (ADR 0021).
     var copiedAt: Date {

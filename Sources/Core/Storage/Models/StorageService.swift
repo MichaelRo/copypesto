@@ -323,7 +323,7 @@ public actor StorageService: ModelActor {
         item.textLength = clipType == .text || clipType == .code ? payloadString.count : 0
         item.isNSFW = detectedNSFW
         item.analysisPending = judgedLater
-        item.isRemote = capture.isRemote
+        item.takeOrigin(of: capture)
         if capture.isConcealed {
             item.expiresAt = Self.concealedExpiry(timestamp: capture.timestamp, allowanceEnd: capture.concealedUntil)
         }

@@ -24,7 +24,9 @@ struct MobileShortcutsTests {
         try await library.state.addFromShortcut(text: nil, file: png, fileType: .png)
         try await library.refreshed()
 
-        #expect(library.store.items.contains { $0.displayPreviewText == "from a shortcut" })
+        #expect(library.store.items.contains {
+            $0.displayPreviewText == "from a shortcut" && $0.captureMethod == .shortcut
+        })
         #expect(library.store.items.contains { $0.type == .image })
         await #expect(throws: MobileAppState.ShortcutFailure.nothingToAdd) {
             try await library.state.addFromShortcut(text: "   ", file: nil, fileType: nil)

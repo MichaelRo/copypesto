@@ -17,11 +17,14 @@ final class LibraryModel {
     var showsSettings = false
     var isComposing = false
     var isNamingCollection = false
-    var renaming: Pinboard?
+    var editingCollection: Pinboard?
     var pendingDelete: UUID?
     var sharing: ClipShare?
     var flashedClipID: UUID?
     var copyCount = 0
+    /// Bumped when the grid should take the history's order again (`GridOrder`).
+    private(set) var orderVersion = 0
+    @ObservationIgnored let order = GridOrder()
 
     func open(_ id: UUID) {
         openClipID = id
@@ -36,6 +39,11 @@ final class LibraryModel {
             guard let self, copyCount == count else { return }
             flashedClipID = nil
         }
+    }
+
+    func resort() {
+        order.resort()
+        orderVersion += 1
     }
 
     func endSearch() {

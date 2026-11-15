@@ -25,19 +25,26 @@ struct LibraryGrid: View {
             VStack(alignment: .leading, spacing: 14) {
                 if showsChipRow { LibraryChipRow() }
                 if !appState.storeIsOnDisk { notSavedBanner }
-                grid(ids, columns: count, cardWidth: cardWidth)
+                TimelineView(.periodic(from: .now, by: 60)) { timeline in
+                    grid(ids, columns: count, cardWidth: cardWidth)
+                        .environment(\.cardClock, timeline.date)
+                }
             }
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
         .scrollDismissesKeyboard(.immediately)
+        .refreshable {
+            await SyncExchange.onPull(appState.sync)
+            library.resort()
+        }
         .background(ground.ignoresSafeArea())
         .overlay { LibraryEmptyState(isEmpty: ids.isEmpty, hasClips: !store.items.isEmpty) }
         .libraryBanners()
         .sensoryFeedback(.success, trigger: library.copyCount)
         .onDrop(of: ItemProviderCapture.acceptedTypes + [ClipDrag.clipIDType], isTargeted: nil) { providers in
             guard !ClipDrag.isOwnDrag(providers) else { return false }
-            Task { await appState.add(from: providers) }
+            Task { await appState.add(from: providers, method: .drop) }
             return true
         }
         .focusedSceneValue(\.listCommands, ListCommandActions(
@@ -73,14 +80,18 @@ struct LibraryGrid: View {
 
     private func visibleIDs() -> [UUID] {
         _ = store.items.count
+        _ = library.orderVersion
         guard let index = store.searchIndex() else { return [] }
-        return library.filter.scope.ids(
+        let kind = library.isSearching ? library.filter.kind : nil
+        let fresh = library.filter.scope.ids(
             in: index,
             query: library.query,
-            kind: library.isSearching ? library.filter.kind : nil,
+            kind: kind,
             smartRule: smartRule,
             hidesSensitive: NSFWMode.current() == .hide
         )
+        let context = "\(library.filter.scope)|\(library.query)|\(kind?.rawValue ?? "")"
+        return library.order.arrange(fresh, context: context)
     }
 
     private var smartRule: ((UUID) -> Bool)? {

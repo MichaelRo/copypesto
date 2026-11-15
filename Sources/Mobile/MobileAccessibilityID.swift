@@ -27,4 +27,5 @@ enum MobileAccessibilityID {
     static let saveCollectionButton = "collection-save"
     static let clipboardOffer = "clipboard-offer"
     static let addsCopiesToggle = "adds-copies-on-open"
+    static let quickInsertToggle = "quick-insert"
 }

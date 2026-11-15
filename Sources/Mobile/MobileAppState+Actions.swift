@@ -217,13 +217,16 @@ extension MobileAppState {
         secretReveal.hideAll()
         await reportAsync("Couldn\u{2019}t clear the history.") {
             let ids = try await service.clearNonPinned(in: .all)
+            emptyQuickInsert()
             ThumbnailCache.shared.clear()
             tell(String(localized: "Cleared \(ids.count) clips."))
         }
     }
 
-    /// Pesto left the foreground: whatever was shown hides again (ADR 0003).
+    /// Pesto left the foreground: whatever was shown hides again (ADR 0003), and the AutoFill set is brought up to
+    /// date before iOS may suspend the app (ADR 0051).
     func didLeaveForeground() {
         secretReveal.hideAll()
+        writeQuickInsert()
     }
 }

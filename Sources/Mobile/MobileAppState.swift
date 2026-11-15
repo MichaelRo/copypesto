@@ -36,6 +36,10 @@ final class MobileAppState {
     @ObservationIgnored var undoOfferDismissal: Task<Void, Never>?
     /// The running pass over the share extension's inbox (`MobileAppState+Inbox.swift`), so two never overlap.
     @ObservationIgnored var inboxDrain: Task<InboxDrain.Report?, Never>?
+    /// Where the AutoFill set is kept (`MobileAppState+QuickInsert.swift`); nil in a hosted test until it names one.
+    @ObservationIgnored var quickInsert: QuickInsertTarget? = .current
+    @ObservationIgnored var quickInsertRewrite: Task<Void, Never>?
+    @ObservationIgnored var quickInsertObserver: (any NSObjectProtocol)?
     @ObservationIgnored let clock: @MainActor () -> Date
 
     static let noticeDuration: Duration = .seconds(4)
@@ -71,6 +75,7 @@ final class MobileAppState {
             environment: environment?() ?? .live(rules: ClipboardRules.fromUserDefaults())
         )
         storageService = service
+        startQuickInsert(container: container)
         launchWork = Task(priority: .utility) {
             await LaunchMigrator.run(LaunchMigration.standard(service: service))
             #if DEBUG

@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
+    @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
     @State private var clearCount = 0
     @State private var isConfirmingClear = false
 
@@ -36,6 +37,19 @@ struct SettingsView: View {
                 Text(
                     "Pesto adds what you copied in another app each time it opens, and iOS asks for permission to " +
                         "paste. Off, Pesto offers it with a Paste button and never reads the clipboard on its own."
+                )
+            }
+            Section {
+                Toggle("Insert from Pesto in other apps", isOn: $quickInsertEnabled)
+                    .accessibilityIdentifier(MobileAccessibilityID.quickInsertToggle)
+                    .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
+            } header: {
+                Text("AutoFill")
+            } footer: {
+                Text(
+                    "Pesto keeps a small set of your pinned and recent text clips ready, sealed, so AutoFill can " +
+                        "insert one in any text field. Clips with secrets are never in it. To use it, turn on Pesto " +
+                        "in Settings > General > AutoFill & Passwords."
                 )
             }
             Section {

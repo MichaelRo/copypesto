@@ -13,12 +13,19 @@ enum CardMedia {
     struct Picture {
         let image: UIImage
         let isAnimated: Bool
+        var animation: GIFFrames.Animation?
     }
 
+    /// A GIF's frames are decoded only when `frames` names a budget, from the service's small GIF (it caches it).
     @MainActor
-    static func picture(itemID: UUID, byteSize: Int, container: ModelContainer?, maxPixel: Int) async -> Picture? {
+    static func picture(
+        itemID: UUID, byteSize: Int, container: ModelContainer?, maxPixel: Int, frames: GIFFrames.Budget? = nil
+    ) async
+    -> Picture? {
         let caches = maxPixel <= cardPixel
-        if caches, let cached = ThumbnailCache.shared.entry(for: itemID, byteSize: byteSize) {
+        if caches, let cached = ThumbnailCache.shared.entry(for: itemID, byteSize: byteSize),
+           !(cached.isAnimated && frames != nil)
+        {
             return Picture(image: cached.image, isAnimated: cached.isAnimated)
         }
         guard let container else { return nil }
@@ -30,7 +37,10 @@ enum CardMedia {
                 .init(image: image, isAnimated: thumbnail.isAnimated, byteSize: byteSize), for: itemID
             )
         }
-        return Picture(image: image, isAnimated: thumbnail.isAnimated)
+        var picture = Picture(image: image, isAnimated: thumbnail.isAnimated)
+        if thumbnail.isAnimated,
+           let frames { picture.animation = await GIFFrames.decode(thumbnail.data, budget: frames) }
+        return picture
     }
 
     @concurrent
@@ -50,11 +60,14 @@ struct ClipThumbnail: View {
     let byteSize: Int
     let maxPixel: Int
     @Environment(MobileAppState.self) private var appState
-    @State private var image: UIImage?
+    @State private var picture: CardMedia.Picture?
 
     var body: some View {
         Group {
-            if let image {
+            if let animation = picture?.animation, !Motion.reduceMotion {
+                AnimatedPicture(animation: animation, fills: false)
+                    .aspectRatio(picture.map { $0.image.size.width / max(1, $0.image.size.height) }, contentMode: .fit)
+            } else if let image = picture?.image {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
@@ -65,9 +78,10 @@ struct ClipThumbnail: View {
         }
         .accessibilityHidden(true)
         .task(id: itemID) {
-            image = await CardMedia.picture(
-                itemID: itemID, byteSize: byteSize, container: appState.historyContainer, maxPixel: maxPixel
-            )?.image
+            picture = await CardMedia.picture(
+                itemID: itemID, byteSize: byteSize, container: appState.historyContainer, maxPixel: maxPixel,
+                frames: Motion.reduceMotion ? nil : .detail
+            )
         }
     }
 }

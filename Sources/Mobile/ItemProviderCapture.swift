@@ -47,8 +47,8 @@ enum ItemProviderCapture {
         }
     }
 
-    // A URL object's `public.url` data is an archive, not its text (Safari's drag, the Paste button), so the provider is
-    // asked for the object, as the share extension does.
+    /// A URL object's `public.url` data is an archive, not its text (Safari's drag, the Paste button), so the provider
+    /// is asked for the object, as the share extension does.
     private static func url(from provider: NSItemProvider) async throws -> URL {
         try await withCheckedThrowingContinuation { continuation in
             _ = provider.loadObject(ofClass: NSURL.self) { object, error in

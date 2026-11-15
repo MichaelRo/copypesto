@@ -10,6 +10,7 @@ struct ClipCardFace: View {
     let media: CardMediaState
     let width: CGFloat
     let revision: ClipCard.Revision
+    var playsAnimation = false
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -20,7 +21,10 @@ struct ClipCardFace: View {
         case .shownSecret:
             framed { SecretShownBody(item: item, text: media.revealedText, metrics: metrics) }
         case let .picture(fills, isAnimated):
-            PictureCardFace(image: media.picture?.image, fillsCard: fills) {
+            PictureCardFace(
+                image: media.picture?.image, fillsCard: fills,
+                animation: playsAnimation ? media.picture?.animation : nil
+            ) {
                 CardFootLineView(item: item, onPicture: true, showsGIF: isAnimated)
             }
         case .linkPicture:

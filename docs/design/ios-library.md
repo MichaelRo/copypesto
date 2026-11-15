@@ -86,10 +86,11 @@ Settings → Appearance has the theme and System, Light or Dark, set on every wi
 Per device: these preferences are not synced. Liquid Glass is only the system's bars, search field, sheets and menus.
 
 ## The Recent Clips widget (ADR 0052)
-Small shows the latest clip as its card would (a color fills it, a picture fills it above the foot line), medium three
-rows divided by hairlines, large six rows on the card's white with its hairline; all on the theme's ground carried in
-the snapshot, with the card's foot line (source and `CardAge`). A tap copies the clip through the library's copy path
-and the library returns to All with the card flashed.
+Pesto cards at widget scale on the theme's ground carried in the snapshot: one card fills the small widget, three sit
+in a row in the medium one, six in two columns in the large one. A color fills its card, a picture fills it near a
+card's shape, a link leads with its host, short text is large, one foot line gives the source and `CardAge`. The
+widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
+Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent or Pinned.
 
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds

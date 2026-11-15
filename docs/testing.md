@@ -337,14 +337,14 @@ added as an experiment), so picking a clip through the real AutoFill sheet is a 
 The widget snapshot (ADR 0052) is tested in Core (`WidgetSnapshotSelectionTests`: what may enter, the order and the
 bounds, the fullest snapshot still sealing; `WidgetSnapshotSealingTests`: refusals, no plaintext in the file, neither
 file's key opening the other; `WidgetContentTests`: each family's clips and state and the timeline's moments;
-`WidgetLinkTests`: the one accepted link shape) and in the iOS app (`MobileWidgetTests`: no widget means no file and no
+`WidgetLinkTests`: the three accepted link shapes; `WidgetTapTests`: what each setting does to each kind, and the http(s)-only rule) and in the iOS app (`MobileWidgetTests`: no widget means no file and no
 Keychain read, a history change writes it, Clear History empties it, a clip made secret leaves it, the last widget
-removed takes the file and key, the widget's reader opens what the app wrote, and a link copies only an eligible clip),
+removed takes the file and key, the widget's reader opens what the app wrote, a copy link copies, a show link opens the detail and an open link hands only a web address to the browser, and an in-place copy writes the whole text),
 with a temp folder, `MemorySecrets` and a stand-in for `WidgetCenter` (`WidgetTarget`). The iOS unit-test target compiles
 `Sources/MobileWidget` (all but the `@main` bundle), and `WidgetRenderingTests` draws every family and state in light
 and dark to `.build/widget-renders/` for a look. In the iOS 27.2 simulator the widget is offered in the gallery, draws
-the snapshot on the Home Screen once Pesto has been active, and a tap on a clip opens Pesto, copies it and shows
-Copied; `xcrun simctl openurl` asks "Open in Pesto?" first, so answer it before reading the clipboard.
+the snapshot on the Home Screen once Pesto has been active, a tile's in-place copy reaches the system clipboard
+(`simctl pbpaste`, and a paste in Safari) and says Copied, and the show and open links open the detail and Safari; `xcrun simctl openurl` asks "Open in Pesto?" first, so answer it before reading the clipboard.
 
 Sync on iOS is tested in `MobileSyncTests` against a Mac built as `SyncMac` (`Tests/PestoCoreTests/Sync`): the iPhone
 side is a `MobileSync` on a `BookmarkedSyncFolder` with `FakeBookmarks` (counts every start and stop of the security

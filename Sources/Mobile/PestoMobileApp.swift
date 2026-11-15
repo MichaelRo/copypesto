@@ -27,13 +27,17 @@ struct PestoMobileApp: App {
                     await appState.clipboardDidBecomeActive()
                 }
                 .defaultAppStorage(AppDefaults.store)
+                .onOpenURL { appState.open($0) }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
                 appState.syncDidBecomeActive()
                 appState.inboxDidBecomeActive()
-                Task { await appState.clipboardDidBecomeActive() }
+                Task {
+                    await appState.clipboardDidBecomeActive()
+                    await appState.refreshWidgetPresence()
+                }
             case .background:
                 appState.didLeaveForeground()
                 appState.syncDidEnterBackground()

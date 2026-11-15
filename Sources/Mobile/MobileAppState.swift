@@ -40,6 +40,17 @@ final class MobileAppState {
     @ObservationIgnored var quickInsert: QuickInsertTarget? = .current
     @ObservationIgnored var quickInsertRewrite: Task<Void, Never>?
     @ObservationIgnored var quickInsertObserver: (any NSObjectProtocol)?
+    /// The last clip a widget link copied, so the library shows it (`MobileAppState+WidgetLink.swift`).
+    var linkedClip: LinkedClip?
+    /// Where the widget's snapshot is kept (`MobileAppState+Widget.swift`); nil in a hosted test until it names one.
+    @ObservationIgnored var widget: WidgetTarget? = .current
+    /// iOS's last answer to whether a Pesto widget is installed.
+    @ObservationIgnored var widgetIsInstalled = false
+    @ObservationIgnored var widgetRewrite: Task<Void, Never>?
+    @ObservationIgnored var widgetWrites: Task<Void, Never>?
+    @ObservationIgnored var widgetObserver: (any NSObjectProtocol)?
+    /// What was last written, so a rewrite keeps the thumbnails of the pictures still in it.
+    @ObservationIgnored var lastWidgetSnapshot: WidgetSnapshot?
     @ObservationIgnored let clock: @MainActor () -> Date
 
     static let noticeDuration: Duration = .seconds(4)
@@ -52,6 +63,7 @@ final class MobileAppState {
 
     isolated deinit {
         if let quickInsertObserver { NotificationCenter.default.removeObserver(quickInsertObserver) }
+        if let widgetObserver { NotificationCenter.default.removeObserver(widgetObserver) }
     }
 
     static var standardOpeners: StorageBoot.Openers {
@@ -80,6 +92,7 @@ final class MobileAppState {
         )
         storageService = service
         startQuickInsert(container: container)
+        startWidget(container: container)
         launchWork = Task(priority: .utility) {
             await LaunchMigrator.run(LaunchMigration.standard(service: service))
             #if DEBUG

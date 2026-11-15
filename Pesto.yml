@@ -134,13 +134,16 @@ targets:
         embed: true
       - target: PestoAutoFill
         embed: true
+      - target: PestoWidget
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto
         PRODUCT_NAME: Pesto
         PRODUCT_MODULE_NAME: PestoMobile
-        # The app group it shares with both extensions (ADR 0047), and two Keychain groups: its own first, so every
-        # item it writes stays there, then the quick-insert group it shares with PestoAutoFill alone (ADR 0051).
+        # The app group it shares with its extensions (ADR 0047), and three Keychain groups: its own first, so every
+        # item it writes stays there, then the quick-insert group it shares with PestoAutoFill alone (ADR 0051), then
+        # the widget group it shares with PestoWidget alone (ADR 0052).
         CODE_SIGN_ENTITLEMENTS: Sources/Resources/PestoMobile.entitlements
         MARKETING_VERSION: "1.7.0"
         CURRENT_PROJECT_VERSION: "9"
@@ -213,6 +216,34 @@ targets:
         APPLICATION_EXTENSION_API_ONLY: "YES"
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"
 
+  # The iOS Recent Clips widget (ADR 0052). It opens the sealed snapshot the app keeps in the app group with the key
+  # of a Keychain group only the app and it hold; never the store or the history key.
+  PestoWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources/MobileWidget
+        excludes: ["Info.plist", "*.entitlements"]
+      - path: Sources/Resources/Localizable.xcstrings
+    dependencies:
+      - package: PestoCore
+        product: PestoCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.widget
+        PRODUCT_NAME: PestoWidget
+        MARKETING_VERSION: "1.7.0"
+        CURRENT_PROJECT_VERSION: "9"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_HARDENED_RUNTIME: "NO"
+        INFOPLIST_FILE: Sources/MobileWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/MobileWidget/PestoWidget.entitlements
+        APPLICATION_EXTENSION_API_ONLY: "YES"
+        ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+
   PestoMobileTests:
     type: bundle.unit-test
     platform: iOS
@@ -223,6 +254,9 @@ targets:
       - path: Tests/PestoCoreTests/Sync
       - path: Tests/PestoCoreTests/Support
         excludes: ["FakePasteboard.swift", "PasteboardDumpFixture.swift"]
+      # The widget's views and reader, compiled again so a test can open a snapshot and draw each family.
+      - path: Sources/MobileWidget
+        excludes: ["Info.plist", "*.entitlements", "PestoWidgetBundle.swift"]
     dependencies:
       - target: PestoMobile
       - package: PestoCore

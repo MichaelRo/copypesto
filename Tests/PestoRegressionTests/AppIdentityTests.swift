@@ -15,7 +15,7 @@ struct AppIdentityTests {
         let project = try String(contentsOf: root.appendingPathComponent("Pesto.yml"), encoding: .utf8)
         for id in [
             AppIdentity.bundleID, AppIdentity.controlsBundleID, AppIdentity.cliBundleID, AppIdentity.shareBundleID,
-            AppIdentity.autofillBundleID
+            AppIdentity.autofillBundleID, AppIdentity.widgetBundleID
         ] {
             #expect(project.contains("PRODUCT_BUNDLE_IDENTIFIER: \(id)\n"), "\(id) missing from Pesto.yml")
         }
@@ -75,7 +75,7 @@ struct AppIdentityTests {
         #expect(AppIdentity.appGroupID == "group.net.copypesto.pesto")
         for path in [
             "Sources/Resources/PestoMobile.entitlements", "Sources/MobileShare/PestoShare.entitlements",
-            "Sources/MobileAutoFill/PestoAutoFill.entitlements"
+            "Sources/MobileAutoFill/PestoAutoFill.entitlements", "Sources/MobileWidget/PestoWidget.entitlements"
         ] {
             let data = try Data(contentsOf: root.appendingPathComponent(path))
             let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]

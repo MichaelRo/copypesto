@@ -10,6 +10,17 @@
     <array>
         <string>net.copypesto.pesto.sync-refresh</string>
     </array>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>net.copypesto.pesto.url-scheme</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>pesto</string>
+            </array>
+        </dict>
+    </array>
     <key>UIBackgroundModes</key>
     <array>
         <string>fetch</string>

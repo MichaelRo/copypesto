@@ -29,7 +29,8 @@ struct PasteboardWriteSourcesTests {
             ("Shared", 15),
             ("Mobile", 3),
             ("MobileShare", 3),
-            ("MobileAutoFill", 2)
+            ("MobileAutoFill", 2),
+            ("MobileWidget", 5)
         ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 scanned += 1

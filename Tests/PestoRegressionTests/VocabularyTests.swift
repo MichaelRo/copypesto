@@ -76,7 +76,8 @@ struct VocabularyTests {
             ("CLI", 1),
             ("Mobile", 3),
             ("MobileShare", 3),
-            ("MobileAutoFill", 2)
+            ("MobileAutoFill", 2),
+            ("MobileWidget", 5)
         ] {
             let files = try SourceTree.swiftFiles(in: folder, minimum: minimum)
             for file in files where !Self.allowedFiles.contains(file.lastPathComponent) {
@@ -134,7 +135,8 @@ struct VocabularyTests {
             ("CLI", 1),
             ("Mobile", 3),
             ("MobileShare", 3),
-            ("MobileAutoFill", 2)
+            ("MobileAutoFill", 2),
+            ("MobileWidget", 5)
         ] {
             let files = try SourceTree.swiftFiles(in: folder, minimum: minimum)
             for file in files {

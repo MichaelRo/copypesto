@@ -8,7 +8,14 @@ struct AccentUsageTests {
     func noSystemAccentInViews() throws {
         let allowed: Set = ["AccentColor.swift", "PestoAccentEnvironment.swift"]
         var offenders: [String] = []
-        for (folder, minimum) in ["Features": 60, "Shared": 15, "App": 30, "Mobile": 3, "MobileShare": 3] {
+        for (folder, minimum) in [
+            "Features": 60,
+            "Shared": 15,
+            "App": 30,
+            "Mobile": 3,
+            "MobileShare": 3,
+            "MobileAutoFill": 2
+        ] {
             let files = try SourceTree.swiftFiles(in: folder, minimum: minimum)
             for file in files where !allowed.contains(file.lastPathComponent) {
                 for (number, line) in try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")
@@ -32,7 +39,14 @@ struct AccentUsageTests {
     )
     func noSystemBlueLinks() throws {
         var offenders: [String] = []
-        for (folder, minimum) in ["Features": 60, "Shared": 15, "App": 30, "Mobile": 3, "MobileShare": 3] {
+        for (folder, minimum) in [
+            "Features": 60,
+            "Shared": 15,
+            "App": 30,
+            "Mobile": 3,
+            "MobileShare": 3,
+            "MobileAutoFill": 2
+        ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 for (number, line) in try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")
                     .enumerated() where line.contains("buttonStyle(.link)")
@@ -48,7 +62,14 @@ struct AccentUsageTests {
     @Test("a filled button goes through PestoProminentButtonStyle, because the system styles print white on the accent")
     func noSystemProminentButtons() throws {
         var offenders: [String] = []
-        for (folder, minimum) in ["Features": 60, "Shared": 15, "App": 30, "Mobile": 3, "MobileShare": 3] {
+        for (folder, minimum) in [
+            "Features": 60,
+            "Shared": 15,
+            "App": 30,
+            "Mobile": 3,
+            "MobileShare": 3,
+            "MobileAutoFill": 2
+        ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 for (number, line) in try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")
                     .enumerated() where line.contains(".borderedProminent") || line.contains(".glassProminent")
@@ -76,7 +97,14 @@ struct AccentUsageTests {
     )
     func noSystemStatusColorsOnText() throws {
         var offenders: [String] = []
-        for (folder, minimum) in ["Features": 60, "Shared": 15, "App": 30, "Mobile": 3, "MobileShare": 3] {
+        for (folder, minimum) in [
+            "Features": 60,
+            "Shared": 15,
+            "App": 30,
+            "Mobile": 3,
+            "MobileShare": 3,
+            "MobileAutoFill": 2
+        ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 let lines = try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")
                 for (number, line) in lines.enumerated()

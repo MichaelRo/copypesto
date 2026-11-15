@@ -70,7 +70,14 @@ struct VocabularyTests {
     /// skipped.
     private static func spokenLiterals() throws -> [(location: String, spoken: String)] {
         var literals: [(location: String, spoken: String)] = []
-        for (folder, minimum) in [("Features", 60), ("App", 30), ("CLI", 1), ("Mobile", 3), ("MobileShare", 3)] {
+        for (folder, minimum) in [
+            ("Features", 60),
+            ("App", 30),
+            ("CLI", 1),
+            ("Mobile", 3),
+            ("MobileShare", 3),
+            ("MobileAutoFill", 2)
+        ] {
             let files = try SourceTree.swiftFiles(in: folder, minimum: minimum)
             for file in files where !Self.allowedFiles.contains(file.lastPathComponent) {
                 let text = try String(contentsOf: file, encoding: .utf8)
@@ -121,7 +128,14 @@ struct VocabularyTests {
     func noHandMadePlurals() throws {
         let handMade = try NSRegularExpression(pattern: Self.handMadePluralPattern)
         var offenders: [String] = []
-        for (folder, minimum) in [("Features", 60), ("App", 30), ("CLI", 1), ("Mobile", 3), ("MobileShare", 3)] {
+        for (folder, minimum) in [
+            ("Features", 60),
+            ("App", 30),
+            ("CLI", 1),
+            ("Mobile", 3),
+            ("MobileShare", 3),
+            ("MobileAutoFill", 2)
+        ] {
             let files = try SourceTree.swiftFiles(in: folder, minimum: minimum)
             for file in files {
                 let text = try String(contentsOf: file, encoding: .utf8)

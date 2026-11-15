@@ -325,6 +325,15 @@ and in the iOS app (`MobileInboxTests`, `MobileShortcutsTests`), always with a t
 the real app group or Keychain. `PestoShare` itself has no test target: the system share sheet cannot be driven from a
 UI test of Pesto, so sharing from Safari or Notes into Pesto is a hand check (build, launch Pesto once, share, reopen).
 
+The AutoFill set (ADR 0051) is tested in Core on the Mac (`QuickInsertSelectionTests`: what may enter, the order and
+the bounds; `QuickInsertEnvelopeTests`: sealing, refusals, no plaintext in the bytes; `QuickInsertMenuTests`: the
+picker's sections, search and empty states) and in the iOS app (`MobileQuickInsertTests`: off means no file and no
+Keychain read, a history change and leaving the foreground write it, Clear History empties it, a clip made secret
+leaves it, and the extension's read path opens what the app wrote), with a temp folder and `MemorySecrets`.
+`PestoAutoFill` has no test target. In the iOS 27.2 simulator the extension is registered (`pluginkit`) and the edit
+menu offers AutoFill, but Settings > General > AutoFill & Passwords did not list Pesto (nor with `ProvidesPasswords`
+added as an experiment), so picking a clip through the real AutoFill sheet is a hand check on a signed device build.
+
 Sync on iOS is tested in `MobileSyncTests` against a Mac built as `SyncMac` (`Tests/PestoCoreTests/Sync`): the iPhone
 side is a `MobileSync` on a `BookmarkedSyncFolder` with `FakeBookmarks` (counts every start and stop of the security
 scope, and stages a stale link), a this-device key in `MemorySecrets` and a temp folder, never the Keychain or iCloud

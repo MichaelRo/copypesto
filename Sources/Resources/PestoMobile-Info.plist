@@ -4,6 +4,8 @@
 <dict>
     <key>PestoAllowsTestHooks</key>
     <string>$(PESTO_ALLOWS_TEST_HOOKS)</string>
+    <key>PestoAppIdentifierPrefix</key>
+    <string>$(AppIdentifierPrefix)</string>
     <key>BGTaskSchedulerPermittedIdentifiers</key>
     <array>
         <string>net.copypesto.pesto.sync-refresh</string>

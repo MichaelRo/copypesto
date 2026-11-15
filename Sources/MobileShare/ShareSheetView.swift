@@ -1,19 +1,10 @@
 // SPDX-License-Identifier: MIT
-import PestoCore
 import SwiftUI
-import UIKit
 
 struct ShareSheetView: View {
     let model: ShareModel
 
-    private static let accent = Color(uiColor: UIColor { traits in
-        let hex = traits.userInterfaceStyle == .dark ? BrandPalette.accentDark : BrandPalette.accentLight
-        let value = UInt32(hex, radix: 16) ?? 0
-        return UIColor(
-            red: CGFloat((value >> 16) & 0xFF) / 255, green: CGFloat((value >> 8) & 0xFF) / 255,
-            blue: CGFloat(value & 0xFF) / 255, alpha: 1
-        )
-    })
+    private static let accent = BrandAccent.color
 
     var body: some View {
         NavigationStack {

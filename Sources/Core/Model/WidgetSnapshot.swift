@@ -28,12 +28,28 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
 
     public let createdAt: Date
     public let theme: Theme
+    /// The newest clips, pinned or not.
     public let clips: [WidgetClip]
+    /// The newest pinned clips, for a widget set to show Pinned.
+    public let pinned: [WidgetClip]
 
-    public init(createdAt: Date, theme: Theme, clips: [WidgetClip]) {
+    public init(createdAt: Date, theme: Theme, clips: [WidgetClip], pinned: [WidgetClip] = []) {
         self.createdAt = createdAt
         self.theme = theme
         self.clips = clips
+        self.pinned = pinned
+    }
+
+    public func clips(from source: WidgetClipSource) -> [WidgetClip] {
+        switch source {
+        case .recent: clips
+        case .pinned: pinned
+        }
+    }
+
+    /// The clip with this id in either list.
+    public func clip(id: UUID) -> WidgetClip? {
+        clips.first { $0.id == id } ?? pinned.first { $0.id == id }
     }
 
     public static func empty(theme: Theme, at date: Date) -> WidgetSnapshot {

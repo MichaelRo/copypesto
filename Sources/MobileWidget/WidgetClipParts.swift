@@ -3,71 +3,64 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// The quiet line under a clip: where it came from and its age as the card writes it, then the pin in the accent.
+/// The quiet line at a card's foot: where it came from and its age as the card writes it, then the pin in the accent;
+/// for a moment after an in-place copy, Copied in the accent instead.
 struct WidgetFootLine: View {
     let clip: WidgetClip
     let now: Date
     let accent: Color
     var ink: Color?
+    var copied = false
 
     var body: some View {
         HStack(spacing: 4) {
-            Text(WidgetClipSpeech.foot(clip, now: now))
-                .lineLimit(1)
-            if clip.isPinned {
-                Image(systemName: "pin.fill")
-                    .imageScale(.small)
+            if copied {
+                Label("Copied", systemImage: "checkmark.circle.fill")
+                    .fontWeight(.semibold)
                     .foregroundStyle(ink ?? accent)
-                    .accessibilityHidden(true)
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    Text(WidgetClipSpeech.foot(clip, now: now))
+                    Text(CardAge.text(interval: now.timeIntervalSince(clip.date)))
+                }
+                .foregroundStyle(ink.map { $0.opacity(0.8) } ?? Color.secondary)
+                if clip.isPinned {
+                    Image(systemName: "pin.fill")
+                        .imageScale(.small)
+                        .foregroundStyle(ink ?? accent)
+                        .accessibilityHidden(true)
+                }
             }
         }
         .font(.caption2)
-        .foregroundStyle(ink.map { $0.opacity(0.8) } ?? Color.secondary)
+        .lineLimit(1)
     }
 }
 
-/// A picture's thumbnail, cropped to a rounded square of `side` or filling what it is given when `side` is nil; the
-/// picture symbol when there is none.
-struct WidgetThumbnail: View {
+/// A picture as its card draws it: filling the tile when its shape is near a card's (ADR 0041), otherwise whole over a
+/// blurred, darkened copy of itself; the picture symbol when the snapshot has no thumbnail.
+struct WidgetPicture: View {
     let data: Data?
-    let side: CGFloat?
 
     var body: some View {
-        Group {
-            if let data, let image = UIImage(data: data) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
+        if let data, let image = UIImage(data: data) {
+            let aspect = image.size.height > 0 ? image.size.width / image.size.height : 1
+            if CardTreatment.pictureFillRange.contains(aspect) {
+                Color.clear
+                    .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                    .clipped()
             } else {
-                Image(systemName: "photo")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(.quaternary)
+                Color.black
+                    .overlay { Image(uiImage: image).resizable().scaledToFill().blur(radius: 14).opacity(0.7) }
+                    .overlay { Image(uiImage: image).resizable().scaledToFit() }
+                    .clipped()
             }
+        } else {
+            Image(systemName: "photo")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(width: side, height: side)
-        .frame(maxWidth: side == nil ? .infinity : nil, maxHeight: side == nil ? .infinity : nil)
-        .clipShape(.rect(cornerRadius: side == nil ? 10 : 6, style: .continuous))
-        .accessibilityHidden(true)
-    }
-}
-
-/// A color clip's swatch in a row, with the card's hairline.
-struct WidgetSwatch: View {
-    let hex: String
-    let side: CGFloat
-    let palette: WidgetPalette
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: 6, style: .continuous)
-            .fill(WidgetPalette.color(hex) ?? .clear)
-            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(
-                palette.hairline,
-                lineWidth: 0.75
-            ))
-            .frame(width: side, height: side)
-            .accessibilityHidden(true)
     }
 }
 
@@ -88,5 +81,17 @@ enum WidgetClipSpeech {
         let pinned = clip.isPinned ? String(localized: "Pinned") : nil
         return [clip.kind.presentation.label, shown, clip.source, age, pinned].compactMap(\.self)
             .filter { !$0.isEmpty }.joined(separator: ", ")
+    }
+
+    static func hint(_ tap: WidgetTap, kind: ClipboardType) -> String {
+        switch tap {
+        case .copyInPlace: String(localized: "Copies this clip")
+        case let .link(url):
+            switch WidgetLink.target(in: url)?.action {
+            case .copy: String(localized: "Opens Pesto and copies this clip")
+            case .open where kind == .url: String(localized: "Opens this link")
+            default: String(localized: "Opens this clip in Pesto")
+            }
+        }
     }
 }

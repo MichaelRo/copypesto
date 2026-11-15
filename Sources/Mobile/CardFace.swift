@@ -26,7 +26,7 @@ enum CardFace: Equatable {
     }
 
     /// ADR 0041: a picture fills the card only near the card's own shape; anything else is shown whole.
-    static let fillRange: ClosedRange<Double> = 0.8...1.35
+    static let fillRange = CardTreatment.pictureFillRange
 
     static func decide(_ input: Input) -> CardFace {
         if input.isConcealed { return .covered(isSecret: input.isSecret) }

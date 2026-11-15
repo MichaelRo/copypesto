@@ -340,7 +340,7 @@ file's key opening the other; `WidgetContentTests`: each family's clips and stat
 `WidgetLinkTests`: the one accepted link shape) and in the iOS app (`MobileWidgetTests`: no widget means no file and no
 Keychain read, a history change writes it, Clear History empties it, a clip made secret leaves it, the last widget
 removed takes the file and key, the widget's reader opens what the app wrote, and a link copies only an eligible clip),
-with a temp folder, `MemorySecrets` and a stand-in for `WidgetCenter` (`WidgetTarget`). `PestoMobileTests` compiles
+with a temp folder, `MemorySecrets` and a stand-in for `WidgetCenter` (`WidgetTarget`). The iOS unit-test target compiles
 `Sources/MobileWidget` (all but the `@main` bundle), and `WidgetRenderingTests` draws every family and state in light
 and dark to `.build/widget-renders/` for a look. In the iOS 27.2 simulator the widget is offered in the gallery, draws
 the snapshot on the Home Screen once Pesto has been active, and a tap on a clip opens Pesto, copies it and shows

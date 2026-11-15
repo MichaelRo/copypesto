@@ -3,6 +3,7 @@ import Foundation
 import Observation
 import PestoCore
 import SwiftData
+import UIKit
 
 /// What the iPhone and iPad app holds for its views: the opened store and the services on it (ADR 0046).
 @MainActor
@@ -42,6 +43,8 @@ final class MobileAppState {
     @ObservationIgnored var quickInsertObserver: (any NSObjectProtocol)?
     /// The last clip a widget link copied, so the library shows it (`MobileAppState+WidgetLink.swift`).
     var linkedClip: LinkedClip?
+    /// Hands a link clip's web address to the browser; a test records it instead.
+    @ObservationIgnored var openExternally: @MainActor (URL) -> Void = { UIApplication.shared.open($0) }
     /// Where the widget's snapshot is kept (`MobileAppState+Widget.swift`); nil in a hosted test until it names one.
     @ObservationIgnored var widget: WidgetTarget? = .current
     /// iOS's last answer to whether a Pesto widget is installed.

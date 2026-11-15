@@ -14,9 +14,15 @@ public struct WidgetContent: Equatable, Sendable {
     public let clips: [WidgetClip]
     public let theme: WidgetSnapshot.Theme
 
-    public init(snapshot: WidgetSnapshot?, size: WidgetSize, accessibilityText: Bool = false) {
+    public let source: WidgetClipSource
+
+    public init(
+        snapshot: WidgetSnapshot?, size: WidgetSize, source: WidgetClipSource = .recent, accessibilityText: Bool = false
+    ) {
+        self.source = source
         theme = snapshot?.theme ?? .brand
-        clips = Array((snapshot?.clips ?? []).prefix(size.clipCount(accessibilityText: accessibilityText)))
+        let all = snapshot?.clips(from: source) ?? []
+        clips = Array(all.prefix(size.clipCount(accessibilityText: accessibilityText)))
         state = snapshot == nil ? .unavailable : clips.isEmpty ? .empty : .clips
     }
 

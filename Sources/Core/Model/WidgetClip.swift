@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-/// One clip as the widget draws it (ADR 0052): never its whole content, only what a widget shows.
+/// One clip as the widget draws it (ADR 0052): what a widget shows, and a short text's whole content so a tile can
+/// copy it in place.
 public struct WidgetClip: Codable, Equatable, Identifiable, Sendable {
     public let id: UUID
     public let kind: ClipboardType
     /// The start of the text (or a file's name), at most `WidgetSnapshotPolicy.maxPreviewCharacters`.
     public let text: String
+    /// The whole text of a text, code, link or color clip of at most `WidgetSnapshotPolicy.maxFullTextBytes`, while
+    /// the snapshot's budget lasts; nil for anything else, which a tile copies by opening Pesto.
+    public let fullText: String?
     public let linkHost: String?
     public let linkPath: String?
     /// Six hex digits, without `#`.
@@ -19,12 +23,14 @@ public struct WidgetClip: Codable, Equatable, Identifiable, Sendable {
     public let thumbnail: Data?
 
     public init(
-        id: UUID, kind: ClipboardType, text: String, linkHost: String? = nil, linkPath: String? = nil,
-        colorHex: String? = nil, source: String? = nil, date: Date, isPinned: Bool = false, thumbnail: Data? = nil
+        id: UUID, kind: ClipboardType, text: String, fullText: String? = nil, linkHost: String? = nil,
+        linkPath: String? = nil, colorHex: String? = nil, source: String? = nil, date: Date, isPinned: Bool = false,
+        thumbnail: Data? = nil
     ) {
         self.id = id
         self.kind = kind
         self.text = text
+        self.fullText = fullText
         self.linkHost = linkHost
         self.linkPath = linkPath
         self.colorHex = colorHex

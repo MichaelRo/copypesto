@@ -14,6 +14,9 @@ public enum CardTreatment: Equatable, Sendable {
     }
 
     public static let shortTextLimit = 48
+    /// ADR 0041: a picture fills an iPhone or iPad card (and a widget tile) only when its width over its height is in
+    /// this range; anything else is shown whole.
+    public static let pictureFillRange: ClosedRange<Double> = 0.8...1.35
     public static let lineHeightFactor = 1.25
     public static let headlineLimit = 24
     public static let headlinePoints = 24.0

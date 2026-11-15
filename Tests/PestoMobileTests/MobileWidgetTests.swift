@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 import Testing
+import UIKit
+import UniformTypeIdentifiers
 @testable import PestoCore
 @testable import PestoMobile
 
@@ -193,27 +195,59 @@ struct MobileWidgetTests {
         #expect(WidgetSnapshotReader.read(file: fixture.file, keys: wrong) == nil)
     }
 
-    @Test("a widget link copies a clip it may show and the library shows it; anything else only opens the library")
-    func whenALinkIsOpened_thenOnlyAnEligibleClipIsCopied() async throws {
+    @Test("a copy link copies a clip it may show and the library flashes it; anything else only opens the library")
+    func whenACopyLinkIsOpened_thenOnlyAnEligibleClipIsCopied() async throws {
         let library = try await MobileTestLibrary()
         let shown = try await library.add("from the widget")
         try await library.service.ingest(#require(ClipCapture.text(secret)))
         let hidden = try await library.settle()
         #expect(hidden.sensitivityRaw != nil)
 
-        #expect(library.state.open(WidgetLink.url(for: shown.id)))
+        #expect(library.state.open(WidgetLink.url(for: shown.id)) == .copied)
         #expect(library.state.linkedClip?.id == shown.id)
+        #expect(library.state.linkedClip?.opensDetail == false)
         #expect(library.state.notice?.text == String(localized: "Copied"))
 
         let before = library.state.linkedClip
-        #expect(!library.state.open(WidgetLink.url(for: hidden.id)))
-        #expect(!library.state.open(WidgetLink.url(for: UUID())))
-        #expect(try !library.state.open(#require(URL(string: "pesto://clip/\(shown.id.uuidString)?then=delete"))))
-        #expect(try !library.state.open(#require(URL(string: "pesto://paste?id=\(shown.id.uuidString)"))))
+        for action in WidgetLink.Action.allCases {
+            #expect(library.state.open(WidgetLink.url(for: hidden.id, action: action)) == .ignored)
+            #expect(library.state.open(WidgetLink.url(for: UUID(), action: action)) == .ignored)
+        }
+        #expect(try library.state
+            .open(#require(URL(string: "pesto://clip/\(shown.id.uuidString)?then=delete"))) == .ignored)
+        #expect(try library.state.open(#require(URL(string: "pesto://paste?id=\(shown.id.uuidString)"))) == .ignored)
         #expect(library.state.linkedClip == before)
     }
 
-    @Test("the library goes back to All, out of a search and an open clip, and flashes the linked card")
+    @Test("a show link opens the clip in Pesto without copying it")
+    func whenAShowLinkIsOpened_thenTheDetailOpens() async throws {
+        let library = try await MobileTestLibrary()
+        let item = try await library.add("look at me")
+
+        #expect(library.state.open(WidgetLink.url(for: item.id, action: .show)) == .shown)
+
+        #expect(library.state.linkedClip?.opensDetail == true)
+        #expect(library.state.notice == nil)
+    }
+
+    @Test("an open link hands only an http or https link clip to the browser; any other clip opens in Pesto")
+    func whenAnOpenLinkIsOpened_thenOnlyTheWebLeavesPesto() async throws {
+        let library = try await MobileTestLibrary()
+        var opened: [URL] = []
+        library.state.openExternally = { opened.append($0) }
+        let web = try await library.add("https://copypesto.net/guide")
+        let note = try await library.add("just a note")
+        #expect(web.type == .url)
+
+        #expect(try library.state.open(WidgetLink.url(for: web.id, action: .open)) == .openedInBrowser(
+            #require(URL(string: "https://copypesto.net/guide"))
+        ))
+        #expect(library.state.open(WidgetLink.url(for: note.id, action: .open)) == .shown)
+        #expect(opened.map(\.absoluteString) == ["https://copypesto.net/guide"])
+        #expect(library.state.notice == nil)
+    }
+
+    @Test("the library goes back to All, out of a search; a copied clip's card flashes, a shown clip's detail opens")
     func whenTheLibraryShowsALinkedClip_thenItResets() {
         let model = LibraryModel()
         let id = UUID()
@@ -222,12 +256,37 @@ struct MobileWidgetTests {
         model.isSearching = true
         model.openClipID = UUID()
 
-        model.show(id)
+        model.show(id, opensDetail: false)
 
         #expect(model.filter == LibraryFilter())
         #expect(model.query.isEmpty)
         #expect(!model.isSearching)
         #expect(model.openClipID == nil)
         #expect(model.flashedClipID == id)
+
+        model.show(id, opensDetail: true)
+        #expect(model.openClipID == id)
+    }
+
+    @Test(
+        "an in-place copy writes the snapshot's whole text, a link as its address too, and remembers the tile briefly"
+    )
+    func whenATileCopiesInPlace_thenTheWholeTextIsWritten() {
+        let pasteboard = UIPasteboard.withUniqueName()
+        defer { UIPasteboard.remove(withName: pasteboard.name) }
+        let defaults = ThrowawayDefaults.make()
+        let id = UUID()
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+        CopyClipIntent.write("https://copypesto.net/a", kind: .url, to: pasteboard)
+        #expect(pasteboard.string == "https://copypesto.net/a")
+        #expect(pasteboard.url?.absoluteString == "https://copypesto.net/a")
+        #expect(Set(CopyClipIntent.item("javascript:alert(1)", kind: .url).keys) == [UTType.utf8PlainText.identifier])
+        #expect(Set(CopyClipIntent.item("https://a.b", kind: .text).keys) == [UTType.utf8PlainText.identifier])
+
+        WidgetCopyRecord.save(id, at: now, in: defaults)
+        #expect(WidgetCopyRecord.recent(at: now + 1, in: defaults)?.id == id)
+        #expect(WidgetCopyRecord.recent(at: now + WidgetSnapshotPolicy.copiedFeedback, in: defaults) == nil)
+        #expect(WidgetCopyRecord.recent(at: now - 1, in: defaults) == nil)
     }
 }

@@ -35,8 +35,15 @@ struct WidgetSnapshotSelectionTests {
             ((try? context.fetch(FetchDescriptor<ClipboardItem>())) ?? []).sorted { $0.timestamp > $1.timestamp }
         }
 
-        func clips(thumbnail: (ClipboardItem) -> Data? = { _ in nil }) -> [WidgetClip] {
-            WidgetSnapshotSelection.clips(from: newest(), source: { _ in "Notes" }, thumbnail: thumbnail)
+        func clips(thumbnail: @escaping (ClipboardItem) -> Data? = { _ in nil }) -> [WidgetClip] {
+            WidgetSnapshotSelection.clips(from: newest(), reader: .init(source: { _ in "Notes" }, thumbnail: thumbnail))
+        }
+
+        func lists(fullText: @escaping (ClipboardItem) -> String?) -> (clips: [WidgetClip], pinned: [WidgetClip]) {
+            let all = newest()
+            return WidgetSnapshotSelection.lists(
+                newest: all, pinned: all.filter(\.isPinned), reader: .init(source: { _ in nil }, fullText: fullText)
+            )
         }
     }
 
@@ -116,6 +123,56 @@ struct WidgetSnapshotSelectionTests {
         #expect(chosen.compactMap(\.thumbnail).count == WidgetSnapshotPolicy.maxThumbnailTotalBytes / big.count)
     }
 
+    @Test("a short text, code, link or color carries its whole text within the bounds; a picture or file never does")
+    func whenATextIsShort_thenItsWholeTextIsKept() throws {
+        let clips = try Clips()
+        let whole = Dictionary(uniqueKeysWithValues: [
+            ("long", String(repeating: "a", count: WidgetSnapshotPolicy.maxFullTextBytes + 1)),
+            ("short", "the whole note, longer than its preview"), ("pic", "not text"), ("doc", "not text")
+        ])
+        clips.add("short")
+        clips.add("long")
+        clips.add("pic", type: .image)
+        clips.add("doc", type: .file)
+
+        let chosen = clips.lists { whole[$0.displayPreviewText] }.clips
+
+        #expect(chosen.map(\.fullText) == [nil, nil, nil, "the whole note, longer than its preview"])
+
+        let many = try Clips()
+        for index in 0..<8 {
+            many.add("chunk \(index)")
+        }
+        let chunk = String(repeating: "b", count: WidgetSnapshotPolicy.maxFullTextBytes)
+        let texts = many.lists { _ in chunk }.clips.compactMap(\.fullText)
+        #expect(texts.count == WidgetSnapshotPolicy.maxFullTextTotalBytes / chunk.utf8.count)
+    }
+
+    @Test(
+        "pinned clips get a list of their own, the newest six that may be shown, sharing what the newest already read"
+    )
+    func whenPinned_thenTheyHaveTheirOwnList() throws {
+        let clips = try Clips()
+        for index in 0..<8 {
+            clips.add("pin \(index)", pinned: true)
+        }
+        clips.add("hidden pin", pinned: true).sensitivityRaw = SensitivityCategory.apiKey.rawValue
+        for index in 0..<8 {
+            clips.add("copy \(index)")
+        }
+        var reads = 0
+
+        let lists = clips.lists { item in
+            reads += 1
+            return item.displayPreviewText
+        }
+
+        #expect(lists.clips.map(\.text).first == "copy 7")
+        #expect(lists.pinned.map(\.text) == ["pin 7", "pin 6", "pin 5", "pin 4", "pin 3", "pin 2"])
+        #expect(lists.pinned.allSatisfy { $0.fullText != nil && $0.isPinned })
+        #expect(reads == WidgetSnapshotPolicy.maxClips + WidgetSnapshotPolicy.maxPinned)
+    }
+
     @Test("from a real store: a secret found by ingest stays out, the rest is sealed into a file under the bound")
     func whenReadFromAStore_thenSecretsStayOutAndItFits() async throws {
         let container = try ModelContainerSetup.makeInMemory()
@@ -130,6 +187,7 @@ struct WidgetSnapshotSelectionTests {
 
         #expect(snapshot.clips.count == 1)
         #expect(try #require(snapshot.clips.first).text.hasPrefix("12 Basil Lane"))
+        #expect(snapshot.clips.first?.fullText == nil, "over the bound, it is copied by opening Pesto")
         #expect(!snapshot.clips.contains { $0.text.contains("ghp_") })
         let sealed = try SealedFileEnvelope.seal(snapshot, as: .widgetSnapshot, with: SymmetricKey(size: .bits256))
         #expect(sealed.count < WidgetSnapshotPolicy.maxFileBytes)
@@ -139,15 +197,26 @@ struct WidgetSnapshotSelectionTests {
     func whenEverythingIsAtItsBound_thenItStillSeals() throws {
         let worstText = String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxPreviewCharacters)
         let worstPart = String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxLinkPartCharacters)
-        let perThumbnail = WidgetSnapshotPolicy.maxThumbnailTotalBytes / WidgetSnapshotPolicy.maxClips
-        let clips = (0..<WidgetSnapshotPolicy.maxClips).map { _ in
+        let count = WidgetSnapshotPolicy.maxClips + WidgetSnapshotPolicy.maxPinned
+        let perThumbnail = WidgetSnapshotPolicy.maxThumbnailTotalBytes / count
+        let wholeTexts = WidgetSnapshotPolicy.maxFullTextTotalBytes / WidgetSnapshotPolicy.maxFullTextBytes
+        let all = (0..<count).map { index in
             WidgetClip(
-                id: UUID(), kind: .url, text: worstText, linkHost: worstPart, linkPath: worstPart, colorHex: "FFFFFF",
+                id: UUID(), kind: .url, text: worstText,
+                fullText: index < wholeTexts ? String(
+                    repeating: "\u{1}",
+                    count: WidgetSnapshotPolicy.maxFullTextBytes
+                ) :
+                    nil,
+                linkHost: worstPart, linkPath: worstPart, colorHex: "FFFFFF",
                 source: String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxSourceCharacters), date: .now,
                 isPinned: true, thumbnail: Data(repeating: 0xFF, count: perThumbnail)
             )
         }
-        let snapshot = WidgetSnapshot(createdAt: .now, theme: .brand, clips: clips)
+        let snapshot = WidgetSnapshot(
+            createdAt: .now, theme: .brand, clips: Array(all.prefix(WidgetSnapshotPolicy.maxClips)),
+            pinned: Array(all.dropFirst(WidgetSnapshotPolicy.maxClips))
+        )
 
         #expect(throws: Never.self) {
             try SealedFileEnvelope.seal(snapshot, as: .widgetSnapshot, with: SymmetricKey(size: .bits256))

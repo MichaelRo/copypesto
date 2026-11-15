@@ -22,11 +22,24 @@ struct WidgetContentTests {
         #expect(WidgetContent(snapshot: full, size: .medium).clips.count == 3)
         #expect(WidgetContent(snapshot: full, size: .large).clips.count == 6)
         #expect(WidgetContent(snapshot: full, size: .medium, accessibilityText: true).clips.count == 2)
-        #expect(WidgetContent(snapshot: full, size: .large, accessibilityText: true).clips.count == 3)
+        #expect(WidgetContent(snapshot: full, size: .large, accessibilityText: true).clips.count == 4)
+        #expect(WidgetSize.large.columns(accessibilityText: false) == 2)
+        #expect(WidgetSize.medium.columns(accessibilityText: false) == 3)
         #expect(WidgetContent(snapshot: snapshot(clips: 2), size: .large).clips.count == 2)
         for size in WidgetSize.allCases {
             #expect(WidgetContent(snapshot: full, size: size).state == .clips)
         }
+    }
+
+    @Test("a widget set to Pinned shows the pinned list, and says No clips yet when there is none")
+    func whenSetToPinned_thenThePinnedListIsShown() {
+        let pin = WidgetClip(id: UUID(), kind: .text, text: "pinned", date: now, isPinned: true)
+        let snapshot = WidgetSnapshot(createdAt: now, theme: .brand, clips: snapshot(clips: 3).clips, pinned: [pin])
+
+        #expect(WidgetContent(snapshot: snapshot, size: .large, source: .pinned).clips == [pin])
+        #expect(snapshot.clip(id: pin.id) == pin)
+        let none = WidgetSnapshot(createdAt: now, theme: .brand, clips: snapshot.clips)
+        #expect(WidgetContent(snapshot: none, size: .medium, source: .pinned).state == .empty)
     }
 
     @Test("no snapshot is unavailable in the brand's colors; an empty one is empty in its own theme")

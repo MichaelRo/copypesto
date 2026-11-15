@@ -22,20 +22,26 @@ struct WidgetRenderingTests {
         .large: CGSize(width: 364, height: 382)
     ]
 
-    private func thumbnail() throws -> Data {
-        let image = UIGraphicsImageRenderer(size: CGSize(width: 240, height: 180)).image { context in
+    private func picture(width: CGFloat, height: CGFloat) throws -> Data {
+        let image = UIGraphicsImageRenderer(size: CGSize(width: width, height: height)).image { context in
             UIColor(red: 0.35, green: 0.55, blue: 0.3, alpha: 1).setFill()
-            context.fill(CGRect(x: 0, y: 0, width: 240, height: 180))
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
             UIColor(red: 0.95, green: 0.8, blue: 0.3, alpha: 1).setFill()
-            context.cgContext.fillEllipse(in: CGRect(x: 70, y: 30, width: 100, height: 100))
+            let side = min(width, height) * 0.55
+            context.cgContext.fillEllipse(in: CGRect(
+                x: (width - side) / 2,
+                y: (height - side) / 2,
+                width: side,
+                height: side
+            ))
         }
         return try #require(image.jpegData(compressionQuality: 0.7))
     }
 
     private func snapshot() throws -> WidgetSnapshot {
-        try WidgetSnapshot(createdAt: now, theme: .brand, clips: [
+        let clips = try [
             WidgetClip(
-                id: UUID(), kind: .text, text: "Pick up basil, pine nuts and parmesan on the way home",
+                id: UUID(), kind: .text, text: "Pick up basil, pine nuts and parmesan on the way home, and call Ana",
                 source: "Notes", date: now - 40
             ),
             WidgetClip(
@@ -52,25 +58,31 @@ struct WidgetRenderingTests {
             ),
             WidgetClip(
                 id: UUID(), kind: .image, text: "Basil on the sill", source: "Photos", date: now - 4000,
-                thumbnail: thumbnail()
+                thumbnail: picture(width: 240, height: 180)
             ),
             WidgetClip(
                 id: UUID(), kind: .code, text: "let pesto = basil + garlic + oil", source: "Xcode", date: now - 9000,
                 isPinned: true
             ),
-            WidgetClip(id: UUID(), kind: .text, text: "12 Basil Lane", source: "Another device", date: now - 90_000)
-        ])
+            WidgetClip(id: UUID(), kind: .text, text: "12 Basil Lane", source: "Another device", date: now - 90_000),
+            WidgetClip(
+                id: UUID(), kind: .image, text: "Panorama", source: "Photos", date: now - 95_000,
+                thumbnail: picture(width: 240, height: 80)
+            )
+        ]
+        return WidgetSnapshot(createdAt: now, theme: .brand, clips: clips, pinned: [clips[4]])
     }
 
+    @discardableResult
     private func render(_ entry: RecentClipsEntry, _ size: WidgetSize, dark: Bool, name: String) throws -> UIImage {
         let frame = try #require(Self.sizes[size])
-        let content = WidgetContent(snapshot: entry.snapshot, size: size)
+        let content = WidgetContent(snapshot: entry.snapshot, size: size, source: entry.source)
         let palette = WidgetPalette(theme: content.theme, isDark: dark)
-        let swatch = size == .small ? content.clips.first?.colorHex.flatMap(WidgetPalette.color) : nil
+        let single = size == .small ? content.clips.first : nil
         let view = RecentClipsView(entry: entry, size: size)
             .padding(16)
             .frame(width: frame.width, height: frame.height)
-            .background(swatch ?? palette.ground)
+            .background { RecentClipsView.ground(single: single, palette: palette) }
             .clipShape(.rect(cornerRadius: 22, style: .continuous))
             .padding(12)
             .background(dark ? Color.black : Color(white: 0.85))
@@ -104,17 +116,30 @@ struct WidgetRenderingTests {
                 }
             }
         }
-        let colorFirst = WidgetSnapshot(createdAt: now, theme: .brand, clips: [full.clips[2]])
-        let pictureFirst = WidgetSnapshot(createdAt: now, theme: .brand, clips: [full.clips[3]])
-        let linkFirst = WidgetSnapshot(createdAt: now, theme: .brand, clips: [full.clips[1]])
-        for (name, snapshot) in [("color", colorFirst), ("picture", pictureFirst), ("link", linkFirst)] {
+        for (index, name) in [(1, "link"), (2, "color"), (3, "picture"), (4, "code"), (6, "panorama")] {
+            let one = WidgetSnapshot(createdAt: now, theme: .brand, clips: [full.clips[index]])
             for dark in [false, true] {
-                _ = try render(
-                    RecentClipsEntry(date: now, snapshot: snapshot), .small, dark: dark,
+                try render(
+                    RecentClipsEntry(date: now, snapshot: one), .small, dark: dark,
                     name: "small-\(name)-\(dark ? "dark" : "light")"
                 )
             }
         }
+        let copied = RecentClipsEntry(date: now, snapshot: full, copiedID: full.clips[1].id)
+        try render(copied, .medium, dark: false, name: "medium-copied-light")
+        try render(
+            RecentClipsEntry(date: now, snapshot: full, source: .pinned),
+            .medium,
+            dark: true,
+            name: "medium-pinned-dark"
+        )
+        let noPins = WidgetSnapshot(createdAt: now, theme: .brand, clips: full.clips)
+        try render(
+            RecentClipsEntry(date: now, snapshot: noPins, source: .pinned),
+            .small,
+            dark: false,
+            name: "small-nopins-light"
+        )
     }
 
     @Test("the timeline is one opened snapshot with an entry each time an age changes, and none to wait for when empty")
@@ -126,6 +151,34 @@ struct WidgetRenderingTests {
         #expect(timeline.entries.count == 61)
         #expect(timeline.entries.dropFirst().first?.date == now + 20)
         #expect(empty.entries.count == 1)
+    }
+
+    @Test("after an in-place copy the tile says Copied until the feedback ends, then the timeline goes on")
+    func whenATileCopied_thenTheTimelineEndsItsCopied() {
+        let id = UUID()
+        let copiedAt = now - 0.5
+        let timeline = RecentClipsProvider.timeline(
+            snapshot: .empty(theme: .brand, at: now), now: now, copied: (id, copiedAt)
+        )
+
+        #expect(timeline.entries.map(\.copiedID) == [id, nil])
+        #expect(timeline.entries.last?.date == copiedAt + WidgetSnapshotPolicy.copiedFeedback)
+    }
+
+    @Test("each tap action reaches the tile: Copy copies in place with the whole text, else it opens Pesto")
+    func whenConfigured_thenEachTileTakesItsTap() throws {
+        let clips = try snapshot().clips
+        let whole = WidgetClip(id: UUID(), kind: .text, text: "short", fullText: "short", date: now)
+
+        #expect(WidgetTap.decide(for: whole, action: .copy, copiesInPlace: CopyClipIntent.copiesInPlace)
+            == (CopyClipIntent.copiesInPlace ? .copyInPlace(whole.id) : .link(WidgetLink.url(for: whole.id))))
+        #expect(WidgetTap
+            .decide(for: clips[3], action: .copy, copiesInPlace: true) == .link(WidgetLink.url(for: clips[3].id)))
+        #expect(WidgetClipSpeech.hint(.copyInPlace(whole.id), kind: .text) == "Copies this clip")
+        #expect(WidgetClipSpeech.hint(.link(WidgetLink.url(for: clips[1].id, action: .open)), kind: .url)
+            == "Opens this link")
+        #expect(WidgetClipSpeech.hint(.link(WidgetLink.url(for: clips[3].id)), kind: .image)
+            == "Opens Pesto and copies this clip")
     }
 
     @Test("VoiceOver hears the kind, the content, the source, the age and the pin of a clip")

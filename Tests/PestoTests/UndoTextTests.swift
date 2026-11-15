@@ -8,7 +8,7 @@ struct UndoTextTests {
     private let labels: [UndoLabel] = [
         .deleteClips(1), .deleteClips(3), .deleteCollection("Work"), .createCollection("Work"),
         .editCollection("Work"), .duplicateCollection("Work copy"), .reorderCollections, .importCollection("Work"),
-        .addClips(.snippet, 1), .addClips(.snippet, 4), .addClips(.imported, 2), .editSnippet,
+        .addClips(.snippet, 1), .addClips(.snippet, 4), .addClips(.imported, 2), .editSnippet, .editText,
         .changeClip(.title), .changeClip(.note), .changeClip(.tags), .changeClip(.icon), .changeClip(.collection),
         .changeClip(.pinned), .changeClip(.shortcut), .changeClip(.sensitive), .changeClip(.expiry),
         .changeClip(.order)

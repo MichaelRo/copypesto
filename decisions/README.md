@@ -56,6 +56,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0045](0045-collection-files.md) | A collection is shared as a `.pesto` file that carries its pictures and whole texts (secrets never written); import from the shelf and by opening the file |
 | [0046](0046-pesto-on-iphone-and-ipad.md) | Pesto runs on iPhone and iPad as one more sync device: Core is one module for both platforms, capture is always the person's act, no keyboard extension |
 | [0047](0047-share-extension-sealed-inbox.md) | The iOS share extension seals what is shared to the app's public key in an app-group inbox and never holds the history key; Shortcuts never hand out a secret |
+| [0048](0048-a-clips-text-can-be-edited.md) | A text, code, link or color clip's content can be edited: it stays the same clip, is sealed and judged again, keeps its curation and place, is one Undo and one sync change, and is refused when another clip holds the text |
 
 ## Template
 

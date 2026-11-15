@@ -13,6 +13,7 @@ public enum UndoLabel: Equatable, Sendable {
     case importCollection(String)
     case addClips(AddedClipsKind, Int)
     case editSnippet
+    case editText
 }
 
 /// One thing that can be undone and done again.
@@ -24,6 +25,7 @@ public struct UndoEntry: Sendable {
         case collectionsChanged(CollectionChangeKind, [CollectionChange])
         case clipsAdded(AddedClips)
         case snippetsReplaced([ClipReplacement])
+        case textReplaced([ClipReplacement])
     }
 
     public let kind: Kind
@@ -40,6 +42,7 @@ public struct UndoEntry: Sendable {
         case let .collectionsChanged(kind, changes): Self.label(of: kind, changes)
         case let .clipsAdded(added): Self.label(of: added)
         case .snippetsReplaced: .editSnippet
+        case .textReplaced: .editText
         }
     }
 
@@ -50,7 +53,8 @@ public struct UndoEntry: Sendable {
         case let .clipsEdited(edits): edits.reduce(0) { $0 + $1.heldBytes }
         case let .collectionsChanged(_, changes): changes.reduce(0) { $0 + $1.heldBytes }
         case let .clipsAdded(added): added.heldBytes
-        case let .snippetsReplaced(replacements): replacements.reduce(0) { $0 + $1.heldBytes }
+        case let .snippetsReplaced(replacements), let .textReplaced(replacements):
+            replacements.reduce(0) { $0 + $1.heldBytes }
         }
     }
 

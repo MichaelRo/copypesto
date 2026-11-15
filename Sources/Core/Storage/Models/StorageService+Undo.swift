@@ -77,6 +77,8 @@ extension StorageService {
             return try applyAddition(added, undoing: undoing).map { UndoEntry(.clipsAdded($0)) }
         case let .snippetsReplaced(replacements):
             return try applyReplacements(replacements, undoing: undoing) ? entry : nil
+        case let .textReplaced(replacements):
+            return try applyReplacements(replacements, undoing: undoing, guardsDuplicates: true) ? entry : nil
         }
     }
 
@@ -224,29 +226,55 @@ extension StorageService {
 
     // MARK: Snippets
 
-    /// Remembers a snippet whose text was replaced, from the snapshot taken before the change.
-    func recordReplacement(of item: ClipboardItem, before: ClipSnapshot) {
+    enum ReplacementKind { case snippet, text }
+
+    /// Remembers a clip whose text was replaced (a snippet's, or any text clip's), from the snapshot taken before.
+    func recordReplacement(of item: ClipboardItem, before: ClipSnapshot, kind: ReplacementKind) {
         let after = ClipSnapshot(item: item, linkPreviewFile: nil)
         guard before.isHoldable, after.isHoldable else { return }
-        undoHistory.record(UndoEntry(.snippetsReplaced([ClipReplacement(before: before, after: after)])))
+        let replacement = [ClipReplacement(before: before, after: after)]
+        undoHistory.record(UndoEntry(kind == .snippet ? .snippetsReplaced(replacement) : .textReplaced(replacement)))
     }
 
-    private func applyReplacements(_ replacements: [ClipReplacement], undoing: Bool) throws -> Bool {
-        var applied = false
+    /// `guardsDuplicates` leaves a clip alone when another clip now holds the content it would go back to, so Undo
+    /// never makes two clips of one text.
+    private func applyReplacements(
+        _ replacements: [ClipReplacement], undoing: Bool, guardsDuplicates: Bool = false
+    ) throws
+    -> Bool {
+        var applied: [(ClipboardItem, ClipSnapshot)] = []
         for replacement in replacements {
             let id = replacement.id
+            let target = undoing ? replacement.before : replacement.after
             var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
             descriptor.fetchLimit = 1
             guard let item = try modelContext.fetch(descriptor).first else { continue }
-            (undoing ? replacement.before : replacement.after).writeContent(to: item, in: modelContext)
+            if guardsDuplicates {
+                let hash = target.contentHash
+                let taken = try modelContext.fetchCount(FetchDescriptor<ClipboardItem>(
+                    predicate: #Predicate { $0.contentHash == hash && $0.id != id }
+                ))
+                guard taken == 0 else { continue }
+            }
+            target.writeContent(to: item, in: modelContext)
             lastItemStore.clear(ifItemID: id)
-            applied = true
+            applied.append((item, target))
         }
-        if applied {
-            PreviewTextCache.shared.clear()
-            try saveOrRollback()
+        guard !applied.isEmpty else { return false }
+        PreviewTextCache.shared.clear()
+        try saveOrRollback()
+        for (item, target) in applied {
+            if let file = target.linkPreviewFile { try? linkPreviews.restoreSealedFile(file, for: item.id) }
+            guard guardsDuplicates else { continue }
+            if target.linkPreviewFile == nil { linkPreviews.delete(ids: [item.id]) }
+            similarity.remove(item.id)
+            if let text = item.blob?.decryptedText(), item.metadata.signature != nil,
+               let signature = TextSignature.make(from: text)
+            {
+                similarity.insert(signature, for: item.id)
+            }
         }
-        return applied
+        return true
     }
 
     // MARK: Edits

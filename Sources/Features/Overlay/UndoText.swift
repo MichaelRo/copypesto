@@ -16,6 +16,7 @@ enum UndoText {
         case let .importCollection(name): String(localized: "Imported the collection \u{201C}\(name)\u{201D}")
         case let .addClips(kind, count): added(kind, count)
         case .editSnippet: String(localized: "Changed a snippet")
+        case .editText: String(localized: "Changed the text")
         }
     }
 
@@ -55,6 +56,7 @@ enum UndoText {
                 String(localized: "Import")
             }
         case .editSnippet: String(localized: "Edit Snippet")
+        case .editText: String(localized: "Text Change")
         }
     }
 

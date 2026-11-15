@@ -334,6 +334,18 @@ leaves it, and the extension's read path opens what the app wrote), with a temp 
 menu offers AutoFill, but Settings > General > AutoFill & Passwords did not list Pesto (nor with `ProvidesPasswords`
 added as an experiment), so picking a clip through the real AutoFill sheet is a hand check on a signed device build.
 
+The widget snapshot (ADR 0052) is tested in Core (`WidgetSnapshotSelectionTests`: what may enter, the order and the
+bounds, the fullest snapshot still sealing; `WidgetSnapshotSealingTests`: refusals, no plaintext in the file, neither
+file's key opening the other; `WidgetContentTests`: each family's clips and state and the timeline's moments;
+`WidgetLinkTests`: the one accepted link shape) and in the iOS app (`MobileWidgetTests`: no widget means no file and no
+Keychain read, a history change writes it, Clear History empties it, a clip made secret leaves it, the last widget
+removed takes the file and key, the widget's reader opens what the app wrote, and a link copies only an eligible clip),
+with a temp folder, `MemorySecrets` and a stand-in for `WidgetCenter` (`WidgetTarget`). `PestoMobileTests` compiles
+`Sources/MobileWidget` (all but the `@main` bundle), and `WidgetRenderingTests` draws every family and state in light
+and dark to `.build/widget-renders/` for a look. In the iOS 27.2 simulator the widget is offered in the gallery, draws
+the snapshot on the Home Screen once Pesto has been active, and a tap on a clip opens Pesto, copies it and shows
+Copied; `xcrun simctl openurl` asks "Open in Pesto?" first, so answer it before reading the clipboard.
+
 Sync on iOS is tested in `MobileSyncTests` against a Mac built as `SyncMac` (`Tests/PestoCoreTests/Sync`): the iPhone
 side is a `MobileSync` on a `BookmarkedSyncFolder` with `FakeBookmarks` (counts every start and stop of the security
 scope, and stages a stale link), a this-device key in `MemorySecrets` and a temp folder, never the Keychain or iCloud

@@ -85,7 +85,13 @@ Settings → Appearance has the theme and System, Light or Dark, set on every wi
 (`MobileAppearanceBridge`).
 Per device: these preferences are not synced. Liquid Glass is only the system's bars, search field, sheets and menus.
 
+## The Recent Clips widget (ADR 0052)
+Small shows the latest clip as its card would (a color fills it, a picture fills it above the foot line), medium three
+rows divided by hairlines, large six rows on the card's white with its hairline; all on the theme's ground carried in
+the snapshot, with the card's foot line (source and `CardAge`). A tap copies the clip through the library's copy path
+and the library returns to All with the card flashed.
+
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds
-section, onboarding, widgets, a keyboard extension, glass on a card. Source-app chips: Core's index keeps the bundle id
+section, onboarding, a keyboard extension, glass on a card. Source-app chips: Core's index keeps the bundle id
 private and iOS cannot name an app, so there is no cheap list to show.

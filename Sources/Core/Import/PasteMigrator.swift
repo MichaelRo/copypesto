@@ -138,7 +138,7 @@ public actor PasteMigrator {
         let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
         let alreadyThere = try !modelContext.fetch(descriptor).isEmpty
         do {
-            try await storage.ingest(capture)
+            try await storage.ingest(capture, bumpsExistingDuplicate: false)
         } catch is ClipSizePolicy.TooLarge {
             run.summary.skipped += 1
             return
@@ -230,7 +230,7 @@ public actor PasteMigrator {
             payload: payload,
             payloadString: payloadString,
             frontmostBundleID: record.sourceBundleID,
-            timestamp: record.timestamp,
+            timestamp: min(record.timestamp, .now),
             contentHash: hash,
             richPayload: selected == .string ? richPayload(of: record) : nil
         )

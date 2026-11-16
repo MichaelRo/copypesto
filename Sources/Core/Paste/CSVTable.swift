@@ -205,4 +205,43 @@ public struct CSVTable: Equatable, Sendable {
             return (String(validating: cell, as: UTF8.self) ?? "", true)
         }
     }
+
+    public static func parseMarkdownTable(_ text: String, maxRows: Int = .max) -> CSVTable? {
+        guard text.utf8.count <= maxInputBytes else { return nil }
+        let lines = text.split(omittingEmptySubsequences: true, whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        guard lines.count >= 3 else { return nil }
+        let header = splitMarkdownRow(lines[0])
+        let separator = splitMarkdownRow(lines[1])
+        guard header.count >= 2,
+              header.count <= maxColumns,
+              separator.count == header.count,
+              isPlausibleHeader(header),
+              separator.allSatisfy(isMarkdownSeparatorCell) else { return nil }
+        var rows: [[String]] = []
+        let limit = maxRows == .max ? lines.count : min(lines.count, maxRows + 1)
+        for line in lines[2..<limit] {
+            let cells = splitMarkdownRow(line)
+            guard cells.count == header.count else { return nil }
+            rows.append(cells)
+        }
+        guard !rows.isEmpty else { return nil }
+        return CSVTable(header: header, rows: rows)
+    }
+
+    private static func splitMarkdownRow(_ line: String) -> [String] {
+        guard line.contains("|") else { return [] }
+        var body = Substring(line)
+        if body.first == "|" { body = body.dropFirst() }
+        if body.last == "|" { body = body.dropLast() }
+        return body.split(separator: "|", omittingEmptySubsequences: false)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+    }
+
+    private static func isMarkdownSeparatorCell(_ cell: String) -> Bool {
+        var core = Substring(cell)
+        if core.first == ":" { core = core.dropFirst() }
+        if core.last == ":" { core = core.dropLast() }
+        return !core.isEmpty && core.allSatisfy { $0 == "-" }
+    }
 }

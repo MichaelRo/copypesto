@@ -23,11 +23,13 @@ struct PopUpMenuButton<Label: View>: View {
     var body: some View {
         Button(action: present, label: label)
             .background(MenuAnchorView(anchor: anchor))
-            .onChange(of: openRequest) { present() }
+            .onChange(of: openRequest) {
+                DispatchQueue.main.async { present() }
+            }
     }
 
     private func present() {
-        guard let view = anchor.view else { return }
+        guard let view = anchor.view, view.window != nil else { return }
         let targets = MenuActionTargets()
         let menu = nativeMenu(for: items, targets: targets)
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: view.isFlipped ? view.bounds.height : 0), in: view)

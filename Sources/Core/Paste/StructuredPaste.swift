@@ -50,11 +50,15 @@ public enum StructuredPaste {
 
     /// Reads only the first rows of a table: enough to say it is one when the menu opens.
     private static func qualifiesForJSON(_ text: String) -> Bool {
-        JSONDocument.formatted(text) != nil || CSVTable.parse(text, maxRows: 50) != nil
+        JSONDocument.formatted(text) != nil
+            || CSVTable.parse(text, maxRows: 50) != nil
+            || CSVTable.parseMarkdownTable(text, maxRows: 50) != nil
     }
 
     private static func jsonText(from text: String) -> String? {
-        JSONDocument.formatted(text) ?? CSVTable.parse(text)?.jsonText()
+        JSONDocument.formatted(text)
+            ?? CSVTable.parse(text)?.jsonText()
+            ?? CSVTable.parseMarkdownTable(text)?.jsonText()
     }
 
     private static func markdown(for item: ClipboardItem) -> String? {

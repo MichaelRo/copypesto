@@ -7,11 +7,10 @@ import SwiftUI
 /// must not pay for that.
 struct StructuredTransformRows: View {
     let item: ClipboardItem
-    let offered: ((ClipboardItem) -> [TextTransform])?
+    let entries: [TextTransform]
     let perform: ((ClipboardItem, TextTransform) -> Void)?
 
     var body: some View {
-        let entries = offered?(item) ?? []
         if !entries.isEmpty, let perform {
             ForEach(entries, id: \.self) { transform in
                 Button {

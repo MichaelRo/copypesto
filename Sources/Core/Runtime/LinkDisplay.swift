@@ -36,8 +36,8 @@ public struct LinkDisplay: Equatable, Sendable {
         }
         guard let components, var host = components.host?.lowercased(), !host.isEmpty else { return nil }
         if host.contains(":"), !host.hasPrefix("[") { host = "[\(host)]" }
-        var rest = components.port.map { ":\($0)" } ?? ""
-        if components.path != "/" { rest += components.path }
+        if let port = components.port { host += ":\(port)" }
+        var rest = components.path != "/" ? components.path : ""
         if rest.count > restLimit { rest = String(rest.prefix(restLimit - 1)) + "\u{2026}" }
         return LinkDisplay(host: host, rest: rest)
     }

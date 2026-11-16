@@ -11,7 +11,7 @@ final class CardRenameTests: PestoUITestCase {
         let target = cards.firstMatch
         XCTAssertTrue(target.waitForExistence(timeout: 10))
         target.rightClick()
-        app.menuItems["Rename\u{2026}"].click()
+        app.menuItems["Add Title\u{2026}"].click()
         RunLoop.current.run(until: Date().addingTimeInterval(0.6))
     }
 
@@ -24,8 +24,11 @@ final class CardRenameTests: PestoUITestCase {
 
         app.typeText("Quarterly figures\r")
 
-        XCTAssertTrue(cardsTitled("Quarterly figures").firstMatch.waitForExistence(timeout: 5), "no new title")
+        let renamed = cardsTitled("Quarterly figures").firstMatch
+        XCTAssertTrue(renamed.waitForExistence(timeout: 5), "no new title")
         capture("card-renamed")
+        renamed.rightClick()
+        XCTAssertTrue(app.menuItems["Rename\u{2026}"].waitForExistence(timeout: 3), "titled card should offer Rename…")
     }
 
     func test_escapeLeavesTheTitleAlone() {
@@ -45,7 +48,7 @@ final class CardRenameTests: PestoUITestCase {
         XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
 
         app.typeKey("k", modifierFlags: .command)
-        let rename = app.menuItems["Rename\u{2026}"]
+        let rename = app.menuItems["Add Title\u{2026}"]
         XCTAssertTrue(rename.waitForExistence(timeout: 5), "⌘K did not open the card's menu")
         capture("card-actions-from-keyboard")
         rename.click()

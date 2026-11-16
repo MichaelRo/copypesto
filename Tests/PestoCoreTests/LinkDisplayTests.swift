@@ -23,10 +23,10 @@ struct LinkDisplayTests {
         #expect(link?.rest == "/login")
     }
 
-    @Test("a port stays with the rest and out of the host")
-    func whenPort_thenPortLeadsTheRest() {
-        let link = LinkDisplay.parse("http://localhost:8080/a")
-        #expect(link == LinkDisplay(host: "localhost", rest: ":8080/a"))
+    @Test("a port stays with the host so localhost:8080 reads together")
+    func whenPort_thenPortStaysWithHost() {
+        #expect(LinkDisplay.parse("http://localhost:8080/hello") == LinkDisplay(host: "localhost:8080", rest: "/hello"))
+        #expect(LinkDisplay.parse("http://localhost:3000") == LinkDisplay(host: "localhost:3000", rest: ""))
     }
 
     @Test("a host is shown in lower case")
@@ -95,9 +95,9 @@ struct LinkDisplayTests {
         #expect(rest?.hasSuffix("\u{2026}") == true)
     }
 
-    @Test("an IPv6 host keeps its brackets, so a port after it is not part of the address")
+    @Test("an IPv6 host keeps its brackets, so a port after it stays attached to the bracketed host")
     func whenIPv6_thenBracketed() {
-        #expect(LinkDisplay.parse("http://[::1]:8080/x") == LinkDisplay(host: "[::1]", rest: ":8080/x"))
+        #expect(LinkDisplay.parse("http://[::1]:8080/x") == LinkDisplay(host: "[::1]:8080", rest: "/x"))
         #expect(LinkDisplay.parse("http://[2001:db8::7]/x")?.host == "[2001:db8::7]")
     }
 }

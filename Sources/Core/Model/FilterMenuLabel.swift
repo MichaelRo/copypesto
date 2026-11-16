@@ -5,7 +5,7 @@ import Foundation
 /// the filter is set to, the way a Mac pop-up does (ADR 0025).
 public enum FilterMenuLabel {
     public static func format(chosen title: String?) -> String {
-        title ?? String(localized: "Any")
+        title ?? String(localized: "Format")
     }
 
     public static func from(chosen names: [String]) -> String {

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import AppKit
 import Foundation
+import SwiftData
 import Testing
 @testable import PestoCore
 
@@ -150,5 +151,40 @@ struct StructuredPasteTests {
         let item = try clip("x", rich: RichTextPayload(html: Data(table.utf8)))
         item.blob?.encryptedRichData = Data(repeating: 1, count: StructuredPaste.maxRichCiphertextBytes + 1)
         #expect(StructuredPaste.offered(for: item).isEmpty)
+    }
+
+    @Test("a freshly ingested rich or tabular clip offers Markdown and JSON before any paste")
+    @MainActor
+    func whenFreshlyIngested_thenStructuredEntriesAreOfferedImmediately() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let storage = StorageService(modelContainer: container)
+        let rich = RichTextPayload(html: Data("<p><strong>Fresh</strong></p>".utf8))
+        let capture = PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("name,role\nAda,eng".utf8),
+            payloadString: "name,role\nAda,eng",
+            contentHash: Data("name,role\nAda,eng".utf8).sha256Hex,
+            richPayload: rich
+        )
+        try await storage.ingest(capture)
+
+        let items = try container.mainContext.fetch(FetchDescriptor<ClipboardItem>())
+        let item = try #require(items.first)
+        #expect(StructuredPaste.offered(for: item) == [.json, .markdown])
+    }
+
+    @Test("a Markdown table clip offers JSON and writes an array of objects")
+    func whenMarkdownTable_thenJsonOffered() throws {
+        let md = """
+        | name | role |
+        | --- | --- |
+        | Ada | eng |
+        | Bob | design |
+        """
+        let item = try clip(md, type: .code, language: "markdown")
+        #expect(StructuredPaste.offered(for: item) == [.json])
+        let json = try #require(StructuredPaste.result(of: .json, for: item))
+        #expect(json.contains("\"name\": \"Ada\""))
+        #expect(json.contains("\"role\": \"design\""))
     }
 }

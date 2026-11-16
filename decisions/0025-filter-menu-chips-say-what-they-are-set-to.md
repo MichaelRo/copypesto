@@ -9,7 +9,7 @@ The search bar groups its chips under small captions: Kind, Format, When, From, 
 
 ## Decision
 - **The captions stay.** They group the row and cost no height.
-- **At rest the chips read their value:** Format says "Any" and From says "Any app". Once chosen they read the format ("JSON") or the app ("Safari", or "Safari +2"), as before. The menus' own first item is still Any Format and Any App.
+- **At rest the chips read their value:** From says "Any app", while Format reads "Format" (amended 2026-11-16; previously "Any"). Once chosen they read the format ("JSON") or the app ("Safari", or "Safari +2"), as before. The menus' own first item is still Any Format and Any App.
 - The text lives in Core (`FilterMenuLabel`), so the website's demo shelf, which is drawn by hand from `docs/design/website-shelf-spec.md`, can be checked against it.
 - VoiceOver is unchanged: the chips already spoke "Format, any" and "From, any app".
 

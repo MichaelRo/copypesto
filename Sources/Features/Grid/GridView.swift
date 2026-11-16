@@ -33,9 +33,12 @@ struct GridView: View {
     @Environment(AppState.self) var appState: AppState
     @Environment(\.shelfActions) var shelfActions: ShelfActionDispatcher
     @Environment(\.modelContext) var modelContext
+    @Environment(\.pestoAccent) var accent
+    @State var cardInsertionBar: CollectionReorder.InsertionBar?
     @State var focusedIndex = 0
     @State var focusAnchor = FocusedCardAnchor()
     @State var focusedID: UUID?
+    @State var firstIDAtClose: UUID?
     @State var keyboardRevealedID: UUID?
     @State var pointerOrigin: CGPoint?
     @State var scrollState = ShelfScrollState()
@@ -131,7 +134,7 @@ struct GridView: View {
         )
     }
 
-    private var cardDimensions: CGSize {
+    var cardDimensions: CGSize {
         CardSize.dimensions(sizeRaw: cardSizeRaw, customWidth: cardWidth)
     }
 
@@ -349,15 +352,28 @@ struct GridView: View {
             pointerOrigin = nil
             scrollState.pointerHasMoved = false
             if visible {
-                scrollToStart()
-                focusedIndex = 0
+                if appState.shelfContextWasStale
+                    || focusedID == nil
+                    || cachedFilteredIDs.first != firstIDAtClose
+                {
+                    scrollToStart()
+                    focusedIndex = 0
+                } else {
+                    focusedIndex = ShelfFocus.resolvedIndex(
+                        focusedID: focusedID,
+                        previousIndex: focusedIndex,
+                        in: cachedFilteredIDs
+                    )
+                }
                 isPasting = false
                 appState.isDragging = false
                 appState.draggingItemID = nil
+                cardInsertionBar = nil
                 displayLimit = 1000
                 ShelfAnnouncement.opened(clipCount: cachedFilteredItems.count, isLocked: appState.isHistoryLocked)
             } else {
-                appState.isSearchActive = false
+                firstIDAtClose = cachedFilteredIDs.first
+                appState.filterChipCursor = nil
                 appState.isEditingCollection = false
                 appState.isCreatingCollection = false
             }

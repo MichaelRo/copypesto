@@ -37,7 +37,7 @@ final class StackPasteTests: PestoUITestCase {
         let pasted = waitForPaste(count: 1)
         let first = try XCTUnwrap(pasted.first, "the stack did not paste its first clip when the shelf closed")
         XCTAssertTrue(
-            app.staticTexts["Pasting 2/3"].waitForExistence(timeout: 8),
+            app.staticTexts["Pasting 2/3"].waitUntilExists(timeout: 8),
             "the HUD should say which clip is next"
         )
         let second = try XCTUnwrap(waitForBoard(toDifferFrom: first), "the second clip was not made ready")
@@ -45,11 +45,11 @@ final class StackPasteTests: PestoUITestCase {
         send(.stackUserPaste)
         let third = try XCTUnwrap(waitForBoard(toDifferFrom: second), "the third clip was not made ready")
         XCTAssertNotEqual(third, first)
-        XCTAssertTrue(app.staticTexts["Pasting 3/3"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Pasting 3/3"].waitUntilExists(timeout: 8))
 
         send(.stackUserPaste)
         XCTAssertTrue(
-            app.staticTexts["All pasted"].waitForExistence(timeout: 8),
+            app.staticTexts["All pasted"].waitUntilExists(timeout: 8),
             "the last ⌘V should finish the stack"
         )
         XCTAssertEqual(pastedTexts().count, 1, "only the first clip is pasted by Pesto itself")
@@ -60,7 +60,7 @@ final class StackPasteTests: PestoUITestCase {
         showOverlay()
         selectFirstThreeCards()
         element(AccessibilityID.pasteOneByOneButton).click()
-        XCTAssertTrue(app.staticTexts["Pasting 2/3"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.staticTexts["Pasting 2/3"].waitUntilExists(timeout: 8))
 
         element(AccessibilityID.stackCancelButton).click()
 

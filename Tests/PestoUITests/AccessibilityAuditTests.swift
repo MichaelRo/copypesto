@@ -66,7 +66,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
         // The audit judges screen pixels, and a launched Pesto can sit behind the app the run was started from: a
         // light run once measured another app's window, so bring Pesto to the front and let it settle first.
         app.activate()
-        Thread.sleep(forTimeInterval: 1)
+        Thread.sleep(forTimeInterval: 0.2)
         let containers = pestoContainerFrames()
         try app.performAccessibilityAudit(for: .all) { issue in
             let element = issue.element
@@ -140,12 +140,12 @@ final class AccessibilityAuditTests: PestoUITestCase {
         knownFindings: [KnownAuditFinding] = [],
         prepare: () throws -> Void
     ) throws {
-        for mode in ["light", "dark"] {
-            if mode == "dark" { app.terminate() }
-            launch(defaults: defaults.merging(["appearanceMode": mode]) { _, pinned in pinned })
-            try prepare()
-            try runAudit("\(name), \(mode)", knownFindings: knownFindings)
-        }
+        launch(defaults: defaults.merging(["appearanceMode": "light"]) { _, pinned in pinned })
+        try prepare()
+        try runAudit("\(name), light", knownFindings: knownFindings)
+        send(.setAppearanceDark)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        try runAudit("\(name), dark", knownFindings: knownFindings)
     }
 
     func test_overlay_passesTheAccessibilityAudit() throws {
@@ -158,7 +158,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
         ]) {
             showOverlay()
             overlay.typeKey("a", modifierFlags: .command)
-            XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitUntilExists(timeout: 5))
         }
     }
 
@@ -177,7 +177,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
         ]) {
             showOverlay()
             element(AccessibilityID.searchButton).click()
-            XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5))
         }
     }
 
@@ -190,7 +190,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
         ]) {
             showOverlay()
             overlay.typeKey(.delete, modifierFlags: [])
-            XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitUntilExists(timeout: 5))
         }
     }
 
@@ -201,7 +201,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
             showOverlay()
             overlay.typeKey(.delete, modifierFlags: [])
             element(AccessibilityID.deleteConfirmButton).click()
-            XCTAssertTrue(element(AccessibilityID.undoButton).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.undoButton).waitUntilExists(timeout: 5))
             parkPointer()
         }
     }
@@ -214,13 +214,13 @@ final class AccessibilityAuditTests: PestoUITestCase {
             showOverlay()
             let hidden = cards.matching(NSPredicate(format: "label CONTAINS 'sensitive content, hidden'")).firstMatch
             // The second appearance reopens the same history, where the clip is already hidden.
-            if !hidden.waitForExistence(timeout: 3) {
+            if !hidden.waitUntilExists(timeout: 3) {
                 let target = card(containing: "Quarterly report draft")
-                XCTAssertTrue(target.waitForExistence(timeout: 5))
+                XCTAssertTrue(target.waitUntilExists(timeout: 5))
                 target.rightClick()
                 app.menuItems["Mark as Sensitive"].click()
             }
-            XCTAssertTrue(hidden.waitForExistence(timeout: 5), "no covered card")
+            XCTAssertTrue(hidden.waitUntilExists(timeout: 5), "no covered card")
             // The menu click leaves the pointer wherever the item was, which can be over another card: its hover card
             // then joins the audit, and that panel has its own audit with its own known findings.
             parkPointer()
@@ -236,11 +236,11 @@ final class AccessibilityAuditTests: PestoUITestCase {
             copyToClipboard("The sequence of numbers appears to be random, with no pattern a reader could name.")
             showOverlay()
             let target = card(containing: "sequence of numbers")
-            XCTAssertTrue(target.waitForExistence(timeout: 10))
+            XCTAssertTrue(target.waitUntilExists(timeout: 10))
             target.rightClick()
             app.menuItems["Key Points"].click()
             XCTAssertTrue(
-                element(AccessibilityID.aiResultPasteButton).waitForExistence(timeout: 15), "no AI answer panel"
+                element(AccessibilityID.aiResultPasteButton).waitUntilExists(timeout: 15), "no AI answer panel"
             )
             try runAudit("AI answer panel, \(mode)", knownFindings: [
                 KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 2)
@@ -251,7 +251,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
     func test_toast_passesTheAccessibilityAudit() throws {
         try auditInBothAppearances("toast", knownFindings: [Self.hostedPanelGroup]) {
             send(.showToast)
-            XCTAssertTrue(element(AccessibilityID.toast).waitForExistence(timeout: 5), "the toast never appeared")
+            XCTAssertTrue(element(AccessibilityID.toast).waitUntilExists(timeout: 5), "the toast never appeared")
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         }
     }
@@ -275,7 +275,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
             showOverlay()
             overlay.typeKey(.rightArrow, modifierFlags: [])
             XCTAssertTrue(
-                element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 5), "the hover card never opened"
+                element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 5), "the hover card never opened"
             )
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         }
@@ -292,7 +292,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
     func test_settings_passesTheAccessibilityAudit() throws {
         try auditInBothAppearances("Settings", knownFindings: Self.navigationSplitViewFindings) {
             send(.openSettings)
-            XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+            XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
             RunLoop.current.run(until: Date().addingTimeInterval(1))
             capture("settings-audited")
         }
@@ -302,9 +302,9 @@ final class AccessibilityAuditTests: PestoUITestCase {
     private func auditSettingsPane(_ pane: String, plus extra: [KnownAuditFinding] = []) throws {
         try auditInBothAppearances("Settings, \(pane)", knownFindings: Self.navigationSplitViewFindings + extra) {
             send(.openSettings)
-            XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+            XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
             let row = element(AccessibilityID.settingsSidebar(pane))
-            XCTAssertTrue(row.waitForExistence(timeout: 5), "no sidebar row for \(pane)")
+            XCTAssertTrue(row.waitUntilExists(timeout: 5), "no sidebar row for \(pane)")
             row.click()
             RunLoop.current.run(until: Date().addingTimeInterval(1))
         }
@@ -380,22 +380,22 @@ final class AccessibilityAuditTests: PestoUITestCase {
     func test_onboarding_passesTheAccessibilityAudit() throws {
         try auditInBothAppearances("onboarding", defaults: [:]) {
             send(.showOnboarding)
-            XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+            XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
         }
     }
 
     func test_onboardingLastStep_passesTheAccessibilityAudit() throws {
         try auditInBothAppearances("onboarding last step", defaults: [:]) {
             send(.showOnboarding)
-            XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+            XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
             let next = element(AccessibilityID.onboardingContinueButton)
-            XCTAssertTrue(next.waitForExistence(timeout: 5))
+            XCTAssertTrue(next.waitUntilExists(timeout: 5))
             next.click()
             let pasting = element(AccessibilityID.onboardingContinueButton)
-            XCTAssertTrue(element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 5))
-            XCTAssertTrue(pasting.waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.onboardingAccessibilityStep).waitUntilExists(timeout: 5))
+            XCTAssertTrue(pasting.waitUntilExists(timeout: 5))
             pasting.click()
-            XCTAssertTrue(element(AccessibilityID.onboardingGetStartedButton).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.onboardingGetStartedButton).waitUntilExists(timeout: 5))
             waitForNonExistence(
                 element(AccessibilityID.onboardingShelfStep),
                 timeout: 5,
@@ -415,7 +415,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
             )
         ]) {
             showOverlay(expectingCards: false)
-            XCTAssertTrue(element(AccessibilityID.lockOverlay).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.lockOverlay).waitUntilExists(timeout: 5))
         }
     }
 
@@ -428,14 +428,14 @@ final class AccessibilityAuditTests: PestoUITestCase {
             KnownAuditFinding(.sufficientElementDescription, "Element has no description", on: .other)
         ]) {
             send(.showQuickMenu)
-            XCTAssertTrue(element(AccessibilityID.quickMenuPanel).waitForExistence(timeout: 10))
+            XCTAssertTrue(element(AccessibilityID.quickMenuPanel).waitUntilExists(timeout: 10))
         }
     }
 
     func test_pinnedWindow_passesTheAccessibilityAudit() throws {
         try auditInBothAppearances("pinned window") {
             send(.togglePinnedWindow)
-            XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitForExistence(timeout: 10))
+            XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitUntilExists(timeout: 10))
         }
     }
 

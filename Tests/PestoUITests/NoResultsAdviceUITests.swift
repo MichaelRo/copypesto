@@ -7,9 +7,9 @@ final class NoResultsAdviceUITests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         let imageChip = element(AccessibilityID.filterChip("Image"))
-        XCTAssertTrue(imageChip.waitForExistence(timeout: 5))
+        XCTAssertTrue(imageChip.waitUntilExists(timeout: 5))
         imageChip.click()
         field.click()
         field.typeText("Quarterly")
@@ -21,22 +21,22 @@ final class NoResultsAdviceUITests: PestoUITestCase {
 
         let advice = element(AccessibilityID.shelfEmptyStateAdvice)
         XCTAssertTrue(
-            advice.waitForExistence(timeout: 5),
+            advice.waitUntilExists(timeout: 5),
             "no Clear Filters button on an empty search with a filter on"
         )
         advice.click()
 
-        XCTAssertTrue(card(containing: "Quarterly report draft").waitForExistence(timeout: 5))
+        XCTAssertTrue(card(containing: "Quarterly report draft").waitUntilExists(timeout: 5))
     }
 
     func test_tabThroughTheChips_reachesClearFiltersAndReturnPressesIt() {
         let field = searchForNothingWithImageOn()
-        XCTAssertTrue(element(AccessibilityID.shelfEmptyStateAdvice).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.shelfEmptyStateAdvice).waitUntilExists(timeout: 5))
 
         field.typeKey(.tab, modifierFlags: .shift)
         field.typeKey(.return, modifierFlags: [])
 
-        XCTAssertTrue(card(containing: "Quarterly report draft").waitForExistence(timeout: 5))
+        XCTAssertTrue(card(containing: "Quarterly report draft").waitUntilExists(timeout: 5))
     }
 
     func test_tabToFormatChip_andSpaceOpensItsMenu() {
@@ -44,7 +44,7 @@ final class NoResultsAdviceUITests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
 
         // Tab past Kind chips (Text, Image, Link, Code, Color, File) to Format.
         for _ in 0..<7 {
@@ -52,6 +52,6 @@ final class NoResultsAdviceUITests: PestoUITestCase {
         }
         field.typeKey(.space, modifierFlags: [])
 
-        XCTAssertTrue(app.menuItems["Markdown"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.menuItems["Markdown"].waitUntilExists(timeout: 3))
     }
 }

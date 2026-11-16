@@ -30,7 +30,7 @@ final class MarketingScreenshotTests: PestoUITestCase {
             ]
             launchDefaults.merge(defaults) { _, new in new }
             launch(seed: "marketing", defaults: launchDefaults, backdrop: backdrop)
-            XCTAssertTrue(backdropWindow.waitForExistence(timeout: 10), "the backdrop window never appeared")
+            XCTAssertTrue(backdropWindow.waitUntilExists(timeout: 10), "the backdrop window never appeared")
             try shot(mode)
         }
     }
@@ -105,9 +105,9 @@ final class MarketingScreenshotTests: PestoUITestCase {
             try inBothAppearances(defaults: ["appTheme": theme]) { mode in
                 showOverlay()
                 element(AccessibilityID.searchButton).click()
-                XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5), "no search field")
+                XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5), "no search field")
                 overlay.typeText("garlic")
-                XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+                XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10))
                 settle(1.5)
                 // The shelf window is bottom-anchored and `largeShelfHeight` tall, so that is the crop: a taller one
                 // shows backdrop above the search field. If the search field or the cards do not fit inside that
@@ -129,17 +129,17 @@ final class MarketingScreenshotTests: PestoUITestCase {
         try inBothAppearances { mode in
             showOverlay()
             element(AccessibilityID.searchButton).click()
-            XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5), "no search field")
+            XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5), "no search field")
             overlay.typeText("links from today")
             let ask = element(AccessibilityID.askButton)
-            XCTAssertTrue(ask.waitForExistence(timeout: 5), "the Ask button did not appear")
+            XCTAssertTrue(ask.waitUntilExists(timeout: 5), "the Ask button did not appear")
             ask.click()
             expectation(
                 for: NSPredicate(format: "isSelected == true"),
                 evaluatedWith: element(AccessibilityID.filterChip("Today"))
             )
             waitForExpectations(timeout: 10)
-            XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+            XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10))
             settle(1.5)
             capture("03-ask", mode: mode, region: bottomStrip(shortSize))
         }
@@ -178,7 +178,7 @@ final class MarketingScreenshotTests: PestoUITestCase {
     func test_lock() throws {
         try inBothAppearances(defaults: ["biometricLockEnabled": "true"]) { mode in
             showOverlay(expectingCards: false)
-            XCTAssertTrue(element(AccessibilityID.lockOverlay).waitForExistence(timeout: 10))
+            XCTAssertTrue(element(AccessibilityID.lockOverlay).waitUntilExists(timeout: 10))
             settle(1.2)
             let lock = element(AccessibilityID.lockOverlay).frame
             capture("06-lock", mode: mode, region: bottomStrip(shortSize, originX: lock.midX - 600))
@@ -188,7 +188,7 @@ final class MarketingScreenshotTests: PestoUITestCase {
     func test_privacyPane() throws {
         try inBothAppearances { mode in
             send(.openSettings)
-            XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+            XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
             element(AccessibilityID.settingsSidebar("Privacy")).click()
             settle(1.5)
             capture("07-privacy-pane", mode: mode, region: settingsWindow.frame.insetBy(dx: -56, dy: -56))
@@ -199,9 +199,9 @@ final class MarketingScreenshotTests: PestoUITestCase {
         try inBothAppearances { mode in
             showOverlay()
             let target = card(containing: "Friday at 7:00 pm")
-            XCTAssertTrue(target.waitForExistence(timeout: 10), "date card not found")
+            XCTAssertTrue(target.waitUntilExists(timeout: 10), "date card not found")
             target.rightClick()
-            XCTAssertTrue(app.menuItems["Add to Calendar"].waitForExistence(timeout: 10))
+            XCTAssertTrue(app.menuItems["Add to Calendar"].waitUntilExists(timeout: 10))
             settle()
             capture("09-smart-clips", mode: mode, region: bottomStrip(CGSize(width: 720, height: 680)))
         }

@@ -32,7 +32,7 @@ final class MarketingLoopTests: PestoUITestCase {
                 ],
                 backdrop: "plain"
             )
-            XCTAssertTrue(backdropWindow.waitForExistence(timeout: 10), "the backdrop window never appeared")
+            XCTAssertTrue(backdropWindow.waitUntilExists(timeout: 10), "the backdrop window never appeared")
             try scene(mode)
         }
     }
@@ -69,12 +69,12 @@ final class MarketingLoopTests: PestoUITestCase {
             settle()
             frame("find", mode, 1, holdMilliseconds: 1300)
             element(AccessibilityID.searchButton).click()
-            XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5), "no search field")
+            XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5), "no search field")
             overlay.typeText("g")
             settle()
             frame("find", mode, 2, holdMilliseconds: 500)
             overlay.typeText("arlic")
-            XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+            XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10))
             settle(1.2)
             frame("find", mode, 3, holdMilliseconds: 1600)
             overlay.typeKey(.return, modifierFlags: [])

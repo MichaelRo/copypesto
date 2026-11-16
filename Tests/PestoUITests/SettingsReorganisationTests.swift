@@ -5,7 +5,7 @@ final class SettingsReorganisationTests: PestoUITestCase {
     private func openSettings(pane: String) {
         launch(defaults: ["hasOnboarded": "true"])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar(pane)).click()
     }
 
@@ -26,22 +26,22 @@ final class SettingsReorganisationTests: PestoUITestCase {
 
         element(AccessibilityID.settingsSidebar("Privacy")).click()
 
-        XCTAssertTrue(element(AccessibilityID.addExcludedAppButton).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.addExcludedAppButton).waitUntilExists(timeout: 5))
     }
 
     func test_searchingForAppExclusions_opensPrivacy() {
         openSettings(pane: "General")
         let field = settingsWindow.searchFields.firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         field.click()
         field.typeText("exclusions")
 
         let result = element(AccessibilityID.settingsSearchResult("App exclusions"))
-        XCTAssertTrue(result.waitForExistence(timeout: 5))
+        XCTAssertTrue(result.waitUntilExists(timeout: 5))
         result.click()
 
         XCTAssertTrue(
-            element(AccessibilityID.addExcludedAppButton).waitForExistence(timeout: 5),
+            element(AccessibilityID.addExcludedAppButton).waitUntilExists(timeout: 5),
             "search must open the Privacy pane so the setting is visible"
         )
     }
@@ -50,7 +50,7 @@ final class SettingsReorganisationTests: PestoUITestCase {
         openSettings(pane: "Shortcuts")
 
         XCTAssertTrue(
-            settingsWindow.staticTexts["No pinned clip has a shortcut yet."].waitForExistence(timeout: 5),
+            settingsWindow.staticTexts["No pinned clip has a shortcut yet."].waitUntilExists(timeout: 5),
             "Shortcuts should say that no pinned clip has a shortcut, rather than show an inert note"
         )
     }
@@ -59,7 +59,7 @@ final class SettingsReorganisationTests: PestoUITestCase {
         openSettings(pane: "Shortcuts")
 
         XCTAssertTrue(
-            settingsWindow.staticTexts["Everywhere"].waitForExistence(timeout: 5),
+            settingsWindow.staticTexts["Everywhere"].waitUntilExists(timeout: 5),
             "the Shortcuts pane should list the shortcuts that work in every app"
         )
         XCTAssertTrue(settingsWindow.staticTexts["On the shelf"].exists, "the shelf keys belong to Shortcuts")
@@ -68,6 +68,6 @@ final class SettingsReorganisationTests: PestoUITestCase {
         element(AccessibilityID.settingsSidebar("General")).click()
 
         XCTAssertFalse(settingsWindow.staticTexts["Everywhere"].exists, "General no longer lists shortcuts")
-        XCTAssertTrue(settingsWindow.staticTexts["Permissions"].waitForExistence(timeout: 5))
+        XCTAssertTrue(settingsWindow.staticTexts["Permissions"].waitUntilExists(timeout: 5))
     }
 }

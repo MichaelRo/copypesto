@@ -7,11 +7,11 @@ final class SmartActionsTests: PestoUITestCase {
         launch()
         showOverlay()
         let target = card(containing: "Team lunch")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.rightClick()
 
-        XCTAssertTrue(app.menuItems["Add to Calendar"].waitForExistence(timeout: 5), "no Add to Calendar action")
+        XCTAssertTrue(app.menuItems["Add to Calendar"].waitUntilExists(timeout: 5), "no Add to Calendar action")
         app.typeKey(.escape, modifierFlags: [])
     }
 
@@ -19,11 +19,11 @@ final class SmartActionsTests: PestoUITestCase {
         launch()
         showOverlay()
         let target = card(containing: "hello@example.com")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.rightClick()
 
-        XCTAssertTrue(app.menuItems["Compose Email"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.menuItems["Compose Email"].waitUntilExists(timeout: 5))
         XCTAssertFalse(app.menuItems["Add to Calendar"].exists)
         app.typeKey(.escape, modifierFlags: [])
     }

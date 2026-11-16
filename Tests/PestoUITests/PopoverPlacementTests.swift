@@ -9,15 +9,15 @@ final class PopoverPlacementTests: PestoUITestCase {
         showOverlay()
         parkPointer()
         let target = card(containing: "Quarterly report draft")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.hover()
-        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+        if !element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 2) {
             cards.element(boundBy: 1).hover()
             target.hover()
         }
         XCTAssertTrue(
-            element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 5), "no hover card appeared"
+            element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 5), "no hover card appeared"
         )
         let hoverCard = app.windows.matching(NSPredicate(format: "label == 'Clip details'")).firstMatch
         XCTAssertTrue(hoverCard.exists)
@@ -40,15 +40,15 @@ final class PopoverPlacementTests: PestoUITestCase {
         showOverlay()
         parkPointer()
         let target = card(containing: "Quarterly report draft")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.hover()
-        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+        if !element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 2) {
             cards.element(boundBy: 1).hover()
             target.hover()
         }
         XCTAssertTrue(
-            element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 5), "no hover card appeared"
+            element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 5), "no hover card appeared"
         )
         let hoverCard = app.windows.matching(NSPredicate(format: "label == 'Clip details'")).firstMatch
         XCTAssertTrue(hoverCard.exists)

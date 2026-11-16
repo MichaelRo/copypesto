@@ -7,7 +7,7 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch(defaults: ["hasOnboarded": "true"].merging(cardSize.map { ["cardSize": $0] } ?? [:]) { _, new in new })
         showOverlay()
         let card = cards.firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertTrue(card.waitUntilExists(timeout: 5))
         return card.frame.width
     }
 
@@ -25,7 +25,7 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch(defaults: ["hasOnboarded": "true", "cardWidth": "150"])
         showOverlay()
         let narrow = cards.firstMatch
-        XCTAssertTrue(narrow.waitForExistence(timeout: 5))
+        XCTAssertTrue(narrow.waitUntilExists(timeout: 5))
         XCTAssertEqual(narrow.frame.width, 150, accuracy: 4)
         capture("cards-narrowest", of: overlay)
     }
@@ -33,11 +33,11 @@ final class SettingsEffectsTests: PestoUITestCase {
     func test_theWidthSlider_showsTheStoredWidth() {
         launch(defaults: ["hasOnboarded": "true", "cardWidth": "170"])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Appearance")).click()
 
         let slider = element(AccessibilityID.settingsChoice("cardWidth", "slider"))
-        XCTAssertTrue(slider.waitForExistence(timeout: 5), "no width slider in Appearance")
+        XCTAssertTrue(slider.waitUntilExists(timeout: 5), "no width slider in Appearance")
         XCTAssertEqual(slider.normalizedSliderPosition, (170 - 160) / 80.0, accuracy: 0.03)
         capture("settings-card-width-slider", of: settingsWindow)
     }
@@ -45,9 +45,9 @@ final class SettingsEffectsTests: PestoUITestCase {
     func test_pinnedWindow_pastesOnTapWhenAutoPasteIsOn() {
         launch(defaults: ["hasOnboarded": "true", "pinnedWindowAutoPaste": "true"])
         send(.togglePinnedWindow)
-        XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitUntilExists(timeout: 10))
         let target = card(containing: "Quarterly report draft")
-        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        XCTAssertTrue(target.waitUntilExists(timeout: 10))
 
         target.click()
 
@@ -57,9 +57,9 @@ final class SettingsEffectsTests: PestoUITestCase {
     func test_pinnedWindow_onlyCopiesOnTapWhenAutoPasteIsOff() {
         launch(defaults: ["hasOnboarded": "true", "pinnedWindowAutoPaste": "false"])
         send(.togglePinnedWindow)
-        XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitUntilExists(timeout: 10))
         let target = card(containing: "Quarterly report draft")
-        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        XCTAssertTrue(target.waitUntilExists(timeout: 10))
 
         target.click()
         RunLoop.current.run(until: Date().addingTimeInterval(2))
@@ -73,11 +73,11 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch()
         showOverlay()
         let target = card(containing: "Team lunch")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.rightClick()
         let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
-        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+        XCTAssertTrue(cardMenu.waitUntilExists(timeout: 5), "the card's context menu did not open")
         cardMenu.menuItems["Copy"].firstMatch.click()
 
         let board = NSPasteboard(name: NSPasteboard.Name("io.pesto.uitest.\(session)"))
@@ -95,11 +95,11 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch()
         showOverlay()
         let target = card(containing: "Team lunch")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.rightClick()
         let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
-        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+        XCTAssertTrue(cardMenu.waitUntilExists(timeout: 5), "the card's context menu did not open")
         let item = cardMenu.menuItems["Paste as Plain Text"].firstMatch
         XCTAssertTrue(item.exists, "no top-level Paste as Plain Text item")
         item.click()
@@ -114,11 +114,11 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch()
         showOverlay()
         let target = card(containing: "Team lunch")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.rightClick()
         let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
-        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+        XCTAssertTrue(cardMenu.waitUntilExists(timeout: 5), "the card's context menu did not open")
         let named = cardMenu.menuItems.allElementsBoundByIndex.map(\.title).filter { !$0.isEmpty }
         let titles = Array(named.prefix(4))
         XCTAssertEqual(titles, ["Paste", "Paste as Plain Text", "Copy", "Quick Look"])
@@ -134,24 +134,24 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch()
         showOverlay()
         let target = card(containing: "Team lunch")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.rightClick()
         let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
-        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+        XCTAssertTrue(cardMenu.waitUntilExists(timeout: 5), "the card's context menu did not open")
 
         let pasteAs = cardMenu.menuItems["Paste As\u{2026}"].firstMatch
-        XCTAssertTrue(pasteAs.waitForExistence(timeout: 3), "no Paste As menu item")
+        XCTAssertTrue(pasteAs.waitUntilExists(timeout: 3), "no Paste As menu item")
         pasteAs.hover()
 
         let uppercase = pasteAs.menuItems["UPPERCASE"].firstMatch
-        XCTAssertTrue(uppercase.waitForExistence(timeout: 3), "UPPERCASE must stay at the top level of Paste As")
+        XCTAssertTrue(uppercase.waitUntilExists(timeout: 3), "UPPERCASE must stay at the top level of Paste As")
         let escaping = pasteAs.menuItems["Escape and unescape"].firstMatch
-        XCTAssertTrue(escaping.waitForExistence(timeout: 3), "no Escape and unescape submenu")
+        XCTAssertTrue(escaping.waitUntilExists(timeout: 3), "no Escape and unescape submenu")
         escaping.hover()
 
         let jsonEscape = escaping.menuItems["JSON Escape"].firstMatch
-        XCTAssertTrue(jsonEscape.waitForExistence(timeout: 3), "no JSON Escape item inside Escape and unescape")
+        XCTAssertTrue(jsonEscape.waitUntilExists(timeout: 3), "no JSON Escape item inside Escape and unescape")
         app.typeKey(.escape, modifierFlags: [])
     }
 
@@ -159,18 +159,18 @@ final class SettingsEffectsTests: PestoUITestCase {
     func test_cardSizeSlider_resizesTheShelfCards() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Appearance")).click()
 
         let slider = element(AccessibilityID.settingsChoice("cardWidth", "slider"))
-        XCTAssertTrue(slider.waitForExistence(timeout: 5), "no card size slider")
+        XCTAssertTrue(slider.waitUntilExists(timeout: 5), "no card size slider")
         slider.adjust(toNormalizedSliderPosition: 0)
         RunLoop.current.run(until: Date().addingTimeInterval(0.8))
         capture("settings-appearance-slider", of: settingsWindow)
 
         showOverlay()
         let card = cards.firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertTrue(card.waitUntilExists(timeout: 5))
         XCTAssertEqual(card.frame.width, 160, accuracy: 4, "the slider's smallest position should give Small cards")
     }
 
@@ -178,15 +178,15 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch(defaults: ["hasOnboarded": "true", "pinnedWindowAutoPaste": "false"])
         send(.togglePinnedWindow)
         let panel = element(AccessibilityID.pinnedPanel)
-        XCTAssertTrue(panel.waitForExistence(timeout: 10))
+        XCTAssertTrue(panel.waitUntilExists(timeout: 10))
         let target = panel.descendants(matching: .any).matching(
             NSPredicate(format: "identifier == %@ AND label CONTAINS %@", AccessibilityID.card, "Team lunch")
         ).firstMatch
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
 
         target.rightClick()
         let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
-        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5), "the card's context menu did not open")
+        XCTAssertTrue(cardMenu.waitUntilExists(timeout: 5), "the card's context menu did not open")
         XCTAssertFalse(cardMenu.menuItems["Paste"].exists, "a copy-only floating window must not offer Paste")
         XCTAssertTrue(cardMenu.menuItems["Copy"].exists)
     }
@@ -195,7 +195,7 @@ final class SettingsEffectsTests: PestoUITestCase {
         launch()
         showOverlay()
         let first = cards.element(boundBy: 0)
-        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        XCTAssertTrue(first.waitUntilExists(timeout: 5))
         overlay.typeKey(.space, modifierFlags: [])
         overlay.typeKey(.rightArrow, modifierFlags: [])
         overlay.typeKey(.space, modifierFlags: [])
@@ -204,7 +204,7 @@ final class SettingsEffectsTests: PestoUITestCase {
         XCTAssertTrue(third.exists)
         third.rightClick()
         let cardMenu = app.menus.containing(.menuItem, identifier: "Mark as Sensitive").firstMatch
-        XCTAssertTrue(cardMenu.waitForExistence(timeout: 5))
+        XCTAssertTrue(cardMenu.waitUntilExists(timeout: 5))
         cardMenu.menuItems["Paste"].firstMatch.click()
 
         XCTAssertEqual(

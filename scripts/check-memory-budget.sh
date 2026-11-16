@@ -21,12 +21,14 @@ OUT="$(mktemp -d)"
 WORK="$OUT/pesto-memory-work"
 mkdir -p "$WORK/commands"
 
-make generate >/dev/null
-xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Profile -destination 'platform=macOS' \
-  -derivedDataPath "$DERIVED" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build >"$OUT/build.log" 2>&1 \
-  || { tail -20 "$OUT/build.log" >&2; echo "check-memory-budget: the Profile build failed" >&2; exit 1; }
-rm -rf "$APP"/Contents/PlugIns/*.xctest "$APP"/Contents/PlugIns/*.xctest.dSYM
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1
+if [[ "${PESTO_SKIP_PROFILE_BUILD:-0}" != "1" ]]; then
+  make generate >/dev/null
+  xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Profile -destination 'platform=macOS' \
+    -derivedDataPath "$DERIVED" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build >"$OUT/build.log" 2>&1 \
+    || { tail -20 "$OUT/build.log" >&2; echo "check-memory-budget: the Profile build failed" >&2; exit 1; }
+  rm -rf "$APP"/Contents/PlugIns/*.xctest "$APP"/Contents/PlugIns/*.xctest.dSYM
+  codesign --force --deep --sign - "$APP" >/dev/null 2>&1
+fi
 
 # Info.plist's LSEnvironment (MallocLargeCache=0) is applied by LaunchServices only; apply it here and check it took (P-02).
 BUNDLE_ENV="$(/usr/libexec/PlistBuddy -c 'Print :LSEnvironment' "$APP/Contents/Info.plist" | sed -n 's/^ *\(.*\) = \(.*\)$/\1=\2/p' | tr '\n' ' ')"

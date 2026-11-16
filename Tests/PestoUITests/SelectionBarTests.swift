@@ -34,7 +34,7 @@ final class SelectionBarTests: PestoUITestCase {
     func test_selectionBar_ofTextClips_offersPasteAllPasteOneByOneAndDelete() {
         inBothAppearances { mode in
             pick([8, 10, 11])
-            XCTAssertTrue(element(AccessibilityID.pasteAllButton).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.pasteAllButton).waitUntilExists(timeout: 5))
             XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).exists)
             XCTAssertTrue(element(AccessibilityID.deleteSelectedButton).exists)
             settle()
@@ -45,7 +45,7 @@ final class SelectionBarTests: PestoUITestCase {
     func test_selectionBar_ofMixedClips_offersNoPasteAll() {
         inBothAppearances { mode in
             pick([1, 8])
-            XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitUntilExists(timeout: 5))
             XCTAssertFalse(
                 element(AccessibilityID.pasteAllButton).exists,
                 "an image cannot be pasted together with text"
@@ -59,7 +59,7 @@ final class SelectionBarTests: PestoUITestCase {
         inBothAppearances { mode in
             pick([0, 1, 3])
             element(AccessibilityID.deleteSelectedButton).click()
-            XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitUntilExists(timeout: 5))
             settle()
             capture("selection-bar-delete-confirm-\(mode)")
             element(AccessibilityID.deleteCancelButton).click()
@@ -74,7 +74,7 @@ final class SelectionBarTests: PestoUITestCase {
         showOverlay()
         pick([0, 1, 3])
         let bar = element(AccessibilityID.deleteSelectedButton)
-        XCTAssertTrue(bar.waitForExistence(timeout: 5))
+        XCTAssertTrue(bar.waitUntilExists(timeout: 5))
         XCTAssertLessThanOrEqual(bar.frame.maxY, overlay.frame.maxY, "the bar must not hang below the panel")
         settle()
         capture("selection-bar-top-compact")

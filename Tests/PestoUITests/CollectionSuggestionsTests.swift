@@ -7,14 +7,14 @@ final class CollectionSuggestionsTests: PestoUITestCase {
     private func openCollections() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Collections")).click()
     }
 
     func test_aSuggestedCollection_isAddedAsASmartCollection_andLeavesTheList() {
         openCollections()
         let add = element(AccessibilityID.addSuggestedCollection("shape-links"))
-        XCTAssertTrue(add.waitForExistence(timeout: 15), "no Links suggestion in a history with links")
+        XCTAssertTrue(add.waitUntilExists(timeout: 15), "no Links suggestion in a history with links")
         capture("settings-collections-suggestions", of: settingsWindow)
 
         add.click()
@@ -23,12 +23,12 @@ final class CollectionSuggestionsTests: PestoUITestCase {
         waitForExpectations(timeout: 8)
         XCTAssertTrue(
             settingsWindow.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Links")).firstMatch
-                .waitForExistence(timeout: 5),
+                .waitUntilExists(timeout: 5),
             "the new collection is not listed"
         )
         XCTAssertTrue(
             settingsWindow.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Smart collection")).firstMatch
-                .waitForExistence(timeout: 5),
+                .waitUntilExists(timeout: 5),
             "it is not a smart collection"
         )
         capture("settings-collections-after-add", of: settingsWindow)
@@ -37,7 +37,7 @@ final class CollectionSuggestionsTests: PestoUITestCase {
     func test_aDismissedSuggestion_staysAway() {
         openCollections()
         let add = element(AccessibilityID.addSuggestedCollection("shape-code"))
-        XCTAssertTrue(add.waitForExistence(timeout: 15))
+        XCTAssertTrue(add.waitUntilExists(timeout: 15))
 
         settingsWindow.buttons["Dismiss Code"].click()
 

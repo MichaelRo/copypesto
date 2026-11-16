@@ -6,13 +6,13 @@ import XCTest
 final class ClearHistoryTests: PestoUITestCase {
     private func chooseClear(_ identifier: String) {
         let statusItem = app.statusItems.firstMatch
-        XCTAssertTrue(statusItem.waitForExistence(timeout: 10), "no menu-bar item")
+        XCTAssertTrue(statusItem.waitUntilExists(timeout: 10), "no menu-bar item")
         statusItem.click()
         let parent = app.menuItems["Clear History"]
-        XCTAssertTrue(parent.waitForExistence(timeout: 5), "status menu has no Clear History")
+        XCTAssertTrue(parent.waitUntilExists(timeout: 5), "status menu has no Clear History")
         parent.hover()
         let item = app.menuItems.matching(identifier: identifier).firstMatch
-        XCTAssertTrue(item.waitForExistence(timeout: 5), "submenu item \(identifier) missing")
+        XCTAssertTrue(item.waitUntilExists(timeout: 5), "submenu item \(identifier) missing")
         item.click()
     }
 
@@ -21,14 +21,14 @@ final class ClearHistoryTests: PestoUITestCase {
 
         chooseClear("statusClearLast5")
         let confirm = element(AccessibilityID.clearConfirmDelete)
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "no confirmation before deleting")
+        XCTAssertTrue(confirm.waitUntilExists(timeout: 10), "no confirmation before deleting")
         capture("clear-confirmation", of: confirm.exists ? app.windows.firstMatch : nil)
         clickIgnoringInterruptions(confirm)
 
         showOverlay()
         XCTAssertFalse(card(containing: "Quarterly report draft").exists, "the newest item should be gone")
         XCTAssertTrue(
-            card(containing: "Remember to renew the domain").waitForExistence(timeout: 5),
+            card(containing: "Remember to renew the domain").waitUntilExists(timeout: 5),
             "older history must survive clearing the last five minutes"
         )
     }
@@ -38,11 +38,11 @@ final class ClearHistoryTests: PestoUITestCase {
 
         chooseClear("statusClearAll")
         let cancel = element(AccessibilityID.clearConfirmCancel)
-        XCTAssertTrue(cancel.waitForExistence(timeout: 10), "no confirmation before deleting")
+        XCTAssertTrue(cancel.waitUntilExists(timeout: 10), "no confirmation before deleting")
         clickIgnoringInterruptions(cancel)
 
         showOverlay()
         XCTAssertTrue(card(containing: "Quarterly report draft").exists)
-        XCTAssertTrue(card(containing: "Remember to renew the domain").waitForExistence(timeout: 5))
+        XCTAssertTrue(card(containing: "Remember to renew the domain").waitUntilExists(timeout: 5))
     }
 }

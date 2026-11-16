@@ -46,8 +46,22 @@ DETAIL=()
 SECONDS_TOTAL=$SECONDS
 
 record() {
-  NAMES+=("$1"); STATUS+=("$2"); DETAIL+=("$3")
+  if [[ -n "${RECORD_FILE:-}" ]]; then
+    printf '%s\t%s\t%s\n' "$1" "$2" "$3" >> "$RECORD_FILE"
+  else
+    NAMES+=("$1"); STATUS+=("$2"); DETAIL+=("$3")
+  fi
   printf '  %-4s  %-36s %s\n' "$2" "$1" "$((SECONDS - SECONDS_TOTAL)) s"
+}
+
+ingest_records() {
+  local f name st detail
+  for f in "$@"; do
+    [[ -f "$f" ]] || continue
+    while IFS=$'\t' read -r name st detail; do
+      NAMES+=("$name"); STATUS+=("$st"); DETAIL+=("$detail")
+    done < "$f"
+  done
 }
 
 step_lint() {
@@ -370,18 +384,36 @@ step_scoped() {
   fi
 }
 
-step_lint
 if [[ $SCOPED -eq 1 ]]; then
+  step_lint
   step_scoped
 else
-  step_core
-  step_build
+  make generate >"$LOGS/generate.log" 2>&1
+  export PESTO_SKIP_GENERATE=1
+
+  RECORD_FILE="$LOGS/rec-lint" step_lint &
+  pid_lint=$!
+  RECORD_FILE="$LOGS/rec-build" step_build &
+  pid_build=$!
+  pid_release=""
   if [[ $FAST -eq 0 ]]; then
-    step_release_build
-    [[ $SKIP_UI -eq 0 ]] && step_memory
-    [[ $SKIP_UI -eq 0 ]] && step_memory_pictures
-    [[ $SKIP_UI -eq 0 ]] && step_shelf_bench
-    [[ $SKIP_UI -eq 0 ]] && step_first_open
+    RECORD_FILE="$LOGS/rec-release" step_release_build &
+    pid_release=$!
+  fi
+
+  wait "$pid_lint" "$pid_build" ${pid_release:+"$pid_release"}
+  # Run Core tests after xcodebuild finishes so Release -O compilation never starves sub-100ms timing checks.
+  RECORD_FILE="$LOGS/rec-core" step_core
+  ingest_records "$LOGS/rec-lint" "$LOGS/rec-core" "$LOGS/rec-build" "$LOGS/rec-release"
+
+  if [[ $FAST -eq 0 ]]; then
+    if [[ $SKIP_UI -eq 0 ]]; then
+      step_memory
+      export PESTO_SKIP_PROFILE_BUILD=1
+      step_memory_pictures
+      step_shelf_bench
+      step_first_open
+    fi
     step_hosted_and_ui
   fi
 fi

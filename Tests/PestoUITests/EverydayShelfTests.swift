@@ -12,7 +12,7 @@ final class EverydayShelfTests: PestoUITestCase {
             backdrop: "plain"
         )
         showOverlay()
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10))
         parkPointer()
         capture("everyday-\(mode)-\(size)")
         app.typeKey(.rightArrow, modifierFlags: [])

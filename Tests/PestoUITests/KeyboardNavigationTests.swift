@@ -40,10 +40,10 @@ final class KeyboardNavigationTests: PestoUITestCase {
         launch()
         showOverlay()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Privacy")).click()
         let field = settingsWindow.searchFields.firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 5), "Settings has no search field")
+        XCTAssertTrue(field.waitUntilExists(timeout: 5), "Settings has no search field")
 
         field.click()
         field.typeText("abc")
@@ -61,7 +61,7 @@ final class ToolbarShortcutTests: PestoUITestCase {
 
         overlay.typeKey(",", modifierFlags: .command)
 
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
     }
 
     func test_cmdN_startsANewCollectionFromTheGrid() {
@@ -70,7 +70,7 @@ final class ToolbarShortcutTests: PestoUITestCase {
 
         overlay.typeKey("n", modifierFlags: .command)
 
-        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitUntilExists(timeout: 5))
     }
 }
 
@@ -81,9 +81,9 @@ final class SearchKeyboardTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         app.typeText("Quarterly")
-        XCTAssertTrue(card(containing: "Quarterly report draft").waitForExistence(timeout: 5))
+        XCTAssertTrue(card(containing: "Quarterly report draft").waitUntilExists(timeout: 5))
 
         app.typeKey(.return, modifierFlags: [])
 
@@ -95,9 +95,9 @@ final class SearchKeyboardTests: PestoUITestCase {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5))
         app.typeText("pesto")
-        XCTAssertTrue(card(containing: "Pesto keeps your clipboard history").waitForExistence(timeout: 5))
+        XCTAssertTrue(card(containing: "Pesto keeps your clipboard history").waitUntilExists(timeout: 5))
 
         app.typeKey(.rightArrow, modifierFlags: [])
         app.typeKey(.rightArrow, modifierFlags: [])
@@ -115,7 +115,7 @@ final class SearchKeyboardTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         app.typeText("pesto")
         XCTAssertEqual(field.value as? String, "pesto")
 
@@ -123,7 +123,7 @@ final class SearchKeyboardTests: PestoUITestCase {
         field.typeKey("a", modifierFlags: .command)
         field.typeKey("a", modifierFlags: .command)
         XCTAssertTrue(
-            element(AccessibilityID.deleteSelectedButton).waitForExistence(timeout: 5),
+            element(AccessibilityID.deleteSelectedButton).waitUntilExists(timeout: 5),
             "a second ⌘A with the search field's text selected must select the shown clips"
         )
     }

@@ -13,17 +13,17 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
     }
 
     private func openRestoreWindow() {
-        XCTAssertTrue(restoreFromBackup.waitForExistence(timeout: 30), "the lost-key alert did not appear")
+        XCTAssertTrue(restoreFromBackup.waitUntilExists(timeout: 30), "the lost-key alert did not appear")
         capture("key-loss-alert", of: app.dialogs.firstMatch)
         clickIgnoringInterruptions(restoreFromBackup)
-        XCTAssertTrue(app.buttons["Choose Backup\u{2026}"].waitForExistence(timeout: 10), "no restore window")
+        XCTAssertTrue(app.buttons["Choose Backup\u{2026}"].waitUntilExists(timeout: 10), "no restore window")
         capture("key-loss-restore-window")
         app.buttons["Choose Backup\u{2026}"].click()
     }
 
     private func open(with secret: String) {
         let field = app.secureTextFields["Passphrase"]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         field.click()
         field.typeText(secret)
         app.buttons["Open"].click()
@@ -34,7 +34,7 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
         launch(seed: "empty", keyLoss: true)
         openRestoreWindow()
 
-        XCTAssertTrue(app.windows["Restore from Backup"].waitForExistence(timeout: 10), "the window has no title")
+        XCTAssertTrue(app.windows["Restore from Backup"].waitUntilExists(timeout: 10), "the window has no title")
         let headings = app.staticTexts.matching(NSPredicate(
             format: "label == 'Restore from Backup' OR value == 'Restore from Backup'"
         ))
@@ -47,11 +47,11 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
 
         open(with: "not the passphrase")
 
-        if !app.buttons["Back"].waitForExistence(timeout: 10) { dumpState("after-open") }
+        if !app.buttons["Back"].waitUntilExists(timeout: 10) { dumpState("after-open") }
         XCTAssertTrue(app.buttons["Back"].exists, "a wrong passphrase showed no error")
         capture("key-loss-wrong-passphrase")
         app.buttons["Close"].click()
-        XCTAssertTrue(restoreFromBackup.waitForExistence(timeout: 10), "the alert did not come back")
+        XCTAssertTrue(restoreFromBackup.waitUntilExists(timeout: 10), "the alert did not come back")
     }
 
     func test_cancellingAtThePreview_changesNothing_andTheAlertComesBack() {
@@ -60,14 +60,14 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
 
         open(with: passphrase)
 
-        XCTAssertTrue(app.buttons["Restore"].waitForExistence(timeout: 20), "the preview did not open")
+        XCTAssertTrue(app.buttons["Restore"].waitUntilExists(timeout: 20), "the preview did not open")
         capture("key-loss-preview")
         // The sheet's texts reach XCUITest as `value`, not `label`.
         let warning = app.staticTexts.matching(NSPredicate(
             format: "value CONTAINS 'Restoring replaces it with this backup' OR label CONTAINS 'Restoring replaces it'"
         )).firstMatch
         XCTAssertTrue(
-            warning.waitForExistence(timeout: 10),
+            warning.waitUntilExists(timeout: 10),
             "the preview should say that restoring replaces the current history"
         )
         XCTAssertTrue(
@@ -75,18 +75,18 @@ final class KeyLossRecoveryUITests: PestoUITestCase {
             "the preview says: \(warning.value ?? warning.label)"
         )
         app.buttons["Cancel"].click()
-        XCTAssertTrue(restoreFromBackup.waitForExistence(timeout: 10), "the alert did not come back")
+        XCTAssertTrue(restoreFromBackup.waitUntilExists(timeout: 10), "the alert did not come back")
     }
 
     func test_restoring_replacesTheHistoryWithTheBackup_andLaunchContinues() {
         launch(seed: "empty", keyLoss: true)
         openRestoreWindow()
         open(with: passphrase)
-        XCTAssertTrue(app.buttons["Restore"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["Restore"].waitUntilExists(timeout: 10))
 
         app.buttons["Restore"].click()
 
-        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 20), "the restore did not finish")
+        XCTAssertTrue(app.buttons["Done"].waitUntilExists(timeout: 20), "the restore did not finish")
         app.buttons["Done"].click()
         waitUntilReady(timeout: 60)
         showOverlay()

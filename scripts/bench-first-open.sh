@@ -13,9 +13,11 @@ SEED=${2:-imported}
 IDENTITY="Pesto Development"
 OUT=$(mktemp -d)
 pgrep -x Pesto >/dev/null && { echo "bench-first-open: quit Pesto first" >&2; exit 1; }
-make generate >/dev/null
-xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Profile -destination 'platform=macOS' \
-  -derivedDataPath .build/xcode-profile CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build >"$OUT/build.log" 2>&1
+if [[ "${PESTO_SKIP_PROFILE_BUILD:-0}" != "1" ]]; then
+  make generate >/dev/null
+  xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Profile -destination 'platform=macOS' \
+    -derivedDataPath .build/xcode-profile CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build >"$OUT/build.log" 2>&1
+fi
 APP="$OUT/Pesto.app"
 ditto .build/xcode-profile/Build/Products/Profile/Pesto.app "$APP"
 rm -rf "$APP"/Contents/PlugIns/*.xctest "$APP"/Contents/PlugIns/*.xctest.dSYM

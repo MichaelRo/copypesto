@@ -12,7 +12,7 @@ final class ShortcutRecordingTests: PestoUITestCase {
     private func openShortcuts() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Shortcuts")).click()
     }
 
@@ -22,10 +22,10 @@ final class ShortcutRecordingTests: PestoUITestCase {
 
     private func choose(_ item: String, inMenuOf id: UInt32) {
         let menu = element(AccessibilityID.shortcutMenu(id))
-        XCTAssertTrue(menu.waitForExistence(timeout: 5), "row \(id) has no menu")
+        XCTAssertTrue(menu.waitUntilExists(timeout: 5), "row \(id) has no menu")
         menu.click()
         let entry = app.menuItems[item].firstMatch
-        XCTAssertTrue(entry.waitForExistence(timeout: 5), "no \(item) in the menu of row \(id)")
+        XCTAssertTrue(entry.waitUntilExists(timeout: 5), "no \(item) in the menu of row \(id)")
         entry.click()
     }
 
@@ -36,7 +36,7 @@ final class ShortcutRecordingTests: PestoUITestCase {
     func test_theShortcutInUse_canBeRecordedAgain_aClashIsRefused_andEscCancels() {
         openShortcuts()
         let shelf = element(AccessibilityID.shortcutRecorder(shelfID))
-        XCTAssertTrue(shelf.waitForExistence(timeout: 5))
+        XCTAssertTrue(shelf.waitUntilExists(timeout: 5))
         XCTAssertEqual(value(of: AccessibilityID.shortcutRecorder(shelfID)), "⇧⌘V")
 
         shelf.click()
@@ -50,7 +50,7 @@ final class ShortcutRecordingTests: PestoUITestCase {
         let refusal = settingsWindow.descendants(matching: .any).matching(NSPredicate(
             format: "label CONTAINS 'already the shortcut for' OR value CONTAINS 'already the shortcut for'"
         )).firstMatch
-        XCTAssertTrue(refusal.waitForExistence(timeout: 5), "a clash gave no reason")
+        XCTAssertTrue(refusal.waitUntilExists(timeout: 5), "a clash gave no reason")
         XCTAssertEqual(value(of: AccessibilityID.shortcutRecorder(shelfID)), "⇧⌘V")
         capture("settings-shortcut-clash", of: settingsWindow)
 
@@ -63,7 +63,7 @@ final class ShortcutRecordingTests: PestoUITestCase {
     func test_anOptionalShortcut_startsUnset_isRecorded_andCleared() {
         openShortcuts()
         let recorder = element(AccessibilityID.shortcutRecorder(pinnedWindowID))
-        XCTAssertTrue(recorder.waitForExistence(timeout: 5))
+        XCTAssertTrue(recorder.waitUntilExists(timeout: 5))
         XCTAssertEqual(value(of: AccessibilityID.shortcutRecorder(pinnedWindowID)), "Not set")
 
         recorder.click()
@@ -80,7 +80,7 @@ final class ShortcutRecordingTests: PestoUITestCase {
     func test_changeInTheMenu_startsRecording() {
         openShortcuts()
         let recorder = element(AccessibilityID.shortcutRecorder(shelfID))
-        XCTAssertTrue(recorder.waitForExistence(timeout: 5))
+        XCTAssertTrue(recorder.waitUntilExists(timeout: 5))
 
         choose("Change…", inMenuOf: shelfID)
         app.typeKey("b", modifierFlags: [.command, .option, .shift])
@@ -92,10 +92,10 @@ final class ShortcutRecordingTests: PestoUITestCase {
     func test_theMenu_offersResetOnlyWhenTheShortcutDiffersFromItsDefault() {
         openShortcuts()
         let menu = element(AccessibilityID.shortcutMenu(shelfID))
-        XCTAssertTrue(menu.waitForExistence(timeout: 5))
+        XCTAssertTrue(menu.waitUntilExists(timeout: 5))
 
         menu.click()
-        XCTAssertTrue(app.menuItems["Turn Off"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.menuItems["Turn Off"].firstMatch.waitUntilExists(timeout: 5))
         XCTAssertFalse(app.menuItems["Reset to Default"].firstMatch.exists, "Reset offered at the default")
         app.typeKey(.escape, modifierFlags: [])
     }
@@ -103,7 +103,7 @@ final class ShortcutRecordingTests: PestoUITestCase {
     func test_doubleCopyAppend_livesInGeneralNotWithTheShortcuts() {
         openShortcuts()
 
-        XCTAssertTrue(element(AccessibilityID.shortcutRecorder(12)).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.shortcutRecorder(12)).waitUntilExists(timeout: 5))
         XCTAssertFalse(element(AccessibilityID.doubleCopyToggle).exists, "the toggle moved to General, Copy and paste")
         capture("settings-general-shortcuts", of: settingsWindow)
     }
@@ -112,7 +112,7 @@ final class ShortcutRecordingTests: PestoUITestCase {
         openShortcuts()
         let plainTextID: UInt32 = 12
         let recorder = element(AccessibilityID.shortcutRecorder(plainTextID))
-        XCTAssertTrue(recorder.waitForExistence(timeout: 5))
+        XCTAssertTrue(recorder.waitUntilExists(timeout: 5))
         XCTAssertEqual(value(of: AccessibilityID.shortcutRecorder(plainTextID)), "⌃⌥⌘V")
 
         choose("Turn Off", inMenuOf: plainTextID)

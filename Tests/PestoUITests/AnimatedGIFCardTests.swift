@@ -6,7 +6,7 @@ final class AnimatedGIFCardTests: PestoUITestCase {
         launch(seed: "animated", motion: true)
         showOverlay()
         let gifCard = cards.matching(NSPredicate(format: "label CONTAINS[c] 'image'")).firstMatch
-        XCTAssertTrue(gifCard.waitForExistence(timeout: 10), "no picture card on the shelf")
+        XCTAssertTrue(gifCard.waitUntilExists(timeout: 10), "no picture card on the shelf")
 
         var frames = Set<Data>()
         for _ in 0..<8 {
@@ -21,7 +21,7 @@ final class AnimatedGIFCardTests: PestoUITestCase {
         launch(seed: "animated", motion: true)
         showOverlay()
         let fileCard = cards.matching(NSPredicate(format: "label CONTAINS[c] 'pesto-seed-dance.gif'")).firstMatch
-        XCTAssertTrue(fileCard.waitForExistence(timeout: 10), "no card for the GIF file")
+        XCTAssertTrue(fileCard.waitUntilExists(timeout: 10), "no card for the GIF file")
 
         var frames = Set<Data>()
         for _ in 0..<8 {
@@ -39,7 +39,7 @@ final class AnimatedGIFCardTests: PestoUITestCase {
         )
         showOverlay()
         let linkCard = cards.matching(NSPredicate(format: "label CONTAINS[c] 'pesto-link-dance'")).firstMatch
-        XCTAssertTrue(linkCard.waitForExistence(timeout: 10), "no card for the GIF link")
+        XCTAssertTrue(linkCard.waitUntilExists(timeout: 10), "no card for the GIF link")
 
         var frames = Set<Data>()
         let deadline = Date().addingTimeInterval(8)

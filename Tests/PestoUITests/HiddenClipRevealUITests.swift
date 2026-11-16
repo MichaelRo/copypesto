@@ -18,7 +18,7 @@ final class HiddenClipRevealUITests: PestoUITestCase {
 
     func test_aMaskedClip_isShownForAFewSeconds_afterAuthentication() {
         openShelf(authenticationGranted: true)
-        XCTAssertTrue(maskedCard.waitForExistence(timeout: 10), "no masked card on the shelf")
+        XCTAssertTrue(maskedCard.waitUntilExists(timeout: 10), "no masked card on the shelf")
         XCTAssertFalse(
             (maskedCard.value as? String ?? "").contains(secret),
             "the secret is readable before anyone asked"
@@ -39,7 +39,7 @@ final class HiddenClipRevealUITests: PestoUITestCase {
 
     func test_aMaskedClip_staysHidden_whenAuthenticationIsRefused() {
         openShelf(authenticationGranted: false)
-        XCTAssertTrue(maskedCard.waitForExistence(timeout: 10))
+        XCTAssertTrue(maskedCard.waitUntilExists(timeout: 10))
 
         maskedCard.rightClick()
         app.menuItems["Show"].click()

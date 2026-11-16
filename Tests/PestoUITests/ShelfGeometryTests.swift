@@ -20,7 +20,7 @@ final class ShelfGeometryTests: PestoUITestCase {
         showOverlay()
         overlay.typeKey("a", modifierFlags: .command)
         let button = element(AccessibilityID.deleteSelectedButton)
-        XCTAssertTrue(button.waitForExistence(timeout: 5))
+        XCTAssertTrue(button.waitUntilExists(timeout: 5))
         let panel = overlay.frame
         let card = cards.element(boundBy: 3).frame
         XCTAssertEqual(panel.maxY - button.frame.maxY, 11, accuracy: 1.5, "8 pt under the capsule and its 3 pt rim")

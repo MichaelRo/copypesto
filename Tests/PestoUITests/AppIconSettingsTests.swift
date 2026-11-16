@@ -5,7 +5,7 @@ final class AppIconSettingsTests: PestoUITestCase {
     private func openAppearance() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Appearance")).click()
     }
 
@@ -14,7 +14,7 @@ final class AppIconSettingsTests: PestoUITestCase {
 
         for name in ["basil", "parmesan", "pineNut", "mortar"] {
             XCTAssertTrue(
-                element(AccessibilityID.settingsChoice("appIcon", name)).waitForExistence(timeout: 5),
+                element(AccessibilityID.settingsChoice("appIcon", name)).waitUntilExists(timeout: 5),
                 "no \(name) icon in Appearance"
             )
         }
@@ -36,7 +36,7 @@ final class AppIconSettingsTests: PestoUITestCase {
     func test_choosingAnIcon_selectsIt() {
         openAppearance()
         let mortar = element(AccessibilityID.settingsChoice("appIcon", "mortar"))
-        XCTAssertTrue(mortar.waitForExistence(timeout: 5))
+        XCTAssertTrue(mortar.waitUntilExists(timeout: 5))
 
         mortar.click()
 

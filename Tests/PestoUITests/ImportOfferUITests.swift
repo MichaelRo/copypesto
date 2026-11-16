@@ -10,7 +10,7 @@ final class ImportOfferUITests: PestoUITestCase {
         showOverlay()
 
         let banner = element(AccessibilityID.importOfferBanner)
-        XCTAssertTrue(banner.waitForExistence(timeout: 10), "no import offer on the shelf")
+        XCTAssertTrue(banner.waitUntilExists(timeout: 10), "no import offer on the shelf")
         XCTAssertTrue(element(AccessibilityID.importOfferImportButton).exists)
         capture("import-offer-banner")
 
@@ -26,13 +26,13 @@ final class ImportOfferUITests: PestoUITestCase {
     func test_accepting_opensSettingsAtData_andShowsThatAppsPreview() {
         launch(importFixture: "maccy")
         showOverlay()
-        XCTAssertTrue(element(AccessibilityID.importOfferBanner).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(AccessibilityID.importOfferBanner).waitUntilExists(timeout: 10))
 
         element(AccessibilityID.importOfferImportButton).click()
 
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "Settings did not open")
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10), "Settings did not open")
         XCTAssertTrue(
-            element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10),
+            element(AccessibilityID.importPreviewSheet).waitUntilExists(timeout: 10),
             "the import for the offered app did not start with its preview"
         )
         element(AccessibilityID.importPreviewCancel).click()
@@ -41,13 +41,13 @@ final class ImportOfferUITests: PestoUITestCase {
     func test_withTwoAppsInstalled_theBannerChoosesAndTheCardListsEachApp() {
         launch(importFixture: "paste,maccy")
         showOverlay()
-        XCTAssertTrue(element(AccessibilityID.importOfferBanner).waitForExistence(timeout: 10))
+        XCTAssertTrue(element(AccessibilityID.importOfferBanner).waitUntilExists(timeout: 10))
 
         element(AccessibilityID.importOfferImportButton).click()
 
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "Settings did not open")
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10), "Settings did not open")
         for app in ["paste", "maccy"]
-            where !element(AccessibilityID.foundOnThisMacRow(app)).waitForExistence(timeout: 10)
+            where !element(AccessibilityID.foundOnThisMacRow(app)).waitUntilExists(timeout: 10)
         {
             dumpState("found-card-missing-\(app)")
             XCTFail("no Found on this Mac row for \(app)")

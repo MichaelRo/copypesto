@@ -9,7 +9,7 @@ final class ShelfClickHintUITests: PestoUITestCase {
         cards.firstMatch.click()
 
         XCTAssertTrue(
-            element(AccessibilityID.clickHint).waitForExistence(timeout: 5),
+            element(AccessibilityID.clickHint).waitUntilExists(timeout: 5),
             "a click that only selects did not say that a double-click pastes"
         )
     }

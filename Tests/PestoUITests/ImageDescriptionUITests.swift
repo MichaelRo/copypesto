@@ -6,15 +6,15 @@ final class ImageDescriptionUITests: PestoUITestCase {
         launch()
         showOverlay()
         let imageCard = card(containing: "image")
-        XCTAssertTrue(imageCard.waitForExistence(timeout: 5), "the seed has image cards")
+        XCTAssertTrue(imageCard.waitUntilExists(timeout: 5), "the seed has image cards")
         imageCard.rightClick()
 
         let describe = app.menuItems["Describe Image"]
-        try XCTSkipUnless(describe.waitForExistence(timeout: 3), "this Mac's on-device model cannot read images")
+        try XCTSkipUnless(describe.waitUntilExists(timeout: 3), "this Mac's on-device model cannot read images")
         describe.click()
 
         let title = app.staticTexts["Describe Image"]
-        XCTAssertTrue(title.waitForExistence(timeout: 60), "no result panel appeared")
+        XCTAssertTrue(title.waitUntilExists(timeout: 60), "no result panel appeared")
         capture("image-description")
     }
 
@@ -22,9 +22,9 @@ final class ImageDescriptionUITests: PestoUITestCase {
         launch()
         showOverlay()
         let textCard = card(containing: "text")
-        XCTAssertTrue(textCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(textCard.waitUntilExists(timeout: 5))
         textCard.rightClick()
-        XCTAssertTrue(app.menuItems["Summarize"].waitForExistence(timeout: 3) || app.menuItems["Copy"].exists)
+        XCTAssertTrue(app.menuItems["Summarize"].waitUntilExists(timeout: 3) || app.menuItems["Copy"].exists)
         XCTAssertFalse(app.menuItems["Describe Image"].exists)
         app.typeKey(.escape, modifierFlags: [])
     }

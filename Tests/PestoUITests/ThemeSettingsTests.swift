@@ -5,7 +5,7 @@ final class ThemeSettingsTests: PestoUITestCase {
     private func openAppearance() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Appearance")).click()
     }
 
@@ -21,7 +21,7 @@ final class ThemeSettingsTests: PestoUITestCase {
 
         for name in ["basil", "parmesan", "pineNut", "mortar"] {
             XCTAssertTrue(
-                element(AccessibilityID.settingsChoice("theme", name)).waitForExistence(timeout: 5),
+                element(AccessibilityID.settingsChoice("theme", name)).waitUntilExists(timeout: 5),
                 "no \(name) theme in Appearance"
             )
         }
@@ -31,7 +31,7 @@ final class ThemeSettingsTests: PestoUITestCase {
     func test_choosingAnIcon_leavesTheThemeAlone() {
         openAppearance()
         let mortarIcon = element(AccessibilityID.settingsChoice("appIcon", "mortar"))
-        XCTAssertTrue(mortarIcon.waitForExistence(timeout: 5))
+        XCTAssertTrue(mortarIcon.waitUntilExists(timeout: 5))
 
         mortarIcon.click()
 
@@ -43,7 +43,7 @@ final class ThemeSettingsTests: PestoUITestCase {
     func test_choosingATheme_selectsItAndItsIcon() {
         openAppearance()
         let parmesan = element(AccessibilityID.settingsChoice("theme", "parmesan"))
-        XCTAssertTrue(parmesan.waitForExistence(timeout: 5))
+        XCTAssertTrue(parmesan.waitUntilExists(timeout: 5))
 
         parmesan.click()
 
@@ -61,9 +61,9 @@ final class ThemeAppearancePaneTests: PestoUITestCase {
             for mode in ["light", "dark"] {
                 launch(defaults: ["hasOnboarded": "true", "appearanceMode": mode, "appTheme": theme])
                 send(.openSettings)
-                XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "\(theme) \(mode)")
+                XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10), "\(theme) \(mode)")
                 element(AccessibilityID.settingsSidebar("Appearance")).click()
-                XCTAssertTrue(element(AccessibilityID.settingsChoice("theme", theme)).waitForExistence(timeout: 5))
+                XCTAssertTrue(element(AccessibilityID.settingsChoice("theme", theme)).waitUntilExists(timeout: 5))
                 RunLoop.current.run(until: Date().addingTimeInterval(1))
                 capture("settings-theme-\(theme)-\(mode)", of: settingsWindow)
                 app.terminate()
@@ -89,7 +89,7 @@ final class ThemeShelfTests: PestoUITestCase {
                 )
                 isFirst = false
                 showOverlay()
-                XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10), "\(theme) \(mode)")
+                XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10), "\(theme) \(mode)")
                 RunLoop.current.run(until: Date().addingTimeInterval(1))
                 capture("shelf-\(theme)-\(mode)")
                 app.terminate()

@@ -39,10 +39,14 @@ help: ## [Develop] Show this help
 
 .PHONY: generate
 generate: ## [Develop] Regenerate Pesto.xcodeproj from Pesto.yml (and restore the committed package pins)
+ifeq ($(PESTO_SKIP_GENERATE),1)
+	@true
+else
 	scripts/clear-stale-module-cache.sh
 	xcodegen generate --spec Pesto.yml
 	mkdir -p Pesto.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
 	cp Pesto.resolved Pesto.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+endif
 
 .PHONY: update-resolved
 update-resolved: generate ## [Develop] Re-resolve packages and save the exact revisions to Pesto.resolved (review the diff, commit it)

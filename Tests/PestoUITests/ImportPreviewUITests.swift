@@ -7,20 +7,20 @@ final class ImportPreviewUITests: PestoUITestCase {
     private func openImport(_ item: String, fixture: String) {
         launch(importFixture: fixture)
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Data")).click()
         let menu = element(AccessibilityID.importFromAppMenu)
-        XCTAssertTrue(menu.waitForExistence(timeout: 10), "no import menu in Data")
+        XCTAssertTrue(menu.waitUntilExists(timeout: 10), "no import menu in Data")
         menu.click()
         let entry = element(item)
-        XCTAssertTrue(entry.waitForExistence(timeout: 5), "the menu does not offer \(item)")
+        XCTAssertTrue(entry.waitUntilExists(timeout: 5), "the menu does not offer \(item)")
         entry.click()
     }
 
     func test_maccy_showsItsPinsAndAnOptionalHistory_andWarnsAboutWhatRetentionRemoves() {
         openImport(AccessibilityID.importMaccyButton, fixture: "maccy")
 
-        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10), "no preview sheet")
+        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitUntilExists(timeout: 10), "no preview sheet")
         let history = element(AccessibilityID.importPreviewHistoryToggle)
         XCTAssertTrue(history.exists, "Maccy has pins, so history is a choice")
         XCTAssertFalse(element(AccessibilityID.importPreviewExpiring).exists, "no history yet, so nothing expires")
@@ -29,12 +29,12 @@ final class ImportPreviewUITests: PestoUITestCase {
 
         history.click()
         XCTAssertTrue(
-            element(AccessibilityID.importPreviewExpiring).waitForExistence(timeout: 5),
+            element(AccessibilityID.importPreviewExpiring).waitUntilExists(timeout: 5),
             "with history in, the clip older than the retention setting should be called out"
         )
         element(AccessibilityID.importPreviewCancel).click()
         XCTAssertFalse(
-            element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 2),
+            element(AccessibilityID.importPreviewSheet).waitUntilExists(timeout: 2),
             "Cancel left the sheet"
         )
     }
@@ -42,7 +42,7 @@ final class ImportPreviewUITests: PestoUITestCase {
     func test_alfred_hasNoPins_soHistoryIsTheImportAndThereIsNoToggle() {
         openImport(AccessibilityID.importAlfredButton, fixture: "alfred")
 
-        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10), "no preview sheet")
+        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitUntilExists(timeout: 10), "no preview sheet")
         XCTAssertFalse(
             element(AccessibilityID.importPreviewHistoryToggle).exists,
             "Alfred has no pins to choose between"
@@ -59,7 +59,7 @@ final class ImportPreviewUITests: PestoUITestCase {
     func test_paste_keepsItsPinboardsAndHistoryChoice() {
         openImport(AccessibilityID.importPasteButton, fixture: "paste")
 
-        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10), "no preview sheet")
+        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitUntilExists(timeout: 10), "no preview sheet")
         XCTAssertTrue(element(AccessibilityID.importPreviewHistoryToggle).exists)
         element(AccessibilityID.importPreviewCancel).click()
     }
@@ -67,7 +67,7 @@ final class ImportPreviewUITests: PestoUITestCase {
     func test_pasteOverTheLimits_saysHowManyComeInAndChangesWithTheHistoryChoice() {
         openImport(AccessibilityID.importPasteButton, fixture: "paste-over-cap")
 
-        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10), "no preview sheet")
+        XCTAssertTrue(element(AccessibilityID.importPreviewSheet).waitUntilExists(timeout: 10), "no preview sheet")
         let limits = element(AccessibilityID.importPreviewLimits)
         XCTAssertTrue(limits.exists, "a library past the limits should say what comes in")
         /// A static text reaches XCUITest as its value; the label stays empty.

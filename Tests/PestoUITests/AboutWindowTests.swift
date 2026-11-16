@@ -7,10 +7,10 @@ final class AboutWindowTests: PestoUITestCase {
         send(.openAbout)
 
         let window = app.windows.matching(identifier: AccessibilityID.aboutWindow).firstMatch
-        XCTAssertTrue(window.waitForExistence(timeout: 10), "About did not open")
+        XCTAssertTrue(window.waitUntilExists(timeout: 10), "About did not open")
         RunLoop.current.run(until: Date().addingTimeInterval(1))
         capture("about", of: window)
-        XCTAssertTrue(window.staticTexts["Pesto"].waitForExistence(timeout: 5))
+        XCTAssertTrue(window.staticTexts["Pesto"].waitUntilExists(timeout: 5))
         XCTAssertTrue(window.staticTexts["Everything you copy. Readable only by you."].exists)
         let version = window.descendants(matching: .any).matching(
             NSPredicate(format: "label BEGINSWITH %@ OR value BEGINSWITH %@", "Version", "Version")
@@ -23,14 +23,14 @@ final class AboutWindowTests: PestoUITestCase {
         XCTAssertTrue(app.state == .runningForeground || app.state == .runningBackground, "the app died on close")
 
         send(.openAbout)
-        XCTAssertTrue(window.waitForExistence(timeout: 10), "About did not reopen")
+        XCTAssertTrue(window.waitUntilExists(timeout: 10), "About did not reopen")
     }
 
     func test_aboutWindow_closesWithEscape() {
         launch(defaults: ["hasOnboarded": "true"])
         send(.openAbout)
         let window = app.windows.matching(identifier: AccessibilityID.aboutWindow).firstMatch
-        XCTAssertTrue(window.waitForExistence(timeout: 10), "About did not open")
+        XCTAssertTrue(window.waitUntilExists(timeout: 10), "About did not open")
 
         app.typeKey(.escape, modifierFlags: [])
 
@@ -42,10 +42,10 @@ final class AboutWindowTests: PestoUITestCase {
         launch(defaults: ["hasOnboarded": "true"])
         send(.openAbout)
         let window = app.windows.matching(identifier: AccessibilityID.aboutWindow).firstMatch
-        XCTAssertTrue(window.waitForExistence(timeout: 10))
+        XCTAssertTrue(window.waitUntilExists(timeout: 10))
 
         element(AccessibilityID.showWelcomeButton).click()
 
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10), "the welcome screen did not open")
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10), "the welcome screen did not open")
     }
 }

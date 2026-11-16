@@ -14,7 +14,7 @@ final class DocScreenshotTests: PestoUITestCase {
             backdrop: "plain"
         )
         showOverlay()
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10))
         parkPointer()
     }
 
@@ -38,19 +38,19 @@ final class DocScreenshotTests: PestoUITestCase {
         showShelf(mode: "dark")
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         app.typeText("pine")
-        XCTAssertTrue(card(containing: "pine nuts").waitForExistence(timeout: 5))
+        XCTAssertTrue(card(containing: "pine nuts").waitUntilExists(timeout: 5))
         capture("showcase-search")
     }
 
     func test_askPesto() {
         showShelf(mode: "dark")
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5))
         app.typeText("the pesto link from today")
         let ask = element(AccessibilityID.askButton)
-        XCTAssertTrue(ask.waitForExistence(timeout: 5))
+        XCTAssertTrue(ask.waitUntilExists(timeout: 5))
         ask.click()
         expectation(
             for: NSPredicate(format: "isSelected == true"),
@@ -63,9 +63,9 @@ final class DocScreenshotTests: PestoUITestCase {
     func test_collections() {
         showShelf(mode: "dark")
         let chip = element(AccessibilityID.collectionChip("Pesto night"))
-        XCTAssertTrue(chip.waitForExistence(timeout: 10), "the seeded collection has no chip")
+        XCTAssertTrue(chip.waitUntilExists(timeout: 10), "the seeded collection has no chip")
         chip.click()
-        XCTAssertTrue(card(containing: "Bring: basil").waitForExistence(timeout: 5), "the collection shows no clips")
+        XCTAssertTrue(card(containing: "Bring: basil").waitUntilExists(timeout: 5), "the collection shows no clips")
         parkPointer()
         capture("showcase-collections")
     }
@@ -73,11 +73,11 @@ final class DocScreenshotTests: PestoUITestCase {
     func test_settingsCollections() {
         launch(seed: "marketing", defaults: ["hasOnboarded": "true", "appearanceMode": "dark"])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Collections")).click()
         XCTAssertTrue(
             settingsWindow.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Pesto night")).firstMatch
-                .waitForExistence(timeout: 10),
+                .waitUntilExists(timeout: 10),
             "no collection listed"
         )
         capture("showcase-settings-collections", of: settingsWindow)
@@ -87,11 +87,11 @@ final class DocScreenshotTests: PestoUITestCase {
     func test_sensitiveCard() {
         showShelf(mode: "dark", seed: "showcase")
         let target = card(containing: "Shopping list")
-        XCTAssertTrue(target.waitForExistence(timeout: 5))
+        XCTAssertTrue(target.waitUntilExists(timeout: 5))
         target.rightClick()
         app.menuItems["Mark as Sensitive"].click()
         XCTAssertTrue(cards.matching(NSPredicate(format: "label CONTAINS 'sensitive content, hidden'"))
-            .firstMatch.waitForExistence(timeout: 5))
+            .firstMatch.waitUntilExists(timeout: 5))
         parkPointer()
         capture("showcase-sensitive")
     }
@@ -104,7 +104,7 @@ final class DocScreenshotTests: PestoUITestCase {
             if mode == "dark" { app.terminate() }
             launch(seed: "marketing", defaults: ["hasOnboarded": "true", "appearanceMode": mode])
             send(.openSettings)
-            XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+            XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
             for pane in ["General", "Appearance", "Privacy"] {
                 element(AccessibilityID.settingsSidebar(pane)).click()
                 RunLoop.current.run(until: Date().addingTimeInterval(1))

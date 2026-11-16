@@ -5,7 +5,7 @@ final class BackupSettingsTests: PestoUITestCase {
     private func openDataPane() {
         launch(defaults: ["hasOnboarded": "true"])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Data")).click()
     }
 
@@ -19,7 +19,7 @@ final class BackupSettingsTests: PestoUITestCase {
         openDataPane()
 
         let summary = element(AccessibilityID.backupStatus)
-        XCTAssertTrue(summary.waitForExistence(timeout: 5), "no backup summary row")
+        XCTAssertTrue(summary.waitUntilExists(timeout: 5), "no backup summary row")
         XCTAssertTrue(
             Self.words(of: summary).contains("Your clips stay on this Mac") && Self.words(of: summary)
                 .contains("Backup: Off"),
@@ -31,7 +31,7 @@ final class BackupSettingsTests: PestoUITestCase {
 
     func test_clearEverything_isLastInData_notInPrivacy() {
         openDataPane()
-        XCTAssertTrue(element(AccessibilityID.clearEverythingButton).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.clearEverythingButton).waitUntilExists(timeout: 5))
 
         element(AccessibilityID.settingsSidebar("Privacy")).click()
 
@@ -41,25 +41,25 @@ final class BackupSettingsTests: PestoUITestCase {
     func test_restoreSheet_opensFromTheDataPane() {
         openDataPane()
         let restore = element(AccessibilityID.restoreBackupButton)
-        XCTAssertTrue(restore.waitForExistence(timeout: 5))
+        XCTAssertTrue(restore.waitUntilExists(timeout: 5))
         restore.click()
 
-        XCTAssertTrue(app.staticTexts["Restore from Backup"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Restore from Backup"].waitUntilExists(timeout: 5))
         capture("restore-sheet", of: settingsWindow)
     }
 
     func test_theBackupSheet_keepsSetUpDisabledUntilAFolderIsChosen_andCancelLeavesNothingSetUp() {
         openDataPane()
         let setUp = element(AccessibilityID.backupSwitch)
-        XCTAssertTrue(setUp.waitForExistence(timeout: 5), "the Data pane has no switch to back up this Mac")
+        XCTAssertTrue(setUp.waitUntilExists(timeout: 5), "the Data pane has no switch to back up this Mac")
         setUp.click()
 
         let confirm = element(AccessibilityID.backupSaveButton)
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "the Back up this Mac switch did not open the set-up sheet")
+        XCTAssertTrue(confirm.waitUntilExists(timeout: 5), "the Back up this Mac switch did not open the set-up sheet")
         XCTAssertFalse(confirm.isEnabled)
 
         settingsWindow.sheets.firstMatch.buttons["Cancel"].click()
-        XCTAssertFalse(confirm.waitForExistence(timeout: 2), "Cancel left the sheet open")
+        XCTAssertFalse(confirm.waitUntilExists(timeout: 2), "Cancel left the sheet open")
         XCTAssertTrue(setUp.exists, "cancelling must leave the backup not set up")
         XCTAssertTrue(
             Self.words(of: element(AccessibilityID.backupStatus)).contains("Backup: Off"),
@@ -70,7 +70,7 @@ final class BackupSettingsTests: PestoUITestCase {
 
     func test_thereIsOneBackupSection_notAManualOneAndAnAutomaticOne() {
         openDataPane()
-        XCTAssertTrue(element(AccessibilityID.backupSwitch).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.backupSwitch).waitUntilExists(timeout: 5))
         XCTAssertTrue(element(AccessibilityID.restoreBackupButton).exists)
         XCTAssertFalse(settingsWindow.buttons["Back Up\u{2026}"].exists, "the separate manual backup is back")
         XCTAssertFalse(settingsWindow.staticTexts["Automatic backup"].exists, "a second backup section is back")
@@ -80,7 +80,7 @@ final class BackupSettingsTests: PestoUITestCase {
         openDataPane()
         element(AccessibilityID.backupSwitch).click()
         let protection = element(AccessibilityID.settingsChoice("autoBackup", "protection"))
-        XCTAssertTrue(protection.waitForExistence(timeout: 5), "the sheet has no choice of protection")
+        XCTAssertTrue(protection.waitUntilExists(timeout: 5), "the sheet has no choice of protection")
         XCTAssertFalse(
             element(AccessibilityID.backupPassphraseField).exists,
             "a recovery key needs no passphrase, so none should be asked for"
@@ -93,7 +93,7 @@ final class BackupSettingsTests: PestoUITestCase {
 
         protection.radioButtons["Passphrase"].click()
 
-        XCTAssertTrue(element(AccessibilityID.backupPassphraseField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.backupPassphraseField).waitUntilExists(timeout: 5))
         XCTAssertTrue(
             settingsWindow.sheets.firstMatch.checkBoxes["Back up automatically"].exists,
             "the sheet does not offer to back up automatically"
@@ -110,11 +110,11 @@ final class BackupSettingsTests: PestoUITestCase {
             "autoBackupProtection": "Recovery key only"
         ])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Data")).click()
 
         XCTAssertTrue(
-            element(AccessibilityID.backupChangeFolderButton).waitForExistence(timeout: 5),
+            element(AccessibilityID.backupChangeFolderButton).waitUntilExists(timeout: 5),
             "no Change… button"
         )
         XCTAssertTrue(element(AccessibilityID.autoBackupNowButton).exists, "no Back Up Now button")

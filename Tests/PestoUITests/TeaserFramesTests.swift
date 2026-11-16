@@ -35,7 +35,7 @@ final class TeaserFramesTests: PestoUITestCase {
             ],
             backdrop: "plain"
         )
-        XCTAssertTrue(backdropWindow.waitForExistence(timeout: 10), "the backdrop window never appeared")
+        XCTAssertTrue(backdropWindow.waitUntilExists(timeout: 10), "the backdrop window never appeared")
     }
 
     private func settle(_ seconds: TimeInterval = 0.9) {
@@ -103,7 +103,7 @@ final class TeaserFramesTests: PestoUITestCase {
     /// Opens search (one frame) and types the word, a frame after every letter, so the film shows the row thinning.
     private func search(_ words: String, frames scene: String, from number: Int) {
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5), "no search field")
+        XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5), "no search field")
         settle(0.6)
         frame(scene, number)
         for (index, character) in words.enumerated() {
@@ -111,7 +111,7 @@ final class TeaserFramesTests: PestoUITestCase {
             settle(0.6)
             frame(scene, number + 1 + index)
         }
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10), "nothing found for \(words)")
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10), "nothing found for \(words)")
     }
 
     /// The whole story in order. Mamma Mia asks what time she lands; the flight time and the tracking number were
@@ -181,7 +181,7 @@ final class TeaserFramesTests: PestoUITestCase {
         frame("secret", 0)
         copyFrom("com.apple.MobileSMS", "5555 5555 5555 4444")
         let masked = card(containing: "4444")
-        XCTAssertTrue(masked.waitForExistence(timeout: 10))
+        XCTAssertTrue(masked.waitUntilExists(timeout: 10))
         XCTAssertFalse((masked.value as? String ?? "").contains("5555"), "the card must stay masked")
         XCTAssertFalse(masked.label.contains("5555"), "the card must stay masked")
         settleGlass()

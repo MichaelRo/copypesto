@@ -5,7 +5,7 @@ final class SettingsFlowTests: PestoUITestCase {
     func test_everySettingsPane_opens() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "Settings window did not open")
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10), "Settings window did not open")
 
         for section in [
             "General",
@@ -16,7 +16,7 @@ final class SettingsFlowTests: PestoUITestCase {
             "Data"
         ] {
             let row = element(AccessibilityID.settingsSidebar(section))
-            XCTAssertTrue(row.waitForExistence(timeout: 5), "sidebar row \(section) missing")
+            XCTAssertTrue(row.waitUntilExists(timeout: 5), "sidebar row \(section) missing")
             row.click()
             RunLoop.current.run(until: Date().addingTimeInterval(0.6))
             XCTAssertTrue(settingsWindow.exists, "Settings closed while opening \(section)")
@@ -27,12 +27,12 @@ final class SettingsFlowTests: PestoUITestCase {
     func test_snippetsPane_scrolledToThePlaceholderReference_isCaptured() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "Settings window did not open")
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10), "Settings window did not open")
         element(AccessibilityID.settingsSidebar("Snippets")).click()
 
         let reference = settingsWindow.descendants(matching: .any)
             .matching(NSPredicate(format: "label == 'Placeholders you can use in a snippet'")).firstMatch
-        XCTAssertTrue(reference.waitForExistence(timeout: 5), "no placeholder reference in the Snippets pane")
+        XCTAssertTrue(reference.waitUntilExists(timeout: 5), "no placeholder reference in the Snippets pane")
         for _ in 0..<8 where !reference.isHittable {
             settingsWindow.scrollViews.firstMatch.scroll(byDeltaX: 0, deltaY: -300)
         }
@@ -43,21 +43,21 @@ final class SettingsFlowTests: PestoUITestCase {
     func test_settingsAskedToOpenAtAPane_opensOnThatPane() {
         launch()
         send(.openSettingsAtData)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "Settings window did not open")
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10), "Settings window did not open")
 
         let data = element(AccessibilityID.settingsSidebar("Data"))
-        XCTAssertTrue(data.waitForExistence(timeout: 5))
+        XCTAssertTrue(data.waitUntilExists(timeout: 5))
         XCTAssertTrue(data.isSelected, "Settings opened on another pane than the one it was asked for")
     }
 
     func test_captureSettings_listsTheAppsThatAreAlwaysExcluded() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Privacy")).click()
 
         XCTAssertTrue(
-            element(AccessibilityID.allowExclusion("com.1password.1password")).waitForExistence(timeout: 5),
+            element(AccessibilityID.allowExclusion("com.1password.1password")).waitUntilExists(timeout: 5),
             "1Password is excluded but not listed with its Allow control"
         )
         capture("settings-built-in-exclusions", of: settingsWindow)
@@ -74,7 +74,7 @@ final class SettingsFlowTests: PestoUITestCase {
         try skipWhileAnotherPestoRuns()
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
 
         send(.openSettings)
         RunLoop.current.run(until: Date().addingTimeInterval(1))
@@ -95,7 +95,7 @@ final class SettingsFlowTests: PestoUITestCase {
 
         send(.openSettings)
 
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         let deadline = Date().addingTimeInterval(5)
         while app.state != .runningForeground,
               Date() < deadline
@@ -115,7 +115,7 @@ final class SettingsFlowTests: PestoUITestCase {
     func test_launchAtLogin_whenMacOSRefuses_staysOffAndSaysWhy() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("General")).click()
 
         let toggle = element(AccessibilityID.launchAtLoginToggle)
@@ -123,7 +123,7 @@ final class SettingsFlowTests: PestoUITestCase {
         toggle.click()
 
         XCTAssertTrue(
-            element(AccessibilityID.launchAtLoginUnavailable).waitForExistence(timeout: 5),
+            element(AccessibilityID.launchAtLoginUnavailable).waitUntilExists(timeout: 5),
             "a refused switch gives no reason"
         )
         XCTAssertEqual("\(toggle.value ?? "")", "0")
@@ -134,7 +134,7 @@ final class SettingsFlowTests: PestoUITestCase {
         // pasteboard watcher with it.
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
 
         settingsWindow.buttons[XCUIIdentifierCloseWindow].click()
         RunLoop.current.run(until: Date().addingTimeInterval(1.5))
@@ -146,14 +146,14 @@ final class SettingsFlowTests: PestoUITestCase {
     func test_menuBarIcon_canBeHidden_andComesBack() throws {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("General")).click()
         let statusItem = app.statusItems.firstMatch
-        guard statusItem.waitForExistence(timeout: 10) else {
+        guard statusItem.waitUntilExists(timeout: 10) else {
             // A full menu bar (Spotify, podcasts, ...) leaves Pesto's icon out; Settings then says so.
             let hint = element(AccessibilityID.settingsChoice("menuBarIcon", "crowdedHint"))
             XCTAssertTrue(
-                hint.waitForExistence(timeout: 10),
+                hint.waitUntilExists(timeout: 10),
                 "no icon in the menu bar and no word about it in Settings"
             )
             throw XCTSkip(
@@ -176,12 +176,12 @@ final class SettingsFlowTests: PestoUITestCase {
     func test_menuBarIcon_whenTheBarIsFull_settingsSaysWhereToGo() {
         launch(menuBarIsFull: true)
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("General")).click()
 
         let hint = element(AccessibilityID.settingsChoice("menuBarIcon", "crowdedHint"))
         XCTAssertTrue(
-            hint.waitForExistence(timeout: 10),
+            hint.waitUntilExists(timeout: 10),
             "a full menu bar leaves the icon out and Settings says nothing"
         )
         XCTAssertTrue("\(hint.value ?? hint.label)".contains("full"), "the hint does not name the cause")
@@ -191,14 +191,14 @@ final class SettingsFlowTests: PestoUITestCase {
     func test_dataImport_isOneMenuOfSources_notAButtonForOneApp() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Data")).click()
 
         let menu = element(AccessibilityID.importFromAppMenu)
-        XCTAssertTrue(menu.waitForExistence(timeout: 10), "no import menu in Data")
+        XCTAssertTrue(menu.waitUntilExists(timeout: 10), "no import menu in Data")
         menu.click()
 
-        XCTAssertTrue(element(AccessibilityID.importPasteButton).waitForExistence(timeout: 5), "Paste is not offered")
+        XCTAssertTrue(element(AccessibilityID.importPasteButton).waitUntilExists(timeout: 5), "Paste is not offered")
         XCTAssertTrue(element(AccessibilityID.importMaccyButton).exists, "Maccy is not offered")
         XCTAssertTrue(element(AccessibilityID.importAlfredButton).exists, "Alfred is not offered")
         XCTAssertTrue(element(AccessibilityID.importSnippetsButton).exists, "a snippets file is not offered")

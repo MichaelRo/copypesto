@@ -9,7 +9,7 @@ final class FileClipCardTests: PestoUITestCase {
     func test_fileCards_areNamedByFileNotByRawPath() {
         launch(seed: "files")
         showOverlay()
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10))
 
         let labels = fileCardLabels()
         XCTAssertEqual(labels.count, 3, "\(labels)")

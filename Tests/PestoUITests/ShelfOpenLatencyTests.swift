@@ -17,7 +17,7 @@ final class ShelfOpenLatencyTests: PestoUITestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(1))
             showOverlay()
             XCTAssertTrue(
-                card(containing: sentinel).waitForExistence(timeout: 5),
+                card(containing: sentinel).waitUntilExists(timeout: 5),
                 "run \(run): the new clip is not first"
             )
             overlay.typeKey(.escape, modifierFlags: [])

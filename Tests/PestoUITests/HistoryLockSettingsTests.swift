@@ -8,10 +8,10 @@ final class HistoryLockSettingsTests: PestoUITestCase {
             "uitestAuthenticationGranted": authenticationGranted ? "true" : "false"
         ])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Privacy")).click()
         let toggle = element(AccessibilityID.settingsChoice("historyLock", "toggle"))
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        XCTAssertTrue(toggle.waitUntilExists(timeout: 5))
         return toggle
     }
 

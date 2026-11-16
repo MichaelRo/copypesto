@@ -140,7 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @MainActor
-    private func applyAppearance() {
+    func applyAppearance() {
         let raw = AppDefaults.store.value(for: Setting.appearanceMode)
         let appearance: NSAppearance? = switch raw {
         case "light": NSAppearance(named: .aqua)

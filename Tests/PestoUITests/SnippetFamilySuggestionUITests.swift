@@ -25,7 +25,7 @@ final class SnippetFamilySuggestionUITests: PestoUITestCase {
         card(containing: "Hi Bruno").doubleClick()
         waitForNonExistence(overlay, timeout: 10, "the paste should close the shelf")
         showOverlay()
-        XCTAssertTrue(banner.waitForExistence(timeout: dwell + 8), "no suggestion banner after the dwell")
+        XCTAssertTrue(banner.waitUntilExists(timeout: dwell + 8), "no suggestion banner after the dwell")
     }
 
     func test_whenAMessageOfALookalikeFamilyIsPasted_thenTheShelfOffersOneSnippet() {
@@ -47,20 +47,20 @@ final class SnippetFamilySuggestionUITests: PestoUITestCase {
 
         element(AccessibilityID.shelfSuggestionAcceptButton).click()
 
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10), "Settings should open on the snippets")
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10), "Settings should open on the snippets")
         let editor = element(AccessibilityID.snippetTextEditor)
-        XCTAssertTrue(editor.waitForExistence(timeout: 10), "the editor did not open")
+        XCTAssertTrue(editor.waitUntilExists(timeout: 10), "the editor did not open")
         let text = (editor.value as? String) ?? ""
         XCTAssertTrue(text.contains("{{input:Name}}"), "the template should ask for the name: \(text)")
         XCTAssertTrue(text.contains("{{input:Number}}"), "the template should ask for the number: \(text)")
         XCTAssertTrue(text.contains("has shipped and should arrive on Friday"), "the shared words stay: \(text)")
         XCTAssertTrue(
-            element(AccessibilityID.snippetQuestionName).waitForExistence(timeout: 5),
+            element(AccessibilityID.snippetQuestionName).waitUntilExists(timeout: 5),
             "the questions should each have a row"
         )
         capture("snippet-family-editor", of: settingsWindow)
         let preview = element(AccessibilityID.snippetPreview)
-        XCTAssertTrue(preview.waitForExistence(timeout: 5), "the editor shows no preview")
+        XCTAssertTrue(preview.waitUntilExists(timeout: 5), "the editor shows no preview")
         let shown = (preview.value as? String) ?? preview.label
         XCTAssertTrue(shown.contains("Number"), "the preview should show the Number field: \(shown)")
     }

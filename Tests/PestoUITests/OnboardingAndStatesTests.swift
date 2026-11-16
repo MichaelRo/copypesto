@@ -5,47 +5,47 @@ final class OnboardingAndStatesTests: PestoUITestCase {
     /// With Accessibility already granted the second step still shows, and its Continue moves on.
     private func continueFromPastingStep() {
         XCTAssertTrue(
-            element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 5),
+            element(AccessibilityID.onboardingAccessibilityStep).waitUntilExists(timeout: 5),
             "no second step"
         )
         let next = element(AccessibilityID.onboardingContinueButton)
-        XCTAssertTrue(next.waitForExistence(timeout: 5))
+        XCTAssertTrue(next.waitUntilExists(timeout: 5))
         next.click()
     }
 
     /// The first step introduces the shortcut and creates the key; Continue moves on to the next step.
     private func continueFromShelfStep() {
-        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitForExistence(timeout: 10), "no first step")
+        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitUntilExists(timeout: 10), "no first step")
         let next = element(AccessibilityID.onboardingContinueButton)
-        XCTAssertTrue(next.waitForExistence(timeout: 5))
+        XCTAssertTrue(next.waitUntilExists(timeout: 5))
         next.click()
     }
 
     func test_onboarding_movesWithTheArrowKeysAndClosesWithEscape() {
         launch(accessibility: "trusted")
         send(.showOnboarding)
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
-        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitForExistence(timeout: 10))
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
+        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitUntilExists(timeout: 10))
         XCTAssertFalse(element(AccessibilityID.onboardingBackButton).exists, "the first page has nothing to go back to")
 
         app.typeKey(.rightArrow, modifierFlags: [])
         XCTAssertTrue(
-            element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 10),
+            element(AccessibilityID.onboardingAccessibilityStep).waitUntilExists(timeout: 10),
             "Right Arrow did not move to the second page"
         )
 
         app.typeKey(.rightArrow, modifierFlags: [])
-        XCTAssertTrue(element(AccessibilityID.onboardingGetStartedButton).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.onboardingGetStartedButton).waitUntilExists(timeout: 5))
         XCTAssertTrue(element(AccessibilityID.onboardingBackButton).exists)
 
         app.typeKey(.leftArrow, modifierFlags: [])
         XCTAssertTrue(
-            element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 5),
+            element(AccessibilityID.onboardingAccessibilityStep).waitUntilExists(timeout: 5),
             "Left Arrow did not go back a page"
         )
 
         element(AccessibilityID.onboardingBackButton).click()
-        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitForExistence(timeout: 5), "Back did not go back")
+        XCTAssertTrue(element(AccessibilityID.onboardingShelfStep).waitUntilExists(timeout: 5), "Back did not go back")
 
         app.typeKey(.escape, modifierFlags: [])
         waitForNonExistence(onboardingWindow, timeout: 5, "Escape did not close the welcome screen")
@@ -54,11 +54,11 @@ final class OnboardingAndStatesTests: PestoUITestCase {
     func test_firstRun_withAccessibilityDenied_showsOnboardingAndTheOverlayBanner() {
         launch(accessibility: "denied", defaults: [:])
 
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10), "onboarding did not appear")
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10), "onboarding did not appear")
         app.activate()
         capture("onboarding-shelf-step", of: onboardingWindow)
         continueFromShelfStep()
-        XCTAssertTrue(element(AccessibilityID.onboardingAccessibilityStep).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.onboardingAccessibilityStep).waitUntilExists(timeout: 5))
         app.activate()
         // The pointer rests where Continue was, which is where Back is now: its tooltip would be in the picture.
         onboardingWindow.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.04)).hover()
@@ -67,7 +67,7 @@ final class OnboardingAndStatesTests: PestoUITestCase {
 
         showOverlay()
         XCTAssertTrue(
-            element(AccessibilityID.accessibilityBanner).waitForExistence(timeout: 5),
+            element(AccessibilityID.accessibilityBanner).waitUntilExists(timeout: 5),
             "the overlay should warn that auto-paste needs Accessibility"
         )
         capture("overlay-accessibility-banner")
@@ -76,16 +76,16 @@ final class OnboardingAndStatesTests: PestoUITestCase {
     func test_onboarding_whenEverythingIsDone_keepsEveryLineInsideTheWindow() {
         launch(accessibility: "trusted")
         send(.showOnboarding)
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
         continueFromShelfStep()
         continueFromPastingStep()
 
         let toggle = element(AccessibilityID.launchAtLoginToggle)
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        XCTAssertTrue(toggle.waitUntilExists(timeout: 5))
         toggle.click()
         let caption = element(AccessibilityID.launchAtLoginUnavailable)
         XCTAssertTrue(
-            caption.waitForExistence(timeout: 5),
+            caption.waitUntilExists(timeout: 5),
             "this copy cannot register a login item, so pressing the switch shows why"
         )
         capture("onboarding-all-done", of: onboardingWindow)
@@ -101,13 +101,13 @@ final class OnboardingAndStatesTests: PestoUITestCase {
     func test_onboarding_moreOptions_opensChoices_insideTheWindow() {
         launch(accessibility: "trusted", updates: true)
         send(.showOnboarding)
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
         continueFromShelfStep()
         continueFromPastingStep()
         XCTAssertFalse(element(AccessibilityID.onboardingMenuBarToggle).exists, "the extra choices start folded away")
 
         let more = element(AccessibilityID.onboardingMoreOptions)
-        XCTAssertTrue(more.waitForExistence(timeout: 5), "no More options on the last step")
+        XCTAssertTrue(more.waitUntilExists(timeout: 5), "no More options on the last step")
         more.click()
 
         let menuBar = element(AccessibilityID.onboardingMenuBarToggle)
@@ -115,11 +115,11 @@ final class OnboardingAndStatesTests: PestoUITestCase {
         let linkPreviews = element(AccessibilityID.onboardingLinkPreviewsToggle)
         let retention = element(AccessibilityID.onboardingRetentionPicker)
         let updates = element(AccessibilityID.onboardingUpdatesToggle)
-        XCTAssertTrue(menuBar.waitForExistence(timeout: 5), "no menu bar choice under More options")
-        XCTAssertTrue(devices.waitForExistence(timeout: 5), "no other-devices choice under More options")
-        XCTAssertTrue(linkPreviews.waitForExistence(timeout: 5), "no link-previews choice under More options")
-        XCTAssertTrue(retention.waitForExistence(timeout: 5), "no retention picker under More options")
-        XCTAssertTrue(updates.waitForExistence(timeout: 5), "no automatic updates toggle under More options")
+        XCTAssertTrue(menuBar.waitUntilExists(timeout: 5), "no menu bar choice under More options")
+        XCTAssertTrue(devices.waitUntilExists(timeout: 5), "no other-devices choice under More options")
+        XCTAssertTrue(linkPreviews.waitUntilExists(timeout: 5), "no link-previews choice under More options")
+        XCTAssertTrue(retention.waitUntilExists(timeout: 5), "no retention picker under More options")
+        XCTAssertTrue(updates.waitUntilExists(timeout: 5), "no automatic updates toggle under More options")
         capture("onboarding-more-options", of: onboardingWindow)
         let window = onboardingWindow.frame
         XCTAssertLessThanOrEqual(updates.frame.maxY, window.maxY, "the last choice is cut off by the window")
@@ -131,14 +131,14 @@ final class OnboardingAndStatesTests: PestoUITestCase {
     func test_onboarding_whenEverythingIsDone_runsLaunchAtLoginAcrossTheWidthOfGetStarted() {
         launch(accessibility: "trusted")
         send(.showOnboarding)
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
         continueFromShelfStep()
         continueFromPastingStep()
 
         let toggle = element(AccessibilityID.launchAtLoginToggle)
         let button = element(AccessibilityID.onboardingGetStartedButton)
         let label = onboardingWindow.staticTexts["Launch Pesto at login"]
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "the preferences appear on the last step")
+        XCTAssertTrue(toggle.waitUntilExists(timeout: 5), "the preferences appear on the last step")
         XCTAssertTrue(label.exists, "the switch needs its label")
         app.activate()
         RunLoop.current.run(until: Date().addingTimeInterval(1))
@@ -161,13 +161,13 @@ final class OnboardingAndStatesTests: PestoUITestCase {
 
     func test_onboarding_canBeFinishedWithoutAccessibility_andStaysOpenUntilGetStarted() {
         launch(accessibility: "denied", defaults: [:])
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
         app.activate()
         continueFromShelfStep()
 
         element(AccessibilityID.onboardingSkipAccessibilityButton).click()
         let getStarted = element(AccessibilityID.onboardingGetStartedButton)
-        XCTAssertTrue(getStarted.waitForExistence(timeout: 5), "skipping Accessibility should allow finishing")
+        XCTAssertTrue(getStarted.waitUntilExists(timeout: 5), "skipping Accessibility should allow finishing")
         app.activate()
         RunLoop.current.run(until: Date().addingTimeInterval(1))
         capture("onboarding-skipped-accessibility", of: onboardingWindow)
@@ -182,7 +182,7 @@ final class OnboardingAndStatesTests: PestoUITestCase {
     func test_closingOnboarding_keepsTheAppRunning() {
         // Same over-release as the Settings window: the delegate owns the window and AppKit also released it.
         launch(accessibility: "denied", defaults: [:])
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
 
         onboardingWindow.buttons[XCUIIdentifierCloseWindow].click()
         RunLoop.current.run(until: Date().addingTimeInterval(1.5))
@@ -206,7 +206,7 @@ final class OnboardingAndStatesTests: PestoUITestCase {
 
         XCTAssertEqual(cards.count, 0)
         XCTAssertTrue(
-            element(AccessibilityID.shelfEmptyState).waitForExistence(timeout: 5),
+            element(AccessibilityID.shelfEmptyState).waitUntilExists(timeout: 5),
             "empty shelf shows no explanation"
         )
         capture("overlay-empty")
@@ -239,17 +239,17 @@ final class OnboardingAndStatesTests: PestoUITestCase {
 
     func test_onboarding_moreOptions_showsCustomRetentionSelection() {
         launch(accessibility: "trusted", defaults: ["retentionDays": "14"])
-        XCTAssertTrue(onboardingWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
         app.activate()
         continueFromShelfStep()
         continueFromPastingStep()
 
         let moreOptions = element(AccessibilityID.onboardingMoreOptions)
-        XCTAssertTrue(moreOptions.waitForExistence(timeout: 5))
+        XCTAssertTrue(moreOptions.waitUntilExists(timeout: 5))
         moreOptions.click()
 
         let picker = element(AccessibilityID.onboardingRetentionPicker)
-        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        XCTAssertTrue(picker.waitUntilExists(timeout: 5))
         XCTAssertEqual(picker.value as? String, "Custom (14 days)")
     }
 }

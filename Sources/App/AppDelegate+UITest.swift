@@ -109,7 +109,7 @@ extension AppDelegate {
     /// Polls the command queue the runner writes into the shared working directory.
     private func startUITestCommandPolling() {
         let directory = AppPaths.supportDirectory
-        uiTestCommandTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+        uiTestCommandTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 for command in UITestCommandQueue.drain(in: directory) {
                     UITestSupport.appendCommandLog("received \(command.rawValue)", in: directory)
@@ -128,6 +128,24 @@ extension AppDelegate {
     }
 
     private func perform(_ command: UITestCommand) {
+        if let bench = UITestBenchRequest(command) {
+            appState.uiTestBench = bench
+            return
+        }
+        if performPresentationCommand(command) { return }
+        switch command {
+        case .toggleHideContents: statusToggleContentHidden()
+        case .walkShelfToEnd: appState.uiTestWalkRequest += 1
+        case .showToast: toastController.show(.manualPaste(.pressCommandV), holds: true)
+        case .setAppearanceDark:
+            AppDefaults.store.set("dark", for: Setting.appearanceMode)
+            applyAppearance()
+        case .stackUserPaste: stackUserPasted()
+        default: break
+        }
+    }
+
+    private func performPresentationCommand(_ command: UITestCommand) -> Bool {
         switch command {
         case .showOverlay: showOverlay()
         case .hideOverlay: hideOverlay()
@@ -139,13 +157,9 @@ extension AppDelegate {
             openSettingsWindow()
         case .showOnboarding: showOnboarding()
         case .openAbout: openAboutWindow()
-        case .toggleHideContents: statusToggleContentHidden()
-        case .walkShelfToEnd, .benchArrowSteps, .benchArrowHold, .benchCycleCollections, .benchCycleHold,
-             .benchCycleAB:
-            driveShelf(command)
-        case .showToast: toastController.show(.manualPaste(.pressCommandV), holds: true)
-        case .stackUserPaste: stackUserPasted()
+        default: return false
         }
+        return true
     }
 
     /// XCUITest hook: `--show-overlay` delays 1.5 s then opens the overlay so the

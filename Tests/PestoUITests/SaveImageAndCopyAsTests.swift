@@ -11,11 +11,11 @@ final class SaveImageAndCopyAsTests: PestoUITestCase {
         launch()
         showOverlay()
         let imageCard = card(containing: "image")
-        XCTAssertTrue(imageCard.waitForExistence(timeout: 5), "the seed has image cards")
+        XCTAssertTrue(imageCard.waitUntilExists(timeout: 5), "the seed has image cards")
         imageCard.rightClick()
 
         let save = app.menuItems["Save Image"]
-        XCTAssertTrue(save.waitForExistence(timeout: 3), "a picture offers Save Image")
+        XCTAssertTrue(save.waitUntilExists(timeout: 3), "a picture offers Save Image")
         save.click()
 
         let deadline = Date().addingTimeInterval(5)
@@ -30,11 +30,11 @@ final class SaveImageAndCopyAsTests: PestoUITestCase {
         launch()
         showOverlay()
         let imageCard = card(containing: "image")
-        XCTAssertTrue(imageCard.waitForExistence(timeout: 5), "the seed has image cards")
+        XCTAssertTrue(imageCard.waitUntilExists(timeout: 5), "the seed has image cards")
         imageCard.rightClick()
 
         let copy = overlay.menuItems["Copy"]
-        XCTAssertTrue(copy.waitForExistence(timeout: 3), "a picture offers Copy")
+        XCTAssertTrue(copy.waitUntilExists(timeout: 3), "a picture offers Copy")
         copy.click()
 
         let board = NSPasteboard(name: NSPasteboard.Name("io.pesto.uitest.\(session)"))
@@ -56,9 +56,9 @@ final class SaveImageAndCopyAsTests: PestoUITestCase {
         launch()
         showOverlay()
         let textCard = card(containing: "text")
-        XCTAssertTrue(textCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(textCard.waitUntilExists(timeout: 5))
         textCard.rightClick()
-        XCTAssertTrue(app.menuItems["Copy"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.menuItems["Copy"].waitUntilExists(timeout: 3))
         XCTAssertFalse(app.menuItems["Save Image"].exists)
         XCTAssertFalse(app.menuItems["Copy As"].exists)
         app.typeKey(.escape, modifierFlags: [])
@@ -68,7 +68,7 @@ final class SaveImageAndCopyAsTests: PestoUITestCase {
         launch()
         showOverlay()
         let textCard = card(containing: "text")
-        XCTAssertTrue(textCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(textCard.waitUntilExists(timeout: 5))
         textCard.click()
         app.typeKey("s", modifierFlags: .command)
         RunLoop.current.run(until: Date().addingTimeInterval(1))

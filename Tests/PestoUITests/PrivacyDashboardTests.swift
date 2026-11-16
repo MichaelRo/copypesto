@@ -7,7 +7,7 @@ final class PrivacyDashboardTests: PestoUITestCase {
     ) {
         launch(defaults: defaults)
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar(pane)).click()
     }
 
@@ -18,7 +18,7 @@ final class PrivacyDashboardTests: PestoUITestCase {
 
     func test_privacyOpensWithThePromise_andItsLines() {
         openPrivacy()
-        XCTAssertTrue(element(AccessibilityID.privacyFact("net-clips")).waitForExistence(timeout: 10), "no promise")
+        XCTAssertTrue(element(AccessibilityID.privacyFact("net-clips")).waitUntilExists(timeout: 10), "no promise")
         for line in ["key", "net-ai", "net-updates", "net-backup"] {
             XCTAssertFalse(fact(line).isEmpty, "the promise has no \(line) line")
         }
@@ -28,12 +28,12 @@ final class PrivacyDashboardTests: PestoUITestCase {
     func test_clearEverything_cancelKeepsHistory() {
         openPrivacy(pane: "Data")
         element(AccessibilityID.clearEverythingButton).click()
-        XCTAssertTrue(app.sheets.buttons["Cancel"].waitForExistence(timeout: 5) || app.dialogs.buttons["Cancel"]
-            .waitForExistence(timeout: 2))
+        XCTAssertTrue(app.sheets.buttons["Cancel"].waitUntilExists(timeout: 5) || app.dialogs.buttons["Cancel"]
+            .waitUntilExists(timeout: 2))
         (app.sheets.buttons["Cancel"].exists ? app.sheets.buttons["Cancel"] : app.dialogs.buttons["Cancel"]).click()
 
         send(.showOverlay)
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10), "cancelling must keep the history")
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10), "cancelling must keep the history")
     }
 
     func test_clearEverything_confirmedWithAuthenticationEmptiesTheHistory() {
@@ -41,7 +41,7 @@ final class PrivacyDashboardTests: PestoUITestCase {
         element(AccessibilityID.clearEverythingButton).click()
         let confirm = app.sheets.buttons["Clear Everything"].exists ? app.sheets.buttons["Clear Everything"] : app
             .dialogs.buttons["Clear Everything"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(confirm.waitUntilExists(timeout: 5))
         confirm.click()
         RunLoop.current.run(until: Date().addingTimeInterval(2))
 
@@ -55,12 +55,12 @@ final class PrivacyWordingTests: PestoUITestCase {
     func test_thePromise_saysPlainlyWhatLeavesThisMac() {
         launch(defaults: ["hasOnboarded": "true"])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Privacy")).click()
 
         func line(_ id: String) -> String {
             let item = element(AccessibilityID.privacyFact(id))
-            _ = item.waitForExistence(timeout: 5)
+            _ = item.waitUntilExists(timeout: 5)
             return (item.value as? String) ?? item.label
         }
         XCTAssertTrue(line("net-updates").contains(PrivacyNetworkFacts.updates), line("net-updates"))

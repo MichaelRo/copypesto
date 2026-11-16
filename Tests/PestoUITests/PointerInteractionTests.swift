@@ -22,7 +22,7 @@ final class PointerInteractionTests: PestoUITestCase {
         hover(cards.element(boundBy: 1))
 
         XCTAssertTrue(
-            element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 5),
+            element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 5),
             "resting the pointer on a card should open its detail"
         )
         capture("hover-detail-open")

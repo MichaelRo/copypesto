@@ -6,14 +6,14 @@ final class SnippetSuggestionsTests: PestoUITestCase {
     private func openSnippets() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Snippets")).click()
     }
 
     func test_aStarter_isAddedAsASnippet_andLeavesTheStarters() {
         openSnippets()
         let add = element(AccessibilityID.addSnippetStarter("stand-up"))
-        XCTAssertTrue(add.waitForExistence(timeout: 10), "no starter snippets")
+        XCTAssertTrue(add.waitUntilExists(timeout: 10), "no starter snippets")
         capture("settings-snippets-starters", of: settingsWindow)
 
         add.click()
@@ -22,7 +22,7 @@ final class SnippetSuggestionsTests: PestoUITestCase {
         waitForExpectations(timeout: 8)
         XCTAssertTrue(
             settingsWindow.staticTexts.matching(NSPredicate(format: "value BEGINSWITH 'Stand-up'")).firstMatch
-                .waitForExistence(timeout: 5),
+                .waitUntilExists(timeout: 5),
             "the snippet is not listed"
         )
     }
@@ -31,37 +31,37 @@ final class SnippetSuggestionsTests: PestoUITestCase {
         openSnippets()
         settingsWindow.buttons["Add Snippet"].click()
         let editor = element(AccessibilityID.snippetTextEditor)
-        XCTAssertTrue(editor.waitForExistence(timeout: 5))
+        XCTAssertTrue(editor.waitUntilExists(timeout: 5))
         editor.click()
         editor.typeText(#"Hi {{input:Name}}, thanks for {{input:Topic default="your note"}}!"#)
 
         let firstQuestion = element(AccessibilityID.snippetQuestionName)
         capture("settings-snippet-fields-top", of: settingsWindow)
         settingsWindow.scrollViews.firstMatch.scroll(byDeltaX: 0, deltaY: -500)
-        XCTAssertTrue(firstQuestion.waitForExistence(timeout: 5), "no row for the first question")
+        XCTAssertTrue(firstQuestion.waitUntilExists(timeout: 5), "no row for the first question")
         capture("settings-snippet-fields", of: settingsWindow)
         let shortcut = settingsWindow.checkBoxes.matching(NSPredicate(format: "label BEGINSWITH 'Also paste it with'"))
-        XCTAssertTrue(shortcut.firstMatch.waitForExistence(timeout: 5), "no shortcut checkbox")
+        XCTAssertTrue(shortcut.firstMatch.waitUntilExists(timeout: 5), "no shortcut checkbox")
     }
 
     func test_text_withNoPlaceholder_cannotBeSaved_untilOneIsInserted() {
         openSnippets()
         settingsWindow.buttons["Add Snippet"].click()
         let editor = element(AccessibilityID.snippetTextEditor)
-        XCTAssertTrue(editor.waitForExistence(timeout: 5))
+        XCTAssertTrue(editor.waitUntilExists(timeout: 5))
         editor.click()
         editor.typeText("Best regards")
 
-        XCTAssertTrue(element(AccessibilityID.snippetNeedsPlaceholder).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.snippetNeedsPlaceholder).waitUntilExists(timeout: 5))
         XCTAssertFalse(element(AccessibilityID.snippetSaveButton).isEnabled)
         capture("settings-snippet-needs-placeholder", of: settingsWindow)
 
         settingsWindow.buttons["Fill From Mac\u{2026}"].click()
         let dateItem = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH '{{date}}'")).firstMatch
-        XCTAssertTrue(dateItem.waitForExistence(timeout: 5), "Fill From Mac offers no {{date}}")
+        XCTAssertTrue(dateItem.waitUntilExists(timeout: 5), "Fill From Mac offers no {{date}}")
         dateItem.click()
 
-        XCTAssertTrue(element(AccessibilityID.snippetSaveButton).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.snippetSaveButton).waitUntilExists(timeout: 5))
         expectation(
             for: NSPredicate(format: "isEnabled == true"),
             evaluatedWith: element(AccessibilityID.snippetSaveButton)
@@ -73,25 +73,25 @@ final class SnippetSuggestionsTests: PestoUITestCase {
     func test_aSnippet_canBeEdited_andTheListShowsTheChange() {
         openSnippets()
         let add = element(AccessibilityID.addSnippetStarter("stand-up"))
-        XCTAssertTrue(add.waitForExistence(timeout: 10))
+        XCTAssertTrue(add.waitUntilExists(timeout: 10))
         add.click()
         let edit = element(AccessibilityID.editSnippetButton)
-        XCTAssertTrue(edit.waitForExistence(timeout: 8), "a snippet in the list should offer Edit")
+        XCTAssertTrue(edit.waitUntilExists(timeout: 8), "a snippet in the list should offer Edit")
 
         edit.click()
         let text = element(AccessibilityID.snippetTextEditor)
-        XCTAssertTrue(text.waitForExistence(timeout: 5), "Edit did not open the editor")
+        XCTAssertTrue(text.waitUntilExists(timeout: 5), "Edit did not open the editor")
         text.click()
         text.typeKey("a", modifierFlags: .command)
         text.typeText("Updated: {{date}} {{cursor}}done")
         let preview = element(AccessibilityID.snippetPreview)
-        XCTAssertTrue(preview.waitForExistence(timeout: 5), "the editor shows what the snippet pastes")
+        XCTAssertTrue(preview.waitUntilExists(timeout: 5), "the editor shows what the snippet pastes")
         capture("settings-snippet-editor", of: settingsWindow)
         element(AccessibilityID.snippetSaveButton).click()
 
         XCTAssertTrue(
             settingsWindow.staticTexts.matching(NSPredicate(format: "value BEGINSWITH 'Updated'")).firstMatch
-                .waitForExistence(timeout: 8),
+                .waitUntilExists(timeout: 8),
             "the edited text is not listed"
         )
     }
@@ -99,13 +99,13 @@ final class SnippetSuggestionsTests: PestoUITestCase {
     func test_deletingASnippet_asksFirst() {
         openSnippets()
         let add = element(AccessibilityID.addSnippetStarter("stand-up"))
-        XCTAssertTrue(add.waitForExistence(timeout: 10))
+        XCTAssertTrue(add.waitUntilExists(timeout: 10))
         add.click()
         let delete = element(AccessibilityID.deleteSnippetButton)
-        XCTAssertTrue(delete.waitForExistence(timeout: 8))
+        XCTAssertTrue(delete.waitUntilExists(timeout: 8))
 
         delete.click()
-        XCTAssertTrue(element(AccessibilityID.deleteSnippetConfirmButton).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.deleteSnippetConfirmButton).waitUntilExists(timeout: 5))
         element(AccessibilityID.deleteSnippetConfirmButton).click()
 
         waitForNonExistence(delete, timeout: 8, "confirming should remove the snippet")

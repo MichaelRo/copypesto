@@ -9,7 +9,7 @@ final class CardRenameTests: PestoUITestCase {
         launch()
         showOverlay()
         let target = cards.firstMatch
-        XCTAssertTrue(target.waitForExistence(timeout: 10))
+        XCTAssertTrue(target.waitUntilExists(timeout: 10))
         target.rightClick()
         app.menuItems["Add Title\u{2026}"].click()
         RunLoop.current.run(until: Date().addingTimeInterval(0.6))
@@ -25,10 +25,10 @@ final class CardRenameTests: PestoUITestCase {
         app.typeText("Quarterly figures\r")
 
         let renamed = cardsTitled("Quarterly figures").firstMatch
-        XCTAssertTrue(renamed.waitForExistence(timeout: 5), "no new title")
+        XCTAssertTrue(renamed.waitUntilExists(timeout: 5), "no new title")
         capture("card-renamed")
         renamed.rightClick()
-        XCTAssertTrue(app.menuItems["Rename\u{2026}"].waitForExistence(timeout: 3), "titled card should offer Rename…")
+        XCTAssertTrue(app.menuItems["Rename\u{2026}"].waitUntilExists(timeout: 3), "titled card should offer Rename…")
     }
 
     func test_escapeLeavesTheTitleAlone() {
@@ -45,16 +45,16 @@ final class CardRenameTests: PestoUITestCase {
     func test_commandK_opensTheFocusedCardsMenu_andRenameWorksFromTheKeyboard() {
         launch()
         showOverlay()
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 10))
 
         app.typeKey("k", modifierFlags: .command)
         let rename = app.menuItems["Add Title\u{2026}"]
-        XCTAssertTrue(rename.waitForExistence(timeout: 5), "⌘K did not open the card's menu")
+        XCTAssertTrue(rename.waitUntilExists(timeout: 5), "⌘K did not open the card's menu")
         capture("card-actions-from-keyboard")
         rename.click()
         RunLoop.current.run(until: Date().addingTimeInterval(0.6))
         app.typeText("From the keyboard\r")
 
-        XCTAssertTrue(cardsTitled("From the keyboard").firstMatch.waitForExistence(timeout: 5), "no new title")
+        XCTAssertTrue(cardsTitled("From the keyboard").firstMatch.waitUntilExists(timeout: 5), "no new title")
     }
 }

@@ -12,7 +12,7 @@ final class CardDetailPopoverTests: PestoUITestCase {
         RunLoop.current.run(until: Date().addingTimeInterval(0.6))
 
         XCTAssertTrue(
-            element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2),
+            element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 2),
             "keyboard focus on a card should open its detail popover, same as hover does"
         )
     }
@@ -26,11 +26,11 @@ final class CardDetailPopoverTests: PestoUITestCase {
         RunLoop.current.run(until: Date().addingTimeInterval(0.6))
 
         let popover = element(AccessibilityID.cardDetailPopover)
-        XCTAssertTrue(popover.waitForExistence(timeout: 5), "keyboard focus on a card should open its popover")
+        XCTAssertTrue(popover.waitUntilExists(timeout: 5), "keyboard focus on a card should open its popover")
         let text = popover.staticTexts.matching(NSPredicate(
             format: "value CONTAINS 'final review pending' OR label CONTAINS 'final review pending'"
         )).firstMatch
-        XCTAssertTrue(text.waitForExistence(timeout: 5), "the popover of a plain text clip should show the text")
+        XCTAssertTrue(text.waitUntilExists(timeout: 5), "the popover of a plain text clip should show the text")
     }
 
     func test_openingTheShelf_doesNotShowADetailPopoverUntilTheUserActs() {
@@ -49,7 +49,7 @@ final class CardDetailPopoverTests: PestoUITestCase {
         launch()
         showOverlay()
         overlay.typeKey(.rightArrow, modifierFlags: [])
-        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 3))
+        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 3))
 
         RunLoop.current.run(until: Date().addingTimeInterval(7))
 
@@ -63,7 +63,7 @@ final class CardDetailPopoverTests: PestoUITestCase {
         launch()
         showOverlay()
         overlay.typeKey(.rightArrow, modifierFlags: [])
-        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 3))
+        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 3))
 
         overlay.typeKey(.escape, modifierFlags: [])
 
@@ -78,11 +78,11 @@ final class CardDetailPopoverTests: PestoUITestCase {
         let first = cards.element(boundBy: 0)
         let second = cards.element(boundBy: 1)
         first.hover()
-        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+        if !element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 2) {
             second.hover()
             first.hover()
         }
-        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 4))
+        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 4))
 
         second.hover()
         RunLoop.current.run(until: Date().addingTimeInterval(1))
@@ -98,15 +98,15 @@ final class CardDetailPopoverTests: PestoUITestCase {
         let card = cards.firstMatch
         parkPointer()
         card.hover()
-        if !element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 2) {
+        if !element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 2) {
             cards.element(boundBy: 1).hover()
             card.hover()
         }
-        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitForExistence(timeout: 4))
+        XCTAssertTrue(element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 4))
 
         card.rightClick()
 
-        XCTAssertTrue(app.menuItems["Quick Look"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.menuItems["Quick Look"].waitUntilExists(timeout: 5))
         waitForNonExistence(
             element(AccessibilityID.cardDetailPopover),
             timeout: 3,

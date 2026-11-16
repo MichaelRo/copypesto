@@ -10,10 +10,10 @@ final class AuthenticationUnavailableUITests: PestoUITestCase {
             "uitestAuthenticationUnavailable": "true"
         ])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Privacy")).click()
         let toggle = element(AccessibilityID.settingsChoice("historyLock", "toggle"))
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        XCTAssertTrue(toggle.waitUntilExists(timeout: 5))
         return toggle
     }
 
@@ -22,7 +22,7 @@ final class AuthenticationUnavailableUITests: PestoUITestCase {
 
         XCTAssertFalse(toggle.isEnabled, "the lock can be switched on where nothing can unlock it")
         XCTAssertTrue(
-            element(AccessibilityID.authenticationUnavailable).waitForExistence(timeout: 5),
+            element(AccessibilityID.authenticationUnavailable).waitUntilExists(timeout: 5),
             "no explanation of why the lock is unavailable"
         )
         capture("authentication-unavailable-settings")
@@ -42,7 +42,7 @@ final class AuthenticationUnavailableUITests: PestoUITestCase {
         launch(defaults: ["hasOnboarded": "true", "uitestAuthenticationUnavailable": "true"])
         showOverlay()
         let masked = card(containing: "4242")
-        XCTAssertTrue(masked.waitForExistence(timeout: 10), "no masked card on the shelf")
+        XCTAssertTrue(masked.waitUntilExists(timeout: 10), "no masked card on the shelf")
 
         XCTAssertFalse(element(AccessibilityID.revealHiddenClip).exists, "Show is offered where it cannot work")
         masked.rightClick()

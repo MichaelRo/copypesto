@@ -7,12 +7,12 @@ final class AskPestoTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         field.click()
         field.typeText("images from today")
 
         let ask = element(AccessibilityID.askButton)
-        XCTAssertTrue(ask.waitForExistence(timeout: 5), "no Ask button for a multi-word search")
+        XCTAssertTrue(ask.waitUntilExists(timeout: 5), "no Ask button for a multi-word search")
         ask.click()
 
         let selected = NSPredicate(format: "isSelected == true")
@@ -27,7 +27,7 @@ final class AskPestoTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         field.click()
         field.typeText("Quarterly")
 

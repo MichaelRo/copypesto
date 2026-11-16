@@ -23,7 +23,7 @@ final class RealDeviceCaptureTests: PestoUITestCase {
 
         showOverlay(expectingCards: false)
 
-        XCTAssertTrue(element(AccessibilityID.lockOverlay).waitForExistence(timeout: 10), "the lock screen should show")
+        XCTAssertTrue(element(AccessibilityID.lockOverlay).waitUntilExists(timeout: 10), "the lock screen should show")
         RunLoop.current.run(until: Date().addingTimeInterval(1.5))
         capture("real-history-locked")
     }
@@ -35,10 +35,10 @@ final class RealDeviceCaptureTests: PestoUITestCase {
         )
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.searchField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5))
         app.typeText("the link from today")
         let ask = element(AccessibilityID.askButton)
-        XCTAssertTrue(ask.waitForExistence(timeout: 5))
+        XCTAssertTrue(ask.waitUntilExists(timeout: 5))
         ask.click()
         RunLoop.current.run(until: Date().addingTimeInterval(6))
         capture("real-ask")

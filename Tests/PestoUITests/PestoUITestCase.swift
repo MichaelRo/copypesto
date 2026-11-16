@@ -80,10 +80,60 @@ class PestoUITestCase: XCTestCase {
         if suggestionsLive { environment["PESTO_UITEST_SUGGESTIONS_LIVE"] = "1" }
         if updates { environment["PESTO_UITEST_UPDATES"] = "1" }
         if recordsPerfTimeline { environment["PESTO_UITEST_PERF_TIMELINE"] = "1" }
+        let canCacheSeed = !keyLoss && importFixture == nil
+        if canCacheSeed {
+            environment["PESTO_UITEST_KEY_SEED"] = "seed-\(seed)"
+            restoreCachedSeed(seed)
+        }
         app.launchEnvironment = environment
         app.launch()
         // The lost-key alert (`keyLoss`) is modal, and the ready marker comes when it is answered.
-        if !keyLoss { waitUntilReady(timeout: timeout) }
+        if !keyLoss { finishSeedLaunch(seed: seed, canCache: canCacheSeed, timeout: timeout) }
+    }
+
+    private func finishSeedLaunch(seed: String, canCache: Bool, timeout: TimeInterval) {
+        waitUntilReady(timeout: timeout)
+        if canCache { saveCachedSeedIfNeeded(seed) }
+    }
+
+    private func seedCacheDirectory(for seed: String) -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(
+                "pesto-seed-cache-\(ProcessInfo.processInfo.processIdentifier)-\(seed)",
+                isDirectory: true
+            )
+    }
+
+    private func restoreCachedSeed(_ seed: String) {
+        let cache = seedCacheDirectory(for: seed)
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: cache.appendingPathComponent(UITestSupport.readyFileName).path),
+              let items = try? fm.contentsOfDirectory(at: cache, includingPropertiesForKeys: nil) else { return }
+        for item in items {
+            let dest = workDirectory.appendingPathComponent(item.lastPathComponent)
+            if !fm.fileExists(atPath: dest.path) {
+                try? fm.copyItem(at: item, to: dest)
+            }
+        }
+    }
+
+    private func saveCachedSeedIfNeeded(_ seed: String) {
+        let cache = seedCacheDirectory(for: seed)
+        let fm = FileManager.default
+        let ready = cache.appendingPathComponent(UITestSupport.readyFileName)
+        guard !fm.fileExists(atPath: ready.path),
+              let items = try? fm.contentsOfDirectory(
+                  at: workDirectory, includingPropertiesForKeys: nil
+              ) else { return }
+        let stage = cache.appendingPathExtension("tmp-\(UUID().uuidString.prefix(6))")
+        try? fm.createDirectory(at: stage, withIntermediateDirectories: true)
+        let skip: Set<String> = ["commands", "commands.log", "perf-timeline.tsv", UITestSupport.readyFileName]
+        for item in items where !skip.contains(item.lastPathComponent) {
+            try? fm.copyItem(at: item, to: stage.appendingPathComponent(item.lastPathComponent))
+        }
+        let srcReady = workDirectory.appendingPathComponent(UITestSupport.readyFileName)
+        try? fm.copyItem(at: srcReady, to: stage.appendingPathComponent(UITestSupport.readyFileName))
+        try? fm.moveItem(at: stage, to: cache)
     }
 
     func relaunch() {
@@ -97,7 +147,7 @@ class PestoUITestCase: XCTestCase {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             if UITestSupport.readyMarker(in: workDirectory) != nil { return }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            RunLoop.current.run(until: Date().addingTimeInterval(0.02))
         }
         XCTFail("App did not finish seeding within \(timeout) s")
     }
@@ -150,11 +200,11 @@ class PestoUITestCase: XCTestCase {
 
     func showOverlay(expectingCards: Bool = true) {
         send(.showOverlay)
-        if !overlay.waitForExistence(timeout: 10) {
+        if !overlay.waitUntilExists(timeout: 10) {
             dumpState("overlay-missing")
             XCTFail("overlay did not appear")
         }
-        if expectingCards, !cards.firstMatch.waitForExistence(timeout: 10) {
+        if expectingCards, !cards.firstMatch.waitUntilExists(timeout: 10) {
             dumpState("no-cards")
             XCTFail("no cards rendered")
         }
@@ -194,8 +244,11 @@ class PestoUITestCase: XCTestCase {
     }
 
     func waitForNonExistence(_ element: XCUIElement, timeout: TimeInterval = 5, _ message: String = "") {
-        let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
-        XCTAssertEqual(XCTWaiter.wait(for: [expectation], timeout: timeout), .completed, message)
+        let deadline = Date().addingTimeInterval(timeout)
+        while element.exists, Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        }
+        XCTAssertFalse(element.exists, message)
     }
 
     // MARK: - Store
@@ -219,14 +272,14 @@ class PestoUITestCase: XCTestCase {
     /// Quits through the status menu and returns once the process is gone.
     func quitFromStatusMenu(timeout: TimeInterval = 40) {
         let statusItem = app.statusItems.firstMatch
-        XCTAssertTrue(statusItem.waitForExistence(timeout: 10), "no menu-bar item")
+        XCTAssertTrue(statusItem.waitUntilExists(timeout: 10), "no menu-bar item")
         guard let pid = UITestSupport.readyMarker(in: workDirectory)?.processID else {
             XCTFail("no process id in the ready marker")
             return
         }
         statusItem.click()
         let quit = app.menuItems.matching(identifier: "statusQuit").firstMatch
-        XCTAssertTrue(quit.waitForExistence(timeout: 5))
+        XCTAssertTrue(quit.waitUntilExists(timeout: 5))
         quit.click()
         let deadline = Date().addingTimeInterval(timeout)
         while kill(pid, 0) == 0, Date() < deadline {
@@ -329,5 +382,19 @@ class PestoUITestCase: XCTestCase {
         app.setValue(true, forKey: "doesNotHandleUIInterruptions")
         element.click()
         app.setValue(false, forKey: "doesNotHandleUIInterruptions")
+    }
+}
+
+extension XCUIElement {
+    /// Polls `exists` at 50 ms instead of `waitForExistence`'s 1 s minimum quantization delay.
+    @MainActor
+    func waitUntilExists(timeout: TimeInterval) -> Bool {
+        if exists { return true }
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+            if exists { return true }
+        }
+        return exists
     }
 }

@@ -7,22 +7,22 @@ final class OtherFileImportUITests: PestoUITestCase {
     func test_otherFile_mapsTheColumns_thenShowsTheUsualPreview() {
         launch(importFixture: "otherfile")
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Data")).click()
         let menu = element(AccessibilityID.importFromAppMenu)
-        XCTAssertTrue(menu.waitForExistence(timeout: 10), "no Import menu")
+        XCTAssertTrue(menu.waitUntilExists(timeout: 10), "no Import menu")
 
         menu.click()
         app.menuItems["Other File\u{2026}"].click()
 
         let sheet = element(AccessibilityID.otherFileSheet)
-        XCTAssertTrue(sheet.waitForExistence(timeout: 10), "Other File… did not open its sheet")
+        XCTAssertTrue(sheet.waitUntilExists(timeout: 10), "Other File… did not open its sheet")
         capture("other-file-sheet", of: settingsWindow)
 
         element(AccessibilityID.otherFileContinueButton).click()
 
         XCTAssertTrue(
-            element(AccessibilityID.importPreviewSheet).waitForExistence(timeout: 10),
+            element(AccessibilityID.importPreviewSheet).waitUntilExists(timeout: 10),
             "the usual import preview did not follow"
         )
         element(AccessibilityID.importPreviewCancel).click()

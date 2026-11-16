@@ -9,12 +9,12 @@ final class SearchAndCollectionsTests: PestoUITestCase {
 
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5), "search field did not appear")
+        XCTAssertTrue(field.waitUntilExists(timeout: 5), "search field did not appear")
         field.click()
         field.typeText("Quarterly")
 
         let match = card(containing: "Quarterly report draft")
-        XCTAssertTrue(match.waitForExistence(timeout: 5))
+        XCTAssertTrue(match.waitUntilExists(timeout: 5))
         XCTAssertLessThan(cards.count, before, "the grid should narrow while searching")
         capture("search-results")
     }
@@ -24,11 +24,11 @@ final class SearchAndCollectionsTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.newCollectionButton).click()
         let name = element(AccessibilityID.collectionNameField)
-        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        XCTAssertTrue(name.waitUntilExists(timeout: 5))
         name.click()
         name.typeText("Work\r")
         let chip = element(AccessibilityID.collectionChip("Work"))
-        XCTAssertTrue(chip.waitForExistence(timeout: 5))
+        XCTAssertTrue(chip.waitUntilExists(timeout: 5))
         parkPointer()
         overlay.typeKey("[", modifierFlags: .command)
         expectation(for: NSPredicate(format: "isSelected == false"), evaluatedWith: chip)
@@ -50,7 +50,7 @@ final class SearchAndCollectionsTests: PestoUITestCase {
 
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         field.click()
         field.typeText("zzzz-no-such-clip")
 
@@ -66,11 +66,11 @@ final class SearchAndCollectionsTests: PestoUITestCase {
 
         element(AccessibilityID.newCollectionButton).click()
         let name = element(AccessibilityID.collectionNameField)
-        XCTAssertTrue(name.waitForExistence(timeout: 5), "inline creator did not appear")
+        XCTAssertTrue(name.waitUntilExists(timeout: 5), "inline creator did not appear")
         name.click()
         name.typeText("Work\r")
 
-        XCTAssertTrue(element(AccessibilityID.collectionChip("Work")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionChip("Work")).waitUntilExists(timeout: 5))
         capture("collection-created")
     }
 
@@ -80,10 +80,10 @@ final class SearchAndCollectionsTests: PestoUITestCase {
         showOverlay()
 
         element(AccessibilityID.newCollectionButton).click()
-        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitUntilExists(timeout: 5))
         app.typeText("Work\r")
 
-        XCTAssertTrue(element(AccessibilityID.collectionChip("Work")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionChip("Work")).waitUntilExists(timeout: 5))
     }
 
     /// A name that is taken is numbered, as a folder is in Finder; nothing silently fails.
@@ -92,12 +92,12 @@ final class SearchAndCollectionsTests: PestoUITestCase {
         showOverlay()
         for _ in 0..<2 {
             element(AccessibilityID.newCollectionButton).click()
-            XCTAssertTrue(element(AccessibilityID.collectionNameField).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.collectionNameField).waitUntilExists(timeout: 5))
             app.typeText("Work\r")
-            XCTAssertTrue(element(AccessibilityID.collectionChip("Work")).waitForExistence(timeout: 5))
+            XCTAssertTrue(element(AccessibilityID.collectionChip("Work")).waitUntilExists(timeout: 5))
         }
 
-        XCTAssertTrue(element(AccessibilityID.collectionChip("Work 2")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionChip("Work 2")).waitUntilExists(timeout: 5))
     }
 
     /// The chip's right-click menu offers Export Collection…, the same command Settings has. The save panel itself is
@@ -106,15 +106,15 @@ final class SearchAndCollectionsTests: PestoUITestCase {
         launch()
         showOverlay()
         element(AccessibilityID.newCollectionButton).click()
-        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitUntilExists(timeout: 5))
         app.typeText("Work\r")
         let chip = element(AccessibilityID.collectionChip("Work"))
-        XCTAssertTrue(chip.waitForExistence(timeout: 5))
+        XCTAssertTrue(chip.waitUntilExists(timeout: 5))
 
         chip.rightClick()
 
         XCTAssertTrue(
-            app.menuItems["Export Collection\u{2026}"].waitForExistence(timeout: 5),
+            app.menuItems["Export Collection\u{2026}"].waitUntilExists(timeout: 5),
             "the collection chip's menu has no Export Collection\u{2026}"
         )
         capture("collection-chip-menu")
@@ -126,13 +126,13 @@ final class SearchAndCollectionsTests: PestoUITestCase {
         launch()
         showOverlay()
         element(AccessibilityID.newCollectionButton).click()
-        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitUntilExists(timeout: 5))
         overlay.typeKey(.escape, modifierFlags: [])
-        XCTAssertFalse(element(AccessibilityID.collectionNameField).waitForExistence(timeout: 1))
+        XCTAssertFalse(element(AccessibilityID.collectionNameField).waitUntilExists(timeout: 1))
 
         element(AccessibilityID.newCollectionButton).click()
 
-        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionNameField).waitUntilExists(timeout: 5))
     }
 
     /// Empty search field, focused: the last searches are offered, newest first.
@@ -141,15 +141,15 @@ final class SearchAndCollectionsTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         field.click()
         field.typeText("Quarterly")
         // Cancel saves the query to history (Return now pastes the top result instead).
         element(AccessibilityID.searchCancelButton).click()
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
 
-        XCTAssertTrue(app.staticTexts["Recent searches"].waitForExistence(timeout: 5), "no recent searches offered")
+        XCTAssertTrue(app.staticTexts["Recent searches"].waitUntilExists(timeout: 5), "no recent searches offered")
         XCTAssertTrue(
             app.buttons["Quarterly"].exists || app.staticTexts["Quarterly"].exists,
             "the search is not listed"
@@ -166,9 +166,9 @@ final class SearchOpeningMotionTests: PestoUITestCase {
         element(AccessibilityID.searchButton).click()
         app.typeText("pine nuts")
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         XCTAssertEqual(field.value as? String, "pine nuts", "keys typed during the opening were lost")
-        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitUntilExists(timeout: 5))
     }
 }
 
@@ -179,11 +179,11 @@ final class FilterBarLayoutTests: PestoUITestCase {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitUntilExists(timeout: 5))
 
         for caption in ["Kind", "When", "Other"] {
             XCTAssertTrue(
-                element(AccessibilityID.filterGroup(caption)).waitForExistence(timeout: 5),
+                element(AccessibilityID.filterGroup(caption)).waitUntilExists(timeout: 5),
                 "no group named \(caption)"
             )
         }
@@ -196,19 +196,19 @@ final class FilterBarLayoutTests: PestoUITestCase {
         launch()
         showOverlay()
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitUntilExists(timeout: 5))
         XCTAssertTrue(element(AccessibilityID.filterChip("Yesterday")).exists)
         XCTAssertFalse(element(AccessibilityID.filterChip("7d")).exists, "7d is still its own chip")
 
         let more = element(AccessibilityID.filterChip("More time ranges"))
-        XCTAssertTrue(more.waitForExistence(timeout: 5), "no More chip in When")
+        XCTAssertTrue(more.waitUntilExists(timeout: 5), "no More chip in When")
         more.click()
         for title in ["Any Time", "Last 7 Days", "Last 30 Days", "Last Hour", "Last 3 Hours", "On a Day"] {
-            XCTAssertTrue(app.menuItems[title].waitForExistence(timeout: 5), "no \(title) in the When menu")
+            XCTAssertTrue(app.menuItems[title].waitUntilExists(timeout: 5), "no \(title) in the When menu")
         }
         app.menuItems["Last 3 Hours"].click()
 
-        XCTAssertTrue(more.waitForExistence(timeout: 5))
+        XCTAssertTrue(more.waitUntilExists(timeout: 5))
         XCTAssertTrue(more.isSelected, "the More chip does not show the range in force")
         XCTAssertEqual(more.label, "When, Last 3 hours")
         capture("filter-bar-when-chip")
@@ -220,15 +220,15 @@ final class FilterBarLayoutTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let from = element(AccessibilityID.filterChip("Filter by app"))
-        XCTAssertTrue(from.waitForExistence(timeout: 5), "no From chip")
+        XCTAssertTrue(from.waitUntilExists(timeout: 5), "no From chip")
         XCTAssertEqual(from.label, "From, any app")
 
         from.click()
         let mail = app.menuItems.matching(NSPredicate(format: "title BEGINSWITH 'Mail'")).firstMatch
-        XCTAssertTrue(mail.waitForExistence(timeout: 5), "Mail is not in the From menu")
+        XCTAssertTrue(mail.waitUntilExists(timeout: 5), "Mail is not in the From menu")
         mail.click()
 
-        XCTAssertTrue(from.waitForExistence(timeout: 5))
+        XCTAssertTrue(from.waitUntilExists(timeout: 5))
         XCTAssertEqual(from.label, "From, Mail")
         XCTAssertTrue(from.isSelected)
     }
@@ -239,10 +239,10 @@ final class FilterBarLayoutTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let format = element(AccessibilityID.filterChip("Filter by format"))
-        XCTAssertTrue(format.waitForExistence(timeout: 5), "no Format chip")
+        XCTAssertTrue(format.waitUntilExists(timeout: 5), "no Format chip")
 
         format.click()
-        XCTAssertTrue(app.menuItems["Markdown"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.menuItems["Markdown"].waitUntilExists(timeout: 5))
         app.menuItems["JSON"].click()
 
         XCTAssertEqual(format.label, "Format, JSON")
@@ -258,7 +258,7 @@ final class FilterBarLayoutTests: PestoUITestCase {
         app.typeText("1234")
 
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         XCTAssertEqual(field.value as? String, "1234")
     }
 
@@ -269,7 +269,7 @@ final class FilterBarLayoutTests: PestoUITestCase {
 
         app.typeText("1")
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         RunLoop.current.run(until: Date().addingTimeInterval(1.5))
         app.typeText("2")
 
@@ -282,7 +282,7 @@ final class FilterBarLayoutTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         field.click()
 
         // Kind (6), Format, Today, Yesterday, then More.
@@ -291,7 +291,7 @@ final class FilterBarLayoutTests: PestoUITestCase {
         }
         app.typeKey(.return, modifierFlags: [])
 
-        XCTAssertTrue(app.menuItems["Last 7 Days"].waitForExistence(timeout: 5), "Return did not open the When menu")
+        XCTAssertTrue(app.menuItems["Last 7 Days"].waitUntilExists(timeout: 5), "Return did not open the When menu")
         app.typeKey(.escape, modifierFlags: [])
     }
 
@@ -301,20 +301,20 @@ final class FilterBarLayoutTests: PestoUITestCase {
         showOverlay()
         element(AccessibilityID.searchButton).click()
         let field = element(AccessibilityID.searchField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         XCTAssertFalse(element(AccessibilityID.searchClearButton).exists)
         field.click()
         field.typeText("report")
 
         let clear = element(AccessibilityID.searchClearButton)
-        XCTAssertTrue(clear.waitForExistence(timeout: 5))
+        XCTAssertTrue(clear.waitUntilExists(timeout: 5))
         let frame = element(AccessibilityID.searchFieldFrame).frame
         XCTAssertTrue(frame.contains(clear.frame), "clear \(clear.frame) is outside the field \(frame)")
         XCTAssertTrue(frame.contains(field.frame), "text \(field.frame) is outside the field \(frame)")
 
         clear.click()
 
-        XCTAssertFalse(clear.waitForExistence(timeout: 1))
+        XCTAssertFalse(clear.waitUntilExists(timeout: 1))
         XCTAssertTrue((field.value as? String ?? "").isEmpty)
     }
 }
@@ -324,11 +324,11 @@ final class ChipLabelTests: PestoUITestCase {
     func test_filterChips_haveDistinctSpokenLabels() {
         launch()
         showOverlay()
-        XCTAssertTrue(element(AccessibilityID.collectionChip("All")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.collectionChip("All")).waitUntilExists(timeout: 5))
         XCTAssertEqual(element(AccessibilityID.collectionChip("All")).label, "All collections")
 
         element(AccessibilityID.searchButton).click()
-        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Today")).waitUntilExists(timeout: 5))
 
         XCTAssertEqual(element(AccessibilityID.filterChip("Today")).label, "Today")
         XCTAssertEqual(element(AccessibilityID.filterChip("More time ranges")).label, "More time ranges")
@@ -339,10 +339,10 @@ final class SettingsSidebarSemanticsTests: PestoUITestCase {
     func test_sidebarIsOneLabelledGroup_andMarksTheSelectedSection() {
         launch(defaults: ["hasOnboarded": "true"])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
 
         XCTAssertTrue(
-            settingsWindow.descendants(matching: .any)["Settings sections"].waitForExistence(timeout: 5),
+            settingsWindow.descendants(matching: .any)["Settings sections"].waitUntilExists(timeout: 5),
             "the sidebar should be one labelled list"
         )
         element(AccessibilityID.settingsSidebar("Privacy")).click()
@@ -359,10 +359,10 @@ final class ShelfNamingTests: PestoUITestCase {
     func test_theCardListSaysHowManyClipsItHolds() {
         launch()
         showOverlay()
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 5))
 
         let list = app.descendants(matching: .any).matching(NSPredicate(format: "label == 'Clips'")).firstMatch
-        XCTAssertTrue(list.waitForExistence(timeout: 5))
+        XCTAssertTrue(list.waitUntilExists(timeout: 5))
         XCTAssertTrue(((list.value as? String) ?? "").hasSuffix(" clips"), "the list should say how many clips")
     }
 }

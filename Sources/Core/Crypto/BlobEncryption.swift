@@ -153,7 +153,8 @@ public struct BlobEncryption: Sendable {
     /// data written before an app relaunch can still be decrypted; never stored in the Keychain.
     static func isolatedKey(for configuration: RuntimeConfiguration) -> SymmetricKey? {
         guard configuration.mode != .normal else { return nil }
-        let digest = SHA256.hash(data: Data("io.pesto.isolated-key.\(configuration.session)".utf8))
+        let keyTag = configuration.seedKeySession ?? configuration.session
+        let digest = SHA256.hash(data: Data("io.pesto.isolated-key.\(keyTag)".utf8))
         return SymmetricKey(data: Data(digest))
     }
 

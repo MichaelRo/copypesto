@@ -17,7 +17,7 @@ final class OverlayFlowTests: PestoUITestCase {
         launch()
         showOverlay()
         let first = cards.firstMatch
-        XCTAssertTrue(first.waitForExistence(timeout: 5))
+        XCTAssertTrue(first.waitUntilExists(timeout: 5))
 
         let margin = first.frame.minX - overlay.frame.minX
 
@@ -44,7 +44,7 @@ final class OverlayFlowTests: PestoUITestCase {
 
         target.click()
 
-        XCTAssertTrue(overlay.waitForExistence(timeout: 2), "a single click must not paste or close the shelf")
+        XCTAssertTrue(overlay.waitUntilExists(timeout: 2), "a single click must not paste or close the shelf")
         RunLoop.current.run(until: Date().addingTimeInterval(1))
         XCTAssertTrue(pastedTexts().isEmpty, "nothing was pasted by a single click")
         overlay.typeKey(.return, modifierFlags: [])
@@ -86,7 +86,7 @@ final class OverlayFlowTests: PestoUITestCase {
         copyToClipboard(sentinel)
         showOverlay()
 
-        XCTAssertTrue(card(containing: sentinel).waitForExistence(timeout: 10), "copied text never appeared")
+        XCTAssertTrue(card(containing: sentinel).waitUntilExists(timeout: 10), "copied text never appeared")
         capture("after-copy")
     }
 }

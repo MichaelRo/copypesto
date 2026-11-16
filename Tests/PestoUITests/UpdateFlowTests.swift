@@ -8,7 +8,7 @@ final class UpdateFlowTests: PestoUITestCase {
 
     private func openGeneral() {
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("General")).click()
     }
 
@@ -31,7 +31,7 @@ final class UpdateFlowTests: PestoUITestCase {
         openGeneral()
 
         let checkNow = settingsWindow.buttons["Check Now"]
-        XCTAssertTrue(checkNow.waitForExistence(timeout: 5), "no Check Now button in General")
+        XCTAssertTrue(checkNow.waitUntilExists(timeout: 5), "no Check Now button in General")
         XCTAssertTrue(
             settingsWindow.staticTexts["Not checked yet."].exists,
             "before any check the pane should say so"
@@ -46,7 +46,7 @@ final class UpdateFlowTests: PestoUITestCase {
         checkNow.click()
 
         XCTAssertTrue(
-            settingsWindow.buttons["Restart Now"].waitForExistence(timeout: 10),
+            settingsWindow.buttons["Restart Now"].waitUntilExists(timeout: 10),
             "a staged update should offer Restart Now"
         )
         XCTAssertTrue(settingsWindow.links["What\u{2019}s New"].exists, "a staged update should offer What's New")
@@ -60,7 +60,7 @@ final class UpdateFlowTests: PestoUITestCase {
     func test_checkForUpdatesInTheMenu_toastsThenClickingTheToastRestarts_andTheMenuOffersRestartToo() {
         launchWithFakeUpdater()
         let statusItem = app.statusItems.firstMatch
-        XCTAssertTrue(statusItem.waitForExistence(timeout: 10), "no menu-bar item")
+        XCTAssertTrue(statusItem.waitUntilExists(timeout: 10), "no menu-bar item")
 
         statusItem.click()
         XCTAssertFalse(
@@ -68,14 +68,14 @@ final class UpdateFlowTests: PestoUITestCase {
             "nothing is staged yet, so no Restart to Update"
         )
         let check = app.menuItems["Check for Updates\u{2026}"]
-        XCTAssertTrue(check.waitForExistence(timeout: 5), "no Check for Updates in the menu")
+        XCTAssertTrue(check.waitUntilExists(timeout: 5), "no Check for Updates in the menu")
         check.click()
 
         let readyText = "A new version is ready"
         let toast = app.descendants(matching: .any).matching(
             NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", readyText, readyText)
         ).firstMatch
-        XCTAssertTrue(toast.waitForExistence(timeout: 10), "no update-ready toast after a manual check")
+        XCTAssertTrue(toast.waitUntilExists(timeout: 10), "no update-ready toast after a manual check")
         capture("update-ready-toast")
         toast.click()
         waitForInstalls(1)
@@ -83,7 +83,7 @@ final class UpdateFlowTests: PestoUITestCase {
 
         statusItem.click()
         let restart = app.menuItems.matching(identifier: "statusInstallStagedUpdate").firstMatch
-        XCTAssertTrue(restart.waitForExistence(timeout: 5), "the menu should keep offering Restart to Update")
+        XCTAssertTrue(restart.waitUntilExists(timeout: 5), "the menu should keep offering Restart to Update")
         XCTAssertTrue(app.menuItems.matching(identifier: "statusShowWhatsNew").firstMatch.exists)
         restart.click()
         waitForInstalls(2)
@@ -93,17 +93,17 @@ final class UpdateFlowTests: PestoUITestCase {
     func test_developmentBuild_checkForUpdatesShowsUnavailableToast() {
         launch(defaults: ["hasOnboarded": "true"])
         let statusItem = app.statusItems.firstMatch
-        XCTAssertTrue(statusItem.waitForExistence(timeout: 10), "no menu-bar item")
+        XCTAssertTrue(statusItem.waitUntilExists(timeout: 10), "no menu-bar item")
 
         statusItem.click()
         let check = statusItem.menuItems["statusCheckUpdates"]
-        XCTAssertTrue(check.waitForExistence(timeout: 5), "no Check for Updates in the menu")
+        XCTAssertTrue(check.waitUntilExists(timeout: 5), "no Check for Updates in the menu")
         check.click()
 
         let unavailableText = "This build does not check for updates."
         let toast = app.descendants(matching: .any).matching(
             NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", unavailableText, unavailableText)
         ).firstMatch
-        XCTAssertTrue(toast.waitForExistence(timeout: 5), "no unavailable-updates toast on development build")
+        XCTAssertTrue(toast.waitUntilExists(timeout: 5), "no unavailable-updates toast on development build")
     }
 }

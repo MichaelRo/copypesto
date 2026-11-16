@@ -17,7 +17,7 @@ final class AnimationStressTests: PestoUITestCase {
         send(.showOverlay)
 
         XCTAssertNotEqual(app.state, .notRunning, "the app crashed while the overlay animated")
-        XCTAssertTrue(overlay.waitForExistence(timeout: 10), "the overlay must end up visible after the last show")
+        XCTAssertTrue(overlay.waitUntilExists(timeout: 10), "the overlay must end up visible after the last show")
     }
 
     func test_quickMenuAndPinnedWindow_toggleWithoutCrashing() {

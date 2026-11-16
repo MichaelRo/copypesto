@@ -27,10 +27,10 @@ final class ShelfChipBarGeometryTests: PestoUITestCase {
     private func addCollection(named name: String) {
         element(AccessibilityID.newCollectionButton).click()
         let field = element(AccessibilityID.collectionNameField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5), "no name field for \(name)")
+        XCTAssertTrue(field.waitUntilExists(timeout: 5), "no name field for \(name)")
         field.typeText("\(name)\r")
         XCTAssertTrue(
-            element(AccessibilityID.collectionChip(name)).waitForExistence(timeout: 5), "\(name) was not added"
+            element(AccessibilityID.collectionChip(name)).waitUntilExists(timeout: 5), "\(name) was not added"
         )
         parkPointer()
     }
@@ -77,7 +77,7 @@ final class ShelfChipBarGeometryTests: PestoUITestCase {
         element(AccessibilityID.newCollectionButton).click()
 
         let field = element(AccessibilityID.collectionNameField)
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.waitUntilExists(timeout: 5))
         XCTAssertTrue(field.isHittable, "the chip row's drop layer must not cover the name field")
     }
 }

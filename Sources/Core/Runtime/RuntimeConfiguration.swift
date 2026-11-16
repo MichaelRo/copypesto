@@ -65,6 +65,7 @@ public enum MarketingBackdropStyle: String, Equatable, Sendable {
 public struct RuntimeConfiguration: Equatable, Sendable {
     public var mode: LaunchMode
     public var session: String
+    public var seedKeySession: String?
     public var seed: SeedProfile
     public var accessibility: AccessibilityStub
     /// Working directory chosen by the test runner (PESTO_UITEST_DIR); shared by the app and the runner.
@@ -115,6 +116,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     public init(
         mode: LaunchMode,
         session: String,
+        seedKeySession: String? = nil,
         seed: SeedProfile,
         accessibility: AccessibilityStub,
         directory: URL? = nil,
@@ -133,6 +135,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     ) {
         self.mode = mode
         self.session = session
+        self.seedKeySession = seedKeySession
         self.seed = seed
         self.accessibility = accessibility
         self.directory = directory
@@ -170,6 +173,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         return RuntimeConfiguration(
             mode: mode,
             session: session,
+            seedKeySession: environment["PESTO_UITEST_KEY_SEED"].flatMap { $0.isEmpty ? nil : $0 },
             seed: environment["PESTO_UITEST_SEED"].flatMap(SeedProfile.init(rawValue:)) ?? .basic,
             accessibility: environment["PESTO_UITEST_ACCESSIBILITY"].flatMap(AccessibilityStub.init(rawValue:))
                 ?? .trusted,

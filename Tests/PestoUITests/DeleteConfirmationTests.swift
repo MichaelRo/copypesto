@@ -19,14 +19,14 @@ final class DeleteConfirmationTests: PestoUITestCase {
         let label = cards.firstMatch.label
 
         overlay.typeKey(.delete, modifierFlags: [])
-        XCTAssertTrue(cancel.waitForExistence(timeout: 5), "Delete should ask before removing the clip")
+        XCTAssertTrue(cancel.waitUntilExists(timeout: 5), "Delete should ask before removing the clip")
 
         overlay.typeKey(.escape, modifierFlags: [])
 
         waitForNonExistence(cancel, timeout: 5, "the question should close on Escape")
         XCTAssertTrue(overlay.exists, "Escape should cancel the question, not also close the shelf")
         XCTAssertTrue(
-            cards.matching(NSPredicate(format: "label == %@", label)).firstMatch.waitForExistence(timeout: 5),
+            cards.matching(NSPredicate(format: "label == %@", label)).firstMatch.waitUntilExists(timeout: 5),
             "the clip should still be there after cancelling"
         )
     }
@@ -38,7 +38,7 @@ final class DeleteConfirmationTests: PestoUITestCase {
         let label = cards.firstMatch.label
 
         overlay.typeKey(.delete, modifierFlags: [])
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "Delete should ask before removing the clip")
+        XCTAssertTrue(confirm.waitUntilExists(timeout: 5), "Delete should ask before removing the clip")
         overlay.typeKey(.return, modifierFlags: [])
 
         waitForNonExistence(
@@ -54,7 +54,7 @@ final class DeleteConfirmationTests: PestoUITestCase {
         let label = cards.firstMatch.label
 
         overlay.typeKey(.delete, modifierFlags: [])
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "Delete should ask before removing the clip")
+        XCTAssertTrue(confirm.waitUntilExists(timeout: 5), "Delete should ask before removing the clip")
         confirm.click()
 
         waitForNonExistence(
@@ -77,7 +77,7 @@ final class DeleteConfirmationTests: PestoUITestCase {
         selectFirstTwoCards()
 
         element(AccessibilityID.deleteSelectedButton).click()
-        XCTAssertTrue(cancel.waitForExistence(timeout: 5), "deleting a selection should ask first")
+        XCTAssertTrue(cancel.waitUntilExists(timeout: 5), "deleting a selection should ask first")
         cancel.click()
 
         waitForNonExistence(cancel, timeout: 5, "the question should close")
@@ -91,7 +91,7 @@ final class DeleteConfirmationTests: PestoUITestCase {
         selectFirstTwoCards()
 
         element(AccessibilityID.deleteSelectedButton).click()
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "deleting a selection should ask first")
+        XCTAssertTrue(confirm.waitUntilExists(timeout: 5), "deleting a selection should ask first")
         confirm.click()
 
         let removed = NSPredicate { _, _ in self.cards.count == before - 2 }
@@ -107,7 +107,7 @@ final class DeleteConfirmationTests: PestoUITestCase {
         selectFirstTwoCards()
 
         overlay.typeKey(.delete, modifierFlags: [])
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5), "Delete should ask before removing the selection")
+        XCTAssertTrue(confirm.waitUntilExists(timeout: 5), "Delete should ask before removing the selection")
         overlay.typeKey(.return, modifierFlags: [])
 
         let removed = NSPredicate { _, _ in self.cards.count == before - 2 }

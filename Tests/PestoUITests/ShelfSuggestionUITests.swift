@@ -33,7 +33,7 @@ final class ShelfSuggestionUITests: PestoUITestCase {
         waitForNonExistence(overlay, timeout: 10, "the paste should close the shelf")
 
         showOverlay()
-        XCTAssertTrue(banner.waitForExistence(timeout: dwell + 8), "no suggestion banner after the dwell")
+        XCTAssertTrue(banner.waitUntilExists(timeout: dwell + 8), "no suggestion banner after the dwell")
         XCTAssertTrue(banner.label.contains("⌃1"), "the banner should offer ⌃1, said: \(banner.label)")
         let suggestedCard = cards.matching(NSPredicate(format: "value CONTAINS 'suggested shortcut Control 1'"))
             .firstMatch
@@ -48,7 +48,7 @@ final class ShelfSuggestionUITests: PestoUITestCase {
         // The 24-hour pause after a banner also keeps it away here; "twice the pastes" is covered by the policy tests.
         closeShelf()
         showOverlay()
-        let returned = banner.waitForExistence(timeout: dwell + 4)
+        let returned = banner.waitUntilExists(timeout: dwell + 4)
         capture("suggestion-after-reopen")
         XCTAssertFalse(returned, "a declined offer comes back only after the clip is pasted twice as often (ADR 0015)")
     }

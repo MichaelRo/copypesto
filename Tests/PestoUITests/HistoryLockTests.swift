@@ -11,7 +11,7 @@ final class HistoryLockTests: PestoUITestCase {
 
         showOverlay(expectingCards: false)
 
-        XCTAssertTrue(element(AccessibilityID.lockOverlay).waitForExistence(timeout: 5), "the lock screen should show")
+        XCTAssertTrue(element(AccessibilityID.lockOverlay).waitUntilExists(timeout: 5), "the lock screen should show")
         XCTAssertEqual(cards.count, 0, "locked cards must not be exposed to accessibility or automation")
         capture("history-locked")
     }
@@ -32,7 +32,7 @@ final class HistoryLockTests: PestoUITestCase {
         showOverlay(expectingCards: false)
 
         XCTAssertTrue(
-            cards.firstMatch.waitForExistence(timeout: 10),
+            cards.firstMatch.waitUntilExists(timeout: 10),
             "the prompt should open by itself, so history shows without pressing the unlock button"
         )
         XCTAssertFalse(element(AccessibilityID.lockOverlay).exists)
@@ -43,7 +43,7 @@ final class HistoryLockTests: PestoUITestCase {
 
         send(.showQuickMenu)
 
-        XCTAssertTrue(element(AccessibilityID.lockOverlay).waitForExistence(timeout: 10), "the lock screen should show")
+        XCTAssertTrue(element(AccessibilityID.lockOverlay).waitUntilExists(timeout: 10), "the lock screen should show")
         XCTAssertFalse(element(AccessibilityID.quickMenuPanel).exists, "the quick menu must not bypass the lock")
         XCTAssertEqual(cards.count, 0)
     }

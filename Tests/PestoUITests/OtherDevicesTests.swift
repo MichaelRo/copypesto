@@ -8,7 +8,7 @@ final class OtherDevicesTests: PestoUITestCase {
 
         element(AccessibilityID.searchButton).click()
 
-        XCTAssertTrue(element(AccessibilityID.filterChip("Sensitive")).waitForExistence(timeout: 5))
+        XCTAssertTrue(element(AccessibilityID.filterChip("Sensitive")).waitUntilExists(timeout: 5))
         XCTAssertFalse(element(AccessibilityID.filterChip("Other Devices")).exists)
     }
 
@@ -19,7 +19,7 @@ final class OtherDevicesTests: PestoUITestCase {
         element(AccessibilityID.searchButton).click()
 
         let chip = element(AccessibilityID.filterChip("Other Devices"))
-        XCTAssertTrue(chip.waitForExistence(timeout: 5), "no Other Devices chip")
+        XCTAssertTrue(chip.waitUntilExists(timeout: 5), "no Other Devices chip")
         chip.click()
         let deadline = Date().addingTimeInterval(5)
         while cards.firstMatch.exists, Date() < deadline {
@@ -35,38 +35,38 @@ final class OtherDevicesTests: PestoUITestCase {
         element(AccessibilityID.searchButton).click()
 
         let chip = element(AccessibilityID.filterChip("Other Devices"))
-        XCTAssertTrue(chip.waitForExistence(timeout: 10), "an old clip from another device cannot be found")
+        XCTAssertTrue(chip.waitUntilExists(timeout: 10), "an old clip from another device cannot be found")
         chip.click()
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 5))
         capture("other-devices-card")
     }
 
     func test_privacySettings_offerTheToggleOffByDefault() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Privacy")).click()
 
         let toggle = element(AccessibilityID.settingsChoice("keepsRemoteCopies", "toggle"))
 
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5), "no Keep copies from other devices toggle")
+        XCTAssertTrue(toggle.waitUntilExists(timeout: 5), "no Keep copies from other devices toggle")
         XCTAssertEqual(toggle.value as? Int, 0, "copies from other devices must be off by default")
     }
 
     func test_togglingKeepCopiesFromOtherDevicesInSettings_updatesTheOtherDevicesChipLive() {
         launch()
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Privacy")).click()
         let toggle = element(AccessibilityID.settingsChoice("keepsRemoteCopies", "toggle"))
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+        XCTAssertTrue(toggle.waitUntilExists(timeout: 5))
         toggle.click()
         XCTAssertEqual(toggle.value as? Int, 1)
 
         showOverlay()
         element(AccessibilityID.searchButton).click()
         XCTAssertTrue(
-            element(AccessibilityID.filterChip("Other Devices")).waitForExistence(timeout: 5),
+            element(AccessibilityID.filterChip("Other Devices")).waitUntilExists(timeout: 5),
             "turning Keep copies from other devices on in Settings should expose the Other Devices chip"
         )
     }

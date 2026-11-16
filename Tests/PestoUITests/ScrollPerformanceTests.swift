@@ -35,7 +35,7 @@ final class ScrollPerformanceTests: PestoUITestCase {
         }
 
         let focused = card(containing: "Clip #4959")
-        XCTAssertTrue(focused.waitForExistence(timeout: 5), "the card 40 steps along was never drawn")
+        XCTAssertTrue(focused.waitUntilExists(timeout: 5), "the card 40 steps along was never drawn")
         XCTAssertTrue(focused.isHittable, "the focused card should have been scrolled into view")
     }
 
@@ -56,7 +56,7 @@ final class ScrollPerformanceTests: PestoUITestCase {
         showOverlay()
 
         let newest = card(containing: sentinel)
-        XCTAssertTrue(newest.waitForExistence(timeout: 5), "the clip copied while closed is not on the shelf")
+        XCTAssertTrue(newest.waitUntilExists(timeout: 5), "the clip copied while closed is not on the shelf")
         XCTAssertTrue(newest.isHittable, "the shelf opened scrolled past the newest clip")
         XCTAssertLessThan(newest.frame.minX - overlay.frame.minX, 40, "the newest clip is not at the start")
     }

@@ -10,7 +10,7 @@ final class DedupeFlowTests: PestoUITestCase {
 
         copyToClipboard(sentinel)
         showOverlay()
-        XCTAssertTrue(card(containing: sentinel).waitForExistence(timeout: 10))
+        XCTAssertTrue(card(containing: sentinel).waitUntilExists(timeout: 10))
         copyToClipboard("something else")
         copyToClipboard(sentinel)
         RunLoop.current.run(until: Date().addingTimeInterval(1.5))
@@ -23,7 +23,7 @@ final class DedupeFlowTests: PestoUITestCase {
         launch()
         let older = "Team lunch is at 12:30 on Thursday, booked under Alex."
         showOverlay()
-        XCTAssertTrue(card(containing: "Team lunch").waitForExistence(timeout: 10))
+        XCTAssertTrue(card(containing: "Team lunch").waitUntilExists(timeout: 10))
         XCTAssertGreaterThan(card(containing: "Team lunch").frame.minX, cards.firstMatch.frame.minX)
 
         copyToClipboard("something else \(UUID().uuidString.prefix(6))")
@@ -40,7 +40,7 @@ final class DedupeFlowTests: PestoUITestCase {
         let sentinel = "pesto-select-\(UUID().uuidString.prefix(6))"
         copyToClipboard(sentinel)
         showOverlay()
-        XCTAssertTrue(card(containing: sentinel).waitForExistence(timeout: 10))
+        XCTAssertTrue(card(containing: sentinel).waitUntilExists(timeout: 10))
 
         card(containing: sentinel).doubleClick()
         XCTAssertEqual(waitForPaste(count: 1), [sentinel])
@@ -55,7 +55,7 @@ final class DedupeFlowTests: PestoUITestCase {
         let sentinel = "pesto-persist-\(UUID().uuidString.prefix(6))"
         copyToClipboard(sentinel)
         showOverlay()
-        XCTAssertTrue(card(containing: sentinel).waitForExistence(timeout: 10))
+        XCTAssertTrue(card(containing: sentinel).waitUntilExists(timeout: 10))
 
         relaunch()
         showOverlay()

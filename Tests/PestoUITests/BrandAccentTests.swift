@@ -5,14 +5,14 @@ final class BrandAccentTests: PestoUITestCase {
     private func openAppearance() {
         launch(defaults: ["hasOnboarded": "true"])
         send(.openSettings)
-        XCTAssertTrue(settingsWindow.waitForExistence(timeout: 10))
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
         element(AccessibilityID.settingsSidebar("Appearance")).click()
     }
 
     func test_aFreshInstall_usesThePestoGreenAccent() {
         openAppearance()
         let brand = element(AccessibilityID.settingsChoice("accent", "brand"))
-        XCTAssertTrue(brand.waitForExistence(timeout: 5), "no Pesto green swatch")
+        XCTAssertTrue(brand.waitUntilExists(timeout: 5), "no Pesto green swatch")
         XCTAssertTrue(brand.isSelected, "the brand accent should be the default")
         capture("settings-appearance-brand", of: settingsWindow)
     }
@@ -24,7 +24,7 @@ final class BrandAccentTests: PestoUITestCase {
         expectation(for: NSPredicate(format: "isSelected == true"), evaluatedWith: blue)
         waitForExpectations(timeout: 5)
         let name = element(AccessibilityID.settingsChoice("accent", "name"))
-        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        XCTAssertTrue(name.waitUntilExists(timeout: 5))
         XCTAssertEqual("\(name.value ?? name.label)", "Blue", "the chosen colour is not named under the row")
 
         element(AccessibilityID.settingsChoice("accent", "brand")).click()
@@ -39,7 +39,7 @@ final class BrandAccentTests: PestoUITestCase {
         openAppearance()
         let preset = element(AccessibilityID.settingsChoice("accent", "blue"))
         let custom = element(AccessibilityID.settingsChoice("accent", "custom"))
-        XCTAssertTrue(custom.waitForExistence(timeout: 5), "no custom swatch")
+        XCTAssertTrue(custom.waitUntilExists(timeout: 5), "no custom swatch")
         XCTAssertEqual(
             custom.frame.width,
             preset.frame.width,
@@ -55,7 +55,7 @@ final class BrandAccentTests: PestoUITestCase {
         openAppearance()
         element(AccessibilityID.settingsChoice("accent", "custom")).click()
         let panel = app.windows["Colors"]
-        XCTAssertTrue(panel.waitForExistence(timeout: 5), "Other did not open the colour panel")
+        XCTAssertTrue(panel.waitUntilExists(timeout: 5), "Other did not open the colour panel")
 
         element(AccessibilityID.settingsChoice("accent", "purple")).click()
 

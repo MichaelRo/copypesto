@@ -172,4 +172,19 @@ struct StructuredPasteTests {
         let item = try #require(items.first)
         #expect(StructuredPaste.offered(for: item) == [.json, .markdown])
     }
+
+    @Test("a Markdown table clip offers JSON and writes an array of objects")
+    func whenMarkdownTable_thenJsonOffered() throws {
+        let md = """
+        | name | role |
+        | --- | --- |
+        | Ada | eng |
+        | Bob | design |
+        """
+        let item = try clip(md, type: .code, language: "markdown")
+        #expect(StructuredPaste.offered(for: item) == [.json])
+        let json = try #require(StructuredPaste.result(of: .json, for: item))
+        #expect(json.contains("\"name\": \"Ada\""))
+        #expect(json.contains("\"role\": \"design\""))
+    }
 }

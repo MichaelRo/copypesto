@@ -207,11 +207,7 @@ struct GridView: View {
                 onSpace: handleSpace,
                 onCharacterTyped: { appState.typeIntoSearch($0) },
                 onEscapeFromSearch: {
-                    if isPinnedHost {
-                        appState.isSearchActive = false
-                    } else {
-                        appState.close()
-                    }
+                    appState.isSearchActive = false
                 },
                 onArrowKey: arrowKeyMoved,
                 onPrevPinboard: { cyclePinboard(forward: false) },

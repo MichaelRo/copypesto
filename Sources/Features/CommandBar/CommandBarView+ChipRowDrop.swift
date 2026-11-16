@@ -20,4 +20,11 @@ extension CommandBarView {
             )
             .accessibilityHidden(true)
     }
+
+    func reorderPinboard(_ sourceID: UUID, relativeTo targetID: UUID, side: CollectionReorder.Side) {
+        let order = CollectionReorder.order(pinboards.map(\.id), moving: sourceID, relativeTo: targetID, side: side)
+        withAnimation(Motion.animation(.pestoMove)) {
+            persistPinboardOrder(order, moved: sourceID)
+        }
+    }
 }

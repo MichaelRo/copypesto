@@ -54,16 +54,25 @@ struct ShortcutsSettings: View {
         }
     }
 
-    private var shelfKeysSection: some View {
+    private struct ShelfKeyPair: Identifiable {
+        let id: Int
+        let left: ShelfKey
+        let right: ShelfKey?
+    }
+
+    private static let shelfKeyPairs: [ShelfKeyPair] = {
         let entries = ShelfKeyReference.entries
-        let pairs = stride(from: 0, to: entries.count, by: 2).map { index in
-            (index, entries[index], index + 1 < entries.count ? entries[index + 1] : nil)
+        return stride(from: 0, to: entries.count, by: 2).map { index in
+            ShelfKeyPair(id: index, left: entries[index], right: index + 1 < entries.count ? entries[index + 1] : nil)
         }
-        return Section {
-            ForEach(pairs, id: \.0) { _, left, right in
+    }()
+
+    private var shelfKeysSection: some View {
+        Section {
+            ForEach(Self.shelfKeyPairs) { pair in
                 HStack(spacing: 20) {
-                    shelfKeyCell(left)
-                    if let right {
+                    shelfKeyCell(pair.left)
+                    if let right = pair.right {
                         shelfKeyCell(right)
                     } else {
                         Spacer(minLength: 0).frame(maxWidth: .infinity)
@@ -88,6 +97,7 @@ struct ShortcutsSettings: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .drawingGroup()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(shelfKey.action), \(shelfKey.keys.joined(separator: " "))")
         .accessibilityAddTraits(.isStaticText)

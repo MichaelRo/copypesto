@@ -21,6 +21,9 @@ struct PinboardChipView: View {
     var canMoveLeft = false
     var canMoveRight = false
     var insertionSide: CollectionReorder.Side?
+    var chipWidth: CGFloat = 80
+    var chipInsertionBar: Binding<CollectionReorder.InsertionBar?>?
+    var onReorderChip: ((UUID, CollectionReorder.Side) -> Void)?
 
     @Environment(AppState.self) private var appState: AppState
     @State private var isEditing = false
@@ -86,7 +89,15 @@ struct PinboardChipView: View {
             }
             .onDrop(
                 of: [UTType.text, UTType.data],
-                delegate: ChipDropDelegate(appState: appState, isTargeted: $isDropTarget, onClipDrop: { onDrop?() })
+                delegate: ChipDropDelegate(
+                    appState: appState,
+                    targetID: pinboard.id,
+                    chipWidth: chipWidth,
+                    isTargeted: $isDropTarget,
+                    insertionBar: chipInsertionBar,
+                    onClipDrop: { onDrop?() },
+                    onChipReorder: onReorderChip
+                )
             )
             .contextMenu {
                 Button("Edit…") { isEditing = true }
@@ -120,27 +131,64 @@ struct PinboardChipView: View {
     }
 }
 
-/// A clip dragged over a collection chip keeps the collection's ring. A chip dragged over it is not this delegate's: it
-/// refuses, and the row's delegate answers (`ChipRowDropDelegate`), so the cursor never shows "not allowed" between
-/// chips.
+/// Handles both clip-onto-collection drops (colored ring) and collection-chip reorder drops (2 pt accent bar),
+/// matching `CardReorderDropDelegate`.
 private struct ChipDropDelegate: DropDelegate {
     let appState: AppState
+    let targetID: UUID
+    let chipWidth: CGFloat
     @Binding var isTargeted: Bool
+    var insertionBar: Binding<CollectionReorder.InsertionBar?>?
     let onClipDrop: () -> Void
+    var onChipReorder: ((UUID, CollectionReorder.Side) -> Void)?
 
     func validateDrop(info _: DropInfo) -> Bool {
-        appState.draggingPinboardID == nil
+        if let sourceID = appState.draggingPinboardID {
+            return sourceID != targetID && onChipReorder != nil
+        }
+        return true
     }
 
-    func dropEntered(info _: DropInfo) {
-        isTargeted = true
+    func dropEntered(info: DropInfo) {
+        if let sourceID = appState.draggingPinboardID {
+            guard sourceID != targetID else { return }
+            let side = CollectionReorder.Side.at(x: info.location.x, width: max(chipWidth, 1))
+            insertionBar?.wrappedValue = CollectionReorder.InsertionBar(target: targetID, side: side)
+        } else {
+            isTargeted = true
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        if let sourceID = appState.draggingPinboardID {
+            guard sourceID != targetID else { return nil }
+            let side = CollectionReorder.Side.at(x: info.location.x, width: max(chipWidth, 1))
+            let next = CollectionReorder.InsertionBar(target: targetID, side: side)
+            if insertionBar?.wrappedValue != next { insertionBar?.wrappedValue = next }
+            return DropProposal(operation: .move)
+        }
+        return DropProposal(operation: .copy)
     }
 
     func dropExited(info _: DropInfo) {
         isTargeted = false
+        if insertionBar?.wrappedValue?.target == targetID {
+            insertionBar?.wrappedValue = nil
+        }
     }
 
-    func performDrop(info _: DropInfo) -> Bool {
+    func performDrop(info: DropInfo) -> Bool {
+        if let sourceID = appState.draggingPinboardID {
+            defer {
+                insertionBar?.wrappedValue = nil
+                appState.isDragging = false
+                appState.draggingPinboardID = nil
+            }
+            guard sourceID != targetID else { return false }
+            let side = CollectionReorder.Side.at(x: info.location.x, width: max(chipWidth, 1))
+            onChipReorder?(sourceID, side)
+            return true
+        }
         defer {
             isTargeted = false
             appState.isDragging = false

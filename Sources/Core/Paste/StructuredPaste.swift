@@ -19,7 +19,7 @@ public enum StructuredPaste {
     public static func offered(for item: ClipboardItem) -> [TextTransform] {
         guard isEligible(item) else { return [] }
         var entries: [TextTransform] = []
-        if let text = plainText(of: item), qualifiesForJSON(text) { entries.append(.json) }
+        if let text = plainText(of: item), qualifiesForJSON(text, item: item) { entries.append(.json) }
         if markdown(for: item) != nil { entries.append(.markdown) }
         return entries
     }
@@ -30,7 +30,7 @@ public enum StructuredPaste {
         guard isEligible(item) else { return nil }
         switch transform {
         case .json:
-            return plainText(of: item).flatMap(jsonText(from:))
+            return plainText(of: item).flatMap { jsonText(from: $0, item: item) }
         case .markdown:
             return markdown(for: item)
         default:
@@ -49,16 +49,23 @@ public enum StructuredPaste {
     }
 
     /// Reads only the first rows of a table: enough to say it is one when the menu opens.
-    private static func qualifiesForJSON(_ text: String) -> Bool {
+    private static func qualifiesForJSON(_ text: String, item: ClipboardItem) -> Bool {
         JSONDocument.formatted(text) != nil
             || CSVTable.parse(text, maxRows: 50) != nil
             || CSVTable.parseMarkdownTable(text, maxRows: 50) != nil
+            || (isMarkdownClip(text, item: item) && MarkdownJSON.convert(text) != nil)
     }
 
-    private static func jsonText(from text: String) -> String? {
-        JSONDocument.formatted(text)
-            ?? CSVTable.parse(text)?.jsonText()
-            ?? CSVTable.parseMarkdownTable(text)?.jsonText()
+    private static func jsonText(from text: String, item: ClipboardItem) -> String? {
+        if let formatted = JSONDocument.formatted(text) { return formatted }
+        if let table = CSVTable.parse(text) ?? CSVTable.parseMarkdownTable(text) {
+            return table.jsonText()
+        }
+        return isMarkdownClip(text, item: item) ? MarkdownJSON.convert(text) : nil
+    }
+
+    private static func isMarkdownClip(_ text: String, item: ClipboardItem) -> Bool {
+        item.detectedLanguage == ClipboardType.markdownLanguage || MarkdownDetector.isMarkdown(text)
     }
 
     private static func markdown(for item: ClipboardItem) -> String? {

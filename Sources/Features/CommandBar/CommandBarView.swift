@@ -158,7 +158,10 @@ struct CommandBarView: View {
                     onMove: { movePinboard(pinboard.id, by: $0) },
                     canMoveLeft: pinboards.first?.id != pinboard.id,
                     canMoveRight: pinboards.last?.id != pinboard.id,
-                    insertionSide: chipInsertionBar?.target == pinboard.id ? chipInsertionBar?.side : nil
+                    insertionSide: chipInsertionBar?.target == pinboard.id ? chipInsertionBar?.side : nil,
+                    chipWidth: chipFrames[pinboard.id]?.width ?? 80,
+                    chipInsertionBar: $chipInsertionBar,
+                    onReorderChip: { reorderPinboard($0, relativeTo: pinboard.id, side: $1) }
                 )
                 .transition(.scale(scale: 0.85).combined(with: .opacity))
             }

@@ -393,8 +393,6 @@ else
 
   RECORD_FILE="$LOGS/rec-lint" step_lint &
   pid_lint=$!
-  RECORD_FILE="$LOGS/rec-core" step_core &
-  pid_core=$!
   RECORD_FILE="$LOGS/rec-build" step_build &
   pid_build=$!
   pid_release=""
@@ -403,7 +401,9 @@ else
     pid_release=$!
   fi
 
-  wait "$pid_lint" "$pid_core" "$pid_build" ${pid_release:+"$pid_release"}
+  wait "$pid_lint" "$pid_build" ${pid_release:+"$pid_release"}
+  # Run Core tests after xcodebuild finishes so Release -O compilation never starves sub-100ms timing checks.
+  RECORD_FILE="$LOGS/rec-core" step_core
   ingest_records "$LOGS/rec-lint" "$LOGS/rec-core" "$LOGS/rec-build" "$LOGS/rec-release"
 
   if [[ $FAST -eq 0 ]]; then

@@ -15,6 +15,9 @@ public protocol TextRecognizing: Sendable {
 
 public struct OCRService: TextRecognizing {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "OCR")
+    /// Vision's `VNImageRequestHandler.perform` blocks synchronously and can exhaust Swift Concurrency's
+    /// cooperative thread pool when multiple image recognitions run concurrently; keep it on a dedicated queue.
+    private static let queue = DispatchQueue(label: "\(AppIdentity.logSubsystem).ocr", qos: .utility)
 
     /// Hosted CI runners are virtual machines on which Vision's text recognition never returns; their job sets this.
     public static let disableVariable = "PESTO_DISABLE_TEXT_RECOGNITION"
@@ -50,33 +53,39 @@ public struct OCRService: TextRecognizing {
     /// no recognizable text or cannot be decoded.
     public func recognize(imageData: Data) async -> String? {
         guard !disabled else { return nil }
-        return await Task.detached(priority: .utility) {
-            guard
-                let source = CGImageSourceCreateWithData(
-                    imageData as CFData,
-                    [kCGImageSourceShouldCache: false] as CFDictionary
-                ),
-                let cgImage = ImageDownsampler.boundedImage(from: source) else { return nil }
-
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.usesLanguageCorrection = true
-
-            // A failed read is logged, not treated as "no text": a picture whose text could not be read is not a
-            // picture
-            // known to hold no secret.
-            do {
-                try VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
-            } catch {
-                Self.logger.error("Text recognition failed: \(error.localizedDescription, privacy: .public)")
-                return nil
+        return await withCheckedContinuation { continuation in
+            Self.queue.async {
+                continuation.resume(returning: Self.performRecognition(imageData: imageData))
             }
+        }
+    }
 
-            let text = (request.results ?? [])
-                .compactMap { $0.topCandidates(1).first?.string }
-                .joined(separator: "\n")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            return text.isEmpty ? nil : text
-        }.value
+    private static func performRecognition(imageData: Data) -> String? {
+        guard
+            let source = CGImageSourceCreateWithData(
+                imageData as CFData,
+                [kCGImageSourceShouldCache: false] as CFDictionary
+            ),
+            let cgImage = ImageDownsampler.boundedImage(from: source) else { return nil }
+
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+
+        // A failed read is logged, not treated as "no text": a picture whose text could not be read is not a
+        // picture
+        // known to hold no secret.
+        do {
+            try VNImageRequestHandler(cgImage: cgImage, options: [:]).perform([request])
+        } catch {
+            logger.error("Text recognition failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+
+        let text = (request.results ?? [])
+            .compactMap { $0.topCandidates(1).first?.string }
+            .joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.isEmpty ? nil : text
     }
 }

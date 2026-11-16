@@ -28,6 +28,8 @@ struct CollectionReorderTests {
     func whenPointerInHalf_thenSide() {
         #expect(CollectionReorder.Side.at(x: 10, width: 100) == .before)
         #expect(CollectionReorder.Side.at(x: 60, width: 100) == .after)
+        #expect(CollectionReorder.Side.at(x: 50, width: 100) == .after)
+        #expect(CollectionReorder.Side.at(x: 0, width: 0) == .after)
     }
 
     @Test("the insertion index counts the chips whose centre the pointer has passed")

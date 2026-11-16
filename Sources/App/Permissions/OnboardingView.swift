@@ -327,6 +327,13 @@ struct OnboardingView: View {
                         }
                         .buttonStyle(.pestoLink)
                         .accessibilityIdentifier(AccessibilityID.onboardingSkipAccessibilityButton)
+                        Text(
+                            "You can browse and copy clips, and press ⌘V to paste them yourself. "
+                                + "Auto-paste can be enabled anytime in System Settings."
+                        )
+                        .font(.caption)
+                        .pestoQuiet()
+                        .multilineTextAlignment(.center)
                     }
                 }
             case .lock:

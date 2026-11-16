@@ -203,4 +203,51 @@ struct StructuredPasteTests {
         #expect(json.contains("\"Shopping\""))
         #expect(json.contains("\"Pine nuts\""))
     }
+
+    @Test("MarkdownJSON parses headings, lists, quotes, code fences, paragraphs, and CRLF")
+    func whenMarkdownBlocksMixed_thenAllBlockTypesConverted() throws {
+        let md = [
+            "## Title",
+            "",
+            "First line",
+            "second line",
+            "",
+            "> Quote one",
+            "> Quote two",
+            "",
+            "1. One",
+            "2. Two",
+            "",
+            "```swift",
+            "let x = 1",
+            "",
+            "let y = 2",
+            "```"
+        ].joined(separator: "\r\n")
+        let json = try #require(MarkdownJSON.convert(md))
+        let data = Data(json.utf8)
+        let parsed = try #require(try JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+        #expect(parsed.count == 5)
+        #expect(parsed[0]["type"] as? String == "heading")
+        #expect(parsed[0]["level"] as? Int == 2)
+        #expect(parsed[1]["type"] as? String == "paragraph")
+        #expect(parsed[1]["text"] as? String == "First line second line")
+        #expect(parsed[2]["type"] as? String == "quote")
+        #expect(parsed[2]["text"] as? String == "Quote one\nQuote two")
+        #expect(parsed[3]["type"] as? String == "list")
+        #expect(parsed[3]["ordered"] as? Bool == true)
+        #expect(parsed[4]["type"] as? String == "code")
+        #expect(parsed[4]["language"] as? String == "swift")
+    }
+
+    @Test("MarkdownJSON handles unclosed code fences, rejects empty/oversized input, and non-markdown text ignores it")
+    func whenMarkdownEdgeCases_thenHandledSafely() throws {
+        #expect(MarkdownJSON.convert("   \n\t\n") == nil)
+        let huge = String(repeating: "a", count: MarkdownJSON.maxInputBytes + 1)
+        #expect(MarkdownJSON.convert(huge) == nil)
+        let unclosed = try #require(MarkdownJSON.convert("```\ncode\n"))
+        #expect(unclosed.contains("\"type\" : \"code\""))
+        let plainText = try clip("Just a regular sentence without markdown.")
+        #expect(StructuredPaste.offered(for: plainText).isEmpty)
+    }
 }

@@ -23,9 +23,11 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 
 if pgrep -x Pesto > /dev/null; then echo "bench-shelf: a Pesto is running; quit it first (two at once spoil each other)" >&2; exit 1; fi
 
-make generate > /dev/null
-xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Profile -destination 'platform=macOS' \
-  -derivedDataPath .build/xcode-profile CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build > "$OUT/build.log" 2>&1
+if [[ "${PESTO_SKIP_PROFILE_BUILD:-0}" != "1" ]]; then
+  make generate > /dev/null
+  xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Profile -destination 'platform=macOS' \
+    -derivedDataPath .build/xcode-profile CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build > "$OUT/build.log" 2>&1
+fi
 APP="$OUT/Pesto.app"
 ditto .build/xcode-profile/Build/Products/Profile/Pesto.app "$APP"
 rm -rf "$APP"/Contents/PlugIns/*.xctest "$APP"/Contents/PlugIns/*.xctest.dSYM

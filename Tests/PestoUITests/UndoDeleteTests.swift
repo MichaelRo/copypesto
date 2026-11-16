@@ -92,4 +92,32 @@ final class UndoDeleteTests: PestoUITestCase {
         overlay.typeKey("z", modifierFlags: [.command, .shift])
         XCTAssertTrue(chip.waitUntilExists(timeout: 5), "⇧⌘Z should add it again")
     }
+
+    func test_whenHiddenNSFWClipsAreShownSelectedAllAndDeleted_thenCommandZBringsThemBack() {
+        launch(seed: "empty", defaults: ["hasOnboarded": "true", "nsfwMode": "hide"])
+        copyToClipboard("https://erome.com/clip.gif")
+        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+        copyToClipboard("https://erome.com/album/1")
+        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+
+        showOverlay(expectingCards: false)
+        element(AccessibilityID.searchButton).click()
+        let hiddenChip = element(AccessibilityID.filterChip("Hidden"))
+        XCTAssertTrue(hiddenChip.waitUntilExists(timeout: 5), "Hidden filter chip should appear in Search")
+        hiddenChip.click()
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 5), "Hidden NSFW clips should appear")
+        XCTAssertEqual(cards.count, 2)
+
+        overlay.typeKey("a", modifierFlags: .command)
+        let deleteSelected = element(AccessibilityID.deleteSelectedButton)
+        XCTAssertTrue(deleteSelected.waitUntilExists(timeout: 5), "Selection action bar should appear")
+        deleteSelected.click()
+        XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitUntilExists(timeout: 5))
+        element(AccessibilityID.deleteConfirmButton).click()
+        waitForNonExistence(cards.firstMatch, timeout: 5, "Deleting all hidden clips should clear the grid")
+
+        overlay.typeKey("z", modifierFlags: .command)
+        XCTAssertTrue(cards.firstMatch.waitUntilExists(timeout: 5), "⌘Z should restore the deleted NSFW clips")
+        XCTAssertEqual(cards.count, 2)
+    }
 }

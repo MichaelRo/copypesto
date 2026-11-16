@@ -142,17 +142,23 @@ struct ClipDeleteUndoTests {
         #expect(history.undoLabel == .deleteClips(1))
     }
 
-    @Test("a batch with one clip that cannot be held is not undoable at all")
-    func whenOneIsNotHoldable_thenTheBatchIsNot() async throws {
-        let ids = try await ingest("burns", "fine")
+    @Test("a batch with one clip that cannot be held still lets the holdable clips undo")
+    func whenOneIsNotHoldable_thenTheHoldableOnesStillUndo() async throws {
+        let ids = try await ingest("burns", "fine", "also-fine")
         let context = ModelContext(container)
         try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == ids[0] })
             .expiresAt = .now.addingTimeInterval(60)
+        try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == ids[1] })
+            .byteSize = UndoPolicy.maxClipBytes + 1
         try context.save()
 
         try await service.deleteItems(ids: ids, reason: .user)
 
-        #expect(history.undoLabel == nil)
+        #expect(history.undoLabel == .deleteClips(1))
+        let outcome = try await service.undo()
+        #expect(outcome == UndoOutcome(label: .deleteClips(1), direction: .undone))
+        let restored = try items()
+        #expect(restored.map(\.id) == [ids[2]])
     }
 
     @Test("a clip copied again while the old one was deleted is not duplicated by the undo")
@@ -214,5 +220,51 @@ struct ClipDeleteUndoTests {
         try await service.clearEverything()
         #expect(history.undoLabel == nil)
         #expect(try await service.undo() == nil)
+    }
+
+    @Test("filtered NSFW GIF and links deleted together come back on undo with isNSFW intact")
+    func whenNSFWGifAndLinksDeleted_thenUndoRestoresAll() async throws {
+        let gifData = Data("GIF89a".utf8) + Data(repeating: 0xAB, count: 256)
+        let gifCapture = PasteboardCapture(
+            typeIdentifier: "com.compuserve.gif",
+            payload: gifData,
+            payloadString: "",
+            timestamp: .now,
+            contentHash: "hash-nsfw-gif",
+            sourceImageURL: URL(string: "https://erome.com/clip.gif")
+        )
+        let gifLink = PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("https://erome.com/clip.gif".utf8),
+            payloadString: "https://erome.com/clip.gif",
+            timestamp: .now.addingTimeInterval(1),
+            contentHash: "hash-nsfw-gif-link"
+        )
+        let siteLink = PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("https://erome.com/album/1".utf8),
+            payloadString: "https://erome.com/album/1",
+            timestamp: .now.addingTimeInterval(2),
+            contentHash: "hash-nsfw-site-link"
+        )
+        try await service.ingest(gifCapture)
+        try await service.ingest(gifLink)
+        try await service.ingest(siteLink)
+        await service.waitForBackgroundWork()
+
+        let all = try items()
+        #expect(all.count == 3)
+        #expect(all.filter(\.isNSFW).count == 3)
+
+        let ids = all.map(\.id)
+        try await service.deleteItems(ids: ids, reason: .user)
+        #expect(try items().isEmpty)
+        #expect(history.undoLabel == .deleteClips(3))
+
+        let undone = try await service.undo()
+        #expect(undone == UndoOutcome(label: .deleteClips(3), direction: .undone))
+        let restored = try items()
+        #expect(restored.count == 3)
+        #expect(restored.filter(\.isNSFW).count == 3)
     }
 }

@@ -215,4 +215,50 @@ struct ClipDeleteUndoTests {
         #expect(history.undoLabel == nil)
         #expect(try await service.undo() == nil)
     }
+
+    @Test("filtered NSFW GIF and links deleted together come back on undo with isNSFW intact")
+    func whenNSFWGifAndLinksDeleted_thenUndoRestoresAll() async throws {
+        let gifData = Data("GIF89a".utf8) + Data(repeating: 0xAB, count: 256)
+        let gifCapture = PasteboardCapture(
+            typeIdentifier: "com.compuserve.gif",
+            payload: gifData,
+            payloadString: "",
+            timestamp: .now,
+            contentHash: "hash-nsfw-gif",
+            sourceImageURL: URL(string: "https://erome.com/clip.gif")
+        )
+        let gifLink = PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("https://erome.com/clip.gif".utf8),
+            payloadString: "https://erome.com/clip.gif",
+            timestamp: .now.addingTimeInterval(1),
+            contentHash: "hash-nsfw-gif-link"
+        )
+        let siteLink = PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("https://erome.com/album/1".utf8),
+            payloadString: "https://erome.com/album/1",
+            timestamp: .now.addingTimeInterval(2),
+            contentHash: "hash-nsfw-site-link"
+        )
+        try await service.ingest(gifCapture)
+        try await service.ingest(gifLink)
+        try await service.ingest(siteLink)
+        await service.waitForBackgroundWork()
+
+        let all = try items()
+        #expect(all.count == 3)
+        #expect(all.filter(\.isNSFW).count == 3)
+
+        let ids = all.map(\.id)
+        try await service.deleteItems(ids: ids, reason: .user)
+        #expect(try items().isEmpty)
+        #expect(history.undoLabel == .deleteClips(3))
+
+        let undone = try await service.undo()
+        #expect(undone == UndoOutcome(label: .deleteClips(3), direction: .undone))
+        let restored = try items()
+        #expect(restored.count == 3)
+        #expect(restored.filter(\.isNSFW).count == 3)
+    }
 }

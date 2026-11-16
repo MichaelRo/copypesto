@@ -147,16 +147,24 @@ final class AppState {
 
     /// When the shelf last closed; `ShelfContextPolicy` decides from it whether the next open starts from All.
     @ObservationIgnored var shelfClosedAt: Date?
+    /// Whether the most recent open crossed `ShelfContextPolicy.memory` and reset context.
+    @ObservationIgnored var shelfContextWasStale = false
 
     /// A link or script chose what the shelf shows (a collection, a search): a long absence must not undo it.
     func noteContextRequested() {
         shelfClosedAt = nil
+        shelfContextWasStale = false
     }
 
     /// Called as the shelf opens. After `ShelfContextPolicy.memory` closed the shelf forgets its collection and
     /// filters; `restingCollectionID` is the frontmost app's own collection, if it has one.
     func resetShelfContextIfStale(now: Date = .now, restingCollectionID: UUID?) {
-        guard !isPinnedWindowVisible, ShelfContextPolicy.shouldReset(closedAt: shelfClosedAt, now: now) else { return }
+        let stale = !isPinnedWindowVisible && ShelfContextPolicy.shouldReset(closedAt: shelfClosedAt, now: now)
+        shelfContextWasStale = stale
+        guard stale else { return }
+        searchText = ""
+        isSearchActive = false
+        filterChipCursor = nil
         clearSearchFilters()
         appChipFilter = []
         selectedCollectionID = restingCollectionID

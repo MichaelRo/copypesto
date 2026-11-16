@@ -191,7 +191,7 @@ extension ClipboardCard {
 
         if offers(.rename) {
             Button(action: beginRenamingTitle) {
-                Label("Rename\u{2026}", systemImage: "pencil")
+                Label(item.customTitle == nil ? "Add Title\u{2026}" : "Rename\u{2026}", systemImage: "pencil")
             }
         }
 
@@ -228,11 +228,12 @@ extension ClipboardCard {
 
         let pasteAsTransforms = TextTransform.available(for: item.type)
         if !pasteAsTransforms.isEmpty {
+            let structuredTransforms = concealment.isConcealed ? [] : (actions.structuredTransforms?(item) ?? [])
             if offers(.copyTransformed), actions.copyTransformed != nil {
                 Menu {
                     if !concealment.isConcealed {
                         StructuredTransformRows(
-                            item: item, offered: actions.structuredTransforms, perform: actions.copyTransformed
+                            item: item, entries: structuredTransforms, perform: actions.copyTransformed
                         )
                     }
                     TransformRows(transforms: pasteAsTransforms) { actions.copyTransformed?(item, $0) }
@@ -245,7 +246,7 @@ extension ClipboardCard {
                 Menu {
                     if !concealment.isConcealed {
                         StructuredTransformRows(
-                            item: item, offered: actions.structuredTransforms, perform: actions.pasteAs
+                            item: item, entries: structuredTransforms, perform: actions.pasteAs
                         )
                     }
                     TransformRows(transforms: pasteAsTransforms.filter { $0 != .stripFormatting }) {

@@ -9,6 +9,7 @@ struct ShelfEmptyStateView: View {
     var hasKeyboardCursor = false
     var onAction: ((ShelfEmptyState.Action) -> Void)?
     var onAdvice: ((NoResultsAdvice.Action) -> Void)?
+    @Environment(\.pestoAccent) private var accent
 
     var body: some View {
         VStack(spacing: 6) {
@@ -35,6 +36,7 @@ struct ShelfEmptyStateView: View {
                 Button(advice.buttonTitle) { onAdvice?(advice.action) }
                     .buttonStyle(.pestoProminent)
                     .controlSize(.regular)
+                    .overlay(Capsule().strokeBorder(accent, lineWidth: hasKeyboardCursor ? 2 : 0).padding(-2))
                     .padding(.top, 6)
                     .help(advice.buttonTitle)
                     .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAdvice)

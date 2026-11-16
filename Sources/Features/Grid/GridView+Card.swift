@@ -61,21 +61,33 @@ extension GridView {
             showsFirstCopyTime: showsFirstCopyTime
         )
         .equatable()
-        .onDrop(
-            of: [
-                UTType.utf8PlainText.identifier, UTType.plainText.identifier,
-                UTType.png.identifier, UTType.tiff.identifier, UTType.fileURL.identifier
-            ],
-            isTargeted: nil
-        ) { _ in
-            guard showsFirstCopyTime,
-                  let draggedID = appState.draggingItemID,
-                  draggedID != item.id else { return false }
-            reorderItem(from: draggedID, to: item.id)
-            appState.draggingItemID = nil
-            appState.isDragging = false
-            return true
+        .overlay(alignment: cardInsertionBar?.target == item.id && cardInsertionBar?
+            .side == .before ? .leading : .trailing)
+        {
+            if let bar = cardInsertionBar, bar.target == item.id {
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(accent)
+                    .frame(width: 2)
+                    .padding(.vertical, 8)
+                    .offset(x: bar.side == .before ? -5 : 5)
+            }
         }
+        .onDrop(
+                of: [
+                    UTType.utf8PlainText.identifier, UTType.plainText.identifier,
+                    UTType.png.identifier, UTType.tiff.identifier, UTType.fileURL.identifier
+                ],
+                delegate: CardReorderDropDelegate(
+                    appState: appState,
+                    targetID: item.id,
+                    cardWidth: cardDimensions.width,
+                    canReorder: showsFirstCopyTime,
+                    insertionBar: $cardInsertionBar,
+                    onReorder: { sourceID, side in
+                        reorderItem(from: sourceID, relativeTo: item.id, side: side)
+                    }
+                )
+            )
     }
 
     /// What every card on this shelf can do. Built once per update of the grid, not once per card.
@@ -217,14 +229,14 @@ extension GridView {
         .environment(\.clipEditor, editor)
     }
 
-    func reorderItem(from sourceID: UUID, to targetID: UUID) {
+    func reorderItem(from sourceID: UUID, relativeTo targetID: UUID, side: CollectionReorder.Side) {
         guard appState.historyStore != nil else { return }
-        var currentItems = cachedFilteredItems
-        guard let fromIndex = currentItems.firstIndex(where: { $0.id == sourceID }),
-              let toIndex = currentItems.firstIndex(where: { $0.id == targetID }) else { return }
-        let moved = currentItems.remove(at: fromIndex)
-        currentItems.insert(moved, at: toIndex)
-        let order = Dictionary(currentItems.enumerated().map { ($1.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let ids = cachedFilteredItems.map(\.id)
+        let reorderedIDs = CollectionReorder.order(ids, moving: sourceID, relativeTo: targetID, side: side)
+        guard reorderedIDs != ids else { return }
+        let byID = Dictionary(cachedFilteredItems.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let currentItems = reorderedIDs.compactMap { byID[$0] }
+        let order = Dictionary(reorderedIDs.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
         clipEditor.edit(currentItems) { $0.collectionOrder = order[$0.id] }
     }
 
@@ -238,5 +250,42 @@ extension GridView {
         guard !appState.isHistoryLockedNow(), let payloadKind = appState.writeAsFile(item) else { return }
         appState.notePastedInBackground(item, in: modelContext)
         appState.close(.paste(item, payloadKind))
+    }
+}
+
+private struct CardReorderDropDelegate: DropDelegate {
+    let appState: AppState
+    let targetID: UUID
+    let cardWidth: CGFloat
+    let canReorder: Bool
+    @Binding var insertionBar: CollectionReorder.InsertionBar?
+    let onReorder: (UUID, CollectionReorder.Side) -> Void
+
+    func validateDrop(info _: DropInfo) -> Bool {
+        canReorder && appState.draggingItemID != nil && appState.draggingItemID != targetID
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        guard canReorder, let sourceID = appState.draggingItemID, sourceID != targetID else { return nil }
+        let side = CollectionReorder.Side.at(x: info.location.x, width: cardWidth)
+        let next = CollectionReorder.InsertionBar(target: targetID, side: side)
+        if insertionBar != next { insertionBar = next }
+        return DropProposal(operation: .move)
+    }
+
+    func dropExited(info _: DropInfo) {
+        if insertionBar?.target == targetID { insertionBar = nil }
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        defer {
+            insertionBar = nil
+            appState.draggingItemID = nil
+            appState.isDragging = false
+        }
+        guard canReorder, let sourceID = appState.draggingItemID, sourceID != targetID else { return false }
+        let side = CollectionReorder.Side.at(x: info.location.x, width: cardWidth)
+        onReorder(sourceID, side)
+        return true
     }
 }

@@ -85,5 +85,23 @@ extension HostedGlobals {
             #expect(state.appChipFilter == ["com.apple.Notes"])
             #expect(state.selectedCollectionID == collection)
         }
+
+        @Test("reopening soon keeps the search query and marks context fresh; reopening late clears search")
+        func whenReopenedSoonVsLate_thenSearchQueryAndFreshnessFollowPolicy() {
+            let (state, _) = stateInACollection()
+            state.searchText = "invoice"
+            state.isSearchActive = true
+            state.shelfClosedAt = Date(timeIntervalSince1970: 1000)
+
+            state.resetShelfContextIfStale(now: Date(timeIntervalSince1970: 1060), restingCollectionID: nil)
+            #expect(!state.shelfContextWasStale)
+            #expect(state.searchText == "invoice")
+            #expect(state.isSearchActive)
+
+            state.resetShelfContextIfStale(now: Date(timeIntervalSince1970: 1091), restingCollectionID: nil)
+            #expect(state.shelfContextWasStale)
+            #expect(state.searchText.isEmpty)
+            #expect(!state.isSearchActive)
+        }
     }
 }

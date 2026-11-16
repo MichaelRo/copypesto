@@ -351,4 +351,55 @@ struct PasteMigratorTests {
         #expect(summary.skipped == 1)
         #expect(try items(in: container).count == 1)
     }
+
+    @Test("older imported clips keep their dates and never jump ahead of newer live clips on All")
+    func whenOlderClipsImported_thenNewerLiveClipsStayFirst() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let storage = StorageService(modelContainer: container)
+        let now = Date.now
+        let liveNew = PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("newer live clip".utf8),
+            payloadString: "newer live clip",
+            timestamp: now.addingTimeInterval(-60),
+            contentHash: Data("newer live clip".utf8).sha256Hex
+        )
+        let liveShared = PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: Data("shared clip".utf8),
+            payloadString: "shared clip",
+            timestamp: now.addingTimeInterval(-120),
+            contentHash: Data("shared clip".utf8).sha256Hex
+        )
+        try await storage.ingest(liveNew)
+        try await storage.ingest(liveShared)
+
+        let olderImported = PasteImportRecord(
+            pinboard: nil,
+            title: nil,
+            timestamp: now.addingTimeInterval(-86_400),
+            sourceBundleID: nil,
+            representations: [.init(
+                uti: "public.utf8-plain-text",
+                dataBase64: Data("older imported".utf8).base64EncodedString()
+            )]
+        )
+        let olderShared = PasteImportRecord(
+            pinboard: nil,
+            title: nil,
+            timestamp: now.addingTimeInterval(-172_800),
+            sourceBundleID: nil,
+            representations: [.init(
+                uti: "public.utf8-plain-text",
+                dataBase64: Data("shared clip".utf8).base64EncodedString()
+            )]
+        )
+
+        _ = try await PasteMigrator(modelContainer: container).migrate(records: [olderImported, olderShared])
+
+        let ordered = try items(in: container).sorted { $0.timestamp > $1.timestamp }
+        #expect(ordered.map(\.displayPreviewText) == ["newer live clip", "shared clip", "older imported"])
+        #expect(ordered[0].timestamp <= now)
+        #expect(ordered[1].timestamp <= liveShared.timestamp.addingTimeInterval(0.01))
+    }
 }

@@ -72,7 +72,22 @@ struct CommandBarView: View {
         .onChange(of: appChips, initial: true) { appState.appChipLists[host] = appChips }
         .onAppear { suggestionsModel.start(appState) }
         .onDisappear { suggestionsModel.stop() }
-        .onChange(of: appState.isOverlayVisible) { _, visible in if visible { suggestionsModel.refresh() } }
+        .onChange(of: appState.isOverlayVisible) { _, visible in
+            if visible {
+                suggestionsModel.refresh()
+                if appState.isSearchActive {
+                    SearchFieldCaret.arm()
+                    searchFocused = true
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(40))
+                        SearchFieldCaret.placeAtEnd()
+                    }
+                }
+            } else {
+                searchFocused = false
+                showsRecentSearches = false
+            }
+        }
         .onChange(of: appState.isPinnedWindowVisible) { _, visible in if visible { suggestionsModel.refresh() } }
         .onChange(of: appState.isHistoryLocked) { _, _ in suggestionsModel.refresh() }
         .onChange(of: appState.isSearchActive) { _, active in

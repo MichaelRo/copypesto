@@ -4,9 +4,9 @@ import Testing
 
 @Suite("What the Format and From chips say")
 struct FilterMenuLabelTests {
-    @Test("Format reads Any at rest, so it does not repeat the caption above it, and the format once one is chosen")
+    @Test("Format reads Format at rest, and the format once one is chosen")
     func format_namesItsValue() {
-        #expect(FilterMenuLabel.format(chosen: nil) == "Any")
+        #expect(FilterMenuLabel.format(chosen: nil) == "Format")
         #expect(FilterMenuLabel.format(chosen: "JSON") == "JSON")
     }
 

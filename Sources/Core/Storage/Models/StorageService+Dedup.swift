@@ -10,12 +10,15 @@ extension StorageService {
         hash: String,
         now: Date,
         bundleID: String?,
-        isRemote: Bool? = nil
+        isRemote: Bool? = nil,
+        onlyAdvanceTimestamp: Bool = false
     ) async throws
     -> Bool {
         guard let existing = try modelContext.fetch(descriptor).first else { return false }
         existing.contentHash = hash // upgrades an item stored under the old plain hash
-        existing.bringToFront(at: now)
+        if !onlyAdvanceTimestamp || now > existing.timestamp {
+            existing.bringToFront(at: now)
+        }
         lastIngestedHash = (hash, now)
         lastInsertedClip = nil
         if let isRemote {

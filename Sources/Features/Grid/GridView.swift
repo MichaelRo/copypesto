@@ -33,6 +33,8 @@ struct GridView: View {
     @Environment(AppState.self) var appState: AppState
     @Environment(\.shelfActions) var shelfActions: ShelfActionDispatcher
     @Environment(\.modelContext) var modelContext
+    @Environment(\.pestoAccent) var accent
+    @State var cardInsertionBar: CollectionReorder.InsertionBar?
     @State var focusedIndex = 0
     @State var focusAnchor = FocusedCardAnchor()
     @State var focusedID: UUID?
@@ -131,7 +133,7 @@ struct GridView: View {
         )
     }
 
-    private var cardDimensions: CGSize {
+    var cardDimensions: CGSize {
         CardSize.dimensions(sizeRaw: cardSizeRaw, customWidth: cardWidth)
     }
 
@@ -205,7 +207,11 @@ struct GridView: View {
                 onSpace: handleSpace,
                 onCharacterTyped: { appState.typeIntoSearch($0) },
                 onEscapeFromSearch: {
-                    appState.isSearchActive = false
+                    if isPinnedHost {
+                        appState.isSearchActive = false
+                    } else {
+                        appState.close()
+                    }
                 },
                 onArrowKey: arrowKeyMoved,
                 onPrevPinboard: { cyclePinboard(forward: false) },
@@ -349,15 +355,24 @@ struct GridView: View {
             pointerOrigin = nil
             scrollState.pointerHasMoved = false
             if visible {
-                scrollToStart()
-                focusedIndex = 0
+                if appState.shelfContextWasStale || focusedID == nil {
+                    scrollToStart()
+                    focusedIndex = 0
+                } else {
+                    focusedIndex = ShelfFocus.resolvedIndex(
+                        focusedID: focusedID,
+                        previousIndex: focusedIndex,
+                        in: cachedFilteredIDs
+                    )
+                }
                 isPasting = false
                 appState.isDragging = false
                 appState.draggingItemID = nil
+                cardInsertionBar = nil
                 displayLimit = 1000
                 ShelfAnnouncement.opened(clipCount: cachedFilteredItems.count, isLocked: appState.isHistoryLocked)
             } else {
-                appState.isSearchActive = false
+                appState.filterChipCursor = nil
                 appState.isEditingCollection = false
                 appState.isCreatingCollection = false
             }

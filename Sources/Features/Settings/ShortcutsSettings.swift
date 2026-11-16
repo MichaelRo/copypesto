@@ -56,18 +56,27 @@ struct ShortcutsSettings: View {
 
     private var shelfKeysSection: some View {
         Section {
-            ForEach(ShelfKeyReference.entries) { shelfKey in
-                HStack(spacing: 4) {
-                    Text(verbatim: shelfKey.action)
-                    Spacer(minLength: 12)
-                    ForEach(Array(shelfKey.keys.enumerated()), id: \.offset) { _, symbol in
-                        Keycap(symbol: symbol)
+            LazyVGrid(
+                columns: [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)],
+                alignment: .leading,
+                spacing: 10
+            ) {
+                ForEach(ShelfKeyReference.entries) { shelfKey in
+                    HStack(spacing: 4) {
+                        Text(verbatim: shelfKey.action)
+                            .font(.callout)
+                            .lineLimit(1)
+                        Spacer(minLength: 8)
+                        ForEach(Array(shelfKey.keys.enumerated()), id: \.offset) { _, symbol in
+                            Keycap(symbol: symbol)
+                        }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(shelfKey.action), \(shelfKey.keys.joined(separator: " "))")
+                    .accessibilityAddTraits(.isStaticText)
                 }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(shelfKey.action), \(shelfKey.keys.joined(separator: " "))")
-                .accessibilityAddTraits(.isStaticText)
             }
+            .padding(.vertical, 4)
         } header: {
             Text("On the shelf").settingsRow("Shelf keys")
         } footer: {

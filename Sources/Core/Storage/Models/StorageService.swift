@@ -139,7 +139,8 @@ public actor StorageService: ModelActor {
         _ capture: PasteboardCapture,
         preferredItemID: UUID? = nil,
         rewritesText: Bool = true,
-        popsLookalikePicture: Bool = true
+        popsLookalikePicture: Bool = true,
+        bumpsExistingDuplicate: Bool = true
     ) async throws {
         if ClipSizePolicy.isTooLarge(byteCount: capture.payload.count, typeIdentifier: capture.typeIdentifier) {
             throw ClipSizePolicy.TooLarge(message: ClipSizePolicy.message(
@@ -177,9 +178,10 @@ public actor StorageService: ModelActor {
         if try await popExistingDuplicate(
             matching: descriptor,
             hash: hash,
-            now: now,
+            now: bumpsExistingDuplicate ? now : capture.timestamp,
             bundleID: capture.sourceBundleID,
-            isRemote: capture.isRemote
+            isRemote: capture.isRemote,
+            onlyAdvanceTimestamp: !bumpsExistingDuplicate
         ) {
             return
         }

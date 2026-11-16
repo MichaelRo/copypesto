@@ -38,4 +38,20 @@ final class NoResultsAdviceUITests: PestoUITestCase {
 
         XCTAssertTrue(card(containing: "Quarterly report draft").waitForExistence(timeout: 5))
     }
+
+    func test_tabToFormatChip_andSpaceOpensItsMenu() {
+        launch()
+        showOverlay()
+        element(AccessibilityID.searchButton).click()
+        let field = element(AccessibilityID.searchField)
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+
+        // Tab past Kind chips (Text, Image, Link, Code, Color, File) to Format.
+        for _ in 0..<7 {
+            field.typeKey(.tab, modifierFlags: [])
+        }
+        field.typeKey(.space, modifierFlags: [])
+
+        XCTAssertTrue(app.menuItems["Markdown"].waitForExistence(timeout: 3))
+    }
 }

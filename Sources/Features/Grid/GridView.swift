@@ -38,6 +38,7 @@ struct GridView: View {
     @State var focusedIndex = 0
     @State var focusAnchor = FocusedCardAnchor()
     @State var focusedID: UUID?
+    @State var firstIDAtClose: UUID?
     @State var keyboardRevealedID: UUID?
     @State var pointerOrigin: CGPoint?
     @State var scrollState = ShelfScrollState()
@@ -351,7 +352,10 @@ struct GridView: View {
             pointerOrigin = nil
             scrollState.pointerHasMoved = false
             if visible {
-                if appState.shelfContextWasStale || focusedID == nil {
+                if appState.shelfContextWasStale
+                    || focusedID == nil
+                    || cachedFilteredIDs.first != firstIDAtClose
+                {
                     scrollToStart()
                     focusedIndex = 0
                 } else {
@@ -368,6 +372,7 @@ struct GridView: View {
                 displayLimit = 1000
                 ShelfAnnouncement.opened(clipCount: cachedFilteredItems.count, isLocked: appState.isHistoryLocked)
             } else {
+                firstIDAtClose = cachedFilteredIDs.first
                 appState.filterChipCursor = nil
                 appState.isEditingCollection = false
                 appState.isCreatingCollection = false

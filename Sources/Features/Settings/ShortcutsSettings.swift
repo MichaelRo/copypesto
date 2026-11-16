@@ -55,34 +55,42 @@ struct ShortcutsSettings: View {
     }
 
     private var shelfKeysSection: some View {
-        Section {
-            LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 20), GridItem(.flexible(), spacing: 20)],
-                alignment: .leading,
-                spacing: 10
-            ) {
-                ForEach(ShelfKeyReference.entries) { shelfKey in
-                    HStack(spacing: 4) {
-                        Text(verbatim: shelfKey.action)
-                            .font(.callout)
-                            .lineLimit(1)
-                        Spacer(minLength: 8)
-                        ForEach(Array(shelfKey.keys.enumerated()), id: \.offset) { _, symbol in
-                            Keycap(symbol: symbol)
-                        }
+        let entries = ShelfKeyReference.entries
+        let pairs = stride(from: 0, to: entries.count, by: 2).map { index in
+            (index, entries[index], index + 1 < entries.count ? entries[index + 1] : nil)
+        }
+        return Section {
+            ForEach(pairs, id: \.0) { _, left, right in
+                HStack(spacing: 20) {
+                    shelfKeyCell(left)
+                    if let right {
+                        shelfKeyCell(right)
+                    } else {
+                        Spacer(minLength: 0).frame(maxWidth: .infinity)
                     }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(shelfKey.action), \(shelfKey.keys.joined(separator: " "))")
-                    .accessibilityAddTraits(.isStaticText)
                 }
             }
-            .padding(.vertical, 4)
         } header: {
             Text("On the shelf").settingsRow("Shelf keys")
         } footer: {
             Text("These work while the shelf is open. They are fixed, so they never clash with your own shortcuts.")
                 .pestoCaption()
         }
+    }
+
+    private func shelfKeyCell(_ shelfKey: ShelfKey) -> some View {
+        HStack(spacing: 4) {
+            Text(verbatim: shelfKey.action)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            ForEach(Array(shelfKey.keys.enumerated()), id: \.offset) { _, symbol in
+                Keycap(symbol: symbol)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(shelfKey.action), \(shelfKey.keys.joined(separator: " "))")
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 

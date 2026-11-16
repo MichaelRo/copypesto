@@ -332,8 +332,13 @@ final class AccessibilityAuditTests: PestoUITestCase {
         ])
     }
 
+    /// The 2-column shelf-keys cells combine `Text` and `Keycap` into one `.isStaticText` element
+    /// (`accessibilityElement(children: .ignore)`),
+    /// so the audit's contrast sampler reads the keycap chrome inside the staticText bounds as a false positive.
     func test_settingsShortcuts_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Shortcuts")
+        try auditSettingsPane("Shortcuts", plus: [
+            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 4)
+        ])
     }
 
     /// Two or three starter captions ("Every swatch you have copied.", …) measure under 4.5:1 in a run, a different set

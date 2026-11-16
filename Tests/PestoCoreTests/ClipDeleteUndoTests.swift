@@ -142,17 +142,23 @@ struct ClipDeleteUndoTests {
         #expect(history.undoLabel == .deleteClips(1))
     }
 
-    @Test("a batch with one clip that cannot be held is not undoable at all")
-    func whenOneIsNotHoldable_thenTheBatchIsNot() async throws {
-        let ids = try await ingest("burns", "fine")
+    @Test("a batch with one clip that cannot be held still lets the holdable clips undo")
+    func whenOneIsNotHoldable_thenTheHoldableOnesStillUndo() async throws {
+        let ids = try await ingest("burns", "fine", "also-fine")
         let context = ModelContext(container)
         try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == ids[0] })
             .expiresAt = .now.addingTimeInterval(60)
+        try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == ids[1] })
+            .byteSize = UndoPolicy.maxClipBytes + 1
         try context.save()
 
         try await service.deleteItems(ids: ids, reason: .user)
 
-        #expect(history.undoLabel == nil)
+        #expect(history.undoLabel == .deleteClips(1))
+        let outcome = try await service.undo()
+        #expect(outcome == UndoOutcome(label: .deleteClips(1), direction: .undone))
+        let restored = try items()
+        #expect(restored.map(\.id) == [ids[2]])
     }
 
     @Test("a clip copied again while the old one was deleted is not duplicated by the undo")

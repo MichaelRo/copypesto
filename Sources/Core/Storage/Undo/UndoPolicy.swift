@@ -28,7 +28,14 @@ public enum UndoPolicy {
 
     /// Whether deleting these clips together can be undone: every one of them is holdable and there are not too many.
     public static func canHold(_ items: [ClipboardItem]) -> Bool {
-        canHold(clipCount: items.count) && items.allSatisfy {
+        canHold(clipCount: items.count) && holdable(items).count == items.count
+    }
+
+    /// The subset of `items` that `UndoPolicy` can hold when deleted together (empty when the batch exceeds
+    /// `maxClipsPerEntry` or no item is holdable).
+    public static func holdable(_ items: [ClipboardItem]) -> [ClipboardItem] {
+        guard canHold(clipCount: items.count) else { return [] }
+        return items.filter {
             canHold(
                 byteSize: $0.byteSize, expiresAt: $0.expiresAt, sensitivityRaw: $0.sensitivityRaw,
                 analysisPending: $0.analysisPending

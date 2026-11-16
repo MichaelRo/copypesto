@@ -19,8 +19,9 @@ public struct UndoOutcome: Equatable, Sendable {
 /// `ClipEditor.edit`, the pin and shortcut functions); applying happens here, on the one writer.
 extension StorageService {
     func undoSnapshots(of doomed: [ClipboardItem]) -> [ClipSnapshot]? {
-        guard UndoPolicy.canHold(doomed) else { return nil }
-        return doomed.map {
+        let holdable = UndoPolicy.holdable(doomed)
+        guard !holdable.isEmpty else { return nil }
+        return holdable.map {
             ClipSnapshot(
                 item: $0, linkPreviewFile: linkPreviews.sealedFile(for: $0.id),
                 recognizedTextFile: recognizedTexts.sealedFile(for: $0.id)

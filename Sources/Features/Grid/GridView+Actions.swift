@@ -537,10 +537,10 @@ extension GridView {
         )
     }
 
-    /// Whether ⌘Z will bring these clips back: not a large or expiring one, and not more than `UndoPolicy` holds.
-    func deletionCanBeUndone(_ ids: [UUID]) -> Bool {
+    /// How many of these clips ⌘Z can bring back: excludes large, expiring, credential, or pending items.
+    func undoableDeletionCount(_ ids: [UUID]) -> Int {
         let wanted = Set(ids)
-        return UndoPolicy.canHold(cachedFilteredItems.filter { wanted.contains($0.id) })
+        return UndoPolicy.holdable(cachedFilteredItems.filter { wanted.contains($0.id) }).count
     }
 
     func confirmDelete() {

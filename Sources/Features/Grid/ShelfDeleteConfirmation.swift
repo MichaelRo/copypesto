@@ -6,8 +6,8 @@ import SwiftUI
 /// shelf's own key handling answers it (`KeyNavCoordinator.isConfirming`): Return deletes, Esc keeps.
 struct ShelfDeleteConfirmation: View {
     let count: Int
-    /// Whether ⌘Z will be able to bring them back (`UndoPolicy`), which the question says either way.
-    let canUndo: Bool
+    /// How many clips ⌘Z will be able to bring back (`UndoPolicy`), which the question says honestly.
+    let undoableCount: Int
     let onConfirm: () -> Void
     let onCancel: () -> Void
     /// Moves VoiceOver onto the question, as the lock screen does, so the Return that follows is not a surprise.
@@ -16,6 +16,12 @@ struct ShelfDeleteConfirmation: View {
 
     private var title: String {
         count == 1 ? String(localized: "Delete this clip?") : String(localized: "Delete \(CountText.clips(count))?")
+    }
+
+    private var undoNote: String {
+        if undoableCount >= count { return String(localized: "You can undo this with \u{2318}Z.") }
+        if undoableCount == 0 { return String(localized: "This can\u{2019}t be undone.") }
+        return String(localized: "\(undoableCount) of \(CountText.clips(count)) can be undone with \u{2318}Z.")
     }
 
     var body: some View {
@@ -32,9 +38,7 @@ struct ShelfDeleteConfirmation: View {
                 .scaledFont(size: 11)
                 .pestoQuiet()
                 .multilineTextAlignment(.center)
-            Text(canUndo
-                ? "You can undo this with \u{2318}Z."
-                : "This can\u{2019}t be undone.")
+            Text(undoNote)
                 .scaledFont(size: 11)
                 .foregroundStyle(AdaptiveContrast.quiet(contrast))
                 .multilineTextAlignment(.center)

@@ -333,7 +333,7 @@ struct GridView: View {
                 ZStack {
                     Color.clear.contentShape(Rectangle()).onTapGesture { pendingDelete = nil }
                     ShelfDeleteConfirmation(
-                        count: ids.count, canUndo: deletionCanBeUndone(ids), onConfirm: confirmDelete
+                        count: ids.count, undoableCount: undoableDeletionCount(ids), onConfirm: confirmDelete
                     ) { pendingDelete = nil }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.96)))

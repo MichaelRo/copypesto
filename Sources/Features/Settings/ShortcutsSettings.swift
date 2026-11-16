@@ -97,6 +97,7 @@ struct ShortcutsSettings: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .drawingGroup()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(shelfKey.action), \(shelfKey.keys.joined(separator: " "))")
         .accessibilityAddTraits(.isStaticText)

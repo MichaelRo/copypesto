@@ -63,6 +63,5 @@ struct Keycap: View {
                         style: style == .ghost ? StrokeStyle(lineWidth: 1, dash: [3, 2]) : StrokeStyle(lineWidth: 1)
                     )
             )
-            .drawingGroup()
     }
 }

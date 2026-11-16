@@ -24,6 +24,7 @@ final class SnippetFamilySuggestionUITests: PestoUITestCase {
         showOverlay()
         card(containing: "Hi Bruno").doubleClick()
         waitForNonExistence(overlay, timeout: 10, "the paste should close the shelf")
+        RunLoop.current.run(until: Date().addingTimeInterval(0.35))
         showOverlay()
         XCTAssertTrue(banner.waitUntilExists(timeout: dwell + 8), "no suggestion banner after the dwell")
     }

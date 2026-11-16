@@ -80,7 +80,8 @@ class PestoUITestCase: XCTestCase {
         if suggestionsLive { environment["PESTO_UITEST_SUGGESTIONS_LIVE"] = "1" }
         if updates { environment["PESTO_UITEST_UPDATES"] = "1" }
         if recordsPerfTimeline { environment["PESTO_UITEST_PERF_TIMELINE"] = "1" }
-        let canCacheSeed = !keyLoss && importFixture == nil
+        let heavySeeds: Set = ["large", "imported", "mixed", "pictures"]
+        let canCacheSeed = !keyLoss && importFixture == nil && heavySeeds.contains(seed)
         if canCacheSeed {
             environment["PESTO_UITEST_KEY_SEED"] = "seed-\(seed)"
             restoreCachedSeed(seed)

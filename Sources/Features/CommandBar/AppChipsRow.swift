@@ -40,6 +40,7 @@ struct AppChipsRow: View {
                 chip(app, index: index)
             }
         }
+        .accessibilityElement(children: .contain)
         .onContinuousHover { phase in
             switch phase {
             case let .active(point):

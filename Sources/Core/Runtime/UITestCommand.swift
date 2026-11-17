@@ -33,6 +33,8 @@ public enum UITestCommand: String, CaseIterable, Sendable {
     /// Cycles the collections 4 rounds with `PESTO_AB_FLAGS` off, then on, alternately, marking each with a `variant`
     /// event.
     case benchCycleAB
+    case setAccessibilityTrusted
+    case setAccessibilityDenied
 }
 
 /// A directory-backed queue between the runner and the app. The runner is sandboxed and cannot post

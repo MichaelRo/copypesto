@@ -374,4 +374,26 @@ struct ExclusionRulesTests {
             typeIdentifiers: ["public.utf8-plain-text"], sources: ["com.1password.1password"], now: now
         ))
     }
+
+    @Test("ignores items copied from Passwords Menu Bar extra")
+    func whenSourceIsPasswordsMenuBarExtra_thenIgnore() {
+        let rules = ExclusionRules()
+        #expect(rules.shouldIgnore(
+            typeIdentifiers: ["public.utf8-plain-text"],
+            frontmostBundleID: "com.apple.Passwords.MenuBarExtra"
+        ))
+    }
+
+    @Test("Passwords Menu Bar extra can be temporarily allowed via ExclusionAllowances and fromSettings")
+    func whenPasswordsMenuBarExtraAllowed_thenPassesUntilRevoked() {
+        let bundleID = "com.apple.Passwords.MenuBarExtra"
+        let allowances = ExclusionAllowances()
+        defer { allowances.clear() }
+
+        allowances.allow(bundleID, length: .fifteenMinutes)
+        #expect(!ExclusionRules.fromSettings().isExcluded(bundleID))
+
+        allowances.revoke(bundleID)
+        #expect(ExclusionRules.fromSettings().isExcluded(bundleID))
+    }
 }

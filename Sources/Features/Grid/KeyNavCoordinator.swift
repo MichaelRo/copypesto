@@ -123,6 +123,12 @@ final class KeyNavCoordinator {
 
     @discardableResult
     private func consumeCommandShortcut(_ event: NSEvent) -> Bool {
+        if event.keyCode == 13, let onDismissShelf {
+            onDismissShelf()
+            return true
+        }
+        // ⌘H hides an app; Pesto is not the active app and has nothing to hide, so the key is taken without a beep.
+        if event.keyCode == 4, onDismissShelf != nil { return true }
         let characters = event.charactersIgnoringModifiers
         guard let command = ShelfCommand.resolve(
             characters: characters, keyCode: event.keyCode, shift: event.modifierFlags.contains(.shift),
@@ -401,12 +407,6 @@ final class KeyNavCoordinator {
 
     /// ⌘A, ⌘Z and ⇧⌘Z, which only the grid takes: a search field keeps them for its text.
     private func consumeGridCommand(_ event: NSEvent) -> Bool {
-        if event.keyCode == 13, let onDismissShelf {
-            onDismissShelf()
-            return true
-        }
-        // ⌘H hides an app; Pesto is not the active app and has nothing to hide, so the key is taken without a beep.
-        if event.keyCode == 4, onDismissShelf != nil { return true }
         if consumeHistoryCommand(event) { return true }
         guard ShelfCommand.resolve(
             characters: event.charactersIgnoringModifiers, keyCode: event.keyCode,

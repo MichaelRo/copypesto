@@ -20,18 +20,53 @@ struct MarketingBackdropView: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                gradient
-                glow(at: UnitPoint(x: 0.18, y: 0.88), radius: proxy.size.width * 0.5, color: lowGlow)
-                glow(at: UnitPoint(x: 0.85, y: 0.12), radius: proxy.size.width * 0.35, color: highGlow)
-                if style == .hero {
-                    leaves(in: proxy.size)
-                    hostNote(in: proxy.size)
-                }
+                #if DEBUG
+                    if style == .white {
+                        Color.white
+                    } else if style == .busy {
+                        busyBackdrop(in: proxy.size)
+                    } else {
+                        brandBackdrop(in: proxy.size)
+                    }
+                #else
+                    brandBackdrop(in: proxy.size)
+                #endif
             }
             .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .accessibilityIdentifier("marketing-backdrop")
     }
+
+    @ViewBuilder
+    private func brandBackdrop(in size: CGSize) -> some View {
+        gradient
+        glow(at: UnitPoint(x: 0.18, y: 0.88), radius: size.width * 0.5, color: lowGlow)
+        glow(at: UnitPoint(x: 0.85, y: 0.12), radius: size.width * 0.35, color: highGlow)
+        if style == .hero {
+            leaves(in: size)
+            hostNote(in: size)
+        }
+    }
+
+    #if DEBUG
+        @ViewBuilder
+        private func busyBackdrop(in size: CGSize) -> some View {
+            LinearGradient(
+                colors: [.orange, .pink, .purple, .blue, .teal],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            ForEach(0..<12, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(index.isMultiple(of: 2) ? Color.white.opacity(0.35) : Color.black.opacity(0.28))
+                    .frame(width: size.width * 0.22, height: size.height * 0.26)
+                    .offset(
+                        x: CGFloat((index % 4) - 2) * size.width * 0.2,
+                        y: CGFloat((index / 4) - 1) * size.height * 0.25
+                    )
+            }
+        }
+    #endif
 
     private var gradient: some View {
         let colors: [String] = switch (theme, isDark) {

@@ -28,4 +28,32 @@ struct SyncFileAvailabilityTests {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("nope-\(UUID().uuidString)")
         #expect(!SyncFileAvailability.isReadable(url, flags: { _ in 0 }))
     }
+
+    @Test("an iCloud placeholder that is not downloaded starts downloading and is not readable yet")
+    func whenUbiquitousNotDownloaded_thenNotReadableAndStartsDownload() throws {
+        var started = false
+        let readable = try SyncFileAvailability.isReadable(
+            file(),
+            flags: { _ in 0 },
+            ubiquitousStatus: { _ in .init(isUbiquitousItem: true, downloadingStatus: .notDownloaded) },
+            startUbiquitousDownload: { _ in started = true }
+        )
+        #expect(!readable)
+        #expect(started)
+    }
+
+    @Test("an iCloud item that is downloaded or current is readable", arguments: [
+        URLUbiquitousItemDownloadingStatus.downloaded, .current
+    ])
+    func whenUbiquitousDownloadedOrCurrent_thenReadable(status: URLUbiquitousItemDownloadingStatus) throws {
+        var started = false
+        let readable = try SyncFileAvailability.isReadable(
+            file(),
+            flags: { _ in 0 },
+            ubiquitousStatus: { _ in .init(isUbiquitousItem: true, downloadingStatus: status) },
+            startUbiquitousDownload: { _ in started = true }
+        )
+        #expect(readable)
+        #expect(!started)
+    }
 }

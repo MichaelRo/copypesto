@@ -11,8 +11,9 @@ struct ShelfAuthenticationRequest: Equatable {
 
 extension AppState {
     static var embeddedBiometricsAvailable: Bool {
-        LaunchMode.current.usesSystemIntegrations
-            && LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+        (LaunchMode.current.usesSystemIntegrations
+            && LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil))
+            || (RuntimeConfiguration.current.mode == .uiTest && RuntimeConfiguration.current.embeddedBiometrics)
     }
 
     /// True if the person authenticated now or recently enough (`AuthenticationGrace`). With Touch ID available and the

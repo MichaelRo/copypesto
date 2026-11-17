@@ -97,4 +97,127 @@ struct CardAccessibilityTests {
         #expect(card(tags: ["work"], age: 30).value == "1 tag: work, just now")
         #expect(card(age: 30, selected: true).value == "just now, selected")
     }
+
+    private func makeItem(
+        type: ClipboardType,
+        preview: String,
+        textLength: Int? = nil,
+        note: String? = nil,
+        ogTitle: String? = nil,
+        ogSiteName: String? = nil,
+        customTitle: String? = nil,
+        sensitivity: SensitivityCategory? = nil
+    )
+    -> ClipboardItem {
+        let item = ClipboardItem(
+            type: type,
+            sourceAppName: "Safari",
+            previewText: preview,
+            sensitivity: sensitivity,
+            contentHash: UUID().uuidString,
+            byteSize: preview.utf8.count,
+            deviceID: "test-device",
+            sequenceNumber: 1
+        )
+        item.textLength = textLength ?? preview.count
+        item.userNote = note
+        item.ogTitle = ogTitle
+        item.ogSiteName = ogSiteName
+        item.customTitle = customTitle
+        return item
+    }
+
+    @Test("VoiceOverDetails populates Details, Text, Title, Note, Files, and Text in the picture by clip kind")
+    func voiceOverContent_coversAllClipKindsAndFields() {
+        let textItem = makeItem(type: .text, preview: "Hello world", note: "Keep this")
+        let textDetails = VoiceOverDetails.make(
+            for: textItem, collectionName: "Notes", isBlurredAsSensitive: false, isCoveredForPrivacy: false
+        )
+        #expect(!textDetails.details.isEmpty)
+        #expect(textDetails.text == "Hello world")
+        #expect(textDetails.note == "Keep this")
+        #expect(textDetails.title.isEmpty)
+        #expect(textDetails.files.isEmpty)
+        #expect(textDetails.inPicture.isEmpty)
+
+        let codeItem = makeItem(type: .code, preview: "let x = 1", textLength: 501)
+        let codeDetails = VoiceOverDetails.make(
+            for: codeItem, collectionName: nil, isBlurredAsSensitive: false, isCoveredForPrivacy: false
+        )
+        #expect(!codeDetails.details.isEmpty)
+        #expect(!codeDetails.details.contains("lines"))
+        #expect(codeDetails.text.hasSuffix(" … Quick Look shows the rest."))
+
+        let urlItem = makeItem(
+            type: .url, preview: "https://example.com", ogTitle: "Example", ogSiteName: "Example Site"
+        )
+        let urlDetails = VoiceOverDetails.make(
+            for: urlItem, collectionName: nil, isBlurredAsSensitive: false, isCoveredForPrivacy: false
+        )
+        #expect(urlDetails.title == "Example, Example Site")
+        #expect(urlDetails.text == "https://example.com")
+
+        let fileURLs = (1...8).map { "file:///tmp/file-\($0).txt" }.joined(separator: "\n")
+        let fileItem = makeItem(type: .file, preview: fileURLs)
+        let fileDetails = VoiceOverDetails.make(
+            for: fileItem, collectionName: nil, isBlurredAsSensitive: false, isCoveredForPrivacy: false
+        )
+        #expect(fileDetails.files == "file-1.txt, file-2.txt, file-3.txt, file-4.txt, file-5.txt, file-6.txt")
+
+        let longOCR = "  \n" + String(repeating: "A", count: 350) + "\n  "
+        let imageItem = makeItem(type: .image, preview: longOCR)
+        let imageDetails = VoiceOverDetails.make(
+            for: imageItem, collectionName: nil, isBlurredAsSensitive: false, isCoveredForPrivacy: false
+        )
+        #expect(imageDetails.inPicture == String(repeating: "A", count: 300))
+
+        let colorItem = makeItem(type: .color, preview: "#529D6E", note: "Brand green")
+        let colorDetails = VoiceOverDetails.make(
+            for: colorItem, collectionName: nil, isBlurredAsSensitive: false, isCoveredForPrivacy: false
+        )
+        #expect(!colorDetails.details.isEmpty)
+        #expect(colorDetails.note == "Brand green")
+        #expect(colorDetails.text.isEmpty)
+        #expect(colorDetails.title.isEmpty)
+        #expect(colorDetails.files.isEmpty)
+        #expect(colorDetails.inPicture.isEmpty)
+    }
+
+    @Test("VoiceOverDetails truncates long text at CardPreviewText.previewLength")
+    func voiceOverContent_truncatesLongText() {
+        let longText = String(repeating: "b", count: CardPreviewText.previewLength + 25)
+        let item = makeItem(type: .text, preview: longText, textLength: longText.count)
+        let details = VoiceOverDetails.make(
+            for: item, collectionName: nil, isBlurredAsSensitive: false, isCoveredForPrivacy: false
+        )
+        let expectedPrefix = String(repeating: "b", count: CardPreviewText.previewLength)
+        #expect(details.text == expectedPrefix + " … Quick Look shows the rest.")
+    }
+
+    @Test("VoiceOverDetails clears sensitive or covered content while keeping Details")
+    func voiceOverContent_clearsWhenSensitiveOrCovered() {
+        let urlItem = makeItem(
+            type: .url, preview: "https://secret.example.com", note: "Private note",
+            ogTitle: "Secret", ogSiteName: "Internal"
+        )
+        let sensitiveItem = makeItem(
+            type: .text, preview: "4242", note: "Card", sensitivity: .creditCard
+        )
+
+        for (item, blurred, covered) in [
+            (sensitiveItem, false, false),
+            (urlItem, true, false),
+            (urlItem, false, true)
+        ] {
+            let details = VoiceOverDetails.make(
+                for: item, collectionName: nil, isBlurredAsSensitive: blurred, isCoveredForPrivacy: covered
+            )
+            #expect(!details.details.isEmpty)
+            #expect(details.note.isEmpty)
+            #expect(details.text.isEmpty)
+            #expect(details.title.isEmpty)
+            #expect(details.files.isEmpty)
+            #expect(details.inPicture.isEmpty)
+        }
+    }
 }

@@ -31,9 +31,17 @@ class PestoUITestCase: XCTestCase {
 
     // MARK: - Launch
 
-    private func addLaunchSwitches(to environment: inout [String: String], menuBarIsFull: Bool, linkStubMillis: Int?) {
+    private func addLaunchSwitches(
+        to environment: inout [String: String],
+        menuBarIsFull: Bool,
+        linkStubMillis: Int?,
+        pasteboardAccess: String?,
+        embeddedBiometrics: Bool
+    ) {
         if menuBarIsFull { environment["PESTO_UITEST_MENUBAR_FULL"] = "1" }
         if let linkStubMillis { environment["PESTO_UITEST_LINK_STUB_MS"] = "\(linkStubMillis)" }
+        if let pasteboardAccess { environment["PESTO_UITEST_PASTEBOARD_ACCESS"] = pasteboardAccess }
+        if embeddedBiometrics { environment["PESTO_UITEST_EMBEDDED_BIOMETRICS"] = "1" }
     }
 
     func launch(
@@ -51,6 +59,8 @@ class PestoUITestCase: XCTestCase {
         recordsPerfTimeline: Bool = false,
         linkStubMillis: Int? = nil,
         menuBarIsFull: Bool = false,
+        pasteboardAccess: String? = nil,
+        embeddedBiometrics: Bool = false,
         timeout: TimeInterval = 90
     ) {
         app = XCUIApplication()
@@ -73,7 +83,13 @@ class PestoUITestCase: XCTestCase {
         }
         if let backdrop { environment["PESTO_UITEST_BACKDROP"] = backdrop }
         if realDevice { environment["PESTO_UITEST_REAL_DEVICE"] = "1" }
-        addLaunchSwitches(to: &environment, menuBarIsFull: menuBarIsFull, linkStubMillis: linkStubMillis)
+        addLaunchSwitches(
+            to: &environment,
+            menuBarIsFull: menuBarIsFull,
+            linkStubMillis: linkStubMillis,
+            pasteboardAccess: pasteboardAccess,
+            embeddedBiometrics: embeddedBiometrics
+        )
         if let importFixture { environment["PESTO_UITEST_IMPORT_FIXTURE"] = importFixture }
         if keyLoss { environment["PESTO_UITEST_KEYLOSS"] = "1" }
         if aiFixture { environment["PESTO_UITEST_AI_FIXTURE"] = "1" }

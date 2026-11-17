@@ -27,6 +27,7 @@ public final class SyncFolderService {
     private let highWaterStore: any SyncHighWaterStoring
     let includeSensitive: @MainActor () -> Bool
     private let isLocked: @MainActor () -> Bool
+    private let isReadable: @Sendable (URL) -> Bool
     let now: @Sendable () -> Date
     let timing: Timing
 
@@ -53,6 +54,7 @@ public final class SyncFolderService {
         keyStore: any SyncKeyStoring, highWater: any SyncHighWaterStoring, timing: Timing = Timing(),
         includeSensitive: @escaping @MainActor () -> Bool = { false },
         isLocked: @escaping @MainActor () -> Bool = { false },
+        isReadable: (@Sendable (URL) -> Bool)? = nil,
         now: @escaping @Sendable () -> Date = { .now }
     ) {
         self.container = container
@@ -66,6 +68,7 @@ public final class SyncFolderService {
         self.timing = timing
         self.includeSensitive = includeSensitive
         self.isLocked = isLocked
+        self.isReadable = isReadable ?? { SyncFileAvailability.isReadable($0) }
         self.now = now
     }
 
@@ -236,7 +239,7 @@ public final class SyncFolderService {
             return true
         }
         let url = layout.log(identity.deviceID).appendingPathComponent(last)
-        guard SyncFileAvailability.isReadable(url), let data = try? Data(contentsOf: url) else { return false }
+        guard isReadable(url), let data = try? Data(contentsOf: url) else { return false }
         var hash = SyncManifest.zeroHash
         do {
             let verified = try SyncSegmentReader.verify(
@@ -359,7 +362,7 @@ public final class SyncFolderService {
         for (index, name) in todo.enumerated() {
             if todo.count > 1 { set(.receiving(done: index, total: todo.count)) }
             let url = layout.log(device).appendingPathComponent(name)
-            guard SyncFileAvailability.isReadable(url) else { return (applied, true) }
+            guard isReadable(url) else { return (applied, true) }
             guard let data = try? Data(contentsOf: url) else { return (applied, true) }
             let verified: VerifiedSyncSegment
             do {
@@ -397,7 +400,7 @@ public final class SyncFolderService {
         for record in records where record.kind == .item {
             guard let name = try record.decodeMetadata(SyncItemRecord.self).blobName else { continue }
             let url = layout.blobs(device).appendingPathComponent(SyncBlobFile.fileName(name))
-            guard SyncFileAvailability.isReadable(url), let data = try? Data(contentsOf: url) else { return nil }
+            guard isReadable(url), let data = try? Data(contentsOf: url) else { return nil }
             out[name] = try SyncBlobFile.open(data, name: name, syncKey: found.key)
         }
         return out

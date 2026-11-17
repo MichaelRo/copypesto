@@ -60,6 +60,10 @@ public enum MarketingBackdropStyle: String, Equatable, Sendable {
     case none
     case plain
     case hero
+    #if DEBUG
+        case white
+        case busy
+    #endif
 }
 
 public struct RuntimeConfiguration: Equatable, Sendable {
@@ -108,6 +112,10 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     /// Makes the menu bar icon read as left out of a full menu bar, which a test Mac's bar cannot be relied on to be.
     /// UI-test mode only.
     public var menuBarIsFull: Bool
+    /// Overrides `PasteboardCaptureAccess.current()` in UI-test mode (`PESTO_UITEST_PASTEBOARD_ACCESS`).
+    public var pasteboardAccess: PasteboardCaptureAccess?
+    /// Forces embedded Touch ID prompt availability in UI-test mode (`PESTO_UITEST_EMBEDDED_BIOMETRICS=1`).
+    public var embeddedBiometrics: Bool
 
     static let defaultOverridePrefix = "PESTO_UITEST_DEFAULT_"
 
@@ -131,7 +139,9 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         suggestionsLive: Bool = false,
         fakeUpdates: Bool = false,
         linkPreviewStubMillis: Int? = nil,
-        menuBarIsFull: Bool = false
+        menuBarIsFull: Bool = false,
+        pasteboardAccess: PasteboardCaptureAccess? = nil,
+        embeddedBiometrics: Bool = false
     ) {
         self.mode = mode
         self.session = session
@@ -151,6 +161,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         self.suggestionsLive = suggestionsLive
         self.linkPreviewStubMillis = linkPreviewStubMillis
         self.menuBarIsFull = menuBarIsFull
+        self.pasteboardAccess = pasteboardAccess
+        self.embeddedBiometrics = embeddedBiometrics
     }
 
     public static let current = parse(
@@ -189,7 +201,10 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             suggestionsLive: environment["PESTO_UITEST_SUGGESTIONS_LIVE"] == "1",
             fakeUpdates: environment["PESTO_UITEST_UPDATES"] == "1",
             linkPreviewStubMillis: environment["PESTO_UITEST_LINK_STUB_MS"].flatMap(Int.init),
-            menuBarIsFull: environment["PESTO_UITEST_MENUBAR_FULL"] == "1"
+            menuBarIsFull: environment["PESTO_UITEST_MENUBAR_FULL"] == "1",
+            pasteboardAccess: environment["PESTO_UITEST_PASTEBOARD_ACCESS"]
+                .flatMap(PasteboardCaptureAccess.init(rawValue:)),
+            embeddedBiometrics: environment["PESTO_UITEST_EMBEDDED_BIOMETRICS"] == "1"
         )
     }
 

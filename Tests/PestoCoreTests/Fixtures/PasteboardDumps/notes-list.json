@@ -1,0 +1,14 @@
+{
+  "sourceBundleID": "com.apple.Notes",
+  "flavors": {
+    "public.utf8-plain-text": {
+      "utf8": "Groceries\nMilk\nEggs"
+    },
+    "public.html": {
+      "utf8": "<h2>Groceries</h2><ul><li>Milk</li><li>Eggs</li></ul>"
+    },
+    "public.rtf": {
+      "utf8": "{\\rtf1\\ansi Groceries\\par Milk\\par Eggs\\par}"
+    }
+  }
+}

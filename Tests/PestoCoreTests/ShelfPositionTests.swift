@@ -88,4 +88,46 @@ struct ShelfPositionTests {
         #expect(Setting.allNames.contains(Setting.shelfPosition.name))
         #expect(SettingsIndex.entries.contains { $0.title == "Shelf position" })
     }
+
+    @Test("Dock on the left or right narrows the shelf to visibleFrame without overlapping the Dock")
+    func whenDockOnSide_thenShelfFitsVisibleFrame() {
+        let dockLeft = ShelfPosition.Screen(
+            frame: CGRect(x: 0, y: 0, width: 1512, height: 982),
+            visibleFrame: CGRect(x: 72, y: 0, width: 1440, height: 944),
+            safeAreaTop: 38
+        )
+        #expect(ShelfPosition.bottom.frame(on: dockLeft, height: 250) == CGRect(x: 72, y: 0, width: 1440, height: 250))
+        #expect(
+            ShelfPosition.underNotch.frame(on: dockLeft, height: 250)
+                == CGRect(x: 72, y: 694, width: 1440, height: 250)
+        )
+
+        let dockRight = ShelfPosition.Screen(
+            frame: CGRect(x: 0, y: 0, width: 1512, height: 982),
+            visibleFrame: CGRect(x: 0, y: 0, width: 1440, height: 944),
+            safeAreaTop: 38
+        )
+        #expect(ShelfPosition.bottom.frame(on: dockRight, height: 250) == CGRect(x: 0, y: 0, width: 1440, height: 250))
+        #expect(
+            ShelfPosition.underNotch.frame(on: dockRight, height: 250)
+                == CGRect(x: 0, y: 694, width: 1440, height: 250)
+        )
+    }
+
+    @Test("secondary display to the left of main (negative minX) places bottom and top shelves on that display")
+    func whenSecondaryDisplayLeftOfMain_thenUsesDisplayOrigin() {
+        let leftDisplay = ShelfPosition.Screen(
+            frame: CGRect(x: -1920, y: -120, width: 1920, height: 1080),
+            visibleFrame: CGRect(x: -1920, y: -120, width: 1920, height: 1055),
+            safeAreaTop: 0
+        )
+        #expect(
+            ShelfPosition.bottom.frame(on: leftDisplay, height: 240)
+                == CGRect(x: -1920, y: -120, width: 1920, height: 240)
+        )
+        #expect(
+            ShelfPosition.underNotch.frame(on: leftDisplay, height: 240)
+                == CGRect(x: -1920, y: 935 - 240, width: 1920, height: 240)
+        )
+    }
 }

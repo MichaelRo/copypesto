@@ -1,0 +1,11 @@
+{
+  "sourceBundleID": "company.thebrowser.Browser",
+  "flavors": {
+    "public.png": {
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    },
+    "public.html": {
+      "utf8": "<meta charset='utf-8'><img src=\"https://media.tenor.com/xyz987/tenor.gif\" alt=\"Celebration\">"
+    }
+  }
+}

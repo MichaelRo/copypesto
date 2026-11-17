@@ -119,14 +119,6 @@ extension AppDelegate {
         }
     }
 
-    private func driveShelf(_ command: UITestCommand) {
-        if let bench = UITestBenchRequest(command) {
-            appState.uiTestBench = bench
-        } else {
-            appState.uiTestWalkRequest += 1
-        }
-    }
-
     private func perform(_ command: UITestCommand) {
         if let bench = UITestBenchRequest(command) {
             appState.uiTestBench = bench
@@ -141,6 +133,12 @@ extension AppDelegate {
             AppDefaults.store.set("dark", for: Setting.appearanceMode)
             applyAppearance()
         case .stackUserPaste: stackUserPasted()
+        case .setAccessibilityTrusted:
+            AccessibilityAccess.setUITestOverride(.trusted)
+            appState.recheckAccessibility()
+        case .setAccessibilityDenied:
+            AccessibilityAccess.setUITestOverride(.denied)
+            appState.recheckAccessibility()
         default: break
         }
     }

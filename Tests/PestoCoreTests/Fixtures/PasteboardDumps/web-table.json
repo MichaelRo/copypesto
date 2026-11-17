@@ -1,0 +1,11 @@
+{
+  "sourceBundleID": "com.apple.Safari",
+  "flavors": {
+    "public.utf8-plain-text": {
+      "utf8": "Model\tContext\nFlash\t1M\nPro\t2M"
+    },
+    "public.html": {
+      "utf8": "<meta charset=\"utf-8\"><table><tr><th>Model</th><th>Context</th></tr><tr><td>Flash</td><td>1M</td></tr><tr><td>Pro</td><td>2M</td></tr></table>"
+    }
+  }
+}

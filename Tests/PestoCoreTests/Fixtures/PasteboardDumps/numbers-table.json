@@ -1,0 +1,17 @@
+{
+  "sourceBundleID": "com.apple.iWork.Numbers",
+  "flavors": {
+    "public.utf8-plain-text": {
+      "utf8": "Item\tQty\tPrice\nApples\t3\t4.50\nBread\t1\t3.25"
+    },
+    "public.tab-separated-values-text": {
+      "utf8": "Item\tQty\tPrice\nApples\t3\t4.50\nBread\t1\t3.25"
+    },
+    "public.html": {
+      "utf8": "<table><thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody><tr><td>Apples</td><td>3</td><td>4.50</td></tr><tr><td>Bread</td><td>1</td><td>3.25</td></tr></tbody></table>"
+    },
+    "public.rtf": {
+      "utf8": "{\\rtf1\\ansi Item\\tab Qty\\tab Price\\par Apples\\tab 3\\tab 4.50\\par}"
+    }
+  }
+}

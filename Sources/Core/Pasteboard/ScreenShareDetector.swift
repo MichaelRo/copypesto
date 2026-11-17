@@ -26,8 +26,26 @@ public final class ScreenShareDetector {
 
     private var pollingTask: Task<Void, Never>?
     private var tracker = SharingStateTracker()
+    private let isMirroredProbe: @MainActor () -> Bool
+    private let runningBundleIDsProbe: @MainActor () -> Set<String>
+    private let windowSnapshotsProbe: @MainActor () -> [WindowSnapshot]
+    private let bundleIDForPIDProbe: @MainActor (Int32) -> String?
 
-    public init() {}
+    public init(
+        isMirrored: (@MainActor () -> Bool)? = nil,
+        runningBundleIDs: (@MainActor () -> Set<String>)? = nil,
+        windowSnapshots: (@MainActor () -> [WindowSnapshot])? = nil,
+        bundleIDForPID: (@MainActor (Int32) -> String?)? = nil
+    ) {
+        self.isMirroredProbe = isMirrored ?? { ScreenShareDetector.isMirrored() }
+        self.runningBundleIDsProbe = runningBundleIDs ?? {
+            Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier))
+        }
+        self.windowSnapshotsProbe = windowSnapshots ?? { BrowserShareSignature.onScreenWindows() }
+        self.bundleIDForPIDProbe = bundleIDForPID ?? {
+            NSRunningApplication(processIdentifier: $0)?.bundleIdentifier
+        }
+    }
 
     public var isRunning: Bool {
         pollingTask != nil
@@ -39,11 +57,17 @@ public final class ScreenShareDetector {
         // Runs on the main actor: NSWorkspace is main-actor-isolated and the display check is cheap.
         pollingTask = Task { [weak self] in
             while !Task.isCancelled {
-                let sharing = Self.isMirrored() || Self.hasSharingProcess() || Self.hasBrowserShare()
-                self?.publish(sharing)
+                self?.pollOnce()
                 try? await Task.sleep(for: .seconds(3))
             }
         }
+    }
+
+    public func pollOnce() {
+        let sharing = isMirroredProbe()
+            || Self.isSharing(runningBundleIDs: runningBundleIDsProbe())
+            || BrowserShareSignature.isSharing(windows: windowSnapshotsProbe(), bundleID: bundleIDForPIDProbe)
+        publish(sharing)
     }
 
     private func publish(_ sharing: Bool) {
@@ -70,18 +94,6 @@ public final class ScreenShareDetector {
         var displays = [CGDirectDisplayID](repeating: 0, count: Int(displayCount))
         CGGetActiveDisplayList(displayCount, &displays, &displayCount)
         return displays.contains { CGDisplayMirrorsDisplay($0) != kCGNullDirectDisplay }
-    }
-
-    @MainActor
-    private static func hasSharingProcess() -> Bool {
-        isSharing(runningBundleIDs: Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)))
-    }
-
-    @MainActor
-    private static func hasBrowserShare() -> Bool {
-        BrowserShareSignature.isSharing(windows: BrowserShareSignature.onScreenWindows()) { pid in
-            NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
-        }
     }
 
     public nonisolated static func isSharing(runningBundleIDs: Set<String>) -> Bool {

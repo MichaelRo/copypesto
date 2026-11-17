@@ -5,6 +5,8 @@ import SwiftUI
 /// The rest of what the context menu offers, as VoiceOver actions: pin, open a link, remove a tag, and tell the person
 /// which clip the arrow keys moved to. A modifier of its own for the same reason as `CardEditActions`.
 struct CardMoreActions: ViewModifier {
+    @MainActor static var isVoiceOverEnabled: () -> Bool = { NSWorkspace.shared.isVoiceOverEnabled }
+
     let isPinned: Bool
     let togglePin: (() -> Void)?
     let openLink: LinkOpenPolicy.Action
@@ -33,8 +35,13 @@ struct CardMoreActions: ViewModifier {
                 }
             }
             .onChange(of: isFocused) { _, focused in
-                guard focused, NSWorkspace.shared.isVoiceOverEnabled else { return }
-                Announcer.announce(spokenCard)
+                Self.announceFocusIfNeeded(focused: focused, spokenCard: spokenCard)
             }
+    }
+
+    @MainActor
+    static func announceFocusIfNeeded(focused: Bool, spokenCard: String) {
+        guard focused, isVoiceOverEnabled() else { return }
+        Announcer.announce(spokenCard)
     }
 }

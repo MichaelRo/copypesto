@@ -8,9 +8,23 @@ struct LoginItemToggle: View {
     let title: String
     /// Setup's last step passes true: the switch opens already on, once (`LoginItemSetupDefault`, ADR 0024).
     var appliesSetupDefault = false
-    private let service = LoginItemService()
-    @State private var status = LoginItemService().status
+    private let service: LoginItemService
+    private let bundlePath: String
+    @State private var status: LoginItemStatus
     @State private var failure: String?
+
+    init(
+        title: String,
+        appliesSetupDefault: Bool = false,
+        service: LoginItemService = LoginItemService(),
+        bundlePath: String = Bundle.main.bundlePath
+    ) {
+        self.title = title
+        self.appliesSetupDefault = appliesSetupDefault
+        self.service = service
+        self.bundlePath = bundlePath
+        _status = State(initialValue: service.status)
+    }
 
     var body: some View {
         Toggle(isOn: Binding(
@@ -35,7 +49,7 @@ struct LoginItemToggle: View {
         }
 
         if let failure {
-            Text(Self.explanation(for: failure))
+            Text(Self.explanation(for: failure, bundlePath: bundlePath))
                 .pestoCaption()
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier(AccessibilityID.launchAtLoginUnavailable)
@@ -56,8 +70,8 @@ struct LoginItemToggle: View {
         failure = change.failure
     }
 
-    private static func explanation(for failure: String) -> String {
-        let location = InstallLocation.evaluate(bundlePath: Bundle.main.bundlePath).launchAtLoginUnavailableExplanation
+    static func explanation(for failure: String, bundlePath: String = Bundle.main.bundlePath) -> String {
+        let location = InstallLocation.evaluate(bundlePath: bundlePath).launchAtLoginUnavailableExplanation
         return "\(location) macOS said: \(failure)"
     }
 }

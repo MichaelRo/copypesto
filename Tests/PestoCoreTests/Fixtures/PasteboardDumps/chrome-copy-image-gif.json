@@ -1,0 +1,11 @@
+{
+  "sourceBundleID": "com.google.Chrome",
+  "flavors": {
+    "public.png": {
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    },
+    "public.html": {
+      "utf8": "<meta charset='utf-8'><img src=\"https://media.giphy.com/media/abc123/giphy.gif\" alt=\"Reaction\">"
+    }
+  }
+}

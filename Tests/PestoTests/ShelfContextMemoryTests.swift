@@ -6,7 +6,7 @@ import Testing
 extension HostedGlobals {
     @Suite("The shelf forgets its collection and filters after a while closed")
     @MainActor
-    struct ShelfContextMemoryTests {
+    final class ShelfContextMemoryTests {
         private func stateInACollection() -> (AppState, UUID) {
             let state = AppState()
             let collection = UUID()
@@ -102,6 +102,30 @@ extension HostedGlobals {
             #expect(state.shelfContextWasStale)
             #expect(state.searchText.isEmpty)
             #expect(!state.isSearchActive)
+        }
+
+        @Test("89 seconds persists context while 90 seconds resets it, and clearSearch clears searchText immediately")
+        func whenAt89Vs90Seconds_thenBoundaryRespectedAndClearSearchClearsImmediately() {
+            let (state, collection) = stateInACollection()
+            state.searchText = "receipt"
+            state.isSearchActive = true
+            state.shelfClosedAt = Date(timeIntervalSince1970: 1000)
+
+            state.resetShelfContextIfStale(now: Date(timeIntervalSince1970: 1089), restingCollectionID: nil)
+            #expect(!state.shelfContextWasStale)
+            #expect(state.selectedCollectionID == collection)
+            #expect(state.searchText == "receipt")
+
+            state.resetShelfContextIfStale(now: Date(timeIntervalSince1970: 1090), restingCollectionID: nil)
+            #expect(state.shelfContextWasStale)
+            #expect(state.selectedCollectionID == nil)
+            #expect(state.searchText.isEmpty)
+
+            state.searchTypeFilter = ["text"]
+            state.searchText = "transient"
+            state.clearSearchFilters()
+            #expect(state.searchTypeFilter.isEmpty)
+            #expect(state.searchText == "transient")
         }
     }
 }

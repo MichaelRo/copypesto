@@ -20,6 +20,9 @@ import SwiftUI
 @MainActor
 final class SafeHostingView: NSHostingView<AnyView> {
     private var inLayoutOrConstraints = false
+    /// Opt-in for non-key panels (such as the hover card) so a first click reaches SwiftUI buttons without
+    /// activating or focusing the panel.
+    var allowsFirstMouse = false
 
     init(erasing rootView: some View) {
         super.init(rootView: AnyView(rootView))
@@ -55,5 +58,9 @@ final class SafeHostingView: NSHostingView<AnyView> {
             guard !inLayoutOrConstraints else { return }
             super.needsUpdateConstraints = newValue
         }
+    }
+
+    override func acceptsFirstMouse(for _: NSEvent?) -> Bool {
+        allowsFirstMouse
     }
 }

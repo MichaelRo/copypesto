@@ -269,7 +269,7 @@ struct PasteImportStreamingTests {
         let oversizedFile = try fixture.addExternalSnippet(id: 3, list: 1, archive: Data(), seconds: 30)
         let handle = try FileHandle(forWritingTo: oversizedFile)
         try handle.truncate(atOffset: UInt64(PasteLibraryReader.maxRecordBytes + 1))
-        try handle.closeFile()
+        try handle.close()
 
         try fixture.addMany(from: 10, count: 25_000, list: 1, blob: PasteFixture.archive("history-item")) {
             Double($0)

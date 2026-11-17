@@ -102,7 +102,7 @@ final class FocusRingAndContrastSnapshotTests: XCTestCase {
         let item = try makeItem()
         let size = CGSize(width: 260, height: 240)
         for theme in AppTheme.allCases {
-            try withTheme(theme) {
+            withTheme(theme) {
                 for dark in [false, true] {
                     let accent = Color.pestoAccent(stored: AccentChoice.defaultStored, theme: theme.rawValue)
                     let root = ZStack {

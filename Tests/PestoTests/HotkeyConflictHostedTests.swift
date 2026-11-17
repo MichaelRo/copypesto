@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Carbon.HIToolbox
 import Foundation
+import os
 import OSLog
 import PestoCore
 import Testing
@@ -47,12 +48,12 @@ extension HostedGlobals {
             let controller = HotkeyController()
             defer { controller.unregister() }
 
-            var notifications: [[String]] = []
+            let notifications = OSAllocatedUnfairLock(initialState: [[String]]())
             let observer = NotificationCenter.default.addObserver(
                 forName: .hotkeyConflictDetected, object: nil, queue: .main
             ) { note in
                 let conflicts = note.userInfo?["conflicts"] as? [String] ?? []
-                notifications.append(conflicts)
+                notifications.withLock { $0.append(conflicts) }
             }
             defer { NotificationCenter.default.removeObserver(observer) }
 
@@ -60,7 +61,7 @@ extension HostedGlobals {
             controller.register()
 
             #expect(controller.conflictingHotkeys.contains("Paste as plain text"))
-            #expect(notifications.last?.contains("Paste as plain text") == true)
+            #expect(notifications.withLock { $0.last }?.contains("Paste as plain text") == true)
             let conflictLogs = try hotkeyLogMessages(since: conflictStart)
             #expect(conflictLogs.contains("Registered Paste as plain text: status -9878"))
 
@@ -74,7 +75,7 @@ extension HostedGlobals {
             controller.reregisterMain()
 
             #expect(!controller.conflictingHotkeys.contains("Paste as plain text"))
-            #expect(notifications.last?.contains("Paste as plain text") == false)
+            #expect(notifications.withLock { $0.last }?.contains("Paste as plain text") == false)
             let clearLogs = try hotkeyLogMessages(since: clearStart)
             #expect(clearLogs.contains("Registered Paste as plain text: status 0"))
         }

@@ -19,7 +19,7 @@ extension ClipboardCardTests {
             ("Terminal", "#2E2E2E")
         ]
         for width in sizes {
-            try withCardWidth(width) {
+            withCardWidth(width) {
                 for theme in AppTheme.allCases {
                     let accent = Color.pestoAccent(stored: AccentChoice.defaultStored, theme: theme.rawValue)
                     for (appName, hex) in sourceApps {

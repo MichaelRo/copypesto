@@ -36,8 +36,11 @@ public enum PasteboardCaptureAccess: String, Equatable, Sendable {
     }
 
     public static func current(from provider: any PasteboardAccessProviding = SystemPasteboardAccess()) -> Self {
-        if RuntimeConfiguration.current.mode == .uiTest, let override = RuntimeConfiguration.current.pasteboardAccess {
-            return override
+        if RuntimeConfiguration.current.mode == .uiTest,
+           let override = RuntimeConfiguration.current.pasteboardAccess,
+           let mapped = Self(rawValue: override.rawValue)
+        {
+            return mapped
         }
         return Self(behaviorRawValue: provider.behaviorRawValue)
     }

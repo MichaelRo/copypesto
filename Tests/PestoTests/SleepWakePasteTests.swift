@@ -65,7 +65,7 @@ extension HostedGlobals {
 
             NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
 
-            for _ in 0..<200 where delegate.fillInPrompt.isShowing || delegate.pasteTasks.isRunning {
+            for _ in 0..<200 where delegate.fillInPrompt.isShowing || delegate.pasteTasks.isRunning || result != nil {
                 try? await Task.sleep(for: .milliseconds(10))
             }
             #expect(!delegate.fillInPrompt.isShowing)

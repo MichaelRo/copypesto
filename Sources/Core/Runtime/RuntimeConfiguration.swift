@@ -38,6 +38,13 @@ public enum AccessibilityStub: String, Equatable, Sendable {
     case denied
 }
 
+public enum PasteboardAccessStub: String, Equatable, Sendable {
+    case allowed
+    case notDecided
+    case prompting
+    case blocked
+}
+
 public enum DefaultsValue: Equatable, Sendable {
     case bool(Bool)
     case int(Int)
@@ -113,7 +120,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     /// UI-test mode only.
     public var menuBarIsFull: Bool
     /// Overrides `PasteboardCaptureAccess.current()` in UI-test mode (`PESTO_UITEST_PASTEBOARD_ACCESS`).
-    public var pasteboardAccess: PasteboardCaptureAccess?
+    public var pasteboardAccess: PasteboardAccessStub?
     /// Forces embedded Touch ID prompt availability in UI-test mode (`PESTO_UITEST_EMBEDDED_BIOMETRICS=1`).
     public var embeddedBiometrics: Bool
 
@@ -140,7 +147,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         fakeUpdates: Bool = false,
         linkPreviewStubMillis: Int? = nil,
         menuBarIsFull: Bool = false,
-        pasteboardAccess: PasteboardCaptureAccess? = nil,
+        pasteboardAccess: PasteboardAccessStub? = nil,
         embeddedBiometrics: Bool = false
     ) {
         self.mode = mode
@@ -203,7 +210,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             linkPreviewStubMillis: environment["PESTO_UITEST_LINK_STUB_MS"].flatMap(Int.init),
             menuBarIsFull: environment["PESTO_UITEST_MENUBAR_FULL"] == "1",
             pasteboardAccess: environment["PESTO_UITEST_PASTEBOARD_ACCESS"]
-                .flatMap(PasteboardCaptureAccess.init(rawValue:)),
+                .flatMap(PasteboardAccessStub.init(rawValue:)),
             embeddedBiometrics: environment["PESTO_UITEST_EMBEDDED_BIOMETRICS"] == "1"
         )
     }

@@ -42,7 +42,7 @@ extension HostedGlobals {
                     environment: ["PESTO_UITEST_PASTEBOARD_ACCESS": raw],
                     allowsTestHooks: true
                 )
-                #expect(config.pasteboardAccess == expected)
+                #expect(config.pasteboardAccess?.rawValue == expected.rawValue)
                 #expect(expected.needsAttention == (expected == .prompting || expected == .blocked))
             }
         }

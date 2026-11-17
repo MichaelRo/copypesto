@@ -456,3 +456,94 @@ struct SyncControllerTests {
         #expect(off.controller.status == .off)
     }
 }
+
+@Suite("Sync controller: flow, secrets and pause")
+@MainActor
+struct SyncControllerCoverageTests {
+    let folder = FileManager.default.temporaryDirectory
+        .appendingPathComponent("pesto-sync-ctrl-cov-\(UUID().uuidString)", isDirectory: true)
+    let time = TimeBox()
+
+    init() throws {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    }
+
+    private func settle(_ macs: SyncMac...) async {
+        for _ in 0..<2 {
+            for mac in macs {
+                time.advance()
+                await mac.controller.syncNow()
+            }
+        }
+    }
+
+    @Test("every flow state is reachable through controller actions")
+    func flowStates() throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        #expect(a.controller.flow == .idle)
+        a.controller.beginSetUp()
+        #expect(a.controller.flow == .setUp)
+        a.controller.beginRecoveryKeyEntry()
+        #expect(a.controller.flow == .enterRecoveryKey)
+        a.controller.cancelFlow()
+        #expect(a.controller.flow == .idle)
+    }
+
+    @Test("turning Also sync clips with secrets on sends secrets, and turning it off purges them from other Macs")
+    func secretsOnThenOffPurgesFromOtherMac() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        try await a.site.copy("4111 1111 1111 1111")
+        try await a.site.copy("plain")
+        await a.controller.turnOn()
+        guard case let .recoveryKey(key) = a.controller.flow else {
+            Issue.record("expected recovery key")
+            return
+        }
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        await b.controller.useRecoveryKey(key)
+        b.controller.confirmJoin()
+        await settle(a, b)
+        #expect(try b.clips() == ["plain"])
+
+        await a.controller.setIncludesSecrets(true)
+        await settle(a, b)
+        #expect(try b.clips() == ["4111 1111 1111 1111", "plain"])
+
+        await a.controller.setIncludesSecrets(false)
+        await settle(a, b)
+        #expect(try a.clips() == ["4111 1111 1111 1111", "plain"])
+        #expect(try b.clips() == ["plain"])
+    }
+
+    @Test("pausing sync stops reading and writing while leaving the folder intact, and turning back on resumes")
+    func pauseAndResume() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        guard case let .recoveryKey(key) = a.controller.flow else {
+            Issue.record("expected recovery key")
+            return
+        }
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        await b.controller.useRecoveryKey(key)
+        b.controller.confirmJoin()
+        try await a.site.copy("before pause")
+        await settle(a, b)
+        #expect(try b.clips() == ["before pause"])
+
+        a.controller.pause()
+        #expect(!a.controller.isEnabled)
+        #expect(a.controller.status == .off)
+        try await a.site.copy("while paused")
+        await settle(a, b)
+        #expect(try b.clips() == ["before pause"])
+
+        await a.controller.turnOn()
+        if case .joinOffer = a.controller.flow { a.controller.confirmJoin() }
+        try await a.site.copy("after resume")
+        await settle(a, b)
+        #expect(a.controller.isEnabled)
+        #expect(try b.clips().contains("after resume"))
+    }
+}

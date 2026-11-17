@@ -18,7 +18,7 @@ public struct SystemPasteboardAccess: PasteboardAccessProviding {
 
 /// macOS 15.4+ lets the user make an app's programmatic pasteboard access ask every time or be denied,
 /// which silently stops a clipboard manager from capturing.
-public enum PasteboardCaptureAccess: Equatable, Sendable {
+public enum PasteboardCaptureAccess: String, Equatable, Sendable {
     case allowed
     case notDecided
     case prompting
@@ -36,7 +36,13 @@ public enum PasteboardCaptureAccess: Equatable, Sendable {
     }
 
     public static func current(from provider: any PasteboardAccessProviding = SystemPasteboardAccess()) -> Self {
-        Self(behaviorRawValue: provider.behaviorRawValue)
+        if RuntimeConfiguration.current.mode == .uiTest,
+           let override = RuntimeConfiguration.current.pasteboardAccess,
+           let mapped = Self(rawValue: override.rawValue)
+        {
+            return mapped
+        }
+        return Self(behaviorRawValue: provider.behaviorRawValue)
     }
 
     /// macOS has not been told to allow this yet, so the first read of the board can raise its own alert.

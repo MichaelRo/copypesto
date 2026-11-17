@@ -13,8 +13,11 @@ public final class AuthenticationGrace: Sendable {
     public static let defaultMinutes = Setting.authenticationGraceMinutes.defaultValue
 
     private let lastSuccess = Mutex<Date?>(nil)
+    private let now: @Sendable () -> Date
 
-    public init() {}
+    public init(now: @escaping @Sendable () -> Date = { .now }) {
+        self.now = now
+    }
 
     /// The window in seconds from the person's setting. It also decides when the History Lock engages again.
     public static func window(defaults: UserDefaults = AppDefaults.store) -> TimeInterval {
@@ -27,13 +30,13 @@ public final class AuthenticationGrace: Sendable {
         return choices.contains(minutes) ? minutes : defaultMinutes
     }
 
-    public func isActive(window: TimeInterval = AuthenticationGrace.window(), now: Date = .now) -> Bool {
+    public func isActive(window: TimeInterval = AuthenticationGrace.window(), now: Date? = nil) -> Bool {
         guard window > 0, let last = lastSuccess.withLock({ $0 }) else { return false }
-        return now.timeIntervalSince(last) < window
+        return (now ?? self.now()).timeIntervalSince(last) < window
     }
 
-    public func record(now: Date = .now) {
-        lastSuccess.withLock { $0 = now }
+    public func record(now: Date? = nil) {
+        lastSuccess.withLock { $0 = now ?? self.now() }
     }
 
     public func clear() {
@@ -46,12 +49,13 @@ public final class AuthenticationGrace: Sendable {
         reason: String,
         requireFresh: Bool = false,
         window: TimeInterval = AuthenticationGrace.window(),
-        now: Date = .now
+        now: Date? = nil
     ) async
     -> Bool {
-        if !requireFresh, isActive(window: window, now: now) { return true }
+        let current = now ?? self.now()
+        if !requireFresh, isActive(window: window, now: current) { return true }
         guard await authenticator.authenticate(reason: reason) else { return false }
-        record(now: now)
+        record(now: current)
         return true
     }
 }

@@ -69,4 +69,32 @@ struct ToastPlacementTests {
         #expect(origin.x == CGFloat(756 - 180))
         #expect(origin.y == 80)
     }
+
+    @Test("secondary display with non-zero origin and Dock on left/right clamps and centres inside visibleFrame")
+    func whenSecondaryDisplayAndSideDock_thenClampedToVisibleFrame() {
+        let leftDockScreen = CGRect(x: 1512, y: 0, width: 2560, height: 1440)
+        let leftDockVisible = CGRect(x: 1592, y: 0, width: 2480, height: 1415)
+        let leftEdgeIcon = CGRect(x: 1595, y: 1415, width: 24, height: 25)
+
+        let clampedLeft = ToastPlacement.origin(
+            for: .belowMenuBar, size: size, visibleFrame: leftDockVisible,
+            screenFrame: leftDockScreen, anchor: leftEdgeIcon
+        )
+        #expect(clampedLeft.x == leftDockVisible.minX + 12)
+
+        let aboveLeftDock = ToastPlacement.origin(
+            for: .aboveDock, size: size, visibleFrame: leftDockVisible, screenFrame: leftDockScreen, anchor: nil
+        )
+        #expect(aboveLeftDock.x == leftDockVisible.midX - size.width / 2)
+        #expect(aboveLeftDock.y == 80)
+
+        let rightDockScreen = CGRect(x: -1920, y: -100, width: 1920, height: 1080)
+        let rightDockVisible = CGRect(x: -1920, y: -100, width: 1840, height: 1055)
+        let rightEdgeIcon = CGRect(x: -100, y: 955, width: 24, height: 25)
+        let clampedRight = ToastPlacement.origin(
+            for: .belowMenuBar, size: size, visibleFrame: rightDockVisible,
+            screenFrame: rightDockScreen, anchor: rightEdgeIcon
+        )
+        #expect(clampedRight.x == rightDockVisible.maxX - size.width - 12)
+    }
 }

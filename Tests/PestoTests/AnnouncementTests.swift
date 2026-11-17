@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
+import AppKit
 import Foundation
-import PestoCore
+import SwiftUI
 import Testing
 @testable import Pesto
+@testable import PestoCore
 
 private final class Spoken: @unchecked Sendable {
     private let lock = NSLock()
@@ -25,6 +27,28 @@ private final class PriorityLog: @unchecked Sendable {
 
     var all: [Announcer.Priority] {
         lock.withLock { priorities }
+    }
+}
+
+@MainActor
+private final class CardFocusModel {
+    var isFocused = false
+
+    func makeView() -> AnyView {
+        AnyView(
+            Text("Card")
+                .modifier(CardMoreActions(
+                    isPinned: false,
+                    togglePin: nil,
+                    openLink: .none,
+                    tags: [],
+                    removeTag: { _ in },
+                    copyRecognizedText: nil,
+                    isFocused: isFocused,
+                    spokenCard: "text from Safari: hello",
+                    offers: { _ in false }
+                ))
+        )
     }
 }
 
@@ -149,6 +173,66 @@ extension HostedGlobals {
             #expect(one == ["Clipboard history, 1 clip"])
             #expect(none == ["Clipboard history, empty"])
             #expect(locked.isEmpty)
+        }
+
+        @Test("toggling the no-results chip at the cursor speaks Filters cleared or Search cleared")
+        func whenNoResultsChipToggled_thenConfirmationIsSpoken() async throws {
+            let state = AppState()
+            state.searchText = "invoice"
+
+            state.noResultsAdvice = NoResultsAdvice(sentence: "No matches", action: .clearFilters)
+            state.filterChipActions = try [#require(state.noResultsChipAction())]
+            state.filterChipCursor = 0
+            let filtersCleared = await capturing {
+                #expect(state.toggleFilterChipAtCursor())
+            }
+
+            state.noResultsAdvice = NoResultsAdvice(sentence: "No matches", action: .clearSearch)
+            state.filterChipActions = try [#require(state.noResultsChipAction())]
+            state.filterChipCursor = 0
+            let searchCleared = await capturing {
+                #expect(state.toggleFilterChipAtCursor())
+            }
+
+            #expect(filtersCleared == ["Filters cleared"])
+            #expect(searchCleared == ["Search cleared"])
+        }
+
+        @Test("CardMoreActions announces the focused card only when VoiceOver is enabled")
+        func whenCardFocusChanges_thenCardMoreActionsAnnouncesIfVoiceOverEnabled() async {
+            let originalVO = CardMoreActions.isVoiceOverEnabled
+            defer { CardMoreActions.isVoiceOverEnabled = originalVO }
+
+            let model = CardFocusModel()
+            let hosting = SafeHostingView(pesto: model.makeView())
+            hosting.frame = NSRect(x: 0, y: 0, width: 120, height: 40)
+
+            CardMoreActions.isVoiceOverEnabled = { false }
+            let whileOff = await capturing {
+                model.isFocused = true
+                hosting.setPestoRoot(model.makeView())
+                hosting.layoutSubtreeIfNeeded()
+                try? await Task.sleep(for: .milliseconds(30))
+            }
+            #expect(whileOff.isEmpty)
+
+            model.isFocused = false
+            hosting.setPestoRoot(model.makeView())
+            hosting.layoutSubtreeIfNeeded()
+            try? await Task.sleep(for: .milliseconds(30))
+
+            CardMoreActions.isVoiceOverEnabled = { true }
+            let whileOn = await capturing {
+                model.isFocused = true
+                hosting.setPestoRoot(model.makeView())
+                hosting.layoutSubtreeIfNeeded()
+                try? await Task.sleep(for: .milliseconds(30))
+                model.isFocused = false
+                hosting.setPestoRoot(model.makeView())
+                hosting.layoutSubtreeIfNeeded()
+                try? await Task.sleep(for: .milliseconds(30))
+            }
+            #expect(whileOn == ["text from Safari: hello"])
         }
     }
 }

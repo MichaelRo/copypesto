@@ -1,0 +1,14 @@
+{
+  "sourceBundleID": "com.microsoft.Excel",
+  "flavors": {
+    "public.utf8-plain-text": {
+      "utf8": "Region\tSales\nNorth\t1200\nSouth\t950"
+    },
+    "public.tab-separated-values-text": {
+      "utf8": "Region\tSales\nNorth\t1200\nSouth\t950"
+    },
+    "public.html": {
+      "utf8": "<html xmlns:x=\"urn:schemas-microsoft-com:office:excel\"><body><table><tr><td>Region</td><td>Sales</td></tr><tr><td>North</td><td>1200</td></tr><tr><td>South</td><td>950</td></tr></table></body></html>"
+    }
+  }
+}

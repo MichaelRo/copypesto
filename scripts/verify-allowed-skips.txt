@@ -36,3 +36,9 @@ lock_reenabledAfterUnlock_locksImmediately
 RealDeviceCaptureTests
 # Text recognition needs a real Mac; a CI runner skips it (VisionAvailability.canRecognizeText).
 the real Vision reader makes a rendered screenshot searchable
+# Reduce Transparency on the host Mac forces both shelf surfaces to Solid.
+Reduce Transparency makes both surfaces solid
+# Signed release / provisioning profile only (ad-hoc verify builds lack application-identifier).
+ICloudSyncKeyStoreTests
+# Apple Intelligence evals require an Apple Silicon Mac with FoundationModels enabled.
+the real on-device model evaluates chunked summaries

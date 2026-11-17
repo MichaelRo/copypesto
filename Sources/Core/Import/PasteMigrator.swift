@@ -74,6 +74,7 @@ public actor PasteMigrator {
         var done = 0
         do {
             for group in plan.batches(includingHistory: includingHistory) {
+                try Task.checkCancellation()
                 let batch = try await snapshot.records(for: group[...])
                 run.summary.skipped += batch.undecodable
                 for record in batch.records {

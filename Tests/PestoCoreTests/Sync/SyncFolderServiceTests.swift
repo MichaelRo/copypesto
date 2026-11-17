@@ -30,7 +30,10 @@ final class SyncSite {
     var locked = false
     let highWater = MemoryHighWater()
 
-    init(name: String, layout: SyncFolderLayout, time: TimeBox, timing custom: SyncFolderService.Timing? = nil) throws {
+    init(
+        name: String, layout: SyncFolderLayout, time: TimeBox, timing custom: SyncFolderService.Timing? = nil,
+        isReadable: @escaping @Sendable (URL) -> Bool = { SyncFileAvailability.isReadable($0) }
+    ) throws {
         self.name = name
         container = try ModelContainerSetup.makeInMemory()
         storage = StorageService(modelContainer: container)
@@ -46,7 +49,7 @@ final class SyncSite {
         service = SyncFolderService(
             container: container, storage: storage, layout: layout, identity: identity, keyStore: keyStore,
             highWater: highWater, timing: timing, includeSensitive: { false }, isLocked: { flag.value },
-            now: { time.now }
+            isReadable: isReadable, now: { time.now }
         )
         lockedFlag = flag
     }
@@ -401,5 +404,60 @@ struct SyncFolderServiceTests {
             try await Task.sleep(for: .milliseconds(100))
         }
         #expect(seen.value)
+    }
+
+    @Test("a dataless segment is skipped without advancing high-water marks and applied once readable")
+    func datalessSegmentWaitsThenApplies() async throws {
+        let readable = LockedFlag()
+        readable.value = true
+        let a = try SyncSite(name: "mac-a", layout: layout, time: time)
+        let b = try SyncSite(name: "mac-b", layout: layout, time: time) { url in
+            if url.pathExtension == "pestolog", !readable.value { return false }
+            return SyncFileAvailability.isReadable(url)
+        }
+        let made = try SyncGroupManager.create(
+            layout: layout, identity: a.identity, keyStore: a.keyStore, now: time.now
+        )
+        try b.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
+
+        try await a.copy("first")
+        await settle(a, b)
+        let markAfterFirst = b.highWater.load().mark(for: "mac-a")?.sequence
+        #expect(markAfterFirst != nil)
+
+        readable.value = false
+        try await a.copy("second-dataless")
+        await settle(a)
+        await b.service.syncNow()
+
+        #expect(b.service.status == .waitingForFolder)
+        #expect(b.highWater.load().mark(for: "mac-a")?.sequence == markAfterFirst)
+        #expect(try b.texts() == ["first"])
+
+        readable.value = true
+        await b.service.syncNow()
+
+        #expect(try b.texts() == ["first", "second-dataless"])
+        #expect((b.highWater.load().mark(for: "mac-a")?.sequence ?? 0) > (markAfterFirst ?? 0))
+        if case .upToDate = b.service.status {} else { Issue.record("expected upToDate, got \(b.service.status)") }
+    }
+
+    @Test("multiple incoming segments report receiving(done:total:) before upToDate")
+    func receivingProgressReported() async throws {
+        let (a, b) = try pair()
+        var seenStatuses: [SyncStatus] = []
+        b.service.onStatusChange = { seenStatuses.append($0) }
+
+        try await a.copy("seg1")
+        await settle(a)
+        try await a.copy("seg2")
+        await settle(a)
+        await b.service.syncNow()
+
+        #expect(seenStatuses.contains {
+            if case .receiving = $0 { return true }
+            return false
+        })
+        if case .upToDate = b.service.status {} else { Issue.record("expected upToDate, got \(b.service.status)") }
     }
 }

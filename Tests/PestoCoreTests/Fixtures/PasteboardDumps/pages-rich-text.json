@@ -1,0 +1,11 @@
+{
+  "sourceBundleID": "com.apple.iWork.Pages",
+  "flavors": {
+    "public.utf8-plain-text": {
+      "utf8": "Quarterly Summary\nRevenue grew 18% year over year."
+    },
+    "public.rtf": {
+      "utf8": "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Helvetica;}}\\f0\\fs24 {\\b Quarterly Summary}\\par Revenue grew {\\i 18%} year over year.\\par}"
+    }
+  }
+}

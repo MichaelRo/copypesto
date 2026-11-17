@@ -1,0 +1,11 @@
+{
+  "sourceBundleID": "com.microsoft.edgemac",
+  "flavors": {
+    "public.png": {
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    },
+    "public.html": {
+      "utf8": "<meta charset='utf-8'><img src=\"https://media.giphy.com/media/def456/giphy.webp\" alt=\"Wave\">"
+    }
+  }
+}

@@ -3,12 +3,17 @@
 # Records a dated network activity snapshot of a running Pesto process for the Privacy page (H-04).
 # Uses lsof and nettop to inspect open sockets and connections while Pesto runs.
 #
-# Usage: scripts/dev/record-network-check.sh [--duration <seconds> | <seconds>]
+# Usage: scripts/dev/record-network-check.sh [--assert-zero] [--duration <seconds> | <seconds>]
 set -euo pipefail
 
-DURATION=15
+DURATION=""
+ASSERT_ZERO=0
 while [ $# -gt 0 ]; do
   case "$1" in
+    --assert-zero)
+      ASSERT_ZERO=1
+      shift
+      ;;
     --duration)
       DURATION="${2:-15}"
       shift 2
@@ -23,6 +28,14 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
+
+if [ -z "$DURATION" ]; then
+  if [ "$ASSERT_ZERO" = "1" ]; then
+    DURATION=30
+  else
+    DURATION=15
+  fi
+fi
 
 PID=$(pgrep -x Pesto | head -1 || true)
 
@@ -51,7 +64,7 @@ cat > "$OUT_FILE" <<REPORT
 - **Date**: $DATE_ISO
 - **macOS**: $MACOS_VER ($MACOS_BUILD)
 - **Process**: \`Pesto\` (PID $PID)
-- **Link Previews (\`fetchLinkPreviews\`)**: $(defaults read net.copypesto.pesto fetchLinkPreviews 2>/dev/null || echo "false (default)")
+- **Link Previews (\`linkPreviewsEnabled\`)**: $(defaults read net.copypesto.pesto linkPreviewsEnabled 2>/dev/null || echo "false (default)")
 
 ## Open network sockets before check (\`lsof -n -P -i -a -p $PID\`)
 \`\`\`
@@ -72,3 +85,25 @@ REPORT
 echo ""
 echo "✓ Network check saved to $OUT_FILE"
 cat "$OUT_FILE"
+
+if [ "$ASSERT_ZERO" = "1" ]; then
+  BEFORE_SOCKETS=$(printf '%s\n' "$OPEN_BEFORE" | grep -v '^COMMAND' | grep -v '^$' || true)
+  AFTER_SOCKETS=$(printf '%s\n' "$OPEN_AFTER" | grep -v '^COMMAND' | grep -v '^$' || true)
+  if [ -n "$BEFORE_SOCKETS" ] || [ -n "$AFTER_SOCKETS" ]; then
+    echo "FAIL: --assert-zero detected open network sockets for Pesto (PID $PID)" >&2
+    exit 1
+  fi
+  NONZERO_BYTES=$(printf '%s\n' "$NETTOP_OUT" | awk -F, '
+    NR > 1 && $1 != "" && $1 !~ /^time/ {
+      for (i = 2; i <= NF; i++) {
+        gsub(/[^0-9]/, "", $i)
+        if ($i != "" && ($i + 0) > 0) { print; exit 0 }
+      }
+    }
+  ' || true)
+  if [ -n "$NONZERO_BYTES" ]; then
+    echo "FAIL: --assert-zero detected non-zero nettop byte transfer: $NONZERO_BYTES" >&2
+    exit 1
+  fi
+  echo "✓ --assert-zero passed: 0 sockets, 0 bytes transferred over ${DURATION}s"
+fi

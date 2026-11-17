@@ -242,6 +242,130 @@ struct PasteImportStreamingTests {
         #expect(stored.count == PasteLibrarySnapshot.batchRecords)
         #expect(history.entryCount == 1, "the clips that came in are one Undo")
     }
+
+    @Test("25,000-clip library respects 20,000 cap, external blobs, >50 MB skip, and corrupt cleanup")
+    func whenTwentyFiveThousandClips_thenCapExternalAndCorruptCleanupHold() async throws {
+        let scratch = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-25k-scratch-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: scratch) }
+
+        let corruptURL = scratch.appendingPathComponent("corrupt.db")
+        try Data("not a sqlite database".utf8).write(to: corruptURL)
+        #expect(throws: PasteLibraryReader.ReadError.self) {
+            _ = try PasteLibrarySnapshot.open(databaseAt: corruptURL, temporaryDirectory: scratch)
+        }
+        #expect(try !FileManager.default.contentsOfDirectory(atPath: scratch.path)
+            .contains { $0.hasPrefix("pesto-paste-") })
+
+        let fixture = try PasteFixture()
+        defer { fixture.close() }
+        try fixture.addExternalSnippet(
+            id: 1, list: 2, archive: Data(PasteFixture.archive("external-present").dropFirst()), seconds: 10
+        )
+        let vanishingFile = try fixture.addExternalSnippet(
+            id: 2, list: 2, archive: Data(PasteFixture.archive("external-vanishing").dropFirst()), seconds: 20
+        )
+        let oversizedFile = try fixture.addExternalSnippet(id: 3, list: 1, archive: Data(), seconds: 30)
+        let handle = try FileHandle(forWritingTo: oversizedFile)
+        try handle.truncate(atOffset: UInt64(PasteLibraryReader.maxRecordBytes + 1))
+        try handle.close()
+
+        try fixture.addMany(from: 10, count: 25_000, list: 1, blob: PasteFixture.archive("history-item")) {
+            Double($0)
+        }
+
+        let snapshot = try PasteLibrarySnapshot.open(databaseAt: fixture.url, temporaryDirectory: scratch)
+        let plan = try await snapshot.plan(cap: .paste, retention: forever)
+        #expect(plan.selectedCount == ImportCap.paste.maxClips)
+        #expect(plan.unusableTooLarge == 1)
+        #expect(plan.pinboards.count == 2)
+        #expect(plan.historyLeftByCap == 5002)
+
+        try FileManager.default.removeItem(at: vanishingFile)
+        let firstGroup = try #require(plan.batches(includingHistory: true).first)
+        let firstBatch = try await snapshot.records(for: firstGroup[...])
+        #expect(firstBatch.undecodable == 1)
+        #expect(firstBatch.records.count == firstGroup.count - 1)
+        await snapshot.discard()
+        #expect(try !FileManager.default.contentsOfDirectory(atPath: scratch.path)
+            .contains { $0.hasPrefix("pesto-paste-") })
+    }
+
+    @Test("bulk import sets isUndoable false, second import dedupes to 0, and mid-batch cancel cleans up")
+    func whenBulkMigrated_thenNotUndoableDedupesAndCancelsSafely() async throws {
+        let scratch = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-bulk-scratch-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: scratch) }
+
+        let bulkFixture = try PasteFixture()
+        defer { bulkFixture.close() }
+        let bulkCount = UndoPolicy.maxClipsPerEntry + 50
+        try bulkFixture.run("BEGIN;")
+        for id in 1...bulkCount {
+            try bulkFixture.addSnippet(
+                id: id, list: 1, title: nil, blob: PasteFixture.archive("bulk-\(id)"), seconds: Double(id)
+            )
+        }
+        try bulkFixture.run("COMMIT;")
+
+        let container = try ModelContainerSetup.makeInMemory()
+        let history = UndoHistory()
+        let snap1 = try PasteLibrarySnapshot.open(databaseAt: bulkFixture.url, temporaryDirectory: scratch)
+        let plan1 = try await snap1.plan(cap: .paste, retention: forever)
+        let summary1 = try await PasteMigrator(modelContainer: container).migrate(
+            plan: plan1, from: snap1, includingHistory: true, undoHistory: history
+        )
+        #expect(summary1.imported == bulkCount && !summary1.isUndoable && history.entryCount == 0)
+
+        let existing = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).map {
+            ExistingClip($0.id, $0.copiedAt, $0.byteSize)
+        }
+        let snap2 = try PasteLibrarySnapshot.open(databaseAt: bulkFixture.url, temporaryDirectory: scratch)
+        let plan2 = try await snap2.plan(cap: .paste, retention: forever, existing: existing)
+        #expect(plan2.selectedCount == 0)
+        let summary2 = try await PasteMigrator(modelContainer: container).migrate(
+            plan: plan2, from: snap2, includingHistory: true, undoHistory: history
+        )
+        #expect(summary2.imported == 0)
+        #expect(try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).count == bulkCount)
+
+        let cancelContainer = try ModelContainerSetup.makeInMemory()
+        let snap3 = try PasteLibrarySnapshot.open(databaseAt: bulkFixture.url, temporaryDirectory: scratch)
+        let plan3 = try await snap3.plan(cap: .paste, retention: forever)
+        let handleBox = CancelBox()
+        let migrateTask = Task {
+            try await PasteMigrator(modelContainer: cancelContainer).migrate(
+                plan: plan3, from: snap3, includingHistory: true
+            ) { done, _ in
+                if done >= PasteLibrarySnapshot.batchRecords { handleBox.cancel() }
+            }
+        }
+        handleBox.set(migrateTask)
+        do {
+            _ = try await migrateTask.value
+            Issue.record("expected mid-batch cancellation")
+        } catch let interrupted as PasteMigrator.Interrupted {
+            #expect(interrupted.cause is CancellationError)
+            #expect(interrupted.summary.imported == PasteLibrarySnapshot.batchRecords)
+        } catch is CancellationError {}
+        #expect(try !FileManager.default.contentsOfDirectory(atPath: scratch.path)
+            .contains { $0.hasPrefix("pesto-paste-") })
+    }
+}
+
+private final class CancelBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var task: Task<PasteMigrator.Summary, any Error>?
+
+    func set(_ task: Task<PasteMigrator.Summary, any Error>) {
+        lock.withLock { self.task = task }
+    }
+
+    func cancel() {
+        lock.withLock { task?.cancel() }
+    }
 }
 
 final class LockedCounts: @unchecked Sendable {

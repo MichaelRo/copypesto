@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import CoreGraphics
+import os
 import Testing
 @testable import PestoCore
 
@@ -27,5 +29,40 @@ struct ScreenShareDetectorTests {
             "net.copypesto.pesto"
         ]))
         #expect(!ScreenShareDetector.isSharing(runningBundleIDs: []))
+    }
+
+    @MainActor
+    @Test("injected window-snapshot probe detects Chromium/Firefox share bar and publishes changes once")
+    func whenWindowSnapshotProbeDetectsBrowserShare_thenPublishesChanges() {
+        let windows = OSAllocatedUnfairLock(initialState: [WindowSnapshot]())
+        let detector = ScreenShareDetector(
+            isMirrored: { false },
+            runningBundleIDs: { ["com.google.Chrome"] },
+            windowSnapshots: { windows.withLock { $0 } },
+            bundleIDForPID: { $0 == 42 ? "com.google.Chrome" : nil }
+        )
+        var events: [Bool] = []
+        detector.onStateChange = { events.append($0) }
+
+        detector.pollOnce()
+        #expect(events.isEmpty)
+
+        windows.withLock {
+            $0 = [WindowSnapshot(
+                ownerPID: 42,
+                layer: Int(CGWindowLevelForKey(.statusWindow)),
+                isOnScreen: true,
+                width: 420,
+                height: 44,
+                alpha: 1
+            )]
+        }
+        detector.pollOnce()
+        detector.pollOnce()
+        #expect(events == [true])
+
+        windows.withLock { $0 = [] }
+        detector.pollOnce()
+        #expect(events == [true, false])
     }
 }

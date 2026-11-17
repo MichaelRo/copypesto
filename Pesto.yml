@@ -215,6 +215,12 @@ schemes:
       config: Debug
       targets:
         - PestoSnapshotTests
+      environmentVariables:
+        - variable: TZ
+          value: UTC
+      commandLineArguments:
+        "-AppleLocale en_US": true
+        "-AppleLanguages (en)": true
 
   PestoCITests:
     build:

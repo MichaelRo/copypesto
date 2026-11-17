@@ -47,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var doubleCopyMonitor: Any?
     var doubleCopyMonitorWasTrusted = false
     var settingsWindowObserver: Any?
+    var sleepWakeObservers: [any NSObjectProtocol] = []
     /// Cancellable safety timer used in openSettingsWindow(). Cancelled when the window
     /// actually becomes key so the timer doesn't revert activation policy prematurely.
     var statusItem: NSStatusItem?
@@ -277,29 +278,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Cancel any pending paste task when the Mac wakes from sleep or the screen unlocks.
         // Without this, a Task.sleep(300ms) suspended mid-paste resumes immediately on wake
-        // and pastes into whatever text field the user is currently in.
-        // didWakeNotification = hardware sleep/wake (lid open/close, power button).
-        // screensDidWakeNotification = screen lock/unlock (CMD+CTRL+Q, screensaver, display sleep).
-        // Going to sleep or dimming the screen interrupts too: a selection made just before is stale either way.
-        for name in [
-            NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification,
-            NSWorkspace.screensDidSleepNotification, NSWorkspace.screensDidWakeNotification
-        ] {
-            NSWorkspace.shared.notificationCenter.addObserver(
-                forName: name,
-                object: nil,
-                queue: .main
-            ) { [weak self] _ in
-                // A Mac that slept or locked its screen is not the person who just authenticated.
-                AuthenticationGrace.shared.clear()
-                Task { @MainActor [weak self] in
-                    if self?.pasteTasks.isRunning == true {
-                        Self.pasteLogger.notice("[cancel] reason=wake-or-screen-unlock")
-                    }
-                    self?.pasteTasks.interrupt()
-                }
-            }
-        }
+        installSleepWakeObservers()
 
         setupUserDefaultsObserver()
 
@@ -494,5 +473,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Closes the overlay without pasting (Escape / hotkey toggle path); any paste that was waiting is dropped.
     func hideOverlay() {
         appState.close()
+    }
+}
+
+extension AppDelegate {
+    func installSleepWakeObservers() {
+        removeSleepWakeObservers()
+        for name in [
+            NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification,
+            NSWorkspace.screensDidSleepNotification, NSWorkspace.screensDidWakeNotification
+        ] {
+            let token = NSWorkspace.shared.notificationCenter.addObserver(
+                forName: name,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                // A Mac that slept or locked its screen is not the person who just authenticated.
+                AuthenticationGrace.shared.clear()
+                Task { @MainActor [weak self] in
+                    if self?.pasteTasks.isRunning == true {
+                        Self.pasteLogger.notice("[cancel] reason=wake-or-screen-unlock")
+                    }
+                    self?.pasteTasks.interrupt()
+                }
+            }
+            sleepWakeObservers.append(token)
+        }
+    }
+
+    func removeSleepWakeObservers() {
+        for token in sleepWakeObservers {
+            NSWorkspace.shared.notificationCenter.removeObserver(token)
+        }
+        sleepWakeObservers.removeAll()
     }
 }

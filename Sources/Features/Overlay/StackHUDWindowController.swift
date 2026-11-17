@@ -195,13 +195,7 @@ final class StackHUDWindowController {
 
     private func positionPanel(_ panel: NSPanel) {
         guard let screen = TargetScreen.current() ?? NSScreen.main else { return }
-        let sf = screen.visibleFrame
-        let pw = panel.frame.width
-        let ph = panel.frame.height
-        let origin = NSPoint(
-            x: sf.maxX - pw - 16,
-            y: sf.maxY - ph - 8
-        )
+        let origin = FloatingWindowPlacement.stackHUDOrigin(panelSize: panel.frame.size, in: screen.visibleFrame)
         panel.setFrameOrigin(origin)
     }
 }

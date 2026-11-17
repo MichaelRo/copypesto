@@ -23,6 +23,14 @@ public enum FloatingWindowPlacement {
         return CGRect(x: x, y: y, width: width, height: height)
     }
 
+    /// Top-right origin for the paste-stack HUD inside `visibleFrame`.
+    public static func stackHUDOrigin(panelSize: CGSize, in visibleFrame: CGRect) -> CGPoint {
+        CGPoint(
+            x: visibleFrame.maxX - panelSize.width - 16,
+            y: visibleFrame.maxY - panelSize.height - 8
+        )
+    }
+
     private static func overlap(_ a: CGRect, _ b: CGRect) -> CGFloat {
         let r = a.intersection(b)
         return r.isNull ? 0 : r.width * r.height

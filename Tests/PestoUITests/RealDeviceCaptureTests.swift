@@ -43,4 +43,27 @@ final class RealDeviceCaptureTests: PestoUITestCase {
         RunLoop.current.run(until: Date().addingTimeInterval(6))
         capture("real-ask")
     }
+
+    func test_realSummarizeLongClipPastesIntoTargetApp() {
+        launch(
+            seed: "marketing",
+            defaults: ["hasOnboarded": "true", "appearanceMode": "dark"],
+            backdrop: "plain",
+            realDevice: true
+        )
+        showOverlay()
+        let cards = app.groups.matching(NSPredicate(format: "identifier BEGINSWITH 'clip-card-'"))
+        guard let firstCard = cards.allElementsBoundByIndex.first, firstCard.waitUntilExists(timeout: 5) else {
+            XCTFail("Expected at least one clip card")
+            return
+        }
+        firstCard.rightClick()
+        let summarize = app.menuItems["Summarize"].firstMatch
+        if summarize.waitUntilExists(timeout: 5) {
+            summarize.click()
+            // Long/real on-device summarization can take >20 s on real hardware.
+            RunLoop.current.run(until: Date().addingTimeInterval(22))
+        }
+        capture("real-summarize")
+    }
 }

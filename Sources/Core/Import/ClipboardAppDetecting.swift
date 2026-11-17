@@ -6,13 +6,21 @@ public protocol ClipboardAppDetecting: Sendable {
     func installed() -> [ImportSource]
 }
 
+public typealias WorkspaceAppLookup = @Sendable (String) -> URL?
+
 /// Asks LaunchServices for each bundle identifier. It never opens another app's container.
 public struct LaunchServicesAppDetector: ClipboardAppDetecting {
-    public init() {}
+    private let lookup: WorkspaceAppLookup
+
+    public init(
+        lookup: @escaping WorkspaceAppLookup = { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }
+    ) {
+        self.lookup = lookup
+    }
 
     public func installed() -> [ImportSource] {
         ImportSource.allCases.filter { source in
-            source.bundleIDs.contains { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
+            source.bundleIDs.contains { lookup($0) != nil }
         }
     }
 }

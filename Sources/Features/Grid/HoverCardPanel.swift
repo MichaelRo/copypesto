@@ -29,6 +29,7 @@ final class HoverCardPanel: NSPanel {
         setAccessibilityRole(.window)
         setAccessibilitySubrole(.floatingWindow)
         setAccessibilityLabel(String(localized: "Clip details"))
+        hosting.allowsFirstMouse = true
         hosting.autoresizingMask = [.width, .height]
         container.addSubview(hosting)
         container.onPointerInside = { [weak self] inside in self?.onPointerInside?(inside) }

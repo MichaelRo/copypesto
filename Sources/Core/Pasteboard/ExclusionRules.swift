@@ -34,6 +34,7 @@ public struct ExclusionRules: Sendable {
         "io.macpaw.eccentricapp.Hider5",
         "com.mac-keychain.keychain",
         "com.apple.Passwords",
+        "com.apple.Passwords.MenuBarExtra",
         "in.sinew.Enpass-Desktop",
         "me.proton.pass.electron",
         "com.hicknhacksoftware.MacPass"
@@ -52,6 +53,7 @@ public struct ExclusionRules: Sendable {
         "io.macpaw.eccentricapp.Hider5": "Hider",
         "com.mac-keychain.keychain": "Keychain",
         "com.apple.Passwords": "Passwords",
+        "com.apple.Passwords.MenuBarExtra": "Passwords Menu Bar",
         "in.sinew.Enpass-Desktop": "Enpass",
         "me.proton.pass.electron": "Proton Pass",
         "com.hicknhacksoftware.MacPass": "MacPass"

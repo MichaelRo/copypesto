@@ -1,0 +1,11 @@
+{
+  "sourceBundleID": "com.google.Chrome",
+  "flavors": {
+    "public.utf8-plain-text": {
+      "utf8": "Design Review\nShip checklist"
+    },
+    "public.html": {
+      "utf8": "<meta charset='utf-8'><b style=\"font-weight:normal;\" id=\"docs-internal-guid-1234\"><h1>Design Review</h1><p>Ship <strong>checklist</strong></p></b>"
+    }
+  }
+}

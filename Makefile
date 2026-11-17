@@ -354,6 +354,38 @@ bench-shelf: ## [Benchmarks] Measure an arrow press, a held arrow and a collecti
 bench-scroll: ## [Benchmarks] Measure shelf scrolling (hitches) on a mixed history and a long text history; the Mac must be unlocked
 	scripts/bench-scroll.sh
 
+.PHONY: soak-memory
+soak-memory: ## [Benchmarks] Run multi-cycle Profile soak test (footprint < 150 MB, 0 leaks, flat slope, MallocLargeCache=0)
+	scripts/soak-memory.sh
+
+.PHONY: check-flash
+check-flash: ## [Test] Capture OverlayPanel at 120 Hz while cycling collections (⌘]/⌘[) to catch blank/stale frames
+	scripts/check-collection-switch-flash.sh
+
+.PHONY: test-drag-hover
+test-drag-hover: ## [Test] Run standalone CGEvent + AXObserver drag-and-hover suite against Profile build
+	scripts/drag-and-hover/run.sh
+
+.PHONY: test-virtual-display
+test-virtual-display: ## [Test] Run CGVirtualDisplay multi-screen, notch, Stage Manager, and menu-bar contrast suite
+	scripts/virtual-display/run.sh
+
+.PHONY: test-multi-app
+test-multi-app: ## [Test] Run multi-app live paste, Paste As…, entry-point, snippet, and drag suite
+	scripts/multi-app/run.sh
+
+.PHONY: test-sleep-paste
+test-sleep-paste: ## [Test] Verify zero paste on sleep/wake via pmset schedule wake + sleepnow
+	scripts/test-sleep-paste.sh
+
+.PHONY: test-real-paste-import
+test-real-paste-import: ## [Test] Stress-test Paste.app import against an isolated PESTO_REAL_PASTE_DB fixture
+	scripts/test-real-paste-import.sh
+
+.PHONY: test-voiceover
+test-voiceover: ## [Test] Run live VoiceOver.sdef osascript announcement sweep on OverlayPanel
+	scripts/test-voiceover.sh
+
 .PHONY: dmg-preview
 dmg-preview: generate ## [Release] Build an unsigned installer disk image from a Release build, and open it to look at its window (.build/Pesto-preview.dmg)
 	DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild -project Pesto.xcodeproj -scheme Pesto -configuration Release \

@@ -64,8 +64,9 @@ struct BiometricLockOverlay<Content: View>: View {
     }
 
     private var usesEmbeddedPrompt: Bool {
-        (LaunchMode.current.usesSystemIntegrations || RuntimeConfiguration.current.usesRealDevice)
-            && LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+        ((LaunchMode.current.usesSystemIntegrations || RuntimeConfiguration.current.usesRealDevice)
+            && LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil))
+            || (RuntimeConfiguration.current.mode == .uiTest && RuntimeConfiguration.current.embeddedBiometrics)
     }
 
     /// The password or fallback unlock; a refusal shakes the glyph like a wrong password does.

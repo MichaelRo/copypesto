@@ -2,7 +2,7 @@
 
 Status: Accepted
 
-Research and the evaluation of each scope: [`docs/research/smart-snippets.md`](../docs/research/smart-snippets.md). What changed in the building is under "As built".
+Research and the evaluation of each scope were archived in the owner's Brain vault. What changed in the building is under "As built".
 
 ## Context
 A snippet in Pesto is a pinned clip whose text holds `{{token}}` (`docs/design/snippets-and-suggestions.md`), expanded

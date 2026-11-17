@@ -208,7 +208,6 @@ final class QuickMenuWindowController {
     private func positionedFrame(near cursorRect: CGRect) -> CGRect {
         let cursorScreen = NSScreen.screens.first { $0.frame.intersects(cursorRect) } ?? NSScreen.main
         let screenFrame = cursorScreen?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
-        let gap: CGFloat = 8
         let cardSize = CardSize.dimensions(
             sizeRaw: AppDefaults.store.value(for: Setting.cardSize),
             customWidth: AppDefaults.store.value(for: Setting.cardWidth)
@@ -216,20 +215,6 @@ final class QuickMenuWindowController {
         let panelSize = QuickMenuMetrics.panelSize(
             cardSize: cardSize, cards: Self.shownCards, maxWidth: screenFrame.width - 16
         )
-        let panelWidth = panelSize.width
-        let panelHeight = panelSize.height
-
-        var x = cursorRect.midX - panelWidth / 2
-        var y = cursorRect.maxY + gap
-
-        x = max(screenFrame.minX + 8, min(x, screenFrame.maxX - panelWidth - 8))
-
-        if y + panelHeight > screenFrame.maxY {
-            y = cursorRect.minY - panelHeight - gap
-        }
-
-        y = max(screenFrame.minY + 8, min(y, screenFrame.maxY - panelHeight - 8))
-
-        return CGRect(x: x, y: y, width: panelWidth, height: panelHeight)
+        return QuickMenuMetrics.frame(near: cursorRect, panelSize: panelSize, in: screenFrame)
     }
 }

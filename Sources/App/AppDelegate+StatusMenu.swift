@@ -291,6 +291,15 @@ extension AppDelegate: NSMenuDelegate {
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        updateStatusMenu(menu)
+    }
+
+    func updateStatusMenu(
+        _ menu: NSMenu,
+        pasteboardAccess: PasteboardCaptureAccess = PasteboardCaptureAccess.current(),
+        checksPasteboardAccess: Bool = LaunchMode.current.usesSystemIntegrations
+            || RuntimeConfiguration.current.pasteboardAccess != nil
+    ) {
         menu.removeAllItems()
 
         addUpdateItems(to: menu)
@@ -305,7 +314,7 @@ extension AppDelegate: NSMenuDelegate {
             menu.addItem(.separator())
         }
 
-        if LaunchMode.current.usesSystemIntegrations, PasteboardCaptureAccess.current().needsAttention {
+        if checksPasteboardAccess, pasteboardAccess.needsAttention {
             menu.addItem(makeItem(
                 "Clipboard Access Limited — Open Settings…",
                 action: #selector(statusOpenPasteboardSettings)

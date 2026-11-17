@@ -41,9 +41,17 @@ let package = Package(
                 .enableUpcomingFeature("ExistentialAny")
             ]
         ),
+        .executableTarget(
+            name: "SyncPeerTool",
+            dependencies: ["PestoCore"],
+            path: "Tests/SyncPeerTool",
+            swiftSettings: [
+                .enableUpcomingFeature("ExistentialAny")
+            ]
+        ),
         .testTarget(
             name: "PestoCoreTests",
-            dependencies: ["PestoCore"],
+            dependencies: ["PestoCore", "SyncPeerTool"],
             path: "Tests/PestoCoreTests",
             exclude: ["Fixtures"]
         ),

@@ -158,15 +158,19 @@ public enum HiddenClipReveal {
 
 /// Touch ID, Apple Watch or the account password, whichever the Mac offers.
 public struct SystemUserAuthenticator: UserAuthenticating {
-    public init() {}
+    private let makeContext: @Sendable () -> any LAContextEvaluating
+
+    public init(makeContext: @escaping @Sendable () -> any LAContextEvaluating = { LAContext() }) {
+        self.makeContext = makeContext
+    }
 
     public func canAuthenticate() -> Bool {
         var error: NSError?
-        return LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
+        return makeContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
     }
 
     public func authenticate(reason: String) async -> Bool {
-        await (try? LAContext().evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)) ?? false
+        await (try? makeContext().evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)) ?? false
     }
 }
 

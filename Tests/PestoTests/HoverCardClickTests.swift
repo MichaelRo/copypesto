@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import AppKit
+import os
 import SwiftUI
 import Testing
 @testable import Pesto
@@ -79,11 +80,11 @@ extension HostedGlobals {
             panel.contentView?.layoutSubtreeIfNeeded()
             try await Task.sleep(for: .milliseconds(100))
 
-            var resignedCount = 0
+            let resignedCount = OSAllocatedUnfairLock(initialState: 0)
             let observer = NotificationCenter.default.addObserver(
                 forName: NSWindow.didResignKeyNotification, object: overlay, queue: .main
             ) { _ in
-                resignedCount += 1
+                resignedCount.withLock { $0 += 1 }
             }
             defer { NotificationCenter.default.removeObserver(observer) }
 
@@ -94,7 +95,7 @@ extension HostedGlobals {
             #expect(copies == 1)
             #expect(!panel.isKeyWindow)
             #expect(overlay.isKeyWindow == wasOverlayKey)
-            #expect(resignedCount == 0)
+            #expect(resignedCount.withLock { $0 } == 0)
 
             let outside = NSWindow(
                 contentRect: NSRect(x: 500, y: 500, width: 120, height: 120),
@@ -106,7 +107,7 @@ extension HostedGlobals {
             try await Task.sleep(for: .milliseconds(50))
 
             if wasOverlayKey {
-                #expect(resignedCount >= 1)
+                #expect(resignedCount.withLock { $0 } >= 1)
             }
         }
 

@@ -43,6 +43,17 @@ enum CardMedia {
         return picture
     }
 
+    /// The frames of a card's GIF, decoded behind `GIFDecodeGate` so a fast scroll decodes only a few at a time.
+    @MainActor
+    static func animation(itemID: UUID, container: ModelContainer?, budget: GIFFrames.Budget) async -> GIFFrames.Animation? {
+        guard let container else { return nil }
+        let service = await ThumbnailServices.shared.service(for: container)
+        guard let thumbnail = await service.thumbnail(for: itemID, maxPixel: cardPixel), thumbnail.isAnimated else {
+            return nil
+        }
+        return await GIFDecodeGate.shared.run { await GIFFrames.decode(thumbnail.data, budget: budget) }
+    }
+
     @concurrent
     static func linkPicture(for itemID: UUID) async -> UIImage? {
         guard let data = LinkPreviewImageStore().load(for: itemID) else { return nil }

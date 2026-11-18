@@ -79,8 +79,19 @@ struct ClipCard: View {
                     fetchPreview: { await appState.loadLinkPreview(for: item) }
                 )
             }
+            .task(id: isOnScreen && !Motion.reduceMotion && !concealment.isConcealed) {
+                guard isOnScreen, !Motion.reduceMotion, !concealment.isConcealed else { return }
+                let id = item.id
+                let container = appState.historyContainer
+                await media.animate {
+                    await CardMedia.animation(itemID: id, container: container, budget: .card)
+                }
+            }
             .onAppear { isOnScreen = true }
-            .onDisappear { isOnScreen = false }
+            .onDisappear {
+                isOnScreen = false
+                media.dropAnimation()
+            }
             .modifier(CardAccessibility(card: self))
             .accessibilityIdentifier(MobileAccessibilityID.clipCard)
     }

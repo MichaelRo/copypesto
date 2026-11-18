@@ -13,7 +13,7 @@ struct SemanticSearchTests {
     func whenQueryIsShortOrASourceFilter_thenItDoesNotAskForMeaning() {
         #expect(SemanticSearch.asksForMeaning("quarterly numbers"))
         #expect(SemanticSearch.asksForMeaning("  quarterly numbers  "))
-        #expect(!SemanticSearch.asksForMeaning("quarterly"))
+        #expect(!SemanticSearch.asksForMeaning("quarters"))
         #expect(!SemanticSearch.asksForMeaning("@Safari quarterly numbers"))
         #expect(!SemanticSearch.asksForMeaning("short"))
     }

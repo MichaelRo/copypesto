@@ -28,11 +28,13 @@ enum ItemProviderCapture {
     private static func capture(_ choice: Choice, from provider: NSItemProvider) async throws -> PasteboardCapture? {
         switch choice {
         case let .picture(type):
-            return try await ClipCapture.picture(data(of: type, from: provider), typeIdentifier: type)
+            let capture = try await ClipCapture.picture(data(of: type, from: provider), typeIdentifier: type)
+            return await capture?.with(sourceImageURL: animatedAddress(from: provider))
         case let .pictureToConvert(type):
             let raw = try await data(of: type, from: provider)
             guard let png = UIImage(data: raw)?.pngData() else { throw Unreadable() }
-            return ClipCapture.picture(png, typeIdentifier: UTType.png.identifier)
+            return await ClipCapture.picture(png, typeIdentifier: UTType.png.identifier)?
+                .with(sourceImageURL: animatedAddress(from: provider))
         case .link:
             return try await ClipCapture.link(url(from: provider))
         case .text:
@@ -45,6 +47,22 @@ enum ItemProviderCapture {
             guard let text = String(data: raw, encoding: encoding) else { throw Unreadable() }
             return ClipCapture.text(text)
         }
+    }
+
+    /// Safari's Copy Image on a GIF hands over the first frame and an HTML flavour that names the GIF; the address is
+    /// kept so the whole animation can be fetched after the still is saved (ADR 0005).
+    nonisolated static func animatedAddress(inHTML data: Data?) -> URL? {
+        guard let data, data.count <= maxHTMLBytes, let html = String(data: data, encoding: .utf8) else { return nil }
+        return ImageSourceAddress.animatedPictureURL(inHTML: html)
+    }
+
+    nonisolated static let maxHTMLBytes = 1_000_000
+
+    private static func animatedAddress(from provider: NSItemProvider) async -> URL? {
+        let html = UTType.html.identifier
+        guard provider.hasItemConformingToTypeIdentifier(html),
+              let data = try? await data(of: html, from: provider) else { return nil }
+        return animatedAddress(inHTML: data)
     }
 
     /// A URL object's `public.url` data is an archive, not its text (Safari's drag, the Paste button), so the provider

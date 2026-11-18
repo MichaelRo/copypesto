@@ -20,7 +20,7 @@ public struct PasteboardCapture: Sendable {
     public let concealedUntil: Date?
     /// For a still picture a browser copied: the address of the GIF it came from, read from the HTML flavour. The
     /// browser puts only the first frame on the pasteboard; this is where the whole GIF can be fetched (ADR 0005).
-    public let sourceImageURL: URL?
+    public private(set) var sourceImageURL: URL?
     /// Formatted flavours (RTF, RTFD, HTML) captured alongside a text copy so formatting survives a normal paste.
     public let richPayload: RichTextPayload?
     /// How the person handed this to Pesto on iOS; sealed with the clip on this device only (ADR 0049).
@@ -63,6 +63,12 @@ public struct PasteboardCapture: Sendable {
     public func with(captureMethod method: CaptureMethod?) -> PasteboardCapture {
         var copy = self
         copy.captureMethod = method
+        return copy
+    }
+
+    public func with(sourceImageURL address: URL?) -> PasteboardCapture {
+        var copy = self
+        copy.sourceImageURL = address
         return copy
     }
 

@@ -99,7 +99,12 @@ final class MobileAppState {
         historyStore = store
         let service = StorageService(
             modelContainer: container,
-            environment: environment?() ?? .live(rules: ClipboardRules.fromUserDefaults())
+            environment: environment?() ?? .live(
+                rules: ClipboardRules.fromUserDefaults(),
+                remoteGIFFetcher: RemoteGIFFetcher.make(isHistoryLocked: { [weak self] in
+                    await MainActor.run { self?.isHistoryLockedNow() ?? true }
+                })
+            )
         )
         storageService = service
         startQuickInsert(container: container)

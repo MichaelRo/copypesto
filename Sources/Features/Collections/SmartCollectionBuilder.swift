@@ -127,7 +127,7 @@ private struct RuleRow: View {
 
             Picker("Condition", selection: $rule.op) {
                 ForEach(allowedOps(for: rule.field), id: \.self) { op in
-                    Text(op.displayName).tag(op)
+                    Text(op.displayName(for: rule.field)).tag(op)
                 }
             }
             .frame(width: 100)
@@ -240,6 +240,15 @@ extension PredicateRule.Field {
 }
 
 extension PredicateRule.Operator {
+    /// The yes/no conditions are worded for the field they test: "From Another Device is pinned" read as nonsense.
+    func displayName(for field: PredicateRule.Field) -> String {
+        switch (self, field) {
+        case (.isTrue, .isRemote): "came from another device"
+        case (.isFalse, .isRemote): "was copied on this Mac"
+        default: displayName
+        }
+    }
+
     var displayName: String {
         switch self {
         case .equals: "is"

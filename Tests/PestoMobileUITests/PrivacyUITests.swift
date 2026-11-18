@@ -83,4 +83,23 @@ final class PrivacyUITests: XCTestCase {
         XCTAssertFalse(packing.exists, "a covered card says its kind, never its text")
         capture("Cards covered by Hide Clip Contents")
     }
+
+    func test_whenTheSceneIsCaptured_thenEveryCardIsCoveredAndOffersShow() {
+        let app = launch(environment: [
+            "PESTO_UITEST_DEFAULT_screenSharingPrivacy": "true",
+            "PESTO_UITEST_DEFAULT_uitestForcesSceneCapture": "true"
+        ])
+        let cards = app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
+        let shows = app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.showUnderCoverButton)
+        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertTrue(shows.firstMatch.waitForExistence(timeout: timeout), "a covered card offers Show")
+        XCTAssertGreaterThan(cards.count, 1)
+        XCTAssertEqual(shows.count, cards.count, "every card on screen is covered and offers Show")
+        let packing = cards.matching(NSPredicate(format: "label CONTAINS %@", "Packing list")).firstMatch
+        XCTAssertFalse(packing.exists, "a covered card says its kind, never its text")
+        capture("Cards covered while the scene is captured")
+
+        shows.firstMatch.tap()
+        XCTAssertEqual(shows.count, cards.count - 1, "Show uncovers that one card until the capture ends")
+    }
 }

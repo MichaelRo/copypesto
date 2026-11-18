@@ -11,9 +11,18 @@ struct LibraryRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var library = LibraryModel()
 
+    /// A `-UITestMode` launch can say the scene is being captured, since a simulator never reports a real capture.
+    private static var forcesSceneCapture: Bool {
+        #if DEBUG
+        LaunchMode.current == .uiTest && AppDefaults.store.value(for: Setting.uitestForcesSceneCapture)
+        #else
+        false
+        #endif
+    }
+
     var body: some View {
         content
-            .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 })
+            .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 || Self.forcesSceneCapture })
             .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(in: scenePhase)))
             .animation(Motion.animation(.pestoWash), value: appState.isHistoryLocked)
             .onChange(of: appState.isHistoryLocked) { _, locked in if locked { library.closeEverything() } }

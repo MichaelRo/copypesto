@@ -62,8 +62,12 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 - **Tap** copies (a secret too, without showing it, `localOnly` and gone after two minutes), moves the clip to the
   front, flashes an accent ring, plays the success haptic, says "Copied" in a small toast and to VoiceOver. No Undo on
   a copy. Return copies the focused card.
-- **Long press**: a large preview and Copy, Edit Details, Share, Pin or Unpin, Add to Collection, Show (a hidden
-  secret), Delete (last, destructive, Undo offered). SwiftUI gives a grid no "tap the preview" hook, so Edit Details is
+- **Long press**: a large preview and Copy, Copy As (the Mac's text transforms for text, code and links; a color's
+  formats), Copy Recognized Text and Save to Photos (a picture; add-only Photos permission), Edit Details, Share, Pin or
+  Unpin, Add to Collection, Save as Snippet (a plain text clip), Show (a hidden secret), Delete (last, destructive, Undo
+  offered). A snippet that asks for values (ADR 0017) opens a small sheet before Copy: its fields, and a system Paste
+  button for `{{clipboard}}` (never a silent read); selection and app name stay empty on iOS. The same copy actions are
+  in the detail's More menu. SwiftUI gives a grid no "tap the preview" hook, so Edit Details is
   the way into the detail.
 - **Drag**: a card that nothing covers drags out as text, a URL or its picture, with its id visible to Pesto alone
   (`ClipDrag`, an exported type with `.ownProcess` visibility). A drop on a sidebar collection files the clip there; a
@@ -78,6 +82,20 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
   confirmation, all in the menu a held ⌘ shows.
 - **VoiceOver**: a card is one element ("Link, copypesto.net, Safari, 4 minutes ago, Pinned"); activating copies;
   actions Edit Details, Pin, Share, Show and Delete.
+
+## Search and filters
+Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and
+order: after the text matches) when the on-device model is available. While searching the chip row also offers Today,
+This Week (the Mac's date rules) and Other Devices (clips that arrived by sync). Link previews are fetched once for a
+link card on screen (`LinkPreviewLoader`), only with Settings → Privacy → Load link previews on (off by default: iOS has
+no setup screen to ask, ADR 0042) and never while locked. A GIF copied in Safari arrives as a still and its address,
+and the whole GIF is fetched under the same switch (`RemoteGIFFetcher`). Settings → History has Keep clips for and Keep
+at most with the Mac's choices and defaults, swept at launch and, at most hourly, on return to the foreground.
+
+## Motion
+Only `Motion.animation` with the four named curves: cards entering and leaving the grid (one clip added or removed;
+`ListChangeMotion`), the chip and the Copied ring, the toast, the detail's edit switch, and the lock screen fading in
+(the library leaves at once, so no card stays drawn while it fades). Nothing under Reduce Motion, nothing before a tap.
 
 ## Theme
 `MobileAccent` resolves the ground and the accent with `MobileTheme` (Core's `AppTheme`, `AccentChoice` and

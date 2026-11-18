@@ -139,6 +139,7 @@ public enum Setting {
 
     public static let uitestAuthenticationGranted = SettingKey("uitestAuthenticationGranted", default: false)
     public static let uitestAuthenticationUnavailable = SettingKey("uitestAuthenticationUnavailable", default: false)
+    public static let uitestForcesSceneCapture = SettingKey("uitestForcesSceneCapture", default: false)
 
     /// Every key's name, for the tests that keep the list honest.
     public static let allNames: [String] = [
@@ -179,6 +180,6 @@ public enum Setting {
         shelfSuggestionsLastShownAt.name,
         shelfSuggestionDeclines.name,
         shelfSuggestionLedger.name, clickHintShownCount.name, doubleClickPasted.name,
-        uitestAuthenticationGranted.name, uitestAuthenticationUnavailable.name
+        uitestAuthenticationGranted.name, uitestAuthenticationUnavailable.name, uitestForcesSceneCapture.name
     ]
 }

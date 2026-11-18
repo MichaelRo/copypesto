@@ -52,7 +52,7 @@ struct SyncTextEditTests {
         local.sourceDominantColorHex = "#336699"
         local.updateMetadata {
             $0.fieldMemory = ["name": "Ada"]
-            $0.pasteDays = [20000, 20001]
+            $0.pasteDays = [20_000, 20_001]
             $0.captureMethod = .paste
         }
         try context.saveOrRollback()
@@ -69,7 +69,7 @@ struct SyncTextEditTests {
         #expect(arrived.pinnedHotkeyIndex == 3)
         #expect(arrived.sourceDominantColorHex == "#336699")
         #expect(arrived.metadata.fieldMemory == ["name": "Ada"])
-        #expect(arrived.metadata.pasteDays == [20000, 20001])
+        #expect(arrived.metadata.pasteDays == [20_000, 20_001])
         #expect(arrived.captureMethod == .paste)
         #expect(arrived.timestamp == localTimestamp)
         #expect(arrived.syncDirty == false)
@@ -97,7 +97,8 @@ struct SyncTextEditTests {
             .decodeMetadata(SyncTombstoneRecord.self))
         #expect(tombstone.id == id)
         #expect(tombstone.plainHash == nil)
-        #expect(records.allSatisfy { $0.metadata.range(of: Data(Data("4111 1111 1111 1111".utf8).sha256Hex.utf8)) == nil })
+        #expect(records
+            .allSatisfy { $0.metadata.range(of: Data(Data("4111 1111 1111 1111".utf8).sha256Hex.utf8)) == nil })
         try await world.apply(records, on: macB)
         #expect(try world.clips(on: macB).isEmpty)
     }
@@ -129,9 +130,9 @@ struct SyncTextEditTests {
         for index in 0..<300 where index % 3 != 1 {
             let id = try #require(byText["clip number \(index)"])
             let expectsHash = index % 3 == 2 || index == 0
-            #expect(((hashByID[id] ?? nil) != nil) == expectsHash, "clip number \(index)")
+            #expect((hashByID[id].flatMap(\.self) != nil) == expectsHash, "clip number \(index)")
         }
-        #expect((hashByID[alsoDoomedTwin] ?? nil) != nil, "its text left with clip number 0")
+        #expect(hashByID[alsoDoomedTwin].flatMap(\.self) != nil, "its text left with clip number 0")
         #expect(try world.clips(on: mac).count == survivors.count - 1)
     }
 

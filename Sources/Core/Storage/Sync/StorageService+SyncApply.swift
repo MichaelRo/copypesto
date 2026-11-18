@@ -202,8 +202,7 @@ extension StorageService {
         guard ["public.utf8-plain-text", "public.url"].contains(mimeType),
               TextEditOutcome.isEditable(type: item.type, analysisPending: item.analysisPending),
               let text = String(data: payload, encoding: .utf8),
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else { return nil }
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         return text
     }
 

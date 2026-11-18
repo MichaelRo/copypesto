@@ -26,7 +26,8 @@ enum ItemProviderCapture {
 
     static func capture(
         from providers: [NSItemProvider], pasteboardTypes: [String] = []
-    ) async throws -> PasteboardCapture? {
+    ) async throws
+    -> PasteboardCapture? {
         guard !isConcealed(providers, pasteboardTypes: pasteboardTypes) else { return nil }
         for provider in providers {
             guard let choice = choose(typeIdentifiers: provider.registeredTypeIdentifiers) else { continue }

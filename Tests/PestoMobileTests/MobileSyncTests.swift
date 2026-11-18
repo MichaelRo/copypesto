@@ -237,7 +237,9 @@ struct MobileSyncTests {
         )
     }
 
-    @Test("a stale bookmark that cannot be renewed asks for the folder again and does not run sync; the same folder resumes it")
+    @Test(
+        "a stale bookmark that cannot be renewed asks for the folder again, sync waits, and the same folder resumes it"
+    )
     func whenTheBookmarkGoesStale_thenSyncWaitsForTheFolderAndResumes() async throws {
         defer { try? FileManager.default.removeItem(at: picked) }
         let (mac, key) = try await firstMac()

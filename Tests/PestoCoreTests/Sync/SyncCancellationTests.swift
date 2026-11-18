@@ -52,7 +52,12 @@ struct SyncCancellationTests {
         defer { try? FileManager.default.removeItem(at: layout.root) }
         let a = try SyncSite(name: "mac-a", layout: layout, time: time)
         let b = try SyncSite(name: "mac-b", layout: layout, time: time)
-        let made = try SyncGroupManager.create(layout: layout, identity: a.identity, keyStore: a.keyStore, now: time.now)
+        let made = try SyncGroupManager.create(
+            layout: layout,
+            identity: a.identity,
+            keyStore: a.keyStore,
+            now: time.now
+        )
         try b.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
         for text in ["one", "two", "three"] {
             try await a.copy(text)

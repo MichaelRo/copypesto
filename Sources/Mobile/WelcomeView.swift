@@ -63,14 +63,15 @@ struct WelcomeView: View {
             VStack(spacing: 12) {
                 if model.step == .sync {
                     Button { appState.closeWelcome(startingSync: true) } label: { buttonLabel("Turn On Sync") }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.pestoProminent)
                         .accessibilityIdentifier(MobileAccessibilityID.welcomeTurnOnSync)
                     Button { appState.closeWelcome() } label: { buttonLabel("Not Now") }
                         .buttonStyle(.bordered)
+                        .buttonBorderShape(.roundedRectangle(radius: 9))
                         .accessibilityIdentifier(MobileAccessibilityID.welcomeNotNow)
                 } else {
                     Button { advance() } label: { buttonLabel("Continue") }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.pestoProminent)
                         .accessibilityIdentifier(MobileAccessibilityID.welcomeContinue)
                 }
             }

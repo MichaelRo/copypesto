@@ -36,9 +36,10 @@ enum DeviceAuthenticationWords {
     static func lockCaption(for biometry: LABiometryType) -> String {
         switch biometry {
         case .faceID, .touchID, .opticID:
-            String(
-                localized: "\(name(for: biometry)) before your clips show. Widgets and AutoFill stay empty while it\u{2019}s on."
-            )
+            String(localized: """
+            \(name(for: biometry)) before your clips show. \
+            Widgets and AutoFill stay empty while it\u{2019}s on.
+            """)
         default:
             String(
                 localized: "Your passcode before your clips show. Widgets and AutoFill stay empty while it\u{2019}s on."

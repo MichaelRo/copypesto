@@ -16,8 +16,7 @@ struct AutoFillTipBanner: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 8) {
                 Button("Turn On") { Task { await appState.turnOnAutoFillFromTip() } }
-                    .buttonStyle(.borderedProminent)
-                    .buttonBorderShape(.capsule)
+                    .buttonStyle(.pestoProminent)
                     .accessibilityIdentifier(MobileAccessibilityID.autoFillTipTurnOn)
                 Button("Not Now", systemImage: "xmark") { appState.dismissAutoFillTip() }
                     .labelStyle(.iconOnly)

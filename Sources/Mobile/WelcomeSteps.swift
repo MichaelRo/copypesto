@@ -3,47 +3,6 @@ import LocalAuthentication
 import PestoCore
 import SwiftUI
 
-/// What every step has in common: the art (hidden at accessibility sizes), the title that says which step this is to
-/// VoiceOver, the line under it, then the step's own content, all in a scroll view above the pinned buttons.
-struct WelcomePage<Art: View, Content: View>: View {
-    let stepNumber: Int
-    let title: String
-    let line: String
-    @ViewBuilder var art: Art
-    @ViewBuilder var content: Content
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    var body: some View {
-        GeometryReader { proxy in
-            ScrollView {
-                VStack(spacing: 18) {
-                    if !typeSize.isAccessibilitySize {
-                        art.frame(maxWidth: 340).padding(.bottom, 4)
-                    }
-                    VStack(spacing: 10) {
-                        Text(title)
-                            .font(.title.bold())
-                            .multilineTextAlignment(.center)
-                            .accessibilityLabel(Text("Step \(stepNumber) of \(WelcomeModel.stepCount). \(title)"))
-                            .accessibilityAddTraits(.isHeader)
-                        Text(line)
-                            .font(.body)
-                            .pestoQuiet()
-                            .multilineTextAlignment(.center)
-                    }
-                    content
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-                .frame(maxWidth: 520)
-                .frame(maxWidth: .infinity, minHeight: proxy.size.height)
-            }
-            .scrollBounceBehavior(.basedOnSize)
-        }
-    }
-}
-
 struct WelcomeKeepStep: View {
     let isActive: Bool
 
@@ -80,32 +39,6 @@ struct WelcomeKeepStep: View {
     }
 }
 
-private struct WelcomeRow: View {
-    let symbol: String
-    let title: LocalizedStringResource
-    let text: LocalizedStringResource
-    @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.pestoAccent) private var accent
-
-    var body: some View {
-        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
-            : AnyLayout(HStackLayout(alignment: .top, spacing: 14))
-        layout {
-            Image(systemName: symbol)
-                .font(.title3)
-                .foregroundStyle(accent)
-                .frame(width: 32, alignment: typeSize.isAccessibilitySize ? .leading : .center)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(text).font(.subheadline).pestoQuiet()
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-}
-
 struct WelcomeChoicesStep: View {
     @Environment(MobileAppState.self) private var appState
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
@@ -123,9 +56,10 @@ struct WelcomeChoicesStep: View {
                 Toggle(isOn: $linkPreviews) {
                     WelcomeChoiceText(
                         title: String(localized: "Load link previews"),
-                        caption: String(
-                            localized: "Pesto asks a link\u{2019}s site for its title and picture. The site sees your address."
-                        )
+                        caption: String(localized: """
+                        Pesto asks a link\u{2019}s site for its title and picture. \
+                        The site sees your address.
+                        """)
                     )
                 }
                 .accessibilityIdentifier(MobileAccessibilityID.welcomeLinkPreviews)
@@ -173,9 +107,10 @@ struct WelcomeSyncStep: View {
     var body: some View {
         WelcomePage(
             stepNumber: WelcomeStep.sync.rawValue, title: String(localized: "Your Mac\u{2019}s clips, here too"),
-            line: String(
-                localized: "Sync goes through a folder you choose, such as iCloud Drive. No server: clips are sealed so only your devices can open them."
-            )
+            line: String(localized: """
+            Sync goes through a folder you choose, such as iCloud Drive. \
+            No server: clips are sealed so only your devices can open them.
+            """)
         ) {
             WelcomeSyncArt(isActive: isActive)
         } content: {

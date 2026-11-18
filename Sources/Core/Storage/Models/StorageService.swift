@@ -107,29 +107,6 @@ public actor StorageService: ModelActor {
         self.rules = rules
     }
 
-    /// Encrypts previews stored in plaintext before every type was encrypted (URLs, images, files, and text from
-    /// before ADR 0002). Idempotent; sensitive items keep their masked preview and colours stay plain.
-    @discardableResult
-    public func encryptLegacyPreviews() async throws -> Int {
-        let colorRaw = ClipboardType.color.rawValue
-        var changed = 0
-        try await forEachClip(matching: FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { $0.previewCiphertext == nil && !$0.previewText.isEmpty && $0.typeRaw != colorRaw }
-        )) { item in
-            guard item.sensitivityRaw == nil else { return }
-            let envelope = try encryption.encrypt(
-                Data(item.previewText.utf8),
-                associatedData: BlobEncryption.associatedData(itemID: item.id, field: .preview)
-            )
-            item.previewCiphertext = envelope.ciphertext
-            item.previewNonce = envelope.nonce
-            item.previewAADBound = true
-            item.previewText = ""
-            changed += 1
-        }
-        return changed
-    }
-
     public func updateClock(_ newClock: @escaping @Sendable () -> Date) {
         clock = newClock
     }

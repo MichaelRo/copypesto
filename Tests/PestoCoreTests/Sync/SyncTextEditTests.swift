@@ -38,6 +38,49 @@ struct SyncTextEditTests {
         #expect(try world.state(of: macA) == world.state(of: macB))
     }
 
+    @Test("a text edited elsewhere replaces the text in place and keeps what only this device knows about the clip")
+    func whenTextEditedElsewhere_thenThisDevicesOwnStateStays() async throws {
+        let world = try SyncWorld(["mac-a", "iphone"])
+        let (macA, phone) = (world.macs[0], world.macs[1])
+        try await world.copy("meet at the north door", on: macA)
+        try await world.apply(world.publish(from: macA), on: phone)
+        let id = try #require(try world.clip("meet at the north door", on: macA)?.id)
+
+        let context = ModelContext(phone.container)
+        let local = try #require(try context.fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == id })
+        local.pinnedHotkeyIndex = 3
+        local.sourceDominantColorHex = "#336699"
+        local.updateMetadata {
+            $0.fieldMemory = ["name": "Ada"]
+            $0.pasteDays = [20000, 20001]
+            $0.captureMethod = .paste
+        }
+        try context.saveOrRollback()
+        let localTimestamp = local.timestamp
+        let undoBefore = phone.service.undoHistory.recordedCount
+
+        world.tick()
+        #expect(try await macA.service.updateText(id: id, text: "meet at the south door") == .saved)
+        try await world.apply(world.publish(from: macA), on: phone)
+
+        let arrived = try #require(try world.clips(on: phone).first { $0.id == id })
+        #expect(arrived.blob?.decryptedText() == "meet at the south door")
+        #expect(arrived.displayPreviewText == "meet at the south door")
+        #expect(arrived.pinnedHotkeyIndex == 3)
+        #expect(arrived.sourceDominantColorHex == "#336699")
+        #expect(arrived.metadata.fieldMemory == ["name": "Ada"])
+        #expect(arrived.metadata.pasteDays == [20000, 20001])
+        #expect(arrived.captureMethod == .paste)
+        #expect(arrived.timestamp == localTimestamp)
+        #expect(arrived.syncDirty == false)
+        #expect(try world.clips(on: phone).count == 1)
+        let echo = try await phone.service.buildOutbox(includeSensitive: false, syncKey: world.key)
+        #expect(echo.records.isEmpty, "an applied edit is not written back")
+        #expect(
+            phone.service.undoHistory.recordedCount == undoBefore, "an edit made elsewhere is not this device's Undo"
+        )
+    }
+
     @Test("an edit to another clip's text keeps both clips on both devices, under the same ids, and a copy moves one")
     func whenEditedToAnotherClipsText_thenBothDevicesKeepBothClips() async throws {
         let world = try SyncWorld(["mac-a", "mac-b"])

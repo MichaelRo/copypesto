@@ -175,13 +175,34 @@ extension StorageService {
                 summary.ignored += 1
                 return
             }
-            try deleteItems(ids: [meta.id], reason: .merged)
-            try await insertRemote(meta, payload: payload, stamp: stampR, keepsSameText: true)
+            if let text = Self.editableText(payload, mimeType: meta.mimeType, of: known) {
+                // Replaced in place, so what only this device holds about the clip stays with it.
+                known.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
+                try replaceText(
+                    of: known, with: text, plainHash: meta.plainHash, key: try? encryption.loadOrCreateKey(),
+                    mimeType: meta.mimeType
+                ) { item in
+                    apply(meta.curation, to: item)
+                    markApplied(item, stamp: stampR)
+                }
+            } else {
+                try deleteItems(ids: [meta.id], reason: .merged)
+                try await insertRemote(meta, payload: payload, stamp: stampR, keepsSameText: true)
+            }
             summary.updated += 1
         } else {
             try await insertRemote(meta, payload: payload, stamp: stampR)
             summary.added += 1
         }
+    }
+
+    private static func editableText(_ payload: Data, mimeType: String, of item: ClipboardItem) -> String? {
+        guard ["public.utf8-plain-text", "public.url"].contains(mimeType),
+              TextEditOutcome.isEditable(type: item.type, analysisPending: item.analysisPending),
+              let text = String(data: payload, encoding: .utf8),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return nil }
+        return text
     }
 
     private func holds(_ plainHash: String, _ item: ClipboardItem) -> Bool {

@@ -33,10 +33,10 @@ extension MobileAppState {
         let policy = retentionPolicy()
         let now = clock()
         guard retentionSchedule.shouldSweep(now: now, policy: policy, force: force) else { return }
-        retentionSchedule.didSweep(at: now, policy: policy)
-        let pruner = RetentionPruner(store: StorageRetentionStore(service: service), policyProvider: retentionPolicy)
+        let pruner = RetentionPruner(store: retentionStore(service), policyProvider: retentionPolicy)
         do {
             try await pruner.sweep(now: now)
+            retentionSchedule.didSweep(at: now, policy: policy)
         } catch {
             Self.retentionLogger.error("The retention sweep failed: \(error.localizedDescription, privacy: .public)")
         }

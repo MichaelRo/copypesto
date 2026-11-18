@@ -154,11 +154,16 @@ extension MobileAppState {
 
     func finishCopy(_ item: ClipboardItem, content: ClipContent) -> Bool {
         MobileClipboard.write(content, protected: item.sensitivityRaw != nil)
+        var saved = true
         if let context = item.modelContext {
             item.bringToFront(at: clock())
-            report("Couldn\u{2019}t save the change.") { try context.saveOrRollback() }
+            saved = false
+            report("Couldn\u{2019}t save the change.") {
+                try saveChanges(context)
+                saved = true
+            }
         }
-        tell(String(localized: "Copied"))
+        if saved { tell(String(localized: "Copied")) }
         return true
     }
 
@@ -248,6 +253,7 @@ extension MobileAppState {
     /// Pesto left the foreground: whatever was shown hides again (ADR 0003), and the AutoFill set and the widget's
     /// snapshot are brought up to date before iOS may suspend the app (ADR 0051, ADR 0052).
     func didLeaveForeground() {
+        isActivated = false
         historyLock.didLeaveForeground(at: clock())
         secretReveal.hideAll()
         writeQuickInsert()

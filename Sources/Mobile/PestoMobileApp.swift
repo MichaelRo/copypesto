@@ -20,27 +20,14 @@ struct PestoMobileApp: App {
             LibraryRootView()
                 .environment(appState)
                 .modifier(MobileAccent())
-                .task {
-                    appState.boot()
-                    appState.lockDidBecomeActive()
-                    appState.syncDidBecomeActive()
-                    appState.inboxDidBecomeActive()
-                    await appState.clipboardDidBecomeActive()
-                }
+                .task { await appState.activate() }
                 .defaultAppStorage(AppDefaults.store)
                 .onOpenURL { appState.open($0) }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
-                Task { await appState.pruneHistory() }
-                appState.lockDidBecomeActive()
-                appState.syncDidBecomeActive()
-                appState.inboxDidBecomeActive()
-                Task {
-                    await appState.clipboardDidBecomeActive()
-                    await appState.refreshWidgetPresence()
-                }
+                Task { await appState.activate() }
             case .background:
                 appState.didLeaveForeground()
                 appState.syncDidEnterBackground()

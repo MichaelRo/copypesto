@@ -20,7 +20,7 @@ struct MobileRetentionTests {
         try await library.refreshed()
 
         time.advance(by: 40 * 86_400)
-        await library.state.sweepRetention(force: true)
+        await library.state.pruneHistory(force: true)
         try await library.refreshed()
 
         #expect(library.store.item(for: old.id) == nil)
@@ -35,7 +35,7 @@ struct MobileRetentionTests {
         let old = try await library.add("an old clip")
 
         time.advance(by: 400 * 86_400)
-        await library.state.sweepRetention(force: true)
+        await library.state.pruneHistory(force: true)
         try await library.refreshed()
 
         #expect(library.store.item(for: old.id) != nil)
@@ -60,10 +60,10 @@ struct MobileRetentionTests {
         let time = TimeBox()
         let library = try await MobileTestLibrary(clock: { time.now })
         library.state.retentionPolicy = { RetentionPolicy.chosen(days: 30, maxItems: 5000) }
-        await library.state.sweepRetention()
+        await library.state.pruneHistory()
         let first = library.state.retentionSchedule.lastSweep
         time.advance(by: 60)
-        await library.state.sweepRetention()
+        await library.state.pruneHistory()
 
         #expect(first != nil)
         #expect(library.state.retentionSchedule.lastSweep == first)

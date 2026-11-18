@@ -28,7 +28,7 @@ struct RetentionSchedule: Equatable {
 extension MobileAppState {
     private static let retentionLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "MobileRetention")
 
-    func sweepRetention(force: Bool = false) async {
+    func pruneHistory(force: Bool = false) async {
         guard let service = storageService else { return }
         let policy = retentionPolicy()
         let now = clock()

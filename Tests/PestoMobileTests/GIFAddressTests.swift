@@ -31,7 +31,13 @@ struct GIFAddressTests {
 
     @Test("the address rides on the capture and reaches ingest")
     func whenAddressIsSet_thenTheCaptureCarriesIt() throws {
-        let png = try #require(Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="))
+        let png =
+            try #require(
+                Data(
+                    base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAC"
+                        + "hwGA60e6kgAAAABJRU5ErkJggg=="
+                )
+            )
         let capture = try #require(ClipCapture.picture(png, typeIdentifier: "public.png"))
         let address = try #require(URL(string: "https://media.giphy.com/media/x/giphy.gif"))
 

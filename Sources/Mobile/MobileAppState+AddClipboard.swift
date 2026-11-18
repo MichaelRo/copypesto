@@ -23,7 +23,8 @@ extension MobileAppState {
         do {
             capture = try await ItemProviderCapture.capture(from: pasteboard.itemProviders)
         } catch {
-            Self.addClipboardLogger.error("Reading the clipboard failed: \(error.localizedDescription, privacy: .public)")
+            Self.addClipboardLogger
+                .error("Reading the clipboard failed: \(error.localizedDescription, privacy: .public)")
             throw ShortcutFailure.failed
         }
         guard let capture else { throw ShortcutFailure.emptyClipboard }
@@ -32,7 +33,8 @@ extension MobileAppState {
         } catch let refusal as ClipSizePolicy.TooLarge {
             throw ShortcutFailure.refused(refusal.message)
         } catch {
-            Self.addClipboardLogger.error("Adding the clipboard failed: \(error.localizedDescription, privacy: .public)")
+            Self.addClipboardLogger
+                .error("Adding the clipboard failed: \(error.localizedDescription, privacy: .public)")
             throw ShortcutFailure.failed
         }
         AppDefaults.store.set(count, for: Setting.lastSeenPasteboardChange)

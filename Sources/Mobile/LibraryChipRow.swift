@@ -46,8 +46,11 @@ struct LibraryChipRow: View {
         case let .kind(type):
             chipButton(chip, label: LibraryScope.kindTitle(type), symbol: type.presentation.symbolName)
         case let .date(chosen):
-            chipButton(chip, label: chosen == .today ? String(localized: "Today") : String(localized: "This Week"),
-                       symbol: chosen == .today ? "sun.max" : "calendar")
+            chipButton(
+                chip,
+                label: chosen == .today ? String(localized: "Today") : String(localized: "This Week"),
+                symbol: chosen == .today ? "sun.max" : "calendar"
+            )
         case .otherDevices:
             chipButton(chip, label: String(localized: "Other Devices"), symbol: "laptopcomputer.and.iphone")
         }

@@ -70,7 +70,8 @@ struct LibraryFilterTests {
         let all = LibraryScope.all.ids(in: index, query: "")
         let today = LibraryScope.all.ids(in: index, query: "", dateCutoff: LibraryFilter(date: .today).dateCutoff())
         let future = LibraryScope.all.ids(
-            in: index, query: "", dateCutoff: LibraryFilter(date: .week).dateCutoff(now: .now.addingTimeInterval(30 * 86_400))
+            in: index, query: "",
+            dateCutoff: LibraryFilter(date: .week).dateCutoff(now: .now.addingTimeInterval(30 * 86_400))
         )
         let others = LibraryScope.all.ids(in: index, query: "", otherDevicesOnly: true)
 

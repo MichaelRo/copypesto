@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import CoreGraphics
+import PestoCore
 import SwiftUI
 
 enum ShelfMotion {

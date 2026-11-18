@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 import os
-import Photos
 import PestoCore
+import Photos
 
 /// What the Copy As, Copy Recognized Text and Save to Photos entries of a clip's menu do. Every clipboard write goes
 /// through `MobileClipboard`; a clip a lock or a cover hides is never read.

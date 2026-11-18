@@ -9,7 +9,8 @@ public enum RemoteGIFFetcher {
         isEnabled: @escaping @Sendable () -> Bool = { LinkPreviewPolicy.isEnabled() },
         download: @escaping @Sendable (URL) async -> Data? = { await URLMetadataFetcher.downloadPicture(from: $0) }
     )
-    -> @Sendable (URL) async -> Data? {
+        -> @Sendable (URL) async -> Data?
+    {
         { address in
             let locked = await isHistoryLocked()
             guard LinkPreviewPolicy.mayFetchGIF(

@@ -30,15 +30,18 @@ struct RemoteGIFFetcherTests {
     @Test("on, unlocked and a public address: the picture is downloaded")
     func whenAllowed_thenDownloaded() async throws {
         let counter = Counter()
-        #expect(try await fetch("https://media.example.com/a.gif", enabled: true, locked: false, counter: counter) != nil)
+        #expect(try await fetch("https://media.example.com/a.gif", enabled: true, locked: false, counter: counter) !=
+            nil)
         #expect(await counter.value == 1)
     }
 
     @Test("switched off, locked or a private address: no request at all")
     func whenNotAllowed_thenNoRequest() async throws {
         let counter = Counter()
-        #expect(try await fetch("https://media.example.com/a.gif", enabled: false, locked: false, counter: counter) == nil)
-        #expect(try await fetch("https://media.example.com/a.gif", enabled: true, locked: true, counter: counter) == nil)
+        #expect(try await fetch("https://media.example.com/a.gif", enabled: false, locked: false, counter: counter) ==
+            nil)
+        #expect(try await fetch("https://media.example.com/a.gif", enabled: true, locked: true, counter: counter) ==
+            nil)
         #expect(try await fetch("http://192.168.1.2/a.gif", enabled: true, locked: false, counter: counter) == nil)
         #expect(await counter.value == 0)
     }

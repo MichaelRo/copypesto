@@ -10,7 +10,8 @@ struct CardCopyActionsTests {
     private func facts(
         _ type: ClipboardType, secret: Bool = false, covered: Bool = false, filtered: Bool = false,
         pending: Bool = false, color: Bool = false, recognized: Bool = false
-    ) -> CardCopyActions.Facts {
+    )
+    -> CardCopyActions.Facts {
         .init(
             type: type, isSecret: secret, isCovered: covered, isFiltered: filtered, isPending: pending,
             hasColor: color, offersRecognizedText: recognized

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-/// What one widget draws from the snapshot it opened (ADR 0052): no snapshot is "Open Pesto to show your clips", a locked one is "Locked", an
+/// What one widget draws from the snapshot it opened (ADR 0052): no snapshot is "Open Pesto to show your clips", a
+/// locked one is "Locked", an
 /// empty one is "No clips yet", otherwise the newest clips its family has room for.
 public struct WidgetContent: Equatable, Sendable {
     public enum State: Equatable, Sendable {

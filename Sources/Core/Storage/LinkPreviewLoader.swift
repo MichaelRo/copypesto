@@ -37,7 +37,8 @@ public struct LinkPreviewLoader {
     public static func address(for item: ClipboardItem, isEnabled: Bool, isHistoryLocked: Bool) -> URL? {
         guard item.type == .url, isEnabled, !isHistoryLocked, item.sensitivityRaw == nil,
               !item.linkPreviewFetched, !item.analysisPending,
-              let link = URL(string: item.displayPreviewText), LinkPreviewEligibility.isEligible(link) else { return nil }
+              let link = URL(string: item.displayPreviewText),
+              LinkPreviewEligibility.isEligible(link) else { return nil }
         return link
     }
 
@@ -65,7 +66,8 @@ public struct LinkPreviewLoader {
                 try images.save(data, for: id)
                 storedPicture = true
             } catch {
-                Self.logger.error("A link preview picture was not saved: \(error.localizedDescription, privacy: .public)")
+                Self.logger
+                    .error("A link preview picture was not saved: \(error.localizedDescription, privacy: .public)")
             }
         }
         editor.applyDerived(to: item, changesFilter: explicit, reportsFailure: explicit) {

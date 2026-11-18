@@ -33,7 +33,8 @@ struct SnippetCopyPlanTests {
         #expect(plan.leftEmpty == ["selection", "app"])
         var fills = SnippetFills()
         fills.values["Who"] = "Ana"
-        #expect(plan.expanded("{{selection}} from {{app}} {{input:Who}}", fills: fills, pastedClipboard: "") == " from  Ana")
+        #expect(plan
+            .expanded("{{selection}} from {{app}} {{input:Who}}", fills: fills, pastedClipboard: "") == " from  Ana")
     }
 
     @Test("expansion fills the fields, the date and the pasted clipboard, and never reads the live one")

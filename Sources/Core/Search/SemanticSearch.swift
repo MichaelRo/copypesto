@@ -30,7 +30,9 @@ public enum SemanticSearch {
     public static func merged(textMatches: [UUID], byMeaning: [UUID], allowed: Set<UUID>) -> [UUID] {
         var present = Set(textMatches)
         var result = textMatches
-        for id in byMeaning where allowed.contains(id) && present.insert(id).inserted { result.append(id) }
+        for id in byMeaning where allowed.contains(id) && present.insert(id).inserted {
+            result.append(id)
+        }
         return result
     }
 }

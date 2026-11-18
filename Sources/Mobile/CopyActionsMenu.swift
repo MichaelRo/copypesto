@@ -23,7 +23,7 @@ struct CopyActionsMenu: View {
         }
         if offer.offersRecognizedText {
             Button("Copy Recognized Text", systemImage: "text.viewfinder") {
-                Task { didCopy(await appState.copyRecognizedText(of: item), flashes: false) }
+                Task { await didCopy(appState.copyRecognizedText(of: item), flashes: false) }
             }
         }
         if offer.offersSaveToPhotos {

@@ -56,6 +56,7 @@ final class MobileAppState {
     @ObservationIgnored var retentionPolicy: @Sendable () -> RetentionPolicy = {
         RetentionPolicy.fromDefaults(AppDefaults.store)
     }
+
     @ObservationIgnored var retentionSchedule = RetentionSchedule()
     /// iOS's last answer to whether a Pesto widget is installed.
     @ObservationIgnored var widgetIsInstalled = false
@@ -119,7 +120,7 @@ final class MobileAppState {
             await LaunchMigrator.run(LaunchMigration.standard(service: service))
             // A clip saved before it was judged, when Pesto was last stopped, is judged now, as the Mac does at launch.
             await service.resumePendingAnalysis()
-            await self.sweepRetention(force: true)
+            await self.pruneHistory(force: true)
             #if DEBUG
             await MobileSeed.runIfAsked(state: self)
             #endif

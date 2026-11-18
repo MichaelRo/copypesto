@@ -15,7 +15,8 @@ struct AccentUsageTests {
             "Mobile": 3,
             "MobileShare": 3,
             "MobileAutoFill": 2,
-            "MobileWidget": 5
+            "MobileWidget": 2,
+            "Widget": 10
         ] {
             let files = try SourceTree.swiftFiles(in: folder, minimum: minimum)
             for file in files where !allowed.contains(file.lastPathComponent) {
@@ -47,7 +48,8 @@ struct AccentUsageTests {
             "Mobile": 3,
             "MobileShare": 3,
             "MobileAutoFill": 2,
-            "MobileWidget": 5
+            "MobileWidget": 2,
+            "Widget": 10
         ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 for (number, line) in try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")
@@ -71,7 +73,8 @@ struct AccentUsageTests {
             "Mobile": 3,
             "MobileShare": 3,
             "MobileAutoFill": 2,
-            "MobileWidget": 5
+            "MobileWidget": 2,
+            "Widget": 10
         ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 for (number, line) in try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")
@@ -107,7 +110,8 @@ struct AccentUsageTests {
             "Mobile": 3,
             "MobileShare": 3,
             "MobileAutoFill": 2,
-            "MobileWidget": 5
+            "MobileWidget": 2,
+            "Widget": 10
         ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 let lines = try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")

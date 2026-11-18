@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+import PestoCore
 import SwiftUI
+import WidgetKit
 
 /// The widget with no clip to show: a symbol in the accent, one line, and on a wider widget a second.
 struct WidgetMessage: View {
@@ -26,5 +28,18 @@ struct WidgetMessage: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: compact ? .bottomLeading : .center)
         .accessibilityElement(children: .combine)
+    }
+}
+
+extension View {
+    /// On the Mac a widget with no clip to show opens the shelf, which is also when Pesto asks whether a widget is
+    /// installed (ADR 0058); on iOS a tap opens the app as it always has.
+    @ViewBuilder
+    func opensShelfOnTheMac() -> some View {
+        #if os(macOS)
+        widgetURL(URL(string: "\(AppIdentity.urlScheme)://open"))
+        #else
+        self
+        #endif
     }
 }

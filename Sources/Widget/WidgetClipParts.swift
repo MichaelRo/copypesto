@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
 import SwiftUI
-import UIKit
 
 /// The quiet line at a card's foot: where it came from and its age as the card writes it, then the pin in the accent;
 /// for a moment after an in-place copy, Copied in the accent instead.
@@ -43,16 +42,16 @@ struct WidgetPicture: View {
     let data: Data?
 
     var body: some View {
-        if let data, let image = UIImage(data: data) {
+        if let data, let image = PlatformImage(data: data) {
             let aspect = image.size.height > 0 ? image.size.width / image.size.height : 1
             if CardTreatment.pictureFillRange.contains(aspect) {
                 Color.clear
-                    .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                    .overlay { Self.image(image).resizable().scaledToFill() }
                     .clipped()
             } else {
                 Color.black
-                    .overlay { Image(uiImage: image).resizable().scaledToFill().blur(radius: 14).opacity(0.7) }
-                    .overlay { Image(uiImage: image).resizable().scaledToFit() }
+                    .overlay { Self.image(image).resizable().scaledToFill().blur(radius: 14).opacity(0.7) }
+                    .overlay { Self.image(image).resizable().scaledToFit() }
                     .clipped()
             }
         } else {
@@ -61,6 +60,16 @@ struct WidgetPicture: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+}
+
+extension WidgetPicture {
+    static func image(_ image: PlatformImage) -> Image {
+        #if os(macOS)
+        Image(nsImage: image)
+        #else
+        Image(uiImage: image)
+        #endif
     }
 }
 

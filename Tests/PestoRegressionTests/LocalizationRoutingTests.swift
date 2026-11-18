@@ -34,7 +34,8 @@ struct LocalizationRoutingTests {
             ("Mobile", 3),
             ("MobileShare", 3),
             ("MobileAutoFill", 2),
-            ("MobileWidget", 5)
+            ("MobileWidget", 2),
+            ("Widget", 10)
         ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 let lines = try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")

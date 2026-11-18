@@ -124,7 +124,7 @@ public final class AutomationURLHandler {
                 case .copy:
                     host.copyClip(item)
                 case .open where item.type == .url:
-                    if let url = WidgetTap.webURL(in: ClipText.full(of: item)) {
+                    if let url = WidgetTap.webURL(in: item.blob?.decryptedText() ?? item.displayPreviewText) {
                         host.openWebLink(url)
                     } else {
                         show(item, on: host)

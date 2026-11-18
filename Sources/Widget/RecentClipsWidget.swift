@@ -3,7 +3,8 @@ import PestoCore
 import SwiftUI
 import WidgetKit
 
-/// Recent Clips on the Home Screen of an iPhone or iPad (ADR 0052): the latest clip, three or six, as Pesto cards.
+/// Recent Clips on the Home Screen of an iPhone or iPad (ADR 0052) and on the Mac's desktop (ADR 0058): the latest
+/// clip, three or six, as Pesto cards.
 struct RecentClipsWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(

@@ -4,8 +4,9 @@ import SwiftUI
 import WidgetKit
 
 /// The widget on the theme's ground: Pesto cards, one filling a small widget, a row of them in a medium one and a grid
-/// in a large one, each doing what "When a Clip Is Tapped" says; "No clips yet" for an empty list, "Open Pesto to
-/// show your clips" when there is no snapshot to show.
+/// in a large one, each doing what "When a Clip Is Chosen" says; "No clips yet" for an empty list, "Open Pesto to
+/// show your clips" when there is no snapshot to show. On the Mac a message opens the shelf, which is also when Pesto
+/// asks whether a widget is installed (ADR 0058).
 struct RecentClipsView: View {
     let entry: RecentClipsEntry
     /// Set by a test, which has no widget family in its environment.
@@ -37,16 +38,19 @@ struct RecentClipsView: View {
                     symbol: "doc.on.clipboard", title: "Open Pesto to show your clips", detail: nil,
                     compact: resolvedSize == .small
                 )
+                .opensShelfOnTheMac()
             case .locked:
                 WidgetMessage(
                     symbol: "lock", title: "Locked", detail: "Open Pesto to see your clips",
                     compact: resolvedSize == .small
                 )
+                .opensShelfOnTheMac()
             case .hidden:
                 WidgetMessage(
                     symbol: "eye.slash", title: "Clip contents hidden",
                     detail: "They show again when Pesto stops hiding them", compact: resolvedSize == .small
                 )
+                .opensShelfOnTheMac()
             case .empty:
                 WidgetMessage(
                     symbol: entry.source == .pinned ? "pin" : "doc.on.clipboard",
@@ -55,6 +59,7 @@ struct RecentClipsView: View {
                         ? "Pin a clip in Pesto, and it shows up here." : "Copy something, and it shows up here.",
                     compact: resolvedSize == .small
                 )
+                .opensShelfOnTheMac()
             case .clips:
                 if let single {
                     WidgetTapArea(tap: tap(for: single), isWholeWidget: true) {
@@ -98,8 +103,14 @@ struct RecentClipsView: View {
     }
 
     private func tap(for clip: WidgetClip) -> WidgetTap {
-        WidgetTap.decide(for: clip, action: entry.tapAction, copiesInPlace: CopyClipIntent.copiesInPlace)
+        WidgetTap.decide(for: clip, action: entry.tapAction, copiesInPlace: Self.copiesInPlace)
     }
+
+    #if os(iOS)
+    static let copiesInPlace = CopyClipIntent.copiesInPlace
+    #else
+    static let copiesInPlace = false
+    #endif
 
     /// What the widget stands on: the theme's ground, or for a small widget its one card (the color, the picture or
     /// the card's white).

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
 import SwiftUI
+import UIKit
 
 /// What every step has in common: the art (hidden at accessibility sizes), the title that says which step this is to
 /// VoiceOver, the line under it, then the step's own content, all in a scroll view above the pinned buttons.
@@ -17,7 +18,7 @@ struct WelcomePage<Art: View, Content: View>: View {
             ScrollView {
                 VStack(spacing: 18) {
                     if !typeSize.isAccessibilitySize {
-                        art.frame(maxWidth: 340).padding(.bottom, 4)
+                        art.frame(maxWidth: UIDevice.current.userInterfaceIdiom == .pad ? 220 : 340).padding(.bottom, 4)
                     }
                     VStack(spacing: 10) {
                         Text(title)

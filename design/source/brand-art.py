@@ -177,7 +177,7 @@ def basil_icon(x, y, size):
 
 MOBILE_ART = {
     "WelcomeShelf": SV(shelf),
-    "WelcomeJar": SV(f'<rect x="196" y="96" width="86" height="88" rx="22" fill="{C["garlic"]}" fill-opacity="0.7" stroke="#D9CFAE" stroke-width="2"/>'
+    "WelcomeJar": SV(f'<rect x="196" y="96" width="86" height="88" rx="22" fill="{C["garlic"]}" fill-opacity="1" stroke="#D9CFAE" stroke-width="2"/>'
                      f'<path d="M196,150 Q216,140 239,150 T282,148 V162 Q282,184 260,184 H218 Q196,184 196,162 Z" fill="{C["basil"]}"/>'
                      f'<rect x="190" y="82" width="98" height="16" rx="6" fill="{C["gold"]}"/>'
                      + pine(54, 180, 10) + pine(72, 181, -20) + pine(306, 180, 15)),

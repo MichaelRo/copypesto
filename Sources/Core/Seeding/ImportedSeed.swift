@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// A history shaped like one brought over from Paste, for measuring the shelf: about 1,100 clips spread over years
@@ -100,3 +101,4 @@ public extension SeedFixtures {
         ImportedSeed.records(now: now)
     }
 }
+#endif

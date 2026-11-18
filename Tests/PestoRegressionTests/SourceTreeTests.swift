@@ -20,4 +20,19 @@ struct SourceTreeTests {
             #expect(try SourceTree.swiftFiles(in: folder, minimum: minimum).count >= minimum)
         }
     }
+
+    @Test("a file of this checkout is scanned, even when the checkout is itself an agent worktree")
+    func whenTheFileIsInThisCheckout_thenItIsScanned() {
+        let file = SourceTree.sources.appendingPathComponent("Core/Runtime/AppIdentity.swift")
+
+        #expect(!SourceTree.isInNestedWorktree(file))
+    }
+
+    @Test("a copy of a file in a worktree nested under this checkout is skipped")
+    func whenTheFileIsInANestedWorktree_thenItIsSkipped() {
+        let file = SourceTree.repositoryRoot
+            .appendingPathComponent(".claude/worktrees/agent-1/Sources/Core/Runtime/AppIdentity.swift")
+
+        #expect(SourceTree.isInNestedWorktree(file))
+    }
 }

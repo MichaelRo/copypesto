@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 
 @MainActor
@@ -49,3 +50,4 @@ public struct PinnedHotkeySlots: Sendable {
         }
     }
 }
+#endif

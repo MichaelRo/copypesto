@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#endif
 import Foundation
 
 /// Expands `{{placeholder}}` tokens in a string at paste time.
@@ -25,8 +27,14 @@ public enum TemplateExpander {
         pattern: #"\{\{((?:(?!\}\}|\{\{)[^\n])+)\}\}"#
     )
 
+    /// iOS tells the person every time an app reads the clipboard, so there a caller that wants `{{clipboard}}` filled
+    /// reads it after asking and passes its own provider.
     public static func liveClipboardText() -> String {
+        #if os(macOS)
         AppPasteboard.reader.string(forType: .string) ?? ""
+        #else
+        ""
+        #endif
     }
 
     /// Whether pasting `text` will read the live clipboard, so nothing reads it (and keeps it) for any other clip.
@@ -108,6 +116,7 @@ public enum TemplateExpander {
         return (result.text, result.charactersAfterCursor)
     }
 
+    #if os(macOS)
     /// Expands tokens inside a rich-text payload, keeping proportional prose styling (bold, italic, links, colors) and
     /// dropping purely monospaced formatting so a template copied from a code editor never pastes as a code block.
     @MainActor
@@ -211,6 +220,7 @@ public enum TemplateExpander {
             }
         }
     }
+    #endif
 
     /// Returns `text` with all known `{{placeholder}}` tokens replaced.
     /// Unknown tokens (e.g. `{{name}}`) are left untouched.

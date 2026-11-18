@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// Fills a pasteboard with one clip: its files, or its stored flavour with the rich flavours and the plain string
@@ -44,3 +45,4 @@ public enum ClipPasteboardWriter {
         return isText ? .text(fallback) : .nonText
     }
 }
+#endif

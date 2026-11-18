@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 /// Reduce-Transparency-aware replacements for `.ultraThinMaterial`.
@@ -13,7 +17,11 @@ import SwiftUI
 extension Color {
     /// Opaque, theme-adaptive stand-in for a frosted panel when transparency is reduced.
     static var opaqueSurface: Color {
+        #if os(macOS)
         Color(nsColor: .windowBackgroundColor)
+        #else
+        Color(uiColor: .systemBackground)
+        #endif
     }
 }
 
@@ -26,6 +34,9 @@ extension EnvironmentValues {
     /// that snapshot tests set instead, letting them force the opaque-fallback path without
     /// touching System Settings. Production code never sets it.
     @Entry var reduceTransparencyOverride: Bool?
+    /// Whether the shelf is drawn on glass, set once at each shelf root so a card never reads the setting. Nil outside
+    /// a shelf (a snapshot, a preview), where a card keeps its glass-friendly fill.
+    @Entry var shelfDrawsGlass: Bool?
 }
 
 extension View {

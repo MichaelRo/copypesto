@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import SwiftUI
 
@@ -64,3 +65,4 @@ final class SafeHostingView: NSHostingView<AnyView> {
         allowsFirstMouse
     }
 }
+#endif

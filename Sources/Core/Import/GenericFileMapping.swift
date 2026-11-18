@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 
 /// What one clip is in a text file.
 public enum TextSeparator: String, CaseIterable, Sendable {
@@ -34,3 +35,4 @@ public struct GenericFileMapping: Sendable, Equatable {
         )
     }
 }
+#endif

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 #if canImport(FoundationModels)
-    import FoundationModels
+import FoundationModels
 #endif
 
 public enum AIAvailability: Sendable, Equatable {
@@ -76,19 +76,19 @@ public enum AIAvailability: Sendable, Equatable {
     public static var system: AIAvailability {
         if RuntimeConfiguration.current.mode == .uiTest, RuntimeConfiguration.current.aiFixture { return .available }
         #if canImport(FoundationModels)
-            guard #available(macOS 26, *) else { return .unavailable(.needsNewerMacOS) }
-            switch SystemLanguageModel.default.availability {
-            case .available: return .available
-            case let .unavailable(reason):
-                switch reason {
-                case .deviceNotEligible: return .unavailable(.deviceNotEligible)
-                case .appleIntelligenceNotEnabled: return .unavailable(.notEnabled)
-                case .modelNotReady: return .unavailable(.modelNotReady)
-                @unknown default: return .unavailable(.unknown)
-                }
+        guard #available(macOS 26, iOS 26, *) else { return .unavailable(.needsNewerMacOS) }
+        switch SystemLanguageModel.default.availability {
+        case .available: return .available
+        case let .unavailable(reason):
+            switch reason {
+            case .deviceNotEligible: return .unavailable(.deviceNotEligible)
+            case .appleIntelligenceNotEnabled: return .unavailable(.notEnabled)
+            case .modelNotReady: return .unavailable(.modelNotReady)
+            @unknown default: return .unavailable(.unknown)
             }
+        }
         #else
-            return .unavailable(.needsNewerMacOS)
+        return .unavailable(.needsNewerMacOS)
         #endif
     }
 }

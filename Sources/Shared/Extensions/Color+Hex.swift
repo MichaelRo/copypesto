@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 import SwiftUI
 
 extension Color {
@@ -27,10 +31,20 @@ extension Color {
     }
 
     func toHex() -> String? {
+        #if os(macOS)
         guard let cgColor = NSColor(self).usingColorSpace(.sRGB) else { return nil }
         let r = Int((cgColor.redComponent * 255).rounded())
         let g = Int((cgColor.greenComponent * 255).rounded())
         let b = Int((cgColor.blueComponent * 255).rounded())
+        #else
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        guard UIColor(self).getRed(&red, green: &green, blue: &blue, alpha: nil) else { return nil }
+        let r = Int((min(max(red, 0), 1) * 255).rounded())
+        let g = Int((min(max(green, 0), 1) * 255).rounded())
+        let b = Int((min(max(blue, 0), 1) * 255).rounded())
+        #endif
         return String(format: "%02X%02X%02X", r, g, b)
     }
 }

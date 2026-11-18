@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import CoreGraphics
 import Foundation
 
@@ -21,3 +22,4 @@ public enum PollPolicy {
         CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: CGEventType(rawValue: ~0) ?? .null)
     }
 }
+#endif

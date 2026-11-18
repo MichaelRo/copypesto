@@ -298,7 +298,22 @@ Run on two physical Macs signed in to the same Apple Account with iCloud Drive o
 - Measure small and 5 MB arrival (`scripts/sync-latency/run-remote.sh`), awake, after sleep, in Low Power Mode, and with Optimize Mac Storage on.
 - Verify real iCloud Keychain auto-join, 8-word pairing, secrets toggle, Reset Sync, Leave Sync, and iCloud status banners (*Receiving*, *Waiting for the Folder*, *Folder Missing*, *iCloud Keychain Is Off*, *Refused*). Pass: idle CPU < 0.5%, memory < 150 MB, and no unexpected network connections in System Settings → Network.
 
+## The iPhone and iPad app
+
+`make test-mobile` runs the iOS test target on an iPhone and then an iPad simulator (`IPHONE_SIMULATOR`, `IPAD_SIMULATOR`
+name them). The tests are hosted in the iOS app, so the runtime seams keep them off real data as on the Mac. The target
+also compiles `Tests/PestoCoreTests/Sync`, which proves the sync format and its keys on iOS; a helper there that needs
+AppKit is left out in `Pesto.yml`. The gate does not run these tests yet. A simulator has no iCloud Keychain, no real
+iCloud Drive and no Face ID hardware: those are hand checks on a device.
+
 ## Lessons from the test suite
+
+- **A run that prints nothing may be stuck, not slow.** `swift test` with its output in a file looks the same either
+  way. Run it through `scripts/swift-test-watched.sh <log> <silent seconds>`: it stops a run whose log has been silent
+  that long and lists the tests that started and never finished. The whole Core run takes under a minute, so three
+  minutes of silence is a stall. To see where a stuck run waits, `sample <pid of swiftpm-testing-helper> 2`.
+- **A blocking framework call on Swift's thread pool can stop the whole run.** Text recognition did: every pool thread
+  waited inside Vision and no test ran again (`OCRThreadingTests`, `Sources/Core/Pasteboard/CLAUDE.md`).
 
 - **A longer line of text in the setup window can fail the accessibility audit on a label you did not touch** (2026-10-16): the audit samples pixels at each element's frame, and a callout that wrapped to two lines moved the encryption-key label to a position it flagged, as a two-line toggle caption did on the last step. After any copy change in `OnboardingView`, run `test_onboarding_passesTheAccessibilityAudit` and `test_onboardingLastStep_passesTheAccessibilityAudit`.
 

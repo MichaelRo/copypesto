@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// The clips behind the website screenshots. Newest first here, as the shelf shows them.
@@ -67,11 +68,11 @@ public enum MarketingSeed {
             }
         }
         #if DEBUG
-            // The film opens with the masked card, so the earlier set's own copy of that number is left out.
-            let kept = earlier.filter { $0.payloadString != LunchRushSeed.cardNumber }
-            return kept + LunchRushSeed.filmClips().reversed()
+        // The film opens with the masked card, so the earlier set's own copy of that number is left out.
+        let kept = earlier.filter { $0.payloadString != LunchRushSeed.cardNumber }
+        return kept + LunchRushSeed.filmClips().reversed()
         #else
-            return earlier
+        return earlier
         #endif
     }
 
@@ -108,3 +109,4 @@ public enum MarketingSeed {
         ]
     }
 }
+#endif

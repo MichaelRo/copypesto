@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#endif
 import SwiftUI
 
 /// Speaks a message through VoiceOver (and shows nothing on screen). Everything transient in Pesto (a toast, an error

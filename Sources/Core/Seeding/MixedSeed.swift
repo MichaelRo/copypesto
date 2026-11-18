@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import CoreGraphics
 
@@ -109,3 +110,4 @@ enum MixedSeed {
         }
     }
 }
+#endif

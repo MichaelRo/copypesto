@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#else
+import Foundation
+#endif
 
 public enum PasteboardProtection {
     public static let concealedMarker = "org.nspasteboard.ConcealedType"
@@ -7,10 +11,13 @@ public enum PasteboardProtection {
     public static func isProtected(types: [String]) -> Bool {
         types.contains(where: ExclusionRules.concealedTypeMarkers.contains)
     }
+}
 
+#if os(macOS)
+public extension PasteboardProtection {
     /// Starts a pasteboard write. A protected write stays on this Mac and carries the concealed marker, so it stays off
     /// Universal Clipboard and out of other clipboard managers, which honour the marker as Pesto does when it captures.
-    public static func beginWrite(on pb: NSPasteboard, protected: Bool) {
+    static func beginWrite(on pb: NSPasteboard, protected: Bool) {
         guard protected else {
             pb.clearContents()
             return
@@ -19,3 +26,4 @@ public enum PasteboardProtection {
         pb.setData(Data(), forType: NSPasteboard.PasteboardType(concealedMarker))
     }
 }
+#endif

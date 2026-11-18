@@ -30,9 +30,9 @@ enum DiagnosticsFacts {
 
     private static var architecture: String {
         #if arch(arm64)
-            "arm64"
+        "arm64"
         #else
-            "x86_64"
+        "x86_64"
         #endif
     }
 

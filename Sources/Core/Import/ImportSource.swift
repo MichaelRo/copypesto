@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Another clipboard manager whose history Pesto can bring in, and the bundle identifiers that say it is installed.
@@ -50,3 +51,4 @@ public enum ImportSource: String, CaseIterable, Sendable {
         }
     }
 }
+#endif

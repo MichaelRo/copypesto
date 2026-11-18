@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// Which of the import sources are installed on this Mac.
@@ -52,3 +53,4 @@ public enum ClipboardAppDetection {
         }
     }
 }
+#endif

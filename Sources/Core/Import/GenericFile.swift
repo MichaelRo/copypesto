@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 
 /// A file of clips from an app Pesto has no reader for, read into rows (CSV, JSON) or text, before the person says
 /// which
@@ -16,3 +17,4 @@ public struct GenericFile: Sendable, Equatable {
     /// The whole text of a text file; empty for the other formats.
     public let text: String
 }
+#endif

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 public enum ClickHintPolicy {
     public static let limit = 3
 
@@ -10,3 +11,4 @@ public enum ClickHintPolicy {
         click == .double && tap == .paste
     }
 }
+#endif

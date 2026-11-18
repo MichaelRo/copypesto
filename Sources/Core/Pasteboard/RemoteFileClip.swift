@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import UniformTypeIdentifiers
 
@@ -33,3 +34,4 @@ public enum RemoteFileClip {
         return Picture(type: type, data: data)
     }
 }
+#endif

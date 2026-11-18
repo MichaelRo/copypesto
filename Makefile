@@ -17,6 +17,16 @@ XCODEBUILD = DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 	CODE_SIGNING_ALLOWED=NO \
 	CODE_SIGNING_REQUIRED=NO
 
+# The iPhone and iPad app (ADR 0046). It has its own derived data, so a Mac build and an iOS build never share one.
+MOBILE_BUILD_DIR = .build/xcode-ios-app
+IPHONE_SIMULATOR ?= iPhone 17
+IPAD_SIMULATOR   ?= iPad Air 11-inch (M4)
+XCODEBUILD_MOBILE = DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
+	-project Pesto.xcodeproj \
+	-scheme PestoMobile \
+	-configuration Debug \
+	-derivedDataPath $(MOBILE_BUILD_DIR)
+
 APP              = $(BUILD_DIR)/Build/Products/Debug/Pesto.app
 SELF_SIGNED_IDENTITY = Pesto Development
 # A Developer ID certificate in the keychain signs development builds too: its designated requirement is the team, so a
@@ -219,6 +229,15 @@ reset-fresh-install: require-dev-reset ## [Maintenance] A first run with an empt
 .PHONY: test-core
 test-core: ## [Test] Run Core/ unit tests via SPM — fast, no Xcode project needed
 	DEVELOPER_DIR=$(DEVELOPER_DIR) swift test
+
+.PHONY: build-mobile
+build-mobile: generate ## [Develop] Build the iPhone and iPad app for the simulator
+	$(XCODEBUILD_MOBILE) -destination 'generic/platform=iOS Simulator' build
+
+.PHONY: test-mobile
+test-mobile: generate ## [Test] Run the iOS tests on an iPhone and then an iPad simulator
+	$(XCODEBUILD_MOBILE) -destination 'platform=iOS Simulator,name=$(IPHONE_SIMULATOR)' test
+	$(XCODEBUILD_MOBILE) -destination 'platform=iOS Simulator,name=$(IPAD_SIMULATOR)' test
 
 .PHONY: test
 test: generate ## [Test] Run integration tests via xcodebuild (snapshot + UI tests skipped)

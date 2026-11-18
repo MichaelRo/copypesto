@@ -129,8 +129,8 @@ custom_rules:
     severity: error
 
   no_direct_general_pasteboard:
-    name: "Use AppPasteboard.general, not NSPasteboard.general"
-    regex: 'NSPasteboard\.general'
+    name: "Use AppPasteboard.general, not NSPasteboard.general or UIPasteboard.general"
+    regex: '(NS|UI)Pasteboard\.general'
     excluded: '(Sources/Core/Runtime/(AppPasteboard|RuntimeConfiguration)|Sources/CLI/main|Tests/.*)\.swift'
     message: "AppPasteboard.general is a private pasteboard under test; .general is the user's real clipboard."
     severity: error

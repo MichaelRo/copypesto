@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 
 /// Which global shortcuts Pesto will register. Applied to a settings file restored from outside, where a shortcut such
@@ -17,3 +18,4 @@ public enum HotkeyPolicy {
         return true
     }
 }
+#endif

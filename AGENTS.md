@@ -14,7 +14,7 @@ change or remove something a person can see. An ADR carries `## Docs affected`. 
 
 A native macOS clipboard manager. Menu-bar utility + global hotkey (`⇧⌘V`) opens a bottom shelf of recent clips as a horizontal grid. History is local to the Mac unless the person turns sync on. One encrypted backup file per Mac in a chosen folder (iCloud Drive suggested; set up in Settings → Data, off until then, kept up to date automatically unless turned off) and restore from any backup file are built (`decisions/0010-backup.md`), and so is multi-device sync through encrypted per-Mac logs in a folder (Settings → Data, off until turned on, per Mac; `decisions/0018-multi-device-sync.md`). Distribution: 1.0.0 shipped self-signed; later releases are signed with a Developer ID and notarized (README, `docs/guide/troubleshooting.md`) — **not** Mac App Store, so no sandboxing.
 
-Target platform: macOS 15+. Bundle ID: `net.copypesto.pesto` (was `io.pesto.app`; `LegacyIdentityMigration` moves an old install). Website and Sparkle feed: `copypesto.net`.
+Target platform: macOS 15+. `PestoCore` also builds for iOS 26 (ADR 0046): the iPhone and iPad app is a sync device built on the same Core. Bundle ID: `net.copypesto.pesto` (was `io.pesto.app`; `LegacyIdentityMigration` moves an old install). Website and Sparkle feed: `copypesto.net`.
 
 ---
 
@@ -35,6 +35,10 @@ No third-party analytics or telemetry. Ever. This is a hard invariant.
 - `Features/` may import `Core/` but not vice versa.
 - `Shared/` may not import either `Core/` or `Features/`.
 - Inside `Core/`, the directories form a one-way graph (`CoreDirectoryCycleTests`, ADR 0005; its `allowedEdges` list is the exact graph): `Model` imports nothing; `Runtime`, `Imaging` and `Predicate` only `Model`; `Crypto`, `Backup`, `AI` (on `Imaging`) and `Intelligence` (on `Predicate`) sit on those; `Sync` on `Crypto`; `Pasteboard`, `Search` and `Storage` above them; `Import`, `Security` and `Paste` above `Storage`; `Seeding` on `Pasteboard`. A type that a lower directory needs moves down or behind a protocol (`AutomationHost`); the allowed-edge list may shrink and never grow.
+
+- `Core/` is one module for macOS and iOS (ADR 0046). A file only a Mac can run is wrapped whole in `#if os(macOS)` (after `#if DEBUG` in a demo-only file); a shared file keeps only its platform imports and calls inside `#if os(…)`. `PlatformFenceTests` fails on a platform import outside a fence and on a Core directory whose count of Mac-only files grows. Build it with `xcodebuild build -scheme PestoCore -destination 'generic/platform=iOS Simulator'`. A type both platforms need never lives in a fenced file (`PasteboardCapture`, `SourceAppRecord`, `ChangeCounting`); a platform service sits behind a protocol with a stand-in (`SourceApps.resolver()`), an image is a `PlatformImage`.
+
+- `Sources/Mobile` is the iPhone and iPad app (target and scheme `PestoMobile`, module `PestoMobile`, product Pesto, the Mac app's bundle identifier; ADR 0046). It imports `Core/` and `Shared/`, never `Features/` or `App/`, and the Mac app never compiles it. `Shared/` is compiled into both apps: a helper that needs AppKit is wrapped whole in `#if os(macOS)`, one both use keeps its platform calls inside `#if`. `make build-mobile` builds it and `make test-mobile` runs `PestoMobileTests` on an iPhone and an iPad simulator; that target also compiles `Tests/PestoCoreTests/Sync`, so the sync format is tested on iOS. The gate (`scripts/verify.sh`) does not run the iOS tests yet.
 
 When in doubt: if a function/type touches a SwiftUI `View`, it's in `Features/`. If it touches `NSPasteboard` or SwiftData models, it's in `Core/`.
 

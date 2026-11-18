@@ -25,14 +25,16 @@ Sources/
 │   ├── Paste/        — focus restoration, AX direct-write, CGEvent fallback
 │   └── Predicate/    — smart-pinboard DSL
 ├── Features/     — SwiftUI views (may import Core, never the reverse); `Marketing/` draws the documentation pictures
+├── Mobile/       — the iPhone and iPad app (target `PestoMobile`, ADR 0046); never compiled into the Mac app
 ├── CLI/          — the `pesto` command-line tool (`make build-cli`)
 ├── Controls/     — the Control Center extension
-└── Shared/       — extensions and utilities
+└── Shared/       — extensions and utilities, compiled into the Mac app and the iOS app
 ```
 
 All of `Core/` is the SwiftPM module `PestoCore`, tested without a built app by `make test-core`, the storage layer
 (`Core/Storage/Models` and `Migration`: the SwiftData models, ingest, delete, encrypt, restore) included. SwiftData's
-macros need Xcode's toolchain, which every supported build uses. The hosted tests (`PestoTests`) are the ones that need
+macros need Xcode's toolchain, which every supported build uses. `PestoCore` builds for macOS 15 and iOS 26 (ADR 0046): what only a Mac can run is inside `#if os(macOS)`, and
+`xcodebuild build -scheme PestoCore -destination 'generic/platform=iOS Simulator'` checks the iOS side. The hosted tests (`PestoTests`) are the ones that need
 the app itself: its state, windows and launch. `AppDelegate`, `ClipboardCard` and `GridView` are split into `+Something.swift` extension files; preferences are typed `Setting` keys (ADR 0012); `AppState` is `@Observable` and the shelf's history is one `HistoryStore` (ADR 0007). The app build uses an `xcodegen`-generated project (`Pesto.yml`).
 
 ## Tech stack
@@ -65,6 +67,8 @@ make build      # generate + xcodebuild debug build (no signing)
 make run        # build + sign with stable cert + open Pesto.app
 make test-core  # swift test on PestoCore — fast, no Xcode project needed
 make test       # xcodebuild hosted tests (snapshot + UITests skipped)
+make build-mobile  # the iPhone and iPad app, for the simulator
+make test-mobile   # its tests on an iPhone and an iPad simulator (needs an iOS simulator runtime)
 make verify     # the full gate: lint, Core + hosted + UI tests, screenshots (docs/testing.md)
 make lint       # swiftformat --lint + swiftlint --strict
 make format     # auto-format all Swift sources

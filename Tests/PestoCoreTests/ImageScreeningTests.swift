@@ -5,33 +5,33 @@ import ImageIO
 import Testing
 import UniformTypeIdentifiers
 #if canImport(FoundationModels) && compiler(>=6.4)
-    import FoundationModels
+import FoundationModels
 #endif
 @testable import PestoCore
 
 @Suite("On-device image screening")
 struct ImageScreeningTests {
     #if canImport(FoundationModels) && compiler(>=6.4)
-        @available(macOS 27, *)
-        @Test("a guardrail stop or a refusal from the model means the image is sensitive")
-        func whenModelStops_thenSensitive() {
-            let guardrail = LanguageModelError.guardrailViolation(.init(debugDescription: "unsafe"))
-            let refusal = LanguageModelError.refusal(.init(explanation: "declined", debugDescription: "declined"))
-            #expect(OnDeviceImageScreener.isSafetyStop(guardrail))
-            #expect(OnDeviceImageScreener.isSafetyStop(refusal))
-        }
+    @available(macOS 27, *)
+    @Test("a guardrail stop or a refusal from the model means the image is sensitive")
+    func whenModelStops_thenSensitive() {
+        let guardrail = LanguageModelError.guardrailViolation(.init(debugDescription: "unsafe"))
+        let refusal = LanguageModelError.refusal(.init(explanation: "declined", debugDescription: "declined"))
+        #expect(OnDeviceImageScreener.isSafetyStop(guardrail))
+        #expect(OnDeviceImageScreener.isSafetyStop(refusal))
+    }
 
-        @available(macOS 27, *)
-        @Test("other model errors are not evidence about the image")
-        func whenOtherError_thenNotSensitive() {
-            let tooBig = LanguageModelError.contextSizeExceeded(.init(
-                contextSize: 100,
-                tokenCount: 200,
-                debugDescription: "too long"
-            ))
-            #expect(!OnDeviceImageScreener.isSafetyStop(tooBig))
-            #expect(!OnDeviceImageScreener.isSafetyStop(URLError(.timedOut)))
-        }
+    @available(macOS 27, *)
+    @Test("other model errors are not evidence about the image")
+    func whenOtherError_thenNotSensitive() {
+        let tooBig = LanguageModelError.contextSizeExceeded(.init(
+            contextSize: 100,
+            tokenCount: 200,
+            debugDescription: "too long"
+        ))
+        #expect(!OnDeviceImageScreener.isSafetyStop(tooBig))
+        #expect(!OnDeviceImageScreener.isSafetyStop(URLError(.timedOut)))
+    }
     #endif
 
     @Test("the description Apple gives for a guardrail stop is recognised even from an unknown error type")

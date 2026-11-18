@@ -2,7 +2,7 @@
 import Foundation
 import ImageIO
 #if canImport(FoundationModels)
-    import FoundationModels
+import FoundationModels
 #endif
 
 /// On-device AI via Apple's Foundation Models framework (macOS 26+, Apple Silicon).
@@ -39,102 +39,102 @@ public struct AppleIntelligenceClient: Sendable {
 
     public init() {}
 
-    @available(macOS 26, *)
+    @available(macOS 26, iOS 26, *)
     public func complete(system: String, userMessage: String) async throws -> String {
         #if canImport(FoundationModels)
-            guard AIAvailability.isUserEnabled() else { throw ClientError.turnedOff }
-            let model = SystemLanguageModel.default
-            guard case .available = model.availability else {
-                let reason = if case let .unavailable(r) = model.availability {
-                    switch r {
-                    case .deviceNotEligible: "device not eligible"
-                    case .appleIntelligenceNotEnabled: "Apple Intelligence not enabled"
-                    case .modelNotReady: "model not ready"
-                    @unknown default: "unknown reason"
-                    }
-                } else {
-                    "unknown"
+        guard AIAvailability.isUserEnabled() else { throw ClientError.turnedOff }
+        let model = SystemLanguageModel.default
+        guard case .available = model.availability else {
+            let reason = if case let .unavailable(r) = model.availability {
+                switch r {
+                case .deviceNotEligible: "device not eligible"
+                case .appleIntelligenceNotEnabled: "Apple Intelligence not enabled"
+                case .modelNotReady: "model not ready"
+                @unknown default: "unknown reason"
                 }
-                throw ClientError.modelUnavailable(reason)
+            } else {
+                "unknown"
             }
-            let session = LanguageModelSession(model: model, instructions: system)
-            do {
-                return try await session.respond(to: userMessage).content
-            } catch LanguageModelSession.GenerationError.exceededContextWindowSize {
-                throw ClientError.tooLong
-            }
+            throw ClientError.modelUnavailable(reason)
+        }
+        let session = LanguageModelSession(model: model, instructions: system)
+        do {
+            return try await session.respond(to: userMessage).content
+        } catch LanguageModelSession.GenerationError.exceededContextWindowSize {
+            throw ClientError.tooLong
+        }
         #else
-            throw ClientError.unavailable
+        throw ClientError.unavailable
         #endif
     }
 
     /// The model's window in tokens, or nil where it cannot be asked (before macOS 26).
     public static var contextTokens: Int? {
         #if canImport(FoundationModels)
-            guard #available(macOS 26, *) else { return nil }
-            return SystemLanguageModel.default.contextSize
+        guard #available(macOS 26, iOS 26, *) else { return nil }
+        return SystemLanguageModel.default.contextSize
         #else
-            return nil
+        return nil
         #endif
     }
 
     /// Whether the on-device model is ready and can read images. Cheap; call it when building a menu.
     public static var supportsVision: Bool {
         #if canImport(FoundationModels) && compiler(>=6.4) // image input needs the macOS 27 SDK
-            guard #available(macOS 27, *), AIAvailability.isUserEnabled() else { return false }
-            let model = SystemLanguageModel.default
-            return model.availability == .available && model.capabilities.contains(.vision)
+        guard #available(macOS 27, iOS 27, *), AIAvailability.isUserEnabled() else { return false }
+        let model = SystemLanguageModel.default
+        return model.availability == .available && model.capabilities.contains(.vision)
         #else
-            return false
+        return false
         #endif
     }
 
-    @available(macOS 27, *)
+    @available(macOS 27, iOS 27, *)
     public func describe(imageData: Data) async throws -> String {
         #if canImport(FoundationModels) && compiler(>=6.4) // image input needs the macOS 27 SDK
-            try await respond(
-                to: imageData,
-                instructions: AIAction.describeImage.systemPrompt,
-                prompt: "Describe this image."
-            )
+        try await respond(
+            to: imageData,
+            instructions: AIAction.describeImage.systemPrompt,
+            prompt: "Describe this image."
+        )
         #else
-            throw ClientError.unavailable
+        throw ClientError.unavailable
         #endif
     }
 
     /// Loads the model ahead of the first picture, so the first screening does not pay for the cold start.
     public static func prewarmVision() {
         #if canImport(FoundationModels) && compiler(>=6.4)
-            guard #available(macOS 27, *), supportsVision else { return }
-            LanguageModelSession(model: .default, instructions: "Answer with the single word OK.").prewarm()
+        guard #available(macOS 27, iOS 27, *), supportsVision else { return }
+        LanguageModelSession(model: .default, instructions: "Answer with the single word OK.").prewarm()
         #endif
     }
 
     /// Shows the picture to the model with a trivial request. Whatever it says is ignored: what matters is whether the
     /// model's safety guardrails stop it, which is thrown to the caller.
-    @available(macOS 27, *)
+    @available(macOS 27, iOS 27, *)
     public func screen(imageData: Data) async throws {
         #if canImport(FoundationModels) && compiler(>=6.4)
-            _ = try await respond(to: imageData, instructions: "Answer with the single word OK.", prompt: "Reply OK.")
+        _ = try await respond(to: imageData, instructions: "Answer with the single word OK.", prompt: "Reply OK.")
         #else
-            throw ClientError.unavailable
+        throw ClientError.unavailable
         #endif
     }
 
     #if canImport(FoundationModels) && compiler(>=6.4)
-        @available(macOS 27, *)
-        private func respond(to imageData: Data, instructions: String, prompt: String) async throws -> String {
-            guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
-                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { throw ClientError.invalidImage }
-            let model = SystemLanguageModel.default
-            guard case .available = model.availability else { throw ClientError.modelUnavailable("not ready") }
-            guard model.capabilities.contains(.vision) else { throw ClientError.visionUnavailable }
-            let session = LanguageModelSession(model: model, instructions: instructions)
-            let response = try await session.respond(to: Prompt {
-                prompt
-                Attachment(image)
-            })
-            return response.content
-        }
+    @available(macOS 27, iOS 27, *)
+    private func respond(to imageData: Data, instructions: String, prompt: String) async throws -> String {
+        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
+              let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { throw ClientError.invalidImage }
+        let model = SystemLanguageModel.default
+        guard case .available = model.availability else { throw ClientError.modelUnavailable("not ready") }
+        guard model.capabilities.contains(.vision) else { throw ClientError.visionUnavailable }
+        let session = LanguageModelSession(model: model, instructions: instructions)
+        let response = try await session.respond(to: Prompt {
+            prompt
+            Attachment(image)
+        })
+        return response.content
+    }
     #endif
 }

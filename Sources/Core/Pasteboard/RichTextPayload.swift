@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#else
+import Foundation
+#endif
 
 /// The formatted flavours of a text copy (RTF, RTFD and HTML) kept alongside its plain string so a normal paste
 /// restores formatting while plain-text paste and search use the plain string.
@@ -17,9 +21,12 @@ public struct RichTextPayload: Codable, Equatable, Sendable {
     public var isEmpty: Bool {
         rtf == nil && rtfd == nil && html == nil
     }
+}
 
+#if os(macOS)
+public extension RichTextPayload {
     /// Writes each stored rich flavour back to `pasteboard`.
-    public func write(to pasteboard: NSPasteboard) {
+    func write(to pasteboard: NSPasteboard) {
         if let rtfd {
             pasteboard.setData(rtfd, forType: .rtfd)
         }
@@ -31,3 +38,4 @@ public struct RichTextPayload: Codable, Equatable, Sendable {
         }
     }
 }
+#endif

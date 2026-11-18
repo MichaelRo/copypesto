@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 public enum PanelMotion {
@@ -16,3 +17,4 @@ public enum PanelMotion {
         NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
     }
 }
+#endif

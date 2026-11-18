@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import ApplicationServices
 import os
@@ -224,3 +225,4 @@ public final class FocusRestoration {
         }
     }
 }
+#endif

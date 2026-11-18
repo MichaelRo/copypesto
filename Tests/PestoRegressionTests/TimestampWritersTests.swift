@@ -12,7 +12,14 @@ struct TimestampWritersTests {
         let assignment = try NSRegularExpression(pattern: #"[A-Za-z0-9_\)\]]\.timestamp\s*=[^=]"#)
         var scanned = 0
         var offenders: [String] = []
-        for (folder, minimum) in [("App", 30), ("Features", 60), ("Shared", 15), ("Core", 200), ("CLI", 1)] {
+        for (folder, minimum) in [
+            ("App", 30),
+            ("Features", 60),
+            ("Shared", 15),
+            ("Core", 200),
+            ("CLI", 1),
+            ("Mobile", 3)
+        ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 scanned += 1
                 let text = try String(contentsOf: file, encoding: .utf8)

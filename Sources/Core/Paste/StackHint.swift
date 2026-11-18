@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// What the Paste One by One panel and its spoken progress tell the person to press: their own ⌘V when Pesto watches
@@ -12,3 +13,4 @@ public enum StackHint {
         return String(localized: "\(keys) to paste")
     }
 }
+#endif

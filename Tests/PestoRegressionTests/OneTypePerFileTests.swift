@@ -14,7 +14,7 @@ struct OneTypePerFileTests {
         "Sources/Features/AI/AIResultPanelController.swift", "Sources/Core/Storage/Undo/UndoChanges.swift",
         "Sources/Core/Storage/RetentionPolicy.swift", "Sources/Core/Storage/CommandBarSuggestions.swift",
         "Sources/Core/Runtime/RuntimeConfiguration.swift", "Sources/Core/Runtime/PerfSignposts.swift",
-        "Sources/Core/Runtime/BrandPalette.swift", "Sources/Core/Pasteboard/PasteboardWatcher.swift"
+        "Sources/Core/Runtime/BrandPalette.swift"
     ]
     private static let limit = 4
 

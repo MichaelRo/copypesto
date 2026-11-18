@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-import AppKit
+import Foundation
 
 /// Card pictures already made, kept in memory. A card that scrolls out of the row and back in is built again, and
 /// without this each return decrypted the whole picture, shrank it and decoded the result again, which is what made a
@@ -9,14 +9,14 @@ public final class ThumbnailCache {
     public static let shared = ThumbnailCache()
 
     public struct Entry {
-        public let image: NSImage
+        public let image: PlatformImage
         public let isAnimated: Bool
         /// The clip's size when the picture was made. A still that becomes its GIF changes the size, so the cached
         /// still
         /// is not offered for it.
         public let byteSize: Int
 
-        public init(image: NSImage, isAnimated: Bool, byteSize: Int) {
+        public init(image: PlatformImage, isAnimated: Bool, byteSize: Int) {
             self.image = image
             self.isAnimated = isAnimated
             self.byteSize = byteSize

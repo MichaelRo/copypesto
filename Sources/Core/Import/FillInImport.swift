@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Turns the fill-ins of other snippet tools into Pesto's: Raycast's `{argument}` and TextExpander's `%filltext`,
@@ -97,3 +98,4 @@ enum FillInImport {
         return result + ns.substring(from: cursor)
     }
 }
+#endif

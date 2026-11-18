@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import SwiftUI
 
@@ -21,3 +22,4 @@ struct MenuAnchorView: NSViewRepresentable {
         anchor.view = view
     }
 }
+#endif

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 import Foundation
 
@@ -16,3 +17,4 @@ public enum DefaultShortcutMigration {
         defaults.set(cmdKey | optionKey, for: GlobalShortcut.pastePrevious.modifiersSetting)
     }
 }
+#endif

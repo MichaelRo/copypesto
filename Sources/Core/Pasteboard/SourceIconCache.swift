@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// Source-app icons resolved by bundle ID and shared by every card, instead of a PNG copied onto each history item.
@@ -41,3 +42,4 @@ public final class SourceIconCache {
         return record
     }
 }
+#endif

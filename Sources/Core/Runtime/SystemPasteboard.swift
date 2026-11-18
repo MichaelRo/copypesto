@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// One `NSPasteboard`, read from anywhere. Apple does not mark `NSPasteboard` `Sendable`, so it is wrapped here, not
@@ -39,3 +40,4 @@ public final class SystemPasteboard: PasteboardReading, @unchecked Sendable {
         board.accessBehavior
     }
 }
+#endif

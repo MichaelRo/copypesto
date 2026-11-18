@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import CoreServices
 import Foundation
 
@@ -47,3 +48,42 @@ final class SyncFolderWatcher: @unchecked Sendable {
 
     deinit { stop() }
 }
+#else
+import Foundation
+
+/// iOS has no FSEvents. A file presenter on the folder hears of a change anywhere below it, including a file the
+/// folder's provider brings down. The service's poll still runs.
+final class SyncFolderWatcher: NSObject, NSFilePresenter, Sendable {
+    let presentedItemURL: URL?
+    let presentedItemOperationQueue: OperationQueue
+    private let onChange: @Sendable () -> Void
+
+    init(url: URL, latency _: TimeInterval = 0.3, onChange: @escaping @Sendable () -> Void) {
+        presentedItemURL = url
+        self.onChange = onChange
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 1
+        presentedItemOperationQueue = queue
+    }
+
+    func start() {
+        NSFileCoordinator.addFilePresenter(self)
+    }
+
+    func stop() {
+        NSFileCoordinator.removeFilePresenter(self)
+    }
+
+    func presentedItemDidChange() {
+        onChange()
+    }
+
+    func presentedSubitemDidChange(at _: URL) {
+        onChange()
+    }
+
+    func presentedSubitemDidAppear(at _: URL) {
+        onChange()
+    }
+}
+#endif

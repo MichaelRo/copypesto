@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 import SQLite3
 
@@ -202,3 +203,4 @@ enum PasteArchiveDecoder {
         return representations.isEmpty ? nil : representations
     }
 }
+#endif

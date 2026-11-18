@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// One clip of each kind for the paste and copy latency bench. Oldest first, so the shelf shows them newest first as
@@ -57,3 +58,4 @@ enum LatencySeed {
         return newestFirst.reversed()
     }
 }
+#endif

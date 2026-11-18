@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 import SQLite3
 
@@ -61,3 +62,4 @@ public enum AlfredLibraryReader {
         )
     }
 }
+#endif

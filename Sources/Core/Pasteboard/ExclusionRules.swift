@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
+#else
+import Foundation
+#endif
 
 /// Pasteboard exclusion rules. Append-only by policy — removing a bundle ID requires an ADR.
 /// See `decisions/0004-what-is-never-captured.md` and `AGENTS.md` (Security
@@ -153,9 +157,13 @@ public struct ExclusionRules: Sendable {
     public func shouldIgnore(typeIdentifiers: [String], frontmostBundleID: String?) -> Bool {
         blockReason(typeIdentifiers: typeIdentifiers, frontmostBundleID: frontmostBundleID) != nil
     }
+}
 
+#if os(macOS)
+public extension ExclusionRules {
     /// Convenience: accept the AppKit-typed array directly.
-    public func shouldIgnore(types: [NSPasteboard.PasteboardType], frontmostBundleID: String?) -> Bool {
+    func shouldIgnore(types: [NSPasteboard.PasteboardType], frontmostBundleID: String?) -> Bool {
         shouldIgnore(typeIdentifiers: types.map(\.rawValue), frontmostBundleID: frontmostBundleID)
     }
 }
+#endif

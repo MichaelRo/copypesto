@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import CoreGraphics
 
@@ -100,3 +101,4 @@ public final class ScreenShareDetector {
         !sharingBundleIDs.isDisjoint(with: Set(runningBundleIDs.map { $0.lowercased() }))
     }
 }
+#endif

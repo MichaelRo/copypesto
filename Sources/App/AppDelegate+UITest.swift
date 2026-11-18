@@ -94,7 +94,7 @@ extension AppDelegate {
         await service.waitForBackgroundWork()
         if profile == .marketing { await seedMarketingCollections() }
         #if DEBUG
-            if profile == .lunchRush { await seedLunchRush() }
+        if profile == .lunchRush { await seedLunchRush() }
         #endif
         if profile == .suggestion {
             for daysAgo in (0..<SeedFixtures.suggestionPasteCount).reversed() {

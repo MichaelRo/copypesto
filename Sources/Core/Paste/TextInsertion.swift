@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import ApplicationServices
 import Foundation
 
@@ -44,3 +45,4 @@ enum TextInsertion {
         return true
     }
 }
+#endif

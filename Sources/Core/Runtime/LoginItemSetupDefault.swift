@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Setup's last step offers "Launch Pesto at login" already on (ADR 0024). It is turned on once, here, and the person's
@@ -29,3 +30,4 @@ public enum LoginItemSetupDefault {
         return service.setEnabled(true)
     }
 }
+#endif

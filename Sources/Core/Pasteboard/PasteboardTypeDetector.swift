@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// Classifies a pasteboard's contents into a `ClipboardType` using the priority order
@@ -54,3 +55,4 @@ public enum PasteboardTypeDetector {
         }
     }
 }
+#endif

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 public extension PasteStack {
@@ -58,3 +59,4 @@ public extension PasteStack.Item {
         )
     }
 }
+#endif

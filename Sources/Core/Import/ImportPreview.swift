@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// What another app's library holds, in the one shape the import sheet shows for every source (Paste, Maccy, Alfred):
@@ -93,3 +94,4 @@ public struct ImportPreview: Sendable {
         return history.count(where: { $0.timestamp < cutoff })
     }
 }
+#endif

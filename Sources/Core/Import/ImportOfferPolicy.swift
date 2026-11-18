@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Which installed apps to offer to import from: once, after setup, and never again after the person has answered. They
@@ -25,3 +26,4 @@ public enum ImportOfferPolicy {
         return BannerNames(shown: shown, more: sources.count - shown.count)
     }
 }
+#endif

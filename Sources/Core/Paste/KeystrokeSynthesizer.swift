@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 import ApplicationServices
 import os
@@ -91,3 +92,4 @@ public struct KeystrokeSynthesizer: Sendable {
         }
     }
 }
+#endif

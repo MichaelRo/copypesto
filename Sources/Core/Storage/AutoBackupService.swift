@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 import os
 import SwiftData
@@ -50,7 +51,7 @@ public final class AutoBackupService {
         keyStore: BackupKeyStore = BackupKeyStore(),
         defaults: UserDefaults = AppDefaults.store,
         deviceID: @escaping () -> String = { DeviceIdentity.current() },
-        macName: @escaping () -> String = { Host.current().localizedName ?? "Mac" },
+        macName: @escaping () -> String = { DeviceName.current(fallback: "Mac") },
         isPersistentStore: Bool = true,
         verifyWritten: @escaping @Sendable (URL, BackupKey) throws -> Void = { url, key in
             _ = try BackupFile.verify(url: url, credential: .recoveryKey(key))
@@ -408,3 +409,4 @@ public final class AutoBackupService {
         stop()
     }
 }
+#endif

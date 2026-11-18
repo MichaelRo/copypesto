@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 
 /// Which click the card saw. `activate` is the accessibility action: one step, because a VoiceOver user cannot
@@ -150,3 +151,4 @@ public extension PasteStack.Item {
         }
     }
 }
+#endif

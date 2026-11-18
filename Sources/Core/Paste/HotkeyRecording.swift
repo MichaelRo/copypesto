@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Carbon.HIToolbox
 
 /// What a combination typed into a shortcut recorder amounts to.
@@ -39,3 +40,4 @@ public enum HotkeyRecording {
         return .accepted
     }
 }
+#endif

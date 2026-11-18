@@ -30,6 +30,7 @@
 --elseposition same-line
 --guardelse same-line
 --xcodeindentation enabled
+--ifdef no-indent
 
 # Self handling
 --self init-only

@@ -22,9 +22,13 @@ public struct URLPreviewResult: Sendable {
 @MainActor
 public final class URLMetadataFetcher {
     public static let shared: URLMetadataFetcher = {
+        #if os(macOS)
         guard let millis = RuntimeConfiguration.current.linkPreviewStubMillis,
               RuntimeConfiguration.current.mode == .uiTest else { return URLMetadataFetcher() }
         return URLMetadataFetcher(loader: { try await LinkPreviewStub.load($0, delayMillis: millis) })
+        #else
+        return URLMetadataFetcher()
+        #endif
     }()
 
     /// Upper bound for animated GIFs stored on the model. Larger payloads fall

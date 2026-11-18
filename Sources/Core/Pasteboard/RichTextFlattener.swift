@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import AppKit
 
 /// The plain text of a copied RTF, RTFD or HTML document. AppKit's rich-text import is not thread-safe (it aborted a
@@ -17,3 +18,4 @@ enum RichTextFlattener {
         ).string
     }
 }
+#endif

@@ -117,4 +117,11 @@ final class LibraryModel {
     func endSearch() {
         filter.endSearch()
     }
+
+    /// Ask Pesto's answer: its words go to the search field and its kinds and range to the filter.
+    func apply(_ query: AskPestoQuery) {
+        self.query = query.keywords
+        isSearching = true
+        filter.apply(query)
+    }
 }

@@ -5,10 +5,15 @@ import SwiftUI
 
 struct LibraryChipRow: View {
     @Environment(LibraryModel.self) private var library
+    @Environment(MobileAppState.self) private var appState
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
 
     var body: some View {
-        let chips = LibraryChip.row(collectionIDs: collections.map(\.id), isSearching: library.isSearching)
+        let chips = LibraryChip.row(
+            collectionIDs: collections.map(\.id), isSearching: library.isSearching,
+            offersAsk: !library.query.trimmingCharacters(in: .whitespaces).isEmpty && !library.filter.hasAsk,
+            hasAsk: library.filter.hasAsk
+        )
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 ForEach(chips, id: \.self) { chip in
@@ -52,7 +57,28 @@ struct LibraryChipRow: View {
             )
         case .otherDevices:
             chipButton(chip, label: String(localized: "Other Devices"), symbol: "laptopcomputer.and.iphone")
+        case .ask:
+            Button {
+                Task { await ask() }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles").accessibilityHidden(true)
+                    Text("Ask")
+                }
+            }
+            .buttonStyle(MobileChipStyle(isActive: false, tint: nil))
+            .accessibilityLabel(String(localized: "Ask Pesto"))
+            .accessibilityHint(String(localized: "Turns what you typed into filters."))
+            .accessibilityIdentifier(MobileAccessibilityID.askChip)
+        case .asked:
+            chipButton(chip, label: library.filter.askedSummary, symbol: "sparkles")
+                .accessibilityIdentifier(MobileAccessibilityID.askedChip)
         }
+    }
+
+    private func ask() async {
+        let query = await appState.askPesto(library.query)
+        withAnimation(Motion.animation(.pestoQuick)) { library.apply(query) }
     }
 
     private func chipButton(_ chip: LibraryChip, label: String, symbol: String, tint: Color? = nil) -> some View {

@@ -30,7 +30,7 @@ struct LibraryEmptyState: View {
     }
 
     private var scopeText: String {
-        if library.isSearching, library.filter.kind != nil {
+        if library.isSearching, !library.filter.kinds.isEmpty {
             return String(localized: "No clip of this kind matches.")
         }
         return switch library.filter.scope {

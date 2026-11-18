@@ -10,9 +10,14 @@ extension AppState {
 
     func saveEditedText(id: UUID, text: String) async -> TextEditSaveResult {
         guard let service = storageService else { return .refused(TextEditPolicy.failedMessage) }
-        guard !isHistoryLockedNow() else { return .refused(TextEditPolicy.lockedMessage) }
+        // The window keeps the draft: Save asks for the unlock, and saves once it is given.
+        checkAndApplyBiometricLock(closesTextEditor: false)
+        if isHistoryLocked {
+            await performBiometricUnlock()
+            guard !isHistoryLocked else { return .refused(TextEditPolicy.lockedMessage) }
+        }
         let mark = service.undoHistory.recordedCount
-        let before = historyStore?.item(for: id)?.contentHash
+        let before = shownContentHashes(of: [id])
         let result: TextEditSaveResult
         do {
             result = try await TextEditPolicy.result(for: service.updateText(id: id, text: text))
@@ -24,27 +29,31 @@ extension AppState {
         }
         if result == .saved {
             offerUndo(since: mark)
-            if let before { Task { await redrawWhenTextArrives(changedFrom: [id: before]) } }
+            Task { await redrawWhenTextArrives(changedFrom: before) }
         }
         return result
     }
 
-    /// The content hash of every clip the history holds, before a change whose new text must be drawn.
-    func shownContentHashes() -> [UUID: String] {
-        Dictionary(
-            (historyStore?.items ?? []).map { ($0.id, $0.contentHash) }, uniquingKeysWith: { first, _ in first }
-        )
+    /// The content hash of the given clips as the shelf shows them, before a change whose new text must be drawn.
+    func shownContentHashes(of ids: [UUID]) -> [UUID: String] {
+        var hashes: [UUID: String] = [:]
+        for id in ids {
+            if let item = historyStore?.item(for: id), item.modelContext != nil, !item.isDeleted {
+                hashes[id] = item.contentHash
+            }
+        }
+        return hashes
     }
 
     /// The storage actor's save reaches the main context's copy of a clip a moment later, and neither that merge nor
-    /// the history following the save redrew the card (seen on the shelf after ⌘Z). Once a copy holds new content (a
-    /// second at most) the history is read again, for the search text, and `textEditGeneration` makes the shelf give
-    /// the card a new identity.
+    /// the history following the save redrew the card (seen on the shelf after ⌘Z). Once every changed clip's copy
+    /// holds its new content, or is gone (two seconds at most), the history is read again, for the search text, and
+    /// `textEditGeneration` makes the shelf give the card a new identity.
     func redrawWhenTextArrives(changedFrom hashes: [UUID: String]) async {
         guard let historyStore, !hashes.isEmpty else { return }
-        let deadline = ContinuousClock.now + .seconds(1)
-        while ContinuousClock.now < deadline, !hashes.contains(where: { id, hash in
-            historyStore.item(for: id).map { $0.contentHash != hash } ?? false
+        let deadline = ContinuousClock.now + .seconds(2)
+        while ContinuousClock.now < deadline, !TextArrival.hasArrived(hashes, current: { id in
+            historyStore.item(for: id).flatMap { $0.modelContext == nil || $0.isDeleted ? nil : $0.contentHash }
         }) {
             try? await Task.sleep(for: .milliseconds(20))
         }

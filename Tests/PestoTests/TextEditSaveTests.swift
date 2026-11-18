@@ -111,19 +111,32 @@ extension HostedGlobals {
             #expect(try text(of: id) == "keeps its words")
         }
 
-        @Test("a locked history refuses the save, closes the editor and keeps the old text")
-        func whenLocked_thenRefusedAndEditorClosed() async throws {
+        @Test("a locked history keeps the editor and its draft, refuses the save until the unlock, then saves")
+        func whenLocked_thenTheEditorStaysAndSavesAfterTheUnlock() async throws {
             let id = try await ingest("locked words")
             var closed = 0
             state.closeTextEditor = { closed += 1 }
             AppDefaults.store.set(true, for: Setting.biometricLockEnabled)
-            defer { AppDefaults.store.removeObject(forKey: Setting.biometricLockEnabled.name) }
+            AppDefaults.store.set(false, for: Setting.uitestAuthenticationGranted)
+            AuthenticationGrace.shared.clear()
+            defer {
+                AuthenticationGrace.shared.clear()
+                AppDefaults.store.removeValue(for: Setting.biometricLockEnabled)
+                AppDefaults.store.removeValue(for: Setting.uitestAuthenticationGranted)
+            }
 
-            let result = await state.saveEditedText(id: id, text: "changed while locked")
+            let refused = await state.saveEditedText(id: id, text: "changed while locked")
 
-            #expect(result == .refused(TextEditPolicy.lockedMessage))
-            #expect(closed > 0)
+            #expect(refused == .refused(TextEditPolicy.lockedMessage))
+            #expect(closed == 0, "the draft stays in its window")
             #expect(try text(of: id) == "locked words")
+
+            AppDefaults.store.set(true, for: Setting.uitestAuthenticationGranted)
+            let saved = await state.saveEditedText(id: id, text: "changed while locked")
+
+            #expect(saved == .saved)
+            #expect(closed == 0)
+            #expect(try text(of: id) == "changed while locked")
         }
     }
 }

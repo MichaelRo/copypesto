@@ -84,8 +84,8 @@ extension AppState {
     private func run(redo: Bool) {
         guard let service = storageService, !isHistoryLockedNow() else { return }
         dismissUndoOffer()
-        let label = redo ? service.undoHistory.redoLabel : service.undoHistory.undoLabel
-        let hashes = label == .editText || label == .editSnippet ? shownContentHashes() : [:]
+        let replaced = redo ? service.undoHistory.redoReplacedClipIDs : service.undoHistory.undoReplacedClipIDs
+        let hashes = shownContentHashes(of: replaced)
         Task {
             await attempt(redo ? "Couldn\u{2019}t redo" : "Couldn\u{2019}t undo") {
                 guard let outcome = try await (redo ? service.redo() : service.undo()) else { return }

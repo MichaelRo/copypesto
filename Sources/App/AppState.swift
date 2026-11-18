@@ -455,7 +455,7 @@ final class AppState {
 
     /// Locks the history if the lock is enabled and the idle timeout has elapsed.
     /// Call when the overlay or floating window is shown.
-    func checkAndApplyBiometricLock() {
+    func checkAndApplyBiometricLock(closesTextEditor: Bool = true) {
         isHistoryLocked = HistoryLockPolicy.isLocked(
             enabled: AppDefaults.store.value(for: Setting.biometricLockEnabled),
             timeoutMinutes: AuthenticationGrace.minutes(),
@@ -467,7 +467,7 @@ final class AppState {
         )
         // Decrypted previews must not outlive the lock, and neither may what could be undone.
         if isHistoryLocked {
-            closeTextEditor?()
+            if closesTextEditor { closeTextEditor?() }
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
             stopSimilarityWork()

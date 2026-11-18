@@ -42,12 +42,15 @@ extension MobileAppState {
     }
 
     /// The actor's save reaches this context's copy of the clip a moment later, and neither that merge nor a new read
-    /// of
-    /// the history redrew the card (seen in the simulator). So once the copy holds the new content (a second at most)
-    /// the history is read again, for the search text, and `textEdits` makes the grid give the card a new identity.
+    /// of the history redrew the card (seen in the simulator). So once the copy holds the new content, or the clip is
+    /// gone (two seconds at most), the history is read again, for the search text, and `textEdits` makes the grid give
+    /// the card a new identity.
     private func drawAgain(_ item: ClipboardItem, after oldHash: String) async {
-        let deadline = ContinuousClock.now + .seconds(1)
-        while item.contentHash == oldHash, ContinuousClock.now < deadline {
+        let id = item.id
+        let deadline = ContinuousClock.now + .seconds(2)
+        while ContinuousClock.now < deadline, !TextArrival.hasArrived([id: oldHash], current: { _ in
+            item.modelContext == nil || item.isDeleted ? nil : item.contentHash
+        }) {
             try? await Task.sleep(for: .milliseconds(20))
         }
         historyStore?.refresh()

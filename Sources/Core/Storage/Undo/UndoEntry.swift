@@ -46,6 +46,13 @@ public struct UndoEntry: Sendable {
         }
     }
 
+    var replacedClipIDs: [UUID] {
+        switch kind {
+        case let .snippetsReplaced(replacements), let .textReplaced(replacements): replacements.map(\.id)
+        default: []
+        }
+    }
+
     public var heldBytes: Int {
         switch kind {
         case let .clipsDeleted(snapshots): snapshots.reduce(0) { $0 + $1.heldBytes }

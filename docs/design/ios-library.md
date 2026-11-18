@@ -135,7 +135,15 @@ Allow. A locked history (Face ID) adds nothing until you unlock.
 ## The welcome (ADR 0057)
 Three steps once over the library (iPhone full screen, iPad form sheet; Skip on every step; Settings → Show Welcome Again), then a one-time AutoFill tip after the first pin or snippet. `-UITest` launches skip it unless `uitestShowsWelcome` / `uitestShowsAutoFillTip` is set.
 
+## What pass 3 brought over (ADR 0058)
+- **Decode JWT**: in the menu of a hidden token, after the same Face ID question as Show; a sheet with the header, the payload, the times and "Not verified"; Copy Payload copies it as a secret.
+- **Copy As** leads with JSON and Markdown for a clip that qualifies (a table, a JSON document, HTML), as the Mac's does.
+- **GIF**: a GIF shared into Pesto, pasted or dropped keeps every frame; Share from a card or the detail hands over a `.gif` file.
+- **AI Actions** (a submenu of a card's menu and the detail's More menu): Summarize, Key Points, Professional, Concise, Translate and Extract on text and code, Describe Image on a picture, on Apple's on-device model. Greyed out with the reason while it is off or getting ready; hidden on a device that never can; never offered for a hidden clip. The answer is a sheet with Copy (kept as a clip) and Done. Settings → Apple Intelligence has the one switch.
+- **Ask**: while searching with words typed, an Ask chip leads the filters; one tap makes the kinds and the date from the sentence, shown as one chip that takes them off again.
+- **Smart collections**: New Collection → Smart, then rules as grouped Form sections; Edit Collection shows them again.
+
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds
-section, a keyboard extension, glass on a card. Source-app chips: Core's index keeps the bundle id
+section, a keyboard extension, glass on a card, reading a long text for AI a part at a time (the Mac does; the iOS answer says how much was read). Source-app chips: Core's index keeps the bundle id
 private and iOS cannot name an app, so there is no cheap list to show.

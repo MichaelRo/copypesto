@@ -359,6 +359,16 @@ scope, and stages a stale link), a this-device key in `MemorySecrets` and a temp
 Drive. A real iCloud Drive folder picked in the file picker, the sync key arriving through iCloud Keychain on a
 device, file-presenter callbacks from the iCloud daemon and the app's return from the background are hand checks.
 
+Pass 3 (ADR 0058) is covered in `CardCopyActionsTests` (Copy As JSON and Markdown, Decode JWT: what is offered, that it asks first, that Copy Payload closes it), `JWTDecodingTextTests` (Core), `GIFSharingTests`, `GIFSharingInTests` and the GIF cases of `SharedInboxTests` (a GIF beside a still is kept whole, one over the limit refused), `CardAIActionsTests` and `MobileAITests` (what is offered or greyed out and why; a fake model, never the real one), `AskPestoLibraryTests` (the chip, the rules by hand with the model off, the index narrowed to kinds and a day) and `SmartCollectionEditingTests` (every field makes a valid rule, Undo, a newer Pesto's rules kept). `Pass3UITests` (iPhone) drives Decode JWT with and without authentication (`PESTO_UITEST_JWT=1` adds a token; `PESTO_UITEST_DEFAULT_uitestAuthenticationGranted`), an AI action on the fixture model (`PESTO_UITEST_AI_FIXTURE=1`), the greyed-out menu with `PESTO_UITEST_DEFAULT_appleIntelligenceEnabled=false`, the Ask chip and a smart collection.
+
+### iPhone and iPad: what only a device can check
+
+Device-only checks are listed in `docs/ios-signing.md` ("What only a device can check"): iCloud Keychain key arrival, the Files picker against real iCloud Drive, Face ID and the App Switcher cover, a real screen recording or AirPlay, AutoFill from the system menu, the widget on a real Home Screen, the share sheet from real apps and the Action Button or Back Tap shortcut. Pass 3 adds, on a device with Apple Intelligence:
+- an AI action on a long note (the answer says how much was read), Describe Image on a picture where the model can read pictures, and the same menu greyed out with the reason once Apple Intelligence is switched off in Settings → Apple Intelligence & Siri;
+- Ask with the real model: type "pictures from last week" and choose Ask (then again with Apple Intelligence off: the rules answer);
+- Decode JWT with Face ID, not the stub: a refusal opens nothing;
+- share an animated GIF from Safari, Photos and Messages into Pesto and watch the card animate; share it back out to Messages and Files and check the receiver animates it.
+
 ## Lessons from the test suite
 
 - **A run that prints nothing may be stuck, not slow.** `swift test` with its output in a file looks the same either

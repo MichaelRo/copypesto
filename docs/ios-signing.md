@@ -53,7 +53,8 @@ checks on a device:
   menu; no secret is ever offered (ADR 0051);
 - the widget on the Home Screen, its Copy action, and the Locked state (ADR 0052, 0055);
 - the share sheet from Safari, Notes and Photos (ADR 0047);
-- "Add Clipboard to Pesto" from the Action Button or Back Tap, and iOS's paste prompt.
+- "Add Clipboard to Pesto" from the Action Button or Back Tap, and iOS's paste prompt;
+- the checks that need Apple Intelligence or a real GIF in another app (AI actions, Ask, Describe Image, sharing a GIF in and out) are listed in `docs/testing.md`, "iPhone and iPad: what only a device can check".
 
 ## Distribution
 

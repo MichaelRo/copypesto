@@ -94,18 +94,23 @@ struct LibraryGrid: View {
         _ = appState.textEdits
         guard let index = store.searchIndex() else { return [] }
         let kind = library.isSearching ? library.filter.kind : nil
+        let cutoff = library.isSearching ? library.filter.dateCutoff() : nil
+        let remote = library.isSearching && library.filter.otherDevicesOnly
         let fresh = library.filter.scope.ids(
             in: index,
             query: library.query,
             kind: kind,
             smartRule: smartRule,
-            hidesSensitive: NSFWMode.current() == .hide
+            hidesSensitive: NSFWMode.current() == .hide,
+            dateCutoff: cutoff,
+            otherDevicesOnly: remote
         )
-        let context = "\(library.filter.scope)|\(library.query)|\(kind?.rawValue ?? "")"
+        let context = "\(library.filter.scope)|\(library.query)|\(kind?.rawValue ?? "")|\(cutoff != nil)|\(remote)"
         let arranged = library.order.arrange(fresh, context: context)
         guard !byMeaning.isEmpty, SemanticSearch.asksForMeaning(library.query) else { return arranged }
         let allowed = Set(library.filter.scope.ids(
-            in: index, query: "", kind: kind, smartRule: smartRule, hidesSensitive: NSFWMode.current() == .hide
+            in: index, query: "", kind: kind, smartRule: smartRule, hidesSensitive: NSFWMode.current() == .hide,
+            dateCutoff: cutoff, otherDevicesOnly: remote
         ))
         return SemanticSearch.merged(textMatches: arranged, byMeaning: byMeaning, allowed: allowed)
     }

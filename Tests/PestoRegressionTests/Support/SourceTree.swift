@@ -32,7 +32,7 @@ enum SourceTree {
             throw Missing(description: "\(relativePath(directory)) does not exist")
         }
         let found = enumerator.compactMap { $0 as? URL }.filter {
-            !$0.path.contains("/.claude/worktrees/") && extensions.contains($0.pathExtension)
+            !isInNestedWorktree($0) && extensions.contains($0.pathExtension)
         }
         guard found.count >= minimum else {
             throw Missing(
@@ -40,6 +40,12 @@ enum SourceTree {
             )
         }
         return found
+    }
+
+    /// Agent worktrees live under the checkout's own `.claude/worktrees/`, and a scan must not read their copies. Only
+    /// the part of the path below this checkout counts: a checkout that is itself such a worktree still scans itself.
+    static func isInNestedWorktree(_ file: URL) -> Bool {
+        relativePath(file).contains(".claude/worktrees/")
     }
 
     static func everySwiftFile(minimum: Int = 280) throws -> [URL] {

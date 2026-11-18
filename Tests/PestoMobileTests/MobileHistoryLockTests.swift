@@ -164,6 +164,7 @@ struct MobileHistoryLockTests {
         #expect(try library.state.shortcutClips(ids: [note.id]).count == 1)
     }
 
+    @MainActor
     private struct Surfaces {
         let quick: QuickInsertTarget
         let widget: WidgetTarget
@@ -210,7 +211,7 @@ struct MobileHistoryLockTests {
         #expect(try surfaces.quickCount() == 0)
         #expect(try surfaces.widgetSnapshot().isLocked)
         #expect(try surfaces.widgetSnapshot().clips.isEmpty)
-        #expect(WidgetContent(snapshot: surfaces.widgetSnapshot(), size: .medium).state == .locked)
+        #expect(try WidgetContent(snapshot: surfaces.widgetSnapshot(), size: .medium).state == .locked)
 
         try await library.add("another clip")
         library.state.writeQuickInsert()
@@ -249,6 +250,7 @@ struct MobileHistoryLockTests {
 
         setting.showsOutside = true
         library.state.showsClipsOutsideSettingChanged()
+        await library.state.refreshWidgetPresence()
         #expect(try surfaces.quickCount() == 1)
         #expect(try surfaces.widgetSnapshot().clips.count == 1)
     }

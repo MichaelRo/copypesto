@@ -107,7 +107,7 @@ makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is u
 A development build signed "Pesto Development" can never use the iCloud key, so it always takes the this-device path.
 
 ## The Mac widget (optional; needs two provisioning profiles)
-The Recent Clips widget on the Mac (ADR 0058) exists only in a release signed with the sync profile above **and** a
+The Recent Clips widget on the Mac (ADR 0059) exists only in a release signed with the sync profile above **and** a
 profile for the Controls extension, which carries the widget. Without `WIDGET_PROFILE` nothing about the release
 changes and the widget is not in the gallery. On macOS an app group claim that no profile authorizes clears the app's
 "entitlements validated" flag, and the data protection keychain then refuses the sync key's iCloud item: never ship a

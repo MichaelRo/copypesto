@@ -36,7 +36,7 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
     /// The History Lock is on and the person keeps clips off the Home Screen while it is: the widget says Locked.
     public let isLocked: Bool
     /// The Mac is covering clip contents (Hide Clip Contents, or a screen share it detected): the widget says so and
-    /// holds no clip (ADR 0058). iOS never writes it.
+    /// holds no clip (ADR 0059). iOS never writes it.
     public let isHidden: Bool
 
     public init(

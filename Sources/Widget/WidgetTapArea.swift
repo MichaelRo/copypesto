@@ -5,7 +5,7 @@ import WidgetKit
 
 /// Makes a card do its tap: a button that runs the in-place copy (iOS only), or a link to the app. The small widget
 /// takes no `Link`, so there the whole widget carries the link as its `widgetURL`. The Mac never copies in place (ADR
-/// 0058): its copy is the app's, through the copy link.
+/// 0059): its copy is the app's, through the copy link.
 struct WidgetTapArea<Content: View>: View {
     let tap: WidgetTap
     let isWholeWidget: Bool

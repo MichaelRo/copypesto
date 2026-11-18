@@ -2,7 +2,7 @@
 import Foundation
 import Security
 
-/// Whether this process may share the widget's snapshot and key (ADR 0052, ADR 0058): its signed entitlements claim the
+/// Whether this process may share the widget's snapshot and key (ADR 0052, ADR 0059): its signed entitlements claim the
 /// app group and the widget's Keychain group. On the Mac only a release signed with both provisioning profiles does,
 /// and without both nothing opens the group container (macOS 15 would ask the person) or touches that Keychain group.
 public struct WidgetSharing: Equatable, Sendable {

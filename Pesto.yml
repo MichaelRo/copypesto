@@ -99,12 +99,14 @@ targets:
         LSUIElement: "YES"
 
   # The Mac's WidgetKit extension: the Control Center button (macOS 26), and the Recent Clips widget, which only a
-  # release signed with both provisioning profiles compiles in (PESTO_MAC_WIDGET) and entitles (ADR 0058). Every
-  # other build is sandboxed with nothing else and carries no widget.
+  # release signed with both provisioning profiles compiles in (PESTO_MAC_WIDGET) and entitles (ADR 0059). Every
+  # other build is sandboxed with nothing else, carries no widget and stays at macOS 26 (PESTO_CONTROLS_MIN_MACOS).
+  # PestoCore is linked in every build: a package dependency cannot depend on a build setting, and Sources/Widget
+  # needs it to compile.
   PestoControls:
     type: app-extension
     platform: macOS
-    deploymentTarget: "15.0"
+    deploymentTarget: "26.0"
     sources:
       - path: Sources/Controls
         excludes: ["Info.plist", "*.entitlements"]
@@ -121,7 +123,8 @@ targets:
         PRODUCT_NAME: PestoControls
         MARKETING_VERSION: "1.7.0"
         CURRENT_PROJECT_VERSION: "9"
-        MACOSX_DEPLOYMENT_TARGET: "15.0"
+        PESTO_CONTROLS_MIN_MACOS: "26.0"
+        MACOSX_DEPLOYMENT_TARGET: $(PESTO_CONTROLS_MIN_MACOS)
         INFOPLIST_FILE: Sources/Controls/Info.plist
         PESTO_CONTROLS_ENTITLEMENTS: Sources/Controls/PestoControls.entitlements
         PESTO_CONTROLS_PROFILE: ""

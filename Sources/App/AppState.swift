@@ -105,7 +105,7 @@ final class AppState {
         didSet { if isContentHiddenManually != oldValue { onContentCoverChanged?() } }
     }
 
-    /// Set by the delegate when it keeps a widget snapshot, which holds no clip while contents are covered (ADR 0058).
+    /// Set by the delegate when it keeps a widget snapshot, which holds no clip while contents are covered (ADR 0059).
     @ObservationIgnored var onContentCoverChanged: (() -> Void)?
 
     func isContentCovered(screenSharingPrivacy: Bool) -> Bool {

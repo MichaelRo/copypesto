@@ -1,4 +1,4 @@
-# 0058. The Mac widget: Recent Clips from a sealed snapshot, only in a build signed with both provisioning profiles
+# 0059. The Mac widget: Recent Clips from a sealed snapshot, only in a build signed with both provisioning profiles
 
 Status: Accepted (owner decision, 2026-11-19: profile-signed release only, no plaintext exception, optional)
 
@@ -47,9 +47,12 @@ neither the group nor the Keychain group: claiming them anyway either costs it t
 - **The widget lives in the existing `PestoControls` extension**, not a new target. WidgetKit lets one extension carry
   both a control and widgets; one extension means one more App ID and profile instead of two, and a build without the
   widget embeds nothing new and empty (a widget bundle cannot leave a widget out at run time: `WidgetBundleBuilder`
-  has no `if`, only `if #available`). Its deployment target drops from macOS 26 to macOS 15, the app's: the control
-  stays behind `#available(macOS 26.0, *)`, and the widget needs macOS 15 (`WidgetCenter.currentConfigurations`). The
-  control still never reads a clip; the extension's process now may, through the widget, and only in that build.
+  has no `if`, only `if #available`). In that build only, its deployment target drops from macOS 26 to macOS 15, the
+  app's (`PESTO_CONTROLS_MIN_MACOS=15.0`): the control stays behind `#available(macOS 26.0, *)`, and the widget needs
+  macOS 15 (`WidgetCenter.currentConfigurations`). Every other build keeps it at 26, so macOS 15 never loads an
+  extension with no widget in it. PestoCore is linked into the extension in every build (a package dependency cannot
+  follow a build setting, and the shared widget code needs it to compile); without the widget nothing of it runs. The
+  control still never reads a clip; the extension's process may, through the widget, and only in that build.
 - **The app writes the snapshot only when it can prove it may.** `WidgetSharing.current` reads the running app's own
   signed entitlements (`SecTaskCopyValueForEntitlement`) and answers yes only for the app group and a Keychain group
   that ends in `.net.copypesto.pesto.widget`; without both, `AppPaths.sharedGroupDirectory` stays nil on the Mac, the

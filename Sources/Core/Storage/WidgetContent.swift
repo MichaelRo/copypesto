@@ -2,7 +2,7 @@
 import Foundation
 
 /// What one widget draws from the snapshot it opened (ADR 0052): no snapshot is "Open Pesto to show your clips", a
-/// locked one is "Locked", a hidden one (the Mac covering clip contents, ADR 0058) "Clip contents hidden", an empty
+/// locked one is "Locked", a hidden one (the Mac covering clip contents, ADR 0059) "Clip contents hidden", an empty
 /// one "No clips yet", otherwise the newest clips its family has room for.
 public struct WidgetContent: Equatable, Sendable {
     public enum State: Equatable, Sendable {

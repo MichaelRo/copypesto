@@ -39,7 +39,7 @@ struct WidgetLinkTests {
         #expect(WidgetLink.target(in: url) == nil, "\(text) was accepted")
     }
 
-    @Test("on the Mac a widget link is the widget request for its target and nothing else (ADR 0058)")
+    @Test("on the Mac a widget link is the widget request for its target and nothing else (ADR 0059)")
     func whenTheMacReadsIt_thenItIsTheWidgetRequest() {
         for action in WidgetLink.Action.allCases {
             #expect(

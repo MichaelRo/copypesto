@@ -33,7 +33,7 @@ struct WidgetMessage: View {
 
 extension View {
     /// On the Mac a widget with no clip to show opens the shelf, which is also when Pesto asks whether a widget is
-    /// installed (ADR 0058); on iOS a tap opens the app as it always has.
+    /// installed (ADR 0059); on iOS a tap opens the app as it always has.
     @ViewBuilder
     func opensShelfOnTheMac() -> some View {
         #if os(macOS)

@@ -301,7 +301,7 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 - Content-first cards visual spot-check on physical display (`test_coveredCard_showsNumberKindAndAge`, `CardConcealmentTests`, `CoveredMenuWiringTests`, `FilterMenuLabelTests` cover automated checks).
 
 ## The Mac widget (a release signed with both profiles)
-Only an exported build made with `SYNC_PROFILE` and `WIDGET_PROFILE` can show it (ADR 0058, `docs/release.md`); the
+Only an exported build made with `SYNC_PROFILE` and `WIDGET_PROFILE` can show it (ADR 0059, `docs/release.md`); the
 snapshot logic is covered by `WidgetSnapshotKeeperTests`, `WidgetSnapshotGateTests`, `WidgetSharingTests` and the
 `pesto://clip` cases of `AutomationURLHandlerTests`. By hand, on that build:
 - `scripts/check-widget-signing.sh` passes; the launched app logs no `AMFI` or "No matching profile found", and sync

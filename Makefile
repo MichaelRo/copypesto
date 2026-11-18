@@ -40,14 +40,15 @@ ENTITLEMENTS      = Sources/Resources/Pesto.entitlements
 SYNC_ENTITLEMENTS = Sources/Resources/PestoSync.entitlements
 SYNC_PROFILE     ?=
 # Set WIDGET_PROFILE too (the Developer ID profile of net.copypesto.pesto.controls) to ship the Mac's Recent Clips widget
-# (ADR 0058, docs/release.md "The Mac widget"): the app takes PestoSyncWidget.entitlements, the Controls extension its
-# own profile and PestoControlsWidget.entitlements, and the widget is compiled into it. Unset, nothing changes.
+# (ADR 0059, docs/release.md "The Mac widget"): the app takes PestoSyncWidget.entitlements, the Controls extension its
+# own profile and PestoControlsWidget.entitlements, the widget is compiled into it and the extension's minimum drops from
+# macOS 26 to 15. Unset, nothing changes.
 WIDGET_PROFILE   ?=
 SYNC_WIDGET_ENTITLEMENTS     = Sources/Resources/PestoSyncWidget.entitlements
 CONTROLS_WIDGET_ENTITLEMENTS = Sources/Controls/PestoControlsWidget.entitlements
 RELEASE_SIGNING = \
 	$(if $(SYNC_PROFILE),PESTO_ENTITLEMENTS=$(if $(WIDGET_PROFILE),$(SYNC_WIDGET_ENTITLEMENTS),$(SYNC_ENTITLEMENTS)) PESTO_PROFILE="$(SYNC_PROFILE)" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application",) \
-	$(if $(WIDGET_PROFILE),PESTO_CONTROLS_ENTITLEMENTS=$(CONTROLS_WIDGET_ENTITLEMENTS) PESTO_CONTROLS_PROFILE="$(WIDGET_PROFILE)" PESTO_WIDGET_CONDITION=PESTO_MAC_WIDGET,)
+	$(if $(WIDGET_PROFILE),PESTO_CONTROLS_ENTITLEMENTS=$(CONTROLS_WIDGET_ENTITLEMENTS) PESTO_CONTROLS_PROFILE="$(WIDGET_PROFILE)" PESTO_WIDGET_CONDITION=PESTO_MAC_WIDGET PESTO_CONTROLS_MIN_MACOS=15.0,)
 
 .DEFAULT_GOAL := help
 

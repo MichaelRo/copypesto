@@ -3,7 +3,7 @@
 # Writes exportOptions.plist with the team id filled in:
 # render-export-options.sh <TEAM_ID> <output.plist> [PROFILE_NAME] [WIDGET_PROFILE_NAME].
 # With a profile name (the Developer ID provisioning profile for the sync key), the export signs manually with it; with
-# a widget profile too (the Controls extension's, ADR 0058), the extension is signed with that one.
+# a widget profile too (the Controls extension's, ADR 0059), the extension is signed with that one.
 # Stops when the team id is not 10 letters and digits, so an export never signs with a placeholder.
 set -euo pipefail
 team="${1:-}"

@@ -29,7 +29,7 @@ struct OpenPestoControl: ControlWidget {
 }
 
 /// The control, and Recent Clips only in a release signed with both provisioning profiles (`PESTO_MAC_WIDGET`, ADR
-/// 0058): a widget bundle cannot leave a widget out at run time, and any other build could neither open the snapshot
+/// 0059): a widget bundle cannot leave a widget out at run time, and any other build could neither open the snapshot
 /// nor the key.
 @main
 struct PestoControls: WidgetBundle {

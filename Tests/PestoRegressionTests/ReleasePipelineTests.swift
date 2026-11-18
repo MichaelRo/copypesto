@@ -37,7 +37,7 @@ struct ReleasePipelineTests {
         #expect(!result.output.contains("TEAM_ID_PLACEHOLDER"), "a placeholder survived")
     }
 
-    @Test("the widget's profile signs the Controls extension, and only beside the sync profile (ADR 0058)")
+    @Test("the widget's profile signs the Controls extension, and only beside the sync profile (ADR 0059)")
     func widgetProfileSignsTheExtension() throws {
         let both = try renderExportOptions(team: "ABCDE12345", profiles: ["Pesto Sync", "Pesto Controls"])
         #expect(both.code == 0, "\(both.output)")
@@ -50,7 +50,25 @@ struct ReleasePipelineTests {
 
         let makefile = try text("Makefile")
         #expect(makefile.contains("archive: check-widget-profile"), "a widget profile alone must stop the archive")
-        #expect(makefile.contains("PESTO_WIDGET_CONDITION=PESTO_MAC_WIDGET,)"), "only WIDGET_PROFILE compiles it in")
+        #expect(
+            makefile.contains("PESTO_WIDGET_CONDITION=PESTO_MAC_WIDGET PESTO_CONTROLS_MIN_MACOS=15.0,)"),
+            "only WIDGET_PROFILE compiles the widget in and lowers the extension to macOS 15"
+        )
+    }
+
+    @Test("a build without WIDGET_PROFILE keeps the Controls extension at macOS 26, so macOS 15 never loads it")
+    func controlsExtensionStaysAtMacOS26() throws {
+        let spec = try text("Pesto.yml")
+        let start = try #require(spec.range(of: "\n  PestoControls:\n"))
+        let end = try #require(spec.range(of: "\n  PestoMobile:\n", range: start.upperBound..<spec.endIndex))
+        let target = String(spec[start.upperBound..<end.lowerBound])
+        #expect(target.contains("deploymentTarget: \"26.0\""))
+        #expect(target.contains("PESTO_CONTROLS_MIN_MACOS: \"26.0\""))
+        #expect(target.contains("MACOSX_DEPLOYMENT_TARGET: $(PESTO_CONTROLS_MIN_MACOS)"))
+        #expect(!target.contains("15.0"), "the lower target belongs to the widget build only")
+        let makefile = try text("Makefile")
+        let mentions = makefile.components(separatedBy: "PESTO_CONTROLS_MIN_MACOS=").count - 1
+        #expect(mentions == 1, "only the WIDGET_PROFILE branch of RELEASE_SIGNING lowers it")
     }
 
     @Test("a missing or malformed team id stops the export instead of signing with a bad one")

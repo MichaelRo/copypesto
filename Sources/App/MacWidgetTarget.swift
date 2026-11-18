@@ -3,7 +3,7 @@ import Foundation
 import PestoCore
 import WidgetKit
 
-/// Where the Mac keeps the Recent Clips snapshot and its key, and what WidgetKit says (ADR 0058). Only a normal launch
+/// Where the Mac keeps the Recent Clips snapshot and its key, and what WidgetKit says (ADR 0059). Only a normal launch
 /// of a build signed with both provisioning profiles has one; every other build, a hosted test and a UI-test launch get
 /// nil, so they never open the group container, ask WidgetKit or touch the widget's Keychain group.
 @MainActor

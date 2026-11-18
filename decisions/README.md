@@ -68,6 +68,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0057](0057-the-ios-welcome.md) | The iOS welcome: three steps shown once, link previews on only when step two appears, the lock offered off, sync offered never started, AutoFill as a one-time tip, no permission prompts. |
 | [0058](0058-the-mac-features-pass-3-brings-to-ios.md) | On iOS: Decode JWT behind Show's gate in a memory-only sheet, AI actions as a submenu and a sheet (none for a secret, no chunked reading), Ask Pesto as a chip in the search, smart collections in the collection editor, a GIF kept whole in and out. |
 | [0058](0058-the-mac-widget.md) | The Mac gets the Recent Clips widget only in a release signed with the app's and the extension's provisioning profiles: the same sealed snapshot as iOS in the app group, Locked while the lock is on, hidden while clip contents are covered, and a chosen clip copied, shown or opened by the app through its own write path |
+| [0059](0059-the-mac-widget.md) | The Mac gets the Recent Clips widget only in a release signed with the app's and the extension's provisioning profiles: the same sealed snapshot as iOS in the app group, Locked while the lock is on, hidden while clip contents are covered, and a chosen clip copied, shown or opened by the app through its own write path |
 
 ## Template
 

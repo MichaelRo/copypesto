@@ -26,7 +26,7 @@ public enum AppPaths {
     }
 
     /// The app group the iOS app shares with its extensions (ADR 0047); a test or UI-test launch gets a folder inside
-    /// its own support folder. On the Mac only a build signed for the widget has it (`WidgetSharing`, ADR 0058): any
+    /// its own support folder. On the Mac only a build signed for the widget has it (`WidgetSharing`, ADR 0059): any
     /// other Mac build gets nil without asking for the container, which macOS 15 would answer with a prompt.
     public static var sharedGroupDirectory: URL? {
         let configuration = RuntimeConfiguration.current

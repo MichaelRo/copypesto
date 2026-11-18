@@ -111,7 +111,7 @@ public final class AutomationURLHandler {
         }
     }
 
-    /// A widget's link acts only on a clip that may still be shown outside Pesto (ADR 0052, 0058); an unknown or no
+    /// A widget's link acts only on a clip that may still be shown outside Pesto (ADR 0052, 0059); an unknown or no
     /// longer eligible id only opens the shelf, so a link from anywhere can do no more than the widget could.
     private static func widgetTask(_ target: WidgetLink.Target, _ host: some AutomationHost) -> Task<Void, Never> {
         Task { [weak host] in

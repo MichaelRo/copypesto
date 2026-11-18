@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MIT
-# Checks that an exported Pesto.app can show the Mac's Recent Clips widget (ADR 0058): check-widget-signing.sh <Pesto.app>.
+# Checks that an exported Pesto.app can show the Mac's Recent Clips widget (ADR 0059): check-widget-signing.sh <Pesto.app>.
 # The app and its Controls extension must each embed a Developer ID profile, claim the app group and the widget's
 # Keychain group, and have those claims authorized by their profile. An app group claim the profile does not authorize
 # clears the app's validated entitlements on macOS, and the sync key's iCloud Keychain item is then refused, so such a

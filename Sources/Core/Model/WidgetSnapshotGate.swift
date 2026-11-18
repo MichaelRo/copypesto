@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-/// What the Mac's widget snapshot may hold right now (ADR 0058): the clips; or, with the History Lock switched on,
+/// What the Mac's widget snapshot may hold right now (ADR 0059): the clips; or, with the History Lock switched on,
 /// Locked (ADR 0055's default, and the Mac has no setting that keeps clips there while it is); or, while clip contents
 /// are covered, Hidden. The lock wins over the cover: both hold no clip, and Locked says how to see them again.
 public enum WidgetSnapshotGate: Equatable, Sendable {

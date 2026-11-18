@@ -3,7 +3,7 @@ import Foundation
 import os
 import SwiftData
 
-/// Keeps the Mac's widget snapshot (ADR 0058) as the iOS app keeps its own (ADR 0052): only while a Pesto widget is
+/// Keeps the Mac's widget snapshot (ADR 0059) as the iOS app keeps its own (ADR 0052): only while a Pesto widget is
 /// installed; rewritten a moment after the history changes and at once when the lock, the cover or the theme does, one
 /// write at a time so an older snapshot never lands after a newer one; a Locked or Hidden placeholder with no clip
 /// while `WidgetSnapshotGate` says so; and with no widget, no file and no key. The app makes one only for a build

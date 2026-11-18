@@ -6,7 +6,7 @@ import WidgetKit
 /// The widget on the theme's ground: Pesto cards, one filling a small widget, a row of them in a medium one and a grid
 /// in a large one, each doing what "When a Clip Is Chosen" says; "No clips yet" for an empty list, "Open Pesto to
 /// show your clips" when there is no snapshot to show. On the Mac a message opens the shelf, which is also when Pesto
-/// asks whether a widget is installed (ADR 0058).
+/// asks whether a widget is installed (ADR 0059).
 struct RecentClipsView: View {
     let entry: RecentClipsEntry
     /// Set by a test, which has no widget family in its environment.

@@ -3,7 +3,7 @@ public enum AutomationAction: Equatable, Sendable {
     case open, list, search, paste, pin, collection, clear, summary, clip
 
     /// `pesto://<host>`. `pinboard` is the deprecated name of `collection` (ADR 0007); `clip` is a widget's link to
-    /// one clip (`WidgetLink`, ADR 0052 and 0058).
+    /// one clip (`WidgetLink`, ADR 0052 and 0059).
     public init?(host: String?) {
         switch host {
         case "open": self = .open

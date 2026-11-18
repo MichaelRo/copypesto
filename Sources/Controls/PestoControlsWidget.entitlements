@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Only for a release signed with SYNC_PROFILE and WIDGET_PROFILE (ADR 0058): the extension's own profile
+    <!-- Only for a release signed with SYNC_PROFILE and WIDGET_PROFILE (ADR 0059): the extension's own profile
          authorizes these. It holds the widget's Keychain group alone, never the app's own, so it can open the widget
          snapshot's key and nothing else. Every other build signs the extension with PestoControls.entitlements. -->
     <key>com.apple.security.app-sandbox</key>

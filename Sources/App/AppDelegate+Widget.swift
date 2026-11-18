@@ -2,7 +2,7 @@
 import AppKit
 import PestoCore
 
-/// The Recent Clips widget's snapshot (ADR 0058), kept only by a build signed for it and only while a widget is
+/// The Recent Clips widget's snapshot (ADR 0059), kept only by a build signed for it and only while a widget is
 /// installed. WidgetKit never tells the app a widget was added, so Pesto asks at launch, when the shelf opens (a
 /// widget's message opens it), on a link, on wake and every ten minutes.
 extension AppDelegate {

@@ -22,13 +22,17 @@ PASS  release build (hardened runtime)
 PASS  memory budget
 PASS  memory budget, pictures
 PASS  hosted + UI tests                    passed=430 failed=0 expected=0 skipped=0; hosted=294 ui=136 skipped=0
+PASS  iOS unit + UI tests (iPhone, iPad)   iPhone unit=427 iPad unit=427 ui=19
 screenshots: .build/ui-screenshots/20260924-185508 (19 PNGs)
 RESULT: PASS
 ```
 
 A green summary has to mean the tests ran. `scripts/verify_judge.py` fails the gate when fewer tests ran than its floors
-(Core 950 Swift Testing and 30 XCTest, hosted 270, UI 130, snapshots 30) or when a test was skipped that
-`scripts/verify-allowed-skips.txt` does not name (a Mac without the on-device model, memory deltas on CI). The script
+(Core 950 Swift Testing and 30 XCTest, hosted 270, UI 130, snapshots 30, iOS 380 unit tests on each simulator and 18 UI
+tests) or when a test was skipped that `scripts/verify-allowed-skips.txt` does not name (a Mac without the on-device
+model, memory deltas on CI). The iOS app runs last, on the iPhone 17 and then the iPad Air 11-inch (M4) simulator; an
+iOS UI test that belongs to one device skips on the other, so it counts as skipped only when it passed on neither. A
+runner without those simulators (CI) records the step as SKIP; a developer Mac without them fails it. The script
 refuses to start while Pesto is running (a running copy answers for the tests' windows), holds the Mac awake with
 `caffeinate -dis`, and takes the Core totals from every "Test run with" line, because Swift Testing prints one per run.
 

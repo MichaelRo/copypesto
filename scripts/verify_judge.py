@@ -4,6 +4,7 @@
 
   verify_judge.py core  CORE_LOG
   verify_judge.py hosted TESTS_JSON [--no-ui] [--snapshots]   (TESTS_JSON: `xcresulttool get test-results tests --compact`)
+  verify_judge.py mobile IPHONE_JSON IPAD_JSON [--no-ui]       (the PestoMobile scheme on each simulator)
 
 Prints a one-line summary, then one line per problem. Exits 1 when a floor is missed or a test was skipped that
 scripts/verify-allowed-skips.txt does not name, so a green summary cannot hide tests that did not run.
@@ -18,6 +19,8 @@ CORE_XCTEST_FLOOR = 30
 HOSTED_FLOOR = 270
 UI_FLOOR = 130
 SNAPSHOT_FLOOR = 30
+MOBILE_UNIT_FLOOR = 380
+MOBILE_UI_FLOOR = 18
 
 ALLOWED_SKIPS_FILE = pathlib.Path(__file__).with_name("verify-allowed-skips.txt")
 
@@ -93,11 +96,52 @@ def judge_hosted(tree, includes_ui=True, includes_snapshots=False, allowed=None)
     return summary, problems
 
 
+def judge_mobile(phone_tree, pad_tree, includes_ui=True, allowed=None):
+    """An iOS UI test that belongs to one device skips on the other (`XCTSkipUnless`), so a skip counts only when the
+    same test passed on neither device."""
+    allowed = allowed_skips() if allowed is None else allowed
+    unit = {}
+    ui_passed = set()
+    ui_skipped = set()
+    problems = []
+    for device, tree in (("iPhone", phone_tree), ("iPad", pad_tree)):
+        unit[device] = 0
+        for bundle, identifier, result in collect_cases(tree):
+            if bundle == "PestoMobileTests":
+                if result == "Passed":
+                    unit[device] += 1
+                elif result == "Skipped" and not is_allowed(identifier, allowed):
+                    problems.append(f"unexpected skip on {device}: {identifier}")
+            elif bundle == "PestoMobileUITests":
+                if result == "Passed":
+                    ui_passed.add(identifier)
+                elif result == "Skipped":
+                    ui_skipped.add(identifier)
+        if unit[device] < MOBILE_UNIT_FLOOR:
+            problems.append(f"only {unit[device]} {device} unit tests passed, expected at least {MOBILE_UNIT_FLOOR}")
+    if includes_ui:
+        if len(ui_passed) < MOBILE_UI_FLOOR:
+            problems.append(f"only {len(ui_passed)} iOS UI tests passed, expected at least {MOBILE_UI_FLOOR}")
+        problems += [
+            f"unexpected skip: {name}"
+            for name in sorted(ui_skipped - ui_passed)
+            if not is_allowed(name, allowed)
+        ]
+    summary = f"iPhone unit={unit['iPhone']} iPad unit={unit['iPad']} ui={len(ui_passed)}"
+    return summary, problems
+
+
 def main(argv):
-    if len(argv) < 3 or argv[1] not in ("core", "hosted"):
+    if len(argv) < 3 or argv[1] not in ("core", "hosted", "mobile"):
         print(__doc__)
         return 2
-    if argv[1] == "core":
+    if argv[1] == "mobile":
+        if len(argv) < 4:
+            print(__doc__)
+            return 2
+        phone, pad = (json.loads(pathlib.Path(p).read_text()) for p in argv[2:4])
+        summary, problems = judge_mobile(phone, pad, includes_ui="--no-ui" not in argv)
+    elif argv[1] == "core":
         summary, problems = judge_core(pathlib.Path(argv[2]).read_text(errors="replace"))
     else:
         tree = json.loads(pathlib.Path(argv[2]).read_text())

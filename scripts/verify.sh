@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MIT
-# Pesto verification gate: lint, Core tests, Debug build, hosted tests, UI tests + screenshots.
+# Pesto verification gate: lint, Core tests, Debug build, hosted tests, UI tests + screenshots, and the iPhone and iPad
+# app's tests on their simulators.
 # Prints a pass/fail summary and exits non-zero if any step fails.
 #
 #   scripts/verify.sh           everything (UI tests take a few minutes and drive real windows)
@@ -186,6 +187,46 @@ step_first_open() {
     record "first open, imported" "PASS" "$(grep -m1 '^== warm' "$LOGS/first-open.log" | cut -c1-90)"
   else
     record "first open, imported" "FAIL" "$(grep -E '^== warm|over [0-9]+ ms' "$LOGS/first-open.log" | head -2 | tr '\n' ' ')"
+  fi
+}
+
+# The iPhone and iPad app on one simulator after the other (never two at once): unit tests, and the UI tests unless
+# --no-ui. A UI test that belongs to one device skips on the other, so the judge reads both runs together.
+step_mobile() {
+  local scheme="PestoMobile" label="iOS unit + UI tests (iPhone, iPad)" extra=()
+  if [[ $SKIP_UI -eq 1 ]]; then
+    scheme="PestoMobileCITests"; label="iOS unit tests (iPhone, iPad)"; extra=(--no-ui)
+  fi
+  local device name failed=0 missing=()
+  for device in "iPhone 17" "iPad Air 11-inch (M4)"; do
+    xcrun simctl list devices available 2>/dev/null | grep -qF "    $device (" || missing+=("$device")
+  done
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    if [[ -n "${CI:-}" ]]; then
+      record "$label" "SKIP" "no simulator on this runner: ${missing[*]}"
+    else
+      record "$label" "FAIL" "no simulator named ${missing[*]} (Xcode > Settings > Components, docs/development.md)"
+    fi
+    return
+  fi
+  for device in "iPhone 17:phone" "iPad Air 11-inch (M4):pad"; do
+    name="${device##*:}"
+    xcodebuild -project Pesto.xcodeproj -scheme "$scheme" -configuration Debug \
+      -derivedDataPath .build/xcode-ios-app -destination "platform=iOS Simulator,name=${device%:*}" \
+      -resultBundlePath "$LOGS/mobile-$name.xcresult" test >"$LOGS/mobile-$name.log" 2>&1 || failed=1
+    xcrun xcresulttool get test-results tests --path "$LOGS/mobile-$name.xcresult" --compact \
+      >"$LOGS/mobile-$name.json" 2>/dev/null || echo '{}' >"$LOGS/mobile-$name.json"
+  done
+  local judged judged_code
+  judged="$(python3 scripts/verify_judge.py mobile "$LOGS/mobile-phone.json" "$LOGS/mobile-pad.json" ${extra[@]+"${extra[@]}"})"
+  judged_code=$?
+  if [[ $failed -ne 0 ]]; then
+    grep -hE 'error:|Test Case .* failed' "$LOGS"/mobile-*.log | cut -c1-240 >>"$LOGS/failures.txt"
+    record "$label" "FAIL" "$(grep -hE 'error:|Test Case .* failed' "$LOGS"/mobile-*.log | head -3 | tr '\n' ' ')"
+  elif [[ $judged_code -ne 0 ]]; then
+    record "$label" "FAIL" "$(echo "$judged" | tr '\n' ' ')"
+  else
+    record "$label" "PASS" "$judged"
   fi
 }
 
@@ -415,6 +456,7 @@ else
       step_first_open
     fi
     step_hosted_and_ui
+    step_mobile
   fi
 fi
 

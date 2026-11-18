@@ -175,6 +175,8 @@ final class WelcomeUITests: XCTestCase {
         let step = element(MobileAccessibilityID.welcomeKeepStep, in: app)
         XCTAssertTrue(step.waitForExistence(timeout: timeout))
         XCTAssertLessThan(step.frame.width, app.windows.firstMatch.frame.width * 0.9, "a form sheet, not full screen")
+        let privacyLine = "iPad keeps your clipboard private, so Pesto adds a copy only when you ask."
+        XCTAssertTrue(app.staticTexts[privacyLine].exists, "the welcome names the device it runs on")
         let top = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
             .withOffset(CGVector(dx: 0, dy: -step.frame.height / 2 + 8))
         top.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 1.0)))

@@ -6,15 +6,24 @@ import SwiftUI
 struct WelcomeKeepStep: View {
     let isActive: Bool
 
-    private var actionRow: LocalizedStringResource {
+    private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
-            ? "Run it from Siri or Shortcuts." : "Run it from Siri, Shortcuts or the Action Button."
+    }
+
+    private var actionRow: LocalizedStringResource {
+        isPad ? "Run it from Siri or Shortcuts." : "Run it from Siri, Shortcuts or the Action Button."
+    }
+
+    private var privacyLine: String {
+        isPad
+            ? String(localized: "iPad keeps your clipboard private, so Pesto adds a copy only when you ask.")
+            : String(localized: "iPhone keeps your clipboard private, so Pesto adds a copy only when you ask.")
     }
 
     var body: some View {
         WelcomePage(
             stepNumber: WelcomeStep.keep.rawValue, title: String(localized: "Keep what you copy"),
-            line: String(localized: "iPhone keeps your clipboard private, so Pesto adds a copy only when you ask.")
+            line: privacyLine
         ) {
             WelcomeKeepArt(isActive: isActive)
         } content: {

@@ -29,6 +29,26 @@ enum MobileSeed {
     static func runIfAsked(state: MobileAppState, configuration: RuntimeConfiguration = .current) async {
         guard configuration.mode == .uiTest, configuration.seed != .empty,
               let service = state.storageService else { return }
+        if !isSeeded(state) { await seed(state, service: service) }
+        if let copied = ProcessInfo.processInfo.environment["PESTO_UITEST_CLIPBOARD"] {
+            MobileClipboard.write(.text(copied), protected: false)
+            AppDefaults.store.set(-1, for: Setting.lastSeenPasteboardChange)
+            await state.clipboardDidBecomeActive()
+        }
+    }
+
+    /// A relaunch on the same store (light, then dark) must not pin twice or add a second collection.
+    @MainActor
+    private static func isSeeded(_ state: MobileAppState) -> Bool {
+        guard let context = state.historyContainer?.mainContext else { return false }
+        let id = pinnedID
+        var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return ((try? context.fetchCount(descriptor)) ?? 0) > 0
+    }
+
+    @MainActor
+    private static func seed(_ state: MobileAppState, service: StorageService) async {
         for (capture, id) in captures(now: .now) {
             do {
                 try await service.ingest(capture, preferredItemID: id)
@@ -43,11 +63,6 @@ enum MobileSeed {
         }
         await service.waitForBackgroundWork()
         await arrange(state)
-        if let copied = ProcessInfo.processInfo.environment["PESTO_UITEST_CLIPBOARD"] {
-            MobileClipboard.write(.text(copied), protected: false)
-            AppDefaults.store.set(-1, for: Setting.lastSeenPasteboardChange)
-            await state.clipboardDidBecomeActive()
-        }
     }
 
     /// `PESTO_UITEST_EXTRA_CLIPS=<n>` adds n plain notes, so a UI test can scroll the grid.

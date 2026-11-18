@@ -159,7 +159,7 @@ targets:
       # The sync and crypto suites of Core, compiled again here so the wire format is proven on iOS too.
       - path: Tests/PestoCoreTests/Sync
       - path: Tests/PestoCoreTests/Support
-        excludes: ["FakePasteboard.swift"]
+        excludes: ["FakePasteboard.swift", "PasteboardDumpFixture.swift"]
     dependencies:
       - target: PestoMobile
       - package: PestoCore

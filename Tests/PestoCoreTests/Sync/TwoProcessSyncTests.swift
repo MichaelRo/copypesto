@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+#if os(macOS)
 import Foundation
 import Testing
 @testable import PestoCore
@@ -319,3 +320,4 @@ struct TwoProcessSyncTests {
         #expect(try (peerB?.send(["op": "state"]).clips?.contains("after-reset")) == true)
     }
 }
+#endif

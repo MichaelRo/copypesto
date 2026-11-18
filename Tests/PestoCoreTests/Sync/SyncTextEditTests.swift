@@ -135,6 +135,27 @@ struct SyncTextEditTests {
         #expect(try world.clips(on: mac).count == survivors.count - 1)
     }
 
+    @Test("a real copy of a text sync just brought in moves it to the front: sync is not the latest local copy")
+    func whenTextArrivedBySyncIsCopiedAtOnce_thenTheCopyCounts() async throws {
+        let world = try SyncWorld(["mac-a", "mac-b"])
+        let (macA, macB) = (world.macs[0], world.macs[1])
+        try await world.copy("tracking number 1Z999", on: macA)
+        let appliedAt = world.time.now.addingTimeInterval(120)
+        await macB.service.updateClock { appliedAt }
+        try await world.apply(world.publish(from: macA), on: macB)
+        let arrived = try #require(try world.clip("tracking number 1Z999", on: macB))
+        let arrivedAt = arrived.timestamp
+
+        let copiedAt = appliedAt.addingTimeInterval(1)
+        await macB.service.updateClock { copiedAt }
+        try await world.copy("tracking number 1Z999", on: macB)
+
+        let moved = try #require(try world.clip("tracking number 1Z999", on: macB))
+        #expect(moved.id == arrived.id)
+        #expect(moved.timestamp == copiedAt)
+        #expect(moved.timestamp != arrivedAt)
+    }
+
     @Test("an edit to another clip's text keeps both clips on both devices, under the same ids, and a copy moves one")
     func whenEditedToAnotherClipsText_thenBothDevicesKeepBothClips() async throws {
         let world = try SyncWorld(["mac-a", "mac-b"])

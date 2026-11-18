@@ -212,8 +212,14 @@ extension StorageService {
     private func insertRemote(
         _ meta: SyncItemRecord, payload: Data, stamp: SyncStamp, keepsSameText: Bool = false
     ) async throws {
-        // The two-second echo guard is for a pasteboard that fires twice, not for a clip that has to be put back.
+        // The two-second echo guard and the double ⌘C echo are about this device's own copies: what sync puts in is
+        // neither swallowed by them nor counted as the latest local copy afterwards.
+        let localIngest = (hash: lastIngestedHash, clip: lastInsertedClip)
         lastIngestedHash = nil
+        defer {
+            lastIngestedHash = localIngest.hash
+            lastInsertedClip = localIngest.clip
+        }
         let textual: Set = ["public.utf8-plain-text", "public.url", "public.file-url"]
         try await ingest(
             PasteboardCapture(

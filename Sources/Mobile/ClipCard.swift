@@ -31,12 +31,16 @@ struct ClipCard: View {
         appState.secretReveal.concealment(for: item)
     }
 
+    var isCoveredForPrivacy: Bool {
+        appState.secretReveal.isCoveredForPrivacy(item.id)
+    }
+
     var face: CardFace {
         CardFace.decide(.init(
             type: item.type,
             text: item.type == .text || item.type == .url || item.type == .color ? item.gridPreview : "",
             isConcealed: concealment.isConcealed,
-            isSecret: item.sensitivityRaw != nil,
+            isSecret: item.sensitivityRaw != nil && !isCoveredForPrivacy,
             pictureAspect: pictureAspect,
             isAnimated: media.picture?.isAnimated ?? (item.mimeType?.contains("gif") == true),
             hasLinkPicture: media.linkPicture != nil,
@@ -140,6 +144,7 @@ struct ClipCard: View {
 
     func show() {
         let id = item.id
+        if isCoveredForPrivacy { return appState.secretReveal.showUnderCover(id) }
         Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
     }
 

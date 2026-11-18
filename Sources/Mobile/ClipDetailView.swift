@@ -46,7 +46,8 @@ struct ClipDetailView: View {
                             .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
                     }
                 }
-                if item.sensitivityRaw != nil { revealControl(item) }
+                if item.sensitivityRaw != nil,
+                   !appState.secretReveal.isCoveredForPrivacy(item.id) { revealControl(item) }
                 ClipDetailFields(item: item).id(item.id)
                 AddToCollectionMenu(item: item, collections: collections)
                     .buttonStyle(MobileChipStyle(isActive: item.collectionID != nil, tint: nil))

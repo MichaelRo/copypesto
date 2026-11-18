@@ -79,6 +79,10 @@ extension MobileAppState {
 
     private func performWidgetWrite() async {
         guard let target = widget, widgetIsInstalled, let container = historyContainer else { return }
+        if historyLock.isEnabled {
+            if target.file.exists { removeWidget() }
+            return
+        }
         let previous = lastWidgetSnapshot
         do {
             let snapshot = try await Self.widgetSnapshot(

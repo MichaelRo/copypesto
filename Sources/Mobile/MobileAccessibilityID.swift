@@ -28,4 +28,11 @@ enum MobileAccessibilityID {
     static let clipboardOffer = "clipboard-offer"
     static let addsCopiesToggle = "adds-copies-on-open"
     static let quickInsertToggle = "quick-insert"
+    static let historyLockToggle = "history-lock"
+    static let captureCoverToggle = "cover-while-captured"
+    static let hideContentsToggle = "hide-clip-contents"
+    static let lockScreen = "lock-screen"
+    static let unlockButton = "unlock-button"
+    static let showUnderCoverButton = "show-under-cover"
+    static let privacyCover = "privacy-cover"
 }

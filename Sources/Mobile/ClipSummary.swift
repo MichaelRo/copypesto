@@ -19,15 +19,20 @@ struct ClipSummary: Equatable {
     let isCovered: Bool
 
     @MainActor
-    static func make(_ item: ClipboardItem, concealment: CardConcealment) -> ClipSummary {
+    static func make(
+        _ item: ClipboardItem, concealment: CardConcealment, coveredForPrivacy: Bool = false
+    )
+    -> ClipSummary {
         let covered = concealment.isConcealed
         let type = item.type
         let source = item.isRemote ? String(localized: "Another device") : item.knownSourceAppName
         if covered {
-            let title = item.sensitivityRaw != nil ? item.gridPreview : coveredTitle(for: type, item: item)
+            let masked = item.sensitivityRaw != nil && !coveredForPrivacy
+            let title = masked ? item.gridPreview : coveredTitle(for: type, item: item)
             return ClipSummary(
-                title: title, detail: item.sensitivity?.badgeLabel, source: source,
-                visual: .symbol(item.sensitivityRaw != nil ? "lock" : "eye.slash"), isPinned: item.isPinned,
+                title: title, detail: masked ? item.sensitivity?.badgeLabel : nil,
+                source: coveredForPrivacy ? nil : source,
+                visual: .symbol(masked ? "lock" : "eye.slash"), isPinned: item.isPinned,
                 isCovered: true
             )
         }

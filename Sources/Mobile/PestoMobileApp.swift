@@ -22,6 +22,7 @@ struct PestoMobileApp: App {
                 .modifier(MobileAccent())
                 .task {
                     appState.boot()
+                    appState.lockDidBecomeActive()
                     appState.syncDidBecomeActive()
                     appState.inboxDidBecomeActive()
                     await appState.clipboardDidBecomeActive()
@@ -32,6 +33,7 @@ struct PestoMobileApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
+                appState.lockDidBecomeActive()
                 appState.syncDidBecomeActive()
                 appState.inboxDidBecomeActive()
                 Task {

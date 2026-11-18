@@ -45,12 +45,14 @@ extension MobileAppState {
     func searchForShortcut(_ query: String, limit: Int = 20) throws -> [ShortcutClip] {
         boot()
         guard let context = historyContainer?.mainContext else { throw ShortcutFailure.notReady }
+        guard !isHistoryLockedNow() else { return [] }
         return try ShortcutClipSearch.search(query, in: context, nsfwMode: .current(), limit: limit)
     }
 
     func shortcutClips(ids: [UUID]) throws -> [ShortcutClip] {
         boot()
         guard let context = historyContainer?.mainContext else { throw ShortcutFailure.notReady }
+        guard !isHistoryLockedNow() else { return [] }
         return try ShortcutClipSearch.clips(ids: ids, in: context, nsfwMode: .current())
     }
 

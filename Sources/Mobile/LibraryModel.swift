@@ -30,6 +30,19 @@ final class LibraryModel {
         openClipID = id
     }
 
+    /// The history locked: nothing it had open, typed or was about to delete comes back with the unlock.
+    func closeEverything() {
+        query = ""
+        isSearching = false
+        openClipID = nil
+        showsSettings = false
+        isComposing = false
+        isNamingCollection = false
+        editingCollection = nil
+        pendingDelete = nil
+        sharing = nil
+    }
+
     func didCopy(_ id: UUID) {
         copyCount += 1
         flashedClipID = id

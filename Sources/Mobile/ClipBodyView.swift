@@ -9,6 +9,7 @@ struct ClipBodyView: View {
     let content: ClipContent?
     let concealment: CardConcealment
     let revealedText: String?
+    @Environment(MobileAppState.self) private var appState
 
     var body: some View {
         if concealment.isConcealed {
@@ -21,9 +22,16 @@ struct ClipBodyView: View {
     }
 
     private var covered: some View {
-        let summary = ClipSummary.make(item, concealment: concealment)
-        return Label(summary.title, systemImage: item.sensitivityRaw != nil ? "lock" : "eye.slash")
-            .foregroundStyle(.secondary)
+        let privacy = appState.secretReveal.isCoveredForPrivacy(item.id)
+        let summary = ClipSummary.make(item, concealment: concealment, coveredForPrivacy: privacy)
+        return HStack {
+            Label(summary.title, systemImage: item.sensitivityRaw != nil && !privacy ? "lock" : "eye.slash")
+                .foregroundStyle(.secondary)
+            if privacy {
+                Spacer()
+                Button("Show") { appState.secretReveal.showUnderCover(item.id) }
+            }
+        }
     }
 
     @ViewBuilder

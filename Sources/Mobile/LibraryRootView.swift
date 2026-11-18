@@ -12,7 +12,17 @@ struct LibraryRootView: View {
     @State private var library = LibraryModel()
 
     var body: some View {
-        if let container = appState.historyContainer, let store = appState.historyStore {
+        content
+            .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 })
+            .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(in: scenePhase)))
+            .onChange(of: appState.isHistoryLocked) { _, locked in if locked { library.closeEverything() } }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if appState.isHistoryLocked {
+            LockScreenView()
+        } else if let container = appState.historyContainer, let store = appState.historyStore {
             Group {
                 if sizeClass == .regular {
                     PadLibraryView(store: store)

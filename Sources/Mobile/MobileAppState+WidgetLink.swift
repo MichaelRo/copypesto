@@ -25,6 +25,10 @@ extension MobileAppState {
     func open(_ url: URL) -> LinkOutcome {
         guard let target = WidgetLink.target(in: url) else { return .ignored }
         boot()
+        if isHistoryLockedNow() {
+            heldLink = url
+            return .ignored
+        }
         guard let context = historyContainer?.mainContext else { return .ignored }
         let id = target.id
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })

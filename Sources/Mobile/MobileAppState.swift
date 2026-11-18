@@ -31,6 +31,9 @@ final class MobileAppState {
     /// Sync with the person's other devices, once the history is open (`MobileAppState+Sync.swift`).
     var sync: MobileSync?
     let secretReveal: SecretReveal
+    let historyLock: MobileHistoryLock
+    /// A widget link that arrived while the history was locked, opened once it is unlocked.
+    @ObservationIgnored var heldLink: URL?
     /// The launch migrations, so a test can wait for them before it removes its store.
     @ObservationIgnored private(set) var launchWork: Task<Void, Never>?
     @ObservationIgnored var noticeDismissal: Task<Void, Never>?
@@ -59,8 +62,12 @@ final class MobileAppState {
     static let noticeDuration: Duration = .seconds(4)
     static let undoOfferDuration: Duration = .seconds(8)
 
-    init(secretReveal: SecretReveal? = nil, clock: @escaping @MainActor () -> Date = { .now }) {
+    init(
+        secretReveal: SecretReveal? = nil, historyLock: MobileHistoryLock? = nil,
+        clock: @escaping @MainActor () -> Date = { .now }
+    ) {
         self.secretReveal = secretReveal ?? SecretReveal()
+        self.historyLock = historyLock ?? MobileHistoryLock()
         self.clock = clock
     }
 
@@ -87,7 +94,7 @@ final class MobileAppState {
         storeIsOnDisk = boot.isOnDisk
         guard let container = boot.container else { return }
         let store = HistoryStore(container: container)
-        store.setVisible(true)
+        store.setVisible(!historyLock.isLocked)
         historyStore = store
         let service = StorageService(
             modelContainer: container,
@@ -98,6 +105,8 @@ final class MobileAppState {
         startWidget(container: container)
         launchWork = Task(priority: .utility) {
             await LaunchMigrator.run(LaunchMigration.standard(service: service))
+            // A clip saved before it was judged, when Pesto was last stopped, is judged now, as the Mac does at launch.
+            await service.resumePendingAnalysis()
             #if DEBUG
             await MobileSeed.runIfAsked(state: self)
             #endif

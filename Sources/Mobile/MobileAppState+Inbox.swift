@@ -19,6 +19,7 @@ extension MobileAppState {
 
     @discardableResult
     func drainInbox(_ inbox: SharedInbox, keys: InboxKeyStore) async -> InboxDrain.Report? {
+        guard !isHistoryLockedNow() else { return nil }
         if let running = inboxDrain { return await running.value }
         let task = Task<InboxDrain.Report?, Never> { [self] in
             await runInboxDrain(inbox, keys: keys)

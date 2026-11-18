@@ -21,9 +21,16 @@ extension MobileAppState {
         if let sync { return sync }
         let mode = LaunchMode.current
         guard mode != .hostedTests, let container = historyContainer, let storage = storageService else { return nil }
-        let created = MobileSync(Self.liveSyncEnvironment(container: container, storage: storage, mode: mode))
+        let created = MobileSync(Self.liveSyncEnvironment(
+            container: container, storage: storage, mode: mode, isLocked: syncLockCheck
+        ))
         sync = created
         return created
+    }
+
+    /// Sync pauses while the history is locked, as on the Mac (ADR 0054).
+    var syncLockCheck: @MainActor () -> Bool {
+        { [weak self] in self?.isHistoryLockedNow() ?? true }
     }
 
     static var currentDeviceKind: SyncDeviceKind {
@@ -31,7 +38,8 @@ extension MobileAppState {
     }
 
     private static func liveSyncEnvironment(
-        container: ModelContainer, storage: StorageService, mode: LaunchMode
+        container: ModelContainer, storage: StorageService, mode: LaunchMode,
+        isLocked: @escaping @MainActor () -> Bool
     )
     -> MobileSync.Environment {
         let defaults = AppDefaults.store
@@ -44,7 +52,6 @@ extension MobileAppState {
             makeController: { root in
                 let deviceID = DeviceIdentity.current()
                 guard deviceID != "unknown" else { return nil }
-                // The Mac's history lock has no counterpart on iOS yet, so `isLocked` keeps its default.
                 var environment = SyncController.Environment(
                     container: container, storage: storage, folder: root,
                     keyStore: isUITest ? ThisDeviceSyncKeyStore(secrets: memory) : SyncEntitlement.keyStore(),
@@ -55,6 +62,7 @@ extension MobileAppState {
                     defaults: defaults, deviceID: deviceID, deviceName: DeviceName.current()
                 )
                 environment.deviceKind = kind
+                environment.isLocked = isLocked
                 return SyncController(environment)
             }
         )

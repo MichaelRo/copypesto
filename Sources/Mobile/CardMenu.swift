@@ -15,7 +15,9 @@ struct CardMenu: View {
         }
         Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") { card.togglePin() }
         AddToCollectionMenu(item: item, collections: card.collections)
-        if item.sensitivityRaw != nil, concealment.isConcealed, card.appState.secretReveal.canAuthenticate {
+        if card.isCoveredForPrivacy
+            || item.sensitivityRaw != nil && concealment.isConcealed && card.appState.secretReveal.canAuthenticate
+        {
             Button("Show", systemImage: "eye") { card.show() }
         }
         Divider()

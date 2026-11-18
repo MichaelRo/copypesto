@@ -27,7 +27,7 @@ struct CardAccessibility: ViewModifier {
     func body(content: Content) -> some View {
         let item = card.item
         let concealment = card.concealment
-        let summary = ClipSummary.make(item, concealment: concealment)
+        let summary = ClipSummary.make(item, concealment: concealment, coveredForPrivacy: card.isCoveredForPrivacy)
         let age = CardAge.spoken(interval: CardAge.interval(for: item, inCollection: false))
         content
             .accessibilityElement(children: .ignore)
@@ -43,7 +43,7 @@ struct CardAccessibility: ViewModifier {
             .modifier(OptionalAction(name: "Share", isOffered: !concealment.isConcealed) { card.share() })
             .modifier(OptionalAction(
                 name: "Show",
-                isOffered: item.sensitivityRaw != nil && concealment.isConcealed
+                isOffered: card.isCoveredForPrivacy || item.sensitivityRaw != nil && concealment.isConcealed
             ) { card.show() })
             .accessibilityAction(named: Text("Delete")) { card.delete() }
     }

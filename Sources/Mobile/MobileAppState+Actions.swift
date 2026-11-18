@@ -228,6 +228,7 @@ extension MobileAppState {
     /// Pesto left the foreground: whatever was shown hides again (ADR 0003), and the AutoFill set and the widget's
     /// snapshot are brought up to date before iOS may suspend the app (ADR 0051, ADR 0052).
     func didLeaveForeground() {
+        historyLock.didLeaveForeground(at: clock())
         secretReveal.hideAll()
         writeQuickInsert()
         Task { await refreshWidgetPresence() }

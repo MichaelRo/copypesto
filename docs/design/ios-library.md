@@ -50,7 +50,8 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 | Color | The card is the color; the text and facts in black or white by Core's `CardInk`. |
 | File | Document symbol, name and folder. |
 | Secret | The mask, a lock, the category at the foot, an eye that asks for Face ID (`SecretReveal`); after Show, the start of the text and Hide. |
-| Covered otherwise | The eye-slash symbol and the kind, nothing else. |
+| Covered otherwise | The eye-slash symbol and the kind, nothing else; under the screen-capture cover or Hide Clip Contents (ADR 0054) a Show button that uncovers that card until the cover returns. |
+| Locked | No card at all: the lock screen replaces the library (ADR 0054). |
 
 **The foot line** (`CardFootLine`, on Core's `CardMetaLine`): the app's name, or "Another device", or for a clip made on
 this device the device's symbol and how it came in (Pasted, Note, Shared, Dropped, Shortcut; ADR 0049), or the device's

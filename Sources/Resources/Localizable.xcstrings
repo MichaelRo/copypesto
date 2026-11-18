@@ -757,6 +757,28 @@
         }
       }
     },
+    "Delete %lld clips?": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete %lld clip?"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Delete %lld clips?"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Delete clips older than %lld days": {
       "localizations": {
         "en": {

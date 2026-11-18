@@ -42,3 +42,26 @@ extension MobileAppState {
         }
     }
 }
+
+/// What lowering "Keep clips for" or "Keep at most" would delete, counted before it does.
+enum RetentionPreview {
+    static func clipsLeaving(
+        snapshot: RetentionSnapshot, current: RetentionPolicy, proposed: RetentionPolicy, now: Date
+    )
+    -> Int {
+        let already = Set(RetentionPruner.computeEvictions(candidates: snapshot.candidates, policy: current, now: now))
+        let leaving = Set(RetentionPruner.computeEvictions(candidates: snapshot.candidates, policy: proposed, now: now))
+        return leaving.subtracting(already).count
+    }
+}
+
+extension MobileAppState {
+    func clipsLeaving(days: Int, maxItems: Int) async -> Int {
+        guard let service = storageService else { return 0 }
+        let now = clock()
+        guard let snapshot = try? await retentionStore(service).retentionSnapshot(expiringBefore: now) else { return 0 }
+        return RetentionPreview.clipsLeaving(
+            snapshot: snapshot, current: retentionPolicy(), proposed: .chosen(days: days, maxItems: maxItems), now: now
+        )
+    }
+}

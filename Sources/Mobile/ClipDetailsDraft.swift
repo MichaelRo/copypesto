@@ -13,6 +13,46 @@ struct ClipDetailsDraft: Equatable {
         self.tags = tags.joined(separator: ", ")
     }
 
+    enum Field: CaseIterable {
+        case title, note, tags
+    }
+
+    /// The fields the person changed since `baseline`, the values this form last agreed on with the stored clip.
+    func touched(since baseline: ClipDetailsDraft) -> Set<Field> {
+        Set(Field.allCases.filter { clean($0) != baseline.clean($0) })
+    }
+
+    /// The stored clip changed under the open form (a sync, an edit on another device): a field the person has not
+    /// touched and is not typing in shows the new value; a touched one keeps what was typed.
+    mutating func reconcile(stored: ClipDetailsDraft, baseline: inout ClipDetailsDraft, editing: Field?) {
+        for field in Field.allCases where stored.clean(field) != baseline.clean(field) {
+            guard field != editing, clean(field) == baseline.clean(field) else { continue }
+            set(field, to: stored)
+            baseline.set(field, to: stored)
+        }
+    }
+
+    /// What the form agrees on with the stored clip after saving `fields` from `saved`.
+    mutating func didSave(_ fields: Set<Field>, from saved: ClipDetailsDraft) {
+        for field in fields { set(field, to: saved) }
+    }
+
+    private func clean(_ field: Field) -> String? {
+        switch field {
+        case .title: cleanTitle
+        case .note: cleanNote
+        case .tags: cleanTags.isEmpty ? nil : cleanTags.joined(separator: ",")
+        }
+    }
+
+    private mutating func set(_ field: Field, to other: ClipDetailsDraft) {
+        switch field {
+        case .title: title = other.title
+        case .note: note = other.note
+        case .tags: tags = other.tags
+        }
+    }
+
     var cleanTitle: String? {
         Self.clean(title)
     }

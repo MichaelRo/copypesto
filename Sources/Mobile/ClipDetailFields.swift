@@ -8,15 +8,18 @@ struct ClipDetailFields: View {
     let item: ClipboardItem
     @Environment(MobileAppState.self) private var appState
     @State private var draft: ClipDetailsDraft
-    @FocusState private var focused: Field?
-
-    private enum Field {
-        case title, note, tags
-    }
+    @State private var baseline: ClipDetailsDraft
+    @FocusState private var focused: ClipDetailsDraft.Field?
 
     init(item: ClipboardItem) {
         self.item = item
-        _draft = State(initialValue: ClipDetailsDraft(title: item.customTitle, note: item.userNote, tags: item.tags))
+        let stored = ClipDetailsDraft(title: item.customTitle, note: item.userNote, tags: item.tags)
+        _draft = State(initialValue: stored)
+        _baseline = State(initialValue: stored)
+    }
+
+    private var stored: ClipDetailsDraft {
+        ClipDetailsDraft(title: item.customTitle, note: item.userNote, tags: item.tags)
     }
 
     var body: some View {
@@ -36,18 +39,23 @@ struct ClipDetailFields: View {
         .padding(14)
         .background(Color.primary.opacity(0.05), in: .rect(cornerRadius: 12, style: .continuous))
         .onSubmit(save)
-        .onChange(of: focused) { _, _ in save() }
+        .onChange(of: focused) { _, _ in
+            save()
+            draft.reconcile(stored: stored, baseline: &baseline, editing: focused)
+        }
+        .onChange(of: stored) { _, latest in draft.reconcile(stored: latest, baseline: &baseline, editing: focused) }
         .onDisappear(perform: save)
     }
 
     private func save() {
-        guard draft.differs(title: item.customTitle, note: item.userNote, tags: item.tags),
-              let context = item.modelContext else { return }
+        let touched = draft.touched(since: baseline)
+        guard !touched.isEmpty, let context = item.modelContext else { return }
         let applied = draft
         appState.clipEditor(context: context).edit(item) { clip in
-            clip.customTitle = applied.cleanTitle
-            clip.userNote = applied.cleanNote
-            clip.tags = applied.cleanTags
+            if touched.contains(.title) { clip.customTitle = applied.cleanTitle }
+            if touched.contains(.note) { clip.userNote = applied.cleanNote }
+            if touched.contains(.tags) { clip.tags = applied.cleanTags }
         }
+        baseline.didSave(touched, from: applied)
     }
 }

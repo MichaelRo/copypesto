@@ -32,6 +32,40 @@ struct LibraryPresentations: ViewModifier {
                 Button("Delete", role: .destructive) { deletePending() }
             }
             .onChange(of: collections.map(\.id)) { _, ids in library.filter.forget(collections: ids) }
+            .sheet(isPresented: approvalBinding) {
+                if let sync = appState.sync, let pending = sync.pendingJoin {
+                    SyncApproveView(sync: sync, pending: pending)
+                }
+            }
+            .task(id: appState.sync?.isEnabled ?? false) { await watchForJoinRequests() }
+    }
+
+    /// A request from another device appears in the sync folder; the library looks for it while sync is on, as the
+    /// Sync screen does while it is open.
+    private func watchForJoinRequests() async {
+        guard let sync = appState.sync, sync.isEnabled else { return }
+        while !Task.isCancelled {
+            if !library.showsSettings { sync.refresh() }
+            try? await Task.sleep(for: SyncApprovalPresentation.pollInterval)
+        }
+    }
+
+    private var anotherSheetIsUp: Bool {
+        library.showsSettings || library.isComposing || library.isNamingCollection || library.editingCollection != nil
+            || library.sharing != nil || appState.pendingFill != nil
+            || library.openClipID != nil && sizeClass == .compact
+    }
+
+    private var approvalBinding: Binding<Bool> {
+        Binding(
+            get: {
+                SyncApprovalPresentation.presentsOverLibrary(
+                    hasPendingJoin: appState.sync?.pendingJoin != nil, flowIsIdle: appState.sync?.flow == .idle,
+                    anotherSheetIsUp: anotherSheetIsUp
+                )
+            },
+            set: { _ in }
+        )
     }
 
     /// A clip's detail sheet presents its own fill sheet, since a sheet cannot present over a sheet from below.

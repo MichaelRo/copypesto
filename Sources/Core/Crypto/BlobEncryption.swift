@@ -118,7 +118,7 @@ public struct BlobEncryption: Sendable {
             kSecAttrAccount as String: account,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
-        return KeyPresence(status: SecItemCopyMatching(query as CFDictionary, nil))
+        return KeyPresence(status: SecItemCopyMatching(AppKeychainGroup.pinned(query) as CFDictionary, nil))
     }
 
     public static func keyExists(
@@ -254,7 +254,9 @@ public struct BlobEncryption: Sendable {
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: keychainAccount
         ]
-        return SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        return SecItemUpdate(
+            AppKeychainGroup.pinned(query) as CFDictionary, [kSecValueData as String: data] as CFDictionary
+        )
     }
 
     private func loadKey() throws -> SymmetricKey? {
@@ -266,7 +268,7 @@ public struct BlobEncryption: Sendable {
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        let status = SecItemCopyMatching(AppKeychainGroup.pinned(query) as CFDictionary, &item)
         switch status {
         case errSecSuccess:
             guard let data = item as? Data else { return nil }
@@ -286,7 +288,7 @@ public struct BlobEncryption: Sendable {
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
             kSecValueData as String: data
         ]
-        return SecItemAdd(attrs as CFDictionary, nil)
+        return SecItemAdd(AppKeychainGroup.pinned(attrs) as CFDictionary, nil)
     }
 }
 

@@ -21,7 +21,9 @@ extension MobileAppState {
         let count = pasteboard.changeCount
         let capture: PasteboardCapture?
         do {
-            capture = try await ItemProviderCapture.capture(from: pasteboard.itemProviders)
+            capture = try await ItemProviderCapture.capture(
+                from: pasteboard.itemProviders, pasteboardTypes: pasteboard.types
+            )
         } catch {
             Self.addClipboardLogger
                 .error("Reading the clipboard failed: \(error.localizedDescription, privacy: .public)")

@@ -17,7 +17,17 @@ enum ItemProviderCapture {
 
     struct Unreadable: Error {}
 
-    static func capture(from providers: [NSItemProvider]) async throws -> PasteboardCapture? {
+    /// A password manager's copy carries a concealed or transient marker (security invariant 6): nothing of it is
+    /// read, from any item, whether the marker is on the pasteboard or on one provider.
+    static func isConcealed(_ providers: [NSItemProvider], pasteboardTypes: [String] = []) -> Bool {
+        let types = pasteboardTypes + providers.flatMap(\.registeredTypeIdentifiers)
+        return types.contains(where: ExclusionRules.concealedTypeMarkers.contains)
+    }
+
+    static func capture(
+        from providers: [NSItemProvider], pasteboardTypes: [String] = []
+    ) async throws -> PasteboardCapture? {
+        guard !isConcealed(providers, pasteboardTypes: pasteboardTypes) else { return nil }
         for provider in providers {
             guard let choice = choose(typeIdentifiers: provider.registeredTypeIdentifiers) else { continue }
             if let capture = try await capture(choice, from: provider) { return capture }

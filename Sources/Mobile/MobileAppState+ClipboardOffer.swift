@@ -26,7 +26,7 @@ extension MobileAppState {
         case .addNow:
             defaults.set(count, for: Setting.lastSeenPasteboardChange)
             clipboardOfferCount = nil
-            await add(from: pasteboard.itemProviders, method: .paste)
+            await add(from: pasteboard.itemProviders, method: .paste, pasteboardTypes: pasteboard.types)
         }
     }
 

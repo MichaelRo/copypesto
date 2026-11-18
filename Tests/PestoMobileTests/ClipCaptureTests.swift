@@ -53,6 +53,32 @@ struct ClipCaptureTests {
         #expect(capture?.payloadString == "dropped words")
     }
 
+    @Test(
+        "a copy marked concealed or transient is never captured, by any provider or by the pasteboard's types",
+        arguments: ExclusionRules.concealedTypeMarkers.sorted()
+    )
+    func whenAMarkerIsPresent_thenNothingIsCaptured(marker: String) async throws {
+        let marked = NSItemProvider(object: "hunter2-password" as NSString)
+        marked.registerDataRepresentation(forTypeIdentifier: marker, visibility: .all) { completion in
+            completion(Data(), nil)
+            return nil
+        }
+        #expect(try await ItemProviderCapture.capture(from: [marked]) == nil)
+
+        let plain = NSItemProvider(object: "hunter2-password" as NSString)
+        #expect(try await ItemProviderCapture.capture(from: [plain], pasteboardTypes: [marker]) == nil)
+
+        let other = NSItemProvider(object: "an ordinary note" as NSString)
+        #expect(try await ItemProviderCapture.capture(from: [other, marked]) == nil, "one marked item drops the copy")
+    }
+
+    @Test("a copy with no marker is captured as before")
+    func whenNoMarkerIsPresent_thenTheCopyIsCaptured() async throws {
+        let plain = NSItemProvider(object: "an ordinary note" as NSString)
+        let capture = try await ItemProviderCapture.capture(from: [plain], pasteboardTypes: ["public.utf8-plain-text"])
+        #expect(capture?.payloadString == "an ordinary note")
+    }
+
     @Test("a link handed over as a URL object (Safari's drag, the Paste button) is kept as its whole address")
     func whenAProviderHoldsAURLObject_thenTheAddressIsCaptured() async throws {
         let url = try #require(URL(string: "https://copypesto.net/guide?ref=share"))

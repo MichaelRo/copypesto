@@ -45,6 +45,10 @@ struct CardAccessibility: ViewModifier {
                 name: "Show",
                 isOffered: card.isCoveredForPrivacy || item.sensitivityRaw != nil && concealment.isConcealed
             ) { card.show() })
+            .modifier(OptionalAction(
+                name: "Hide",
+                isOffered: item.sensitivityRaw != nil && card.appState.secretReveal.isShown(item.id)
+            ) { card.hide() })
             .accessibilityAction(named: Text("Delete")) { card.delete() }
     }
 }

@@ -7,6 +7,7 @@ struct NewNoteView: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
+    @State private var isConfirmingDiscard = false
     @FocusState private var isEditing: Bool
 
     var body: some View {
@@ -18,7 +19,7 @@ struct NewNoteView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
+                        Button("Cancel") { if NoteDraft.needsDiscardConfirmation(text) { isConfirmingDiscard = true } else { dismiss() } }
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") { save() }
@@ -27,7 +28,12 @@ struct NewNoteView: View {
                     }
                 }
                 .onAppear { isEditing = true }
+                .confirmationDialog("Discard this note?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
+                    Button("Discard", role: .destructive) { dismiss() }
+                    Button("Keep Editing", role: .cancel) {}
+                }
         }
+        .interactiveDismissDisabled(NoteDraft.needsDiscardConfirmation(text))
     }
 
     private func save() {

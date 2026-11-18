@@ -38,7 +38,13 @@ struct ClipBodyView: View {
     private var uncovered: some View {
         switch item.type {
         case .image:
-            ClipThumbnail(itemID: item.id, byteSize: item.byteSize, maxPixel: 2048)
+            ClipThumbnail(
+                itemID: item.id, byteSize: item.byteSize, maxPixel: 2048,
+                accessibilityText: PictureLabel.make(
+                    width: item.pixelWidth, height: item.pixelHeight,
+                    recognizedText: RecognizedText.hasText(item) ? item.displayPreviewText : nil
+                )
+            )
                 .frame(maxWidth: .infinity, minHeight: 160)
                 .clipShape(.rect(cornerRadius: 10))
         case .url:

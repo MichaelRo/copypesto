@@ -36,7 +36,7 @@ struct LibraryCommands: Commands {
                 .keyboardShortcut("c", modifiers: [.shift, .command])
                 .disabled(clip == nil)
             Button(clip?.isPinned == true ? "Unpin" : "Pin") { clip?.togglePin() }
-                .keyboardShortcut("p", modifiers: .command)
+                .keyboardShortcut("p", modifiers: [.shift, .command])
                 .disabled(clip == nil)
             Button("Delete Clip") { clip?.delete() }
                 .keyboardShortcut(.delete, modifiers: .command)

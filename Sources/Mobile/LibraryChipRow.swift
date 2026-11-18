@@ -16,7 +16,6 @@ struct LibraryChipRow: View {
                 }
             }
             .padding(.horizontal, CardGridLayout.margin)
-            .padding(.vertical, 2)
         }
         .scrollIndicators(.hidden)
         .accessibilityIdentifier(MobileAccessibilityID.chipRow)
@@ -95,6 +94,7 @@ struct MobileChipStyle: ButtonStyle {
                 color.opacity(isActive ? 0.5 : contrast == .increased ? 0.45 : 0), lineWidth: 0.5
             ))
             .foregroundStyle(isActive || contrast == .increased ? Color.primary : Color.primary.opacity(0.8))
-            .contentShape(Capsule())
+            .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+            .contentShape(.rect)
     }
 }

@@ -79,10 +79,10 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
   Share and More (Pin, Delete) in the toolbar. A text, code, link or color clip has Edit Text above its content, one press from the editor: an
   editor with Cancel and Save, saved through Core's `updateText` (ADR 0048) with the Undo banner in the sheet; a hidden
   clip only after Show.
-- **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⇧⌘C copy, ⌘P pin, ⌘⌫ delete with a
+- **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⇧⌘C copy, ⇧⌘P pin (⌘P is Print), ⌘⌫ delete with a
   confirmation, all in the menu a held ⌘ shows.
 - **VoiceOver**: a card is one element ("Link, copypesto.net, Safari, 4 minutes ago, Pinned"); activating copies;
-  actions Edit Details, Pin, Share, Show and Delete.
+  actions Edit Details, Pin, Share, Show (Hide once shown) and Delete. The detail's picture says its kind, its size and the start of any text read in it.
 
 ## Search and filters
 Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and

@@ -70,6 +70,7 @@ struct ClipThumbnail: View {
     let itemID: UUID
     let byteSize: Int
     let maxPixel: Int
+    var accessibilityText: String?
     @Environment(MobileAppState.self) private var appState
     @State private var picture: CardMedia.Picture?
 
@@ -87,12 +88,24 @@ struct ClipThumbnail: View {
                     .overlay { Image(systemName: "photo").foregroundStyle(.secondary) }
             }
         }
-        .accessibilityHidden(true)
+        .modifier(PictureAccessibility(text: accessibilityText))
         .task(id: itemID) {
             picture = await CardMedia.picture(
                 itemID: itemID, byteSize: byteSize, container: appState.historyContainer, maxPixel: maxPixel,
                 frames: Motion.reduceMotion ? nil : .detail
             )
+        }
+    }
+}
+
+private struct PictureAccessibility: ViewModifier {
+    let text: String?
+
+    func body(content: Content) -> some View {
+        if let text {
+            content.accessibilityElement(children: .ignore).accessibilityLabel(text).accessibilityAddTraits(.isImage)
+        } else {
+            content.accessibilityHidden(true)
         }
     }
 }

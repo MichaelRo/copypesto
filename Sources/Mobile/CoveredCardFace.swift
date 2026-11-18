@@ -45,7 +45,7 @@ struct CoveredCardFace: View {
             if appState.secretReveal.isCoveredForPrivacy(item.id) {
                 Button("Show") { appState.secretReveal.showUnderCover(item.id) }
                     .font(.caption.weight(.semibold))
-                    .buttonStyle(.bordered)
+                    .buttonStyle(CoverShowStyle())
                     .accessibilityIdentifier(MobileAccessibilityID.showUnderCoverButton)
             } else if item.isNSFW {
                 Text("Sensitive content").font(.caption)
@@ -58,6 +58,19 @@ struct CoveredCardFace: View {
     private func show() {
         let id = item.id
         Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
+    }
+}
+
+/// The small bordered Show of a covered card, with a 44 point hit area around it.
+private struct CoverShowStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(Color.primary.opacity(configuration.isPressed ? 0.18 : 0.10)))
+            .foregroundStyle(.primary)
+            .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+            .contentShape(.rect)
     }
 }
 

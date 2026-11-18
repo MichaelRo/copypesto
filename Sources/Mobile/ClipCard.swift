@@ -160,6 +160,10 @@ struct ClipCard: View {
         Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
     }
 
+    func hide() {
+        appState.secretReveal.hide(item.id)
+    }
+
     func share() {
         guard !concealment.isConcealed, let content = ClipContent.of(item) else { return }
         library.sharing = ClipShare(content)

@@ -34,6 +34,7 @@ final class LibraryModel {
     var columns: NavigationSplitViewVisibility = .all
     var showsSettings = false
     var isComposing = false
+    var picksSyncFolder = false
     var isNamingCollection = false
     var editingCollection: Pinboard?
     var pendingDelete: UUID?
@@ -75,6 +76,7 @@ final class LibraryModel {
         scrollAnchor = nil
         showsSettings = false
         isComposing = false
+        picksSyncFolder = false
         isNamingCollection = false
         editingCollection = nil
         pendingDelete = nil

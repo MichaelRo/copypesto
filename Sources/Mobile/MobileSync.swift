@@ -124,6 +124,11 @@ final class MobileSync {
         }
     }
 
+    /// Whether sync can start from the folder already chosen, rather than asking for one first.
+    var canBeginSetUp: Bool {
+        hasFolder && folderProblem == nil && controller != nil
+    }
+
     func beginSetUp() {
         controller?.beginSetUp()
     }

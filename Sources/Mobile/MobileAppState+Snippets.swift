@@ -47,6 +47,9 @@ extension MobileAppState {
         await reportAsync("Couldn\u{2019}t save the snippet.") {
             saved = try await service.addSnippet(converted, title: item.customTitle) != nil
         }
-        if saved { tell(String(localized: "Saved as a snippet")) }
+        if saved {
+            tell(String(localized: "Saved as a snippet"))
+            clipWasKept()
+        }
     }
 }

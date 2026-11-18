@@ -9,9 +9,11 @@ struct LibraryBanners: View {
     var body: some View {
         VStack(spacing: 0) {
             if appState.clipboardOfferCount != nil, appState.undoOffer == nil { ClipboardOfferBanner() }
+            if appState.offersAutoFillTip, !appState.isHistoryLocked { AutoFillTipBanner() }
             messages
         }
         .animation(Motion.animation(.pestoMove), value: appState.clipboardOfferCount)
+        .animation(Motion.animation(.pestoMove), value: appState.offersAutoFillTip)
     }
 
     private var messages: some View {

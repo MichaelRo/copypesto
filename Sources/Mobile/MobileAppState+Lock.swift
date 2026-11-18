@@ -50,6 +50,7 @@ extension MobileAppState {
     func historyLockSettingChanged() {
         if historyLock.isEnabled {
             HistoryLockPolicy.lockWasSwitchedOn()
+            offersAutoFillTip = false
             if historyLock.holdsOutsideSurfaces { emptyOutsideSurfaces() }
         } else {
             let wasLocked = historyLock.isLocked

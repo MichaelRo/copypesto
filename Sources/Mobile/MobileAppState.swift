@@ -50,6 +50,7 @@ final class MobileAppState {
     @ObservationIgnored var openExternally: @MainActor (URL) -> Void = { UIApplication.shared.open($0) }
     /// Where the widget's snapshot is kept (`MobileAppState+Widget.swift`); nil in a hosted test until it names one.
     @ObservationIgnored var widget: WidgetTarget? = .current
+    @ObservationIgnored var backgroundWork = BackgroundWork.system
     @ObservationIgnored var linkPreviewLoader = LinkPreviewLoader()
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?

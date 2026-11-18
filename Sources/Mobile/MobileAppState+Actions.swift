@@ -73,9 +73,13 @@ extension MobileAppState {
     }
 
     /// What the Paste button or a drop delivered.
-    func add(from providers: [NSItemProvider], method: CaptureMethod) async {
+    func add(from providers: [NSItemProvider], method: CaptureMethod, pasteboardTypes: [String] = []) async {
+        guard !ItemProviderCapture.isConcealed(providers, pasteboardTypes: pasteboardTypes) else { return }
         do {
-            try await add(ItemProviderCapture.capture(from: providers)?.with(captureMethod: method))
+            try await add(
+                ItemProviderCapture.capture(from: providers, pasteboardTypes: pasteboardTypes)?
+                    .with(captureMethod: method)
+            )
         } catch {
             Self.logger.error("Reading a paste or drop failed: \(error.localizedDescription, privacy: .public)")
             tell(String(localized: "Couldn\u{2019}t read what was pasted."), isProblem: true)
@@ -89,6 +93,9 @@ extension MobileAppState {
             try await service.deleteItems(ids: ids, reason: .user)
             ids.forEach(secretReveal.hide)
             offerUndo(since: mark)
+            // A deleted clip leaves the widget and AutoFill at once, not after the rewrite's pause.
+            writeQuickInsert()
+            await writeWidget()
         }
     }
 
@@ -244,6 +251,10 @@ extension MobileAppState {
         historyLock.didLeaveForeground(at: clock())
         secretReveal.hideAll()
         writeQuickInsert()
-        Task { await refreshWidgetPresence() }
+        let hold = backgroundWork.hold("Widget snapshot")
+        Task {
+            await refreshWidgetPresence()
+            hold.finish()
+        }
     }
 }

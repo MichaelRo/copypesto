@@ -78,7 +78,8 @@ extension MobileAppState {
     }
 
     private func performWidgetWrite() async {
-        guard let target = widget, widgetIsInstalled, let container = historyContainer else { return }
+        guard let target = widget, widgetIsInstalled else { return }
+        guard let container = historyContainer else { return dropWidgetFile(target) }
         if historyLock.holdsOutsideSurfaces {
             performWidgetEmpty()
             return
@@ -96,7 +97,17 @@ extension MobileAppState {
         } catch {
             Self.widgetLogger
                 .error("The widget snapshot was not written: \(error.localizedDescription, privacy: .public)")
+            dropWidgetFile(target)
         }
+    }
+
+    /// A snapshot that could not be written again must not leave the old one behind: it may hold a clip deleted or
+    /// made secret since (a refresh while the device is locked cannot write a file under complete protection).
+    private func dropWidgetFile(_ target: WidgetTarget) {
+        lastWidgetSnapshot = nil
+        guard target.file.exists else { return }
+        target.file.remove()
+        target.reload()
     }
 
     func performWidgetEmpty() {

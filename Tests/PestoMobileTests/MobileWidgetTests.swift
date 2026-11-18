@@ -156,6 +156,37 @@ struct MobileWidgetTests {
         #expect(try fixture.texts().isEmpty)
     }
 
+    @Test("a snapshot that cannot be written again is removed, never left with clips deleted or made secret since")
+    func whenARewriteFails_thenTheOldSnapshotIsRemoved() async throws {
+        let fixture = try fixture(installed: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        let library = try await library(with: fixture)
+        try await library.add("written while unlocked")
+        await library.state.refreshWidgetPresence()
+        #expect(fixture.file.exists)
+        let reloads = fixture.home.reloads
+
+        fixture.secrets.refusesReads = true
+        await library.state.writeWidget()
+
+        #expect(!fixture.file.exists)
+        #expect(fixture.home.reloads > reloads)
+    }
+
+    @Test("a deleted clip leaves the snapshot at once, not after the rewrite's pause")
+    func whenAClipIsDeleted_thenItLeavesTheSnapshotAtOnce() async throws {
+        let fixture = try fixture(installed: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        let library = try await library(with: fixture)
+        let item = try await library.add("delete me")
+        await library.state.refreshWidgetPresence()
+        #expect(try fixture.texts() == ["delete me"])
+
+        await library.state.delete([item.id])
+
+        #expect(try fixture.texts().isEmpty)
+    }
+
     @Test("the last widget removed takes the file and the key with it")
     func whenTheWidgetIsRemoved_thenTheFileAndKeyGo() async throws {
         let fixture = try fixture(installed: true)

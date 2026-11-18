@@ -49,6 +49,8 @@ extension MobileAppState {
         } catch {
             Self.quickInsertLogger
                 .error("The AutoFill set was not written: \(error.localizedDescription, privacy: .public)")
+            // The old set may hold a clip deleted or made secret since; no set is better than that one.
+            target.file.remove()
         }
     }
 

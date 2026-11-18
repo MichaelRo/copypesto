@@ -19,6 +19,7 @@ struct LibraryGrid: View {
     /// The minute the cards' ages are read at. A `TimelineView` around the grid kept the grid from drawing any change
     /// until its next tick (an edited card kept its old text), so one task moves this instead.
     @State private var minute = Date.now
+    @State private var byMeaning: [UUID] = []
 
     var body: some View {
         let ids = visibleIDs()
@@ -49,6 +50,7 @@ struct LibraryGrid: View {
                 minute = .now
             }
         }
+        .task(id: library.query) { await updateMeaningMatches() }
         .onDrop(of: ItemProviderCapture.acceptedTypes + [ClipDrag.clipIDType], isTargeted: nil) { providers in
             guard !ClipDrag.isOwnDrag(providers) else { return false }
             Task { await appState.add(from: providers, method: .drop) }
@@ -100,7 +102,31 @@ struct LibraryGrid: View {
             hidesSensitive: NSFWMode.current() == .hide
         )
         let context = "\(library.filter.scope)|\(library.query)|\(kind?.rawValue ?? "")"
-        return library.order.arrange(fresh, context: context)
+        let arranged = library.order.arrange(fresh, context: context)
+        guard !byMeaning.isEmpty, SemanticSearch.asksForMeaning(library.query) else { return arranged }
+        let allowed = Set(library.filter.scope.ids(
+            in: index, query: "", kind: kind, smartRule: smartRule, hidesSensitive: NSFWMode.current() == .hide
+        ))
+        return SemanticSearch.merged(textMatches: arranged, byMeaning: byMeaning, allowed: allowed)
+    }
+
+    /// Clips that match the query by meaning, found on the device with the same model and threshold as the Mac and
+    /// shown after the text matches; with the model unavailable there are none.
+    private func updateMeaningMatches() async {
+        let query = library.query.trimmingCharacters(in: .whitespaces)
+        guard SemanticSearch.asksForMeaning(query) else {
+            byMeaning = []
+            return
+        }
+        try? await Task.sleep(for: SemanticSearch.typingPause)
+        guard !Task.isCancelled else { return }
+        guard let embedding = await SemanticIndexer.shared.embed(text: query), !Task.isCancelled else {
+            if !Task.isCancelled { byMeaning = [] }
+            return
+        }
+        byMeaning = SemanticSearch.rank(
+            queryEmbedding: embedding, candidates: store.items.map { ($0.id, $0.embeddingData) }
+        )
     }
 
     private var smartRule: ((UUID) -> Bool)? {

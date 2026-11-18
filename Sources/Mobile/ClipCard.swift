@@ -75,7 +75,8 @@ struct ClipCard: View {
             .focusedValue(\.clipCommands, isFocused ? commands : nil)
             .task(id: CardMediaState.Key(id: item.id, isShown: appState.secretReveal.isShown(item.id))) {
                 await media.load(
-                    item, container: appState.historyContainer, isShown: appState.secretReveal.isShown(item.id)
+                    item, container: appState.historyContainer, isShown: appState.secretReveal.isShown(item.id),
+                    fetchPreview: { await appState.loadLinkPreview(for: item) }
                 )
             }
             .onAppear { isOnScreen = true }

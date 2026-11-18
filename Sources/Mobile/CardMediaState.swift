@@ -19,7 +19,9 @@ final class CardMediaState {
         let isShown: Bool
     }
 
-    func load(_ item: ClipboardItem, container: ModelContainer?, isShown: Bool) async {
+    func load(
+        _ item: ClipboardItem, container: ModelContainer?, isShown: Bool, fetchPreview: () async -> Bool = { false }
+    ) async {
         revealedText = isShown ? HiddenClipReveal.readableText(from: item.blob?.decryptedData()) : nil
         switch item.type {
         case .image where item.sensitivityRaw == nil:
@@ -29,8 +31,8 @@ final class CardMediaState {
                 frames: Motion.reduceMotion ? nil : .card
             )
         case .url where item.sensitivityRaw == nil:
-            guard linkPicture == nil else { return }
-            linkPicture = await CardMedia.linkPicture(for: item.id)
+            if linkPicture == nil { linkPicture = await CardMedia.linkPicture(for: item.id) }
+            if await fetchPreview(), linkPicture == nil { linkPicture = await CardMedia.linkPicture(for: item.id) }
         default:
             break
         }

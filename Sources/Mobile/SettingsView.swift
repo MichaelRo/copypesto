@@ -12,6 +12,7 @@ struct SettingsView: View {
     @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
+    @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
     @AppStorage(Setting.screenSharingPrivacy) private var coversWhileCaptured: Bool
     @State private var biometry = DeviceAuthenticationWords.biometry()
     @State private var clearCount = 0
@@ -69,6 +70,8 @@ struct SettingsView: View {
                             .tag(minutes)
                     }
                 }
+                Toggle("Load link previews", isOn: $linkPreviews)
+                    .accessibilityIdentifier(MobileAccessibilityID.linkPreviewsToggle)
             } header: {
                 Text("Privacy")
             } footer: {
@@ -76,7 +79,8 @@ struct SettingsView: View {
                     "With the lock on, Pesto asks when it opens and after it has been away this long. The widget " +
                         "says Locked and AutoFill holds nothing, unless you show clips there, which anyone holding " +
                         "this device can then read. Hidden clips stay masked until you show them. Copying one " +
-                        "never shows it."
+                        "never shows it. Link previews contact the page a link points to, once, to show its title and picture; " +
+                        "nothing else leaves this device."
                 )
             }
             Section {

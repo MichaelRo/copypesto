@@ -6,9 +6,9 @@ import PestoCore
 @MainActor
 protocol SyncExchanging: AnyObject {
     var isEnabled: Bool { get }
-    func activate()
+    func activate(for holder: MobileSync.Holder)
     func syncNow() async
-    func deactivate()
+    func deactivate(for holder: MobileSync.Holder)
 }
 
 extension MobileSync: SyncExchanging {}
@@ -22,14 +22,20 @@ enum SyncExchange {
         await sync.syncNow()
     }
 
-    /// Returns false when nothing was exchanged (sync off, the folder not reachable).
+    /// Returns false when nothing was exchanged (sync off, the folder not reachable, or the time ran out). The
+    /// folder is held as the background's, so the app coming to the front meanwhile keeps it open afterwards.
     @discardableResult
     static func inBackground(_ sync: any SyncExchanging) async -> Bool {
-        sync.activate()
-        defer { sync.deactivate() }
+        sync.activate(for: .background)
+        defer { sync.deactivate(for: .background) }
         guard sync.isEnabled else { return false }
         await sync.syncNow()
-        return true
+        return !Task.isCancelled
+    }
+
+    /// iOS ends the background time: the pass in flight stops and the folder is let go unless the app is in front.
+    static func expire(_ sync: any SyncExchanging) {
+        sync.deactivate(for: .background)
     }
 }
 

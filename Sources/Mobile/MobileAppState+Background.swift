@@ -48,11 +48,33 @@ extension MobileAppState {
             return
         }
         scheduleBackgroundRefresh()
+        let completion = BackgroundTaskCompletion { task.setTaskCompleted(success: $0) }
         let work = Task { await SyncExchange.inBackground(sync) }
-        task.expirationHandler = { work.cancel() }
+        task.expirationHandler = {
+            work.cancel()
+            Task { @MainActor in
+                SyncExchange.expire(sync)
+                completion.finish(success: false)
+            }
+        }
         Task {
             let exchanged = await work.value
-            task.setTaskCompleted(success: exchanged)
+            completion.finish(success: exchanged)
         }
+    }
+}
+
+/// Tells iOS a background task is done exactly once, whichever of the work and the expiration ends first.
+@MainActor
+final class BackgroundTaskCompletion {
+    private var complete: ((Bool) -> Void)?
+
+    init(_ complete: @escaping (Bool) -> Void) {
+        self.complete = complete
+    }
+
+    func finish(success: Bool) {
+        complete?(success)
+        complete = nil
     }
 }

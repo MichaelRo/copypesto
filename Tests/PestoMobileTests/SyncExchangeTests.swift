@@ -13,16 +13,16 @@ private final class RecordingSync: SyncExchanging {
         isEnabled = enabled
     }
 
-    func activate() {
-        calls.append("activate")
+    func activate(for holder: MobileSync.Holder) {
+        calls.append("activate \(holder)")
     }
 
     func syncNow() async {
         calls.append("syncNow")
     }
 
-    func deactivate() {
-        calls.append("deactivate")
+    func deactivate(for holder: MobileSync.Holder) {
+        calls.append("deactivate \(holder)")
     }
 }
 
@@ -44,11 +44,27 @@ struct SyncExchangeTests {
     func whenRefreshedInTheBackground_thenOneExchangeBetweenOpenAndClose() async {
         let on = RecordingSync(enabled: true)
         #expect(await SyncExchange.inBackground(on))
-        #expect(on.calls == ["activate", "syncNow", "deactivate"])
+        #expect(on.calls == ["activate background", "syncNow", "deactivate background"])
 
         let off = RecordingSync(enabled: false)
         #expect(await SyncExchange.inBackground(off) == false)
-        #expect(off.calls == ["activate", "deactivate"])
+        #expect(off.calls == ["activate background", "deactivate background"])
+    }
+
+    @Test("when iOS ends the background time, only the background's hold on the folder goes")
+    func whenTheBackgroundTimeEnds_thenOnlyTheBackgroundLetsGo() {
+        let on = RecordingSync(enabled: true)
+        SyncExchange.expire(on)
+        #expect(on.calls == ["deactivate background"])
+    }
+
+    @Test("a background task is reported done once, whichever of the work and the expiration comes first")
+    func whenWorkAndExpirationBothFinish_thenTheTaskIsCompletedOnce() {
+        var reports: [Bool] = []
+        let completion = BackgroundTaskCompletion { reports.append($0) }
+        completion.finish(success: false)
+        completion.finish(success: true)
+        #expect(reports == [false])
     }
 
     @Test("a refresh is asked for only with sync on, a history and a normal launch")

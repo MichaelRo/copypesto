@@ -63,7 +63,17 @@ final class MobileSync {
 
     // MARK: The folder and the app's life
 
-    func activate() {
+    /// Who holds the folder open: the app in front, a background refresh, or both. The folder is let go only when the
+    /// last of them is done, so a background refresh that ends after the app came back leaves sync running.
+    enum Holder: Hashable {
+        case foreground
+        case background
+    }
+
+    @ObservationIgnored private var holders: Set<Holder> = []
+
+    func activate(for holder: Holder = .foreground) {
+        holders.insert(holder)
         switch env.folder.resolve() {
         case .notChosen:
             hasFolder = false
@@ -84,7 +94,9 @@ final class MobileSync {
         }
     }
 
-    func deactivate() {
+    func deactivate(for holder: Holder = .foreground) {
+        holders.remove(holder)
+        guard holders.isEmpty else { return }
         controller?.suspend()
         env.folder.relinquish()
     }

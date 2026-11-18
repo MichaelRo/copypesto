@@ -88,8 +88,21 @@ public final class BookmarkedSyncFolder: SyncFolderSource {
             logger.error("The sync folder's bookmark did not resolve: \(error.localizedDescription, privacy: .public)")
             return .needsRepair(.unresolvable)
         }
-        guard !resolved.isStale else { return .needsRepair(.stale) }
-        return openFolder(resolved.url).map(SyncFolderResolution.ready) ?? .needsRepair(.unreachable)
+        guard let root = openFolder(resolved.url) else {
+            return .needsRepair(resolved.isStale ? .stale : .unreachable)
+        }
+        if resolved.isStale {
+            // Apple's pattern: a stale bookmark that still opens the folder is made again while the folder is open.
+            do {
+                let renewed = try bookmarks.bookmark(for: resolved.url)
+                defaults.set(renewed.base64EncodedString(), for: Setting.syncFolderBookmark)
+            } catch {
+                logger.error("The stale sync bookmark was not renewed: \(error.localizedDescription, privacy: .public)")
+                relinquish()
+                return .needsRepair(.stale)
+            }
+        }
+        return .ready(root)
     }
 
     public func choose(_ picked: URL) throws -> URL {

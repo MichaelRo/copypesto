@@ -25,8 +25,13 @@ touches the store lives in `Core/Storage/Sync/` (journal, outbox, `applySync`, `
 - **A small file in the folder (vault, device record, identity, grant, join request) is read through `SyncSmallFile`, never `Data(contentsOf:)`** (ADR 0038, `SyncSmallFileScanTests`): the folder is untrusted and a planted multi-gigabyte file would be loaded whole. A tombstone carries no hash of a clip that holds a secret.
 - **Where the folder comes from is a `SyncFolderSource`** (`Core/Storage/Sync`): the Mac passes a path, the iOS app a
   `BookmarkedSyncFolder` (the picked folder as a security-scoped bookmark in `Setting.syncFolderBookmark`, held open
-  from `resolve` or `choose` to `relinquish`, in balance). `SyncController` only ever sees the URL. A stale or
-  unresolvable bookmark is a repair ("Choose the folder again"), never a state that reads as working.
+  from `resolve` or `choose` to `relinquish`, in balance). `SyncController` only ever sees the URL. A stale bookmark
+  that still opens the folder is made again and stored (Apple's pattern); one that does not, or an unresolvable one,
+  is a repair ("Choose the folder again"), never a state that reads as working. The iOS `SyncFolderWatcher` has no
+  `deinit { stop() }`: `NSFileCoordinator` retains a presenter until it is removed, so `stop()` is the only way out.
+- **An iPhone's folder is held per holder** (`MobileSync.Holder`: the app in front, a background refresh) and let go
+  when the last one is done; `SyncFolderService.stop()` cancels the pass in flight, and `applySync` checks for
+  cancellation between records, so a pass never runs on after the security scope ended.
 - **Sync wording takes a `SyncDeviceKind`**: a Mac reads the sentences it always had (`SyncCopyTests` pins them); an
   iPhone or iPad names itself and calls the others devices. A new sync sentence takes the kind too.
 - **A Mac keeps the group and epoch it joined** (`SyncHighWater.vaultFloor`, ADR 0039): `open(preferring:)` ignores a vault planted beside the real one, and an older epoch or another group is refused. Leave Sync and a folder change clear the floor (they reset the high-water state); Reset Sync resets only the marks (`resetMarks`), never the floor. The pairing words are eight and stretched; change the derivation and the fixed vector in `SyncFormatTests` fails on purpose.

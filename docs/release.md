@@ -123,8 +123,11 @@ build that `scripts/check-widget-signing.sh` refuses.
 4. Profiles → + → Distribution → **Developer ID** → App ID `net.copypesto.pesto.controls` → the Developer ID
    Application certificate. Name it "Pesto Controls", download and double-click it.
 5. Check both profiles before building: `security cms -D -i <file>.provisionprofile | plutil -extract Entitlements
-   xml1 -o - -` must list `com.apple.security.application-groups` with `group.net.copypesto.pesto` (or `<Team ID>.*`)
-   and `keychain-access-groups` with `<Team ID>.*`.
+   xml1 -o - -` must list `com.apple.security.application-groups` with `group.net.copypesto.pesto` by name and
+   `keychain-access-groups` with `<Team ID>.*`. A profile that lists only `<Team ID>.*` for app groups may authorize it
+   too (DTS says so for profiles made since June 2025), but `check-widget-signing.sh` refuses it; regenerate the
+   profile after ticking the group, or check by hand with `launchctl procinfo <pid>` that the launched app's
+   entitlements are validated.
 6. `make export SYNC_PROFILE="Pesto Sync" WIDGET_PROFILE="Pesto Controls"` (or `make release` with both), then
    `scripts/check-sync-signing.sh` and `scripts/check-widget-signing.sh` on `.build/xcode/export/Pesto.app`.
 7. Hand checks on the exported, stapled app (`docs/testing.md`, "The Mac widget"): launch it once and look for `AMFI`

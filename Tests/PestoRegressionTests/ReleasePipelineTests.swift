@@ -10,14 +10,14 @@ struct ReleasePipelineTests {
         try String(contentsOf: SourceTree.repositoryRoot.appendingPathComponent(relative), encoding: .utf8)
     }
 
-    private func renderExportOptions(team: String) throws -> (code: Int32, output: String) {
+    private func renderExportOptions(team: String, profiles: [String] = []) throws -> (code: Int32, output: String) {
         let out = FileManager.default.temporaryDirectory.appendingPathComponent("export-\(UUID().uuidString).plist")
         defer { try? FileManager.default.removeItem(at: out) }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [
             SourceTree.repositoryRoot.appendingPathComponent("scripts/render-export-options.sh").path, team, out.path
-        ]
+        ] + profiles
         let pipe = Pipe()
         process.standardError = pipe
         process.standardOutput = pipe
@@ -35,6 +35,22 @@ struct ReleasePipelineTests {
         #expect(result.output.contains("<string>ABCDE12345</string>"))
         #expect(!result.output.contains("$("), "a placeholder survived")
         #expect(!result.output.contains("TEAM_ID_PLACEHOLDER"), "a placeholder survived")
+    }
+
+    @Test("the widget's profile signs the Controls extension, and only beside the sync profile (ADR 0058)")
+    func widgetProfileSignsTheExtension() throws {
+        let both = try renderExportOptions(team: "ABCDE12345", profiles: ["Pesto Sync", "Pesto Controls"])
+        #expect(both.code == 0, "\(both.output)")
+        #expect(both.output.contains("<key>net.copypesto.pesto</key>\n\t\t<string>Pesto Sync</string>"))
+        #expect(both.output.contains("<key>net.copypesto.pesto.controls</key>\n\t\t<string>Pesto Controls</string>"))
+        let syncOnly = try renderExportOptions(team: "ABCDE12345", profiles: ["Pesto Sync"])
+        #expect(syncOnly.code == 0)
+        #expect(!syncOnly.output.contains("net.copypesto.pesto.controls"))
+        #expect(try renderExportOptions(team: "ABCDE12345", profiles: ["", "Pesto Controls"]).code != 0)
+
+        let makefile = try text("Makefile")
+        #expect(makefile.contains("archive: check-widget-profile"), "a widget profile alone must stop the archive")
+        #expect(makefile.contains("PESTO_WIDGET_CONDITION=PESTO_MAC_WIDGET,)"), "only WIDGET_PROFILE compiles it in")
     }
 
     @Test("a missing or malformed team id stops the export instead of signing with a bad one")

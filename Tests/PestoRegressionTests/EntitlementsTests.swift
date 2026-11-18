@@ -35,6 +35,34 @@ struct EntitlementsTests {
         #expect(try plist("Sources/Resources/Pesto.entitlements").isEmpty, "a build without the profile claims nothing")
     }
 
+    @Test("the Mac widget's entitlements are only for the build with both profiles; every other build claims none")
+    func macWidgetEntitlements_areOnlyInTheProfileBuild() throws {
+        let group = "com.apple.security.application-groups"
+        let keychain = "keychain-access-groups"
+        let sandbox = "com.apple.security.app-sandbox"
+        let identifier = "com.apple.application-identifier"
+        let team = "com.apple.developer.team-identifier"
+        let app = try plist("Sources/Resources/PestoSyncWidget.entitlements")
+        let controls = try plist("Sources/Controls/PestoControlsWidget.entitlements")
+        let prefix = "$(DEVELOPMENT_TEAM)."
+
+        #expect(Set(app.keys) == [identifier, team, group, keychain])
+        #expect(app[identifier] as? String == prefix + AppIdentity.bundleID)
+        #expect(app[group] as? [String] == [AppIdentity.appGroupID])
+        #expect(app[keychain] as? [String] == [
+            prefix + AppIdentity.bundleID,
+            prefix + AppIdentity.widgetKeychainGroupName
+        ])
+        #expect(Set(controls.keys) == [sandbox, identifier, team, group, keychain])
+        #expect(controls[sandbox] as? Bool == true)
+        #expect(controls[identifier] as? String == prefix + AppIdentity.controlsBundleID)
+        #expect(controls[group] as? [String] == [AppIdentity.appGroupID])
+        #expect(controls[keychain] as? [String] == [prefix + AppIdentity.widgetKeychainGroupName])
+        let development = try plist("Sources/Controls/PestoControls.entitlements")
+        #expect(Set(development.keys) == [sandbox], "a build without the profiles claims only the sandbox")
+        #expect(try plist("Sources/Resources/PestoSync.entitlements")[group] == nil)
+    }
+
     @Test("each iOS entitlements file claims exactly its keys, and the Mac files name none of them")
     func iOSEntitlements_arePinned() throws {
         let group = "com.apple.security.application-groups"

@@ -69,15 +69,24 @@ struct ClipDetailView: View {
         .navigationTitle(item.type.presentation.label)
         .toolbar { toolbar(item, concealment: concealment) }
         .task(id: TaskKey(id: item.id, covered: concealment.isConcealed, content: item.contentHash)) {
-            content = concealment.isConcealed ? nil : ClipContent.of(item)
-            revealedText = appState.secretReveal.isShown(item.id)
-                ? HiddenClipReveal.readableText(from: item.blob?.decryptedData()) : nil
+            let id = item.id
+            guard let container = appState.historyContainer else { return }
+            content = concealment.isConcealed || item.type == .image
+                ? nil : await ClipContent.load(itemID: id, container: container)
+            revealedText = await revealed(id, isShown: appState.secretReveal.isShown(id), container: container)
         }
         .onChange(of: appState.secretReveal.isShown(item.id)) { _, shown in
-            revealedText = shown ? HiddenClipReveal.readableText(from: item.blob?.decryptedData()) : nil
             if !shown { isEditingText = false }
+            guard let container = appState.historyContainer else { return }
+            let id = item.id
+            Task { revealedText = await revealed(id, isShown: shown, container: container) }
         }
         .onChange(of: itemID) { _, _ in isEditingText = false }
+    }
+
+    private func revealed(_ id: UUID, isShown: Bool, container: ModelContainer) async -> String? {
+        guard isShown else { return nil }
+        return await HiddenClipReveal.readableText(from: ClipContent.payload(itemID: id, container: container))
     }
 
     private struct TaskKey: Hashable {
@@ -110,6 +119,20 @@ struct ClipDetailView: View {
         }
     }
 
+    @ViewBuilder
+    private func share(_ item: ClipboardItem, concealment: CardConcealment) -> some View {
+        if concealment.isConcealed {
+            EmptyView()
+        } else if item.type == .image, let container = appState.historyContainer {
+            ShareLink(
+                item: DeferredPictureTransfer(itemID: item.id, container: container),
+                preview: SharePreview(item.type.presentation.label)
+            )
+        } else if let content {
+            ShareLink(item: ClipTransfer(content: content), preview: SharePreview(item.type.presentation.label))
+        }
+    }
+
     @ToolbarContentBuilder
     private func toolbar(_ item: ClipboardItem, concealment: CardConcealment) -> some ToolbarContent {
         if isSheet {
@@ -122,9 +145,7 @@ struct ClipDetailView: View {
                 if appState.copy(item) { library.didCopy(item.id) }
             }
             .accessibilityIdentifier(MobileAccessibilityID.copyButton)
-            if let content, !concealment.isConcealed {
-                ShareLink(item: ClipTransfer(content: content), preview: SharePreview(item.type.presentation.label))
-            }
+            share(item, concealment: concealment)
             Menu("More", systemImage: "ellipsis") {
                 Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") {
                     let id = item.id

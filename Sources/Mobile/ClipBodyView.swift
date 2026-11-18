@@ -90,9 +90,18 @@ struct ClipBodyView: View {
     }
 
     private func selectable(_ text: String, monospaced: Bool) -> some View {
-        Text(text)
-            .font(monospaced ? .body.monospaced() : .body)
-            .textSelection(.enabled)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        let detail = DetailText.make(text)
+        return VStack(alignment: .leading, spacing: 8) {
+            Text(detail.shown)
+                .font(monospaced ? .body.monospaced() : .body)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if detail.isTruncated {
+                Label("Showing the beginning only. Copy and Share use the whole text.", systemImage: "scissors")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .accessibilityIdentifier(MobileAccessibilityID.truncatedTextNote)
+            }
+        }
     }
 }

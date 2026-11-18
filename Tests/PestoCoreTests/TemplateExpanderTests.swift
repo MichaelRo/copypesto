@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 #if os(macOS)
-    import AppKit
+import AppKit
 #endif
 import Foundation
 import Testing
@@ -229,22 +229,22 @@ struct TemplateExpanderTests {
         #expect(withCaret?.charactersAfterCursor == 4)
 
         #if os(macOS)
-            let styled = NSMutableAttributedString(
-                string: "Wrap {{selection}}",
-                attributes: [.font: NSFont.boldSystemFont(ofSize: 14)]
-            )
-            let rtfData = try #require(styled.rtf(
-                from: NSRange(location: 0, length: styled.length), documentAttributes: [:]
-            ))
-            let rich = RichTextPayload(rtf: rtfData)
-            let expandedRich = try #require(TemplateExpander.expandRichPayload(
-                rich,
-                at: Self.fixedDate,
-                selectionProvider: { "chosen" }
-            ))
-            let decoded = try #require(expandedRich.rtf
-                .flatMap { NSAttributedString(rtf: $0, documentAttributes: nil) })
-            #expect(decoded.string == "Wrap chosen")
+        let styled = NSMutableAttributedString(
+            string: "Wrap {{selection}}",
+            attributes: [.font: NSFont.boldSystemFont(ofSize: 14)]
+        )
+        let rtfData = try #require(styled.rtf(
+            from: NSRange(location: 0, length: styled.length), documentAttributes: [:]
+        ))
+        let rich = RichTextPayload(rtf: rtfData)
+        let expandedRich = try #require(TemplateExpander.expandRichPayload(
+            rich,
+            at: Self.fixedDate,
+            selectionProvider: { "chosen" }
+        ))
+        let decoded = try #require(expandedRich.rtf
+            .flatMap { NSAttributedString(rtf: $0, documentAttributes: nil) })
+        #expect(decoded.string == "Wrap chosen")
         #endif
     }
 }

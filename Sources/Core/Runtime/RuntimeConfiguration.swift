@@ -68,8 +68,8 @@ public enum MarketingBackdropStyle: String, Equatable, Sendable {
     case plain
     case hero
     #if DEBUG
-        case white
-        case busy
+    case white
+    case busy
     #endif
 }
 

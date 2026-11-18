@@ -2,10 +2,10 @@
 import Foundation
 import Testing
 #if canImport(FoundationModels)
-    import FoundationModels
+import FoundationModels
 #endif
 #if canImport(Evaluations)
-    import Evaluations
+import Evaluations
 #endif
 @testable import PestoCore
 
@@ -49,10 +49,10 @@ struct AIEvalsTests {
 
     static var modelAvailable: Bool {
         #if canImport(FoundationModels) && arch(arm64)
-            guard #available(macOS 26, *) else { return false }
-            return SystemLanguageModel.default.availability == .available
+        guard #available(macOS 26, *) else { return false }
+        return SystemLanguageModel.default.availability == .available
         #else
-            return false
+        return false
         #endif
     }
 }

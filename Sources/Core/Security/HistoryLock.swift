@@ -107,10 +107,8 @@ public enum HistoryLockPolicy {
     /// The last-item file holds plaintext outside the encrypted store, so it must not survive the lock being turned on.
     public static func lockWasSwitchedOn(at date: Date = .now, defaults: UserDefaults = AppDefaults.store) {
         LastItemStore.clear()
-        defaults.set(date, forKey: switchedOnKey)
+        defaults.set(date, for: Setting.historyLockSwitchedOnAt)
     }
-
-    public static let switchedOnKey = "historyLockSwitchedOnAt"
 
     /// An unlock from before the lock was last switched on belongs to an earlier session: turning the lock off and
     /// on again must lock at once, not ride on the unlock that preceded it.

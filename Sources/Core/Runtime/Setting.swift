@@ -66,6 +66,8 @@ public enum Setting {
     public static let biometricLockTimeoutMinutes = SettingKey(
         "biometricLockTimeoutMinutes", default: 5
     )
+    /// When the History Lock was last switched on; an unlock from before it does not count (`HistoryLockPolicy`).
+    public static let historyLockSwitchedOnAt = SettingKey("historyLockSwitchedOnAt", default: Date.distantPast)
     public static let authenticationGraceMinutes = SettingKey(
         "authenticationGraceMinutes", default: 5
     )
@@ -154,7 +156,7 @@ public enum Setting {
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,
-        biometricLockTimeoutMinutes.name,
+        biometricLockTimeoutMinutes.name, historyLockSwitchedOnAt.name,
         authenticationGraceMinutes.name, linkPreviews.name,
         appleIntelligenceEnabled.name, pinnedWindowAutoPaste.name, pictureSaveFolder.name, soundEffects.name,
         searchHistory.name,

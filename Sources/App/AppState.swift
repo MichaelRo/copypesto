@@ -461,7 +461,7 @@ final class AppState {
             timeoutMinutes: AuthenticationGrace.minutes(),
             lastUnlock: HistoryLockPolicy.effectiveLastUnlock(
                 lastBiometricUnlock,
-                switchedOnAt: AppDefaults.store.object(forKey: HistoryLockPolicy.switchedOnKey) as? Date
+                switchedOnAt: AppDefaults.store.value(for: Setting.historyLockSwitchedOnAt)
             ),
             now: .now
         )

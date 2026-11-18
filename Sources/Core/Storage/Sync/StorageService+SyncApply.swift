@@ -30,6 +30,8 @@ extension StorageService {
         let clock = SyncJournal.clock(for: modelContainer)
         try await SyncJournal.$isApplyingRemote.withValue(true) {
             for record in records.sorted(by: { $0.stamp < $1.stamp }) {
+                // A segment applied in part is not marked as read, so it is applied again (to the same end) later.
+                try Task.checkCancellation()
                 do { try clock?.observe(record.stamp) } catch {
                     summary.failed += 1
                     summary.clockRefused += 1

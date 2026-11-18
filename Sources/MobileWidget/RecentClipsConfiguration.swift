@@ -7,7 +7,8 @@ import WidgetKit
 /// pinned ones. A collection is not offered: the snapshot does not carry collections.
 struct RecentClipsConfiguration: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "Recent Clips"
-    static let description = IntentDescription("Choose which clips the widget shows and what happens when you choose one.")
+    static let description =
+        IntentDescription("Choose which clips the widget shows and what happens when you choose one.")
 
     @Parameter(title: "When a Clip Is Chosen", default: .copy) var tapAction: WidgetTapChoice
 

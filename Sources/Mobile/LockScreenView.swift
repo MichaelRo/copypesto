@@ -23,8 +23,7 @@ struct LockScreenView: View {
                 .font(.title2.weight(.semibold))
             if appState.historyLock.canAuthenticate {
                 Button(DeviceAuthenticationWords.unlockTitle(for: biometry)) { Task { await appState.unlockHistory() } }
-                    .buttonStyle(.borderedProminent)
-                    .tint(accent)
+                    .buttonStyle(.pestoProminent)
                     .accessibilityIdentifier(MobileAccessibilityID.unlockButton)
             } else {
                 Text("This device has no passcode, so Pesto can\u{2019}t ask who you are.")

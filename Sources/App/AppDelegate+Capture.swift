@@ -20,7 +20,9 @@ extension AppDelegate {
                 LinkPreviewCache.shared.clear()
                 QuickLookPreviewController.sweepStaleTempFiles()
                 self?.appState.clearShelfSuggestions()
-                return try await service.clearEverything()
+                let removed = try await service.clearEverything()
+                await self?.rewriteWidgetAfterClear()
+                return removed
             }
         }
 

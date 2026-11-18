@@ -96,9 +96,17 @@ final class AppState {
     @ObservationIgnored var appChipLists = HostValues<[SourceApp]>([])
     @ObservationIgnored var frontmostAppBundleID: String?
     @ObservationIgnored var frontmostAppName: String?
-    var isScreenBeingShared = false
+    var isScreenBeingShared = false {
+        didSet { if isScreenBeingShared != oldValue { onContentCoverChanged?() } }
+    }
+
     /// Hide Contents Now: set from the menu-bar item, the Hide Clip Contents intent or a Focus filter.
-    var isContentHiddenManually = false
+    var isContentHiddenManually = false {
+        didSet { if isContentHiddenManually != oldValue { onContentCoverChanged?() } }
+    }
+
+    /// Set by the delegate when it keeps a widget snapshot, which holds no clip while contents are covered (ADR 0058).
+    @ObservationIgnored var onContentCoverChanged: (() -> Void)?
 
     func isContentCovered(screenSharingPrivacy: Bool) -> Bool {
         ContentCover.isCovered(

@@ -64,6 +64,8 @@ extension MobileAppState {
         undoOfferDismissal?.cancel()
         undoOffer = nil
         clipboardOfferCount = nil
+        pendingFill = nil
+        linkedClip = nil
         historyStore?.setVisible(false)
         historyStore?.dropSearchText()
         PreviewTextCache.shared.clear()

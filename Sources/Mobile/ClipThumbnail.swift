@@ -43,6 +43,18 @@ enum CardMedia {
         return picture
     }
 
+    /// The frames of a card's GIF, decoded behind `GIFDecodeGate` so a fast scroll decodes only a few at a time.
+    @MainActor
+    static func gifFrames(itemID: UUID, container: ModelContainer?, budget: GIFFrames.Budget) async -> GIFFrames
+    .Animation? {
+        guard let container else { return nil }
+        let service = await ThumbnailServices.shared.service(for: container)
+        guard let thumbnail = await service.thumbnail(for: itemID, maxPixel: cardPixel), thumbnail.isAnimated else {
+            return nil
+        }
+        return await GIFDecodeGate.shared.run { await GIFFrames.decode(thumbnail.data, budget: budget) }
+    }
+
     @concurrent
     static func linkPicture(for itemID: UUID) async -> UIImage? {
         guard let data = LinkPreviewImageStore().load(for: itemID) else { return nil }
@@ -59,6 +71,7 @@ struct ClipThumbnail: View {
     let itemID: UUID
     let byteSize: Int
     let maxPixel: Int
+    var accessibilityText: String?
     @Environment(MobileAppState.self) private var appState
     @State private var picture: CardMedia.Picture?
 
@@ -76,12 +89,24 @@ struct ClipThumbnail: View {
                     .overlay { Image(systemName: "photo").foregroundStyle(.secondary) }
             }
         }
-        .accessibilityHidden(true)
+        .modifier(PictureAccessibility(text: accessibilityText))
         .task(id: itemID) {
             picture = await CardMedia.picture(
                 itemID: itemID, byteSize: byteSize, container: appState.historyContainer, maxPixel: maxPixel,
                 frames: Motion.reduceMotion ? nil : .detail
             )
+        }
+    }
+}
+
+private struct PictureAccessibility: ViewModifier {
+    let text: String?
+
+    func body(content: Content) -> some View {
+        if let text {
+            content.accessibilityElement(children: .ignore).accessibilityLabel(text).accessibilityAddTraits(.isImage)
+        } else {
+            content.accessibilityHidden(true)
         }
     }
 }

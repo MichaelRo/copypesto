@@ -51,7 +51,7 @@ public struct DeviceIdentity: Sendable {
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        let status = SecItemCopyMatching(AppKeychainGroup.pinned(query) as CFDictionary, &item)
         switch status {
         case errSecSuccess:
             guard let data = item as? Data,
@@ -72,7 +72,7 @@ public struct DeviceIdentity: Sendable {
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
             kSecValueData as String: Data(value.utf8)
         ]
-        let status = SecItemAdd(attrs as CFDictionary, nil)
+        let status = SecItemAdd(AppKeychainGroup.pinned(attrs) as CFDictionary, nil)
         guard status == errSecSuccess || status == errSecDuplicateItem else {
             throw BlobEncryption.Error.keychainAccessFailed(status)
         }

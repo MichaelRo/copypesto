@@ -24,7 +24,7 @@ public struct KeychainSecretStore: SecretStoring {
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         var item: CFTypeRef?
-        switch SecItemCopyMatching(query as CFDictionary, &item) {
+        switch SecItemCopyMatching(AppKeychainGroup.pinned(query) as CFDictionary, &item) {
         case errSecSuccess: return item as? Data
         case errSecItemNotFound: return nil
         case let status: throw Failure(status: status)
@@ -39,7 +39,7 @@ public struct KeychainSecretStore: SecretStoring {
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
             kSecValueData as String: data
         ]
-        let status = SecItemAdd(attributes as CFDictionary, nil)
+        let status = SecItemAdd(AppKeychainGroup.pinned(attributes) as CFDictionary, nil)
         guard status == errSecSuccess || status == errSecDuplicateItem else { throw Failure(status: status) }
     }
 
@@ -49,7 +49,7 @@ public struct KeychainSecretStore: SecretStoring {
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
-        SecItemDelete(query as CFDictionary)
+        SecItemDelete(AppKeychainGroup.pinned(query) as CFDictionary)
     }
 }
 

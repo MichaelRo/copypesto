@@ -94,8 +94,10 @@ public final class SyncFolderService {
         }
     }
 
+    /// Also ends a pass that is running: an iPhone stops when its folder's security scope is about to end.
     public func stop() {
         stopped = true
+        current?.cancel()
         loop?.cancel()
         pending?.cancel()
         loop = nil
@@ -145,7 +147,7 @@ public final class SyncFolderService {
             repeat {
                 again = false
                 await pass()
-            } while again
+            } while again && !Task.isCancelled
         }
         current = run
         await run.value
@@ -157,14 +159,20 @@ public final class SyncFolderService {
         if isLocked() { return set(.paused) }
         guard FileManager.default.fileExists(atPath: layout.root.path) else { return set(.folderMissing) }
         do {
+            try Task.checkCancellation()
             guard let opened = try openGroup() else { return }
             try await switchEpochIfNeeded(opened)
             let current = group ?? opened
             try await adoptClipsOfMacsThatLeft()
             guard try recoverOwnLogIfNeeded(current) else { return set(.waitingForFolder) }
+            try Task.checkCancellation()
             try await write(current)
+            try Task.checkCancellation()
             try await compactIfNeeded(current)
+            try Task.checkCancellation()
             try await read(current)
+        } catch is CancellationError {
+            return
         } catch let error as SyncError {
             set(.refused(SyncCopy.refusal(error, device: deviceKind)))
         } catch {
@@ -267,6 +275,7 @@ public final class SyncFolderService {
         var wrote = false
         var drained = snapshot
         for _ in 0..<(snapshot ? Int.max : timing.batchesPerPass) {
+            try Task.checkCancellation()
             let outbox = try await storage.buildOutbox(
                 includeSensitive: includeSensitive(), syncKey: found.key, limit: snapshot ? 500 : 200
             )
@@ -340,6 +349,8 @@ public final class SyncFolderService {
                 let outcome = try await readDevice(device, found)
                 waiting = waiting || outcome.waiting
                 received += outcome.applied
+            } catch is CancellationError {
+                throw CancellationError()
             } catch {
                 // One Mac's damaged or refused file must not stop the others from being read.
                 firstFailure = firstFailure ?? error
@@ -363,6 +374,7 @@ public final class SyncFolderService {
         let todo = names.filter { (Self.sequenceRange(of: $0)?.last ?? 0) > done }
         var applied = 0
         for (index, name) in todo.enumerated() {
+            try Task.checkCancellation()
             if todo.count > 1 { set(.receiving(done: index, total: todo.count)) }
             let url = layout.log(device).appendingPathComponent(name)
             guard isReadable(url) else { return (applied, true) }

@@ -33,12 +33,35 @@ extension MobileAppState {
         let policy = retentionPolicy()
         let now = clock()
         guard retentionSchedule.shouldSweep(now: now, policy: policy, force: force) else { return }
-        retentionSchedule.didSweep(at: now, policy: policy)
-        let pruner = RetentionPruner(store: StorageRetentionStore(service: service), policyProvider: retentionPolicy)
+        let pruner = RetentionPruner(store: retentionStore(service), policyProvider: retentionPolicy)
         do {
             try await pruner.sweep(now: now)
+            retentionSchedule.didSweep(at: now, policy: policy)
         } catch {
             Self.retentionLogger.error("The retention sweep failed: \(error.localizedDescription, privacy: .public)")
         }
+    }
+}
+
+/// What lowering "Keep clips for" or "Keep at most" would delete, counted before it does.
+enum RetentionPreview {
+    static func clipsLeaving(
+        snapshot: RetentionSnapshot, current: RetentionPolicy, proposed: RetentionPolicy, now: Date
+    )
+    -> Int {
+        let already = Set(RetentionPruner.computeEvictions(candidates: snapshot.candidates, policy: current, now: now))
+        let leaving = Set(RetentionPruner.computeEvictions(candidates: snapshot.candidates, policy: proposed, now: now))
+        return leaving.subtracting(already).count
+    }
+}
+
+extension MobileAppState {
+    func clipsLeaving(days: Int, maxItems: Int) async -> Int {
+        guard let service = storageService else { return 0 }
+        let now = clock()
+        guard let snapshot = try? await retentionStore(service).retentionSnapshot(expiringBefore: now) else { return 0 }
+        return RetentionPreview.clipsLeaving(
+            snapshot: snapshot, current: retentionPolicy(), proposed: .chosen(days: days, maxItems: maxItems), now: now
+        )
     }
 }

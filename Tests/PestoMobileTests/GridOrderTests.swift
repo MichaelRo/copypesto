@@ -28,6 +28,24 @@ struct GridOrderTests {
         #expect(next == [arrived, ids[0], ids[2], ids[3]])
     }
 
+    @Test("a clip that left the scope and returns takes its place by the history's order, not the top")
+    func whenAClipReturns_thenItIsPlacedByTheHistoryOrder() {
+        let order = GridOrder()
+        _ = order.arrange(ids, context: "pinned")
+
+        let gone = order.arrange([ids[0], ids[2], ids[3]], context: "pinned")
+        #expect(gone == [ids[0], ids[2], ids[3]])
+
+        let back = order.arrange(ids, context: "pinned")
+        #expect(back == ids)
+
+        let afterCopy = [ids[3], ids[0], ids[1], ids[2]]
+        #expect(order.arrange(afterCopy, context: "pinned") == ids)
+
+        let newest = UUID()
+        #expect(order.arrange([newest] + afterCopy, context: "pinned") == [newest] + ids)
+    }
+
     @Test("a resort, or another scope or search, takes the history's order")
     func whenResortedOrContextChanges_thenTheFreshOrderIsShown() {
         let order = GridOrder()

@@ -10,6 +10,16 @@ struct LibraryRootView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.scenePhase) private var scenePhase
     @State private var library = LibraryModel()
+    @State private var width: CGFloat = 0
+    @State private var automaticColumns: NavigationSplitViewVisibility?
+
+    private var layoutSizeClass: UserInterfaceSizeClass? {
+        #if DEBUG
+        library.forcedSizeClass ?? sizeClass
+        #else
+        sizeClass
+        #endif
+    }
 
     /// A `-UITestMode` launch can say the scene is being captured, since a simulator never reports a real capture.
     private static var forcesSceneCapture: Bool {
@@ -22,6 +32,16 @@ struct LibraryRootView: View {
 
     var body: some View {
         content
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0
+                decideColumns()
+            }
+            .onChange(of: layoutSizeClass) { _, _ in
+                automaticColumns = nil
+                decideColumns()
+            }
+        #if DEBUG
+            .overlay(alignment: .bottomLeading) { UITestLayout.swapControl(library: library, actual: sizeClass) }
+        #endif
             .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 || Self.forcesSceneCapture })
             .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(in: scenePhase)))
             .animation(Motion.animation(.pestoWash), value: appState.isHistoryLocked)
@@ -34,13 +54,14 @@ struct LibraryRootView: View {
             LockScreenView().transition(.opacity)
         } else if let container = appState.historyContainer, let store = appState.historyStore {
             Group {
-                if sizeClass == .regular {
+                if layoutSizeClass == .regular {
                     PadLibraryView(store: store)
                 } else {
                     PhoneLibraryView(store: store)
                 }
             }
             .environment(library)
+            .modifier(ForcedSizeClass(forced: library.forcedSizeClassIfDebug, actual: sizeClass))
             .modelContainer(container)
             .transition(.asymmetric(insertion: .opacity, removal: .identity))
             .onChange(of: scenePhase) { _, phase in if phase == .active { library.resort() } }
@@ -56,6 +77,31 @@ struct LibraryRootView: View {
             )
         } else {
             ProgressView()
+        }
+    }
+}
+
+extension LibraryRootView {
+    /// A regular width starts with the sidebar shown or hidden by how wide the window is, and follows the width until
+    /// the person shows or hides the sidebar themselves.
+    private func decideColumns() {
+        guard width > 0, layoutSizeClass == .regular else { return }
+        guard automaticColumns == nil || library.columns == automaticColumns else { return }
+        let wanted = LibraryChrome.initialColumns(width: width)
+        automaticColumns = wanted
+        library.columns = wanted
+    }
+}
+
+private struct ForcedSizeClass: ViewModifier {
+    let forced: UserInterfaceSizeClass?
+    let actual: UserInterfaceSizeClass?
+
+    func body(content: Content) -> some View {
+        if let forced, forced != actual {
+            content.environment(\.horizontalSizeClass, forced)
+        } else {
+            content
         }
     }
 }

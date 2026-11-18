@@ -18,14 +18,16 @@ public struct UndoOutcome: Equatable, Sendable {
 /// Undo and redo (ADR 0008). Recording happens where the action does (`deleteItems`, `deleteCollection`,
 /// `ClipEditor.edit`, the pin and shortcut functions); applying happens here, on the one writer.
 extension StorageService {
-    func undoSnapshots(of doomed: [ClipboardItem]) -> [ClipSnapshot]? {
+    func undoSnapshots(of doomed: [ClipboardItem], survivors: [String: Set<UUID>]) -> [ClipSnapshot]? {
         let holdable = UndoPolicy.holdable(doomed)
         guard !holdable.isEmpty else { return nil }
         return holdable.map {
-            ClipSnapshot(
+            var snapshot = ClipSnapshot(
                 item: $0, linkPreviewFile: linkPreviews.sealedFile(for: $0.id),
                 recognizedTextFile: recognizedTexts.sealedFile(for: $0.id)
             )
+            snapshot.textAlsoHeldBy = survivors[$0.contentHash] ?? []
+            return snapshot
         }
     }
 
@@ -87,12 +89,15 @@ extension StorageService {
     private func restore(_ snapshots: [ClipSnapshot]) throws {
         let ids = snapshots.map(\.id)
         let hashes = snapshots.map(\.contentHash)
-        let present = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>(
+        let present = try modelContext.fetch(FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { ids.contains($0.id) || hashes.contains($0.contentHash) }
-        )).flatMap { [$0.id.uuidString, $0.contentHash] })
+        ))
+        let presentIDs = Set(present.map(\.id))
+        let holders = Dictionary(grouping: present, by: \.contentHash).mapValues { Set($0.map(\.id)) }
         var restored: [ClipSnapshot] = []
-        for snapshot in snapshots
-            where !present.contains(snapshot.id.uuidString) && !present.contains(snapshot.contentHash)
+        // A clip that holds the text and was not there beside this one is a copy made since: it stands for it.
+        for snapshot in snapshots where !presentIDs.contains(snapshot.id)
+            && (holders[snapshot.contentHash] ?? []).isSubset(of: snapshot.textAlsoHeldBy)
         {
             let item = snapshot.makeItem()
             if let slot = item.pinnedHotkeyIndex, try !clips(holding: slot).isEmpty { item.setShortcut(nil) }
@@ -201,7 +206,7 @@ extension StorageService {
             let snapshots: [ClipSnapshot]
             if doomed.isEmpty {
                 snapshots = []
-            } else if let held = undoSnapshots(of: doomed) {
+            } else if let held = try undoSnapshots(of: doomed, survivors: survivingHolders(of: doomed)) {
                 snapshots = held
             } else {
                 return nil

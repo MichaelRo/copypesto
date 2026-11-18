@@ -82,7 +82,7 @@ struct CollectionEditorView: View {
     }
 
     private func colorRow(_ draft: Binding<CollectionDraft>) -> some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 36), spacing: 10)], spacing: 10) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: TouchTarget.minimum), spacing: 0)], spacing: 0) {
             ForEach(draft.wrappedValue.colorChoices, id: \.self) { hex in
                 let chosen = CollectionPalette.isSame(draft.wrappedValue.colorHex, hex)
                 Button {
@@ -98,6 +98,8 @@ struct CollectionEditorView: View {
                         }
                         .padding(3)
                         .overlay(Circle().strokeBorder(chosen ? Color.primary.opacity(0.4) : .clear, lineWidth: 1.5))
+                        .frame(width: TouchTarget.minimum, height: TouchTarget.minimum)
+                        .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(CollectionPalette.name(forHex: hex))

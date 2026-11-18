@@ -79,8 +79,19 @@ struct ClipCard: View {
                     fetchPreview: { await appState.loadLinkPreview(for: item) }
                 )
             }
+            .task(id: isOnScreen && !Motion.reduceMotion && !concealment.isConcealed) {
+                guard isOnScreen, !Motion.reduceMotion, !concealment.isConcealed else { return }
+                let id = item.id
+                let container = appState.historyContainer
+                await media.animate {
+                    await CardMedia.gifFrames(itemID: id, container: container, budget: .card)
+                }
+            }
             .onAppear { isOnScreen = true }
-            .onDisappear { isOnScreen = false }
+            .onDisappear {
+                isOnScreen = false
+                media.dropAnimation()
+            }
             .modifier(CardAccessibility(card: self))
             .accessibilityIdentifier(MobileAccessibilityID.clipCard)
     }
@@ -147,6 +158,10 @@ struct ClipCard: View {
         let id = item.id
         if isCoveredForPrivacy { return appState.secretReveal.showUnderCover(id) }
         Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
+    }
+
+    func hide() {
+        appState.secretReveal.hide(item.id)
     }
 
     func share() {

@@ -22,6 +22,9 @@ struct LibraryBanners: View {
                     Spacer(minLength: 8)
                     Button("Undo") { Task { await appState.undo() } }
                         .bold()
+                        .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+                        .contentShape(.rect)
+                        .padding(.vertical, -12)
                         .accessibilityIdentifier(MobileAccessibilityID.undoButton)
                 }
             } else if let notice = appState.notice {

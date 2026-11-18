@@ -20,9 +20,14 @@ struct LibraryGrid: View {
     /// until its next tick (an edited card kept its old text), so one task moves this instead.
     @State private var minute = Date.now
     @State private var byMeaning: [UUID] = []
+    @State private var listing = LibraryListing.Result(ids: [], animates: false)
+    @State private var hasListed = false
+    @State private var position: CardIdentity?
+    @State private var hasRestoredPosition = false
+    @State private var ranking = SemanticRanking()
 
     var body: some View {
-        let ids = visibleIDs()
+        let ids = listing.ids
         let count = CardGridLayout.columnCount(width: rowWidth, isAccessibilitySize: typeSize.isAccessibilitySize)
         let cardWidth = CardGridLayout.cardWidth(rowWidth: rowWidth, columns: count)
         ScrollView {
@@ -35,13 +40,16 @@ struct LibraryGrid: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
+        .scrollPosition(id: $position, anchor: .top)
+        .onChange(of: position) { _, first in if hasRestoredPosition { library.scrollAnchor = first } }
         .scrollDismissesKeyboard(.immediately)
         .refreshable {
             await SyncExchange.onPull(appState.sync)
             library.resort()
         }
         .background(ground.ignoresSafeArea())
-        .overlay { LibraryEmptyState(isEmpty: ids.isEmpty, hasClips: !store.items.isEmpty) }
+        .overlay { LibraryEmptyState(isEmpty: hasListed && ids.isEmpty, hasClips: !store.items.isEmpty) }
+        .onChange(of: listingKey, initial: true) { _, key in relist(key) }
         .libraryBanners()
         .sensoryFeedback(.success, trigger: library.copyCount)
         .task {
@@ -64,7 +72,7 @@ struct LibraryGrid: View {
     }
 
     private func grid(_ ids: [UUID], columns count: Int, cardWidth: CGFloat) -> some View {
-        let animatesChange = library.order.shouldAnimate(to: ids)
+        let animatesChange = listing.animates
         let columns = Array(repeating: GridItem(.flexible(), spacing: CardGridLayout.spacing), count: count)
         return LazyVGrid(columns: columns, spacing: CardGridLayout.spacing) {
             ForEach(ids, id: \.self) { id in
@@ -81,6 +89,7 @@ struct LibraryGrid: View {
                 }
             }
         }
+        .scrollTargetLayout()
         .transaction(value: ids) { transaction in
             transaction.animation = animatesChange ? Motion.animation(.pestoMove) : nil
         }
@@ -93,31 +102,20 @@ struct LibraryGrid: View {
         .accessibilityIdentifier(MobileAccessibilityID.clipGrid)
     }
 
-    private func visibleIDs() -> [UUID] {
-        _ = store.items.count
-        _ = library.orderVersion
-        _ = appState.textEdits
-        guard let index = store.searchIndex() else { return [] }
-        let kind = library.isSearching ? library.filter.kind : nil
-        let cutoff = library.isSearching ? library.filter.dateCutoff() : nil
-        let remote = library.isSearching && library.filter.otherDevicesOnly
-        let fresh = library.filter.scope.ids(
-            in: index,
-            query: library.query,
-            kind: kind,
-            smartRule: smartRule,
-            hidesSensitive: NSFWMode.current() == .hide,
-            dateCutoff: cutoff,
-            otherDevicesOnly: remote
+    private var listingKey: LibraryListing.Key {
+        LibraryListing.Key(
+            revision: store.revision, query: library.query, filter: library.filter, isSearching: library.isSearching,
+            orderVersion: library.orderVersion, textEdits: appState.textEdits, byMeaning: byMeaning,
+            hidesSensitive: NSFWMode.current() == .hide, smartRule: smartBoard?.smartPredicateData
         )
-        let context = "\(library.filter.scope)|\(library.query)|\(kind?.rawValue ?? "")|\(cutoff != nil)|\(remote)"
-        let arranged = library.order.arrange(fresh, context: context)
-        guard !byMeaning.isEmpty, SemanticSearch.asksForMeaning(library.query) else { return arranged }
-        let allowed = Set(library.filter.scope.ids(
-            in: index, query: "", kind: kind, smartRule: smartRule, hidesSensitive: NSFWMode.current() == .hide,
-            dateCutoff: cutoff, otherDevicesOnly: remote
-        ))
-        return SemanticSearch.merged(textMatches: arranged, byMeaning: byMeaning, allowed: allowed)
+    }
+
+    private func relist(_ key: LibraryListing.Key) {
+        listing = LibraryListing.list(key, in: store, order: library.order, smartRule: smartRule)
+        hasListed = true
+        guard !hasRestoredPosition else { return }
+        hasRestoredPosition = true
+        position = library.scrollAnchor
     }
 
     /// Clips that match the query by meaning, found on the device with the same model and threshold as the Mac and
@@ -130,19 +128,19 @@ struct LibraryGrid: View {
         }
         try? await Task.sleep(for: SemanticSearch.typingPause)
         guard !Task.isCancelled else { return }
-        guard let embedding = await SemanticIndexer.shared.embed(text: query), !Task.isCancelled else {
-            if !Task.isCancelled { byMeaning = [] }
-            return
-        }
-        byMeaning = SemanticSearch.rank(
-            queryEmbedding: embedding, candidates: store.items.map { ($0.id, $0.embeddingData) }
-        )
+        guard let container = appState.historyContainer else { return }
+        let found = await ranking.matches(for: query, revision: store.revision, container: container)
+        if !Task.isCancelled { byMeaning = found }
+    }
+
+    private var smartBoard: Pinboard? {
+        guard case let .collection(id) = library.filter.scope,
+              let board = collections.first(where: { $0.id == id }), board.isSmart else { return nil }
+        return board
     }
 
     private var smartRule: ((UUID) -> Bool)? {
-        guard case let .collection(id) = library.filter.scope,
-              let board = collections.first(where: { $0.id == id }), board.isSmart,
-              let data = board.smartPredicateData,
+        guard let board = smartBoard, let data = board.smartPredicateData,
               let rules = try? SmartCollectionPredicate.decodeRuleSet(data),
               SmartCollectionPredicate.canCompileRuleSet(rules) else { return nil }
         let store = store

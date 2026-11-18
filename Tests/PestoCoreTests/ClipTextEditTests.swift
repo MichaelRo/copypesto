@@ -179,6 +179,21 @@ struct ClipTextEditTests {
         #expect(text.previewText.isEmpty)
     }
 
+    @Test("an explicit link is marked, and the mark goes when the text is edited to something that is not")
+    func whenExplicitLinkEditedAway_thenTheMarkIsCleared() async throws {
+        let id = try await ingest("plain words here")
+
+        try await service.updateText(id: id, text: "https://pornhub.com/video/123")
+        #expect(try clip(id).isNSFW)
+
+        try await service.updateText(id: id, text: "https://copypesto.net/guide")
+        #expect(try clip(id).isNSFW == false)
+
+        try await service.updateText(id: id, text: "https://pornhub.com/video/456")
+        try await service.updateText(id: id, text: "plain words once more")
+        #expect(try clip(id).isNSFW == false)
+    }
+
     @Test("the search vector and the text signature follow the new text")
     func whenTextEdited_thenVectorAndSignatureAreRefreshed() async throws {
         let old = "The quarterly report is due on Friday, please send your numbers early."

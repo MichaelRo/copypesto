@@ -30,6 +30,8 @@ extension StorageService {
         let clock = SyncJournal.clock(for: modelContainer)
         try await SyncJournal.$isApplyingRemote.withValue(true) {
             for record in records.sorted(by: { $0.stamp < $1.stamp }) {
+                // A segment applied in part is not marked as read, so it is applied again (to the same end) later.
+                try Task.checkCancellation()
                 do { try clock?.observe(record.stamp) } catch {
                     summary.failed += 1
                     summary.clockRefused += 1
@@ -175,13 +177,33 @@ extension StorageService {
                 summary.ignored += 1
                 return
             }
-            try deleteItems(ids: [meta.id], reason: .merged)
-            try await insertRemote(meta, payload: payload, stamp: stampR, keepsSameText: true)
+            if let text = Self.editableText(payload, mimeType: meta.mimeType, of: known) {
+                // Replaced in place, so what only this device holds about the clip stays with it.
+                known.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
+                try replaceText(
+                    of: known, with: text, plainHash: meta.plainHash, key: try? encryption.loadOrCreateKey(),
+                    mimeType: meta.mimeType
+                ) { item in
+                    apply(meta.curation, to: item)
+                    markApplied(item, stamp: stampR)
+                }
+            } else {
+                try deleteItems(ids: [meta.id], reason: .merged)
+                try await insertRemote(meta, payload: payload, stamp: stampR, keepsSameText: true)
+            }
             summary.updated += 1
         } else {
             try await insertRemote(meta, payload: payload, stamp: stampR)
             summary.added += 1
         }
+    }
+
+    private static func editableText(_ payload: Data, mimeType: String, of item: ClipboardItem) -> String? {
+        guard ["public.utf8-plain-text", "public.url"].contains(mimeType),
+              TextEditOutcome.isEditable(type: item.type, analysisPending: item.analysisPending),
+              let text = String(data: payload, encoding: .utf8),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return text
     }
 
     private func holds(_ plainHash: String, _ item: ClipboardItem) -> Bool {
@@ -191,8 +213,14 @@ extension StorageService {
     private func insertRemote(
         _ meta: SyncItemRecord, payload: Data, stamp: SyncStamp, keepsSameText: Bool = false
     ) async throws {
-        // The two-second echo guard is for a pasteboard that fires twice, not for a clip that has to be put back.
+        // The two-second echo guard and the double ⌘C echo are about this device's own copies: what sync puts in is
+        // neither swallowed by them nor counted as the latest local copy afterwards.
+        let localIngest = (hash: lastIngestedHash, clip: lastInsertedClip)
         lastIngestedHash = nil
+        defer {
+            lastIngestedHash = localIngest.hash
+            lastInsertedClip = localIngest.clip
+        }
         let textual: Set = ["public.utf8-plain-text", "public.url", "public.file-url"]
         try await ingest(
             PasteboardCapture(

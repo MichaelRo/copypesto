@@ -20,7 +20,7 @@ struct ClipDeleteUndoTests {
     private func capture(_ text: String, at offset: TimeInterval = 0) -> PasteboardCapture {
         PasteboardCapture(
             typeIdentifier: "public.utf8-plain-text", payload: Data(text.utf8), payloadString: text,
-            timestamp: .now.addingTimeInterval(offset), contentHash: "hash-\(text)"
+            timestamp: .now.addingTimeInterval(offset), contentHash: Data(text.utf8).sha256Hex
         )
     }
 
@@ -170,6 +170,19 @@ struct ClipDeleteUndoTests {
         _ = try await service.undo()
 
         #expect(try items().count == 1)
+    }
+
+    @Test("undoing the delete of one of two clips with one text brings it back beside the one that stayed")
+    func whenOneOfTwoClipsWithOneTextIsDeleted_thenUndoBringsItBack() async throws {
+        let ids = try await ingest("first words", "second words")
+        try await service.updateText(id: ids[0], text: "second words")
+        try await service.deleteItems(ids: [ids[0]], reason: .user)
+        #expect(try items().map(\.id) == [ids[1]])
+
+        let outcome = try await service.undo()
+
+        #expect(outcome?.direction == .undone)
+        #expect(try Set(items().map(\.id)) == Set(ids))
     }
 
     @Test("a shortcut another clip took meanwhile stays with that clip")

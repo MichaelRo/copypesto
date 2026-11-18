@@ -49,7 +49,7 @@ extension HostedGlobals {
             AppDefaults.store.set(true, forKey: key)
             defer {
                 AppDefaults.store.removeObject(forKey: key)
-                AppDefaults.store.removeObject(forKey: HistoryLockPolicy.switchedOnKey)
+                AppDefaults.store.removeValue(for: Setting.historyLockSwitchedOnAt)
             }
             let state = AppState()
             state.completeUnlock()
@@ -163,7 +163,7 @@ extension HostedGlobals {
             AppDefaults.store.set(true, forKey: key)
             defer {
                 AppDefaults.store.removeObject(forKey: key)
-                AppDefaults.store.removeObject(forKey: HistoryLockPolicy.switchedOnKey)
+                AppDefaults.store.removeValue(for: Setting.historyLockSwitchedOnAt)
             }
             let state = AppState()
             state.completeUnlock(at: Date().addingTimeInterval(-3600))
@@ -190,7 +190,7 @@ extension HostedGlobals {
             AppDefaults.store.set(true, forKey: key)
             defer {
                 AppDefaults.store.removeObject(forKey: key)
-                AppDefaults.store.removeObject(forKey: HistoryLockPolicy.switchedOnKey)
+                AppDefaults.store.removeValue(for: Setting.historyLockSwitchedOnAt)
             }
             let state = AppState()
             state.completeUnlock()

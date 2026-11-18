@@ -19,6 +19,7 @@ enum MobileAccessibilityID {
     static let syncRecoveryKey = "sync-recovery-key"
     static let syncRecoveryKeyField = "sync-recovery-key-field"
     static let editTextButton = "clip-edit-text"
+    static let truncatedTextNote = "clip-truncated-note"
     static let textEditor = "clip-text-editor"
     static let saveTextButton = "clip-save-text"
     static let cancelTextEditButton = "clip-cancel-text-edit"

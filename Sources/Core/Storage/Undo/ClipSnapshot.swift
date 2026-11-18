@@ -79,6 +79,9 @@ public struct ClipSnapshot: Sendable {
     let linkPreviewFile: Data?
     /// The sealed file holding a picture's whole recognized text (ADR 0034), restored beside the clip.
     let recognizedTextFile: Data?
+    /// The clips that held the same text and stayed when this one was deleted (ADR 0053), so an undo tells them apart
+    /// from a copy of that text made after the delete.
+    var textAlsoHeldBy: Set<UUID> = []
 
     /// Whether `UndoPolicy` allows this clip to be kept.
     var isHoldable: Bool {

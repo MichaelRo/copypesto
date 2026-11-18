@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
 import SwiftUI
+import Synchronization
 import UIKit
 
 /// Sizes on one card: Core's fixed steps scaled with the card's width (`CardTextScale`; `scaledFont` adds Dynamic
@@ -10,11 +11,11 @@ struct CardMetrics {
     static let footGap: CGFloat = 6
 
     let width: CGFloat
-    private let traits: UITraitCollection
+    private let category: UIContentSizeCategory
 
     init(width: CGFloat, typeSize: DynamicTypeSize) {
         self.width = width
-        traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(typeSize))
+        category = UIContentSizeCategory(typeSize)
     }
 
     var height: CGFloat {
@@ -28,7 +29,7 @@ struct CardMetrics {
     }
 
     func lineHeight(_ style: UIFont.TextStyle) -> CGFloat {
-        UIFont.preferredFont(forTextStyle: style, compatibleWith: traits).lineHeight
+        LineHeights.height(of: style, in: category)
     }
 
     var bodyHeight: CGFloat {
@@ -37,5 +38,29 @@ struct CardMetrics {
 
     func lines(_ style: UIFont.TextStyle) -> Int {
         CardGridLayout.lineLimit(height: bodyHeight, lineHeight: lineHeight(style))
+    }
+}
+
+/// The line height of a text style at a content size category, looked up once: every card on screen asks, on every
+/// draw, and the answer changes only with the person's text size.
+enum LineHeights {
+    private struct Key: Hashable {
+        let style: UIFont.TextStyle
+        let category: UIContentSizeCategory
+    }
+
+    private static let cache = Mutex<[Key: CGFloat]>([:])
+
+    static var cachedCount: Int {
+        cache.withLock { $0.count }
+    }
+
+    static func height(of style: UIFont.TextStyle, in category: UIContentSizeCategory) -> CGFloat {
+        let key = Key(style: style, category: category)
+        if let known = cache.withLock({ $0[key] }) { return known }
+        let traits = UITraitCollection(preferredContentSizeCategory: category)
+        let height = UIFont.preferredFont(forTextStyle: style, compatibleWith: traits).lineHeight
+        cache.withLock { $0[key] = height }
+        return height
     }
 }

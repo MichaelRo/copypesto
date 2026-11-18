@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import CryptoKit
 import Foundation
 import SwiftData
 
@@ -23,21 +24,38 @@ public extension StorageService {
         let key = try? encryption.loadOrCreateKey()
         let forms = ContentHash.candidates(for: plainHash, key: key)
         if forms.contains(item.contentHash) { return .unchanged }
+        let before = ClipSnapshot(item: item, linkPreviewFile: linkPreviews.sealedFile(for: id))
+        try replaceText(of: item, with: text, plainHash: plainHash, key: key)
+        recordReplacement(of: item, before: before, kind: .text)
+        return .saved
+    }
+}
+
+extension StorageService {
+    /// Seals, judges and re-hashes a clip's new text and saves it, with whatever `beforeSave` changes in the same save.
+    /// What this device keeps about the clip on its own (shortcut slot, fill-ins, paste days, capture method, source
+    /// colour, place in the history) stays.
+    func replaceText(
+        of item: ClipboardItem, with text: String, plainHash: String, key: SymmetricKey?,
+        mimeType arrivedMimeType: String? = nil, beforeSave: (ClipboardItem) -> Void = { _ in }
+    ) throws {
+        let payload = Data(text.utf8)
         let classified = ContentClassifier.classify(text: text)
-        let mimeType = classified.type == .url && item.blob?.mimeType == "public.url"
-            ? "public.url" : "public.utf8-plain-text"
+        let mimeType = arrivedMimeType ?? (classified.type == .url && item.blob?.mimeType == "public.url"
+            ? "public.url" : "public.utf8-plain-text")
         if ClipSizePolicy.isTooLarge(byteCount: payload.count, typeIdentifier: mimeType) {
             throw ClipSizePolicy.TooLarge(message: ClipSizePolicy.message(
                 byteCount: payload.count, typeIdentifier: mimeType
             ))
         }
-        let before = ClipSnapshot(item: item, linkPreviewFile: linkPreviews.sealedFile(for: id))
+        let id = item.id
         let wasLink = item.type == .url
         do {
             try sealText(payload, mimeType: mimeType, into: item)
             try applyEditedText(text, classified: classified, to: item)
             item.contentHash = ContentHash.stored(plainHash, key: key)
             if wasLink { forgetLinkPreview(of: item) }
+            beforeSave(item)
             PreviewTextCache.shared.clear()
             try saveOrRollback()
         } catch {
@@ -46,16 +64,12 @@ public extension StorageService {
         }
         if wasLink { linkPreviews.delete(ids: [id]) }
         similarity.remove(id)
-        recordReplacement(of: item, before: before, kind: .text)
         lastItemStore.clear(ifItemID: id)
         mirrorIfNewest(item)
         startEmbedding(for: item, text: text)
         noteSignature(of: item, text: text)
-        return .saved
     }
-}
 
-extension StorageService {
     /// Seals `payload` as the clip's blob under its own id, dropping any rich text from the copy it replaces.
     func sealText(_ payload: Data, mimeType: String, into item: ClipboardItem) throws {
         let envelope = try encryption.encrypt(
@@ -89,7 +103,7 @@ extension StorageService {
         item.textLength = classified.type == .text || classified.type == .code ? text.count : 0
         item.embeddingData = nil
         item.updateMetadata { $0.signature = nil }
-        if classified.type == .url, !item.isNSFW, NSFWURLDetector.isExplicit(urlString: text) { item.isNSFW = true }
+        item.isNSFW = classified.type == .url && NSFWURLDetector.isExplicit(urlString: text)
         if keepsCredential { return }
         let sensitivity = SensitiveContentDetector.detect(in: text)
         item.sensitivityRaw = sensitivity?.category.rawValue

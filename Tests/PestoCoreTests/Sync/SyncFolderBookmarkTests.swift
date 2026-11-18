@@ -8,11 +8,22 @@ final class FakeBookmarks: SecurityScopedBookmarks, @unchecked Sendable {
     private let lock = NSLock()
     private var starts: [URL: Int] = [:]
     private var stops: [URL: Int] = [:]
+    private var bookmarksMade = 0
     var isStale = false
     var grantsScope = true
+    var refusesBookmark = false
 
     func bookmark(for url: URL) throws -> Data {
-        Data(url.path.utf8)
+        try lock.withLock {
+            guard !refusesBookmark else { throw CocoaError(.fileReadNoPermission) }
+            bookmarksMade += 1
+            isStale = false
+            return Data(url.path.utf8)
+        }
+    }
+
+    var bookmarkCount: Int {
+        lock.withLock { bookmarksMade }
     }
 
     func resolve(_ data: Data) throws -> (url: URL, isStale: Bool) {
@@ -101,16 +112,38 @@ struct SyncFolderBookmarkTests {
         #expect(BookmarkedSyncFolder.syncRoot(forPicked: picked) == picked)
     }
 
-    @Test("a stale bookmark asks for the folder again and holds nothing open")
-    func whenTheBookmarkIsStale_thenTheFolderNeedsRepair() throws {
+    @Test("a stale bookmark that cannot be made again asks for the folder again and holds nothing open")
+    func whenTheBookmarkIsStaleAndCannotBeRenewed_thenTheFolderNeedsRepair() throws {
         defer { try? FileManager.default.removeItem(at: picked) }
         let bookmarks = FakeBookmarks()
         let source = BookmarkedSyncFolder(defaults: defaults, bookmarks: bookmarks)
         _ = try source.choose(picked)
         source.relinquish()
         bookmarks.isStale = true
+        bookmarks.refusesBookmark = true
 
         #expect(source.resolve() == .needsRepair(.stale))
+        #expect(bookmarks.held == 0)
+    }
+
+    @Test("a stale bookmark that still opens the folder is made again and stored, and sync goes on")
+    func whenTheBookmarkIsStaleButOpens_thenItIsRenewedAndTheFolderIsReady() throws {
+        defer { try? FileManager.default.removeItem(at: picked) }
+        let bookmarks = FakeBookmarks()
+        let source = BookmarkedSyncFolder(defaults: defaults, bookmarks: bookmarks)
+        let root = try source.choose(picked)
+        source.relinquish()
+        let made = bookmarks.bookmarkCount
+        bookmarks.isStale = true
+
+        #expect(source.resolve() == .ready(root))
+        #expect(bookmarks.bookmarkCount == made + 1)
+        #expect(bookmarks.held == 1)
+        source.relinquish()
+
+        let later = BookmarkedSyncFolder(defaults: defaults, bookmarks: bookmarks)
+        #expect(later.resolve() == .ready(root), "the renewed bookmark is the one stored")
+        later.relinquish()
         #expect(bookmarks.held == 0)
     }
 

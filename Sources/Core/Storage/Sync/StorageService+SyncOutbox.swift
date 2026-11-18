@@ -100,8 +100,8 @@ public extension StorageService {
             return
         case .staysHere:
             if SyncEligibility.needsWithdrawal(item, includeSensitive: includeSensitive) {
-                let hash = item.blob?.decryptedData().map { Data(SHA256.hash(data: $0)).hexString }
-                let body = SyncTombstoneRecord(id: item.id, kind: .item, plainHash: hash)
+                // By id alone: the text it holds now is what must stay here, so not even its hash leaves.
+                let body = SyncTombstoneRecord(id: item.id, kind: .item, plainHash: nil)
                 try outbox.records.append(SyncRecord(
                     kind: .tombstone, sequence: 0, stamp: clock.next(), metadata: SyncRecord.encode(body)
                 ))

@@ -73,9 +73,13 @@ extension MobileAppState {
     }
 
     /// What the Paste button or a drop delivered.
-    func add(from providers: [NSItemProvider], method: CaptureMethod) async {
+    func add(from providers: [NSItemProvider], method: CaptureMethod, pasteboardTypes: [String] = []) async {
+        guard !ItemProviderCapture.isConcealed(providers, pasteboardTypes: pasteboardTypes) else { return }
         do {
-            try await add(ItemProviderCapture.capture(from: providers)?.with(captureMethod: method))
+            try await add(
+                ItemProviderCapture.capture(from: providers, pasteboardTypes: pasteboardTypes)?
+                    .with(captureMethod: method)
+            )
         } catch {
             Self.logger.error("Reading a paste or drop failed: \(error.localizedDescription, privacy: .public)")
             tell(String(localized: "Couldn\u{2019}t read what was pasted."), isProblem: true)
@@ -89,6 +93,9 @@ extension MobileAppState {
             try await service.deleteItems(ids: ids, reason: .user)
             ids.forEach(secretReveal.hide)
             offerUndo(since: mark)
+            // A deleted clip leaves the widget and AutoFill at once, not after the rewrite's pause.
+            writeQuickInsert()
+            await writeWidget()
         }
     }
 
@@ -147,11 +154,16 @@ extension MobileAppState {
 
     func finishCopy(_ item: ClipboardItem, content: ClipContent) -> Bool {
         MobileClipboard.write(content, protected: item.sensitivityRaw != nil)
+        var saved = true
         if let context = item.modelContext {
             item.bringToFront(at: clock())
-            report("Couldn\u{2019}t save the change.") { try context.saveOrRollback() }
+            saved = false
+            report("Couldn\u{2019}t save the change.") {
+                try saveChanges(context)
+                saved = true
+            }
         }
-        tell(String(localized: "Copied"))
+        if saved { tell(String(localized: "Copied")) }
         return true
     }
 
@@ -241,9 +253,14 @@ extension MobileAppState {
     /// Pesto left the foreground: whatever was shown hides again (ADR 0003), and the AutoFill set and the widget's
     /// snapshot are brought up to date before iOS may suspend the app (ADR 0051, ADR 0052).
     func didLeaveForeground() {
+        isActivated = false
         historyLock.didLeaveForeground(at: clock())
         secretReveal.hideAll()
         writeQuickInsert()
-        Task { await refreshWidgetPresence() }
+        let hold = backgroundWork.hold("Widget snapshot")
+        Task {
+            await refreshWidgetPresence()
+            hold.finish()
+        }
     }
 }

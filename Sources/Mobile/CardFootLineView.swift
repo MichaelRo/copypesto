@@ -74,11 +74,9 @@ struct CardFootLineView: View {
         )
     }
 
-    static var device: CardFootLine.Device {
-        UIDevice.current.userInterfaceIdiom == .pad
-            ? .init(name: String(localized: "iPad"), symbol: "ipad")
-            : .init(name: String(localized: "iPhone"), symbol: "iphone")
-    }
+    static let device: CardFootLine.Device = UIDevice.current.userInterfaceIdiom == .pad
+        ? .init(name: String(localized: "iPad"), symbol: "ipad")
+        : .init(name: String(localized: "iPhone"), symbol: "iphone")
 }
 
 private struct PillGround: ViewModifier {

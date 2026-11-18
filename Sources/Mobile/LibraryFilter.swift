@@ -90,6 +90,15 @@ struct LibraryFilter: Equatable {
 }
 
 enum LibraryChrome {
+    /// A regular width narrower than this (an iPad window in Split View or Slide Over) starts with the sidebar hidden
+    /// and
+    /// the chip row in its place.
+    static let sidebarMinimumWidth: CGFloat = 800
+
+    static func initialColumns(width: CGFloat) -> NavigationSplitViewVisibility {
+        width < sidebarMinimumWidth ? .detailOnly : .all
+    }
+
     static func showsChipRow(isRegular: Bool, columns: NavigationSplitViewVisibility) -> Bool {
         !isRegular || columns == .detailOnly
     }

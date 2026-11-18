@@ -146,7 +146,20 @@ struct LockSwitchedOnTests {
 
         HistoryLockPolicy.lockWasSwitchedOn(at: day, defaults: defaults)
 
-        #expect(defaults.object(forKey: HistoryLockPolicy.switchedOnKey) as? Date == day)
+        #expect(defaults.value(for: Setting.historyLockSwitchedOnAt) == day)
+    }
+
+    @Test("the moment the lock was switched on keeps its stored name, so an earlier build's value still counts")
+    func whenStoredByAnEarlierBuild_thenTheSettingReadsIt() {
+        let defaults = ThrowawayDefaults.make()
+        #expect(Setting.historyLockSwitchedOnAt.name == "historyLockSwitchedOnAt")
+        #expect(Setting.allNames.contains("historyLockSwitchedOnAt"))
+        #expect(defaults.value(for: Setting.historyLockSwitchedOnAt) == .distantPast)
+        #expect(HistoryLockPolicy.effectiveLastUnlock(day, switchedOnAt: .distantPast) == day)
+
+        defaults.set(day, forKey: "historyLockSwitchedOnAt")
+
+        #expect(defaults.value(for: Setting.historyLockSwitchedOnAt) == day)
     }
 }
 

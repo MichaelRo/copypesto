@@ -13,6 +13,24 @@ final class LibraryModel {
     var query = ""
     var isSearching = false
     var openClipID: UUID?
+    /// The text editor open in the detail, kept here so a change of layout (the phone's sheet, the pad's inspector)
+    /// does not lose what was typed. Memory only, never scene storage: it holds a clip's plaintext.
+    var textEdit: TextEditSession?
+    /// The first card showing in the grid, restored when the grid is drawn again by the other layout.
+    var scrollAnchor: CardIdentity?
+    #if DEBUG
+    /// `UITestLayout`: the width class a UI test forces, nil for the real one.
+    var forcedSizeClass: UserInterfaceSizeClass? = UITestLayout.initialSizeClass
+    #endif
+
+    var forcedSizeClassIfDebug: UserInterfaceSizeClass? {
+        #if DEBUG
+        forcedSizeClass
+        #else
+        nil
+        #endif
+    }
+
     var columns: NavigationSplitViewVisibility = .all
     var showsSettings = false
     var isComposing = false
@@ -26,8 +44,26 @@ final class LibraryModel {
     private(set) var orderVersion = 0
     @ObservationIgnored let order = GridOrder()
 
+    struct TextEditSession: Equatable {
+        let clipID: UUID
+        var draft: String
+    }
+
     func open(_ id: UUID) {
+        if textEdit?.clipID != id { textEdit = nil }
         openClipID = id
+    }
+
+    func beginTextEdit(of id: UUID, text: String) {
+        textEdit = TextEditSession(clipID: id, draft: text)
+    }
+
+    func endTextEdit() {
+        textEdit = nil
+    }
+
+    func isEditingText(of id: UUID) -> Bool {
+        textEdit?.clipID == id
     }
 
     /// The history locked: nothing it had open, typed or was about to delete comes back with the unlock.
@@ -35,6 +71,8 @@ final class LibraryModel {
         query = ""
         isSearching = false
         openClipID = nil
+        textEdit = nil
+        scrollAnchor = nil
         showsSettings = false
         isComposing = false
         isNamingCollection = false

@@ -50,6 +50,7 @@ final class MobileAppState {
     @ObservationIgnored var openExternally: @MainActor (URL) -> Void = { UIApplication.shared.open($0) }
     /// Where the widget's snapshot is kept (`MobileAppState+Widget.swift`); nil in a hosted test until it names one.
     @ObservationIgnored var widget: WidgetTarget? = .current
+    @ObservationIgnored var backgroundWork = BackgroundWork.system
     @ObservationIgnored var linkPreviewLoader = LinkPreviewLoader()
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?
@@ -58,6 +59,15 @@ final class MobileAppState {
     }
 
     @ObservationIgnored var retentionSchedule = RetentionSchedule()
+    @ObservationIgnored var retentionStore: @MainActor (StorageService) -> any RetentionStore = {
+        StorageRetentionStore(service: $0)
+    }
+
+    @ObservationIgnored var saveChanges: @MainActor (ModelContext) throws -> Void = { try $0.saveOrRollback() }
+
+    /// How many times the foreground sequence ran (`MobileAppState+Activation.swift`).
+    @ObservationIgnored var activationCount = 0
+    @ObservationIgnored var isActivated = false
     /// iOS's last answer to whether a Pesto widget is installed.
     @ObservationIgnored var widgetIsInstalled = false
     @ObservationIgnored var widgetRewrite: Task<Void, Never>?

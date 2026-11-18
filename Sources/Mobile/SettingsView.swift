@@ -15,10 +15,18 @@ struct SettingsView: View {
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
     @AppStorage(Setting.retentionDays) private var retentionDays: Int
     @AppStorage(Setting.retentionMaxItems) private var retentionMaxItems: Int
+    @State private var pendingRetention: PendingRetention?
     @AppStorage(Setting.screenSharingPrivacy) private var coversWhileCaptured: Bool
     @State private var biometry = DeviceAuthenticationWords.biometry()
     @State private var clearCount = 0
     @State private var isConfirmingClear = false
+
+    private struct PendingRetention: Identifiable {
+        let id = UUID()
+        let days: Int
+        let maxItems: Int
+        let count: Int
+    }
 
     var body: some View {
         Form {
@@ -59,14 +67,14 @@ struct SettingsView: View {
                 )
             }
             Section {
-                Picker("Keep clips for", selection: $retentionDays) {
+                Picker("Keep clips for", selection: retentionDaysChoice) {
                     ForEach(RetentionChoices.ageDays, id: \.self) { Text(RetentionChoices.ageLabel($0)).tag($0) }
                     if !RetentionChoices.isPresetAge(retentionDays) {
                         Text(String(localized: "Custom (\(retentionDays) days)")).tag(retentionDays)
                     }
                 }
                 .accessibilityIdentifier(MobileAccessibilityID.retentionAgePicker)
-                Picker("Keep at most", selection: $retentionMaxItems) {
+                Picker("Keep at most", selection: retentionMaxItemsChoice) {
                     ForEach(RetentionChoices.itemCounts, id: \.self) { Text("\($0.formatted()) clips").tag($0) }
                     if !RetentionChoices.isPresetCount(retentionMaxItems) {
                         Text(String(localized: "Custom (\(retentionMaxItems) clips)")).tag(retentionMaxItems)
@@ -77,8 +85,6 @@ struct SettingsView: View {
             } footer: {
                 Text("Pinned clips are always kept.")
             }
-            .onChange(of: retentionDays) { Task { await appState.pruneHistory() } }
-            .onChange(of: retentionMaxItems) { Task { await appState.pruneHistory() } }
             Section {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
@@ -139,6 +145,41 @@ struct SettingsView: View {
         } message: {
             Text("This deletes every clip that is not pinned. It can\u{2019}t be undone.")
         }
+        .confirmationDialog(
+            String(localized: "Delete \(pendingRetention?.count ?? 0) clips?"), isPresented: isConfirmingRetention,
+            titleVisibility: .visible, presenting: pendingRetention
+        ) { change in
+            Button("Delete", role: .destructive) { apply(change) }
+        } message: { _ in
+            Text("Clips past the new limit are deleted now. Pinned clips stay. It can\u{2019}t be undone.")
+        }
+    }
+
+    private var retentionDaysChoice: Binding<Int> {
+        Binding(get: { retentionDays }, set: { askToChangeRetention(days: $0, maxItems: retentionMaxItems) })
+    }
+
+    private var retentionMaxItemsChoice: Binding<Int> {
+        Binding(get: { retentionMaxItems }, set: { askToChangeRetention(days: retentionDays, maxItems: $0) })
+    }
+
+    private var isConfirmingRetention: Binding<Bool> {
+        Binding(get: { pendingRetention != nil }, set: { if !$0 { pendingRetention = nil } })
+    }
+
+    private func askToChangeRetention(days: Int, maxItems: Int) {
+        Task {
+            let count = await appState.clipsLeaving(days: days, maxItems: maxItems)
+            let change = PendingRetention(days: days, maxItems: maxItems, count: count)
+            if count > 0 { pendingRetention = change } else { apply(change) }
+        }
+    }
+
+    private func apply(_ change: PendingRetention) {
+        retentionDays = change.days
+        retentionMaxItems = change.maxItems
+        pendingRetention = nil
+        Task { await appState.pruneHistory() }
     }
 
     private func askToClear() async {

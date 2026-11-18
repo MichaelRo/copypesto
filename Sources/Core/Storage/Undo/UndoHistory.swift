@@ -49,6 +49,15 @@ public final class UndoHistory: Sendable {
         state.withLock { $0.redo.last?.label }
     }
 
+    /// The clips whose text the next Undo (or Redo) puts back, so a caller can wait for exactly those to redraw.
+    public var undoReplacedClipIDs: [UUID] {
+        state.withLock { $0.undo.last?.replacedClipIDs ?? [] }
+    }
+
+    public var redoReplacedClipIDs: [UUID] {
+        state.withLock { $0.redo.last?.replacedClipIDs ?? [] }
+    }
+
     /// How many actions have been recorded in all, so a caller can tell whether its own action was kept.
     public var recordedCount: Int {
         state.withLock { $0.recorded }

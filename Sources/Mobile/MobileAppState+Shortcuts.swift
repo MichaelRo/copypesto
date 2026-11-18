@@ -33,6 +33,7 @@ extension MobileAppState {
     func addFromShortcut(text: String?, file: Data?, fileType: UTType?) async throws {
         boot()
         guard let service = storageService else { throw ShortcutFailure.notReady }
+        guard !isHistoryLockedNow() else { throw ShortcutFailure.locked }
         guard let capture = Self.shortcutCapture(text: text, file: file, fileType: fileType) else {
             throw ShortcutFailure.nothingToAdd
         }

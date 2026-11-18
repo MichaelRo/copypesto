@@ -137,6 +137,37 @@ struct MobileQuickInsertTests {
         #expect(try fixture.read().entries.isEmpty)
     }
 
+    @Test("a set that cannot be written again is removed, never left with clips deleted or made secret since")
+    func whenARewriteFails_thenTheOldSetIsRemoved() async throws {
+        let library = try await MobileTestLibrary()
+        let fixture = try fixture(on: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        library.state.quickInsert = fixture.target
+        try await library.add("written while unlocked")
+        library.state.writeQuickInsert()
+        #expect(fixture.file.exists)
+
+        fixture.secrets.refusesReads = true
+        library.state.writeQuickInsert()
+
+        #expect(!fixture.file.exists)
+    }
+
+    @Test("a deleted clip leaves the set at once, not after the rewrite's pause")
+    func whenAClipIsDeleted_thenItLeavesTheSetAtOnce() async throws {
+        let library = try await MobileTestLibrary()
+        let fixture = try fixture(on: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        library.state.quickInsert = fixture.target
+        let item = try await library.add("delete me")
+        library.state.writeQuickInsert()
+        #expect(try fixture.read().entries.map(\.text) == ["delete me"])
+
+        await library.state.delete([item.id])
+
+        #expect(try fixture.read().entries.isEmpty)
+    }
+
     @Test("turning the setting off removes the file and the key")
     func whenTurnedOff_thenTheFileAndKeyGo() async throws {
         let library = try await MobileTestLibrary()

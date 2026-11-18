@@ -31,13 +31,13 @@ public struct ICloudSyncKeyStore: SyncKeyStoring {
     }
 
     func baseQuery(vaultID: Data, epoch: UInt32) -> [String: Any] {
-        [
+        AppKeychainGroup.pinned([
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: AppIdentity.keychainService,
             kSecAttrAccount as String: Self.account(vaultID: vaultID, epoch: epoch),
             kSecAttrSynchronizable as String: true,
             kSecUseDataProtectionKeychain as String: true
-        ]
+        ])
     }
 
     private func failure(_ status: OSStatus) -> SyncKeyStoreError {

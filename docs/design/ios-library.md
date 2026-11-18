@@ -13,7 +13,13 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 - **Regular width** (`PadLibraryView`): a two-column `NavigationSplitView`. The sidebar lists All Clips, Pinned and the
   collections with New Collection; Settings is in its toolbar. Search sits in the grid's top toolbar. A clip opens in a
   trailing `.inspector`, only on demand. With the sidebar hidden the grid carries the chip row and the gear
-  (`LibraryChrome.showsChipRow`, driven by the size class and the column visibility, never by the device).
+  (`LibraryChrome.showsChipRow`, driven by the size class and the column visibility, never by the device). A regular
+  width under 800 pt (an iPad window in Split View) starts with the sidebar hidden (`LibraryChrome.initialColumns`).
+- **A change of layout** (an iPad window resized across the compact boundary, a foldable iPhone later) tears down one
+  layout and builds the other, so what the person is doing lives in `LibraryModel` above both: the scope, the search,
+  the open clip, the unsaved Edit Text draft (memory only, never scene storage: it holds plaintext) and the first
+  visible card, which the grid scrolls back to (`scrollPosition`). `LayoutSwapUITests` flips a forced size class on
+  the iPad simulator, because XCUITest cannot resize a window.
 - **Chips** (`LibraryChip.row`): All, Pinned, each collection, then "+". While a search is open the row adds the six
   kinds (Text, Links, Pictures, Colors, Code, Files) after a divider and drops "+"; kinds appear nowhere else. A kind
   narrows the scope; ending the search clears it (`LibraryFilter`). A collection chip's menu edits (name, icon, color) or deletes it
@@ -25,7 +31,8 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
   white on a light ground and white at 10 percent on a dark one, on the theme's solid ground.
 - **Order while looking** (`GridOrder`): a copy moves the clip to the front of the history at once, but the grid keeps
   the order it had until the app returns to the front, a pull to refresh, or a change of scope or search; a clip new to
-  the grid (a capture, a sync) shows at the top. Ages at the cards' feet move once a minute (one task in the grid moves
+  the grid (a capture, a sync, one that left the scope and came back) is placed by the history's order: after the
+  nearest clip above it that the grid already shows, or at the top when none is. Ages at the cards' feet move once a minute (one task in the grid moves
   the minute its cards read; a `TimelineView` around the grid kept it from drawing any change until its next tick).
 - **Pull to refresh** runs one sync exchange when sync is on, then takes the history's order again. There is no Sync
   Now; a background refresh exchanges now and then while the app is away (`SyncExchange`).
@@ -78,10 +85,10 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
   Share and More (Pin, Delete) in the toolbar. A text, code, link or color clip has Edit Text above its content, one press from the editor: an
   editor with Cancel and Save, saved through Core's `updateText` (ADR 0048) with the Undo banner in the sheet; a hidden
   clip only after Show.
-- **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⇧⌘C copy, ⌘P pin, ⌘⌫ delete with a
+- **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⇧⌘C copy, ⇧⌘P pin (⌘P is Print), ⌘⌫ delete with a
   confirmation, all in the menu a held ⌘ shows.
 - **VoiceOver**: a card is one element ("Link, copypesto.net, Safari, 4 minutes ago, Pinned"); activating copies;
-  actions Edit Details, Pin, Share, Show and Delete.
+  actions Edit Details, Pin, Share, Show (Hide once shown) and Delete. The detail's picture says its kind, its size and the start of any text read in it.
 
 ## Search and filters
 Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and

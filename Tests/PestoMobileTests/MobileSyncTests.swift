@@ -237,7 +237,9 @@ struct MobileSyncTests {
         )
     }
 
-    @Test("a stale bookmark at launch asks for the folder again and does not run sync; the same folder resumes it")
+    @Test(
+        "a stale bookmark that cannot be renewed asks for the folder again, sync waits, and the same folder resumes it"
+    )
     func whenTheBookmarkGoesStale_thenSyncWaitsForTheFolderAndResumes() async throws {
         defer { try? FileManager.default.removeItem(at: picked) }
         let (mac, key) = try await firstMac()
@@ -253,6 +255,7 @@ struct MobileSyncTests {
         phone.sync.deactivate()
         #expect(phone.bookmarks.held == 0)
         phone.bookmarks.isStale = true
+        phone.bookmarks.refusesBookmark = true
         phone.sync.activate()
 
         #expect(phone.sync.folderProblem == .stale)
@@ -265,6 +268,7 @@ struct MobileSyncTests {
         #expect(phone.sync.status.needsFolder)
 
         phone.bookmarks.isStale = false
+        phone.bookmarks.refusesBookmark = false
         phone.sync.useFolder(picked)
         #expect(phone.sync.folderProblem == nil)
         #expect(phone.sync.isEnabled, "the same folder again keeps sync on")
@@ -339,6 +343,33 @@ struct MobileSyncTests {
         await exchange(mac, phone)
         #expect(try await phone.clips().contains("while in the background"))
         phone.sync.deactivate()
+    }
+
+    @Test("a background refresh that ends after the app came back to the front leaves sync running in front")
+    func whenTheBackgroundRefreshEndsInFront_thenSyncKeepsRunning() async throws {
+        defer { try? FileManager.default.removeItem(at: picked) }
+        let (mac, key) = try await firstMac()
+        let phone = try await MobileSyncDevice(time: time)
+        phone.sync.activate()
+        phone.sync.useFolder(picked)
+        await phone.sync.turnOn()
+        await phone.sync.useRecoveryKey(key)
+        phone.sync.confirmJoin()
+        await exchange(mac, phone)
+        phone.sync.deactivate()
+        #expect(phone.bookmarks.held == 0)
+
+        phone.sync.activate(for: .background)
+        phone.sync.activate()
+        phone.sync.deactivate(for: .background)
+
+        #expect(phone.bookmarks.held == 1, "the app in front still holds the folder")
+        try await mac.site.copy("after the refresh ended")
+        await exchange(mac, phone)
+        #expect(try await phone.clips().contains("after the refresh ended"))
+
+        phone.sync.deactivate()
+        #expect(phone.bookmarks.held == 0)
     }
 
     @Test("turning sync off on the iPhone keeps its place: turning it on again offers to rejoin in the same folder")

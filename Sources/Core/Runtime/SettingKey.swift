@@ -40,6 +40,16 @@ extension String: SettingValue {
     }
 }
 
+extension Date: SettingValue {
+    public static func read(from defaults: UserDefaults, name: String) -> Date? {
+        defaults.object(forKey: name) as? Date
+    }
+
+    public func write(to defaults: UserDefaults, name: String) {
+        defaults.set(self, forKey: name)
+    }
+}
+
 /// One preference: its name in `UserDefaults` and the value it has until the person changes it. The default lives
 /// here and nowhere else, so the Settings window, a background reader and the settings export cannot disagree about it
 /// (retention was spelled out in three places, the card size in four). `Setting` lists every key.

@@ -10,7 +10,8 @@ struct DemoOnlyCodeTests {
         "Sources/Core/Runtime/ShowcaseArt+Basil.swift",
         "Sources/Core/Runtime/ShowcaseArt+BoardingPass.swift",
         "Sources/Core/Runtime/ShowcaseArt+Jar.swift",
-        "Sources/Mobile/MobileSeed.swift"
+        "Sources/Mobile/MobileSeed.swift",
+        "Sources/Mobile/UITestLayout.swift"
     ]
 
     private let callers = [

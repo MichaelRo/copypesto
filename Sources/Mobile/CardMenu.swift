@@ -9,6 +9,7 @@ struct CardMenu: View {
         let item = card.item
         let concealment = card.concealment
         Button("Copy", systemImage: "doc.on.doc") { card.copy() }
+        CopyActionsMenu(item: item)
         Button("Edit Details", systemImage: "info.circle") { card.library.open(item.id) }
         if !concealment.isConcealed {
             Button("Share", systemImage: "square.and.arrow.up") { card.share() }

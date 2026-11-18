@@ -161,6 +161,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Pesto saves a picture from your history to Photos when you choose Save to Photos."
         ASSETCATALOG_COMPILER_APPICON_NAME: Pesto
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"
 

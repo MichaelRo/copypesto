@@ -46,6 +46,18 @@ public enum RetentionChoices {
     public static let ageDays = [1, 7, 30, 90, 180, 365, foreverDays]
     public static let itemCounts = [500, 1000, 2500, 5000, 10_000]
 
+    public static func ageLabel(_ days: Int) -> String {
+        switch days {
+        case foreverDays: "Forever"
+        case 7: "1 week"
+        case 30: "1 month"
+        case 90: "3 months"
+        case 180: "6 months"
+        case 365: "1 year"
+        default: String(localized: "\(days) days")
+        }
+    }
+
     public static func isPresetAge(_ days: Int) -> Bool {
         ageDays.contains(days)
     }

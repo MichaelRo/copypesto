@@ -32,6 +32,7 @@ enum MobileAccessibilityID {
     static let snippetFillSheet = "snippet-fill-sheet"
     static let snippetPasteButton = "snippet-paste"
     static let snippetCopyButton = "snippet-copy"
+    static let retentionAgePicker = "retention-age"
     static let historyLockToggle = "history-lock"
     static let showsClipsOutsideToggle = "shows-clips-outside"
     static let captureCoverToggle = "cover-while-captured"

@@ -33,6 +33,7 @@ struct PestoMobileApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
+                Task { await appState.sweepRetention() }
                 appState.lockDidBecomeActive()
                 appState.syncDidBecomeActive()
                 appState.inboxDidBecomeActive()

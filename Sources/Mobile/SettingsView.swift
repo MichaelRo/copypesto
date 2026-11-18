@@ -13,6 +13,8 @@ struct SettingsView: View {
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
+    @AppStorage(Setting.retentionDays) private var retentionDays: Int
+    @AppStorage(Setting.retentionMaxItems) private var retentionMaxItems: Int
     @AppStorage(Setting.screenSharingPrivacy) private var coversWhileCaptured: Bool
     @State private var biometry = DeviceAuthenticationWords.biometry()
     @State private var clearCount = 0
@@ -56,6 +58,27 @@ struct SettingsView: View {
                         "in Settings > General > AutoFill & Passwords."
                 )
             }
+            Section {
+                Picker("Keep clips for", selection: $retentionDays) {
+                    ForEach(RetentionChoices.ageDays, id: \.self) { Text(RetentionChoices.ageLabel($0)).tag($0) }
+                    if !RetentionChoices.isPresetAge(retentionDays) {
+                        Text(String(localized: "Custom (\(retentionDays) days)")).tag(retentionDays)
+                    }
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.retentionAgePicker)
+                Picker("Keep at most", selection: $retentionMaxItems) {
+                    ForEach(RetentionChoices.itemCounts, id: \.self) { Text("\($0.formatted()) clips").tag($0) }
+                    if !RetentionChoices.isPresetCount(retentionMaxItems) {
+                        Text(String(localized: "Custom (\(retentionMaxItems) clips)")).tag(retentionMaxItems)
+                    }
+                }
+            } header: {
+                Text("History")
+            } footer: {
+                Text("Pinned clips are always kept.")
+            }
+            .onChange(of: retentionDays) { Task { await appState.sweepRetention() } }
+            .onChange(of: retentionMaxItems) { Task { await appState.sweepRetention() } }
             Section {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)

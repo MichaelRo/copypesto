@@ -53,6 +53,10 @@ final class MobileAppState {
     @ObservationIgnored var linkPreviewLoader = LinkPreviewLoader()
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?
+    @ObservationIgnored var retentionPolicy: @Sendable () -> RetentionPolicy = {
+        RetentionPolicy.fromDefaults(AppDefaults.store)
+    }
+    @ObservationIgnored var retentionSchedule = RetentionSchedule()
     /// iOS's last answer to whether a Pesto widget is installed.
     @ObservationIgnored var widgetIsInstalled = false
     @ObservationIgnored var widgetRewrite: Task<Void, Never>?
@@ -115,6 +119,7 @@ final class MobileAppState {
             await LaunchMigrator.run(LaunchMigration.standard(service: service))
             // A clip saved before it was judged, when Pesto was last stopped, is judged now, as the Mac does at launch.
             await service.resumePendingAnalysis()
+            await self.sweepRetention(force: true)
             #if DEBUG
             await MobileSeed.runIfAsked(state: self)
             #endif

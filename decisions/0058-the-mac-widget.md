@@ -64,7 +64,7 @@ neither the group nor the Keychain group: claiming them anyway either costs it t
   detected screen share with that setting on), a Hidden snapshot with no clip ("Clip contents hidden", a new optional
   field `isHidden` and state `.hidden`; iOS never writes it); otherwise the clips. A change of lock, cover, theme or
   history rewrites it (the history a second after the save, the others at once); Clear History, Clear on Lock, Clear on
-  Quit and Clear Everything write an empty snapshot before they return.
+  Quit and Clear Everything rewrite it from what the store still holds before they return (`WidgetSnapshotKeeper`).
 - **Choosing a clip goes through the app.** The Mac widget does not write to the clipboard itself: every pasteboard
   write of a clip goes through `AppState.writeItem` (the lock check, a secret kept to this Mac and concealed, the
   own-write gate). Each tile is a `Link` (the small widget's `widgetURL`) to the same `pesto://clip/<UUID>`, `…/show`

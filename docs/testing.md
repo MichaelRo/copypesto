@@ -300,6 +300,20 @@ prompt or a macOS permission dialog (screen recording after a screenshot) makes 
 **Cards, cover, No Results and the click hint (ADRs 0026 to 0029)**
 - Content-first cards visual spot-check on physical display (`test_coveredCard_showsNumberKindAndAge`, `CardConcealmentTests`, `CoveredMenuWiringTests`, `FilterMenuLabelTests` cover automated checks).
 
+## The Mac widget (a release signed with both profiles)
+Only an exported build made with `SYNC_PROFILE` and `WIDGET_PROFILE` can show it (ADR 0058, `docs/release.md`); the
+snapshot logic is covered by `WidgetSnapshotKeeperTests`, `WidgetSnapshotGateTests`, `WidgetSharingTests` and the
+`pesto://clip` cases of `AutomationURLHandlerTests`. By hand, on that build:
+- `scripts/check-widget-signing.sh` passes; the launched app logs no `AMFI` or "No matching profile found", and sync
+  still finds its iCloud Keychain key.
+- Recent Clips is in the widget gallery (small, medium, large); a development build's gallery has only the control.
+- With a widget placed, the shelf opened once, `~/Library/Group Containers/group.net.copypesto.pesto/widget-snapshot.pestowidget`
+  exists and starts with `PESTOWGT`; removing the widget removes it within ten minutes or the next shelf open.
+- Copy (the default) puts the clip on the clipboard and moves it to the front; note whether focus returns to the app
+  you were in. Show opens the shelf at it; Open on a link clip opens the browser.
+- History Lock on: the widget says Locked. Hide Clip Contents, or a screen share with the setting on: "Clip contents
+  hidden". A new secret never appears.
+
 ## Two Macs: sync
 Run on two physical Macs signed in to the same Apple Account with iCloud Drive on (two-Mac local-folder mechanics are automated in `TwoProcessSyncTests` and `scripts/vm/vm-two-mac-sync.sh`; only real iCloud Drive daemon sync, `Optimize Mac Storage`, and iCloud Keychain cross-Mac join require physical Apple Accounts).
 - Measure small and 5 MB arrival (`scripts/sync-latency/run-remote.sh`), awake, after sleep, in Low Power Mode, and with Optimize Mac Storage on.

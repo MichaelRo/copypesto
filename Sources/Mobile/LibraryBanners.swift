@@ -7,6 +7,14 @@ struct LibraryBanners: View {
     @Environment(MobileAppState.self) private var appState
 
     var body: some View {
+        VStack(spacing: 0) {
+            if appState.clipboardOfferCount != nil, appState.undoOffer == nil { ClipboardOfferBanner() }
+            messages
+        }
+        .animation(Motion.animation(.pestoMove), value: appState.clipboardOfferCount)
+    }
+
+    private var messages: some View {
         Group {
             if let label = appState.undoOffer {
                 banner {

@@ -25,7 +25,8 @@ final class CardMediaState {
         case .image where item.sensitivityRaw == nil:
             guard picture == nil else { return }
             picture = await CardMedia.picture(
-                itemID: item.id, byteSize: item.byteSize, container: container, maxPixel: CardMedia.cardPixel
+                itemID: item.id, byteSize: item.byteSize, container: container, maxPixel: CardMedia.cardPixel,
+                frames: Motion.reduceMotion ? nil : .card
             )
         case .url where item.sensitivityRaw == nil:
             guard linkPicture == nil else { return }

@@ -23,6 +23,10 @@ final class MobileAppState {
     var notice: Notice?
     /// The newest action Undo can take back, offered in a banner after a delete (ADR 0008).
     var undoOffer: UndoLabel?
+    /// The clipboard's change count offered as "Add what you copied" (`MobileAppState+ClipboardOffer.swift`).
+    var clipboardOfferCount: Int?
+    /// Counts saved text edits; the grid reads it to draw an edited card again (`MobileAppState+TextEdit.swift`).
+    var textEdits = 0
     /// Sync with the person's other devices, once the history is open (`MobileAppState+Sync.swift`).
     var sync: MobileSync?
     let secretReveal: SecretReveal
@@ -30,6 +34,8 @@ final class MobileAppState {
     @ObservationIgnored private(set) var launchWork: Task<Void, Never>?
     @ObservationIgnored var noticeDismissal: Task<Void, Never>?
     @ObservationIgnored var undoOfferDismissal: Task<Void, Never>?
+    /// The running pass over the share extension's inbox (`MobileAppState+Inbox.swift`), so two never overlap.
+    @ObservationIgnored var inboxDrain: Task<InboxDrain.Report?, Never>?
     @ObservationIgnored let clock: @MainActor () -> Date
 
     static let noticeDuration: Duration = .seconds(4)

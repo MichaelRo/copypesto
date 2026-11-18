@@ -21,6 +21,7 @@ struct ClipCard: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
     @State var media = CardMediaState()
+    @State private var isOnScreen = false
 
     private var shape: RoundedRectangle {
         RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
@@ -73,6 +74,8 @@ struct ClipCard: View {
                     item, container: appState.historyContainer, isShown: appState.secretReveal.isShown(item.id)
                 )
             }
+            .onAppear { isOnScreen = true }
+            .onDisappear { isOnScreen = false }
             .modifier(CardAccessibility(card: self))
             .accessibilityIdentifier(MobileAccessibilityID.clipCard)
     }
@@ -81,8 +84,14 @@ struct ClipCard: View {
         Color.clear
             .aspectRatio(CardGridLayout.aspectRatio, contentMode: .fit)
             .overlay {
-                ClipCardFace(item: item, face: face, media: media, width: width)
-                    .environment(\.clipRevision, revision ?? Revision(item))
+                ClipCardFace(
+                    item: item, face: face, media: media, width: width, revision: revision ?? Revision(item),
+                    playsAnimation: CardAnimation.plays(
+                        isAnimated: media.picture?.animation != nil, isOnScreen: isOnScreen,
+                        isConcealed: concealment.isConcealed, reduceMotion: Motion.reduceMotion
+                    )
+                )
+                .environment(\.clipRevision, revision ?? Revision(item))
             }
             .background(cardFill, in: shape)
             .clipShape(shape)
@@ -144,12 +153,16 @@ struct ClipCard: View {
         let collectionID: UUID?
         let timestamp: Date
         let isCovered: Bool
+        let content: String
+        let metadata: Data?
 
         init(_ item: ClipboardItem) {
             isPinned = item.isPinned
             collectionID = item.collectionID
             timestamp = item.timestamp
             isCovered = item.analysisPending || item.isNSFW
+            content = item.contentHash
+            metadata = item.metadataCiphertext
         }
     }
 }

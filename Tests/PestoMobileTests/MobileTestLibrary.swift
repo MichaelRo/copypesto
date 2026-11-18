@@ -11,13 +11,18 @@ struct MobileTestLibrary {
     let service: StorageService
     let store: HistoryStore
 
-    init(reveal: SecretReveal? = nil) async throws {
+    /// `storeURL` opens a file-backed store, as the app does; nil keeps the history in memory.
+    init(reveal: SecretReveal? = nil, storeURL: URL? = nil) async throws {
         state = MobileAppState(secretReveal: reveal ?? SecretReveal(
             authenticator: StubUserAuthenticator(available: true, grants: true), grace: AuthenticationGrace()
         ))
         state.boot(
             openers: .init(
-                clips: { try ModelContainerSetup.makeInMemory() },
+                clips: {
+                    if let storeURL { try ModelContainerSetup.openClips(storeURL: storeURL) } else {
+                        try ModelContainerSetup.makeInMemory()
+                    }
+                },
                 inMemory: { try ModelContainerSetup.makeInMemory() }
             ),
             environment: { .testing() }

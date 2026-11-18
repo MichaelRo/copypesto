@@ -20,7 +20,7 @@ struct LibraryEmptyState: View {
                     Text("Paste what you copied to keep it here, or write a new note.")
                 } actions: {
                     PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
-                        Task { await appState.add(from: providers) }
+                        Task { await appState.add(from: providers, method: .paste) }
                     }
                 }
             } else {

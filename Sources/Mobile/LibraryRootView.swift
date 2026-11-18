@@ -8,6 +8,7 @@ import SwiftUI
 struct LibraryRootView: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.scenePhase) private var scenePhase
     @State private var library = LibraryModel()
 
     var body: some View {
@@ -21,6 +22,7 @@ struct LibraryRootView: View {
             }
             .environment(library)
             .modelContainer(container)
+            .onChange(of: scenePhase) { _, phase in if phase == .active { library.resort() } }
         } else if appState.hasBooted {
             ContentUnavailableView(
                 "History Unavailable",

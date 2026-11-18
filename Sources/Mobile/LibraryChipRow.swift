@@ -32,7 +32,7 @@ struct LibraryChipRow: View {
         case let .collection(id):
             if let board = collections.first(where: { $0.id == id }) {
                 chipButton(
-                    chip, label: board.name, symbol: board.isSmart ? "sparkles" : board.symbolName,
+                    chip, label: board.name, symbol: board.symbolName,
                     tint: Color(hex: board.colorHex)
                 )
                 .contextMenu { CollectionMenu(board: board) }
@@ -57,7 +57,7 @@ struct LibraryChipRow: View {
                 if active {
                     Image(systemName: "checkmark").font(.caption2.weight(.bold)).accessibilityHidden(true)
                 }
-                Image(systemName: symbol).accessibilityHidden(true)
+                CollectionIcon(symbol: symbol).accessibilityHidden(true)
                 Text(label).lineLimit(1)
             }
         }

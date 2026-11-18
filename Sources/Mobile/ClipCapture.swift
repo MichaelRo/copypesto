@@ -10,10 +10,7 @@ enum ClipCapture {
     static let textType = UTType.utf8PlainText.identifier
 
     /// Picture formats ingest stores as they are; anything else is converted to PNG first.
-    static let storedPictureTypes: Set<String> = [
-        UTType.png.identifier, UTType.jpeg.identifier, UTType.heic.identifier, UTType.tiff.identifier,
-        UTType.gif.identifier, UTType.webP.identifier
-    ]
+    static let storedPictureTypes = InboxPolicy.storedPictureTypes
 
     static func text(_ text: String, at date: Date = .now) -> PasteboardCapture? {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }

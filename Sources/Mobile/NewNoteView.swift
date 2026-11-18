@@ -31,7 +31,7 @@ struct NewNoteView: View {
     }
 
     private func save() {
-        let capture = ClipCapture.text(text)
+        let capture = ClipCapture.text(text)?.with(captureMethod: .note)
         Task {
             if await appState.add(capture) { dismiss() }
         }

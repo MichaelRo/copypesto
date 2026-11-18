@@ -16,6 +16,7 @@ struct ClipDetailView: View {
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @State private var content: ClipContent?
     @State private var revealedText: String?
+    @State private var isEditingText = false
 
     var body: some View {
         NavigationStack {
@@ -27,6 +28,7 @@ struct ClipDetailView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
         }
     }
 
@@ -34,8 +36,16 @@ struct ClipDetailView: View {
         let concealment = appState.secretReveal.concealment(for: item)
         return ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
-                    .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
+                if isEditingText, let text = content?.plainText {
+                    ClipTextEditor(item: item, text: text) { isEditingText = false }
+                } else {
+                    ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
+                        .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
+                    if appState.canEditText(item), content?.plainText != nil {
+                        Button("Edit Text", systemImage: "pencil") { isEditingText = true }
+                            .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
+                    }
+                }
                 if item.sensitivityRaw != nil { revealControl(item) }
                 ClipDetailFields(item: item).id(item.id)
                 AddToCollectionMenu(item: item, collections: collections)
@@ -49,19 +59,22 @@ struct ClipDetailView: View {
         .accessibilityIdentifier(MobileAccessibilityID.clipDetail)
         .navigationTitle(item.type.presentation.label)
         .toolbar { toolbar(item, concealment: concealment) }
-        .task(id: TaskKey(id: item.id, covered: concealment.isConcealed)) {
+        .task(id: TaskKey(id: item.id, covered: concealment.isConcealed, content: item.contentHash)) {
             content = concealment.isConcealed ? nil : ClipContent.of(item)
             revealedText = appState.secretReveal.isShown(item.id)
                 ? HiddenClipReveal.readableText(from: item.blob?.decryptedData()) : nil
         }
         .onChange(of: appState.secretReveal.isShown(item.id)) { _, shown in
             revealedText = shown ? HiddenClipReveal.readableText(from: item.blob?.decryptedData()) : nil
+            if !shown { isEditingText = false }
         }
+        .onChange(of: itemID) { _, _ in isEditingText = false }
     }
 
     private struct TaskKey: Hashable {
         let id: UUID
         let covered: Bool
+        let content: String
     }
 
     private func factsLine(_ item: ClipboardItem, concealment: CardConcealment) -> some View {

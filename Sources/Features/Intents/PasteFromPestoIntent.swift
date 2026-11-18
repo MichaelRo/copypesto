@@ -34,9 +34,7 @@ struct PasteFromPestoIntent: AppIntent {
         let items = (try? ctx.fetch(descriptor)) ?? []
         let query = search
         // Clips holding a secret are masked on screen; a Shortcut must not be a way round the masking.
-        guard let match = items.first(where: {
-            $0.sensitivityRaw == nil && $0.displayPreviewText.localizedCaseInsensitiveContains(query)
-        }) else {
+        guard let match = items.first(where: { ShortcutClipSearch.matches($0, query: query) }) else {
             throw PasteFromPestoError.noMatch(query)
         }
 

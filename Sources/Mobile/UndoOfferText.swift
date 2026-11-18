@@ -15,6 +15,7 @@ enum UndoOfferText {
         case let .importCollection(name): String(localized: "Imported the collection \u{201C}\(name)\u{201D}")
         case let .addClips(_, count): String(localized: "Added \(CountText.clips(count))")
         case .editSnippet: String(localized: "Changed a snippet")
+        case .editText: String(localized: "Changed the text")
         }
     }
 }

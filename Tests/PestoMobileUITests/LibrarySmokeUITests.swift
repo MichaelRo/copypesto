@@ -73,6 +73,7 @@ final class LibrarySmokeUITests: XCTestCase {
         XCTAssertTrue(element(MobileAccessibilityID.chipRow, in: app).exists, "the chip row sits under the bar")
         XCTAssertTrue(app.buttons["Trip"].waitForExistence(timeout: timeout), "the seeded collection has a chip")
         capture("iphone-library")
+        capture("iphone-toolbar-light", app.navigationBars.firstMatch.screenshot())
         let secret = card(containing: "ghp_", in: app)
         if secret.exists { capture("iphone-secret-card", secret.screenshot()) }
 
@@ -103,6 +104,7 @@ final class LibrarySmokeUITests: XCTestCase {
         let dark = launch(environment: ["PESTO_UITEST_DEFAULT_appearanceMode": "dark"])
         waitForSeededClips(in: dark)
         capture("iphone-library-dark")
+        capture("iphone-toolbar-dark", dark.navigationBars.firstMatch.screenshot())
         dark.terminate()
 
         let large = launch(arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"])

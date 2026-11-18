@@ -4,6 +4,14 @@
 <dict>
     <key>PestoAllowsTestHooks</key>
     <string>$(PESTO_ALLOWS_TEST_HOOKS)</string>
+    <key>BGTaskSchedulerPermittedIdentifiers</key>
+    <array>
+        <string>net.copypesto.pesto.sync-refresh</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+    </array>
     <key>UTExportedTypeDeclarations</key>
     <array>
         <dict>

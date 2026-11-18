@@ -78,31 +78,14 @@ public extension StorageService {
                 byteCount: payload.count, typeIdentifier: typeIdentifier
             ))
         }
-        let envelope = try encryption.encrypt(
-            payload, associatedData: BlobEncryption.associatedData(itemID: id, field: .blob)
-        )
-        let blob = item.blob ?? ClipboardBlob(
-            encryptedData: envelope.ciphertext,
-            nonceData: envelope.nonce,
-            mimeType: typeIdentifier
-        )
-        blob.encryptedData = envelope.ciphertext
-        blob.nonceData = envelope.nonce
-        blob.mimeType = typeIdentifier
-        blob.encryptedRichData = nil
-        blob.richNonceData = nil
-        blob.aadBound = true
-        if item.blob == nil {
-            item.blob = blob
-            modelContext.insert(blob)
-        }
+        try sealText(payload, mimeType: typeIdentifier, into: item)
         try applySnippetText(text, payload: payload, to: item)
         let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
         item.customTitle = trimmedTitle?.isEmpty == false ? trimmedTitle : nil
         PreviewTextCache.shared.clear()
         try ensureSnippetsCollection()
         try saveOrRollback()
-        recordReplacement(of: item, before: before)
+        recordReplacement(of: item, before: before, kind: .snippet)
         lastItemStore.clear(ifItemID: id)
         return true
     }

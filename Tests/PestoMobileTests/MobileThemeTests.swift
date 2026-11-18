@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import SwiftUI
 import Testing
+import UIKit
 @testable import PestoCore
 @testable import PestoMobile
 
@@ -37,11 +38,26 @@ struct MobileThemeTests {
         }
     }
 
-    @Test("light and dark force the appearance; System and anything unknown leave it to iOS")
-    func whenAppearanceIsChosen_thenTheSchemeFollows() {
-        #expect(MobileTheme.colorScheme(appearance: "light") == .light)
-        #expect(MobileTheme.colorScheme(appearance: "dark") == .dark)
-        #expect(MobileTheme.colorScheme(appearance: "system") == nil)
-        #expect(MobileTheme.colorScheme(appearance: "sepia") == nil)
+    @Test("light and dark force the windows' style; System and anything unknown hand it back to iOS")
+    func whenAppearanceIsChosen_thenTheWindowStyleFollows() {
+        #expect(MobileAppearance.interfaceStyle(appearance: "light") == .light)
+        #expect(MobileAppearance.interfaceStyle(appearance: "dark") == .dark)
+        #expect(MobileAppearance.interfaceStyle(appearance: "system") == .unspecified)
+        #expect(MobileAppearance.interfaceStyle(appearance: "sepia") == .unspecified)
+    }
+
+    @Test("applying the style sets every window of the app, and System clears it again")
+    @MainActor
+    func whenStyleApplied_thenEveryWindowCarriesIt() throws {
+        let scenes = UIApplication.shared.connectedScenes
+        let windows = scenes.compactMap { $0 as? UIWindowScene }.flatMap(\.windows)
+        try #require(!windows.isEmpty, "the hosted test runs inside the app's window")
+        let before = windows.map(\.overrideUserInterfaceStyle)
+        defer { zip(windows, before).forEach { $0.overrideUserInterfaceStyle = $1 } }
+
+        MobileAppearance.apply(.dark, to: scenes)
+        #expect(windows.allSatisfy { $0.overrideUserInterfaceStyle == .dark })
+        MobileAppearance.apply(.unspecified, to: scenes)
+        #expect(windows.allSatisfy { $0.overrideUserInterfaceStyle == .unspecified })
     }
 }

@@ -313,7 +313,17 @@ view shows its sidebar; the screenshot it attaches comes out rotated. After a lo
 longer tests takes over two minutes. The tests are hosted in the iOS app, so the runtime seams keep them off real data as on the Mac. The target
 also compiles `Tests/PestoCoreTests/Sync`, which proves the sync format and its keys on iOS; a helper there that needs
 AppKit is left out in `Pesto.yml`. The gate does not run these tests yet. A simulator has no iCloud Keychain, no real
-iCloud Drive and no Face ID hardware: those are hand checks on a device.
+iCloud Drive and no Face ID hardware: those are hand checks on a device. `LibraryEditingUITests` (iPhone) edits a clip's
+text in the detail, goes from Dark back to System and samples the ground and the Settings sheet for light pixels,
+picks a collection's icon, and shows the "Add what you copied" banner. The background sync refresh is unit-tested
+(`SyncExchangeTests`: the scheduling decision, the declared task, the same exchange as pull to refresh); a real
+background launch is a hand check on a device.
+
+The share extension's inbox is tested in Core on the Mac (`SharedInboxTests`: sealing, refusals, the writer's limits;
+`InboxDrainTests`: the drain through ingest on a file-backed store, with the temp group folder scanned for plaintext)
+and in the iOS app (`MobileInboxTests`, `MobileShortcutsTests`), always with a temp folder and `MemorySecrets`, never
+the real app group or Keychain. `PestoShare` itself has no test target: the system share sheet cannot be driven from a
+UI test of Pesto, so sharing from Safari or Notes into Pesto is a hand check (build, launch Pesto once, share, reopen).
 
 Sync on iOS is tested in `MobileSyncTests` against a Mac built as `SyncMac` (`Tests/PestoCoreTests/Sync`): the iPhone
 side is a `MobileSync` on a `BookmarkedSyncFolder` with `FakeBookmarks` (counts every start and stop of the security

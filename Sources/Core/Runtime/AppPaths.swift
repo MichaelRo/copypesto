@@ -25,6 +25,33 @@ public enum AppPaths {
             ?? temporary.appendingPathComponent("io.pesto.uitest.\(configuration.session)", isDirectory: true)
     }
 
+    /// The app group the iOS app shares with its share extension (ADR 0047); a test or UI-test launch gets a folder
+    /// inside its own support folder. Nil on the Mac, which has no group, and when the group is not in the signature.
+    public static var sharedGroupDirectory: URL? {
+        let configuration = RuntimeConfiguration.current
+        guard configuration.mode == .normal else {
+            return sharedGroupDirectory(
+                for: configuration, groupContainer: nil,
+                applicationSupport: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0],
+                temporary: FileManager.default.temporaryDirectory
+            )
+        }
+        #if os(iOS)
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppIdentity.appGroupID)
+        #else
+        return nil
+        #endif
+    }
+
+    static func sharedGroupDirectory(
+        for configuration: RuntimeConfiguration, groupContainer: URL?, applicationSupport: URL, temporary: URL
+    )
+    -> URL? {
+        guard configuration.mode != .normal else { return groupContainer }
+        return supportDirectory(for: configuration, applicationSupport: applicationSupport, temporary: temporary)
+            .appendingPathComponent("Group", isDirectory: true)
+    }
+
     /// Where Save Image puts a file: the person's Downloads folder, and inside the session's temporary folder for a
     /// test run, so a test never writes to the real one.
     public static var downloadsDirectory: URL {

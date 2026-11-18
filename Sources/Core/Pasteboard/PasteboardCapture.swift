@@ -23,6 +23,8 @@ public struct PasteboardCapture: Sendable {
     public let sourceImageURL: URL?
     /// Formatted flavours (RTF, RTFD, HTML) captured alongside a text copy so formatting survives a normal paste.
     public let richPayload: RichTextPayload?
+    /// How the person handed this to Pesto on iOS; sealed with the clip on this device only (ADR 0049).
+    public var captureMethod: CaptureMethod?
 
     /// The Mac app that made the copy. A Universal Clipboard copy comes from another device, so whichever Mac app is in
     /// front says nothing about it.
@@ -58,8 +60,14 @@ public struct PasteboardCapture: Sendable {
         self.isConcealed = isConcealed
     }
 
+    public func with(captureMethod method: CaptureMethod?) -> PasteboardCapture {
+        var copy = self
+        copy.captureMethod = method
+        return copy
+    }
+
     public func with(timestamp: Date) -> PasteboardCapture {
-        PasteboardCapture(
+        var copy = PasteboardCapture(
             typeIdentifier: typeIdentifier,
             payload: payload,
             payloadString: payloadString,
@@ -72,5 +80,7 @@ public struct PasteboardCapture: Sendable {
             sourceImageURL: sourceImageURL,
             richPayload: richPayload
         )
+        copy.captureMethod = captureMethod
+        return copy
     }
 }

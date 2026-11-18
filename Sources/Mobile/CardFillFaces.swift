@@ -8,6 +8,7 @@ import UIKit
 struct PictureCardFace<Foot: View>: View {
     let image: UIImage?
     let fillsCard: Bool
+    var animation: GIFFrames.Animation?
     @ViewBuilder let foot: () -> Foot
 
     var body: some View {
@@ -29,9 +30,7 @@ struct PictureCardFace<Foot: View>: View {
                     filled(image)
                         .blur(radius: 14, opaque: true)
                         .overlay(Color.black.opacity(0.35))
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
+                    still(image, fills: false)
                         .padding(.bottom, 30)
                 }
             }
@@ -42,12 +41,19 @@ struct PictureCardFace<Foot: View>: View {
 
     private func filled(_ image: UIImage) -> some View {
         Color.clear
-            .overlay {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFill()
-            }
+            .overlay { still(image, fills: true) }
             .clipped()
+    }
+
+    @ViewBuilder
+    private func still(_ image: UIImage, fills: Bool) -> some View {
+        if let animation {
+            AnimatedPicture(animation: animation, fills: fills)
+        } else if fills {
+            Image(uiImage: image).resizable().scaledToFill()
+        } else {
+            Image(uiImage: image).resizable().scaledToFit()
+        }
     }
 }
 

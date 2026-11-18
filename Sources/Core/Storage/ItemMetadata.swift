@@ -21,13 +21,15 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
     /// When the clip was first copied, kept once a paste, a copy or a re-copy moves its `timestamp` to the front, so a
     /// collection can keep a clip where it was. Absent until the first of those.
     public var copiedAt: Date?
+    /// How the clip was made on this iPhone or iPad (ADR 0049). Never synced or backed up.
+    public var captureMethod: CaptureMethod?
 
     public init(
         customTitle: String? = nil, userNote: String? = nil, tags: [String] = [],
         customSymbolName: String? = nil, collectionOrder: Int? = nil, ogTitle: String? = nil,
         ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil, fieldMemory: [String: String]? = nil,
         signature: [UInt32]? = nil,
-        pasteDays: [Int]? = nil, copiedAt: Date? = nil
+        pasteDays: [Int]? = nil, copiedAt: Date? = nil, captureMethod: CaptureMethod? = nil
     ) {
         self.customTitle = customTitle
         self.userNote = userNote
@@ -41,13 +43,14 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
         self.signature = signature
         self.pasteDays = pasteDays
         self.copiedAt = copiedAt
+        self.captureMethod = captureMethod
     }
 
     public var isEmpty: Bool {
         customTitle == nil && userNote == nil && tags.isEmpty && customSymbolName == nil
             && collectionOrder == nil && ogTitle == nil && ogSiteName == nil && linkPreviewFetched != true
             && (fieldMemory ?? [:]).isEmpty && signature == nil && (pasteDays ?? []).isEmpty
-            && copiedAt == nil
+            && copiedAt == nil && captureMethod == nil
     }
 
     public static let pasteDayWindow = 30

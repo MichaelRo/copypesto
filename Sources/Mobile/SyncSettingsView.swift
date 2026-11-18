@@ -106,8 +106,6 @@ private struct SyncSettingsForm: View {
     @ViewBuilder
     private var enabledSections: some View {
         Section {
-            Button("Sync Now") { Task { await sync.syncNow() } }
-                .accessibilityIdentifier(MobileAccessibilityID.syncNowButton)
             if let name = sync.folderName { LabeledContent("Folder", value: name) }
             Toggle("Also sync clips with secrets", isOn: Binding(
                 get: { includesSecrets }, set: { on in Task { await sync.setIncludesSecrets(on) } }

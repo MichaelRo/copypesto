@@ -40,7 +40,7 @@ struct LibrarySidebar: View {
         Label {
             Text(board.name)
         } icon: {
-            Image(systemName: board.isSmart ? "sparkles" : board.symbolName)
+            CollectionIcon(symbol: board.symbolName)
                 .foregroundStyle(Color(hex: board.colorHex) ?? .secondary)
         }
         .tag(LibraryScope.collection(board.id))
@@ -66,7 +66,7 @@ struct CollectionMenu: View {
     @Environment(LibraryModel.self) private var library
 
     var body: some View {
-        Button("Rename", systemImage: "pencil") { library.renaming = board }
+        Button("Edit Collection", systemImage: "pencil") { library.editingCollection = board }
         Button("Delete Collection", systemImage: "trash", role: .destructive) {
             let id = board.id
             Task { await appState.deleteCollection(id) }

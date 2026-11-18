@@ -11,6 +11,8 @@ extension MobileAppState {
     enum ShortcutFailure: Error, Equatable, CustomLocalizedStringResourceConvertible {
         case notReady
         case nothingToAdd
+        case locked
+        case emptyClipboard
         case refused(String)
         case failed
 
@@ -18,6 +20,8 @@ extension MobileAppState {
             switch self {
             case .notReady: "Pesto is not ready. Open Pesto and try again."
             case .nothingToAdd: "There was nothing Pesto can keep."
+            case .locked: "Pesto is locked. Open Pesto to unlock it, then try again."
+            case .emptyClipboard: "The clipboard has nothing Pesto can keep."
             case let .refused(message): "\(message)"
             case .failed: "Couldn\u{2019}t add the clip."
             }

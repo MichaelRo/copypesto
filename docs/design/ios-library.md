@@ -93,6 +93,21 @@ card's shape, a link leads with its host, short text is large, one foot line giv
 widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
 Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent or Pinned. With the History Lock on it says "Locked" and "Open Pesto to see your clips" unless "Show clips in widgets and AutoFill" is on (ADR 0055).
 
+## FAQ for the release notes: Add Clipboard to Pesto
+The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to
+`docs/guide/faq.md` with the rest.
+
+**How do I add what I copied without opening Pesto first?** Shortcuts lists "Add Clipboard to Pesto" (Pesto's own
+action; Siri answers "Add my clipboard to Pesto"). It brings Pesto to the front, reads the clipboard, adds it as a clip
+that says it came from a Shortcut, and says "Added to Pesto." Pesto opens because iOS lets only an app on screen read
+what another app copied; iOS asks to allow the paste unless Settings → Apps → Pesto → Paste from Other Apps is set to
+Allow. A locked history (Face ID) adds nothing until you unlock.
+- **Action Button** (iPhone 15 Pro and later): Settings → Action Button → Shortcut → choose "Add Clipboard to Pesto".
+- **Back Tap**: Settings → Accessibility → Touch → Back Tap → Double Tap or Triple Tap → choose "Add Clipboard to
+  Pesto" under Shortcuts.
+- **An automation**: Shortcuts → Automation → New Automation → App → Safari → Is Closed (or any app), Run Immediately →
+  New Blank Automation → add "Add Clipboard to Pesto". Copy in Safari, close it, and the clip is waiting.
+
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds
 section, onboarding, a keyboard extension, glass on a card. Source-app chips: Core's index keeps the bundle id

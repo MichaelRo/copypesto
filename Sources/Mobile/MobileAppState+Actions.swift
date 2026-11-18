@@ -183,20 +183,22 @@ extension MobileAppState {
     func addCollection(_ draft: CollectionDraft, existing: [Pinboard]) -> Pinboard? {
         guard let context = historyContainer?.mainContext else { return nil }
         let name = draft.trimmedName
-        let board = Pinboard(
-            name: CollectionNaming.uniqueName(
-                name.isEmpty ? CollectionNaming.defaultName : name, existing: existing.map(\.name)
-            ),
-            symbolName: draft.symbol,
-            colorHex: draft.colorHex,
-            sortOrder: (existing.map(\.sortOrder).max() ?? -1) + 1
-        )
-        var added = false
+        var added: Pinboard?
         report("Couldn\u{2019}t add the collection.") {
+            let board = try Pinboard(
+                name: CollectionNaming.uniqueName(
+                    name.isEmpty ? CollectionNaming.defaultName : name, existing: existing.map(\.name)
+                ),
+                symbolName: draft.symbol,
+                colorHex: draft.colorHex,
+                sortOrder: (existing.map(\.sortOrder).max() ?? -1) + 1,
+                isSmart: draft.isSmart,
+                smartPredicateData: draft.isSmart ? draft.rules?.encoded() : nil
+            )
             try collectionStore(context: context).insert(.create, [board])
-            added = true
+            added = board
         }
-        return added ? board : nil
+        return added
     }
 
     func renameCollection(_ board: Pinboard, to name: String, existing: [Pinboard]) {
@@ -215,10 +217,12 @@ extension MobileAppState {
             existing: others
         )
         report("Couldn\u{2019}t save the collection.") {
+            let rules = try board.isSmart && draft.isSmart ? draft.rules?.encoded() : nil
             try collectionStore(context: context).edit(.edit, [board]) {
                 board.name = unique
                 board.symbolName = draft.symbol
                 board.colorHex = draft.colorHex
+                if let rules { board.smartPredicateData = rules }
             }
         }
     }

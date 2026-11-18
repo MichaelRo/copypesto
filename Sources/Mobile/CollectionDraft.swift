@@ -8,6 +8,10 @@ struct CollectionDraft: Equatable {
     var name: String
     var symbol: String
     var colorHex: String
+    /// A smart collection fills itself from rules; `rules` is nil when a collection made elsewhere has rules this
+    /// version cannot read, which saving leaves as they are.
+    var isSmart = false
+    var rules: SmartRulesDraft? = SmartRulesDraft.starter
 
     static func new(existing: [Pinboard]) -> CollectionDraft {
         CollectionDraft(
@@ -23,6 +27,8 @@ struct CollectionDraft: Equatable {
 
     init(_ board: Pinboard) {
         self.init(name: board.name, symbol: board.symbolName, colorHex: board.colorHex)
+        isSmart = board.isSmart
+        rules = board.isSmart ? SmartRulesDraft(data: board.smartPredicateData) : SmartRulesDraft.starter
     }
 
     /// The icons offered: Core's list, with the collection's own first when it is something else (an emoji, or a
@@ -39,8 +45,18 @@ struct CollectionDraft: Equatable {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// A smart collection can be saved once every rule is filled in (and a plain one always can).
+    var canSave: Bool {
+        !isSmart || rules?.isComplete != false
+    }
+
     func differs(from board: Pinboard) -> Bool {
         (!trimmedName.isEmpty && trimmedName != board.name) || symbol != board.symbolName
-            || !CollectionPalette.isSame(colorHex, board.colorHex)
+            || !CollectionPalette.isSame(colorHex, board.colorHex) || rulesDiffer(from: board)
+    }
+
+    private func rulesDiffer(from board: Pinboard) -> Bool {
+        guard board.isSmart, isSmart, let rules else { return false }
+        return rules != SmartRulesDraft(data: board.smartPredicateData)
     }
 }

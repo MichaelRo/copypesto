@@ -235,6 +235,13 @@ test-core: ## [Test] Run Core/ unit tests via SPM — fast, no Xcode project nee
 build-mobile: generate ## [Develop] Build the iPhone and iPad app for the simulator
 	$(XCODEBUILD_MOBILE) -destination 'generic/platform=iOS Simulator' build
 
+.PHONY: build-mobile-device
+build-mobile-device: generate ## [Develop] Build the iPhone and iPad app for a connected device, signed for APPLE_TEAM_ID (DEVICE="name"; docs/ios-signing.md)
+	@test -n "$(DEVICE)" || { echo 'Name the device: make build-mobile-device DEVICE="My iPhone"'; exit 1; }
+	@test -n "$(APPLE_TEAM_ID)" || { echo "No team: install a Developer ID certificate or pass APPLE_TEAM_ID=..."; exit 1; }
+	$(XCODEBUILD_MOBILE) -destination 'platform=iOS,name=$(DEVICE)' -allowProvisioningUpdates \
+		DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) CODE_SIGN_STYLE=Automatic build
+
 .PHONY: test-mobile
 test-mobile: MOBILE_SCHEME = PestoMobileCITests
 test-mobile: generate ## [Test] Run the iOS unit tests on an iPhone and then an iPad simulator

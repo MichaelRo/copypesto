@@ -140,6 +140,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         GENERATE_INFOPLIST_FILE: "YES"
+        # Only PestoAllowsTestHooks (as the Mac's Info.plist has it); everything else is generated.
+        INFOPLIST_FILE: Sources/Resources/PestoMobile-Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Pesto
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: "YES"
@@ -168,6 +170,21 @@ targets:
       base:
         BUNDLE_LOADER: $(TEST_HOST)
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/Pesto.app/Pesto
+        GENERATE_INFOPLIST_FILE: "YES"
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: "NO"
+
+  PestoMobileUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - Tests/PestoMobileUITests
+      # The identifiers the app and its UI tests share.
+      - path: Sources/Mobile/MobileAccessibilityID.swift
+    dependencies:
+      - target: PestoMobile
+    settings:
+      base:
         GENERATE_INFOPLIST_FILE: "YES"
         SWIFT_TREAT_WARNINGS_AS_ERRORS: "NO"
 
@@ -294,8 +311,28 @@ schemes:
       targets:
         PestoMobile: all
         PestoMobileTests: [test]
+        PestoMobileUITests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - PestoMobileTests
+        - PestoMobileUITests
+      environmentVariables:
+        - variable: TZ
+          value: UTC
+      commandLineArguments:
+        "-AppleLocale en_US": true
+        "-AppleLanguages (en)": true
+    archive:
+      config: Release
+
+  PestoMobileCITests:
+    build:
+      targets:
+        PestoMobile: all
+        PestoMobileTests: [test]
     test:
       config: Debug
       targets:
@@ -306,5 +343,3 @@ schemes:
       commandLineArguments:
         "-AppleLocale en_US": true
         "-AppleLanguages (en)": true
-    archive:
-      config: Release

@@ -21,9 +21,10 @@ XCODEBUILD = DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 MOBILE_BUILD_DIR = .build/xcode-ios-app
 IPHONE_SIMULATOR ?= iPhone 17
 IPAD_SIMULATOR   ?= iPad Air 11-inch (M4)
+MOBILE_SCHEME   ?= PestoMobile
 XCODEBUILD_MOBILE = DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 	-project Pesto.xcodeproj \
-	-scheme PestoMobile \
+	-scheme $(MOBILE_SCHEME) \
 	-configuration Debug \
 	-derivedDataPath $(MOBILE_BUILD_DIR)
 
@@ -235,9 +236,15 @@ build-mobile: generate ## [Develop] Build the iPhone and iPad app for the simula
 	$(XCODEBUILD_MOBILE) -destination 'generic/platform=iOS Simulator' build
 
 .PHONY: test-mobile
-test-mobile: generate ## [Test] Run the iOS tests on an iPhone and then an iPad simulator
+test-mobile: MOBILE_SCHEME = PestoMobileCITests
+test-mobile: generate ## [Test] Run the iOS unit tests on an iPhone and then an iPad simulator
 	$(XCODEBUILD_MOBILE) -destination 'platform=iOS Simulator,name=$(IPHONE_SIMULATOR)' test
 	$(XCODEBUILD_MOBILE) -destination 'platform=iOS Simulator,name=$(IPAD_SIMULATOR)' test
+
+.PHONY: test-mobile-ui
+test-mobile-ui: generate ## [Test] Run the iOS UI smoke tests on an iPhone and then an iPad simulator, one at a time
+	$(XCODEBUILD_MOBILE) -destination 'platform=iOS Simulator,name=$(IPHONE_SIMULATOR)' -only-testing:PestoMobileUITests test
+	$(XCODEBUILD_MOBILE) -destination 'platform=iOS Simulator,name=$(IPAD_SIMULATOR)' -only-testing:PestoMobileUITests test
 
 .PHONY: test
 test: generate ## [Test] Run integration tests via xcodebuild (snapshot + UI tests skipped)

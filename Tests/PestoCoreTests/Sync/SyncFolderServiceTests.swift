@@ -32,11 +32,14 @@ final class SyncSite {
 
     init(
         name: String, layout: SyncFolderLayout, time: TimeBox, timing custom: SyncFolderService.Timing? = nil,
-        isReadable: @escaping @Sendable (URL) -> Bool = { SyncFileAvailability.isReadable($0) }
+        isReadable: @escaping @Sendable (URL) -> Bool = { SyncFileAvailability.isReadable($0) },
+        environment: StorageEnvironment? = nil
     ) throws {
         self.name = name
-        container = try ModelContainerSetup.makeInMemory()
-        storage = StorageService(modelContainer: container)
+        let container = try ModelContainerSetup.makeInMemory()
+        self.container = container
+        storage = environment.map { StorageService(modelContainer: container, environment: $0) }
+            ?? StorageService(modelContainer: container)
         identity = SyncIdentity(deviceID: name, name: name, keys: .generate())
         keyStore = ThisDeviceSyncKeyStore(secrets: secrets)
         SyncJournal.enable(

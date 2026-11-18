@@ -31,6 +31,7 @@ public actor StorageService: ModelActor {
         rules = environment.rules
         loadDeviceID = environment.deviceID
         keyRotator = environment.keyRotator
+        resolver = environment.sourceApps
         undoHistory = environment.undoHistory
         wipeSuggestionLedger = environment.wipeSuggestionLedger
         nsfwModeProvider = environment.nsfwMode ?? { NSFWMode.current() }
@@ -51,7 +52,7 @@ public actor StorageService: ModelActor {
     let nsfwModeProvider: @Sendable () -> NSFWMode
     let encryption = BlobEncryption()
     let keyRotator: @Sendable () throws -> Void
-    let resolver: any SourceAppResolving = SourceApps.resolver()
+    let resolver: any SourceAppResolving
     /// Tracks the single most-recently-ingested hash with its timestamp. Used only to suppress
     /// the very-rapid re-capture of the *current latest* item (e.g. multiple paste echoes within
     /// a few hundred ms). Any other re-copy — including copying an older item again — must

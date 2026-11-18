@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 import Observation
+import os
 import SwiftData
+
+private let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "SyncController")
 
 /// What Settings shows while sync is being turned on, joined or paired. Each case is one screen of the design.
 public enum SyncFlow: Equatable, Sendable {
@@ -42,6 +45,7 @@ public final class SyncController {
         public var defaults: UserDefaults
         public var deviceID: String
         public var deviceName: String
+        public var deviceKind: SyncDeviceKind = .mac
         public var isLocked: @MainActor () -> Bool = { false }
         public var now: @Sendable () -> Date = { .now }
         public var timing = SyncFolderService.Timing()
@@ -166,6 +170,7 @@ public final class SyncController {
                 )
                 flow = .recoveryKey(made.recoveryKey)
                 enable()
+                await sendHistoryOfFirstDevice(me)
             case let .ready(group):
                 let mine = (try? env.container.mainContext.fetchCount(FetchDescriptor<ClipboardItem>())) ?? 0
                 let theirs = SyncGroupSurvey.clipCount(layout: layout, group: group, excluding: me.deviceID)
@@ -174,8 +179,19 @@ public final class SyncController {
                 flow = env.keyStore.mode == .iCloudKeychain ? .iCloudKeychainOff : .needsKey
             }
         } catch {
-            flow = .failed(Self.describe(error))
+            flow = .failed(Self.describe(error, device: env.deviceKind))
         }
+    }
+
+    /// Making the group announced this device, so its first pass does not send the history again; what was copied
+    /// before sync was on carries no stamp and would otherwise never leave this device.
+    private func sendHistoryOfFirstDevice(_ me: SyncIdentity) async {
+        do {
+            try await env.storage.restampForSync(.notFrom(deviceID: me.deviceID))
+        } catch {
+            logger.error("The history could not be marked for sync: \(error.localizedDescription, privacy: .public)")
+        }
+        await syncNow()
     }
 
     public func confirmJoin() {
@@ -209,7 +225,9 @@ public final class SyncController {
         let created = SyncFolderService(
             container: env.container, storage: env.storage, layout: SyncFolderLayout(root: env.folder), identity: me,
             keyStore: env.keyStore, highWater: env.highWater, timing: env.timing,
-            includeSensitive: { defaults.value(for: Setting.syncIncludesSecrets) }, isLocked: env.isLocked, now: env.now
+            includeSensitive: { defaults.value(for: Setting.syncIncludesSecrets) }, isLocked: env.isLocked,
+            now: env.now,
+            deviceKind: env.deviceKind
         )
         created.onStatusChange = { [weak self] new in self?.status = new }
         service?.stop()
@@ -245,7 +263,7 @@ public final class SyncController {
             try env.keyStore.saveSyncKey(key, vaultID: vault.vaultID, epoch: vault.epoch)
             await turnOn()
         } catch {
-            flow = .failed(Self.describe(error))
+            flow = .failed(Self.describe(error, device: env.deviceKind))
         }
     }
 
@@ -255,8 +273,7 @@ public final class SyncController {
             let layout = SyncFolderLayout(root: env.folder)
             guard case let .needsKey(vault) = try openGroup() else { return }
             guard let approver = Self.publicIdentities(layout).first(where: { $0.deviceID != me.deviceID }) else {
-                flow =
-                    .failed("No other Mac has announced itself in this folder yet. Open Pesto on the other Mac first.")
+                flow = .failed(SyncCopy.noOtherDevice(env.deviceKind))
                 return
             }
             let request = try SyncJoinRequest(
@@ -268,7 +285,7 @@ public final class SyncController {
             approverID = approver.deviceID
             flow = .pairing(words: request.pairingWords(approver: approver.keys), approver: approver.name)
         } catch {
-            flow = .failed(Self.describe(error))
+            flow = .failed(Self.describe(error, device: env.deviceKind))
         }
     }
 
@@ -297,7 +314,7 @@ public final class SyncController {
             self.approverID = nil
             Task { await turnOn() }
         } catch {
-            flow = .failed("The key from the other Mac did not open. Ask again.")
+            flow = .failed(SyncCopy.grantDidNotOpen(env.deviceKind))
         }
     }
 
@@ -339,7 +356,7 @@ public final class SyncController {
             )
             pendingJoin = nil
         } catch {
-            flow = .failed(Self.describe(error))
+            flow = .failed(Self.describe(error, device: env.deviceKind))
         }
     }
 
@@ -379,7 +396,7 @@ public final class SyncController {
             flow = .recoveryKey(next.recoveryKey)
             await syncNow()
         } catch {
-            flow = .failed(Self.describe(error))
+            flow = .failed(Self.describe(error, device: env.deviceKind))
         }
     }
 
@@ -422,9 +439,19 @@ public final class SyncController {
             if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) }
             return nil
         } catch {
-            return "Pesto could not remove this Mac's files from the folder, so sync is still on. " +
-                error.localizedDescription
+            return SyncCopy.couldNotLeave(env.deviceKind) + error.localizedDescription
         }
+    }
+
+    /// Stops reading and writing while the app is away (an iPhone app in the background) without turning sync off:
+    /// the journal keeps stamping, and `resumeIfEnabled` starts again from where it was.
+    public func suspend() {
+        service?.stop()
+        service = nil
+    }
+
+    public var deviceKind: SyncDeviceKind {
+        env.deviceKind
     }
 
     /// Stops reading and writing now and leaves the folder alone.
@@ -463,10 +490,10 @@ public final class SyncController {
         }
     }
 
-    static func describe(_ error: any Error) -> String {
+    static func describe(_ error: any Error, device: SyncDeviceKind = .mac) -> String {
         switch error {
         case SyncKeyStoreError.entitlementMissing: "This build cannot use iCloud Keychain. Use a recovery key instead."
-        case SyncKeyStoreError.locked: "The Keychain is locked. Unlock the Mac and try again."
+        case SyncKeyStoreError.locked: SyncCopy.keychainLocked(device)
         case SyncKeyStoreError.conflict: "A different key is already stored for this sync."
         default: "Sync could not continue: \(error.localizedDescription)"
         }

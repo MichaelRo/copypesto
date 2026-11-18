@@ -69,6 +69,7 @@ make test-core  # swift test on PestoCore — fast, no Xcode project needed
 make test       # xcodebuild hosted tests (snapshot + UITests skipped)
 make build-mobile  # the iPhone and iPad app, for the simulator
 make test-mobile   # its tests on an iPhone and an iPad simulator (needs an iOS simulator runtime)
+make test-mobile-ui  # its UI smoke tests, iPhone then iPad
 make verify     # the full gate: lint, Core + hosted + UI tests, screenshots (docs/testing.md)
 make lint       # swiftformat --lint + swiftlint --strict
 make format     # auto-format all Swift sources

@@ -30,6 +30,7 @@ public final class SyncFolderService {
     private let isReadable: @Sendable (URL) -> Bool
     let now: @Sendable () -> Date
     let timing: Timing
+    private let deviceKind: SyncDeviceKind
 
     public private(set) var status: SyncStatus = .off
     public var onStatusChange: (@MainActor (SyncStatus) -> Void)?
@@ -55,8 +56,10 @@ public final class SyncFolderService {
         includeSensitive: @escaping @MainActor () -> Bool = { false },
         isLocked: @escaping @MainActor () -> Bool = { false },
         isReadable: (@Sendable (URL) -> Bool)? = nil,
-        now: @escaping @Sendable () -> Date = { .now }
+        now: @escaping @Sendable () -> Date = { .now },
+        deviceKind: SyncDeviceKind = .mac
     ) {
+        self.deviceKind = deviceKind
         self.container = container
         self.storage = storage
         self.layout = layout
@@ -163,7 +166,7 @@ public final class SyncFolderService {
             try await compactIfNeeded(current)
             try await read(current)
         } catch let error as SyncError {
-            set(.refused(Self.reason(error)))
+            set(.refused(SyncCopy.refusal(error, device: deviceKind)))
         } catch {
             set(.refused("Sync stopped: \(error.localizedDescription)"))
         }
@@ -407,19 +410,6 @@ public final class SyncFolderService {
     }
 
     static func reason(_ error: SyncError) -> String {
-        switch error {
-        case .badSignature: "A file from another Mac did not match its signature. Nothing was changed."
-        case .unknownSigner: "A file came from a Mac this sync does not know. Nothing was changed."
-        case .fork, .rollback, .brokenChain: "Another Mac's log went backwards or was changed. Nothing was changed."
-        case .clockFarAhead: "Another Mac's clock is far ahead, so its changes were not applied."
-        case .wrongVault, .wrongEpoch, .wrongKey: "Sync was reset. It will pick up the new key."
-        case .vaultWentBack:
-            "The sync folder went back to an older state than this Mac has seen. Nothing was changed. "
-                + "If you reset sync on purpose, choose Leave Sync here and join again."
-        case .otherGroup:
-            "This folder holds a different sync from the one this Mac joined. Nothing was changed. "
-                + "To use it, choose Leave Sync here first."
-        default: "A file from another Mac is damaged. Nothing was changed."
-        }
+        SyncCopy.refusal(error)
     }
 }

@@ -15,6 +15,8 @@ public struct HistoryCriteria: Sendable {
     public var dateBefore: Date?
     public var sensitiveOnly: Bool
     public var remoteOnly: Bool
+    /// The library's Pinned scope: unlike the chips, it applies whether or not a search is open.
+    public var pinnedOnly: Bool
     public var query: String
     public var now: Date?
 
@@ -29,6 +31,7 @@ public struct HistoryCriteria: Sendable {
         dateBefore: Date? = nil,
         sensitiveOnly: Bool = false,
         remoteOnly: Bool = false,
+        pinnedOnly: Bool = false,
         query: String = "",
         now: Date? = nil
     ) {
@@ -42,6 +45,7 @@ public struct HistoryCriteria: Sendable {
         self.dateBefore = dateBefore
         self.sensitiveOnly = sensitiveOnly
         self.remoteOnly = remoteOnly
+        self.pinnedOnly = pinnedOnly
         self.query = query
         self.now = now
     }
@@ -198,6 +202,7 @@ public struct HistoryIndex: Sendable {
             return false
         }
         if criteria.hidesSensitive, row.isNSFW { return false }
+        if criteria.pinnedOnly, !row.isPinned { return false }
         let apps = criteria.searchActive ? criteria.appBundleIDs.union(criteria.sources) : criteria.appBundleIDs
         if !apps.isEmpty, !(row.sourceBundleID.map(apps.contains) ?? false) {
             return false

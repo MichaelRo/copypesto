@@ -69,7 +69,11 @@ struct ClipCard: View {
             .contextMenu {
                 CardMenu(card: self)
             } preview: {
+                // The preview is hosted apart from the grid, so an observable the face reads (a covered card reads the
+                // app state) has to be handed over, or the long press on a hidden clip traps.
                 card(face: face, width: 300).frame(width: 300)
+                    .environment(appState)
+                    .environment(library)
             }
             .modifier(CardDragSource(card: self))
             .focusedValue(\.clipCommands, isFocused ? commands : nil)

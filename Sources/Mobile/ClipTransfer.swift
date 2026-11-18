@@ -4,7 +4,7 @@ import Foundation
 import UniformTypeIdentifiers
 
 /// A clip handed to Share or dragged out of Pesto on iPad: text as text, a link as a URL and its text, a picture as
-/// its own bytes.
+/// its own bytes (an animated GIF as a GIF, not as a picture of its first frame).
 struct ClipTransfer: Transferable {
     let content: ClipContent
 
@@ -17,6 +17,10 @@ struct ClipTransfer: Transferable {
             transfer.pictureData ?? Data()
         }
         .exportingCondition { $0.pictureType == UTType.jpeg.identifier }
+        DataRepresentation(exportedContentType: .gif) { transfer in
+            transfer.pictureData ?? Data()
+        }
+        .exportingCondition { $0.pictureType == UTType.gif.identifier }
         DataRepresentation(exportedContentType: .image) { transfer in
             transfer.pictureData ?? Data()
         }

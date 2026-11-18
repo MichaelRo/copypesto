@@ -29,6 +29,20 @@ public enum InboxPolicy {
         maxPictureBytes + 1024
     }
 
+    /// What happens to a picture of a stored format that the share sheet read from a file.
+    public enum PictureHandling: Equatable, Sendable {
+        case keep
+        case scaleDown
+        case refuse
+    }
+
+    /// A picture within the limit is kept as it is. A larger one is scaled down to a still, except a GIF: that would
+    /// keep one frame of an animation under a name that promised the whole of it, so it is refused instead.
+    public static func handling(ofStoredPictureType typeIdentifier: String, byteCount: Int) -> PictureHandling {
+        if byteCount <= maxPictureBytes { return .keep }
+        return typeIdentifier == UTType.gif.identifier ? .refuse : .scaleDown
+    }
+
     public static func accepts(typeIdentifier: String) -> Bool {
         typeIdentifier == textTypeIdentifier || storedPictureTypes.contains(typeIdentifier)
     }

@@ -11,8 +11,16 @@ struct DeferredPictureTransfer: Transferable {
 
     let itemID: UUID
     let container: ModelContainer
+    var isGIF = false
 
     static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .gif) { transfer in
+            guard case let .picture(data, _)? = await ClipContent.load(
+                itemID: transfer.itemID, container: transfer.container
+            ) else { throw Missing() }
+            return data
+        }
+        .exportingCondition { $0.isGIF }
         DataRepresentation(exportedContentType: .image) { transfer in
             guard case let .picture(data, _)? = await ClipContent.load(
                 itemID: transfer.itemID, container: transfer.container

@@ -37,11 +37,15 @@ public extension StorageService {
         /// Clips that hold secrets get a fresh stamp and are sent again: the person changed what may leave this Mac,
         /// and a stamp later than any withdrawal is what lets a clip come back. Everything else is left alone.
         case sensitive
+        /// Clips and collections that carry no stamp at all: what a device held before its sync was on and never sent
+        /// (a first device before its turn-on stamped the history, ADR 0056). A stamped row is left alone.
+        case unstamped
     }
 
     @discardableResult
     func restampForSync(_ scope: RestampScope) async throws -> Int {
         guard let clock = SyncJournal.clock(for: modelContainer) else { return 0 }
+        if case .unstamped = scope { return try await stampUnstamped(clock: clock) }
         var count = 0
         func isMine(_ encoded: String?, _ deviceID: String) -> Bool {
             encoded.flatMap(SyncStamp.init(encoded:))?.deviceID == deviceID
@@ -57,6 +61,8 @@ public extension StorageService {
                 guard item.sensitivityRaw != nil else { return }
                 item.syncFingerprint = item.syncFingerprintValue()
                 item.changeClock = clock.next().encoded
+            case .unstamped:
+                return
             }
             item.syncDirty = true
             count += 1
@@ -70,6 +76,27 @@ public extension StorageService {
                 board.syncDirty = true
                 count += 1
             }
+        }
+        try saveOrRollback()
+        return count
+    }
+
+    private func stampUnstamped(clock: SyncClock) async throws -> Int {
+        var count = 0
+        let unstampedClips = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.changeClock == nil })
+        try await forEachClip(matching: unstampedClips) { item in
+            item.syncFingerprint = item.syncFingerprintValue()
+            item.changeClock = clock.next().encoded
+            item.syncDirty = true
+            count += 1
+        }
+        for board in try modelContext
+            .fetch(FetchDescriptor<Pinboard>(predicate: #Predicate { $0.changeClock == nil }))
+        {
+            board.syncFingerprint = board.syncFingerprintValue()
+            board.changeClock = clock.next().encoded
+            board.syncDirty = true
+            count += 1
         }
         try saveOrRollback()
         return count

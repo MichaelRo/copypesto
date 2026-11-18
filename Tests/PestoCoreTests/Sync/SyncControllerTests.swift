@@ -13,6 +13,7 @@ final class SyncMac {
     let keyStore: SyncKeyStoring
     let controller: SyncController
     let site: SyncSite
+    private let environment: SyncController.Environment
 
     init(
         name: String, folder: URL, time: TimeBox, keyStore: SyncKeyStoring? = nil, deviceKind: SyncDeviceKind = .mac
@@ -30,7 +31,14 @@ final class SyncMac {
         environment.deviceKind = deviceKind
         environment.timing.batchWindow = .milliseconds(20)
         environment.timing.pollInterval = .seconds(3600)
+        self.environment = environment
         controller = SyncController(environment)
+    }
+
+    /// The same store, keys, preferences and high-water marks under a new controller, as after a relaunch. Drive only
+    /// the new one afterwards.
+    func relaunched() -> SyncController {
+        SyncController(environment)
     }
 
     func clips() throws -> [String] {

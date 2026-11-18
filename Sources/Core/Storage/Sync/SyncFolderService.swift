@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import os
 import SwiftData
+
+private let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "SyncFolderService")
 
 /// Keeps this Mac's log and the other Macs' logs in step through the sync folder (ADR 0018). It writes what changed
 /// here
@@ -41,6 +44,7 @@ public final class SyncFolderService {
     private var stopped = false
     var ownLast: (sequence: UInt64, hash: String) = (0, SyncManifest.zeroHash)
     private var ownLogRecovered = false
+    private var unstampedSent = false
     private var lastReceived: Date?
     private var current: Task<Void, Never>?
     var segmentsAfterCompaction = 0
@@ -207,6 +211,7 @@ public final class SyncFolderService {
         let epochChanged = group.map { $0.epoch != found.epoch } ?? false
         if announced, !epochChanged {
             group = found
+            try await sendUnstampedOnce()
             return
         }
         try SyncGroupManager.writeDeviceRecord(
@@ -218,7 +223,18 @@ public final class SyncFolderService {
             ownLogRecovered = false
         }
         if !announced || epochChanged { _ = try await storage.restampForSync(.notFrom(deviceID: identity.deviceID)) }
+        unstampedSent = true
         group = try SyncGroupManager.openGroup(layout: layout, keyStore: keyStore) ?? found
+    }
+
+    /// A device announced before turn-on stamped its history (ADR 0056) never sent what it held from before. Once per
+    /// run, whatever still carries no stamp is stamped and goes out; afterwards nothing matches, so this costs one
+    /// empty fetch per launch.
+    private func sendUnstampedOnce() async throws {
+        guard !unstampedSent else { return }
+        let stamped = try await storage.restampForSync(.unstamped)
+        unstampedSent = true
+        if stamped > 0 { logger.info("Sent \(stamped, privacy: .public) clips and collections that were never sent") }
     }
 
     /// A Mac that used Leave Sync takes its folder, and so its log, with it, but its clips are still here: this Mac

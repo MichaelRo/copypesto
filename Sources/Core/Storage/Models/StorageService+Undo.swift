@@ -21,11 +21,20 @@ extension StorageService {
     func undoSnapshots(of doomed: [ClipboardItem]) -> [ClipSnapshot]? {
         let holdable = UndoPolicy.holdable(doomed)
         guard !holdable.isEmpty else { return nil }
+        let doomedIDs = Set(doomed.map(\.id))
+        let hashes = Array(Set(holdable.map(\.contentHash)))
+        // Without the survivors a restore skips a clip whose text another clip holds, as it did before ADR 0053.
+        let survivors = (try? modelContext.fetch(FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { hashes.contains($0.contentHash) }
+        )).filter { !doomedIDs.contains($0.id) }) ?? []
+        let survivorsByHash = Dictionary(grouping: survivors, by: \.contentHash)
         return holdable.map {
-            ClipSnapshot(
+            var snapshot = ClipSnapshot(
                 item: $0, linkPreviewFile: linkPreviews.sealedFile(for: $0.id),
                 recognizedTextFile: recognizedTexts.sealedFile(for: $0.id)
             )
+            snapshot.textAlsoHeldBy = Set((survivorsByHash[$0.contentHash] ?? []).map(\.id))
+            return snapshot
         }
     }
 
@@ -87,12 +96,15 @@ extension StorageService {
     private func restore(_ snapshots: [ClipSnapshot]) throws {
         let ids = snapshots.map(\.id)
         let hashes = snapshots.map(\.contentHash)
-        let present = try Set(modelContext.fetch(FetchDescriptor<ClipboardItem>(
+        let present = try modelContext.fetch(FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { ids.contains($0.id) || hashes.contains($0.contentHash) }
-        )).flatMap { [$0.id.uuidString, $0.contentHash] })
+        ))
+        let presentIDs = Set(present.map(\.id))
+        let holders = Dictionary(grouping: present, by: \.contentHash).mapValues { Set($0.map(\.id)) }
         var restored: [ClipSnapshot] = []
-        for snapshot in snapshots
-            where !present.contains(snapshot.id.uuidString) && !present.contains(snapshot.contentHash)
+        // A clip that holds the text and was not there beside this one is a copy made since: it stands for it.
+        for snapshot in snapshots where !presentIDs.contains(snapshot.id)
+            && (holders[snapshot.contentHash] ?? []).isSubset(of: snapshot.textAlsoHeldBy)
         {
             let item = snapshot.makeItem()
             if let slot = item.pinnedHotkeyIndex, try !clips(holding: slot).isEmpty { item.setShortcut(nil) }

@@ -364,7 +364,7 @@ Pass 3 (ADR 0058) is covered in `CardCopyActionsTests` (Copy As JSON and Markdow
 ### iPhone and iPad: what only a device can check
 
 Device-only checks are listed in `docs/ios-signing.md` ("What only a device can check"): iCloud Keychain key arrival, the Files picker against real iCloud Drive, Face ID and the App Switcher cover, a real screen recording or AirPlay, AutoFill from the system menu, the widget on a real Home Screen, the share sheet from real apps and the Action Button or Back Tap shortcut. Pass 3 adds, on a device with Apple Intelligence:
-- an AI action on a long note (the answer says how much was read), Describe Image on a picture where the model can read pictures, and the same menu greyed out with the reason once Apple Intelligence is switched off in Settings → Apple Intelligence & Siri;
+- an AI action on a long note (the answer says how much was read), Describe Image on a picture where the model can read pictures, and the same menu greyed out with the reason once Apple Intelligence is switched off in the iOS Settings app (Apple Intelligence & Siri) or in Pesto's own Apple Intelligence switch;
 - Ask with the real model: type "pictures from last week" and choose Ask (then again with Apple Intelligence off: the rules answer);
 - Decode JWT with Face ID, not the stub: a refusal opens nothing;
 - share an animated GIF from Safari, Photos and Messages into Pesto and watch the card animate; share it back out to Messages and Files and check the receiver animates it.

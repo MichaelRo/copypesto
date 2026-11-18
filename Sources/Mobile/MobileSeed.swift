@@ -8,7 +8,8 @@ import UIKit
 import UniformTypeIdentifiers
 
 /// A clip of each kind for a `-UITestMode` launch, added through ingest like any capture, then one pinned and one in a
-/// collection through the app's own actions. A launch with `PESTO_UITEST_SEED=empty` starts with none.
+/// collection through the app's own actions. A launch with `PESTO_UITEST_SEED=empty` starts with none, and
+/// `PESTO_UITEST_JWT=1` adds a token.
 enum MobileSeed {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "MobileSeed")
     static let noteText = "Packing list: passport, charger, the blue notebook"
@@ -16,6 +17,8 @@ enum MobileSeed {
     static let linkText = "https://copypesto.net/guide/"
     static let colorText = "#3F7D4E"
     static let secretText = "ghp_8fK2mQ9xLr4TzW7nB1vC6yH3sJ5dE0aGpU2i"
+    static let jwtText = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        + "eyJzdWIiOiJwZXN0byIsIm5hbWUiOiJBZGEgTG92ZWxhY2UifQ.c2lnbmF0dXJlLWJ5dGVz"
     static let codeText = "func blend(_ basil: [Leaf]) -> Pesto {\n    let crushed = basil.map(\\.crushed)\n"
         + "    return Pesto(leaves: crushed, oil: .olive)\n}"
     static let longText = "Pesto night at Dana's, Friday at 7:00 pm. Bring the basil and the pecorino. "
@@ -59,6 +62,11 @@ enum MobileSeed {
         for number in 0..<extraClipCount {
             let text = "Filler clip \(number): a line to make the grid scroll"
             guard let capture = ClipCapture.text(text, at: .now) else { continue }
+            try? await service.ingest(capture)
+        }
+        if ProcessInfo.processInfo.environment["PESTO_UITEST_JWT"] == "1",
+           let capture = ClipCapture.text(jwtText, at: .now)
+        {
             try? await service.ingest(capture)
         }
         await service.waitForBackgroundWork()

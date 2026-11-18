@@ -48,8 +48,6 @@ enum CardAIActions {
     }
 
     static var visionReason: String {
-        String(
-            localized: "Describe Image needs a model that can read pictures, which this device\u{2019}s does not have yet."
-        )
+        String(localized: "Describe Image needs a model that can read pictures, and this device\u{2019}s cannot yet.")
     }
 }

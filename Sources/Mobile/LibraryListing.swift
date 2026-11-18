@@ -38,7 +38,8 @@ enum LibraryListing {
             )
         }
         let kindNames = kinds.map(\.rawValue).sorted().joined(separator: ",")
-        let context = "\(key.filter.scope)|\(key.query)|\(kindNames)|\(window.cutoff != nil)|\(window.before != nil)|\(remote)"
+        let bounds = "\(window.cutoff != nil)|\(window.before != nil)"
+        let context = "\(key.filter.scope)|\(key.query)|\(kindNames)|\(bounds)|\(remote)"
         let arranged = order.arrange(ids(query: key.query), context: context)
         var result = arranged
         if !key.byMeaning.isEmpty, SemanticSearch.asksForMeaning(key.query) {

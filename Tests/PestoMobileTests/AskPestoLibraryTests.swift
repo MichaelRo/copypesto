@@ -21,7 +21,7 @@ struct AskPestoLibraryTests {
     }
 
     @Test(
-        "an answer sets the kinds and the range, a kind or date chip takes over its half, and ending the search clears it"
+        "an answer sets kinds and range, a kind or date chip takes over its half, and ending the search clears it"
     )
     func whenAnAnswerIsApplied_thenChipsAndEndTakeOver() {
         var filter = LibraryFilter(scope: .pinned, kind: .code, date: .week)

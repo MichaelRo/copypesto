@@ -67,10 +67,7 @@ struct CardFootLineView: View {
 
     static func line(for item: ClipboardItem, now: Date, device: CardFootLine.Device) -> CardFootLine {
         CardFootLine.make(
-            .init(
-                isRemote: item.isRemote, appName: item.knownSourceAppName, arrivedBySync: item.syncOrigin != nil,
-                captureMethod: item.captureMethod
-            ),
+            CardFootLine.origin(of: item),
             title: item.customTitle,
             age: CardAge.text(for: item, inCollection: false, now: now),
             device: device

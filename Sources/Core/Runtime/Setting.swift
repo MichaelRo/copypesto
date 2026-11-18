@@ -53,6 +53,11 @@ public enum Setting {
     public static let addsCopiesOnOpen = SettingKey("addsCopiesOnOpen", default: false)
     /// iOS: the clipboard's change count last offered, added or written by Pesto, so one copy is offered once.
     public static let lastSeenPasteboardChange = SettingKey("lastSeenPasteboardChange", default: -1)
+    /// iOS: keep a small sealed set of pinned and recent text ready for AutoFill's text insertion (ADR 0051).
+    public static let quickInsertEnabled = SettingKey("quickInsertEnabled", default: false)
+    /// In the widget extension's own preferences: the clip a tile last copied in place and when, as
+    /// `<UUID>@<seconds since 1970>`, so that tile shows Copied for a moment (ADR 0052). Never any content.
+    public static let widgetLastCopy = SettingKey("widgetLastCopy", default: "")
     public static let deviceID = SettingKey("deviceID", default: "")
     public static let opensQuickMenuAtCursor = SettingKey("opensQuickMenuAtCursor", default: false)
     public static let screenSharingPrivacy = SettingKey("screenSharingPrivacy", default: false)
@@ -143,7 +148,7 @@ public enum Setting {
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
         syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
-        deviceID.name,
+        quickInsertEnabled.name, widgetLastCopy.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,

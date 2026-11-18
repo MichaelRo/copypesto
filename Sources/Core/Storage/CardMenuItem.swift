@@ -30,6 +30,7 @@ public enum CardMenuItem: CaseIterable, Sendable {
     case markSensitive
     case setExpiry
     case assignShortcut
+    case editText
     case delete
 
     /// What a card covered for a screen share still offers: paste it, copy it, show it (its own Show, outside this

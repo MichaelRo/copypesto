@@ -154,6 +154,7 @@ extension GridView {
             },
             assignHotkey: { assignShortcut($1, toClip: $0.id) },
             togglePin: { togglePin(ofClip: $0.id) },
+            editText: { appState.openTextEditor?($0) },
             copy: { copyToPasteboard($0) },
             recognizedTextOffered: { !appState.isHistoryLockedNow() && RecognizedText.isOffered(for: $0) },
             copyRecognizedText: { copyRecognizedText($0) },
@@ -209,8 +210,10 @@ extension GridView {
                     showsFirstCopyTime: showsFirstCopy,
                     isBlurred: blurred
                 )
-                .id(item.id)
-                .transition(cardTransition)
+                // A new text is a new card: the main context's merge alone does not redraw it (ADR 0050).
+                .id(item.contentHash)
+                    .id(item.id)
+                    .transition(cardTransition)
             }
             if cachedFilteredItems.count > displayedItems.count {
                 Color.clear

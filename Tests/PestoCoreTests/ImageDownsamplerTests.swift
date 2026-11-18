@@ -40,6 +40,36 @@ struct ImageDownsamplerTests {
         #expect(dimensions.height == 100)
     }
 
+    @Test("a JPEG thumbnail fits its pixel size and its byte bound, or there is none")
+    @MainActor
+    func whenJPEG_thenItFitsBothBounds() throws {
+        let noisy = try noise(width: 1600, height: 1200)
+
+        let thumbnail = try #require(ImageDownsampler.thumbnailJPEG(from: noisy, maxPixel: 240, maxBytes: 24 * 1024))
+
+        let dimensions = try size(of: thumbnail)
+        #expect(dimensions.width == 240)
+        #expect(dimensions.height == 180)
+        #expect(thumbnail.count <= 24 * 1024)
+        #expect(thumbnail.starts(with: [0xFF, 0xD8]))
+        #expect(ImageDownsampler.thumbnailJPEG(from: noisy, maxPixel: 240, maxBytes: 200) == nil)
+        #expect(ImageDownsampler.thumbnailJPEG(from: Data("not an image".utf8), maxPixel: 240, maxBytes: 1024) == nil)
+    }
+
+    @MainActor
+    private func noise(width: Int, height: Int) throws -> Data {
+        let rep = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height, bitsPerSample: 8, samplesPerPixel: 3,
+            hasAlpha: false, isPlanar: false, colorSpaceName: .calibratedRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        let bytes = try #require(rep.bitmapData)
+        var generator = SystemRandomNumberGenerator()
+        for index in 0..<(rep.bytesPerRow * height) {
+            bytes[index] = UInt8.random(in: 0...255, using: &generator)
+        }
+        return try #require(rep.representation(using: .png, properties: [:]))
+    }
+
     @Test("bytes that are neither an image nor a PDF give no thumbnail")
     func whenGarbage_thenNil() {
         #expect(ImageDownsampler.thumbnailPNG(from: Data("not an image".utf8), maxPixel: 100) == nil)

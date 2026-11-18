@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 import Testing
+@testable import PestoCore
 
 @Suite("Entitlements and purpose strings")
 struct EntitlementsTests {
@@ -34,14 +35,68 @@ struct EntitlementsTests {
         #expect(try plist("Sources/Resources/Pesto.entitlements").isEmpty, "a build without the profile claims nothing")
     }
 
-    @Test("the iOS app and its share extension claim only the app group, and the Mac files do not name it")
-    func iOSEntitlements_areOnlyTheAppGroup() throws {
-        for path in ["Sources/Resources/PestoMobile.entitlements", "Sources/MobileShare/PestoShare.entitlements"] {
-            #expect(try Set(plist(path).keys) == ["com.apple.security.application-groups"], "\(path)")
-        }
+    @Test("each iOS entitlements file claims exactly its keys, and the Mac files name none of them")
+    func iOSEntitlements_arePinned() throws {
+        let group = "com.apple.security.application-groups"
+        let keychain = "keychain-access-groups"
+        let autofill = "com.apple.developer.authentication-services.autofill-credential-provider"
+        #expect(try Set(plist("Sources/Resources/PestoMobile.entitlements").keys) == [group, keychain])
+        #expect(try Set(plist("Sources/MobileShare/PestoShare.entitlements").keys) == [group])
+        #expect(try Set(plist("Sources/MobileAutoFill/PestoAutoFill.entitlements").keys) == [group, keychain, autofill])
+        #expect(try plist("Sources/MobileAutoFill/PestoAutoFill.entitlements")[autofill] as? Bool == true)
+        #expect(try Set(plist("Sources/MobileWidget/PestoWidget.entitlements").keys) == [group, keychain])
         for path in ["Sources/Resources/Pesto.entitlements", "Sources/Resources/PestoSync.entitlements"] {
-            #expect(try plist(path)["com.apple.security.application-groups"] == nil, "\(path)")
+            for key in [group, keychain, autofill] {
+                #expect(try plist(path)[key] == nil, "\(path) names \(key)")
+            }
         }
+    }
+
+    @Test("the app's own Keychain group comes first; AutoFill and the widget each hold only the group of their own key")
+    func iOSKeychainGroups_keepTheAppsItemsItsOwn() throws {
+        let prefix = "$(AppIdentifierPrefix)"
+        let app = try plist("Sources/Resources/PestoMobile.entitlements")["keychain-access-groups"] as? [String]
+        let autoFill = try plist("Sources/MobileAutoFill/PestoAutoFill.entitlements")["keychain-access-groups"]
+            as? [String]
+        let widget = try plist("Sources/MobileWidget/PestoWidget.entitlements")["keychain-access-groups"] as? [String]
+        #expect(app == [
+            prefix + AppIdentity.bundleID, AppIdentity.quickInsertKeychainGroup(prefix: prefix),
+            AppIdentity.widgetKeychainGroup(prefix: prefix)
+        ])
+        #expect(autoFill == [AppIdentity.quickInsertKeychainGroup(prefix: prefix)])
+        #expect(widget == [AppIdentity.widgetKeychainGroup(prefix: prefix)])
+        for path in [
+            "Sources/Resources/PestoMobile-Info.plist", "Sources/MobileAutoFill/Info.plist",
+            "Sources/MobileWidget/Info.plist"
+        ] {
+            #expect(try plist(path)[AppIdentity.appIdentifierPrefixInfoKey] as? String == prefix, "\(path)")
+        }
+    }
+
+    @Test("the AutoFill extension offers text insertion and nothing else: no passwords, passkeys or codes")
+    func autoFillExtension_providesTextInsertionOnly() throws {
+        let info = try plist("Sources/MobileAutoFill/Info.plist")
+        let extensionInfo = try #require(info["NSExtension"] as? [String: Any])
+        #expect(
+            extensionInfo["NSExtensionPointIdentifier"] as? String
+                == "com.apple.authentication-services-credential-provider-ui"
+        )
+        let attributes = try #require(extensionInfo["NSExtensionAttributes"] as? [String: Any])
+        #expect(Set(attributes.keys) == ["ASCredentialProviderExtensionCapabilities"])
+        let capabilities = try #require(attributes["ASCredentialProviderExtensionCapabilities"] as? [String: Any])
+        #expect(Set(capabilities.keys) == ["ProvidesTextToInsert"])
+        #expect(capabilities["ProvidesTextToInsert"] as? Bool == true)
+    }
+
+    @Test("the widget is a WidgetKit extension, and the app opens pesto:// links, the widget's among them")
+    func widgetExtension_isWidgetKitAndTheAppTakesTheScheme() throws {
+        let info = try plist("Sources/MobileWidget/Info.plist")
+        let extensionInfo = try #require(info["NSExtension"] as? [String: Any])
+        #expect(Set(extensionInfo.keys) == ["NSExtensionPointIdentifier"])
+        #expect(extensionInfo["NSExtensionPointIdentifier"] as? String == "com.apple.widgetkit-extension")
+        let types =
+            try #require(plist("Sources/Resources/PestoMobile-Info.plist")["CFBundleURLTypes"] as? [[String: Any]])
+        #expect(types.flatMap { $0["CFBundleURLSchemes"] as? [String] ?? [] } == [AppIdentity.urlScheme])
     }
 
     @Test("the share extension is offered only for text, one link and one picture, never for everything")

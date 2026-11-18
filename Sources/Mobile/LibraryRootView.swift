@@ -23,6 +23,10 @@ struct LibraryRootView: View {
             .environment(library)
             .modelContainer(container)
             .onChange(of: scenePhase) { _, phase in if phase == .active { library.resort() } }
+            .onChange(of: appState.linkedClip) { _, linked in if let linked { library.show(
+                linked.id,
+                opensDetail: linked.opensDetail
+            ) } }
         } else if appState.hasBooted {
             ContentUnavailableView(
                 "History Unavailable",

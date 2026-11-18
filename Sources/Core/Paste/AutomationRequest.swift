@@ -14,7 +14,7 @@ public enum AutomationRequest: Equatable, Sendable {
     case clear(ClearRange)
 
     public init?(url: URL) {
-        guard url.scheme == "pesto", let action = AutomationAction(host: url.host) else { return nil }
+        guard url.scheme == AppIdentity.urlScheme, let action = AutomationAction(host: url.host) else { return nil }
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         func value(_ name: String) -> String? {
             items.first { $0.name == name }?.value

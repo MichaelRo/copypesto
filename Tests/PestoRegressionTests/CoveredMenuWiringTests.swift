@@ -19,7 +19,7 @@ struct CoveredMenuWiringTests {
     @Test("every VoiceOver action that names or changes a clip is gated by the covered list")
     func voiceOverActionsAreGated() throws {
         let gated: [(file: String, expected: [String])] = [
-            ("Features/Grid/CardEditActions.swift", ["rename", "note", "tag"]),
+            ("Features/Grid/CardEditActions.swift", ["editText", "rename", "note", "tag"]),
             ("Features/Grid/CardMoreActions.swift", ["pin", "openLink", "tag", "copyRecognizedText"])
         ]
         for (file, expected) in gated {

@@ -10,11 +10,12 @@ struct AppIdentityTests {
             .deletingLastPathComponent()
     }
 
-    @Test("Pesto.yml gives the app, its controls, the share extension and the CLI the identifiers the code uses")
+    @Test("Pesto.yml gives the app, its controls, its iOS extensions and the CLI the identifiers the code uses")
     func projectMatchesAppIdentity() throws {
         let project = try String(contentsOf: root.appendingPathComponent("Pesto.yml"), encoding: .utf8)
         for id in [
-            AppIdentity.bundleID, AppIdentity.controlsBundleID, AppIdentity.cliBundleID, AppIdentity.shareBundleID
+            AppIdentity.bundleID, AppIdentity.controlsBundleID, AppIdentity.cliBundleID, AppIdentity.shareBundleID,
+            AppIdentity.autofillBundleID, AppIdentity.widgetBundleID
         ] {
             #expect(project.contains("PRODUCT_BUNDLE_IDENTIFIER: \(id)\n"), "\(id) missing from Pesto.yml")
         }
@@ -47,12 +48,35 @@ struct AppIdentityTests {
         #expect(AppIdentity.legacyBlobKeyAccount == "io.pesto.app.blobKey")
         #expect(AppIdentity.inboxKeyAccount.hasPrefix(AppIdentity.bundleID))
         #expect(AppIdentity.shareBundleID == "net.copypesto.pesto.share")
+        #expect(AppIdentity.autofillBundleID == "net.copypesto.pesto.autofill")
+        #expect(AppIdentity.quickInsertKeyAccount == "net.copypesto.pesto.quickInsertKey")
+        #expect(AppIdentity.quickInsertKeychainGroupName == "net.copypesto.pesto.quick-insert")
+        #expect(AppIdentity
+            .quickInsertKeychainGroup(prefix: "ABCDE12345.") == "ABCDE12345.net.copypesto.pesto.quick-insert")
+        #expect(AppIdentity.quickInsertFileName != AppIdentity.inboxPublicKeyFileName)
+        #expect(AppIdentity.widgetBundleID == "net.copypesto.pesto.widget")
+        #expect(AppIdentity.widgetKind == "net.copypesto.pesto.recent-clips")
+        #expect(AppIdentity.widgetKeyAccount == "net.copypesto.pesto.widgetKey")
+        #expect(AppIdentity.widgetKeychainGroupName == "net.copypesto.pesto.widget")
+        #expect(AppIdentity.widgetKeychainGroup(prefix: "ABCDE12345.") == "ABCDE12345.net.copypesto.pesto.widget")
+        #expect(AppIdentity.widgetSnapshotFileName == "widget-snapshot.pestowidget")
+        #expect(AppIdentity.urlScheme == "pesto")
+        #expect(Set([
+            AppIdentity.widgetKeyAccount, AppIdentity.quickInsertKeyAccount, AppIdentity.blobKeyAccount,
+            AppIdentity.inboxKeyAccount, AppIdentity.deviceIDAccount
+        ]).count == 5)
+        #expect(Set([
+            AppIdentity.widgetSnapshotFileName, AppIdentity.quickInsertFileName, AppIdentity.inboxPublicKeyFileName
+        ]).count == 3)
     }
 
-    @Test("the app group the iOS app and its share extension name is the bundle ID's, in both entitlements files")
+    @Test("the app group the iOS app and its extensions name is the bundle ID's, in every entitlements file")
     func appGroupMatchesTheEntitlements() throws {
         #expect(AppIdentity.appGroupID == "group.net.copypesto.pesto")
-        for path in ["Sources/Resources/PestoMobile.entitlements", "Sources/MobileShare/PestoShare.entitlements"] {
+        for path in [
+            "Sources/Resources/PestoMobile.entitlements", "Sources/MobileShare/PestoShare.entitlements",
+            "Sources/MobileAutoFill/PestoAutoFill.entitlements", "Sources/MobileWidget/PestoWidget.entitlements"
+        ] {
             let data = try Data(contentsOf: root.appendingPathComponent(path))
             let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
             let groups = plist?["com.apple.security.application-groups"] as? [String]

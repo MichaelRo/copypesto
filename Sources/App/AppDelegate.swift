@@ -60,6 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var uiTestCommandTimer: Timer?
     lazy var quickMenuController = QuickMenuWindowController(appState: appState)
     lazy var pinnedWindowController = PinnedWindowController(appState: appState)
+    lazy var textEditController = makeTextEditController()
     private lazy var urlSchemeHandler = AutomationURLHandler(host: self)
 
     func applicationWillFinishLaunching(_: Notification) {
@@ -350,11 +351,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await self?.fillInPrompt.ask(title: title, fields: fields, initial: initial)
         }
         appState.menuBarIconIsOnScreen = { [weak self] in self?.menuBarIconIsOnScreen ?? false }
-        appState.openSettingsFromOverlay = { [weak self] in
-            guard let self else { return }
-            let shelfFrame = self.overlayWindowController?.overlayWindow.frame
-            self.appState.close(.afterHide { [weak self] in self?.openSettingsWindow(shelfFrame: shelfFrame) })
-        }
+        wireWindowsOpenedFromShelf()
 
         NotificationCenter.default.addObserver(
             forName: .hotkeySettingsChanged,

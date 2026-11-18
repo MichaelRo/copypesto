@@ -30,6 +30,13 @@ struct UndoTextTests {
         #expect(UndoText.menuTitle(undo: .deleteCollection("Work")).contains("Work"))
     }
 
+    @Test("a text edit reads like the menu item that made it")
+    func whenTextEdited_thenTheWordsMatchEditText() {
+        #expect(UndoText.action(.editText) == "Changed the text")
+        #expect(UndoText.menuTitle(undo: .editText) == "Undo Edit Text")
+        #expect(UndoText.done(UndoOutcome(label: .editText, direction: .undone)) == "Undone: Edit Text")
+    }
+
     @Test("with nothing to undo the menu says only Undo")
     func whenNothingToUndo_thenPlainTitles() {
         #expect(UndoText.menuTitle(undo: nil) == "Undo")

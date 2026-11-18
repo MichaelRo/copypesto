@@ -21,6 +21,44 @@ public enum AppIdentity {
     public static let inboxDirectoryName = "inbox"
     public static let inboxPublicKeyFileName = "inbox-key.pestokey"
     public static let inboxFileExtension = "pestoinbox"
+    public static let autofillBundleID = "\(bundleID).autofill"
+    public static let quickInsertKeyAccount = "\(bundleID).quickInsertKey"
+    public static let quickInsertFileName = "quick-insert.pestoquick"
+    /// The Keychain group the iOS app and its AutoFill extension share, after the team prefix their entitlements
+    /// files name as `$(AppIdentifierPrefix)` (ADR 0051).
+    public static let quickInsertKeychainGroupName = "\(bundleID).quick-insert"
+    /// The Info.plist key both iOS bundles carry `$(AppIdentifierPrefix)` in, so the code knows the group's full name.
+    public static let appIdentifierPrefixInfoKey = "PestoAppIdentifierPrefix"
+
+    public static func quickInsertKeychainGroup(prefix: String) -> String {
+        prefix + quickInsertKeychainGroupName
+    }
+
+    public static func quickInsertKeychainGroup(in bundle: Bundle) -> String {
+        quickInsertKeychainGroup(prefix: appIdentifierPrefix(in: bundle))
+    }
+
+    /// The scheme of `pesto://` links: the Mac's automation links and the iOS widget's links to a clip (ADR 0052).
+    public static let urlScheme = "pesto"
+    public static let widgetBundleID = "\(bundleID).widget"
+    /// The kind of the iOS Recent Clips widget, which the app names when it reloads its timelines.
+    public static let widgetKind = "\(bundleID).recent-clips"
+    public static let widgetKeyAccount = "\(bundleID).widgetKey"
+    public static let widgetSnapshotFileName = "widget-snapshot.pestowidget"
+    /// The Keychain group the iOS app and its widget share (ADR 0052), after the team prefix.
+    public static let widgetKeychainGroupName = "\(bundleID).widget"
+
+    public static func widgetKeychainGroup(prefix: String) -> String {
+        prefix + widgetKeychainGroupName
+    }
+
+    public static func widgetKeychainGroup(in bundle: Bundle) -> String {
+        widgetKeychainGroup(prefix: appIdentifierPrefix(in: bundle))
+    }
+
+    private static func appIdentifierPrefix(in bundle: Bundle) -> String {
+        bundle.object(forInfoDictionaryKey: appIdentifierPrefixInfoKey) as? String ?? ""
+    }
 
     public static let legacySupportDirectoryName = legacyBundleID
     public static let legacyKeychainService = legacyBundleID

@@ -31,6 +31,13 @@ public enum ShortcutClipSearch {
         ).isConcealed && item.sensitivityRaw == nil
     }
 
+    /// What may be kept ready for another app to insert without Pesto on screen (AutoFill, ADR 0051): what Shortcuts
+    /// may have, but never a clip the content filter flagged whatever the filter's setting, nor one that expires,
+    /// since the copy kept for insertion would outlive it.
+    public static func isOfferedOutsidePesto(_ item: ClipboardItem) -> Bool {
+        isOffered(item, nsfwMode: .hide) && !item.isNSFW && item.expiresAt == nil
+    }
+
     public static func clip(for item: ClipboardItem, nsfwMode: NSFWMode) -> ShortcutClip? {
         guard isOffered(item, nsfwMode: nsfwMode) else { return nil }
         let preview = item.customTitle ?? item.displayPreviewText

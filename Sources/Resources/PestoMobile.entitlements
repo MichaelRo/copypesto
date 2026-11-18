@@ -6,5 +6,11 @@
     <array>
         <string>group.net.copypesto.pesto</string>
     </array>
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)net.copypesto.pesto</string>
+        <string>$(AppIdentifierPrefix)net.copypesto.pesto.quick-insert</string>
+        <string>$(AppIdentifierPrefix)net.copypesto.pesto.widget</string>
+    </array>
 </dict>
 </plist>

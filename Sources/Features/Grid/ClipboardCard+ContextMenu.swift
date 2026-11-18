@@ -189,6 +189,14 @@ extension ClipboardCard {
             }
         }
 
+        if offers(.editText), let editText = actions.editText, offersTextEdit {
+            Button {
+                editText(item)
+            } label: {
+                Label("Edit Text\u{2026}", systemImage: "character.cursor.ibeam")
+            }
+        }
+
         if offers(.rename) {
             Button(action: beginRenamingTitle) {
                 Label(item.customTitle == nil ? "Add Title\u{2026}" : "Rename\u{2026}", systemImage: "pencil")

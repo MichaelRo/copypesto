@@ -18,22 +18,28 @@ struct CardFootLine: Equatable {
         var captureMethod: CaptureMethod?
     }
 
+    static func origin(of item: ClipboardItem) -> Origin {
+        Origin(
+            isRemote: item.isRemote, appName: item.knownSourceAppName, arrivedBySync: item.syncOrigin != nil,
+            captureMethod: item.captureMethod
+        )
+    }
+
     static func make(_ origin: Origin, title: String?, age: String, device: Device) -> CardFootLine {
-        let source: String?
-        var symbol: String?
-        if origin.isRemote {
-            source = PasteboardCapture.remoteSourceName
-        } else if let appName = origin.appName {
-            source = appName
-        } else if origin.arrivedBySync {
-            source = nil
-        } else {
-            source = origin.captureMethod.map(label) ?? device.name
-            symbol = device.symbol
-        }
+        let source = source(origin, device: device)
+        let symbol = source.isThisDevice ? device.symbol : nil
         let cleanTitle = title.flatMap { $0.isEmpty ? nil : $0 }
-        let texts = CardMetaLine.candidates(.init(title: cleanTitle, source: source, age: age))
+        let texts = CardMetaLine.candidates(.init(title: cleanTitle, source: source.name, age: age))
         return CardFootLine(symbol: cleanTitle == nil ? symbol : nil, texts: texts)
+    }
+
+    /// Where the clip came from, as the foot line and the widget name it: the app, another device, nothing for a synced
+    /// clip without a name, or for one made here how it came in (or the device).
+    static func source(_ origin: Origin, device: Device) -> (name: String?, isThisDevice: Bool) {
+        if origin.isRemote { return (PasteboardCapture.remoteSourceName, false) }
+        if let appName = origin.appName { return (appName, false) }
+        if origin.arrivedBySync { return (nil, false) }
+        return (origin.captureMethod.map(label) ?? device.name, true)
     }
 
     /// How a clip made on this device came in, in place of the device's name (ADR 0049).

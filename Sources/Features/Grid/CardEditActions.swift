@@ -8,11 +8,14 @@ struct CardEditActions: ViewModifier {
     let rename: () -> Void
     let addNote: () -> Void
     let addTag: () -> Void
+    /// Nil when the card offers no Edit Text (a picture, a covered card, a secret not shown).
+    let editText: (() -> Void)?
     let offers: (CardMenuItem) -> Bool
 
     func body(content: Content) -> some View {
         content
             .accessibilityActions {
+                if offers(.editText), let editText { Button("Edit Text", action: editText) }
                 if offers(.rename) { Button("Rename", action: rename) }
                 if offers(.note) { Button("Add Note", action: addNote) }
                 if offers(.tag) { Button("Add Tag", action: addTag) }

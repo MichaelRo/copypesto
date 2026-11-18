@@ -132,20 +132,27 @@ targets:
         product: PestoCore
       - target: PestoShare
         embed: true
+      - target: PestoAutoFill
+        embed: true
+      - target: PestoWidget
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto
         PRODUCT_NAME: Pesto
         PRODUCT_MODULE_NAME: PestoMobile
-        # The app group it shares with PestoShare (ADR 0047); nothing else.
+        # The app group it shares with its extensions (ADR 0047), and three Keychain groups: its own first, so every
+        # item it writes stays there, then the quick-insert group it shares with PestoAutoFill alone (ADR 0051), then
+        # the widget group it shares with PestoWidget alone (ADR 0052).
         CODE_SIGN_ENTITLEMENTS: Sources/Resources/PestoMobile.entitlements
         MARKETING_VERSION: "1.7.0"
         CURRENT_PROJECT_VERSION: "9"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         GENERATE_INFOPLIST_FILE: "YES"
-        # PestoAllowsTestHooks (as the Mac's Info.plist has it), the clip-id type and the background sync refresh
-        # (BGTaskSchedulerPermittedIdentifiers, UIBackgroundModes fetch); everything else is generated.
+        # PestoAllowsTestHooks (as the Mac's Info.plist has it), the team prefix of its Keychain groups, the clip-id
+        # type and the background sync refresh (BGTaskSchedulerPermittedIdentifiers, UIBackgroundModes fetch);
+        # everything else is generated.
         INFOPLIST_FILE: Sources/Resources/PestoMobile-Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Pesto
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
@@ -182,6 +189,61 @@ targets:
         APPLICATION_EXTENSION_API_ONLY: "YES"
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"
 
+  # The iOS AutoFill extension (ADR 0051): text insertion only. It opens the sealed quick-insert set the app keeps in
+  # the app group with the key of a Keychain group only the app and it hold; never the store or the history key.
+  PestoAutoFill:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources/MobileAutoFill
+        excludes: ["Info.plist", "*.entitlements"]
+      - path: Sources/MobileShare/BrandAccent.swift
+    dependencies:
+      - package: PestoCore
+        product: PestoCore
+      - sdk: AuthenticationServices.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.autofill
+        PRODUCT_NAME: PestoAutoFill
+        MARKETING_VERSION: "1.7.0"
+        CURRENT_PROJECT_VERSION: "9"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_HARDENED_RUNTIME: "NO"
+        INFOPLIST_FILE: Sources/MobileAutoFill/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/MobileAutoFill/PestoAutoFill.entitlements
+        APPLICATION_EXTENSION_API_ONLY: "YES"
+        ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+
+  # The iOS Recent Clips widget (ADR 0052). It opens the sealed snapshot the app keeps in the app group with the key
+  # of a Keychain group only the app and it hold; never the store or the history key.
+  PestoWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Sources/MobileWidget
+        excludes: ["Info.plist", "*.entitlements"]
+      - path: Sources/Resources/Localizable.xcstrings
+    dependencies:
+      - package: PestoCore
+        product: PestoCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.widget
+        PRODUCT_NAME: PestoWidget
+        MARKETING_VERSION: "1.7.0"
+        CURRENT_PROJECT_VERSION: "9"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ENABLE_HARDENED_RUNTIME: "NO"
+        INFOPLIST_FILE: Sources/MobileWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/MobileWidget/PestoWidget.entitlements
+        APPLICATION_EXTENSION_API_ONLY: "YES"
+        ENABLE_USER_SCRIPT_SANDBOXING: "YES"
+
   PestoMobileTests:
     type: bundle.unit-test
     platform: iOS
@@ -192,6 +254,9 @@ targets:
       - path: Tests/PestoCoreTests/Sync
       - path: Tests/PestoCoreTests/Support
         excludes: ["FakePasteboard.swift", "PasteboardDumpFixture.swift"]
+      # The widget's views and reader, compiled again so a test can open a snapshot and draw each family.
+      - path: Sources/MobileWidget
+        excludes: ["Info.plist", "*.entitlements", "PestoWidgetBundle.swift"]
     dependencies:
       - target: PestoMobile
       - package: PestoCore

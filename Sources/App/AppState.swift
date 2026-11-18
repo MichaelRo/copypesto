@@ -46,6 +46,8 @@ final class AppState {
     /// Counts the undos and redos that were applied, so the shelf filters again (a clip moved in or out of a
     /// collection).
     var undoGeneration = 0
+    /// Counts the text edits, and the undos of one, that reached the main context, so the shelf draws the new text.
+    var textEditGeneration = 0
     /// `true` while the pinned floating window is on screen.
     var isPinnedWindowVisible = false {
         didSet { historyStore?.setVisible(isOverlayVisible || isPinnedWindowVisible) }
@@ -336,6 +338,10 @@ final class AppState {
     /// Floats a notice that does not need the shelf (set by the delegate).
     @ObservationIgnored var showToast: (@MainActor (StatusToast) -> Void)?
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?
+    /// Opens the Edit Text window for a clip, closing the shelf first (ADR 0050). Set by the delegate.
+    @ObservationIgnored var openTextEditor: (@MainActor (ClipboardItem) -> Void)?
+    /// Closes the Edit Text window and drops its draft: the History Lock calls it. Set by the delegate.
+    @ObservationIgnored var closeTextEditor: (@MainActor () -> Void)?
     /// Exports a collection to a file the person chooses; closes the shelf first when it is open. Set by the delegate.
     @ObservationIgnored var exportCollection: (@MainActor (UUID) -> Void)?
     /// Asks for a collection file and imports it; closes the shelf first when it is open. Set by the delegate.
@@ -461,6 +467,7 @@ final class AppState {
         )
         // Decrypted previews must not outlive the lock, and neither may what could be undone.
         if isHistoryLocked {
+            closeTextEditor?()
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
             stopSimilarityWork()
@@ -503,6 +510,7 @@ final class AppState {
         guard AppDefaults.store.value(for: Setting.biometricLockEnabled) else { return }
         lastBiometricUnlock = nil
         isHistoryLocked = true
+        closeTextEditor?()
         clipboardBeforeLastItemWrite = ""
         aiResult = nil
         storageService?.undoHistory.clear()

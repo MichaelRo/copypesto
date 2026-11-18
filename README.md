@@ -41,6 +41,8 @@ Press **⇧⌘V** and your history slides up as a shelf of clips. Arrow to a cli
 
 - **Paste All** (**⌘P**) joins the selected text clips with a blank line and pastes them at once.
 - **Paste One by One** (**⇧⌘P**) pastes the first clip, then the next on each plain ⌘V.
+- **Edit Text…** in a clip's menu fixes a typo or trims a link in a window of its own; the clip keeps its title, tags,
+  collection and place, and **⌘Z** brings the old text back.
 - **Undo** (**⌘Z**) takes back a delete or an edit, and **⇧⌘Z** does it again.
 - **Secrets** such as card numbers and keys are masked on the shelf until you choose Show.
 - **Copy Recognized Text** copies all the text Pesto read in a screenshot, from the menu or the hover card. The text becomes a clip of its own and the picture stays where it is.

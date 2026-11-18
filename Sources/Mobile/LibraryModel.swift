@@ -41,6 +41,21 @@ final class LibraryModel {
         }
     }
 
+    /// A clip from the widget: the library goes back to All, out of any search, and takes the history's order (a copy
+    /// moved the clip to the front). A copied clip's card flashes; a clip opened from the widget opens in its detail.
+    func show(_ id: UUID, opensDetail: Bool) {
+        filter = LibraryFilter()
+        query = ""
+        isSearching = false
+        openClipID = nil
+        resort()
+        if opensDetail {
+            open(id)
+        } else {
+            didCopy(id)
+        }
+    }
+
     func resort() {
         order.resort()
         orderVersion += 1

@@ -23,7 +23,15 @@ struct PasteboardWriteSourcesTests {
     func clearContentsIsConfined() throws {
         var scanned = 0
         var offenders: [String] = []
-        for (folder, minimum) in [("App", 30), ("Features", 60), ("Shared", 15), ("Mobile", 3), ("MobileShare", 3)] {
+        for (folder, minimum) in [
+            ("App", 30),
+            ("Features", 60),
+            ("Shared", 15),
+            ("Mobile", 3),
+            ("MobileShare", 3),
+            ("MobileAutoFill", 2),
+            ("MobileWidget", 5)
+        ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 scanned += 1
                 let text = try String(contentsOf: file, encoding: .utf8)

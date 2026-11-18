@@ -28,7 +28,14 @@ struct LocalizationRoutingTests {
     @Test("no alert, window title or accessibility label in App or Features is a bare string")
     func noBareAppKitStrings() throws {
         var offenders: [String] = []
-        for (folder, minimum) in [("App", 30), ("Features", 60), ("Mobile", 3), ("MobileShare", 3)] {
+        for (folder, minimum) in [
+            ("App", 30),
+            ("Features", 60),
+            ("Mobile", 3),
+            ("MobileShare", 3),
+            ("MobileAutoFill", 2),
+            ("MobileWidget", 5)
+        ] {
             for file in try SourceTree.swiftFiles(in: folder, minimum: minimum) {
                 let lines = try String(contentsOf: file, encoding: .utf8).components(separatedBy: "\n")
                 for (number, line) in lines.enumerated() {

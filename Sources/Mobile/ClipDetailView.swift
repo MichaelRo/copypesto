@@ -171,6 +171,7 @@ struct ClipDetailView: View {
                     Task { await appState.togglePin(id) }
                 }
                 CopyActionsMenu(item: item)
+                AIActionsMenu(item: item)
                 if appState.canSaveAsSnippet(item) {
                     Button("Save as Snippet", systemImage: "text.badge.plus") {
                         Task { await appState.saveAsSnippet(item) }

@@ -64,6 +64,7 @@ extension MobileAppState {
         syncSetUpRequested = false
         secretReveal.hideAll()
         decodedJWT = nil
+        closeAI()
         storageService?.undoHistory.clear()
         undoOfferDismissal?.cancel()
         undoOffer = nil

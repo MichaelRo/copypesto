@@ -40,6 +40,22 @@ public enum AIAvailability: Sendable, Equatable {
 
     public var message: String {
         guard case let .unavailable(reason) = self else { return "" }
+        #if os(iOS)
+        return switch reason {
+        case .needsNewerMacOS:
+            "AI actions need iOS 26 or later."
+        case .deviceNotEligible:
+            "AI actions need an iPhone or iPad with Apple Intelligence."
+        case .notEnabled:
+            "Turn on Apple Intelligence in Settings to use AI actions."
+        case .modelNotReady:
+            "Apple Intelligence is still getting ready. Try again in a few minutes."
+        case .turnedOff:
+            "Turned off in Pesto\u{2019}s settings."
+        case .unknown:
+            "AI actions are not available on this device right now."
+        }
+        #else
         return switch reason {
         case .needsNewerMacOS:
             "AI actions need macOS 26 or later."
@@ -54,6 +70,7 @@ public enum AIAvailability: Sendable, Equatable {
         case .unknown:
             "AI actions are not available on this Mac right now."
         }
+        #endif
     }
 
     /// The person's own switch in Settings (General), on unless they turned it off. Every on-device AI feature asks

@@ -74,6 +74,7 @@ struct LibraryPresentations: ViewModifier {
     private var anotherSheetIsUp: Bool {
         library.showsSettings || library.isComposing || library.isNamingCollection || library.editingCollection != nil
             || library.sharing != nil || appState.pendingFill != nil || appState.decodedJWT != nil
+            || appState.showsAI
             || library.openClipID != nil && sizeClass == .compact
     }
 

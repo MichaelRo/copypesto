@@ -126,6 +126,7 @@ struct SettingsView: View {
                         "one. Hiding by hand lasts until you show the contents again or Pesto quits."
                 )
             }
+            AppleIntelligenceSection()
             Section {
                 NavigationLink("Sync") { SyncSettingsView() }
             }

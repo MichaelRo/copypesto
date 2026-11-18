@@ -30,6 +30,11 @@ struct ClipResultSheets: ViewModifier {
                     JWTDecodeSheet(result: result).presentationDetents([.medium, .large])
                 }
             }
+            .sheet(isPresented: aiBinding) { AIResultSheet().presentationDetents([.medium, .large]) }
+    }
+
+    private var aiBinding: Binding<Bool> {
+        Binding(get: { presents && appState.showsAI }, set: { if !$0 { appState.closeAI() } })
     }
 
     private var jwtBinding: Binding<Bool> {

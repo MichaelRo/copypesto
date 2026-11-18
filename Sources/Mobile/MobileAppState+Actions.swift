@@ -243,6 +243,7 @@ extension MobileAppState {
         dismissUndoOffer()
         secretReveal.hideAll()
         decodedJWT = nil
+        closeAI()
         await reportAsync("Couldn\u{2019}t clear the history.") {
             let ids = try await service.clearNonPinned(in: .all)
             emptyQuickInsert()

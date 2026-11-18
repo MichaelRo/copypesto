@@ -18,21 +18,39 @@ public struct AppleIntelligenceClient: Sendable {
         case invalidImage
         case tooLong
 
+        private static func platformText(mac: String, ios: String) -> String {
+            #if os(iOS)
+            ios
+            #else
+            mac
+            #endif
+        }
+
         public var errorDescription: String? {
             switch self {
             case .unavailable:
-                "Apple Intelligence requires macOS 26 or later."
+                Self.platformText(
+                    mac: "Apple Intelligence requires macOS 26 or later.",
+                    ios: "Apple Intelligence requires iOS 26 or later."
+                )
             case .turnedOff:
                 "Turned off in Pesto\u{2019}s settings."
             case .visionUnavailable:
-                "This Mac\u{2019}s on-device model can\u{2019}t read pictures."
+                Self.platformText(
+                    mac: "This Mac\u{2019}s on-device model can\u{2019}t read pictures.",
+                    ios: "This device\u{2019}s on-device model can\u{2019}t read pictures."
+                )
             case .invalidImage:
                 "That picture couldn\u{2019}t be read."
             case .tooLong:
                 "That text is too long for the on-device model."
             case let .modelUnavailable(reason):
-                // swiftlint:disable:next line_length
-                "Apple Intelligence is not available: \(reason). Enable it in System Settings → Apple Intelligence & Siri."
+                Self.platformText(
+                    mac: "Apple Intelligence is not available: \(reason). "
+                        + "Enable it in System Settings → Apple Intelligence & Siri.",
+                    ios: "Apple Intelligence is not available: \(reason). "
+                        + "Enable it in Settings → Apple Intelligence & Siri."
+                )
             }
         }
     }

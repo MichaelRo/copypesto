@@ -3,6 +3,7 @@
 
     python3 design/source/brand-art.py <output dir>            SVGs and 1024 px PNGs, one folder
     python3 design/source/brand-art.py --catalog               Sources/Resources/Assets.xcassets
+    python3 design/source/brand-art.py --mobile                Sources/Mobile/Resources/Assets.xcassets (welcome layers)
 
 PNGs are rendered with qlmanage (it honours the drop shadows, but paints on white) and then masked to the icon's
 rounded rectangle by mask-icon.swift. Needs macOS and Xcode."""
@@ -152,6 +153,48 @@ a6 = SV(f'<rect x="40" y="184" width="280" height="10" rx="5" fill="#DCC9A0"/>' 
 
 STATES = {"NoClips": a1, "NoResults": a2, "Paused": a3, "Blocked": a4, "Unavailable": a5, "Welcome": a6}
 
+# The iPhone and iPad welcome (ADR 0057) moves its art, so each picture is a stack of layers on one 360 x 240 canvas
+# that the app draws on top of each other. No filters: the asset catalog's SVG reader does not draw them.
+def bars(x, y, accent, widths=(50, 44, 48)):
+    lines = "".join(f'<rect x="{x}" y="{y + 14 + 12 * i}" width="{w}" height="5" rx="2.5" fill="{C["mortar"]}" opacity="0.16"/>'
+                    for i, w in enumerate(widths))
+    return f'<rect x="{x}" y="{y}" width="34" height="6" rx="3" fill="{accent}" opacity="0.9"/>' + lines
+
+slot = lambda x, y, w, h: (f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="none" stroke="{C["basil"]}" '
+                           f'stroke-width="2" stroke-dasharray="5 5" opacity="0.55"/>')
+
+def basil_icon(x, y, size):
+    o, card, step, rad = 162, 540, 80, 150
+    ground = f'<rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>'
+    cards = (f'<path d="{RR(o + 2 * step, o + 2 * step, card, rad)}" fill="{C["parm"]}" fill-opacity="0.32"/>'
+             f'<path d="{RR(o + step, o + step, card, rad)}" fill="{C["parm"]}" fill-opacity="0.6"/>'
+             f'<path d="{RR(o, o, card, rad)}" fill="{C["garlic"]}"/><path d="{PATH_P}" fill="{C["basil"]}" fill-rule="evenodd"/>')
+    scale = size / 824
+    return (f'<defs><linearGradient id="bg" x1="0.2" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="{C["lift"]}"/>'
+            f'<stop offset="1" stop-color="{C["shade"]}"/></linearGradient></defs>'
+            f'<g transform="translate({x} {y}) scale({scale}) translate(-100 -100)">{ground}'
+            f'<g transform="translate(100 100) scale(0.8046)">{cards}</g></g>')
+
+MOBILE_ART = {
+    "WelcomeShelf": SV(shelf),
+    "WelcomeJar": SV(f'<rect x="196" y="96" width="86" height="88" rx="22" fill="{C["garlic"]}" fill-opacity="0.7" stroke="#D9CFAE" stroke-width="2"/>'
+                     f'<path d="M196,150 Q216,140 239,150 T282,148 V162 Q282,184 260,184 H218 Q196,184 196,162 Z" fill="{C["basil"]}"/>'
+                     f'<rect x="190" y="82" width="98" height="16" rx="6" fill="{C["gold"]}"/>'
+                     + pine(54, 180, 10) + pine(72, 181, -20) + pine(306, 180, 15)),
+    "WelcomeLeaf": SV(leaf(238, 172, 18, 0, C['garlic'])),
+    "WelcomeCard": SV(cardshape(86, 86, 70, 98) + bars(96, 100, C['basil'])),
+    "SyncMac": SV(cardshape(28, 84, 100, 100) + "".join(f'<circle cx="{42 + 10 * i}" cy="96" r="3" fill="{C["mortar"]}" opacity="0.25"/>' for i in range(3))
+                  + f'<rect x="28" y="106" width="100" height="2" fill="#D9CFAE"/>' + slot(56, 118, 44, 56)),
+    "SyncPhone": SV(f'<rect x="240" y="64" width="72" height="120" rx="18" fill="{C["garlic"]}" stroke="#D9CFAE" stroke-width="2"/>'
+                    f'<rect x="264" y="73" width="24" height="6" rx="3" fill="{C["mortar"]}" opacity="0.25"/>'
+                    f'<rect x="254" y="90" width="44" height="5" rx="2.5" fill="{C["mortar"]}" opacity="0.16"/>'
+                    f'<rect x="254" y="100" width="32" height="5" rx="2.5" fill="{C["mortar"]}" opacity="0.16"/>' + slot(254, 118, 44, 56)),
+    "SyncBasil": SV(basil_icon(140, 104, 80)),
+    "SyncCard": SV(cardshape(56, 118, 44, 56) + f'<rect x="64" y="127" width="18" height="5" rx="2.5" fill="{C["basil"]}" opacity="0.9"/>'
+                   + f'<rect x="64" y="139" width="28" height="4" rx="2" fill="{C["mortar"]}" opacity="0.16"/>'
+                   + f'<rect x="64" y="148" width="22" height="4" rx="2" fill="{C["mortar"]}" opacity="0.16"/>'),
+}
+
 
 def render_png(svg_path, size, out_png, transparent=False):
     with tempfile.TemporaryDirectory() as tmp:
@@ -186,7 +229,12 @@ def imageset(root, name, filename, vector):
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    if sys.argv[1] == "--catalog":
+    if sys.argv[1] == "--mobile":
+        root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Sources", "Mobile", "Resources", "Assets.xcassets")
+        write(os.path.join(root, "Contents.json"), json.dumps({"info": {"author": "xcode", "version": 1}}, indent=2) + "\n")
+        for name, art in MOBILE_ART.items():
+            write(imageset(root, name, name + ".svg", True), art)
+    elif sys.argv[1] == "--catalog":
         root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "Sources", "Resources", "Assets.xcassets")
         for name in ICONS:
             with tempfile.TemporaryDirectory() as tmp:

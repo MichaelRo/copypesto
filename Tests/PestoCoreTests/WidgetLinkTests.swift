@@ -39,10 +39,13 @@ struct WidgetLinkTests {
         #expect(WidgetLink.target(in: url) == nil, "\(text) was accepted")
     }
 
-    @Test("a widget link is no automation request on the Mac")
-    func whenTheMacReadsIt_thenItDoesNothing() {
+    @Test("on the Mac a widget link is the widget request for its target and nothing else (ADR 0058)")
+    func whenTheMacReadsIt_thenItIsTheWidgetRequest() {
         for action in WidgetLink.Action.allCases {
-            #expect(AutomationRequest(url: WidgetLink.url(for: id, action: action)) == nil)
+            #expect(
+                AutomationRequest(url: WidgetLink.url(for: id, action: action))
+                    == .widget(.init(id: id, action: action))
+            )
         }
     }
 }

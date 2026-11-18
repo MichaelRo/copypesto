@@ -56,6 +56,18 @@ struct AutomationRequestTests {
         #expect(request("pesto://clear?range=all") == .clear(.all))
     }
 
+    @Test("a widget's clip link is a request only in the exact shape WidgetLink makes")
+    func whenAWidgetLink_thenItsTargetIsTheRequest() {
+        let id = UUID()
+        #expect(request(WidgetLink.url(for: id).absoluteString) == .widget(.init(id: id, action: .copy)))
+        #expect(request(WidgetLink.url(for: id, action: .show).absoluteString) == .widget(.init(id: id, action: .show)))
+        #expect(request(WidgetLink.url(for: id, action: .open).absoluteString) == .widget(.init(id: id, action: .open)))
+        #expect(request("pesto://clip/\(id.uuidString)?x=1") == nil)
+        #expect(request("pesto://clip/\(id.uuidString)/delete") == nil)
+        #expect(request("pesto://clip/not-a-uuid") == nil)
+        #expect(request("pesto://clip") == nil)
+    }
+
     @Test("another scheme or an unknown action is no request")
     func whenForeign_thenNoRequest() {
         #expect(request("https://open") == nil)

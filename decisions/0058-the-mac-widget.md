@@ -76,7 +76,7 @@ neither the group nor the Keychain group: claiming them anyway either costs it t
   the widget could. The widget's configuration (When a Clip Is Chosen, Show) is the iOS one.
 - **Shared code.** The widget's views, provider, configuration and reader move to `Sources/Widget`, compiled into both
   widget extensions and `PestoMobileTests`; only the in-place copy (`CopyClipIntent`) and the iOS bundle stay in
-  `Sources/MobileWidget`. The theme's colours are resolved once in Core (`AppTheme.widgetHexes`) for both apps.
+  `Sources/MobileWidget`. The theme's colors are resolved once in Core (`WidgetSnapshot.Theme.resolve`) for both apps.
 
 ### What the maintainer does in the developer portal
 In `docs/release.md`, "The Mac widget": enable App Groups on the App ID `net.copypesto.pesto` with

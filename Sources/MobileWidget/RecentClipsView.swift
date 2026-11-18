@@ -42,6 +42,11 @@ struct RecentClipsView: View {
                     symbol: "lock", title: "Locked", detail: "Open Pesto to see your clips",
                     compact: resolvedSize == .small
                 )
+            case .hidden:
+                WidgetMessage(
+                    symbol: "eye.slash", title: "Clip contents hidden",
+                    detail: "They show again when Pesto stops hiding them", compact: resolvedSize == .small
+                )
             case .empty:
                 WidgetMessage(
                     symbol: entry.source == .pinned ? "pin" : "doc.on.clipboard",

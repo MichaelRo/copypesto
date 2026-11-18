@@ -6,7 +6,7 @@ import Testing
 struct AutomationActionTests {
     @Test("every documented host maps to an action")
     func documentedHostsMap() {
-        for host in ["open", "list", "search", "paste", "pin", "collection", "clear", "summary"] {
+        for host in ["open", "list", "search", "paste", "pin", "collection", "clear", "summary", "clip"] {
             #expect(AutomationAction(host: host) != nil, "\(host)")
         }
     }

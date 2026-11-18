@@ -15,4 +15,8 @@ public protocol AutomationHost: AnyObject {
     func paste(_ item: ClipboardItem)
     func togglePin(id: UUID) async
     func requestClear(_ range: ClearRange)
+    /// A widget's Copy: the clip through the app's one copy path, moved to the front as a shelf copy is.
+    func copyClip(_ item: ClipboardItem)
+    /// A widget's Open on a link clip whose whole text is one web address.
+    func openWebLink(_ url: URL)
 }

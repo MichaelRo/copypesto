@@ -12,6 +12,7 @@ import SwiftData
 ///     pesto://collection?name=<name>       switch the collection by name, ignoring case (`pinboard` is the old name)
 ///     pesto://clear?range=hour|today|all   after the person confirms, delete the unpinned clips of that span
 ///     pesto://summary?id=<UUID>            show the shelf searching for that clip (never calls an AI provider)
+///     pesto://clip/<UUID>[/show|/open]     a widget's clip: copy it, show it, or open a link clip in the browser
 ///
 /// While the history is locked a link opens the lock screen and does nothing else: it must not set state behind it.
 @MainActor
@@ -55,19 +56,26 @@ public final class AutomationURLHandler {
             if let last = lastClearRequest, moment.timeIntervalSince(last) < Self.clearCooldown { return nil }
             lastClearRequest = moment
             return Task { [weak host] in host?.requestClear(range) }
-        case let .paste(id):
-            return whenUnlocked(host) { Self.pasteTask(id, host) }
-        case let .collection(name):
-            return whenUnlocked(host) { Self.collectionTask(name, host) }
-        case let .summary(id):
-            return whenUnlocked(host) { Self.summaryTask(id, host) }
+        case .paste, .collection, .summary, .widget:
+            return whenUnlocked(host) { Self.storeTask(request, host) }
         }
         return nil
     }
 
+    /// The requests that read the store, run only once `whenUnlocked` lets them.
+    private static func storeTask(_ request: AutomationRequest, _ host: some AutomationHost) -> Task<Void, Never>? {
+        switch request {
+        case let .paste(id): pasteTask(id, host)
+        case let .collection(name): collectionTask(name, host)
+        case let .summary(id): summaryTask(id, host)
+        case let .widget(target): widgetTask(target, host)
+        case .open, .list, .search, .pin, .clear: nil
+        }
+    }
+
     /// A link that reads the store does nothing without one, and while the history is locked only opens the lock
     /// screen.
-    private func whenUnlocked(_ host: any AutomationHost, _ task: () -> Task<Void, Never>) -> Task<Void, Never>? {
+    private func whenUnlocked(_ host: any AutomationHost, _ task: () -> Task<Void, Never>?) -> Task<Void, Never>? {
         guard host.historyContainer != nil else { return nil }
         guard !host.isHistoryLocked else {
             host.showShelf()
@@ -101,6 +109,42 @@ public final class AutomationURLHandler {
                 host?.search(for: String(preview.prefix(40)))
             }
         }
+    }
+
+    /// A widget's link acts only on a clip that may still be shown outside Pesto (ADR 0052, 0058); an unknown or no
+    /// longer eligible id only opens the shelf, so a link from anywhere can do no more than the widget could.
+    private static func widgetTask(_ target: WidgetLink.Target, _ host: some AutomationHost) -> Task<Void, Never> {
+        Task { [weak host] in
+            guard let host else { return }
+            var acted = false
+            withItem(id: target.id, in: host.historyContainer) { item in
+                guard ShortcutClipSearch.isOfferedOutsidePesto(item) else { return }
+                acted = true
+                switch target.action {
+                case .copy:
+                    host.copyClip(item)
+                case .open where item.type == .url:
+                    if let url = WidgetTap.webURL(in: ClipText.full(of: item)) {
+                        host.openWebLink(url)
+                    } else {
+                        show(item, on: host)
+                    }
+                case .show, .open:
+                    show(item, on: host)
+                }
+            }
+            if !acted { host.showShelf() }
+        }
+    }
+
+    private static let searchableKinds: Set<ClipboardType> = [.text, .code, .url, .color]
+
+    private static func show(_ item: ClipboardItem, on host: some AutomationHost) {
+        host.showShelf()
+        guard searchableKinds.contains(item.type) else { return }
+        let line = item.displayPreviewText.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
+        let query = String(line.trimmingCharacters(in: .whitespaces).prefix(40))
+        if !query.isEmpty { host.search(for: query) }
     }
 
     /// The clip is only valid while its context lives, so the work with it happens inside.

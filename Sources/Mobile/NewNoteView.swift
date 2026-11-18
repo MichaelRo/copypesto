@@ -19,7 +19,7 @@ struct NewNoteView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { if NoteDraft.needsDiscardConfirmation(text) { isConfirmingDiscard = true } else { dismiss() } }
+                        Button("Cancel", action: cancel)
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") { save() }
@@ -28,12 +28,24 @@ struct NewNoteView: View {
                     }
                 }
                 .onAppear { isEditing = true }
-                .confirmationDialog("Discard this note?", isPresented: $isConfirmingDiscard, titleVisibility: .visible) {
+                .confirmationDialog(
+                    "Discard this note?",
+                    isPresented: $isConfirmingDiscard,
+                    titleVisibility: .visible
+                ) {
                     Button("Discard", role: .destructive) { dismiss() }
                     Button("Keep Editing", role: .cancel) {}
                 }
         }
         .interactiveDismissDisabled(NoteDraft.needsDiscardConfirmation(text))
+    }
+
+    private func cancel() {
+        if NoteDraft.needsDiscardConfirmation(text) {
+            isConfirmingDiscard = true
+        } else {
+            dismiss()
+        }
     }
 
     private func save() {

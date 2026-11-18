@@ -39,9 +39,9 @@ struct LibraryRootView: View {
                 automaticColumns = nil
                 decideColumns()
             }
-            #if DEBUG
+        #if DEBUG
             .overlay(alignment: .bottomLeading) { UITestLayout.swapControl(library: library, actual: sizeClass) }
-            #endif
+        #endif
             .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 || Self.forcesSceneCapture })
             .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(in: scenePhase)))
             .animation(Motion.animation(.pestoWash), value: appState.isHistoryLocked)
@@ -97,7 +97,6 @@ private struct ForcedSizeClass: ViewModifier {
     let forced: UserInterfaceSizeClass?
     let actual: UserInterfaceSizeClass?
 
-    @ViewBuilder
     func body(content: Content) -> some View {
         if let forced, forced != actual {
             content.environment(\.horizontalSizeClass, forced)

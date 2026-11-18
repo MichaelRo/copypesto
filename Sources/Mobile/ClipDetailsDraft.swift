@@ -34,7 +34,9 @@ struct ClipDetailsDraft: Equatable {
 
     /// What the form agrees on with the stored clip after saving `fields` from `saved`.
     mutating func didSave(_ fields: Set<Field>, from saved: ClipDetailsDraft) {
-        for field in fields { set(field, to: saved) }
+        for field in fields {
+            set(field, to: saved)
+        }
     }
 
     private func clean(_ field: Field) -> String? {

@@ -84,7 +84,7 @@ struct ClipCard: View {
                 let id = item.id
                 let container = appState.historyContainer
                 await media.animate {
-                    await CardMedia.animation(itemID: id, container: container, budget: .card)
+                    await CardMedia.gifFrames(itemID: id, container: container, budget: .card)
                 }
             }
             .onAppear { isOnScreen = true }

@@ -37,9 +37,8 @@ enum MobileSeed {
             }
         }
         for number in 0..<extraClipCount {
-            guard let capture = ClipCapture.text("Filler clip \(number): a line to make the grid scroll", at: .now) else {
-                continue
-            }
+            let text = "Filler clip \(number): a line to make the grid scroll"
+            guard let capture = ClipCapture.text(text, at: .now) else { continue }
             try? await service.ingest(capture)
         }
         await service.waitForBackgroundWork()

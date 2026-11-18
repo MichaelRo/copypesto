@@ -30,6 +30,7 @@ final class LibraryModel {
         nil
         #endif
     }
+
     var columns: NavigationSplitViewVisibility = .all
     var showsSettings = false
     var isComposing = false

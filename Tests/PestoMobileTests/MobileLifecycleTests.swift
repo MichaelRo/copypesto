@@ -10,11 +10,11 @@ struct MobileLifecycleTests {
     private struct Failure: Error {}
 
     private struct FailingRetentionStore: RetentionStore {
-        func retentionSnapshot(expiringBefore: Date) async throws -> RetentionSnapshot {
+        func retentionSnapshot(expiringBefore _: Date) async throws -> RetentionSnapshot {
             throw Failure()
         }
 
-        func deleteItems(ids: [UUID]) async throws {}
+        func deleteItems(ids _: [UUID]) async throws {}
     }
 
     private func lockCapable() -> MobileHistoryLock {

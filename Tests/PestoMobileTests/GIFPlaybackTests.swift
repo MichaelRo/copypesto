@@ -25,10 +25,10 @@ struct GIFPlaybackTests {
 
     @MainActor
     private final class Counter {
-        private(set) var count = 0
+        private(set) var calls = 0
 
         func increment() {
-            count += 1
+            calls += 1
         }
     }
 
@@ -75,7 +75,7 @@ struct GIFPlaybackTests {
         task.cancel()
         await task.value
 
-        #expect(decodes.count == 0)
+        #expect(decodes.calls == 0)
         #expect(state.picture?.animation == nil)
     }
 
@@ -99,7 +99,7 @@ struct GIFPlaybackTests {
             decodes.increment()
             return animation()
         }
-        #expect(decodes.count == 0)
+        #expect(decodes.calls == 0)
 
         let playing = animatedState()
         await playing.animate(settleDelay: .milliseconds(1)) { animation() }
@@ -107,6 +107,6 @@ struct GIFPlaybackTests {
             decodes.increment()
             return animation()
         }
-        #expect(decodes.count == 0)
+        #expect(decodes.calls == 0)
     }
 }

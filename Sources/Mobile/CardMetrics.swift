@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
-import Synchronization
 import SwiftUI
+import Synchronization
 import UIKit
 
 /// Sizes on one card: Core's fixed steps scaled with the card's width (`CardTextScale`; `scaledFont` adds Dynamic

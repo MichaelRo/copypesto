@@ -45,8 +45,8 @@ struct ClipBodyView: View {
                     recognizedText: RecognizedText.hasText(item) ? item.displayPreviewText : nil
                 )
             )
-                .frame(maxWidth: .infinity, minHeight: 160)
-                .clipShape(.rect(cornerRadius: 10))
+            .frame(maxWidth: .infinity, minHeight: 160)
+            .clipShape(.rect(cornerRadius: 10))
         case .url:
             link
         case .color:

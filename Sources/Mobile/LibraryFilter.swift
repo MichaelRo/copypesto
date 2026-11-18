@@ -90,7 +90,8 @@ struct LibraryFilter: Equatable {
 }
 
 enum LibraryChrome {
-    /// A regular width narrower than this (an iPad window in Split View or Slide Over) starts with the sidebar hidden and
+    /// A regular width narrower than this (an iPad window in Split View or Slide Over) starts with the sidebar hidden
+    /// and
     /// the chip row in its place.
     static let sidebarMinimumWidth: CGFloat = 800
 

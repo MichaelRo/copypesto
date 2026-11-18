@@ -7,7 +7,13 @@ import SwiftData
 /// is opened for it), and remembered for the same query over the same history.
 @MainActor
 final class SemanticRanking {
-    private var memo: (query: String, revision: Int, ids: [UUID])?
+    private struct Memo {
+        let query: String
+        let revision: Int
+        let ids: [UUID]
+    }
+
+    private var memo: Memo?
     private(set) var rankCount = 0
 
     func matches(
@@ -20,7 +26,7 @@ final class SemanticRanking {
         let ids = await Self.rank(queryEmbedding: embedding, container: container)
         guard !Task.isCancelled else { return [] }
         rankCount += 1
-        memo = (query, revision, ids)
+        memo = Memo(query: query, revision: revision, ids: ids)
         return ids
     }
 

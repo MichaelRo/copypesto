@@ -52,7 +52,9 @@ final class LayoutSwapUITests: XCTestCase {
         control.tap()
         let root = element("uitest-swap-layout", in: app)
         let deadline = Date.now.addingTimeInterval(timeout)
-        while root.label != layout, Date.now < deadline { _ = root.waitForExistence(timeout: 0.3) }
+        while root.label != layout, Date.now < deadline {
+            _ = root.waitForExistence(timeout: 0.3)
+        }
         XCTAssertEqual(root.label, layout)
     }
 
@@ -90,7 +92,10 @@ final class LayoutSwapUITests: XCTestCase {
 
         swap(app, to: "compact")
         let phoneEditor = element(MobileAccessibilityID.textEditor, in: app)
-        XCTAssertTrue(phoneEditor.waitForExistence(timeout: timeout), "the open editor is still open in the phone layout")
+        XCTAssertTrue(
+            phoneEditor.waitForExistence(timeout: timeout),
+            "the open editor is still open in the phone layout"
+        )
         XCTAssertTrue((phoneEditor.value as? String ?? "").contains("ZZ9"), "the draft survived the swap")
         XCTAssertTrue(element(MobileAccessibilityID.clipDetail, in: app).exists, "the clip is still open")
         capture("ipad-after-swap-compact")
@@ -113,7 +118,9 @@ final class LayoutSwapUITests: XCTestCase {
         let grid = element(MobileAccessibilityID.clipGrid, in: app)
         XCTAssertTrue(grid.waitForExistence(timeout: timeout))
         XCTAssertTrue(cards(in: app).firstMatch.waitForExistence(timeout: timeout))
-        for _ in 0..<2 { grid.swipeUp() }
+        for _ in 0..<2 {
+            grid.swipeUp()
+        }
 
         let anchorLabel = try XCTUnwrap(firstFullyVisibleCardLabel(in: app), "a card is showing after the scroll")
         XCTAssertFalse(anchorLabel.contains("Filler clip 79"), "the grid really scrolled")

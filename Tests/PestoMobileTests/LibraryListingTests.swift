@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import os
 import SwiftData
 import Testing
 @testable import PestoCore
@@ -97,7 +98,7 @@ struct LibraryListingTests {
     }
 
     @Test("listing 5,000 clips: what one list costs, which a focus move or a minute tick no longer pays")
-    func whenFiveThousandClips_thenOneListIsMeasured() async throws {
+    func whenFiveThousandClips_thenOneListIsMeasured() throws {
         let container = try ModelContainerSetup.makeInMemory()
         let context = container.mainContext
         for number in 0..<5000 {
@@ -123,7 +124,9 @@ struct LibraryListingTests {
             #expect(listed.ids.count == 5000)
         }
         let median = samples.sorted()[samples.count / 2]
-        print("MEASURE one grid listing over 5,000 clips: median \(median) ms, slowest \(samples.max() ?? 0) ms")
+        Logger(subsystem: "net.copypesto.pesto.tests", category: "ListingMeasure").notice(
+            "one grid listing over 5,000 clips: median \(median, privacy: .public) ms"
+        )
         #expect(median < 100)
     }
 }

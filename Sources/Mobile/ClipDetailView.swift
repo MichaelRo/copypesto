@@ -30,16 +30,16 @@ struct ClipDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
             #if DEBUG
-            .overlay(alignment: .top) {
-                UITestLayout.swapControl(
-                    library: library, actual: sizeClass, identifier: UITestLayout.detailSwapIdentifier
-                )
-                .padding(.top, 90)
-            }
+                .overlay(alignment: .top) {
+                    UITestLayout.swapControl(
+                        library: library, actual: sizeClass, identifier: UITestLayout.detailSwapIdentifier
+                    )
+                    .padding(.top, 90)
+                }
             #endif
-            .sheet(item: fillBinding) { request in
-                SnippetFillSheet(request: request).presentationDetents([.medium, .large])
-            }
+                .sheet(item: fillBinding) { request in
+                        SnippetFillSheet(request: request).presentationDetents([.medium, .large])
+                    }
         }
     }
 

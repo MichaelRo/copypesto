@@ -33,7 +33,7 @@ struct ClipDetailLoadingTests {
         #expect(wide.utf8.count > DetailText.characterLimit)
         #expect(!DetailText.make(wide).isTruncated)
 
-        let family = String(repeating: "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}", count: 30000)
+        let family = String(repeating: "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}", count: 30_000)
         let detail = DetailText.make(family)
         #expect(detail.isTruncated)
         #expect(detail.shown.count == DetailText.characterLimit)

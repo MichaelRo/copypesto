@@ -73,8 +73,12 @@ struct MobileRetentionTests {
     func whenLowered_thenTheCountIsWhatTheChangeDeletes() {
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         let day = 86_400.0
-        let candidates = [(UUID(), now.addingTimeInterval(-200 * day), 10), (UUID(), now.addingTimeInterval(-60 * day), 10),
-                          (UUID(), now.addingTimeInterval(-10 * day), 10), (UUID(), now.addingTimeInterval(-1 * day), 10)]
+        let candidates = [
+            (UUID(), now.addingTimeInterval(-200 * day), 10),
+            (UUID(), now.addingTimeInterval(-60 * day), 10),
+            (UUID(), now.addingTimeInterval(-10 * day), 10),
+            (UUID(), now.addingTimeInterval(-1 * day), 10)
+        ]
         let snapshot = RetentionSnapshot(candidates: candidates, expired: [])
         let year = RetentionPolicy.chosen(days: 365, maxItems: 5000)
 

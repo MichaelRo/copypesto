@@ -112,6 +112,14 @@ struct CardCopyActionsTests {
         #expect(library.state.copyTransformed(json, by: .json))
         #expect(AppPasteboard.general.string?.contains("\n") == true)
         #expect(!library.state.copyTransformed(json, by: .markdown))
+
+        let page = try await library.add(
+            "<!DOCTYPE html><html><body><table><tr><th>Name</th><th>N</th></tr>"
+                + "<tr><td>Ana</td><td>1</td></tr></table></body></html>"
+        )
+        #expect(library.state.copyOffer(for: page).structured.contains(.markdown))
+        #expect(library.state.copyTransformed(page, by: .markdown))
+        #expect(AppPasteboard.general.string == "| Name | N |\n| --- | --- |\n| Ana | 1 |")
     }
 
     @Test("a token's Decode JWT asks first, reads header and payload, and Copy Payload closes it")

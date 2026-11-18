@@ -71,7 +71,7 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 - **Detail**: a sheet with medium and large detents on a compact width, the inspector on a regular one: the content at
   full size, title, note and tags edited in place (`ClipDetailFields`, saved through `ClipEditor` when a field is
   submitted or loses focus and only when it changed), Add to Collection, one line of facts with the size, and Copy,
-  Share and More (Pin, Delete) in the toolbar. A text, code, link or color clip has Edit Text under its content: an
+  Share and More (Pin, Delete) in the toolbar. A text, code, link or color clip has Edit Text above its content, one press from the editor: an
   editor with Cancel and Save, saved through Core's `updateText` (ADR 0048) with the Undo banner in the sheet; a hidden
   clip only after Show.
 - **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⇧⌘C copy, ⌘P pin, ⌘⌫ delete with a

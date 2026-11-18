@@ -39,12 +39,12 @@ struct ClipDetailView: View {
                 if isEditingText, let text = content?.plainText {
                     ClipTextEditor(item: item, text: text) { isEditingText = false }
                 } else {
-                    ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
-                        .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
                     if appState.canEditText(item), content?.plainText != nil {
                         Button("Edit Text", systemImage: "pencil") { isEditingText = true }
                             .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
                     }
+                    ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
+                        .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
                 }
                 if item.sensitivityRaw != nil,
                    !appState.secretReveal.isCoveredForPrivacy(item.id) { revealControl(item) }

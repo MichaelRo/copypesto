@@ -74,6 +74,8 @@ final class LibraryEditingUITests: XCTestCase {
 
         let edit = element(MobileAccessibilityID.editTextButton, in: app)
         XCTAssertTrue(edit.waitForExistence(timeout: timeout), "a text clip offers Edit Text")
+        XCTAssertTrue(edit.isHittable, "Edit Text is within reach at the top of the detail")
+        capture("iphone-detail-edit-text")
         edit.tap()
         let editor = element(MobileAccessibilityID.textEditor, in: app)
         XCTAssertTrue(editor.waitForExistence(timeout: timeout))

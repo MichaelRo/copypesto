@@ -199,8 +199,11 @@ extension StorageService {
         try restoreTombstones(backup.smallRecords, deleted: &deleted, summary: &summary)
         let collectionIDs = try restoreCollections(backup.smallRecords, summary: &summary)
         try saveOrRollback()
+        var restored: Set<UUID> = []
         try await backup.forEachItem { record in
-            try await restoreItem(record, deleted: deleted, collectionIDs: collectionIDs, summary: &summary)
+            try await restoreItem(
+                record, deleted: deleted, collectionIDs: collectionIDs, restored: &restored, summary: &summary
+            )
         }
         wipeSuggestionLedger?()
         return summary
@@ -255,13 +258,19 @@ extension StorageService {
     private func restoreItems(
         _ records: [BackupRecord], deleted: Set<UUID>, collectionIDs: Set<UUID>, summary: inout BackupRestoreSummary
     ) async throws {
+        var restored: Set<UUID> = []
         for record in records where record.kind == .item {
-            try await restoreItem(record, deleted: deleted, collectionIDs: collectionIDs, summary: &summary)
+            try await restoreItem(
+                record, deleted: deleted, collectionIDs: collectionIDs, restored: &restored, summary: &summary
+            )
         }
     }
 
+    /// A clip this restore brought back does not count as one already here: two clips in the backup can hold one
+    /// text (an edit made it so, ADR 0053), and both come back.
     private func restoreItem(
-        _ record: BackupRecord, deleted: Set<UUID>, collectionIDs: Set<UUID>, summary: inout BackupRestoreSummary
+        _ record: BackupRecord, deleted: Set<UUID>, collectionIDs: Set<UUID>, restored: inout Set<UUID>,
+        summary: inout BackupRestoreSummary
     ) async throws {
         guard let meta = try? record.itemMetadata() else {
             summary.failed += 1
@@ -271,7 +280,7 @@ extension StorageService {
             summary.keptDeleted += 1
             return
         }
-        if try alreadyHas(itemID: meta.id, plainHash: meta.plainHash) {
+        if try alreadyHas(itemID: meta.id, plainHash: meta.plainHash, besides: restored) {
             summary.alreadyHad += 1
             return
         }
@@ -279,7 +288,7 @@ extension StorageService {
         do {
             try await ingest(
                 Self.capture(from: meta, payload: record.payload), preferredItemID: meta.id, rewritesText: false,
-                popsLookalikePicture: false
+                popsLookalikePicture: false, keepsSameText: true
             )
             // A picture that looks like one already here is not stored: it is not a restored clip.
             guard try modelContext.fetchCount(FetchDescriptor<ClipboardItem>(
@@ -289,6 +298,7 @@ extension StorageService {
                 return
             }
             try applyCuration(of: meta, collectionIDs: collectionIDs)
+            restored.insert(itemID)
             summary.restored += 1
         } catch {
             // Counted, and the reason logged: a full disk or a locked store looks like "N clips failed" otherwise.
@@ -299,12 +309,12 @@ extension StorageService {
 
     private static let restoreLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "BackupRestore")
 
-    func alreadyHas(itemID: UUID, plainHash: String) throws -> Bool {
+    func alreadyHas(itemID: UUID, plainHash: String, besides restored: Set<UUID> = []) throws -> Bool {
         let forms = ContentHash.candidates(for: plainHash, key: try? encryption.loadOrCreateKey())
         let byID = try modelContext
             .fetchCount(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID }))
         let byHash = try modelContext.fetchCount(FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { forms.contains($0.contentHash) }
+            predicate: #Predicate { forms.contains($0.contentHash) && !restored.contains($0.id) }
         ))
         return byID > 0 || byHash > 0
     }

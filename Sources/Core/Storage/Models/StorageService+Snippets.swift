@@ -44,7 +44,7 @@ public extension StorageService {
         let payload = Data(text.utf8)
         let hash = payload.sha256Hex
         let forms = ContentHash.candidates(for: hash, key: try? encryption.loadOrCreateKey())
-        let descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { forms.contains($0.contentHash) })
+        let descriptor = Self.holding(forms)
         let before = try modelContext.fetch(descriptor).first.map(ClipFieldState.init)
         try await ingest(PasteboardCapture(
             typeIdentifier: "public.utf8-plain-text", payload: payload, payloadString: text, contentHash: hash

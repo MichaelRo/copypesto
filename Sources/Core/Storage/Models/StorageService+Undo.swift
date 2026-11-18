@@ -78,7 +78,7 @@ extension StorageService {
         case let .snippetsReplaced(replacements):
             return try applyReplacements(replacements, undoing: undoing) ? entry : nil
         case let .textReplaced(replacements):
-            return try applyReplacements(replacements, undoing: undoing, guardsDuplicates: true) ? entry : nil
+            return try applyReplacements(replacements, undoing: undoing, kind: .text) ? entry : nil
         }
     }
 
@@ -236,10 +236,10 @@ extension StorageService {
         undoHistory.record(UndoEntry(kind == .snippet ? .snippetsReplaced(replacement) : .textReplaced(replacement)))
     }
 
-    /// `guardsDuplicates` leaves a clip alone when another clip now holds the content it would go back to, so Undo
-    /// never makes two clips of one text.
+    /// A text edit may go back to a text another clip holds (ADR 0053); a `.text` replacement also refreshes the
+    /// clip's link preview and similarity entry.
     private func applyReplacements(
-        _ replacements: [ClipReplacement], undoing: Bool, guardsDuplicates: Bool = false
+        _ replacements: [ClipReplacement], undoing: Bool, kind: ReplacementKind = .snippet
     ) throws
     -> Bool {
         var applied: [(ClipboardItem, ClipSnapshot)] = []
@@ -249,13 +249,6 @@ extension StorageService {
             var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
             descriptor.fetchLimit = 1
             guard let item = try modelContext.fetch(descriptor).first else { continue }
-            if guardsDuplicates {
-                let hash = target.contentHash
-                let taken = try modelContext.fetchCount(FetchDescriptor<ClipboardItem>(
-                    predicate: #Predicate { $0.contentHash == hash && $0.id != id }
-                ))
-                guard taken == 0 else { continue }
-            }
             target.writeContent(to: item, in: modelContext)
             lastItemStore.clear(ifItemID: id)
             applied.append((item, target))
@@ -265,7 +258,7 @@ extension StorageService {
         try saveOrRollback()
         for (item, target) in applied {
             if let file = target.linkPreviewFile { try? linkPreviews.restoreSealedFile(file, for: item.id) }
-            guard guardsDuplicates else { continue }
+            guard kind == .text else { continue }
             if target.linkPreviewFile == nil { linkPreviews.delete(ids: [item.id]) }
             similarity.remove(item.id)
             if let text = item.blob?.decryptedText(), item.metadata.signature != nil,

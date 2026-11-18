@@ -1,6 +1,6 @@
 # 0050. The Mac edits a clip's text in a window of its own; the shelf closes first
 
-Status: Accepted (owner request, 2026-11-15)
+Status: Accepted (owner request, 2026-11-15); the "Another clip already has this text." refusal is superseded by ADR 0053
 
 Extends ADR 0048 (a clip's text can be edited), ADR 0003 (secrets), ADR 0008 (undo) and ADR 0009 (the shelf never
 becomes key). Nothing they decide is reversed.

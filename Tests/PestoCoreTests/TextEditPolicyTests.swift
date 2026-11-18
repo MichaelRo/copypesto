@@ -82,7 +82,6 @@ struct TextEditPolicyTests {
         #expect(TextEditPolicy.result(for: .saved) == .saved)
         #expect(TextEditPolicy.result(for: .unchanged) == .unchanged)
         #expect(TextEditPolicy.result(for: .empty) == .refused("A clip can\u{2019}t be empty."))
-        #expect(TextEditPolicy.result(for: .sameAsAnother(UUID())) == .refused("Another clip already has this text."))
         #expect(TextEditPolicy.result(for: .missing) == .refused("This clip can\u{2019}t be edited."))
         #expect(TextEditPolicy.result(for: .notText) == .refused("This clip can\u{2019}t be edited."))
         #expect(TextEditSaveResult.saved.closesEditor)

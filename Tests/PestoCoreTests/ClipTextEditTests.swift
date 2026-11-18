@@ -77,17 +77,55 @@ struct ClipTextEditTests {
         #expect(edited.textLength == "second draft of the note".count)
     }
 
-    @Test("editing a clip to the text another clip holds is refused and leaves both clips as they were")
-    func whenEditedToAnotherClipsText_thenRefusedWithoutADuplicate() async throws {
+    @Test("editing a clip to the text another clip holds saves it, keeps both clips, and Undo restores the old text")
+    func whenEditedToAnotherClipsText_thenBothClipsStayAndUndoRestores() async throws {
         let first = try await ingest("alpha text", at: 0)
         let second = try await ingest("beta text", at: 10)
 
         let outcome = try await service.updateText(id: first, text: "beta text")
 
-        #expect(outcome == .sameAsAnother(second))
+        #expect(outcome == .saved)
         #expect(try clips().count == 2)
+        #expect(try clip(first).blob?.decryptedText() == "beta text")
+        #expect(try clip(second).blob?.decryptedText() == "beta text")
+        #expect(try clip(first).contentHash == clip(second).contentHash)
+        #expect(history.undoLabel == .editText)
+
+        try await service.undo()
         #expect(try clip(first).blob?.decryptedText() == "alpha text")
-        #expect(history.undoLabel == nil)
+        #expect(try clip(second).blob?.decryptedText() == "beta text")
+    }
+
+    @Test("Undo and Redo apply even when another clip holds the text they go back to")
+    func whenTargetTextHeldByAnother_thenUndoAndRedoStillApply() async throws {
+        let first = try await ingest("alpha text", at: 0)
+        let second = try await ingest("beta text", at: 10)
+        try await service.updateText(id: first, text: "gamma text")
+        try await service.updateText(id: second, text: "alpha text")
+        try await service.undo()
+        try await service.undo()
+        #expect(try clip(first).blob?.decryptedText() == "alpha text")
+
+        try await service.redo()
+        #expect(try clip(first).blob?.decryptedText() == "gamma text")
+        try await service.updateText(id: first, text: "beta text")
+        try await service.undo()
+        try await service.redo()
+        #expect(try clip(first).blob?.decryptedText() == "beta text")
+        #expect(try clip(second).blob?.decryptedText() == "beta text")
+    }
+
+    @Test("an edit to a text another clip holds gets its own search vector")
+    func whenEditedToAnotherClipsText_thenItGetsItsOwnVector() async throws {
+        let first = try await ingest("alpha text for the vector", at: 0)
+        let second = try await ingest("beta text for the vector", at: 10)
+        let vectorOfSecond = try clip(second).embeddingData
+
+        try await service.updateText(id: first, text: "beta text for the vector")
+        await service.waitForBackgroundWork()
+
+        #expect(try clip(first).embeddingData == Data("vector:beta text for the vector".utf8))
+        #expect(try clip(second).embeddingData == vectorOfSecond)
     }
 
     @Test("the same text again changes nothing and records nothing")

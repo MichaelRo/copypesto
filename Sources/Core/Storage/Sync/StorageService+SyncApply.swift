@@ -75,7 +75,8 @@ extension StorageService {
     private func twins(plainHash: String, except id: UUID) throws -> [ClipboardItem] {
         let forms = ContentHash.candidates(for: plainHash, key: try? encryption.loadOrCreateKey())
         return try modelContext.fetch(FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { forms.contains($0.contentHash) && $0.id != id }
+            predicate: #Predicate { forms.contains($0.contentHash) && $0.id != id },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse), SortDescriptor(\.sequenceNumber, order: .reverse)]
         ))
     }
 
@@ -116,10 +117,10 @@ extension StorageService {
         item.blob?.decryptedData().map { Data(SHA256.hash(data: $0)).hexString }
     }
 
-    /// A clip is the same clip on every Mac when its text is the same (its plain SHA-256), whatever id each Mac gave
-    /// it.
-    /// So two Macs that copied the same words never disagree about which one is "the" clip, and an edit or a deletion
-    /// of that text is one statement about it. The id in a record is only the id its Mac used; this Mac keeps its own.
+    /// A clip this device holds under the record's id is that clip, whatever its text: an edit can give two clips one
+    /// text, and both stay (ADR 0053). Otherwise a clip is the same clip on every device when its text is the same
+    /// (its plain SHA-256), whatever id each device gave it, so two Macs that copied the same words never disagree
+    /// about which one is "the" clip; this device keeps its own id.
     private func applyItem(
         _ record: SyncRecord,
         blob: @Sendable (String) -> Data?,
@@ -141,7 +142,13 @@ extension StorageService {
             modelContext.delete(row)
         }
 
-        if let same = try twins(plainHash: meta.plainHash, except: UUID()).first {
+        let known = try item(id: meta.id)
+        let same: ClipboardItem? = if let known {
+            holds(meta.plainHash, known) ? known : nil
+        } else {
+            try twins(plainHash: meta.plainHash, except: meta.id).first
+        }
+        if let same {
             // The earliest first copy wins whatever order records arrive in, so it is taken even from a record whose
             // edits lose to this Mac's.
             same.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
@@ -161,10 +168,15 @@ extension StorageService {
             summary.failed += 1
             return
         }
-        if try item(id: meta.id) != nil {
-            // The same clip with new text (a snippet edited, text appended): the old text goes, the new text comes.
+        if let known {
+            // The same clip with new text (an edit, a snippet edited, text appended): the old text goes, the new text
+            // comes, even when another clip here holds it.
+            guard stampR > stamp(known.changeClock) else {
+                summary.ignored += 1
+                return
+            }
             try deleteItems(ids: [meta.id], reason: .merged)
-            try await insertRemote(meta, payload: payload, stamp: stampR)
+            try await insertRemote(meta, payload: payload, stamp: stampR, keepsSameText: true)
             summary.updated += 1
         } else {
             try await insertRemote(meta, payload: payload, stamp: stampR)
@@ -172,7 +184,13 @@ extension StorageService {
         }
     }
 
-    private func insertRemote(_ meta: SyncItemRecord, payload: Data, stamp: SyncStamp) async throws {
+    private func holds(_ plainHash: String, _ item: ClipboardItem) -> Bool {
+        ContentHash.candidates(for: plainHash, key: try? encryption.loadOrCreateKey()).contains(item.contentHash)
+    }
+
+    private func insertRemote(
+        _ meta: SyncItemRecord, payload: Data, stamp: SyncStamp, keepsSameText: Bool = false
+    ) async throws {
         // The two-second echo guard is for a pasteboard that fires twice, not for a clip that has to be put back.
         lastIngestedHash = nil
         let textual: Set = ["public.utf8-plain-text", "public.url", "public.file-url"]
@@ -183,7 +201,7 @@ extension StorageService {
                 frontmostBundleID: meta.sourceBundleID, timestamp: meta.timestamp, contentHash: meta.plainHash,
                 isRemote: meta.isRemote, isConcealed: false
             ),
-            preferredItemID: meta.id, rewritesText: false, popsLookalikePicture: false
+            preferredItemID: meta.id, rewritesText: false, popsLookalikePicture: false, keepsSameText: keepsSameText
         )
         guard let inserted = try item(id: meta.id) else { return }
         if let arrived = meta.sourceAppName, !arrived.isEmpty,

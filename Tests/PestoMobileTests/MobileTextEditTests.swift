@@ -25,15 +25,18 @@ struct MobileTextEditTests {
         #expect(library.store.item(for: item.id)?.displayPreviewText == "old words")
     }
 
-    @Test("text another clip holds is refused and the person is told")
-    func whenTextIsAnotherClips_thenRefusalIsShown() async throws {
+    @Test("text another clip holds is saved, both clips stay, and Undo is offered")
+    func whenTextIsAnotherClips_thenItIsSavedAndBothStay() async throws {
         let library = try await MobileTestLibrary()
         let first = try await library.add("one text")
-        _ = try await library.add("two text")
+        let second = try await library.add("two text")
 
-        #expect(await library.state.editText(of: first, to: "two text") == false)
-        #expect(library.state.notice?.isProblem == true)
-        #expect(library.state.undoOffer == nil)
+        #expect(await library.state.editText(of: first, to: "two text"))
+        try await library.refreshed()
+        #expect(library.store.item(for: first.id)?.displayPreviewText == "two text")
+        #expect(library.store.item(for: second.id)?.displayPreviewText == "two text")
+        #expect(library.state.notice?.isProblem != true)
+        #expect(library.state.undoOffer == .editText)
     }
 
     @Test("a hidden clip can be edited only once it is shown")

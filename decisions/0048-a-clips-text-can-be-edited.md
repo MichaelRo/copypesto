@@ -1,6 +1,6 @@
 # 0048. A text clip's content can be edited; it stays the same clip, sealed and judged again, one Undo, one sync change
 
-Status: Accepted (owner request, 2026-11-15)
+Status: Accepted (owner request, 2026-11-15); the refusal of a text another clip holds is superseded by ADR 0053
 
 Extends ADR 0002 (sealed at rest), ADR 0003 (secrets), ADR 0008 (undo), ADR 0018 (sync) and ADR 0021 (order). Nothing
 they decide is reversed.

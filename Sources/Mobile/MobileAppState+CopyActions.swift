@@ -11,11 +11,15 @@ extension MobileAppState {
 
     func copyActionFacts(for item: ClipboardItem) -> CardCopyActions.Facts {
         let concealment = secretReveal.concealment(for: item)
+        let isLocked = isHistoryLockedNow()
         return CardCopyActions.Facts(
             type: item.type, isSecret: item.sensitivityRaw != nil, isCovered: concealment.isConcealed,
             isFiltered: item.isNSFW, isPending: item.analysisPending,
             hasColor: item.type == .color && ColorLiteralParser.firstColor(in: item.displayPreviewText) != nil,
-            offersRecognizedText: item.type == .image && !isHistoryLockedNow() && RecognizedText.isOffered(for: item)
+            offersRecognizedText: item.type == .image && !isLocked && RecognizedText.isOffered(for: item),
+            isJWT: item.sensitivity == .jwt && !isLocked, allowsDecode: concealment.allowsDecode,
+            canAuthenticate: secretReveal.canAuthenticate,
+            structured: isLocked ? [] : StructuredPaste.offered(for: item)
         )
     }
 
@@ -25,9 +29,34 @@ extension MobileAppState {
 
     @discardableResult
     func copyTransformed(_ item: ClipboardItem, by transform: TextTransform) -> Bool {
-        guard copyOffer(for: item).transforms.contains(transform),
+        let offer = copyOffer(for: item)
+        if offer.structured.contains(transform) {
+            guard let text = StructuredPaste.result(of: transform, for: item) else { return false }
+            return finishCopy(item, content: .text(text))
+        }
+        guard offer.transforms.contains(transform),
               let text = ClipContent.of(item)?.plainText else { return false }
         return finishCopy(item, content: .text(transform.apply(to: text, language: item.detectedLanguage)))
+    }
+
+    /// Decode JWT (ADR 0020): the same authentication as Show, the token read and held for the sheet in memory only.
+    /// Nil when it was not offered, was refused, or the clip is not a readable token.
+    @discardableResult
+    func decodeJWT(_ item: ClipboardItem) async -> JWTDecodeResult? {
+        guard copyOffer(for: item).offersDecodeJWT else { return nil }
+        guard await secretReveal.authenticate(reason: String(localized: "Decode the hidden token")) else { return nil }
+        let result: JWTDecodeResult = JWTDecoder.decode(item.blob?.decryptedText() ?? item.displayPreviewText)
+            .map(JWTDecodeResult.decoded)
+            ?? .unreadable
+        decodedJWT = result
+        return result
+    }
+
+    /// Copy Payload: the payload goes out as a secret does (this device only, gone after a while).
+    func copyDecodedPayload(_ decoding: JWTDecoding) {
+        MobileClipboard.write(.text(decoding.payloadJSON), protected: true)
+        decodedJWT = nil
+        tell(String(localized: "Copied"))
     }
 
     @discardableResult

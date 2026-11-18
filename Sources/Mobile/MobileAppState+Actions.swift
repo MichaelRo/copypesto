@@ -242,6 +242,7 @@ extension MobileAppState {
         guard let service = storageService else { return }
         dismissUndoOffer()
         secretReveal.hideAll()
+        decodedJWT = nil
         await reportAsync("Couldn\u{2019}t clear the history.") {
             let ids = try await service.clearNonPinned(in: .all)
             emptyQuickInsert()
@@ -258,6 +259,7 @@ extension MobileAppState {
         isActivated = false
         historyLock.didLeaveForeground(at: clock())
         secretReveal.hideAll()
+        decodedJWT = nil
         writeQuickInsert()
         let hold = backgroundWork.hold("Widget snapshot")
         Task {

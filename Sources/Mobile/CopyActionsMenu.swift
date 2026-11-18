@@ -11,8 +11,17 @@ struct CopyActionsMenu: View {
 
     var body: some View {
         let offer = appState.copyOffer(for: item)
-        if !offer.transforms.isEmpty {
-            Menu("Copy As", systemImage: "doc.on.doc.badge.gearshape") { transformRows(offer.transforms) }
+        if offer.offersDecodeJWT {
+            Button("Decode JWT", systemImage: "curlybraces") { Task { await appState.decodeJWT(item) } }
+        }
+        if !offer.structured.isEmpty || !offer.transforms.isEmpty {
+            Menu("Copy As", systemImage: "doc.on.doc.badge.gearshape") {
+                if !offer.structured.isEmpty {
+                    rows(offer.structured)
+                    Divider()
+                }
+                transformRows(offer.transforms)
+            }
         }
         if !offer.colorFormats.isEmpty {
             Menu("Copy As", systemImage: "eyedropper") {

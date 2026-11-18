@@ -60,6 +60,8 @@ final class MobileAppState {
     /// The one-time AutoFill tip is on screen (`MobileAppState+AutoFillTip.swift`).
     var offersAutoFillTip = false
     @ObservationIgnored var opensAutoFillSettings: @MainActor () async -> Void = AutoFillSettings.open
+    /// What Decode JWT read, shown in a sheet; memory only, gone with the lock, a clear and leaving the foreground.
+    var decodedJWT: JWTDecodeResult?
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?
     @ObservationIgnored var retentionPolicy: @Sendable () -> RetentionPolicy = {

@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MIT
+import PestoCore
+import SwiftUI
+
+/// The sheets a clip's menu opens over the library: what Decode JWT read and an AI answer. A sheet cannot present over
+/// one from below, so the library presents them unless a clip's detail is a sheet over it, and the detail presents
+/// them then.
+struct ClipResultSheets: ViewModifier {
+    enum Host {
+        case library
+        case detail
+    }
+
+    let host: Host
+    @Environment(MobileAppState.self) private var appState
+    @Environment(LibraryModel.self) private var library
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    private var presents: Bool {
+        switch host {
+        case .library: !(library.openClipID != nil && sizeClass == .compact)
+        case .detail: true
+        }
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .sheet(isPresented: jwtBinding) {
+                if let result = appState.decodedJWT {
+                    JWTDecodeSheet(result: result).presentationDetents([.medium, .large])
+                }
+            }
+    }
+
+    private var jwtBinding: Binding<Bool> {
+        Binding(get: { presents && appState.decodedJWT != nil }, set: { if !$0 { appState.decodedJWT = nil } })
+    }
+}
+
+extension View {
+    func clipResultSheets(_ host: ClipResultSheets.Host) -> some View {
+        modifier(ClipResultSheets(host: host))
+    }
+}

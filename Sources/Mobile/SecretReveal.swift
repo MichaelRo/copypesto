@@ -70,6 +70,11 @@ final class SecretReveal {
         return permitted
     }
 
+    /// The same question Show asks, for an action that reads a hidden clip without showing it (Decode JWT).
+    func authenticate(reason: String) async -> Bool {
+        await HiddenClipReveal.permitted(isHidden: true, using: authenticator, reason: reason, grace: grace)
+    }
+
     func hide(_ id: UUID) {
         shown.remove(id)
     }

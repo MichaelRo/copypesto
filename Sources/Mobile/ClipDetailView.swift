@@ -29,6 +29,7 @@ struct ClipDetailView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
+            .clipResultSheets(.detail)
             #if DEBUG
                 .overlay(alignment: .top) {
                     UITestLayout.swapControl(
@@ -141,7 +142,9 @@ struct ClipDetailView: View {
             EmptyView()
         } else if item.type == .image, let container = appState.historyContainer {
             ShareLink(
-                item: DeferredPictureTransfer(itemID: item.id, container: container),
+                item: DeferredPictureTransfer(
+                    itemID: item.id, container: container, isGIF: item.mimeType?.contains("gif") == true
+                ),
                 preview: SharePreview(item.type.presentation.label)
             )
         } else if let content {

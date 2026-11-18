@@ -39,6 +39,12 @@ public struct JWTDecoding: Equatable, Sendable {
     }
 }
 
+/// What Decode JWT has to show: the token's parts, or that it could not be read.
+public enum JWTDecodeResult: Equatable, Sendable {
+    case decoded(JWTDecoding)
+    case unreadable
+}
+
 /// Reads a JWT's header and payload. It never looks at the signature and never claims a token is valid (ADR 0020).
 public enum JWTDecoder {
     public static let maxInputCharacters = 16 * 1024

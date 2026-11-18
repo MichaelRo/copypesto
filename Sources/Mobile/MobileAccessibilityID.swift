@@ -56,4 +56,6 @@ enum MobileAccessibilityID {
     static let autoFillTip = "autofill-tip"
     static let autoFillTipTurnOn = "autofill-tip-turn-on"
     static let autoFillTipDismiss = "autofill-tip-dismiss"
+    static let decodeJWTSheet = "decode-jwt-sheet"
+    static let decodeJWTCopyPayload = "decode-jwt-copy-payload"
 }

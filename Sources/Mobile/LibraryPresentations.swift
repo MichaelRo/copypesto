@@ -18,6 +18,7 @@ struct LibraryPresentations: ViewModifier {
             .sheet(item: fillBinding) { request in
                 SnippetFillSheet(request: request).presentationDetents([.medium, .large])
             }
+            .clipResultSheets(.library)
             .sheet(isPresented: $library.showsSettings, onDismiss: showWelcomeIfAsked) { SettingsSheet() }
             .sheet(isPresented: $library.isComposing) { NewNoteView() }
             .sheet(item: $library.sharing) { share in
@@ -72,7 +73,7 @@ struct LibraryPresentations: ViewModifier {
 
     private var anotherSheetIsUp: Bool {
         library.showsSettings || library.isComposing || library.isNamingCollection || library.editingCollection != nil
-            || library.sharing != nil || appState.pendingFill != nil
+            || library.sharing != nil || appState.pendingFill != nil || appState.decodedJWT != nil
             || library.openClipID != nil && sizeClass == .compact
     }
 

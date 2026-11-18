@@ -63,6 +63,7 @@ extension MobileAppState {
         showsWelcome = false
         syncSetUpRequested = false
         secretReveal.hideAll()
+        decodedJWT = nil
         storageService?.undoHistory.clear()
         undoOfferDismissal?.cancel()
         undoOffer = nil

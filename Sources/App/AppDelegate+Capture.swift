@@ -150,14 +150,6 @@ extension AppDelegate {
 
     /// Fetches the GIF behind a browser's Copy Image, under `LinkPreviewPolicy.mayFetchGIF` (ADR 0005).
     func makeRemoteGIFFetcher() -> @Sendable (URL) async -> Data? {
-        { [appState] address in
-            let locked = await MainActor.run { appState.isHistoryLockedNow() }
-            guard LinkPreviewPolicy.mayFetchGIF(
-                isEnabled: LinkPreviewPolicy.isEnabled(),
-                isEligible: LinkPreviewEligibility.isEligible(address),
-                isHistoryLocked: locked
-            ) else { return nil }
-            return await URLMetadataFetcher.downloadPicture(from: address)
-        }
+        RemoteGIFFetcher.make(isHistoryLocked: { [appState] in await MainActor.run { appState.isHistoryLockedNow() } })
     }
 }

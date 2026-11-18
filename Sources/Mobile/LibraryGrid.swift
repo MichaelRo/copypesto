@@ -19,6 +19,7 @@ struct LibraryGrid: View {
     /// The minute the cards' ages are read at. A `TimelineView` around the grid kept the grid from drawing any change
     /// until its next tick (an edited card kept its old text), so one task moves this instead.
     @State private var minute = Date.now
+    @State private var byMeaning: [UUID] = []
 
     var body: some View {
         let ids = visibleIDs()
@@ -49,6 +50,7 @@ struct LibraryGrid: View {
                 minute = .now
             }
         }
+        .task(id: library.query) { await updateMeaningMatches() }
         .onDrop(of: ItemProviderCapture.acceptedTypes + [ClipDrag.clipIDType], isTargeted: nil) { providers in
             guard !ClipDrag.isOwnDrag(providers) else { return false }
             Task { await appState.add(from: providers, method: .drop) }
@@ -62,6 +64,7 @@ struct LibraryGrid: View {
     }
 
     private func grid(_ ids: [UUID], columns count: Int, cardWidth: CGFloat) -> some View {
+        let animatesChange = library.order.shouldAnimate(to: ids)
         let columns = Array(repeating: GridItem(.flexible(), spacing: CardGridLayout.spacing), count: count)
         return LazyVGrid(columns: columns, spacing: CardGridLayout.spacing) {
             ForEach(ids, id: \.self) { id in
@@ -74,8 +77,12 @@ struct LibraryGrid: View {
                     .focused($focusedClip, equals: id)
                     .focusEffectDisabled()
                     .id(CardIdentity(id: id, content: item.contentHash))
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
+        }
+        .transaction(value: ids) { transaction in
+            transaction.animation = animatesChange ? Motion.animation(.pestoMove) : nil
         }
         .padding(.horizontal, CardGridLayout.margin)
         .onGeometryChange(for: CGFloat.self) { proxy in
@@ -92,15 +99,44 @@ struct LibraryGrid: View {
         _ = appState.textEdits
         guard let index = store.searchIndex() else { return [] }
         let kind = library.isSearching ? library.filter.kind : nil
+        let cutoff = library.isSearching ? library.filter.dateCutoff() : nil
+        let remote = library.isSearching && library.filter.otherDevicesOnly
         let fresh = library.filter.scope.ids(
             in: index,
             query: library.query,
             kind: kind,
             smartRule: smartRule,
-            hidesSensitive: NSFWMode.current() == .hide
+            hidesSensitive: NSFWMode.current() == .hide,
+            dateCutoff: cutoff,
+            otherDevicesOnly: remote
         )
-        let context = "\(library.filter.scope)|\(library.query)|\(kind?.rawValue ?? "")"
-        return library.order.arrange(fresh, context: context)
+        let context = "\(library.filter.scope)|\(library.query)|\(kind?.rawValue ?? "")|\(cutoff != nil)|\(remote)"
+        let arranged = library.order.arrange(fresh, context: context)
+        guard !byMeaning.isEmpty, SemanticSearch.asksForMeaning(library.query) else { return arranged }
+        let allowed = Set(library.filter.scope.ids(
+            in: index, query: "", kind: kind, smartRule: smartRule, hidesSensitive: NSFWMode.current() == .hide,
+            dateCutoff: cutoff, otherDevicesOnly: remote
+        ))
+        return SemanticSearch.merged(textMatches: arranged, byMeaning: byMeaning, allowed: allowed)
+    }
+
+    /// Clips that match the query by meaning, found on the device with the same model and threshold as the Mac and
+    /// shown after the text matches; with the model unavailable there are none.
+    private func updateMeaningMatches() async {
+        let query = library.query.trimmingCharacters(in: .whitespaces)
+        guard SemanticSearch.asksForMeaning(query) else {
+            byMeaning = []
+            return
+        }
+        try? await Task.sleep(for: SemanticSearch.typingPause)
+        guard !Task.isCancelled else { return }
+        guard let embedding = await SemanticIndexer.shared.embed(text: query), !Task.isCancelled else {
+            if !Task.isCancelled { byMeaning = [] }
+            return
+        }
+        byMeaning = SemanticSearch.rank(
+            queryEmbedding: embedding, candidates: store.items.map { ($0.id, $0.embeddingData) }
+        )
     }
 
     private var smartRule: ((UUID) -> Bool)? {

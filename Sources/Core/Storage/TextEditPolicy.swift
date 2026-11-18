@@ -40,7 +40,6 @@ public enum TextEditPolicy {
         case .saved: .saved
         case .unchanged: .unchanged
         case .empty: .refused(String(localized: "A clip can\u{2019}t be empty."))
-        case .sameAsAnother: .refused(String(localized: "Another clip already has this text."))
         case .missing, .notText: .refused(String(localized: "This clip can\u{2019}t be edited."))
         }
     }

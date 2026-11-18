@@ -41,7 +41,7 @@ enum LibraryScope: Hashable {
     /// everything else is decided on the index.
     func ids(
         in index: HistoryIndex, query: String, kind: ClipboardType? = nil, smartRule: ((UUID) -> Bool)? = nil,
-        hidesSensitive: Bool = false, now: Date = .now
+        hidesSensitive: Bool = false, dateCutoff: Date? = nil, otherDevicesOnly: Bool = false, now: Date = .now
     )
     -> [UUID] {
         var criteria = HistoryCriteria(
@@ -50,6 +50,11 @@ enum LibraryScope: Hashable {
         if let kind {
             criteria.searchActive = true
             criteria.types = [kind.rawValue]
+        }
+        if dateCutoff != nil || otherDevicesOnly {
+            criteria.searchActive = true
+            criteria.dateCutoff = dateCutoff
+            criteria.remoteOnly = otherDevicesOnly
         }
         switch self {
         case .all:

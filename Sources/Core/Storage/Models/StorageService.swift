@@ -118,7 +118,8 @@ public actor StorageService: ModelActor {
         preferredItemID: UUID? = nil,
         rewritesText: Bool = true,
         popsLookalikePicture: Bool = true,
-        bumpsExistingDuplicate: Bool = true
+        bumpsExistingDuplicate: Bool = true,
+        keepsSameText: Bool = false
     ) async throws {
         if ClipSizePolicy.isTooLarge(byteCount: capture.payload.count, typeIdentifier: capture.typeIdentifier) {
             throw ClipSizePolicy.TooLarge(message: ClipSizePolicy.message(
@@ -140,7 +141,7 @@ public actor StorageService: ModelActor {
         let contentKey = try? encryption.loadOrCreateKey()
         let hash = ContentHash.stored(capture.contentHash, key: contentKey)
         let knownForms = ContentHash.candidates(for: capture.contentHash, key: contentKey)
-        if let last = lastIngestedHash,
+        if !keepsSameText, let last = lastIngestedHash,
            last.hash == hash,
            now.timeIntervalSince(last.seenAt) < 2
         {
@@ -150,10 +151,8 @@ public actor StorageService: ModelActor {
         // 2. Full-history dedup by contentHash. If this content already exists anywhere in the
         //    user's history, update the existing item's timestamp (pop to top) rather than
         //    creating a duplicate entry.
-        let descriptor = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { knownForms.contains($0.contentHash) }
-        )
-        if try await popExistingDuplicate(
+        let descriptor = Self.holding(knownForms)
+        if !keepsSameText, try await popExistingDuplicate(
             matching: descriptor,
             hash: hash,
             now: bumpsExistingDuplicate ? now : capture.timestamp,
@@ -259,7 +258,9 @@ public actor StorageService: ModelActor {
 
         // The awaits above (reading the picture, resolving the app) let another ingest of the same copy run to the
         // end, so the duplicate check is made again now that nothing suspends before the insert.
-        if try await popExistingDuplicate(matching: descriptor, hash: hash, now: now, bundleID: nil) { return }
+        if !keepsSameText, try await popExistingDuplicate(matching: descriptor, hash: hash, now: now, bundleID: nil) {
+            return
+        }
 
         stages.next("encrypt")
         // 7. Encrypt raw payload (use effectivePayload so rule-transformed text is stored).
@@ -354,12 +355,13 @@ public actor StorageService: ModelActor {
             return
         }
         let hashToEmbed = item.contentHash
+        let idToEmbed = item.id
         let textToEmbed = SemanticIndexer.embeddingInput(for: payloadString)
         let taskID = UUID()
         let embedder = embedder
         pendingEmbeddings[taskID] = Task.detached(priority: .utility) { [self] in
             if let data = await embedder.embed(text: textToEmbed) {
-                try? await self.storeEmbedding(contentHash: hashToEmbed, embeddingData: data)
+                try? await self.storeEmbedding(itemID: idToEmbed, contentHash: hashToEmbed, embeddingData: data)
             }
             await self.finishEmbedding(taskID)
         }
@@ -429,7 +431,7 @@ public actor StorageService: ModelActor {
             .compactMap { URL(string: $0.displayPreviewText.trimmingCharacters(in: .whitespacesAndNewlines)) }
             .flatMap { [$0, LinkPreviewEligibility.fetchTarget(for: $0)].compactMap(\.self) }
         for item in doomed {
-            if reason == .user { modelContext.insert(syncTombstone(for: item)) }
+            if reason == .user { modelContext.insert(syncTombstone(for: item, alsoDeleted: ids)) }
             modelContext.delete(item)
         }
         if reason == .retention { try pruneOldTombstones() }

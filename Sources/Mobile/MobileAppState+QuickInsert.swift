@@ -36,6 +36,7 @@ extension MobileAppState {
         quickInsertRewrite?.cancel()
         quickInsertRewrite = nil
         guard let target = quickInsert else { return }
+        if historyLock.holdsOutsideSurfaces, target.isEnabled() { return emptyQuickInsert() }
         guard target.isEnabled(), let container = historyContainer else {
             if target.file.exists { removeQuickInsert() }
             return

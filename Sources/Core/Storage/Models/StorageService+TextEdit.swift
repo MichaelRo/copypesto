@@ -6,8 +6,9 @@ public extension StorageService {
     /// Replaces the text of a text, code, link or color clip (ADR 0048). The text is sealed and judged as a copy is
     /// (blob and preview bound to the clip's id, a new content hash, the secret scan, the kind and language read
     /// again, a new search vector and signature); what the person did around it stays: title, note, tags, collection,
-    /// pin, first copy and place in the history. An edit is not a use, so the clip does not move. One Undo takes it
-    /// back, and sync sends it as a change of the same clip. Rules that rewrite a copy are not applied: the person
+    /// pin, first copy and place in the history. An edit is not a use, so the clip does not move. The text may be one
+    /// another clip already holds (ADR 0053). One Undo takes it back, and sync sends it as a change of the same clip.
+    /// Rules that rewrite a copy are not applied: the person
     /// typed this. A secret is edited only once it is shown; that is the caller's rule.
     @discardableResult
     func updateText(id: UUID, text: String) throws -> TextEditOutcome {
@@ -22,11 +23,6 @@ public extension StorageService {
         let key = try? encryption.loadOrCreateKey()
         let forms = ContentHash.candidates(for: plainHash, key: key)
         if forms.contains(item.contentHash) { return .unchanged }
-        var twin = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { forms.contains($0.contentHash) && $0.id != id }
-        )
-        twin.fetchLimit = 1
-        if let other = try modelContext.fetch(twin).first { return .sameAsAnother(other.id) }
         let classified = ContentClassifier.classify(text: text)
         let mimeType = classified.type == .url && item.blob?.mimeType == "public.url"
             ? "public.url" : "public.utf8-plain-text"

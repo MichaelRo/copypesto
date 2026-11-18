@@ -29,8 +29,6 @@ extension MobileAppState {
                 return true
             case .empty:
                 tell(String(localized: "A clip can\u{2019}t be empty."), isProblem: true)
-            case .sameAsAnother:
-                tell(String(localized: "Another clip already has this text."), isProblem: true)
             case .missing, .notText:
                 tell(String(localized: "This clip can\u{2019}t be edited."), isProblem: true)
             }

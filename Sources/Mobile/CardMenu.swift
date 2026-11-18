@@ -9,13 +9,21 @@ struct CardMenu: View {
         let item = card.item
         let concealment = card.concealment
         Button("Copy", systemImage: "doc.on.doc") { card.copy() }
+        CopyActionsMenu(item: item)
         Button("Edit Details", systemImage: "info.circle") { card.library.open(item.id) }
         if !concealment.isConcealed {
             Button("Share", systemImage: "square.and.arrow.up") { card.share() }
         }
         Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") { card.togglePin() }
         AddToCollectionMenu(item: item, collections: card.collections)
-        if item.sensitivityRaw != nil, concealment.isConcealed, card.appState.secretReveal.canAuthenticate {
+        if card.appState.canSaveAsSnippet(item) {
+            Button("Save as Snippet", systemImage: "text.badge.plus") {
+                Task { await card.appState.saveAsSnippet(item) }
+            }
+        }
+        if card.isCoveredForPrivacy
+            || item.sensitivityRaw != nil && concealment.isConcealed && card.appState.secretReveal.canAuthenticate
+        {
             Button("Show", systemImage: "eye") { card.show() }
         }
         Divider()

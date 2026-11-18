@@ -84,16 +84,16 @@ extension HostedGlobals {
             #expect(condition())
         }
 
-        @Test("another clip's text is refused in plain words and nothing changes")
-        func whenTextBelongsToAnotherClip_thenRefused() async throws {
+        @Test("another clip's text is saved and both clips keep it")
+        func whenTextBelongsToAnotherClip_thenSaved() async throws {
             let first = try await ingest("first clip", at: 0)
-            _ = try await ingest("second clip", at: 10)
+            let second = try await ingest("second clip", at: 10)
 
             let result = await state.saveEditedText(id: first, text: "second clip")
 
-            #expect(result == .refused("Another clip already has this text."))
-            #expect(try text(of: first) == "first clip")
-            #expect(state.undoOffer == nil)
+            #expect(result == .saved)
+            #expect(try text(of: first) == "second clip")
+            #expect(try text(of: second) == "second clip")
         }
 
         @Test("a blank text and a text over the size limit are refused with their own words")

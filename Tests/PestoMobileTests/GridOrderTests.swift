@@ -41,4 +41,16 @@ struct GridOrderTests {
         let reordered = [ids[1], ids[3], ids[0], ids[2]]
         #expect(order.arrange(reordered, context: "pinned") == reordered)
     }
+
+    @Test("one clip arriving or going animates; a search that rewrites the grid does not; a redraw keeps the answer")
+    func whenTheListChanges_thenOnlyAFollowableChangeAnimates() {
+        let order = GridOrder()
+        _ = order.shouldAnimate(to: ids)
+        let arrived = [UUID()] + ids
+        #expect(order.shouldAnimate(to: arrived))
+        #expect(order.shouldAnimate(to: arrived))
+        let searched = [ids[2]]
+        #expect(!order.shouldAnimate(to: searched))
+        #expect(!order.shouldAnimate(to: searched))
+    }
 }

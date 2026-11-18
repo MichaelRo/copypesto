@@ -9,8 +9,6 @@ public enum TextEditOutcome: Equatable, Sendable {
     case missing
     /// A picture, a file, or a clip still being judged: its content is not text that can be edited.
     case notText
-    /// Another clip already holds this text; the history keeps one clip per content (ADR 0048).
-    case sameAsAnother(UUID)
 
     /// Whether a clip of this kind holds text a person can edit: text, code, a link or a color, once it is judged.
     public static func isEditable(type: ClipboardType, analysisPending: Bool) -> Bool {

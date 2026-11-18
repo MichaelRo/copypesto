@@ -8,7 +8,7 @@ import UIKit
 /// Pesto itself wrote (`MobileClipboard.write` records its count) is never offered.
 extension MobileAppState {
     func clipboardDidBecomeActive(pasteboard: UIPasteboard = AppPasteboard.general) async {
-        guard historyContainer != nil else { return }
+        guard historyContainer != nil, !isHistoryLockedNow() else { return }
         let defaults = AppDefaults.store
         let count = pasteboard.changeCount
         let decision = ClipboardOffer.decide(

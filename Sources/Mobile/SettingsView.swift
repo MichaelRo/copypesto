@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-import LocalAuthentication
 import PestoCore
 import SwiftUI
 
@@ -11,6 +10,13 @@ struct SettingsView: View {
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
+    @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
+    @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
+    @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
+    @AppStorage(Setting.retentionDays) private var retentionDays: Int
+    @AppStorage(Setting.retentionMaxItems) private var retentionMaxItems: Int
+    @AppStorage(Setting.screenSharingPrivacy) private var coversWhileCaptured: Bool
+    @State private var biometry = DeviceAuthenticationWords.biometry()
     @State private var clearCount = 0
     @State private var isConfirmingClear = false
 
@@ -53,16 +59,65 @@ struct SettingsView: View {
                 )
             }
             Section {
-                Picker(Self.graceLabel, selection: $graceMinutes) {
+                Picker("Keep clips for", selection: $retentionDays) {
+                    ForEach(RetentionChoices.ageDays, id: \.self) { Text(RetentionChoices.ageLabel($0)).tag($0) }
+                    if !RetentionChoices.isPresetAge(retentionDays) {
+                        Text(String(localized: "Custom (\(retentionDays) days)")).tag(retentionDays)
+                    }
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.retentionAgePicker)
+                Picker("Keep at most", selection: $retentionMaxItems) {
+                    ForEach(RetentionChoices.itemCounts, id: \.self) { Text("\($0.formatted()) clips").tag($0) }
+                    if !RetentionChoices.isPresetCount(retentionMaxItems) {
+                        Text(String(localized: "Custom (\(retentionMaxItems) clips)")).tag(retentionMaxItems)
+                    }
+                }
+            } header: {
+                Text("History")
+            } footer: {
+                Text("Pinned clips are always kept.")
+            }
+            .onChange(of: retentionDays) { Task { await appState.pruneHistory() } }
+            .onChange(of: retentionMaxItems) { Task { await appState.pruneHistory() } }
+            Section {
+                Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
+                    .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
+                    .accessibilityIdentifier(MobileAccessibilityID.historyLockToggle)
+                Toggle("Show clips in widgets and AutoFill", isOn: $showsClipsOutside)
+                    .disabled(!lockEnabled)
+                    .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
+                    .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
+                Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
                     ForEach(AuthenticationGrace.choices, id: \.self) { minutes in
                         Text(Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes])))
                             .tag(minutes)
                     }
                 }
+                Toggle("Load link previews", isOn: $linkPreviews)
+                    .accessibilityIdentifier(MobileAccessibilityID.linkPreviewsToggle)
             } header: {
                 Text("Privacy")
             } footer: {
-                Text("Hidden clips stay masked until you show them. Copying one never shows it.")
+                Text(
+                    "With the lock on, Pesto asks when it opens and after it has been away this long. The widget " +
+                        "says Locked and AutoFill holds nothing, unless you show clips there, which anyone holding " +
+                        "this device can then read. Hidden clips stay masked until you show them. Copying one " +
+                        "never shows it. Link previews contact the page a link points to, once, to show its title " +
+                        "and picture; " +
+                        "nothing else leaves this device."
+                )
+            }
+            Section {
+                Toggle("Hide clips while the screen is recorded or shared", isOn: $coversWhileCaptured)
+                    .accessibilityIdentifier(MobileAccessibilityID.captureCoverToggle)
+                    .onChange(of: coversWhileCaptured) { _, on in appState.secretReveal.coversWhileCaptured = on }
+                Toggle("Hide clip contents now", isOn: hiddenByHand)
+                    .accessibilityIdentifier(MobileAccessibilityID.hideContentsToggle)
+            } footer: {
+                Text(
+                    "While iOS records, mirrors or AirPlays the screen, cards show only their kind until you show " +
+                        "one. Hiding by hand lasts until you show the contents again or Pesto quits."
+                )
             }
             Section {
                 NavigationLink("Sync") { SyncSettingsView() }
@@ -95,15 +150,31 @@ struct SettingsView: View {
         }
     }
 
-    private static var graceLabel: String {
-        let context = LAContext()
-        _ = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
-        return switch context.biometryType {
-        case .faceID: String(localized: "Ask for Face ID again after")
-        case .touchID: String(localized: "Ask for Touch ID again after")
-        case .opticID: String(localized: "Ask for Optic ID again after")
-        default: String(localized: "Ask for the passcode again after")
-        }
+    /// Turning the lock on needs a device that can authenticate; turning it off asks again, always (ADR 0003).
+    private var lockBinding: Binding<Bool> {
+        Binding(get: { lockEnabled }, set: { wantsOn in
+            if wantsOn {
+                guard HistoryLockPolicy.canSwitchOn(using: appState.historyLock.authenticator) else { return }
+                lockEnabled = true
+                appState.historyLockSettingChanged()
+                return
+            }
+            Task {
+                guard await HistoryLockPolicy.permitsTurningLockOff(
+                    using: appState.historyLock.authenticator, reason: String(localized: "Turn off the history lock"),
+                    grace: appState.historyLock.grace
+                ) else { return }
+                lockEnabled = false
+                appState.historyLockSettingChanged()
+            }
+        })
+    }
+
+    private var hiddenByHand: Binding<Bool> {
+        Binding(
+            get: { appState.secretReveal.isHiddenByHand },
+            set: { appState.secretReveal.isHiddenByHand = $0 }
+        )
     }
 }
 

@@ -69,6 +69,7 @@ make test-core  # swift test on PestoCore — fast, no Xcode project needed
 make test       # xcodebuild hosted tests (snapshot + UITests skipped)
 make build-mobile  # the iPhone and iPad app, for the simulator
 make test-mobile   # its tests on an iPhone and an iPad simulator (needs an iOS simulator runtime)
+make build-mobile-device DEVICE="My iPhone"  # signed for a connected device (docs/ios-signing.md)
 make test-mobile-ui  # its UI smoke tests, iPhone then iPad
 make verify     # the full gate: lint, Core + hosted + UI tests, screenshots (docs/testing.md)
 make lint       # swiftformat --lint + swiftlint --strict
@@ -102,7 +103,7 @@ pinned in `scripts/tool-versions.env`):
 | `verify` | `scripts/verify.sh --no-ui`: SwiftFormat + SwiftLint, every SPM test (Core and Regression), a Debug build with warnings as errors, and the hosted `PestoTests` |
 
 The UI tests and snapshot tests drive real windows, so they run locally (`scripts/verify.sh`, `docs/testing.md`).
-Releasing is described in `docs/release.md`.
+Releasing is described in `docs/release.md`. Signing the iPhone and iPad app for a device, and what the developer portal needs, is in `docs/ios-signing.md`.
 
 ## Security invariants
 

@@ -61,6 +61,9 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0050](0050-the-mac-edits-a-clips-text-in-its-own-window.md) | The Mac edits a text, code, link or color clip in an Edit Text window of its own, opened from the card's menu after the shelf closes; a covered card offers nothing, a secret only while shown, and one Undo takes the edit back |
 | [0051](0051-autofill-inserts-from-a-sealed-quick-insert-set.md) | AutoFill inserts a clip on iPhone and iPad from a small sealed set of pinned, snippet and recent text the app keeps ready under a key only it and its AutoFill extension hold; text insertion only, never passwords, never a secret |
 | [0052](0052-the-ios-widget-shows-a-sealed-snapshot-of-recent-clips.md) | The iPhone and iPad Recent Clips widget shows Pesto cards from a small sealed snapshot of the newest clips that may leave Pesto, kept only while a widget is installed and under a key only the app and the widget hold; a tap copies in place, or opens Pesto, or opens a link, as the widget is set |
+| [0053](0053-an-edit-may-give-two-clips-one-text.md) | An edit may give a clip the text another clip holds: both stay on every device (sync matches by id first, a deletion names only the id while the text lives on), a fresh copy moves the one used most recently; supersedes the refusal of 0048 and 0050 |
+| [0054](0054-ios-locks-and-covers-like-the-mac.md) | iPhone and iPad lock the history with Face ID, Touch ID or the passcode on the Mac's setting and one authentication window, cover cards while the screen is captured or by hand, cover the App Switcher's picture, keep no widget snapshot or AutoFill set while the lock is on, and judge clips left pending at launch |
+| [0055](0055-widgets-and-autofill-while-the-ios-lock-is-on.md) | The iOS widget says Locked while the lock is on, and one setting, off by default, lets widgets and AutoFill keep showing clips. |
 
 ## Template
 

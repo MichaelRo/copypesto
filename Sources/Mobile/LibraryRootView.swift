@@ -11,8 +11,28 @@ struct LibraryRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var library = LibraryModel()
 
+    /// A `-UITestMode` launch can say the scene is being captured, since a simulator never reports a real capture.
+    private static var forcesSceneCapture: Bool {
+        #if DEBUG
+        LaunchMode.current == .uiTest && AppDefaults.store.value(for: Setting.uitestForcesSceneCapture)
+        #else
+        false
+        #endif
+    }
+
     var body: some View {
-        if let container = appState.historyContainer, let store = appState.historyStore {
+        content
+            .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 || Self.forcesSceneCapture })
+            .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(in: scenePhase)))
+            .animation(Motion.animation(.pestoWash), value: appState.isHistoryLocked)
+            .onChange(of: appState.isHistoryLocked) { _, locked in if locked { library.closeEverything() } }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if appState.isHistoryLocked {
+            LockScreenView().transition(.opacity)
+        } else if let container = appState.historyContainer, let store = appState.historyStore {
             Group {
                 if sizeClass == .regular {
                     PadLibraryView(store: store)
@@ -22,6 +42,7 @@ struct LibraryRootView: View {
             }
             .environment(library)
             .modelContainer(container)
+            .transition(.asymmetric(insertion: .opacity, removal: .identity))
             .onChange(of: scenePhase) { _, phase in if phase == .active { library.resort() } }
             .onChange(of: appState.linkedClip) { _, linked in if let linked { library.show(
                 linked.id,

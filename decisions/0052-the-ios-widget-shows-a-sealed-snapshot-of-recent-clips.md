@@ -1,6 +1,6 @@
 # 0052. The iPhone and iPad widget shows Pesto cards from a small sealed snapshot, kept only while a widget is installed; a tap copies in place or through the app
 
-Status: Accepted (owner request, 2026-11-15)
+Status: Accepted (owner request, 2026-11-15); its "no History Lock and no Hide Clip Contents today" is superseded by ADR 0054, which keeps no snapshot while the lock is on
 
 Extends ADR 0002 (sealed at rest), ADR 0003 (secrets are masked and shown on request), ADR 0041 (when a picture fills its card), ADR 0046 (Pesto on iPhone and iPad), ADR 0047 (the share extension's sealed inbox) and ADR 0051 (the AutoFill set, whose sealing this reuses). Nothing they decide is reversed.
 

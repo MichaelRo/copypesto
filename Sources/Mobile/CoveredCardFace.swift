@@ -42,7 +42,12 @@ struct CoveredCardFace: View {
         VStack(spacing: 6) {
             Image(systemName: "eye.slash.fill").font(.title2)
             Text(item.type.presentation.label).font(.caption.weight(.medium))
-            if item.isNSFW {
+            if appState.secretReveal.isCoveredForPrivacy(item.id) {
+                Button("Show") { appState.secretReveal.showUnderCover(item.id) }
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.bordered)
+                    .accessibilityIdentifier(MobileAccessibilityID.showUnderCoverButton)
+            } else if item.isNSFW {
                 Text("Sensitive content").font(.caption)
             }
         }

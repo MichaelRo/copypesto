@@ -29,7 +29,14 @@ struct ClipDetailView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
+            .sheet(item: fillBinding) { request in
+                SnippetFillSheet(request: request).presentationDetents([.medium, .large])
+            }
         }
+    }
+
+    private var fillBinding: Binding<SnippetFillRequest?> {
+        Binding(get: { isSheet ? appState.pendingFill : nil }, set: { appState.pendingFill = $0 })
     }
 
     private func detail(_ item: ClipboardItem) -> some View {
@@ -39,14 +46,15 @@ struct ClipDetailView: View {
                 if isEditingText, let text = content?.plainText {
                     ClipTextEditor(item: item, text: text) { isEditingText = false }
                 } else {
-                    ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
-                        .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
                     if appState.canEditText(item), content?.plainText != nil {
                         Button("Edit Text", systemImage: "pencil") { isEditingText = true }
                             .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
                     }
+                    ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
+                        .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
                 }
-                if item.sensitivityRaw != nil { revealControl(item) }
+                if item.sensitivityRaw != nil,
+                   !appState.secretReveal.isCoveredForPrivacy(item.id) { revealControl(item) }
                 ClipDetailFields(item: item).id(item.id)
                 AddToCollectionMenu(item: item, collections: collections)
                     .buttonStyle(MobileChipStyle(isActive: item.collectionID != nil, tint: nil))
@@ -54,6 +62,7 @@ struct ClipDetailView: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .animation(Motion.animation(.pestoQuick), value: isEditingText)
         }
         .background(ground.ignoresSafeArea())
         .accessibilityIdentifier(MobileAccessibilityID.clipDetail)
@@ -120,6 +129,12 @@ struct ClipDetailView: View {
                 Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") {
                     let id = item.id
                     Task { await appState.togglePin(id) }
+                }
+                CopyActionsMenu(item: item)
+                if appState.canSaveAsSnippet(item) {
+                    Button("Save as Snippet", systemImage: "text.badge.plus") {
+                        Task { await appState.saveAsSnippet(item) }
+                    }
                 }
                 Divider()
                 Button("Delete", systemImage: "trash", role: .destructive) {

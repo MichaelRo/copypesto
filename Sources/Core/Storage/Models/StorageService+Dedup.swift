@@ -3,6 +3,15 @@ import Foundation
 import SwiftData
 
 extension StorageService {
+    /// The clips that hold this content, the one used most recently first (ADR 0053): an edit can give two clips one
+    /// text, and a fresh copy of it moves only that one.
+    static func holding(_ forms: [String]) -> FetchDescriptor<ClipboardItem> {
+        FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { forms.contains($0.contentHash) },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse), SortDescriptor(\.sequenceNumber, order: .reverse)]
+        )
+    }
+
     /// When this content is already in the history, moves that clip to the front (and records where it was copied
     /// from) instead of storing a second one. True when it did.
     func popExistingDuplicate(
@@ -68,10 +77,11 @@ extension StorageService {
         }
     }
 
-    func storeEmbedding(contentHash: String, embeddingData: Data) throws {
-        let desc = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { $0.contentHash == contentHash }
+    func storeEmbedding(itemID: UUID, contentHash: String, embeddingData: Data) throws {
+        var desc = FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { $0.id == itemID && $0.contentHash == contentHash }
         )
+        desc.fetchLimit = 1
         guard let item = try modelContext.fetch(desc).first else { return }
         item.embeddingData = embeddingData
         try saveOrRollback()

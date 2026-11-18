@@ -14,8 +14,9 @@ final class MobileSyncDevice {
     let secrets = MemorySecrets()
     let bookmarks = FakeBookmarks()
 
-    init(time: TimeBox, name: String = "iphone-b") async throws {
-        library = try await MobileTestLibrary()
+    init(time: TimeBox, name: String = "iphone-b", lock: MobileHistoryLock? = nil) async throws {
+        library = try await MobileTestLibrary(lock: lock)
+        let isLocked = library.state.syncLockCheck
         let container = try #require(library.state.historyContainer)
         let storage = library.service
         let defaults = defaults
@@ -32,6 +33,7 @@ final class MobileSyncDevice {
                     defaults: defaults, deviceID: name, deviceName: "iPhone"
                 )
                 environment.deviceKind = .iPhone
+                environment.isLocked = isLocked
                 environment.now = { time.now }
                 environment.timing.batchWindow = .milliseconds(20)
                 environment.timing.pollInterval = .seconds(3600)
@@ -127,6 +129,36 @@ struct MobileSyncTests {
         await exchange(mac, phone)
         #expect(try mac.clips().contains("later, on the iPhone"))
         #expect(try await phone.clips().contains("later, on the Mac"))
+    }
+
+    @Test("an iPhone whose history is locked pauses sync, as a locked Mac does, and catches up once unlocked")
+    func whenTheIPhoneIsLocked_thenSyncPausesUntilTheUnlock() async throws {
+        defer { try? FileManager.default.removeItem(at: picked) }
+        let (mac, key) = try await firstMac()
+        let setting = MobileHistoryLockTests.LockSetting(false)
+        let lock = MobileHistoryLock(
+            authenticator: StubUserAuthenticator(available: true, grants: true), grace: AuthenticationGrace(),
+            isEnabled: { setting.isOn }
+        )
+        let phone = try await MobileSyncDevice(time: time, lock: lock)
+        phone.sync.activate()
+        phone.sync.useFolder(picked)
+        await phone.sync.turnOn()
+        await phone.sync.useRecoveryKey(key)
+        phone.sync.confirmJoin()
+        await exchange(mac, phone)
+        #expect(try await phone.clips() == ["from the Mac"])
+
+        setting.isOn = true
+        phone.library.state.lockHistory()
+        try await mac.site.copy("while the iPhone is locked")
+        await exchange(mac, phone)
+        #expect(phone.sync.controller?.status == .paused)
+        #expect(try await !phone.clips().contains("while the iPhone is locked"))
+
+        await phone.library.state.unlockHistory()
+        await exchange(mac, phone)
+        #expect(try await phone.clips().contains("while the iPhone is locked"))
     }
 
     @Test("an iPhone joins by the eight words: both screens show the same words, the Mac allows, the key arrives")

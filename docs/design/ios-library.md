@@ -50,7 +50,8 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 | Color | The card is the color; the text and facts in black or white by Core's `CardInk`. |
 | File | Document symbol, name and folder. |
 | Secret | The mask, a lock, the category at the foot, an eye that asks for Face ID (`SecretReveal`); after Show, the start of the text and Hide. |
-| Covered otherwise | The eye-slash symbol and the kind, nothing else. |
+| Covered otherwise | The eye-slash symbol and the kind, nothing else; under the screen-capture cover or Hide Clip Contents (ADR 0054) a Show button that uncovers that card until the cover returns. |
+| Locked | No card at all: the lock screen replaces the library (ADR 0054). |
 
 **The foot line** (`CardFootLine`, on Core's `CardMetaLine`): the app's name, or "Another device", or for a clip made on
 this device the device's symbol and how it came in (Pasted, Note, Shared, Dropped, Shortcut; ADR 0049), or the device's
@@ -61,8 +62,12 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 - **Tap** copies (a secret too, without showing it, `localOnly` and gone after two minutes), moves the clip to the
   front, flashes an accent ring, plays the success haptic, says "Copied" in a small toast and to VoiceOver. No Undo on
   a copy. Return copies the focused card.
-- **Long press**: a large preview and Copy, Edit Details, Share, Pin or Unpin, Add to Collection, Show (a hidden
-  secret), Delete (last, destructive, Undo offered). SwiftUI gives a grid no "tap the preview" hook, so Edit Details is
+- **Long press**: a large preview and Copy, Copy As (the Mac's text transforms for text, code and links; a color's
+  formats), Copy Recognized Text and Save to Photos (a picture; add-only Photos permission), Edit Details, Share, Pin or
+  Unpin, Add to Collection, Save as Snippet (a plain text clip), Show (a hidden secret), Delete (last, destructive, Undo
+  offered). A snippet that asks for values (ADR 0017) opens a small sheet before Copy: its fields, and a system Paste
+  button for `{{clipboard}}` (never a silent read); selection and app name stay empty on iOS. The same copy actions are
+  in the detail's More menu. SwiftUI gives a grid no "tap the preview" hook, so Edit Details is
   the way into the detail.
 - **Drag**: a card that nothing covers drags out as text, a URL or its picture, with its id visible to Pesto alone
   (`ClipDrag`, an exported type with `.ownProcess` visibility). A drop on a sidebar collection files the clip there; a
@@ -70,13 +75,27 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 - **Detail**: a sheet with medium and large detents on a compact width, the inspector on a regular one: the content at
   full size, title, note and tags edited in place (`ClipDetailFields`, saved through `ClipEditor` when a field is
   submitted or loses focus and only when it changed), Add to Collection, one line of facts with the size, and Copy,
-  Share and More (Pin, Delete) in the toolbar. A text, code, link or color clip has Edit Text under its content: an
+  Share and More (Pin, Delete) in the toolbar. A text, code, link or color clip has Edit Text above its content, one press from the editor: an
   editor with Cancel and Save, saved through Core's `updateText` (ADR 0048) with the Undo banner in the sheet; a hidden
   clip only after Show.
 - **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⇧⌘C copy, ⌘P pin, ⌘⌫ delete with a
   confirmation, all in the menu a held ⌘ shows.
 - **VoiceOver**: a card is one element ("Link, copypesto.net, Safari, 4 minutes ago, Pinned"); activating copies;
   actions Edit Details, Pin, Share, Show and Delete.
+
+## Search and filters
+Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and
+order: after the text matches) when the on-device model is available. While searching the chip row also offers Today,
+This Week (the Mac's date rules) and Other Devices (clips that arrived by sync). Link previews are fetched once for a
+link card on screen (`LinkPreviewLoader`), only with Settings → Privacy → Load link previews on (off by default: iOS has
+no setup screen to ask, ADR 0042) and never while locked. A GIF copied in Safari arrives as a still and its address,
+and the whole GIF is fetched under the same switch (`RemoteGIFFetcher`). Settings → History has Keep clips for and Keep
+at most with the Mac's choices and defaults, swept at launch and, at most hourly, on return to the foreground.
+
+## Motion
+Only `Motion.animation` with the four named curves: cards entering and leaving the grid (one clip added or removed;
+`ListChangeMotion`), the chip and the Copied ring, the toast, the detail's edit switch, and the lock screen fading in
+(the library leaves at once, so no card stays drawn while it fades). Nothing under Reduce Motion, nothing before a tap.
 
 ## Theme
 `MobileAccent` resolves the ground and the accent with `MobileTheme` (Core's `AppTheme`, `AccentChoice` and
@@ -90,7 +109,22 @@ Pesto cards at widget scale on the theme's ground carried in the snapshot: one c
 in a row in the medium one, six in two columns in the large one. A color fills its card, a picture fills it near a
 card's shape, a link leads with its host, short text is large, one foot line gives the source and `CardAge`. The
 widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
-Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent or Pinned.
+Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent or Pinned. With the History Lock on it says "Locked" and "Open Pesto to see your clips" unless "Show clips in widgets and AutoFill" is on (ADR 0055).
+
+## FAQ for the release notes: Add Clipboard to Pesto
+The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to
+`docs/guide/faq.md` with the rest.
+
+**How do I add what I copied without opening Pesto first?** Shortcuts lists "Add Clipboard to Pesto" (Pesto's own
+action; Siri answers "Add my clipboard to Pesto"). It brings Pesto to the front, reads the clipboard, adds it as a clip
+that says it came from a Shortcut, and says "Added to Pesto." Pesto opens because iOS lets only an app on screen read
+what another app copied; iOS asks to allow the paste unless Settings → Apps → Pesto → Paste from Other Apps is set to
+Allow. A locked history (Face ID) adds nothing until you unlock.
+- **Action Button** (iPhone 15 Pro and later): Settings → Action Button → Shortcut → choose "Add Clipboard to Pesto".
+- **Back Tap**: Settings → Accessibility → Touch → Back Tap → Double Tap or Triple Tap → choose "Add Clipboard to
+  Pesto" under Shortcuts.
+- **An automation**: Shortcuts → Automation → New Automation → App → Safari → Is Closed (or any app), Run Immediately →
+  New Blank Automation → add "Add Clipboard to Pesto". Copy in Safari, close it, and the clip is waiting.
 
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds

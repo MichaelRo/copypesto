@@ -9,12 +9,48 @@ import PestoCore
 @Observable
 final class SecretReveal {
     private(set) var shown: Set<UUID> = []
+    /// The Mac's screen-share cover (ADR 0003, ADR 0054): `ContentCover` over a recording, mirroring or AirPlay that
+    /// iOS reports for the scene, with the Mac's setting; Hide Clip Contents covers by hand and is not saved.
+    var isScreenCaptured = false {
+        didSet { forgetShowsUnlessCovered() }
+    }
+
+    var coversWhileCaptured: Bool {
+        didSet { forgetShowsUnlessCovered() }
+    }
+
+    var isHiddenByHand = false {
+        didSet { forgetShowsUnlessCovered() }
+    }
+
+    private(set) var shownUnderCover: Set<UUID> = []
     @ObservationIgnored private let authenticator: any UserAuthenticating
     @ObservationIgnored private let grace: AuthenticationGrace
 
-    init(authenticator: any UserAuthenticating = UserAuthenticator.current, grace: AuthenticationGrace = .shared) {
+    init(
+        authenticator: any UserAuthenticating = UserAuthenticator.current, grace: AuthenticationGrace = .shared,
+        coversWhileCaptured: Bool = AppDefaults.store.value(for: Setting.screenSharingPrivacy)
+    ) {
         self.authenticator = authenticator
         self.grace = grace
+        self.coversWhileCaptured = coversWhileCaptured
+    }
+
+    var isContentCovered: Bool {
+        ContentCover.isCovered(manual: isHiddenByHand, settingOn: coversWhileCaptured, shareDetected: isScreenCaptured)
+    }
+
+    /// As the Mac's Show on a covered card: no authentication, until the cover lifts and comes back.
+    func isCoveredForPrivacy(_ id: UUID) -> Bool {
+        isContentCovered && !shownUnderCover.contains(id)
+    }
+
+    func showUnderCover(_ id: UUID) {
+        if isContentCovered { shownUnderCover.insert(id) }
+    }
+
+    private func forgetShowsUnlessCovered() {
+        if !isContentCovered, !shownUnderCover.isEmpty { shownUnderCover = [] }
     }
 
     var canAuthenticate: Bool {
@@ -40,12 +76,13 @@ final class SecretReveal {
 
     func hideAll() {
         if !shown.isEmpty { shown = [] }
+        if !shownUnderCover.isEmpty { shownUnderCover = [] }
     }
 
     /// As the Mac's card decides it: a picture still being judged is drawn (only text waits for its verdict).
     func concealment(for item: ClipboardItem, nsfwMode: NSFWMode = .current()) -> CardConcealment {
         CardConcealment(
-            screenShareBlur: false,
+            screenShareBlur: isCoveredForPrivacy(item.id),
             nsfwBlurred: item.isNSFW && nsfwMode != .show,
             maskedSecret: item.sensitivityRaw != nil,
             secretShown: isShown(item.id),

@@ -3,6 +3,7 @@ import CryptoKit
 import Foundation
 import SwiftData
 import Testing
+import UIKit
 @testable import PestoCore
 @testable import PestoMobile
 
@@ -58,6 +59,37 @@ struct MobileAppStateTests {
         #expect(state.storeIsOnDisk)
         #expect(state.historyStore != nil)
         #expect(state.storageService != nil)
+    }
+
+    @Test("a picture left waiting for its text recognition when Pesto was stopped is judged at the next launch")
+    func whenAPictureWasLeftPending_thenTheNextLaunchJudgesIt() async throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let storeURL = directory.appendingPathComponent("clips.store")
+        let png = UIGraphicsImageRenderer(size: CGSize(width: 24, height: 16)).pngData { context in
+            UIColor.systemTeal.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 24, height: 16))
+        }
+        let id: UUID
+        do {
+            let container = try ModelContainerSetup.openClips(storeURL: storeURL)
+            let service = StorageService(modelContainer: container, environment: .testing())
+            try await service.ingest(#require(ClipCapture.picture(png, typeIdentifier: "public.png")))
+            await service.waitForBackgroundWork()
+            let context = ModelContext(container)
+            let picture = try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first)
+            picture.analysisPending = true
+            try context.saveOrRollback()
+            id = picture.id
+        }
+
+        let library = try await MobileTestLibrary(storeURL: storeURL)
+        await library.service.waitForBackgroundWork()
+
+        let context = try ModelContext(#require(library.state.historyContainer))
+        let picture = try #require(context.fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id }))
+            .first)
+        #expect(!picture.analysisPending)
     }
 
     @Test("when the disk store will not open, the history is kept in memory and the app knows it")

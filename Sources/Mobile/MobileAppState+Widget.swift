@@ -79,12 +79,17 @@ extension MobileAppState {
 
     private func performWidgetWrite() async {
         guard let target = widget, widgetIsInstalled, let container = historyContainer else { return }
+        if historyLock.holdsOutsideSurfaces {
+            performWidgetEmpty()
+            return
+        }
         let previous = lastWidgetSnapshot
         do {
             let snapshot = try await Self.widgetSnapshot(
                 container: container, now: clock(), theme: Self.widgetTheme(), previous: previous,
                 device: CardFootLineView.device
             )
+            guard !historyLock.holdsOutsideSurfaces else { return performWidgetEmpty() }
             try target.file.write(snapshot, with: target.keys.loadOrCreate())
             lastWidgetSnapshot = snapshot
             target.reload()
@@ -94,15 +99,14 @@ extension MobileAppState {
         }
     }
 
-    private func performWidgetEmpty() {
+    func performWidgetEmpty() {
         guard let target = widget else { return }
         lastWidgetSnapshot = nil
+        let theme = Self.widgetTheme()
+        let snapshot = historyLock.holdsOutsideSurfaces
+            ? WidgetSnapshot.locked(theme: theme, at: clock()) : WidgetSnapshot.empty(theme: theme, at: clock())
         do {
-            try target.file.write(
-                WidgetSnapshot.empty(theme: Self.widgetTheme(), at: clock()),
-                with: target.keys
-                    .loadOrCreate()
-            )
+            try target.file.write(snapshot, with: target.keys.loadOrCreate())
         } catch {
             Self.widgetLogger
                 .error("The widget snapshot was not emptied: \(error.localizedDescription, privacy: .public)")

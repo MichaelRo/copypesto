@@ -341,28 +341,22 @@ extension GridView {
     @MainActor
     func updateSemanticResults() async {
         let query = appState.searchText.trimmingCharacters(in: .whitespaces)
-        guard query.count > 8, !query.hasPrefix("@") else {
+        guard SemanticSearch.asksForMeaning(query) else {
             semanticSupplement = []
             return
         }
         // Waits out fast typing: this task restarts on every keystroke and an earlier one is cancelled here.
-        try? await Task.sleep(for: .milliseconds(180))
+        try? await Task.sleep(for: SemanticSearch.typingPause)
         guard !Task.isCancelled else { return }
         guard let queryEmbedding = await SemanticIndexer.shared.embed(text: query), !Task.isCancelled else {
             if !Task.isCancelled { semanticSupplement = [] }
             return
         }
-        let threshold: Float = 0.7
         let snapshot = items
-        let ranked: [ClipboardItem] = snapshot
-            .compactMap { item -> (ClipboardItem, Float)? in
-                guard let data = item.embeddingData else { return nil }
-                let sim = SemanticIndexer.cosineSimilarity(queryEmbedding, data)
-                return sim >= threshold ? (item, sim) : nil
-            }
-            .sorted { $0.1 > $1.1 }
-            .map(\.0)
-        semanticSupplement = ranked
+        let byID = Dictionary(snapshot.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        semanticSupplement = SemanticSearch
+            .rank(queryEmbedding: queryEmbedding, candidates: snapshot.map { ($0.id, $0.embeddingData) })
+            .compactMap { byID[$0] }
     }
 
     // MARK: - Paste All

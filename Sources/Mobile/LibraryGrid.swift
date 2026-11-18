@@ -64,6 +64,7 @@ struct LibraryGrid: View {
     }
 
     private func grid(_ ids: [UUID], columns count: Int, cardWidth: CGFloat) -> some View {
+        let animatesChange = library.order.shouldAnimate(to: ids)
         let columns = Array(repeating: GridItem(.flexible(), spacing: CardGridLayout.spacing), count: count)
         return LazyVGrid(columns: columns, spacing: CardGridLayout.spacing) {
             ForEach(ids, id: \.self) { id in
@@ -76,8 +77,12 @@ struct LibraryGrid: View {
                     .focused($focusedClip, equals: id)
                     .focusEffectDisabled()
                     .id(CardIdentity(id: id, content: item.contentHash))
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
+        }
+        .transaction(value: ids) { transaction in
+            transaction.animation = animatesChange ? Motion.animation(.pestoMove) : nil
         }
         .padding(.horizontal, CardGridLayout.margin)
         .onGeometryChange(for: CGFloat.self) { proxy in

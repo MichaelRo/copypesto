@@ -62,6 +62,7 @@ struct ClipDetailView: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .animation(Motion.animation(.pestoQuick), value: isEditingText)
         }
         .background(ground.ignoresSafeArea())
         .accessibilityIdentifier(MobileAccessibilityID.clipDetail)

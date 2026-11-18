@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import PestoCore
 
 /// The order the grid shows while the person is looking. A copy moves a clip to the front of the history at once (so
 /// sync and the Mac agree), but the card stays where the person's finger was; the grid takes the history's order again
@@ -24,6 +25,18 @@ final class GridOrder {
         let arranged = arrivals + shown.filter { present.contains($0) }
         self.shown = arranged
         return arranged
+    }
+
+    private var lastIDs: [UUID] = []
+    private var animates = false
+
+    /// Whether the change to `ids` is one the eye can follow (`ListChangeMotion`); the same answer for the same list,
+    /// however often the view is drawn.
+    func shouldAnimate(to ids: [UUID]) -> Bool {
+        guard ids != lastIDs else { return animates }
+        animates = ListChangeMotion.shouldAnimateChange(from: lastIDs, to: ids)
+        lastIDs = ids
+        return animates
     }
 
     /// The next arrangement takes the history's order as it is.

@@ -9,17 +9,9 @@ enum ShelfMotion {
     /// ⌘[ and ⌘] presses closer together than this become one switch (`cyclePinboard`).
     static let cycleCoalesce = Duration.milliseconds(80)
 
-    /// A list change is animated only when it is one the eye can follow: one clip added or removed, a swap of one for
-    /// another, or one clip brought to the front. A search, filter or sort rewrites the whole list and must not
-    /// animate.
+    /// A list change is animated only when it is one the eye can follow (`ListChangeMotion`).
     static func shouldAnimateChange(from old: [UUID], to new: [UUID]) -> Bool {
-        guard abs(old.count - new.count) <= 2, old != new else { return false }
-        let before = Set(old)
-        let after = Set(new)
-        let changed = before.symmetricDifference(after).count
-        if changed > 0 { return changed <= 2 }
-        guard let first = new.first, old.contains(first) else { return false }
-        return Array(new.dropFirst()) == old.filter { $0 != first }
+        ListChangeMotion.shouldAnimateChange(from: old, to: new)
     }
 
     /// +1 when the shelf moves to a collection further along the chips, -1 when it moves back.

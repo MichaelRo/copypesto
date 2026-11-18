@@ -133,6 +133,19 @@ extension MobileAppState {
             tell(String(localized: "Couldn\u{2019}t open the clip."), isProblem: true)
             return false
         }
+        if let text = content.plainText, let request = SnippetFillRequest.make(for: item, text: text, at: clock()) {
+            switch request {
+            case let .ask(request):
+                pendingFill = request
+                return false
+            case let .copy(expanded):
+                return finishCopy(item, content: .text(expanded))
+            }
+        }
+        return finishCopy(item, content: content)
+    }
+
+    func finishCopy(_ item: ClipboardItem, content: ClipContent) -> Bool {
         MobileClipboard.write(content, protected: item.sensitivityRaw != nil)
         if let context = item.modelContext {
             item.bringToFront(at: clock())

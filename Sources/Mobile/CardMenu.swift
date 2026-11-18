@@ -15,6 +15,11 @@ struct CardMenu: View {
         }
         Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") { card.togglePin() }
         AddToCollectionMenu(item: item, collections: card.collections)
+        if card.appState.canSaveAsSnippet(item) {
+            Button("Save as Snippet", systemImage: "text.badge.plus") {
+                Task { await card.appState.saveAsSnippet(item) }
+            }
+        }
         if card.isCoveredForPrivacy
             || item.sensitivityRaw != nil && concealment.isConcealed && card.appState.secretReveal.canAuthenticate
         {

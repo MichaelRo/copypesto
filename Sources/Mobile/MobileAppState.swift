@@ -51,6 +51,8 @@ final class MobileAppState {
     /// Where the widget's snapshot is kept (`MobileAppState+Widget.swift`); nil in a hosted test until it names one.
     @ObservationIgnored var widget: WidgetTarget? = .current
     @ObservationIgnored var linkPreviewLoader = LinkPreviewLoader()
+    /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
+    var pendingFill: SnippetFillRequest?
     /// iOS's last answer to whether a Pesto widget is installed.
     @ObservationIgnored var widgetIsInstalled = false
     @ObservationIgnored var widgetRewrite: Task<Void, Never>?

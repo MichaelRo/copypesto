@@ -29,7 +29,14 @@ struct ClipDetailView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
+            .sheet(item: fillBinding) { request in
+                SnippetFillSheet(request: request).presentationDetents([.medium, .large])
+            }
         }
+    }
+
+    private var fillBinding: Binding<SnippetFillRequest?> {
+        Binding(get: { isSheet ? appState.pendingFill : nil }, set: { appState.pendingFill = $0 })
     }
 
     private func detail(_ item: ClipboardItem) -> some View {
@@ -121,6 +128,11 @@ struct ClipDetailView: View {
                 Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") {
                     let id = item.id
                     Task { await appState.togglePin(id) }
+                }
+                if appState.canSaveAsSnippet(item) {
+                    Button("Save as Snippet", systemImage: "text.badge.plus") {
+                        Task { await appState.saveAsSnippet(item) }
+                    }
                 }
                 Divider()
                 Button("Delete", systemImage: "trash", role: .destructive) {

@@ -51,26 +51,30 @@ final class PadLibraryUITests: XCTestCase {
         add(attachment)
     }
 
-    func test_onIPad_commandFSearchesAndCommandNWritesANoteThatCommandSSaves() {
+    /// XCUITest sends a key only to an element with text focus, and a card never has it, so ⌘F from the grid is a hand
+    /// check; from the search field, ⌘N and ⌘S reach the app's commands.
+    func test_onIPad_withTheKeyboardCommandNWritesANoteThatCommandSSaves() {
         let app = launch()
         waitForSeededClips(in: app)
-
-        app.typeKey("f", modifierFlags: .command)
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: timeout))
-        app.typeText("Gate")
-        XCTAssertTrue(card(containing: "Gate B7", in: app).waitForExistence(timeout: timeout))
-        XCTAssertFalse(visibleCard(containing: "Packing list", in: app), "⌘F's search filters the grid")
-        capture("ipad-keyboard-search")
-        app.buttons["close"].firstMatch.tap()
-        XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout))
+        field.tap()
+        app.typeText("keyboard")
+        XCTAssertTrue(
+            card(containing: "Packing list", in: app).waitForNonExistence(timeout: timeout),
+            "the search filters the grid"
+        )
 
         app.typeKey("n", modifierFlags: .command)
         XCTAssertTrue(app.navigationBars["New Note"].waitForExistence(timeout: timeout), "⌘N opens the composer")
         app.typeText("Written with the keyboard")
         app.typeKey("s", modifierFlags: .command)
         XCTAssertFalse(app.navigationBars["New Note"].waitForExistence(timeout: 2), "⌘S saves and closes")
-        XCTAssertTrue(card(containing: "Written with the keyboard", in: app).waitForExistence(timeout: timeout))
+        XCTAssertTrue(
+            card(containing: "Written with the keyboard", in: app).waitForExistence(timeout: timeout),
+            "the saved note joins the search it matches"
+        )
+        capture("ipad-keyboard-note")
     }
 
     func test_onIPad_aCardsMenuPinsItAndTheSidebarsPinnedShowsIt() {

@@ -9,15 +9,9 @@ struct ClipTextEditor: View {
     let onClose: () -> Void
 
     @Environment(MobileAppState.self) private var appState
-    @State private var draft: String
+    @Binding var draft: String
     @State private var isSaving = false
     @FocusState private var isFocused: Bool
-
-    init(item: ClipboardItem, text: String, onClose: @escaping () -> Void) {
-        self.item = item
-        self.onClose = onClose
-        _draft = State(initialValue: text)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {

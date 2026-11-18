@@ -36,6 +36,12 @@ enum MobileSeed {
                 logger.error("A seed clip was not added: \(error.localizedDescription, privacy: .public)")
             }
         }
+        for number in 0..<extraClipCount {
+            guard let capture = ClipCapture.text("Filler clip \(number): a line to make the grid scroll", at: .now) else {
+                continue
+            }
+            try? await service.ingest(capture)
+        }
         await service.waitForBackgroundWork()
         await arrange(state)
         if let copied = ProcessInfo.processInfo.environment["PESTO_UITEST_CLIPBOARD"] {
@@ -43,6 +49,11 @@ enum MobileSeed {
             AppDefaults.store.set(-1, for: Setting.lastSeenPasteboardChange)
             await state.clipboardDidBecomeActive()
         }
+    }
+
+    /// `PESTO_UITEST_EXTRA_CLIPS=<n>` adds n plain notes, so a UI test can scroll the grid.
+    private static var extraClipCount: Int {
+        ProcessInfo.processInfo.environment["PESTO_UITEST_EXTRA_CLIPS"].flatMap(Int.init) ?? 0
     }
 
     @MainActor

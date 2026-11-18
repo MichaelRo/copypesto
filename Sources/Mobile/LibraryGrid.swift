@@ -22,6 +22,8 @@ struct LibraryGrid: View {
     @State private var byMeaning: [UUID] = []
     @State private var listing = LibraryListing.Result(ids: [], animates: false)
     @State private var hasListed = false
+    @State private var position: CardIdentity?
+    @State private var hasRestoredPosition = false
     @State private var ranking = SemanticRanking()
 
     var body: some View {
@@ -38,6 +40,8 @@ struct LibraryGrid: View {
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
+        .scrollPosition(id: $position, anchor: .top)
+        .onChange(of: position) { _, first in if hasRestoredPosition { library.scrollAnchor = first } }
         .scrollDismissesKeyboard(.immediately)
         .refreshable {
             await SyncExchange.onPull(appState.sync)
@@ -85,6 +89,7 @@ struct LibraryGrid: View {
                 }
             }
         }
+        .scrollTargetLayout()
         .transaction(value: ids) { transaction in
             transaction.animation = animatesChange ? Motion.animation(.pestoMove) : nil
         }
@@ -108,6 +113,9 @@ struct LibraryGrid: View {
     private func relist(_ key: LibraryListing.Key) {
         listing = LibraryListing.list(key, in: store, order: library.order, smartRule: smartRule)
         hasListed = true
+        guard !hasRestoredPosition else { return }
+        hasRestoredPosition = true
+        position = library.scrollAnchor
     }
 
     /// Clips that match the query by meaning, found on the device with the same model and threshold as the Mac and

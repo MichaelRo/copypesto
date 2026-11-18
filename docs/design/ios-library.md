@@ -13,7 +13,13 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 - **Regular width** (`PadLibraryView`): a two-column `NavigationSplitView`. The sidebar lists All Clips, Pinned and the
   collections with New Collection; Settings is in its toolbar. Search sits in the grid's top toolbar. A clip opens in a
   trailing `.inspector`, only on demand. With the sidebar hidden the grid carries the chip row and the gear
-  (`LibraryChrome.showsChipRow`, driven by the size class and the column visibility, never by the device).
+  (`LibraryChrome.showsChipRow`, driven by the size class and the column visibility, never by the device). A regular
+  width under 800 pt (an iPad window in Split View) starts with the sidebar hidden (`LibraryChrome.initialColumns`).
+- **A change of layout** (an iPad window resized across the compact boundary, a foldable iPhone later) tears down one
+  layout and builds the other, so what the person is doing lives in `LibraryModel` above both: the scope, the search,
+  the open clip, the unsaved Edit Text draft (memory only, never scene storage: it holds plaintext) and the first
+  visible card, which the grid scrolls back to (`scrollPosition`). `LayoutSwapUITests` flips a forced size class on
+  the iPad simulator, because XCUITest cannot resize a window.
 - **Chips** (`LibraryChip.row`): All, Pinned, each collection, then "+". While a search is open the row adds the six
   kinds (Text, Links, Pictures, Colors, Code, Files) after a divider and drops "+"; kinds appear nowhere else. A kind
   narrows the scope; ending the search clears it (`LibraryFilter`). A collection chip's menu edits (name, icon, color) or deletes it

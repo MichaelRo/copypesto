@@ -64,6 +64,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0053](0053-an-edit-may-give-two-clips-one-text.md) | An edit may give a clip the text another clip holds: both stay on every device (sync matches by id first, a deletion names only the id while the text lives on), a fresh copy moves the one used most recently; supersedes the refusal of 0048 and 0050 |
 | [0054](0054-ios-locks-and-covers-like-the-mac.md) | iPhone and iPad lock the history with Face ID, Touch ID or the passcode on the Mac's setting and one authentication window, cover cards while the screen is captured or by hand, cover the App Switcher's picture, keep no widget snapshot or AutoFill set while the lock is on, and judge clips left pending at launch |
 | [0055](0055-widgets-and-autofill-while-the-ios-lock-is-on.md) | The iOS widget says Locked while the lock is on, and one setting, off by default, lets widgets and AutoFill keep showing clips. |
+| [0056](0056-sync-and-undo-corrections-after-the-ios-review.md) | A remote text edit replaces the clip's text in place and keeps what only that device knows; undo, a withdrawal and the echo guard follow ids; an iPhone holds its folder per holder and a stopped pass ends; a stale bookmark is renewed; an older Pesto can move curation between two clips with one text |
 
 ## Template
 

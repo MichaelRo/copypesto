@@ -37,6 +37,11 @@ struct RecentClipsView: View {
                     symbol: "doc.on.clipboard", title: "Open Pesto to show your clips", detail: nil,
                     compact: resolvedSize == .small
                 )
+            case .locked:
+                WidgetMessage(
+                    symbol: "lock", title: "Locked", detail: "Open Pesto to see your clips",
+                    compact: resolvedSize == .small
+                )
             case .empty:
                 WidgetMessage(
                     symbol: entry.source == .pinned ? "pin" : "doc.on.clipboard",

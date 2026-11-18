@@ -50,7 +50,7 @@ extension MobileAppState {
     func historyLockSettingChanged() {
         if historyLock.isEnabled {
             HistoryLockPolicy.lockWasSwitchedOn()
-            emptyOutsideSurfaces()
+            if historyLock.holdsOutsideSurfaces { emptyOutsideSurfaces() }
         } else {
             let wasLocked = historyLock.isLocked
             historyLock.lockWasTurnedOff()
@@ -81,9 +81,17 @@ extension MobileAppState {
         }
     }
 
+    /// The toggle under the lock row: with it on the widget and the set are written as without the lock, with it off
+    /// they go back to saying Locked and holding nothing.
+    func showsClipsOutsideSettingChanged() {
+        guard historyLock.isEnabled else { return }
+        if historyLock.holdsOutsideSurfaces { emptyOutsideSurfaces() } else { writeOutsideSurfaces() }
+    }
+
     private func emptyOutsideSurfaces() {
+        guard historyLock.holdsOutsideSurfaces else { return }
         emptyQuickInsert()
-        if let widget, widget.file.exists { removeWidget() }
+        if let widget, widgetIsInstalled || widget.file.exists { performWidgetEmpty() }
     }
 
     private func writeOutsideSurfaces() {

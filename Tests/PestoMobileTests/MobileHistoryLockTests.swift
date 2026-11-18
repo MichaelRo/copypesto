@@ -12,6 +12,7 @@ struct MobileHistoryLockTests {
     final class LockSetting {
         var isOn: Bool
         var minutes = 5
+        var showsOutside = false
 
         init(_ isOn: Bool) {
             self.isOn = isOn
@@ -24,7 +25,8 @@ struct MobileHistoryLockTests {
     -> MobileHistoryLock {
         MobileHistoryLock(
             authenticator: StubUserAuthenticator(available: available, grants: grants), grace: AuthenticationGrace(),
-            isEnabled: { setting.isOn }, timeoutMinutes: { setting.minutes }
+            isEnabled: { setting.isOn }, timeoutMinutes: { setting.minutes },
+            showsClipsOutside: { setting.showsOutside }
         )
     }
 
@@ -162,15 +164,22 @@ struct MobileHistoryLockTests {
         #expect(try library.state.shortcutClips(ids: [note.id]).count == 1)
     }
 
-    @Test("with the lock on, the widget shows no clips and the AutoFill set is empty, from the moment it is on")
-    func whenLockOn_thenOutsideSurfacesHoldNothing() async throws {
-        let setting = LockSetting(false)
-        let library = try await library(setting)
-        let root = try temporaryFolder("lock-surfaces")
-        defer { try? FileManager.default.removeItem(at: root) }
-        let quickSecrets = MemorySecrets()
+    private struct Surfaces {
+        let quick: QuickInsertTarget
+        let widget: WidgetTarget
+
+        func quickCount() throws -> Int {
+            try quick.file.read(with: #require(try quick.keys.key())).entries.count
+        }
+
+        func widgetSnapshot() throws -> WidgetSnapshot {
+            try widget.file.read(WidgetSnapshot.self, with: #require(try widget.keys.key()))
+        }
+    }
+
+    private func surfaces(_ library: MobileTestLibrary, root: URL) -> Surfaces {
         let quick = QuickInsertTarget(
-            file: QuickInsertFile(root: root), keys: QuickInsertKeyStore(secrets: quickSecrets), isEnabled: { true }
+            file: QuickInsertFile(root: root), keys: QuickInsertKeyStore(secrets: MemorySecrets()), isEnabled: { true }
         )
         let widget = WidgetTarget(
             file: SealedGroupFile(root: root, format: .widgetSnapshot),
@@ -179,24 +188,75 @@ struct MobileHistoryLockTests {
         )
         library.state.quickInsert = quick
         library.state.widget = widget
+        return Surfaces(quick: quick, widget: widget)
+    }
+
+    @Test("with the lock on, the widget says Locked and the AutoFill set is empty, from the moment it is on")
+    func whenLockOn_thenOutsideSurfacesHoldNothing() async throws {
+        let setting = LockSetting(false)
+        let library = try await library(setting)
+        let root = try temporaryFolder("lock-surfaces")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let surfaces = surfaces(library, root: root)
         try await library.add("a pinned address")
         library.state.writeQuickInsert()
         await library.state.refreshWidgetPresence()
-        #expect(try quick.file.read(with: #require(try quick.keys.key())).entries.count == 1)
-        #expect(widget.file.exists)
+        #expect(try surfaces.quickCount() == 1)
+        #expect(try surfaces.widgetSnapshot().clips.count == 1)
 
         setting.isOn = true
         library.state.historyLockSettingChanged()
 
-        #expect(try quick.file.read(with: #require(try quick.keys.key())).entries.isEmpty)
-        #expect(!widget.file.exists)
+        #expect(try surfaces.quickCount() == 0)
+        #expect(try surfaces.widgetSnapshot().isLocked)
+        #expect(try surfaces.widgetSnapshot().clips.isEmpty)
+        #expect(WidgetContent(snapshot: surfaces.widgetSnapshot(), size: .medium).state == .locked)
 
         try await library.add("another clip")
         library.state.writeQuickInsert()
         library.state.didLeaveForeground()
         await library.state.refreshWidgetPresence()
-        #expect(try quick.file.read(with: #require(try quick.keys.key())).entries.isEmpty)
-        #expect(!widget.file.exists)
+        #expect(try surfaces.quickCount() == 0)
+        #expect(try surfaces.widgetSnapshot().isLocked)
+    }
+
+    @Test("with Show clips in widgets and AutoFill on, they are written as without the lock, and the toggle moves them")
+    func whenShowsOutside_thenTheyAreWrittenAsWithoutTheLock() async throws {
+        let setting = LockSetting(true)
+        setting.showsOutside = true
+        let library = try await library(setting)
+        let root = try temporaryFolder("lock-surfaces-shown")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let surfaces = surfaces(library, root: root)
+        try await library.add("a pinned address")
+        try await library.service.ingest(#require(ClipCapture.text(secret)))
+        try await library.refreshed()
+
+        library.state.writeQuickInsert()
+        await library.state.refreshWidgetPresence()
+        #expect(try surfaces.quickCount() == 1)
+        #expect(try surfaces.widgetSnapshot().clips.map(\.text) == ["a pinned address"])
+        #expect(try !surfaces.widgetSnapshot().isLocked)
+
+        library.state.lockHistory()
+        #expect(try surfaces.quickCount() == 1)
+        #expect(try surfaces.widgetSnapshot().clips.count == 1)
+
+        setting.showsOutside = false
+        library.state.showsClipsOutsideSettingChanged()
+        #expect(try surfaces.quickCount() == 0)
+        #expect(try surfaces.widgetSnapshot().isLocked)
+
+        setting.showsOutside = true
+        library.state.showsClipsOutsideSettingChanged()
+        #expect(try surfaces.quickCount() == 1)
+        #expect(try surfaces.widgetSnapshot().clips.count == 1)
+    }
+
+    @Test("the toggle is off by default and a key of the settings registry")
+    func whenDefault_thenOff() {
+        #expect(Setting.showsClipsOutsideWhileLocked.defaultValue == false)
+        #expect(Setting.allNames.contains(Setting.showsClipsOutsideWhileLocked.name))
     }
 
     @Test("what was shared waits in the inbox until the history is unlocked")

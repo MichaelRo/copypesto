@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
+    @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @AppStorage(Setting.screenSharingPrivacy) private var coversWhileCaptured: Bool
     @State private var biometry = DeviceAuthenticationWords.biometry()
     @State private var clearCount = 0
@@ -58,6 +59,10 @@ struct SettingsView: View {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
                     .accessibilityIdentifier(MobileAccessibilityID.historyLockToggle)
+                Toggle("Show clips in widgets and AutoFill", isOn: $showsClipsOutside)
+                    .disabled(!lockEnabled)
+                    .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
+                    .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
                 Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
                     ForEach(AuthenticationGrace.choices, id: \.self) { minutes in
                         Text(Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes])))
@@ -68,8 +73,9 @@ struct SettingsView: View {
                 Text("Privacy")
             } footer: {
                 Text(
-                    "With the lock on, Pesto asks when it opens and after it has been away this long; the widget " +
-                        "and AutoFill show no clips. Hidden clips stay masked until you show them. Copying one " +
+                    "With the lock on, Pesto asks when it opens and after it has been away this long. The widget " +
+                        "says Locked and AutoFill holds nothing, unless you show clips there, which anyone holding " +
+                        "this device can then read. Hidden clips stay masked until you show them. Copying one " +
                         "never shows it."
                 )
             }

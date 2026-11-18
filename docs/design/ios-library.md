@@ -91,7 +91,7 @@ Pesto cards at widget scale on the theme's ground carried in the snapshot: one c
 in a row in the medium one, six in two columns in the large one. A color fills its card, a picture fills it near a
 card's shape, a link leads with its host, short text is large, one foot line gives the source and `CardAge`. The
 widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
-Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent or Pinned.
+Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent or Pinned. With the History Lock on it says "Locked" and "Open Pesto to see your clips" unless "Show clips in widgets and AutoFill" is on (ADR 0055).
 
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds

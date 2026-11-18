@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-/// What one widget draws from the snapshot it opened (ADR 0052): no snapshot is "Open Pesto to show your clips", an
+/// What one widget draws from the snapshot it opened (ADR 0052): no snapshot is "Open Pesto to show your clips", a locked one is "Locked", an
 /// empty one is "No clips yet", otherwise the newest clips its family has room for.
 public struct WidgetContent: Equatable, Sendable {
     public enum State: Equatable, Sendable {
         case unavailable
+        case locked
         case empty
         case clips
     }
@@ -23,7 +24,8 @@ public struct WidgetContent: Equatable, Sendable {
         theme = snapshot?.theme ?? .brand
         let all = snapshot?.clips(from: source) ?? []
         clips = Array(all.prefix(size.clipCount(accessibilityText: accessibilityText)))
-        state = snapshot == nil ? .unavailable : clips.isEmpty ? .empty : .clips
+        state = if snapshot == nil { .unavailable } else if snapshot?.isLocked == true { .locked } else if clips
+            .isEmpty { .empty } else { .clips }
     }
 
     /// The moments after `now` when an age the widget shows (`CardAge.text`) reads differently, soonest first, at most

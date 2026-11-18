@@ -29,6 +29,7 @@ enum MobileAccessibilityID {
     static let addsCopiesToggle = "adds-copies-on-open"
     static let quickInsertToggle = "quick-insert"
     static let historyLockToggle = "history-lock"
+    static let showsClipsOutsideToggle = "shows-clips-outside"
     static let captureCoverToggle = "cover-while-captured"
     static let hideContentsToggle = "hide-clip-contents"
     static let lockScreen = "lock-screen"

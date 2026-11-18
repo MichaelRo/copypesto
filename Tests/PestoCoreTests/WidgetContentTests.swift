@@ -57,6 +57,21 @@ struct WidgetContentTests {
         #expect(empty.theme == theme)
     }
 
+    @Test("a locked snapshot says Locked and shows no clip; a snapshot written before the field decodes as unlocked")
+    func whenLocked_thenTheStateIsLocked() throws {
+        let locked = WidgetSnapshot.locked(theme: .brand, at: now)
+        let content = WidgetContent(snapshot: locked, size: .large)
+        #expect(content.state == .locked)
+        #expect(content.clips.isEmpty)
+
+        let json = #"{"createdAt":0,"theme":{"lightGround":"FFFFFF","darkGround":"000000","#
+            + #""lightAccent":"8A4F16","darkAccent":"E2A15E"},"clips":[],"pinned":[]}"#
+        let old = Data(json.utf8)
+        let decoded = try JSONDecoder().decode(WidgetSnapshot.self, from: old)
+        #expect(!decoded.isLocked)
+        #expect(try JSONDecoder().decode(WidgetSnapshot.self, from: JSONEncoder().encode(locked)).isLocked)
+    }
+
     @Test("the timeline has an entry each time an age reads differently, soonest first and bounded")
     func whenAgesMove_thenTheEntriesFollow() {
         let fresh = WidgetClip(id: UUID(), kind: .text, text: "a", date: now - 30)

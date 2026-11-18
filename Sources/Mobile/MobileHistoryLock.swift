@@ -14,14 +14,19 @@ final class MobileHistoryLock {
     @ObservationIgnored let authenticator: any UserAuthenticating
     @ObservationIgnored let grace: AuthenticationGrace
     @ObservationIgnored private let isEnabledNow: @MainActor () -> Bool
+    @ObservationIgnored private let showsClipsOutsideNow: @MainActor () -> Bool
     @ObservationIgnored private let timeoutMinutes: @MainActor () -> Int
 
     init(
         authenticator: any UserAuthenticating = UserAuthenticator.current,
         grace: AuthenticationGrace = .shared,
         isEnabled: @escaping @MainActor () -> Bool = { AppDefaults.store.value(for: Setting.biometricLockEnabled) },
-        timeoutMinutes: @escaping @MainActor () -> Int = { AuthenticationGrace.minutes() }
+        timeoutMinutes: @escaping @MainActor () -> Int = { AuthenticationGrace.minutes() },
+        showsClipsOutside: @escaping @MainActor () -> Bool = {
+            AppDefaults.store.value(for: Setting.showsClipsOutsideWhileLocked)
+        }
     ) {
+        showsClipsOutsideNow = showsClipsOutside
         self.authenticator = authenticator
         self.grace = grace
         isEnabledNow = isEnabled
@@ -31,6 +36,10 @@ final class MobileHistoryLock {
 
     var isEnabled: Bool {
         isEnabledNow()
+    }
+
+    var holdsOutsideSurfaces: Bool {
+        isEnabled && !showsClipsOutsideNow()
     }
 
     var canAuthenticate: Bool {

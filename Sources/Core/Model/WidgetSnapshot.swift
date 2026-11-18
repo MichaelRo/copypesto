@@ -33,11 +33,26 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
     /// The newest pinned clips, for a widget set to show Pinned.
     public let pinned: [WidgetClip]
 
-    public init(createdAt: Date, theme: Theme, clips: [WidgetClip], pinned: [WidgetClip] = []) {
+    /// The History Lock is on and the person keeps clips off the Home Screen while it is: the widget says Locked.
+    public let isLocked: Bool
+
+    public init(
+        createdAt: Date, theme: Theme, clips: [WidgetClip], pinned: [WidgetClip] = [], isLocked: Bool = false
+    ) {
         self.createdAt = createdAt
         self.theme = theme
         self.clips = clips
         self.pinned = pinned
+        self.isLocked = isLocked
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        createdAt = try values.decode(Date.self, forKey: .createdAt)
+        theme = try values.decode(Theme.self, forKey: .theme)
+        clips = try values.decode([WidgetClip].self, forKey: .clips)
+        pinned = try values.decode([WidgetClip].self, forKey: .pinned)
+        isLocked = try values.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
     }
 
     public func clips(from source: WidgetClipSource) -> [WidgetClip] {
@@ -50,6 +65,10 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
     /// The clip with this id in either list.
     public func clip(id: UUID) -> WidgetClip? {
         clips.first { $0.id == id } ?? pinned.first { $0.id == id }
+    }
+
+    public static func locked(theme: Theme, at date: Date) -> WidgetSnapshot {
+        WidgetSnapshot(createdAt: date, theme: theme, clips: [], isLocked: true)
     }
 
     public static func empty(theme: Theme, at date: Date) -> WidgetSnapshot {

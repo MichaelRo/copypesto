@@ -81,6 +81,60 @@ struct SyncTextEditTests {
         )
     }
 
+    @Test("a synced clip edited into a secret is withdrawn by id alone, and the secret's hash never leaves")
+    func whenEditedIntoASecret_thenTheWithdrawalNamesOnlyTheID() async throws {
+        let world = try SyncWorld(["mac-a", "mac-b"])
+        let (macA, macB) = (world.macs[0], world.macs[1])
+        try await world.copy("card number to come", on: macA)
+        try await world.apply(world.publish(from: macA), on: macB)
+        let id = try #require(try world.clip("card number to come", on: macA)?.id)
+
+        world.tick()
+        #expect(try await macA.service.updateText(id: id, text: "4111 1111 1111 1111") == .saved)
+        let records = try await world.publish(from: macA, includeSensitive: false)
+
+        let tombstone = try #require(try records.first { $0.kind == .tombstone }?
+            .decodeMetadata(SyncTombstoneRecord.self))
+        #expect(tombstone.id == id)
+        #expect(tombstone.plainHash == nil)
+        #expect(records.allSatisfy { $0.metadata.range(of: Data(Data("4111 1111 1111 1111".utf8).sha256Hex.utf8)) == nil })
+        try await world.apply(records, on: macB)
+        #expect(try world.clips(on: macB).isEmpty)
+    }
+
+    @Test("deleting hundreds of clips at once names the text only of those whose text no clip left here holds")
+    func whenManyClipsAreDeleted_thenOnlyTextThatLivesOnIsLeftOut() async throws {
+        let world = try SyncWorld(["mac-a"])
+        let mac = world.macs[0]
+        for index in 0..<300 {
+            try await world.copy("clip number \(index)", on: mac)
+        }
+        let byText = try Dictionary(uniqueKeysWithValues: world.clips(on: mac).compactMap { item in
+            item.blob?.decryptedText().map { ($0, item.id) }
+        })
+        for index in stride(from: 0, to: 300, by: 3) {
+            let twin = try #require(byText["clip number \(index + 1)"])
+            #expect(try await mac.service.updateText(id: twin, text: "clip number \(index)") == .saved)
+        }
+        let doomed = (0..<300).filter { $0 % 3 != 1 }.compactMap { byText["clip number \($0)"] }
+        let survivors = (0..<300).filter { $0 % 3 == 1 }.compactMap { byText["clip number \($0)"] }
+        let alsoDoomedTwin = try #require(byText["clip number 1"])
+
+        world.tick()
+        try await mac.service.deleteItems(ids: doomed + [alsoDoomedTwin], reason: .user)
+
+        let rows = try ModelContext(mac.container).fetch(FetchDescriptor<DeletedItemTombstone>())
+        let hashByID = Dictionary(uniqueKeysWithValues: rows.map { ($0.id, $0.plainHash) })
+        #expect(rows.count == doomed.count + 1)
+        for index in 0..<300 where index % 3 != 1 {
+            let id = try #require(byText["clip number \(index)"])
+            let expectsHash = index % 3 == 2 || index == 0
+            #expect(((hashByID[id] ?? nil) != nil) == expectsHash, "clip number \(index)")
+        }
+        #expect((hashByID[alsoDoomedTwin] ?? nil) != nil, "its text left with clip number 0")
+        #expect(try world.clips(on: mac).count == survivors.count - 1)
+    }
+
     @Test("an edit to another clip's text keeps both clips on both devices, under the same ids, and a copy moves one")
     func whenEditedToAnotherClipsText_thenBothDevicesKeepBothClips() async throws {
         let world = try SyncWorld(["mac-a", "mac-b"])

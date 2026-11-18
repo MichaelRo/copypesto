@@ -18,22 +18,15 @@ public struct UndoOutcome: Equatable, Sendable {
 /// Undo and redo (ADR 0008). Recording happens where the action does (`deleteItems`, `deleteCollection`,
 /// `ClipEditor.edit`, the pin and shortcut functions); applying happens here, on the one writer.
 extension StorageService {
-    func undoSnapshots(of doomed: [ClipboardItem]) -> [ClipSnapshot]? {
+    func undoSnapshots(of doomed: [ClipboardItem], survivors: [String: Set<UUID>]) -> [ClipSnapshot]? {
         let holdable = UndoPolicy.holdable(doomed)
         guard !holdable.isEmpty else { return nil }
-        let doomedIDs = Set(doomed.map(\.id))
-        let hashes = Array(Set(holdable.map(\.contentHash)))
-        // Without the survivors a restore skips a clip whose text another clip holds, as it did before ADR 0053.
-        let survivors = (try? modelContext.fetch(FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { hashes.contains($0.contentHash) }
-        )).filter { !doomedIDs.contains($0.id) }) ?? []
-        let survivorsByHash = Dictionary(grouping: survivors, by: \.contentHash)
         return holdable.map {
             var snapshot = ClipSnapshot(
                 item: $0, linkPreviewFile: linkPreviews.sealedFile(for: $0.id),
                 recognizedTextFile: recognizedTexts.sealedFile(for: $0.id)
             )
-            snapshot.textAlsoHeldBy = Set((survivorsByHash[$0.contentHash] ?? []).map(\.id))
+            snapshot.textAlsoHeldBy = survivors[$0.contentHash] ?? []
             return snapshot
         }
     }
@@ -213,7 +206,7 @@ extension StorageService {
             let snapshots: [ClipSnapshot]
             if doomed.isEmpty {
                 snapshots = []
-            } else if let held = undoSnapshots(of: doomed) {
+            } else if let held = try undoSnapshots(of: doomed, survivors: survivingHolders(of: doomed)) {
                 snapshots = held
             } else {
                 return nil

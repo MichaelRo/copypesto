@@ -426,12 +426,16 @@ public actor StorageService: ModelActor {
         let doomed = try modelContext.fetch(FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { ids.contains($0.id) }
         ))
-        let undoable = reason == .user && recordsUndo ? undoSnapshots(of: doomed) : nil
+        let survivors = reason == .user ? try survivingHolders(of: doomed) : [:]
+        let undoable = reason == .user && recordsUndo ? undoSnapshots(of: doomed, survivors: survivors) : nil
         let pages = doomed.filter { $0.type == .url }
             .compactMap { URL(string: $0.displayPreviewText.trimmingCharacters(in: .whitespacesAndNewlines)) }
             .flatMap { [$0, LinkPreviewEligibility.fetchTarget(for: $0)].compactMap(\.self) }
         for item in doomed {
-            if reason == .user { modelContext.insert(syncTombstone(for: item, alsoDeleted: ids)) }
+            if reason == .user {
+                let textStays = !(survivors[item.contentHash] ?? []).isEmpty
+                modelContext.insert(syncTombstone(for: item, textStays: textStays))
+            }
             modelContext.delete(item)
         }
         if reason == .retention { try pruneOldTombstones() }

@@ -14,31 +14,33 @@ struct WelcomePage<Art: View, Content: View>: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                if !typeSize.isAccessibilitySize {
-                    art.frame(maxWidth: 340).padding(.bottom, 4)
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(spacing: 18) {
+                    if !typeSize.isAccessibilitySize {
+                        art.frame(maxWidth: 340).padding(.bottom, 4)
+                    }
+                    VStack(spacing: 10) {
+                        Text(title)
+                            .font(.title.bold())
+                            .multilineTextAlignment(.center)
+                            .accessibilityLabel(Text("Step \(stepNumber) of \(WelcomeModel.stepCount). \(title)"))
+                            .accessibilityAddTraits(.isHeader)
+                        Text(line)
+                            .font(.body)
+                            .pestoQuiet()
+                            .multilineTextAlignment(.center)
+                    }
+                    content
                 }
-                VStack(spacing: 10) {
-                    Text(title)
-                        .font(.title.bold())
-                        .multilineTextAlignment(.center)
-                        .accessibilityLabel(Text("Step \(stepNumber) of \(WelcomeModel.stepCount). \(title)"))
-                        .accessibilityAddTraits(.isHeader)
-                    Text(line)
-                        .font(.body)
-                        .pestoQuiet()
-                        .multilineTextAlignment(.center)
-                }
-                content
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
+                .frame(maxWidth: 520)
+                .frame(maxWidth: .infinity, minHeight: proxy.size.height)
             }
-            .padding(.horizontal, 24)
-            .padding(.top, 8)
-            .padding(.bottom, 16)
-            .frame(maxWidth: 520)
-            .frame(maxWidth: .infinity)
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .scrollBounceBehavior(.basedOnSize)
     }
 }
 
@@ -59,7 +61,8 @@ struct WelcomeKeepStep: View {
         } content: {
             VStack(alignment: .leading, spacing: 18) {
                 WelcomeRow(
-                    symbol: "doc.on.clipboard", title: "Paste", text: "Press Paste in Pesto to add what you just copied."
+                    symbol: "doc.on.clipboard", title: "Paste",
+                    text: "Press Paste in Pesto to add what you just copied."
                 )
                 WelcomeRow(
                     symbol: "square.and.arrow.up", title: "Share",
@@ -111,7 +114,8 @@ struct WelcomeChoicesStep: View {
 
     var body: some View {
         WelcomePage(
-            stepNumber: WelcomeStep.choices.rawValue, title: String(localized: "Two choices"), line: String(localized: "You can change both in Settings.")
+            stepNumber: WelcomeStep.choices.rawValue, title: String(localized: "Two choices"),
+            line: String(localized: "You can change both in Settings.")
         ) {
             EmptyView()
         } content: {

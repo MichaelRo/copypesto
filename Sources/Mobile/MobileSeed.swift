@@ -58,6 +58,8 @@ enum MobileSeed {
     @MainActor
     private static func arrange(_ state: MobileAppState) async {
         await state.togglePin(pinnedID)
+        state.dismissAutoFillTip()
+        AppDefaults.store.set(false, for: Setting.autoFillTipShown)
         guard let board = state.addCollection(named: collectionName, existing: []),
               let context = state.historyContainer?.mainContext else { return }
         let id = filedID

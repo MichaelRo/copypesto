@@ -41,7 +41,8 @@ struct WelcomeView: View {
                         .allowsHitTesting(step == model.step)
                 }
             }
-            .offset(x: -CGFloat(model.step.rawValue - 1) * proxy.size.width * (layoutDirection == .rightToLeft ? -1 : 1))
+            .offset(x: -CGFloat(model.step.rawValue - 1) * proxy.size
+                .width * (layoutDirection == .rightToLeft ? -1 : 1))
             .animation(Motion.animation(.pestoMove), value: model.step)
         }
         .clipped()

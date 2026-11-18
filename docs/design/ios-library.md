@@ -94,8 +94,7 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and
 order: after the text matches) when the on-device model is available. While searching the chip row also offers Today,
 This Week (the Mac's date rules) and Other Devices (clips that arrived by sync). Link previews are fetched once for a
-link card on screen (`LinkPreviewLoader`), only with Settings → Privacy → Load link previews on (off by default: iOS has
-no setup screen to ask, ADR 0042) and never while locked. A GIF copied in Safari arrives as a still and its address,
+link card on screen (`LinkPreviewLoader`), only with Settings → Privacy → Load link previews on (off until the welcome's step two switches it on, with the switch in view, or the person does; ADR 0057) and never while locked. A GIF copied in Safari arrives as a still and its address,
 and the whole GIF is fetched under the same switch (`RemoteGIFFetcher`). Settings → History has Keep clips for and Keep
 at most with the Mac's choices and defaults, swept at launch and, at most hourly, on return to the foreground.
 
@@ -133,7 +132,10 @@ Allow. A locked history (Face ID) adds nothing until you unlock.
 - **An automation**: Shortcuts → Automation → New Automation → App → Safari → Is Closed (or any app), Run Immediately →
   New Blank Automation → add "Add Clipboard to Pesto". Copy in Safari, close it, and the clip is waiting.
 
+## The welcome (ADR 0057)
+Three steps once over the library (iPhone full screen, iPad form sheet; Skip on every step; Settings → Show Welcome Again), then a one-time AutoFill tip after the first pin or snippet. `-UITest` launches skip it unless `uitestShowsWelcome` / `uitestShowsAutoFillTip` is set.
+
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds
-section, onboarding, a keyboard extension, glass on a card. Source-app chips: Core's index keeps the bundle id
+section, a keyboard extension, glass on a card. Source-app chips: Core's index keeps the bundle id
 private and iOS cannot name an app, so there is no cheap list to show.

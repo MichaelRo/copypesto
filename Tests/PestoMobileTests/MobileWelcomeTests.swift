@@ -14,7 +14,8 @@ struct MobileWelcomeTests {
     -> MobileAppState {
         let state = MobileAppState(
             historyLock: MobileHistoryLock(
-                authenticator: StubUserAuthenticator(available: available, grants: grants), grace: AuthenticationGrace(),
+                authenticator: StubUserAuthenticator(available: available, grants: grants),
+                grace: AuthenticationGrace(),
                 isEnabled: { defaults.value(for: Setting.biometricLockEnabled) }
             )
         )
@@ -184,7 +185,8 @@ struct MobileWelcomeTests {
         #expect(face.hasPrefix("Face ID before your clips show."))
         #expect(touch.hasPrefix("Touch ID before your clips show."))
         #expect(none.hasPrefix("Your passcode before your clips show."))
-        #expect([face, touch, none].allSatisfy { $0.hasSuffix("Widgets and AutoFill stay empty while it\u{2019}s on.") })
+        #expect([face, touch, none]
+            .allSatisfy { $0.hasSuffix("Widgets and AutoFill stay empty while it\u{2019}s on.") })
     }
 
     @Test("the welcome's markers are registered per device and start off")

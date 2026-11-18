@@ -21,7 +21,12 @@ public final class HistoryStore {
     private static let incrementalLimit = 200
     private static let indexSlice = 250
 
-    public private(set) var items: [ClipboardItem] = []
+    public private(set) var items: [ClipboardItem] = [] {
+        didSet { revision &+= 1 }
+    }
+
+    /// Changes whenever the history or a row of its index changes, so a view can list again only when it must.
+    public private(set) var revision = 0
 
     @ObservationIgnored private let context: ModelContext
     @ObservationIgnored private var observer: (any NSObjectProtocol)?
@@ -119,6 +124,7 @@ public final class HistoryStore {
         current.apply(upserting: [item])
         index = current
         itemsByID[item.id] = item
+        revision &+= 1
     }
 
     public func refresh() {

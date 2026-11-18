@@ -17,6 +17,7 @@ RealDeviceCaptureTests
 # A hosted CI runner is a virtual machine: Vision's text recognition never returns there, AppKit's rich-text import needs a
 # window-server session, and a wall-clock budget needs real hardware. Each of these skips when CI is set.
 OCRServiceTests
+more pictures read at once than the Mac has cores
 recognize_
 warming the recognizer
 the recipe card is a picture whose words can be read back

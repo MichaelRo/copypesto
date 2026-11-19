@@ -92,13 +92,14 @@ extension MobileAppState {
             tell(String(localized: "A snippet can\u{2019}t be empty."), isProblem: true)
             return false
         }
-        let existingItem = historyStore?.item(for: id)
-        if let existingItem, secretReveal.concealment(for: existingItem).isConcealed {
+        guard let existingItem = historyStore?.item(for: id),
+              !secretReveal.concealment(for: existingItem).isConcealed else
+        {
             return false
         }
-        let oldHash = existingItem?.contentHash
-        let oldTitle = existingItem?.customTitle
-        let textChanged = existingItem.flatMap { ClipContent.of($0)?.plainText } != text
+        let oldHash = existingItem.contentHash
+        let oldTitle = existingItem.customTitle
+        let textChanged = ClipContent.of(existingItem)?.plainText != text
         let cleanTitle = Self.cleanedTitle(title)
         let mark = service.undoHistory.recordedCount
         do {
@@ -106,15 +107,12 @@ extension MobileAppState {
                 tell(String(localized: "Couldn\u{2019}t save the snippet."), isProblem: true)
                 return false
             }
-            if let existingItem {
-                await waitForUpdatedSnippet(
-                    existingItem, oldHash: oldHash, oldTitle: oldTitle, cleanTitle: cleanTitle,
-                    textChanged: textChanged
-                )
-            } else {
-                historyStore?.refresh()
-            }
+            await waitForUpdatedSnippet(
+                existingItem, oldHash: oldHash, oldTitle: oldTitle, cleanTitle: cleanTitle,
+                textChanged: textChanged
+            )
             textEdits += 1
+            await Task.yield()
             offerUndo(since: mark)
             return true
         } catch let refusal as ClipSizePolicy.TooLarge {
@@ -142,23 +140,24 @@ extension MobileAppState {
 
     private func waitForUpdatedSnippet(
         _ item: ClipboardItem,
-        oldHash: String?,
+        oldHash: String,
         oldTitle: String?,
         cleanTitle: String?,
         textChanged: Bool
     ) async {
         let id = item.id
-        let deadline = ContinuousClock.now + .seconds(2)
-        if textChanged, let oldHash {
-            while ContinuousClock.now < deadline, !TextArrival.hasArrived([id: oldHash], current: { _ in
-                item.modelContext == nil || item.isDeleted ? nil : item.contentHash
+        let deadline = ContinuousClock.now + .seconds(5)
+        if textChanged {
+            while ContinuousClock.now < deadline, !TextArrival.hasArrived([id: oldHash], current: { itemID in
+                let latest = historyStore?.item(for: itemID) ?? item
+                return latest.modelContext == nil || latest.isDeleted ? nil : latest.contentHash
             }) {
                 try? await Task.sleep(for: .milliseconds(20))
             }
         } else if oldTitle != cleanTitle {
-            while ContinuousClock.now < deadline,
-                  item.modelContext != nil, !item.isDeleted, item.customTitle != cleanTitle
-            {
+            while ContinuousClock.now < deadline {
+                let latest = historyStore?.item(for: id) ?? item
+                if latest.modelContext == nil || latest.isDeleted || latest.customTitle == cleanTitle { break }
                 try? await Task.sleep(for: .milliseconds(20))
             }
         }

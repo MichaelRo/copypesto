@@ -268,7 +268,11 @@ struct MobileSnippetEditorView: View {
             case .choice:
                 SnippetField(
                     label: name,
-                    kind: .choice(extra.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }),
+                    kind: .choice(
+                        extra.split(separator: ",")
+                            .map { $0.trimmingCharacters(in: .whitespaces) }
+                            .filter { !$0.isEmpty }
+                    ),
                     defaultValue: nil
                 )
             case .optional:

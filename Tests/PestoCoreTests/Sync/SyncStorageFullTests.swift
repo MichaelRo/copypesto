@@ -122,4 +122,37 @@ struct SyncStorageFullTests {
 
         if case .upToDate = a.service.status {} else { Issue.record("expected upToDate, got \(a.service.status)") }
     }
+
+    @Test("a local iCloud upload quota error wins over a peer read failure")
+    func whenPeerReadFailsAndLocalQuotaError_thenStorageFullWins() async throws {
+        let probe = SyncFolderService.FolderProbe(
+            uploadingError: { url in
+                url.pathExtension == "pestolog" ? CocoaError(.ubiquitousFileNotUploadedDueToQuota) : nil
+            },
+            isICloud: { _ in true }
+        )
+        let a = try SyncSite(name: "mac-a", layout: layout, time: time, folderProbe: probe)
+        let b = try SyncSite(name: "mac-b", layout: layout, time: time)
+        let made = try SyncGroupManager.create(
+            layout: layout, identity: a.identity, keyStore: a.keyStore, now: time.now
+        )
+        try b.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
+
+        try await b.copy("peer clip")
+        time.advance()
+        await b.service.syncNow()
+
+        let peerLogDir = layout.log(b.identity.deviceID)
+        let segment = try #require(
+            FileManager.default.contentsOfDirectory(at: peerLogDir, includingPropertiesForKeys: nil)
+                .first { $0.pathExtension == "pestolog" }
+        )
+        try Data("not-a-valid-segment".utf8).write(to: segment)
+
+        try await a.copy("local write succeeded")
+        time.advance()
+        await a.service.syncNow()
+
+        #expect(a.service.status == .storageFull(isICloud: true))
+    }
 }

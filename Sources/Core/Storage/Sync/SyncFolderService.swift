@@ -388,8 +388,8 @@ public final class SyncFolderService {
             }
         }
         if received > 0 { lastReceived = now() }
+        if await hasUploadQuotaError() { return set(.storageFull(isICloud: true)) }
         if let firstFailure { throw firstFailure }
-        if hasUploadQuotaError() { return set(.storageFull(isICloud: true)) }
         if waiting { return set(.waitingForFolder) }
         if !others.isEmpty, let since = lastReceived ?? group?.devices.map(\.createdAt).max(),
            now().timeIntervalSince(since) > timing.quietAfter

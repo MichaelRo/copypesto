@@ -184,5 +184,16 @@ extension MobilePasteboardGlobals {
             let appended = MobileSnippetPlaceholders.inserting(" {{date}}", into: "Today:", selection: nil)
             #expect(appended.text == "Today: {{date}}")
         }
+
+        @Test("updateSnippet fails closed when the target clip is missing from the store")
+        func whenUpdateSnippetTargetMissing_thenReturnsFalse() async throws {
+            let library = try await MobileTestLibrary()
+            let updated = await library.state.updateSnippet(
+                id: UUID(),
+                title: "Missing",
+                text: "Hello"
+            )
+            #expect(!updated)
+        }
     }
 }

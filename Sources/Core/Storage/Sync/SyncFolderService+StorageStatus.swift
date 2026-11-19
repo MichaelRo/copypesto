@@ -57,14 +57,14 @@ extension SyncFolderService {
         }
     }
 
-    static func isQuotaUploadError(_ error: any Error) -> Bool {
+    nonisolated static func isQuotaUploadError(_ error: any Error) -> Bool {
         matchesErrorChain(error) { nsError in
             nsError.domain == NSCocoaErrorDomain
                 && nsError.code == CocoaError.ubiquitousFileNotUploadedDueToQuota.rawValue
         }
     }
 
-    private static func matchesErrorChain(_ error: any Error, predicate: (NSError) -> Bool) -> Bool {
+    private nonisolated static func matchesErrorChain(_ error: any Error, predicate: (NSError) -> Bool) -> Bool {
         var queue: [NSError] = [error as NSError]
         var remaining = 16
         while !queue.isEmpty, remaining > 0 {
@@ -81,28 +81,35 @@ extension SyncFolderService {
         return false
     }
 
-    func hasUploadQuotaError() -> Bool {
-        var urls: [URL] = [
-            layout.root,
-            layout.device(identity.deviceID),
-            layout.deviceRecord(identity.deviceID),
-            layout.head(identity.deviceID)
-        ]
-        let logDirectory = layout.log(identity.deviceID)
-        let ownSegments = ((try? FileManager.default.contentsOfDirectory(atPath: logDirectory.path)) ?? [])
-            .filter { $0.hasSuffix(".pestolog") }
-            .sorted(by: >)
-        urls.append(contentsOf: ownSegments.map { logDirectory.appendingPathComponent($0) })
+    func hasUploadQuotaError() async -> Bool {
+        let layout = layout
+        let deviceID = identity.deviceID
+        let probe = folderProbe
+        return await Task.detached(priority: .utility) {
+            var urls: [URL] = [
+                layout.root,
+                layout.device(deviceID),
+                layout.deviceRecord(deviceID),
+                layout.head(deviceID)
+            ]
+            let logDirectory = layout.log(deviceID)
+            let ownSegments = ((try? FileManager.default.contentsOfDirectory(atPath: logDirectory.path)) ?? [])
+                .filter { $0.hasSuffix(".pestolog") }
+                .sorted(by: >)
+                .prefix(16)
+            urls.append(contentsOf: ownSegments.map { logDirectory.appendingPathComponent($0) })
 
-        let blobsDirectory = layout.blobs(identity.deviceID)
-        let ownBlobs = ((try? FileManager.default.contentsOfDirectory(atPath: blobsDirectory.path)) ?? [])
-            .filter { $0.hasSuffix(".pestoblob") }
-            .sorted(by: >)
-        urls.append(contentsOf: ownBlobs.map { blobsDirectory.appendingPathComponent($0) })
+            let blobsDirectory = layout.blobs(deviceID)
+            let ownBlobs = ((try? FileManager.default.contentsOfDirectory(atPath: blobsDirectory.path)) ?? [])
+                .filter { $0.hasSuffix(".pestoblob") }
+                .sorted(by: >)
+                .prefix(16)
+            urls.append(contentsOf: ownBlobs.map { blobsDirectory.appendingPathComponent($0) })
 
-        return urls.contains { url in
-            guard let error = folderProbe.uploadingError(url) else { return false }
-            return Self.isQuotaUploadError(error)
-        }
+            return urls.contains { url in
+                guard let error = probe.uploadingError(url) else { return false }
+                return Self.isQuotaUploadError(error)
+            }
+        }.value
     }
 }

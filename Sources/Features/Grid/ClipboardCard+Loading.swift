@@ -2,6 +2,7 @@
 import AppKit
 import os
 import PestoCore
+import PestoCoreNetworking
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers

@@ -11,7 +11,7 @@ struct PlatformFenceTests {
     /// Files that exist only on the Mac, by Core directory. A number may shrink (a file became shared) and never
     /// grow: new code that both platforms can run is written unfenced, with only its platform calls inside `#if`.
     private static let macOnlyFileCeilings: [String: Int] = [
-        "Import": 27, "Paste": 28, "Pasteboard": 10, "Runtime": 8, "Seeding": 8, "Storage": 3
+        "Import": 27, "Paste": 28, "Pasteboard": 10, "Runtime": 8, "Seeding": 8, "Storage": 2
     ]
 
     private struct Reading {

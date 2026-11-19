@@ -81,6 +81,8 @@ targets:
     dependencies:
       - package: PestoCore
         product: PestoCore
+      - package: PestoCore
+        product: PestoCoreNetworking
       - package: Sparkle
         product: Sparkle
       - target: PestoControls
@@ -116,7 +118,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
     settings:
@@ -152,6 +154,8 @@ targets:
     dependencies:
       - package: PestoCore
         product: PestoCore
+      - package: PestoCore
+        product: PestoCoreNetworking
       - target: PestoShare
         embed: true
       - target: PestoAutoFill
@@ -202,7 +206,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.share
@@ -229,7 +233,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
       - sdk: AuthenticationServices.framework
     settings:
       base:
@@ -287,7 +291,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
     settings:
@@ -325,6 +329,8 @@ targets:
       - target: PestoMobile
       - package: PestoCore
         product: PestoCore
+      - package: PestoCore
+        product: PestoCoreNetworking
     settings:
       base:
         BUNDLE_LOADER: $(TEST_HOST)

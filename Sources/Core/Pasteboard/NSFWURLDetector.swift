@@ -56,7 +56,7 @@ public enum NSFWURLDetector: Sendable {
 
     // MARK: - Internal (package-internal for testability)
 
-    static func isBlocklisted(host: String) -> Bool {
+    public static func isBlocklisted(host: String) -> Bool {
         let h = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
         return blocklist.contains { h == $0 || h.hasSuffix("." + $0) }
     }
@@ -64,7 +64,7 @@ public enum NSFWURLDetector: Sendable {
     /// Hosts often run words together ("namethatpornad.com"), which whole-word scoring cannot see. These stems are
     /// long or distinctive enough not to occur inside innocent words; "sex" and "xxx" are left out on purpose
     /// ("essex", "xxxl").
-    static func hostContainsExplicitStem(_ host: String) -> Bool {
+    public static func hostContainsExplicitStem(_ host: String) -> Bool {
         explicitHostStems.contains { host.contains($0) }
     }
 

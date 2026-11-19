@@ -3,6 +3,7 @@ import AppKit
 import Foundation
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 private final class BrowserGIFStubURLProtocol: URLProtocol {
     struct Stub {

@@ -2,6 +2,7 @@
 import Foundation
 import Observation
 import PestoCore
+import PestoCoreNetworking
 import SwiftData
 import UIKit
 

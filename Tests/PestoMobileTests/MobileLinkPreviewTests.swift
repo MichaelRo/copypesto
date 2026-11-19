@@ -3,6 +3,7 @@ import CryptoKit
 import Foundation
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 @testable import PestoMobile
 
 @Suite("A link card's preview is fetched once, under the switch, never while locked")

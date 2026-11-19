@@ -2,6 +2,8 @@
 import Foundation
 import os
 
+import PestoCore
+
 /// Fetches a link clip's page title, site name and picture once and stores them, for an app with no card view to do it
 /// (the iPhone and iPad library; the Mac's card does the same steps in `ClipboardCard+Loading`). The Link Previews
 /// switch, the address checks and a locked history are decided here (ADR 0005); a clip is fetched once, whatever the

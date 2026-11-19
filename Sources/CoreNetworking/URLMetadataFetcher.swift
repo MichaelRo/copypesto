@@ -5,6 +5,8 @@ import ImageIO
 import LinkPresentation
 import UniformTypeIdentifiers
 
+import PestoCore
+
 public struct URLPreviewResult: Sendable {
     public let title: String?
     public let ogImageData: Data?

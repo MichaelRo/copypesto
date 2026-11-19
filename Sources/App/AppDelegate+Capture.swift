@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import AppKit
 import PestoCore
+import PestoCoreNetworking
 
 extension AppDelegate {
     func startPasteboardWatcher() {

@@ -2,6 +2,8 @@
 import Foundation
 import Synchronization
 
+import PestoCore
+
 /// Collects a response body in the chunks the network delivers, and gives up as soon as the status is not 200 or the
 /// body passes `limit`, whether or not the server sent a Content-Length. Iterating `URLSession.AsyncBytes` instead
 /// costs one async step per byte.

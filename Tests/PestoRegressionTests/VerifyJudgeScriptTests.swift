@@ -131,4 +131,69 @@ struct VerifyJudgeScriptTests {
         let notJudged = try run("hosted", input: hostedTree(passed: 300), extra: ["--no-ui"])
         #expect(notJudged.code == 0, "\(notJudged.output)")
     }
+
+    // MARK: The iPhone and iPad runs
+
+    private func mobileTree(unit: Int, uiPassed: [String] = [], uiSkipped: [String] = []) throws -> String {
+        func cases(_ names: [String], _ result: String) -> [[String: Any]] {
+            names.map { ["nodeType": "Test Case", "name": $0, "nodeIdentifier": "UI/\($0)", "result": result] }
+        }
+        let bundles: [[String: Any]] = [
+            ["nodeType": "Unit test bundle", "name": "PestoMobileTests", "children": (0..<unit).map {
+                ["nodeType": "Test Case", "name": "u\($0)", "nodeIdentifier": "Unit/u\($0)", "result": "Passed"]
+            }],
+            [
+                "nodeType": "UI test bundle",
+                "name": "PestoMobileUITests",
+                "children": cases(uiPassed, "Passed") + cases(uiSkipped, "Skipped")
+            ]
+        ]
+        let data = try JSONSerialization.data(withJSONObject: ["testNodes": bundles])
+        return String(bytes: data, encoding: .utf8) ?? ""
+    }
+
+    private func runMobile(phone: String, pad: String, extra: [String] = []) throws -> (code: Int32, output: String) {
+        let padFile = FileManager.default.temporaryDirectory.appendingPathComponent("judge-pad-\(UUID().uuidString)")
+        try pad.write(to: padFile, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: padFile) }
+        return try run("mobile", input: phone, extra: [padFile.path] + extra)
+    }
+
+    private var everyUITest: [String] {
+        (0..<20).map { "shared\($0)" }
+    }
+
+    @Test("a UI test skipped on one device passes when it passed on the other")
+    func deviceOnlyUITestsPass() throws {
+        let phone = try mobileTree(unit: 427, uiPassed: everyUITest + ["phoneOnly"], uiSkipped: ["padOnly"])
+        let pad = try mobileTree(unit: 427, uiPassed: everyUITest + ["padOnly"], uiSkipped: ["phoneOnly"])
+        let result = try runMobile(phone: phone, pad: pad)
+        #expect(result.code == 0, "\(result.output)")
+        #expect(result.output.contains("iPhone unit=427 iPad unit=427 ui=22"))
+    }
+
+    @Test("a UI test skipped on both devices fails the run")
+    func skippedEverywhereFails() throws {
+        let phone = try mobileTree(unit: 427, uiPassed: everyUITest, uiSkipped: ["neverRan"])
+        let pad = try mobileTree(unit: 427, uiPassed: everyUITest, uiSkipped: ["neverRan"])
+        let result = try runMobile(phone: phone, pad: pad)
+        #expect(result.code == 1)
+        #expect(result.output.contains("unexpected skip: UI/neverRan"))
+    }
+
+    @Test("each device's unit tests have their own floor, and the UI floor counts what passed on either device")
+    func mobileFloors() throws {
+        let short = try runMobile(
+            phone: mobileTree(unit: 427, uiPassed: everyUITest), pad: mobileTree(unit: 12, uiPassed: everyUITest)
+        )
+        #expect(short.code == 1)
+        #expect(short.output.contains("only 12 iPad unit tests passed"))
+
+        let noUI = try runMobile(phone: mobileTree(unit: 427), pad: mobileTree(unit: 427))
+        #expect(noUI.code == 1)
+        #expect(noUI.output.contains("only 0 iOS UI tests passed"))
+
+        let unitOnly = try runMobile(phone: mobileTree(unit: 427), pad: mobileTree(unit: 427), extra: ["--no-ui"])
+        #expect(unitOnly.code == 0, "\(unitOnly.output)")
+    }
 }

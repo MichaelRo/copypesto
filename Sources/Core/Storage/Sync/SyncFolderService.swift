@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import os
 import SwiftData
+
+private let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "SyncFolderService")
 
 /// Keeps this Mac's log and the other Macs' logs in step through the sync folder (ADR 0018). It writes what changed
 /// here
@@ -207,6 +210,7 @@ public final class SyncFolderService {
         let epochChanged = group.map { $0.epoch != found.epoch } ?? false
         if announced, !epochChanged {
             group = found
+            await sendUnstampedOnce()
             return
         }
         try SyncGroupManager.writeDeviceRecord(
@@ -218,7 +222,26 @@ public final class SyncFolderService {
             ownLogRecovered = false
         }
         if !announced || epochChanged { _ = try await storage.restampForSync(.notFrom(deviceID: identity.deviceID)) }
+        water.sentUnstampedHistory = true
+        saveWater()
         group = try SyncGroupManager.openGroup(layout: layout, keyStore: keyStore) ?? found
+    }
+
+    /// A device announced before turn-on stamped its history (ADR 0056) never sent what it held from before. Once per
+    /// store (the high-water record remembers it), whatever still carries no stamp goes out. Only once: a clip copied
+    /// later during Pause Sync stays on this device. A failure is logged and tried again on the next pass; it never
+    /// stops the exchange.
+    private func sendUnstampedOnce() async {
+        guard water.sentUnstampedHistory != true else { return }
+        do {
+            let stamped = try await storage.restampForSync(.unstamped)
+            water.sentUnstampedHistory = true
+            saveWater()
+            if stamped >
+                0 { logger.info("Sent \(stamped, privacy: .public) clips and collections that were never sent") }
+        } catch {
+            logger.error("The unsent history could not be marked: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// A Mac that used Leave Sync takes its folder, and so its log, with it, but its clips are still here: this Mac

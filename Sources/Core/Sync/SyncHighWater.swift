@@ -27,6 +27,10 @@ public struct SyncHighWater: Codable, Equatable, Sendable {
 
     public private(set) var marks: [String: Mark] = [:]
     public private(set) var vaultFloor: VaultFloor?
+    /// Whether this device has stamped the history it held from before sync was on (`RestampScope.unstamped`). Nil on
+    /// a record written before the repair existed, which is exactly the device that needs it; set once, so a clip
+    /// copied during Pause Sync never leaves later.
+    var sentUnstampedHistory: Bool?
 
     public init() {}
 

@@ -162,6 +162,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: "NO"
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Pesto saves a picture from your history to Photos when you choose Save to Photos."
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "Pesto asks for Face ID before it shows your clips when the History Lock is on, and before it shows a hidden clip."
         ASSETCATALOG_COMPILER_APPICON_NAME: Pesto
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"
 

@@ -103,7 +103,7 @@ pinned in `scripts/tool-versions.env`):
 | `verify` | `scripts/verify.sh --no-ui`: SwiftFormat + SwiftLint, every SPM test (Core and Regression), a Debug build with warnings as errors, and the hosted `PestoTests` |
 
 The UI tests and snapshot tests drive real windows, so they run locally (`scripts/verify.sh`, `docs/testing.md`).
-Releasing is described in `docs/release.md`. Signing the iPhone and iPad app for a device, and what the developer portal needs, is in `docs/ios-signing.md`.
+Releasing is described in `docs/release.md`. Signing the iPhone and iPad app for a device, and what the developer portal needs, is in `docs/ios-signing.md`; the App Store listing, privacy answers and review notes are in `docs/app-store-ios.md`.
 
 ## Security invariants
 

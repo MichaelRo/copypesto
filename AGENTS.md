@@ -215,7 +215,7 @@ These hold everywhere. **Subsystem-specific pitfalls live in that subtree's `CLA
 **`swift test` prints two "Test run with" lines** (the regression target, then Core); `tail -1` hides a failure, so read three lines or let `scripts/verify_judge.py` judge. An `xcodebuild` without the `test` action only builds and exits 0.
 
 **The full gate is `scripts/verify.sh` (`make verify`, about an hour with the UI tests). An agent starts it only when the maintainer says so, once, as the last step after every change is built, reviewed and merged; it drives real windows, so two gates, or a gate and a person at the keyboard, spoil each other. Until then each change runs its own narrow tests, and a pull request opened earlier says "full gate not run yet".** When it runs, paste its summary. Start it in the background and read only `SUMMARY.txt` and `failures.txt` in its log folder; re-run just the failed tests with `scripts/verify-rerun-failed.sh` (`docs/testing.md`, "Running the gate cheaply"). It runs lint, the Core tests, a Debug
-build with warnings as errors, the hosted and UI tests, and exports screenshots of the real UI to
+build with warnings as errors, the hosted and UI tests, the iOS app's tests on an iPhone and an iPad simulator, and exports screenshots of the real UI to
 `.build/ui-screenshots/`; it exits non-zero on any failure (`--fast` skips the UI tests). Setup, how the UI-test mode
 works, how to write a UI test and the manual checklist for what cannot be automated are in `docs/testing.md`.
 

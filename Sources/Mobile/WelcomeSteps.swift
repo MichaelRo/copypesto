@@ -121,9 +121,9 @@ struct WelcomeSyncStep: View {
     var body: some View {
         WelcomePage(
             stepNumber: WelcomeStep.sync.rawValue, isActive: isActive,
-            title: String(localized: "Your Mac\u{2019}s clips, here too"),
+            title: String(localized: "Your clips on every device"),
             line: String(localized: """
-            Sync goes through a folder you choose, such as iCloud Drive. \
+            Sync your iPhone, iPad and Mac through a folder you choose, such as iCloud Drive. \
             No server: clips are sealed so only your devices can open them.
             """)
         ) {

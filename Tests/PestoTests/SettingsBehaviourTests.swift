@@ -26,7 +26,7 @@ extension HostedGlobals {
         @Test("the shelf is as tall as the stored card size needs", arguments: CardSize.allCases)
         func whenSizeStored_thenShelfHeight(size: CardSize) {
             withCardSize(size.rawValue) {
-                #expect(BottomShelfPositioning.overlayHeight == ShelfHeight
+                #expect(BottomShelfPositioning.overlayHeight() == ShelfHeight
                     .height(forCardHeight: size.cardCGSize.height))
             }
         }
@@ -39,7 +39,7 @@ extension HostedGlobals {
 
             defaults.set(150, forKey: "cardWidth")
             #expect(CardSize.dimensions(sizeRaw: "large", customWidth: 150) == CGSize(width: 150, height: 130))
-            #expect(BottomShelfPositioning.overlayHeight == ShelfHeight.height(forCardHeight: 130))
+            #expect(BottomShelfPositioning.overlayHeight() == ShelfHeight.height(forCardHeight: 130))
 
             defaults.set(0, forKey: "cardWidth")
             #expect(CardSize.dimensions(sizeRaw: "compact", customWidth: 0) == CardSize.compact.cardCGSize)
@@ -52,8 +52,8 @@ extension HostedGlobals {
         @Test("an unset or unknown card size means large")
         func whenSizeMissingOrGarbage_thenLarge() {
             let large = ShelfHeight.height(forCardHeight: CardSize.large.cardCGSize.height)
-            withCardSize(nil) { #expect(BottomShelfPositioning.overlayHeight == large) }
-            withCardSize("gigantic") { #expect(BottomShelfPositioning.overlayHeight == large) }
+            withCardSize(nil) { #expect(BottomShelfPositioning.overlayHeight() == large) }
+            withCardSize("gigantic") { #expect(BottomShelfPositioning.overlayHeight() == large) }
         }
 
         @Test("accent colours parse from six or eight hex digits, with or without a hash")

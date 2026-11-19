@@ -4,12 +4,14 @@ import CoreGraphics
 import PestoCore
 
 enum BottomShelfPositioning {
-    static var overlayHeight: CGFloat {
+    /// The panel's height: the card row and its fixed chrome, plus whatever banners the shelf measured above the
+    /// command bar (`AppState.shelfBannerHeight`).
+    static func overlayHeight(banners: CGFloat = 0) -> CGFloat {
         let defaults = AppDefaults.store
         let size = CardSize.dimensions(
             sizeRaw: defaults.value(for: Setting.cardSize), customWidth: defaults.value(for: Setting.cardWidth)
         )
-        return ShelfHeight.height(forCardHeight: size.height)
+        return ShelfHeight.height(forCardHeight: size.height) + max(0, banners)
     }
 
     static var position: ShelfPosition {
@@ -20,7 +22,7 @@ enum BottomShelfPositioning {
     /// the Dock or
     /// hanging from the menu bar, whichever the person chose.
     @MainActor
-    static func frame(for screen: NSScreen? = nil) -> NSRect {
+    static func frame(for screen: NSScreen? = nil, banners: CGFloat = 0) -> NSRect {
         let targetScreen = screen ?? TargetScreen.current() ?? NSScreen.main ?? NSScreen.screens[0]
         return position.frame(
             on: ShelfPosition.Screen(
@@ -28,7 +30,7 @@ enum BottomShelfPositioning {
                 visibleFrame: targetScreen.visibleFrame,
                 safeAreaTop: targetScreen.safeAreaInsets.top
             ),
-            height: overlayHeight
+            height: overlayHeight(banners: banners)
         )
     }
 }

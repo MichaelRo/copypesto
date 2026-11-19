@@ -36,6 +36,7 @@ final class OverlayWindowController {
         panel.title = String(localized: "Pesto clipboard history")
         panel.setAccessibilityLabel(String(localized: "Pesto clipboard history"))
 
+        appState.onShelfBannerHeightChange = { [weak self] in self?.fitBanners() }
         let rootView = OverlayRootView()
             .environment(appState)
             .environment(\.shelfActions, appState.asShelfActions)
@@ -109,9 +110,22 @@ final class OverlayWindowController {
     func prewarmLayout() {
         guard !panel.isVisible, !appState.isOverlayVisible else { return }
         let interval = PerfSignposts.shelf.begin("prewarmLayout")
-        panel.setFrame(BottomShelfPositioning.frame(), display: false)
+        panel.setFrame(BottomShelfPositioning.frame(banners: appState.shelfTopOverflow), display: false)
         panel.contentView?.layoutSubtreeIfNeeded()
         interval.end()
+    }
+
+    /// A banner came or went while the shelf is open: the panel takes its new height at once, so the cards and the
+    /// Undo offer under them stay inside it. Only the frame moves, never a layer transform (see this folder's notes).
+    private func fitBanners() {
+        // While it opens the panel is not visible yet, but the content measures itself then: a banner present from
+        // the start (an import offer) arrived before `isVisible` and the panel kept the shorter height.
+        guard !isHiding, panel.isVisible || appState.isOverlayVisible else { return }
+        // The display the shelf is on, not the frontmost app's now: focus may have moved to another display since it
+        // opened, and asking again moved the shelf there.
+        panel.setFrame(
+            BottomShelfPositioning.frame(for: panel.screen, banners: appState.shelfTopOverflow), display: true
+        )
     }
 
     func show() {
@@ -119,8 +133,13 @@ final class OverlayWindowController {
         isHiding = false
         showGeneration += 1
         panel.contentView?.layer?.removeAnimation(forKey: "hideOverlay")
-        let frame = BottomShelfPositioning.frame()
+        let frame = BottomShelfPositioning.frame(banners: appState.shelfTopOverflow)
         panel.setFrame(frame, display: false)
+        // Laying the content out measures the block above the row (a banner present from the start), and that
+        // measure arrives before the shelf counts as open; size the panel by it now, or it keeps the shorter height.
+        panel.contentView?.layoutSubtreeIfNeeded()
+        let measured = BottomShelfPositioning.frame(banners: appState.shelfTopOverflow)
+        if measured != frame { panel.setFrame(measured, display: false) }
         // Keep panel fully opaque — layer opacity drives the fade so we never touch
         // NSAnimatablePropertyContainer (panel.animator()), which would spin up NSAnimation
         // machinery and re-trigger the CA transaction / windowDidLayout crash.
@@ -145,7 +164,7 @@ final class OverlayWindowController {
         CATransaction.commit()
 
         let slide = CABasicAnimation(keyPath: "transform.translation.y")
-        slide.fromValue = BottomShelfPositioning.position.slideOffset(height: BottomShelfPositioning.overlayHeight)
+        slide.fromValue = BottomShelfPositioning.position.slideOffset(height: panel.frame.height)
 
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 0
@@ -204,7 +223,7 @@ final class OverlayWindowController {
         let slide = CABasicAnimation(keyPath: "transform.translation.y")
         slide.fromValue = 0
         // Explicit toValue instead of relying on model state.
-        slide.toValue = BottomShelfPositioning.position.slideOffset(height: BottomShelfPositioning.overlayHeight)
+        slide.toValue = BottomShelfPositioning.position.slideOffset(height: panel.frame.height)
 
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 1

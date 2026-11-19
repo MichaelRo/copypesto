@@ -165,29 +165,44 @@ struct OverlayRootView: View {
             // swiftlint:disable:next redundant_discardable_let
             let _ = RenderProbe.hit("OverlayRootView")
             VStack(spacing: 0) {
-                if let notice = StorageNotice.message(
-                    hasStorage: appState.historyContainer != nil, isOnDisk: appState.storeIsOnDisk
-                ) {
-                    storageBanner(notice)
-                }
+                // Everything above the row (the banners, then the command bar) is measured, and what passes the
+                // command bar's budget (`ShelfHeight.commandBlock`) grows the panel (`AppState.shelfTopOverflow`): a
+                // banner, or the command bar at a large system text size, once pushed the row and the Undo offer under
+                // it
+                // past the lower edge.
+                VStack(spacing: 0) {
+                    if let notice = StorageNotice.message(
+                        hasStorage: appState.historyContainer != nil, isOnDisk: appState.storeIsOnDisk
+                    ) {
+                        storageBanner(notice)
+                    }
 
-                if !appState.hasAccessibilityPermission {
-                    axPermissionBanner
-                }
+                    if !appState.hasAccessibilityPermission {
+                        axPermissionBanner
+                    }
 
-                if !appState.importOffer.isEmpty {
-                    importOfferBanner(appState.importOffer)
-                }
+                    if !appState.importOffer.isEmpty {
+                        importOfferBanner(appState.importOffer)
+                    }
 
-                CommandBarView()
-                    .disabled(appState.isHistoryLocked)
-                    .accessibilityHidden(appState.isHistoryLocked)
-                    // The chips name apps and collections ("Notes"), so the locked shelf smears them like the cards
-                    // (D-01).
-                    .blur(radius: appState.isHistoryLocked ? ShelfLockCover.blurRadius : 0)
-                    .padding(.horizontal, 16)
-                    .padding(.top, appState.isSearchActive ? 6 : 12)
-                    .padding(.bottom, appState.isSearchActive ? 2 : 8)
+                    CommandBarView()
+                        .disabled(appState.isHistoryLocked)
+                        .accessibilityHidden(appState.isHistoryLocked)
+                        // The chips name apps and collections ("Notes"), so the locked shelf smears them like the cards
+                        // (D-01).
+                        .blur(radius: appState.isHistoryLocked ? ShelfLockCover.blurRadius : 0)
+                        .padding(.horizontal, 16)
+                        .padding(.top, appState.isSearchActive ? 6 : 12)
+                        .padding(.bottom, appState.isSearchActive ? 2 : 8)
+                }
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { height in
+                    // Search draws the bar 12 points shorter (6 + 2 instead of 12 + 8): its budget shrinks with it, so
+                    // opening search never resizes the panel.
+                    let budget = ShelfHeight.commandBlock - (appState.isSearchActive ? 12 : 0)
+                    appState.shelfTopOverflow = max(0, height - budget)
+                }
 
                 BiometricLockOverlay {
                     GridView(

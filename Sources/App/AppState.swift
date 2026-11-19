@@ -80,6 +80,14 @@ final class AppState {
     var isSearchActive = false
     var selectedCollectionID: UUID?
     var hasAccessibilityPermission = false
+    /// How far the block above the row (the banners, then the command bar) passes its budget
+    /// (`ShelfHeight.commandBlock`), as the shelf measured it. The panel grows by it, so the cards and what sits under
+    /// them keep their place (a banner once pushed the Undo offer below the panel's edge). Views never read it.
+    @ObservationIgnored var shelfTopOverflow: CGFloat = 0 {
+        didSet { if shelfTopOverflow != oldValue { onShelfBannerHeightChange?() } }
+    }
+
+    @ObservationIgnored var onShelfBannerHeightChange: (() -> Void)?
     /// The app chips switched on; a clip from any of them stays. Cleared when the shelf closes.
     var appChipFilter: Set<String> = []
     /// The app chips each window's bar shows, in order, for ⌥⌘[ and ⌥⌘]. Written by that window's command bar; not

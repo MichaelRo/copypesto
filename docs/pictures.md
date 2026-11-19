@@ -72,3 +72,28 @@ All come from `MarketingScreenshotTests` (`make pictures`, or `make marketing-im
 | `theme-<theme>` | `test_themes` | theme try-on |
 | `scenes/loop-*` | `MarketingLoopTests` (`make marketing-loops`) | scroll scenes |
 | `public/og.png` | `scripts/marketing/compose-social-card.swift` from the pictures above (website repo) | share card on every page |
+
+## App Store (`.build/app-store`)
+
+The iPhone and iPad app's pictures. `make pictures` runs `StoreScreenshotTests` (`Tests/PestoMobileUITests`) after the Mac
+pictures, on an iPhone 17 Pro Max and an iPad Pro 13-inch (M5) simulator (found by name; one is made when it is missing),
+in light, on the seeded `-UITestMode` library, with the status bar set to 9:41, full battery and full bars. The
+attachments are exported to `.build/app-store`, not to `docs/images`: they are not in the README or the guide, and a
+failing run does not stop the export of the others. Run one
+device alone with `xcodebuild -scheme PestoMobile -only-testing:PestoMobileUITests/StoreScreenshotTests` and a
+`-destination` for that simulator. `PicturesMapTests` fails when a name in the suite is missing here.
+
+| File | Screen | Used for |
+|---|---|---|
+| `ios-store-iphone-01-library.png` | The library with cards | App Store, iPhone 6.9-inch |
+| `ios-store-iphone-02-search-in-pictures.png` | A search that finds words inside a picture | App Store, iPhone |
+| `ios-store-iphone-03-detail-edit-text.png` | A clip's detail with Edit Text | App Store, iPhone |
+| `ios-store-iphone-04-welcome-sync.png` | The welcome's sync step | App Store, iPhone |
+| `ios-store-ipad-01-library.png` | The library with the sidebar, landscape | App Store, iPad 13-inch |
+| `ios-store-ipad-02-collection.png` | A collection selected | App Store, iPad |
+| `ios-store-ipad-03-inspector.png` | A clip's detail in the inspector | App Store, iPad |
+| `ios-store-ipad-04-smart-collection-rules.png` | A smart collection's rules | App Store, iPad |
+
+The AutoFill picker is not taken: it is a system extension that only another app's keyboard can open, so the app's own UI
+test cannot show it. Take it by hand on a device.
+

@@ -74,4 +74,19 @@ struct KeyboardMenuTests {
         )
         #expect(KeyboardMenu(hasFullAccess: true) { set }.chips.map(\.title) == ["Recent"])
     }
+
+    @Test("Hebrew search ignores niqqud and matches final and non-final letters interchangeably")
+    func whenHebrewSearched_thenNiqqudAndFinalsMatch() {
+        let set = QuickInsertSet(
+            createdAt: .now,
+            entries: [
+                entry("שָׁלוֹם עוֹלָם", .recent),
+                entry("מכתב רשמי", .pinned, title: "מכתבים")
+            ]
+        )
+        let menu = KeyboardMenu(hasFullAccess: true) { set }
+        #expect(menu.entries(matching: "שלומ").map(\.text) == ["שָׁלוֹם עוֹלָם"])
+        #expect(menu.entries(matching: "שלום").map(\.text) == ["שָׁלוֹם עוֹלָם"])
+        #expect(menu.entries(matching: "מכתבימ").map(\.text) == ["מכתב רשמי"])
+    }
 }

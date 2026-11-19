@@ -37,4 +37,14 @@ struct KeyboardQueryTests {
         #expect(KeyboardQuery(starting: "addr").text == "addr")
         #expect(KeyboardQuery(starting: nil).text.isEmpty)
     }
+
+    @Test("Hebrew niqqud is stripped and final letters are folded for search matching")
+    func whenHebrewNiqqudOrFinals_thenNormalizedForSearch() {
+        #expect(KeyboardQuery.normalizedForSearch("שָׁלוֹם") == "שלומ")
+        #expect(KeyboardQuery.normalizedForSearch("בְּרֵאשִׁית") == "בראשית")
+        #expect(KeyboardQuery.normalizedForSearch("ךםןףץ") == "כמנפצ")
+        #expect(KeyboardQuery.normalizedForSearch("מלך") == "מלכ")
+        #expect(KeyboardQuery.normalizedForSearch("עיר") == "עיר")
+        #expect(KeyboardQuery.normalizedForSearch("Basil 123") == "Basil 123")
+    }
 }

@@ -138,5 +138,29 @@ extension HostedGlobals {
             #expect(closed == 0)
             #expect(try text(of: id) == "changed while locked")
         }
+
+        @Test("editing a revealed secret re-seals and re-classifies the saved text")
+        func whenSecretEdited_thenResealedAndReclassified() async throws {
+            let secret = "sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef"
+            let id = try await ingest(secret)
+            let initial = try #require(clips().first { $0.id == id })
+            #expect(initial.sensitivity == .oauthToken)
+            #expect(initial.sensitivityMaskedPreview != nil)
+
+            let toPlain = await state.saveEditedText(id: id, text: "ordinary reminder note")
+            #expect(toPlain == .saved)
+            let afterPlain = try #require(clips().first { $0.id == id })
+            #expect(afterPlain.sensitivity == nil)
+            #expect(afterPlain.sensitivityMaskedPreview == nil)
+            #expect(try text(of: id) == "ordinary reminder note")
+
+            let replacementSecret = "sk-ant-api03-NEWSECRET1234567890abcdef1234567890"
+            let toSecret = await state.saveEditedText(id: id, text: replacementSecret)
+            #expect(toSecret == .saved)
+            let afterSecret = try #require(clips().first { $0.id == id })
+            #expect(afterSecret.sensitivity == .oauthToken)
+            #expect(afterSecret.sensitivityMaskedPreview != nil)
+            #expect(try text(of: id) == replacementSecret)
+        }
     }
 }

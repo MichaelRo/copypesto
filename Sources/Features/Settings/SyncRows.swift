@@ -14,16 +14,25 @@ struct SyncRows: View {
     var body: some View {
         Group {
             VStack(alignment: .leading, spacing: 4) {
-                Toggle("Sync with my other Macs", isOn: Binding(
-                    get: { controller.isEnabled },
-                    set: { on in if on { controller.beginSetUp() } else { controller.pause() } }
-                ))
-                .accessibilityIdentifier(AccessibilityID.syncSwitch)
-                .settingsRow("Sync with my other Macs")
+                HStack(spacing: 8) {
+                    Toggle("Sync with my other Macs", isOn: Binding(
+                        get: { controller.isEnabled },
+                        set: { on in if on { controller.beginSetUp() } else { controller.pause() } }
+                    ))
+                    .accessibilityIdentifier(AccessibilityID.syncSwitch)
+                    .settingsRow("Sync with my other Macs")
+                    Spacer()
+                    if !controller.isEnabled {
+                        Button("Set Up Sync\u{2026}") { controller.beginSetUp() }
+                            .buttonStyle(.pestoProminent)
+                            .controlSize(.small)
+                            .accessibilityIdentifier(AccessibilityID.syncSetUpButton)
+                    }
+                }
                 warning
                 if controller.isEnabled { statusLine }
             }
-            if controller.isEnabled { details } else { offActions }
+            if controller.isEnabled { details }
         }
         .confirmationDialog("Reset Sync?", isPresented: $confirmsReset, titleVisibility: .visible) {
             Button("Reset Sync", role: .destructive) { Task { await controller.reset() } }
@@ -58,15 +67,6 @@ struct SyncRows: View {
             }
         }
         .accessibilityElement(children: .combine)
-    }
-
-    private var offActions: some View {
-        HStack(spacing: 8) {
-            Button("Set Up Sync\u{2026}") { controller.beginSetUp() }
-                .buttonStyle(.pestoProminent)
-                .accessibilityIdentifier(AccessibilityID.syncSetUpButton)
-            Spacer()
-        }
     }
 
     private var statusLine: some View {

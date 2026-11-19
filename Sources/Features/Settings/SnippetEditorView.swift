@@ -92,7 +92,7 @@ struct SnippetEditorView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 10) {
             row("Name") {
                 TextField("", text: $draft.title, prompt: Text("Thank-you reply"))
                     .labelsHidden()
@@ -130,7 +130,7 @@ struct SnippetEditorView: View {
             )
             .focused($focus, equals: .text)
             .padding(6)
-            .frame(minHeight: 120, maxHeight: 200)
+            .frame(minHeight: 90, maxHeight: 150)
             .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .textBackgroundColor)))
             .overlay { RoundedRectangle(cornerRadius: 8).strokeBorder(Color.secondary.opacity(0.35)) }
             HStack(spacing: 6) {
@@ -246,7 +246,7 @@ struct SnippetEditorView: View {
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .accessibilityIdentifier(AccessibilityID.snippetPreview)
             }
-            .frame(minHeight: 48, maxHeight: 160)
+            .frame(minHeight: 36, maxHeight: 108)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)

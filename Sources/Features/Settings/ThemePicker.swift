@@ -15,10 +15,10 @@ struct ThemePicker: View {
     var groupLabel: LocalizedStringKey = "Theme"
     @Environment(\.pestoAccent) private var accent
 
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 14), count: 4)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 4)
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 14) {
+        LazyVGrid(columns: columns, spacing: 12) {
             ForEach(AppTheme.allCases, id: \.self) { option in
                 card(option)
             }
@@ -38,20 +38,20 @@ struct ThemePicker: View {
             iconRaw?.wrappedValue = applied.icon
         }
         return Button(action: select) {
-            VStack(spacing: 6) {
+            VStack(spacing: 5) {
                 ZStack {
                     ThemeShelfMiniature(theme: option, dark: false)
                     ThemeShelfMiniature(theme: option, dark: true).clipShape(DiagonalHalf())
                 }
-                .aspectRatio(3 / 2, contentMode: .fit)
+                .aspectRatio(16 / 9, contentMode: .fit)
                 .clipShape(shape)
                 .overlay(alignment: .bottomTrailing) {
                     if iconRaw != nil {
                         Image(option.pairedIcon.previewImageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 22, height: 22)
-                            .padding(5)
+                            .frame(width: 20, height: 20)
+                            .padding(4)
                             .accessibilityHidden(true)
                     }
                 }
@@ -60,7 +60,7 @@ struct ThemePicker: View {
                     lineWidth: isSelected ? 2.5 : 1
                 ))
                 Text(option.displayName)
-                    .font(.callout.weight(isSelected ? .semibold : .regular))
+                    .font(.caption.weight(isSelected ? .semibold : .regular))
                     .foregroundStyle(isSelected ? Color.primary : AdaptiveContrast.quiet(contrast))
             }
         }

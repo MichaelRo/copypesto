@@ -12,6 +12,7 @@ struct AppearanceSettings: View {
     @AppStorage(Setting.cardWidth) private var cardWidth: Int
     @AppStorage(Setting.shelfPosition) private var shelfPositionRaw: String
     @AppStorage(Setting.shelfSurface) private var shelfSurfaceRaw: String
+    @State private var showDarkThemePicker = false
     @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
     @Environment(\.reduceTransparencyOverride) private var reduceTransparencyOverride
 
@@ -84,10 +85,8 @@ struct AppearanceSettings: View {
                 LabeledContent {
                     AppIconPicker(selection: $appIconRaw)
                 } label: {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("App icon")
-                        Text("Goes with the theme. Change it on its own any time.").pestoCaption()
-                    }
+                    Text("App icon")
+                        .help("Goes with the theme. Change it on its own any time.")
                 }
                 .settingsRow("App icon")
             }
@@ -108,22 +107,68 @@ struct AppearanceSettings: View {
                 .settingsRow("Card size")
             }
 
-            Section("Shelf surface") {
-                PreviewPicker(
-                    title: "Shelf surface",
-                    options: ShelfSurface.allCases,
-                    selection: Binding(
-                        get: { reduceTransparency ? .solid : ShelfSurface(stored: shelfSurfaceRaw) },
-                        set: { shelfSurfaceRaw = $0.rawValue }
-                    ),
-                    label: \.title,
-                    identifier: { AccessibilityID.settingsChoice("shelfSurface", $0.rawValue) },
-                    preview: {
-                        ShelfSurfacePreview(surface: $0, themeRaw: appThemeRaw, darkThemeRaw: appThemeDarkRaw)
+            Section("Shelf") {
+                HStack(alignment: .top, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 4) {
+                            Text("Shelf surface")
+                            InfoPopoverButton(
+                                "Shelf surface",
+                                message: reduceTransparency
+                                    ? "Reduce Transparency is on in System Settings, so the shelf is solid."
+                                    : """
+                                    Glass shows a little of your desktop. Solid is plain and the same on every desktop.
+                                    """
+                            )
+                        }
+                        PreviewPicker(
+                            title: "Shelf surface",
+                            options: ShelfSurface.allCases,
+                            selection: Binding(
+                                get: { reduceTransparency ? .solid : ShelfSurface(stored: shelfSurfaceRaw) },
+                                set: { shelfSurfaceRaw = $0.rawValue }
+                            ),
+                            label: \.title,
+                            identifier: { AccessibilityID.settingsChoice("shelfSurface", $0.rawValue) },
+                            tileSize: CGSize(width: 78, height: 48),
+                            cornerRadius: 9,
+                            preview: {
+                                ShelfSurfacePreview(surface: $0, themeRaw: appThemeRaw, darkThemeRaw: appThemeDarkRaw)
+                            }
+                        )
+                        .disabled(reduceTransparency)
                     }
-                )
-                .disabled(reduceTransparency)
-                .settingsRow("Shelf surface")
+                    .settingsRow("Shelf surface")
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 4) {
+                            Text("Shelf position")
+                            InfoPopoverButton(
+                                "Shelf position",
+                                message: """
+                                Bottom rests on the Dock. Top hangs from the menu bar, below the notch if your Mac \
+                                has one.
+                                """
+                            )
+                        }
+                        PreviewPicker(
+                            title: "Shelf position",
+                            options: ShelfPosition.allCases,
+                            selection: Binding(
+                                get: { ShelfPosition(stored: shelfPositionRaw) },
+                                set: { shelfPositionRaw = $0.rawValue }
+                            ),
+                            label: \.title,
+                            identifier: { AccessibilityID.settingsChoice("shelfPosition", $0.rawValue) },
+                            tileSize: CGSize(width: 78, height: 48),
+                            cornerRadius: 9,
+                            preview: {
+                                ShelfPositionPreview(position: $0, themeRaw: appThemeRaw, darkThemeRaw: appThemeDarkRaw)
+                            }
+                        )
+                    }
+                    .settingsRow("Shelf position")
+                }
                 if reduceTransparency {
                     HStack {
                         Text("Reduce Transparency is on in System Settings, so the shelf is solid.").pestoCaption()
@@ -131,63 +176,61 @@ struct AppearanceSettings: View {
                         Button("Open System Settings\u{2026}") { SystemSettingsLink.openDisplayAccessibility() }
                             .buttonStyle(.pestoCapsule(.secondary))
                     }
-                } else {
-                    Text("Glass shows a little of your desktop. Solid is plain and the same on every desktop.")
-                        .pestoCaption()
                 }
             }
 
-            Section("Shelf position") {
-                PreviewPicker(
-                    title: "Shelf position",
-                    options: ShelfPosition.allCases,
-                    selection: Binding(
-                        get: { ShelfPosition(stored: shelfPositionRaw) },
-                        set: { shelfPositionRaw = $0.rawValue }
-                    ),
-                    label: \.title,
-                    identifier: { AccessibilityID.settingsChoice("shelfPosition", $0.rawValue) },
-                    preview: {
-                        ShelfPositionPreview(position: $0, themeRaw: appThemeRaw, darkThemeRaw: appThemeDarkRaw)
-                    }
-                )
-                .settingsRow("Shelf position")
-                Text("Bottom rests on the Dock. Top hangs from the menu bar, below the notch if your Mac has one.")
-                    .pestoCaption()
-            }
-
             Section("Light and dark") {
-                PreviewPicker(
-                    title: "Appearance", options: AppearanceMode.allCases, selection: appearanceMode,
-                    label: \.label, identifier: { AccessibilityID.settingsChoice("appearance", $0.rawValue) },
-                    preview: { AppearanceModePreview(mode: $0, themeRaw: appThemeRaw, darkThemeRaw: appThemeDarkRaw) }
-                )
+                HStack(alignment: .center, spacing: 12) {
+                    Text("Appearance")
+                    Spacer()
+                    PreviewPicker(
+                        title: "Appearance", options: AppearanceMode.allCases, selection: appearanceMode,
+                        label: \.label, identifier: { AccessibilityID.settingsChoice("appearance", $0.rawValue) },
+                        tileSize: CGSize(width: 74, height: 46),
+                        cornerRadius: 9,
+                        preview: {
+                            AppearanceModePreview(mode: $0, themeRaw: appThemeRaw, darkThemeRaw: appThemeDarkRaw)
+                        }
+                    )
+                    .fixedSize()
+                }
                 .settingsRow("Appearance: light, dark or system")
+
                 LabeledContent {
                     AccentSwatches(hex: $accentColorHex, identifier: {
                         AccessibilityID.settingsChoice("accent", $0)
                     })
                 } label: {
-                    VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
                         Text("Accent color")
-                        Text(accentName).pestoCaption()
+                        Text(accentName)
+                            .pestoCaption()
                             .accessibilityIdentifier(AccessibilityID.settingsChoice("accent", "name"))
                     }
                 }
                 .settingsRow("Accent color")
-            }
 
-            Section {
-                Toggle("Use another theme in dark mode", isOn: darkThemeEnabled)
-                    .accessibilityIdentifier(AccessibilityID.settingsChoice("themeDark", "toggle"))
-                    .settingsRow("Theme in dark mode")
-                if !appThemeDarkRaw.isEmpty {
-                    ThemePicker(theme: $appThemeDarkRaw, groupLabel: "Theme for dark mode")
+                HStack(spacing: 8) {
+                    Toggle("Use another theme in dark mode", isOn: darkThemeEnabled)
+                        .accessibilityIdentifier(AccessibilityID.settingsChoice("themeDark", "toggle"))
+                    Spacer()
+                    if !appThemeDarkRaw.isEmpty {
+                        Button(AppTheme(stored: appThemeDarkRaw).displayName) {
+                            showDarkThemePicker.toggle()
+                        }
+                        .buttonStyle(.pestoCapsule(.secondary))
+                        .popover(isPresented: $showDarkThemePicker, arrowEdge: .trailing) {
+                            ThemePicker(theme: $appThemeDarkRaw, groupLabel: "Theme for dark mode")
+                                .frame(width: 320)
+                                .padding(14)
+                        }
+                    }
+                    InfoPopoverButton(
+                        "Dark mode theme",
+                        message: "Pesto\u{2019}s icon goes with the theme you picked above."
+                    )
                 }
-            } header: {
-                Text("Dark mode")
-            } footer: {
-                Text("Pesto’s icon goes with the theme you picked above.").pestoCaption()
+                .settingsRow("Theme in dark mode")
             }
         }
         .formStyle(.grouped)

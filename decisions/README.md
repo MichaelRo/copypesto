@@ -54,7 +54,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0043](0043-paste-import-reads-external-data.md) | A Paste import reads the payloads Core Data keeps in external files, in place and read-only, and says why a clip cannot come in |
 | [0044](0044-a-card-has-no-header-one-line-of-facts-at-its-foot.md) | A card has no header: the content starts at the top and one line of facts sits at its foot (number, source icon, age and size; the app's name on focus). Supersedes the header of 0026. |
 | [0045](0045-collection-files.md) | A collection is shared as a `.pesto` file that carries its pictures and whole texts (secrets never written); import from the shelf and by opening the file |
-| [0046](0046-pesto-on-iphone-and-ipad.md) | Pesto runs on iPhone and iPad as one more sync device: Core is one module for both platforms, capture is always the person's act, no keyboard extension |
+| [0046](0046-pesto-on-iphone-and-ipad.md) | Pesto runs on iPhone and iPad as one more sync device: Core is one module for both platforms, capture is always the person's act, no keyboard extension (amended by 0061) |
 | [0047](0047-share-extension-sealed-inbox.md) | The iOS share extension seals what is shared to the app's public key in an app-group inbox and never holds the history key; Shortcuts never hand out a secret |
 | [0048](0048-a-clips-text-can-be-edited.md) | A text, code, link or color clip's content can be edited: it stays the same clip, is sealed and judged again, keeps its curation and place, is one Undo and one sync change, and is refused when another clip holds the text |
 | [0049](0049-capture-method-stays-on-the-device.md) | How a clip was made on an iPhone or iPad (pasted, a note, shared, dropped, a Shortcut) is sealed in its metadata on that device only, never synced or backed up, and leads its foot line |
@@ -69,6 +69,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0058](0058-the-mac-features-pass-3-brings-to-ios.md) | On iOS: Decode JWT behind Show's gate in a memory-only sheet, AI actions as a submenu and a sheet (none for a secret, no chunked reading), Ask Pesto as a chip in the search, smart collections in the collection editor, a GIF kept whole in and out. |
 | [0059](0059-the-mac-widget.md) | The Mac gets the Recent Clips widget only in a release signed with the app's and the extension's provisioning profiles: the same sealed snapshot as iOS in the app group, Locked while the lock is on, hidden while clip contents are covered, and a chosen clip copied, shown or opened by the app through its own write path |
 | [0060](0060-a-widget-can-show-a-collection.md) | A widget can be set to one collection: the sealed snapshot carries the first 24 collections (name, symbol, color) and up to eight clips each that may leave Pesto, a plain one in its hand order and a smart one by its rules over the newest 300; the bound rises to 1.5 MB |
+| [0061](0061-an-optional-keyboard-inserts-from-the-quick-insert-set.md) | An optional iOS keyboard with no typing keys inserts from the quick-insert set AutoFill reads, with Full Access only; without it, only date, time and ID starters; it never holds the history key, reads the clipboard or touches the network. Amends the "no keyboard extension" of 0046 |
 
 ## Template
 

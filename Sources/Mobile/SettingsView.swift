@@ -59,13 +59,14 @@ struct SettingsView: View {
                     .accessibilityIdentifier(MobileAccessibilityID.quickInsertToggle)
                     .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
             } header: {
-                Text("AutoFill")
+                Text("AutoFill and keyboard")
             } footer: {
-                Text(
-                    "Pesto keeps a small set of your pinned and recent text clips ready, sealed, so AutoFill can " +
-                        "insert one in any text field. Clips with secrets are never in it. To use it, turn on Pesto " +
-                        "in Settings > General > AutoFill & Passwords."
-                )
+                Text("""
+                Pesto keeps a small set of your pinned and recent text clips ready, sealed, so AutoFill or Pesto's \
+                keyboard can insert one in any text field. Clips with secrets are never in it. For AutoFill, turn on \
+                Pesto in Settings > General > AutoFill & Passwords. For the keyboard, add Pesto in Settings > \
+                General > Keyboard > Keyboards and allow Full Access.
+                """)
             }
             Section {
                 Picker("Keep clips for", selection: retentionDaysChoice) {
@@ -90,11 +91,10 @@ struct SettingsView: View {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
                     .accessibilityIdentifier(MobileAccessibilityID.historyLockToggle)
-                // Only the lock empties widgets and AutoFill, so this exception exists only while the lock is on;
-                // greyed
-                // out without it, it read as a feature this device could not have.
+                // Only the lock empties widgets, AutoFill and the keyboard, so this exception exists only while the
+                // lock is on; greyed out without it, it read as a feature this device could not have.
                 if lockEnabled {
-                    Toggle("Show clips in widgets and AutoFill while locked", isOn: $showsClipsOutside)
+                    Toggle("Show clips in widgets, AutoFill and the keyboard while locked", isOn: $showsClipsOutside)
                         .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
                         .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
                 }
@@ -111,8 +111,8 @@ struct SettingsView: View {
             } footer: {
                 Text("""
                 With the lock on, Pesto asks when it opens and after it has been away this long. Without it, the \
-                widget and AutoFill show your clips; with it, the widget says Locked and AutoFill holds nothing, \
-                unless you show clips there, which anyone holding this device can then read. Hidden clips stay \
+                widget, AutoFill and the keyboard show your clips; with it, the widget says Locked and AutoFill and \
+                the keyboard hold nothing, unless you show clips there, which anyone holding this device can then read. Hidden clips stay \
                 masked until you show them. Copying one never shows it. Link previews contact the page a link \
                 points to, once, to show its title and picture; nothing else leaves this device.
                 """)

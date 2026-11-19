@@ -7,9 +7,10 @@ import UIKit
 /// copies when Pesto opens" on, added at once (iOS asks for permission). One change count is handled once, and what
 /// Pesto itself wrote (`MobileClipboard.write` records its count) is never offered.
 extension MobileAppState {
-    func clipboardDidBecomeActive(pasteboard: UIPasteboard = AppPasteboard.general) async {
+    func clipboardDidBecomeActive(
+        pasteboard: UIPasteboard = AppPasteboard.general, defaults: UserDefaults = AppDefaults.store
+    ) async {
         guard historyContainer != nil, !isHistoryLockedNow() else { return }
-        let defaults = AppDefaults.store
         let count = pasteboard.changeCount
         let decision = ClipboardOffer.decide(
             changeCount: count,

@@ -115,6 +115,10 @@ step_build() {
 }
 
 step_release_build() {
+  if [[ "${PESTO_SKIP_RELEASE_BUILD:-0}" == "1" ]]; then
+    record "release build (hardened runtime)" "SKIP" "PESTO_SKIP_RELEASE_BUILD (pull request CI; the local gate builds it)"
+    return
+  fi
   if scripts/check-release-build.sh >"$LOGS/release.log" 2>&1; then
     record "release build (hardened runtime)" "PASS" "$(tail -1 "$LOGS/release.log" | cut -c1-90)"
   else
@@ -194,6 +198,10 @@ step_first_open() {
 # --no-ui. A UI test that belongs to one device skips on the other, so the judge reads both runs together.
 step_mobile() {
   local scheme="PestoMobile" label="iOS unit + UI tests (iPhone, iPad)" extra=()
+  if [[ "${PESTO_SKIP_MOBILE:-0}" == "1" ]]; then
+    record "iOS tests" "SKIP" "PESTO_SKIP_MOBILE (nothing the iOS app builds from changed)"
+    return
+  fi
   if [[ $SKIP_UI -eq 1 ]]; then
     scheme="PestoMobileCITests"; label="iOS unit tests (iPhone, iPad)"; extra=(--no-ui)
   fi

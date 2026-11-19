@@ -27,9 +27,10 @@ enum MobileClipboard {
 
     @MainActor
     static func write(
-        _ content: ClipContent, protected: Bool, to pasteboard: UIPasteboard = AppPasteboard.general, now: Date = .now
+        _ content: ClipContent, protected: Bool, to pasteboard: UIPasteboard = AppPasteboard.general, now: Date = .now,
+        defaults: UserDefaults = AppDefaults.store
     ) {
         pasteboard.setItems(items(for: content), options: options(protected: protected, now: now))
-        AppDefaults.store.set(pasteboard.changeCount, for: Setting.lastSeenPasteboardChange)
+        defaults.set(pasteboard.changeCount, for: Setting.lastSeenPasteboardChange)
     }
 }

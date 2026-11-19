@@ -29,20 +29,23 @@ extension MobilePasteboardGlobals {
         func whenAddingIsOff_thenOfferedOnceAndNeverPestosOwn() async throws {
             let library = try await MobileTestLibrary()
             let board = pasteboard()
-            AppDefaults.store.set(false, for: Setting.addsCopiesOnOpen)
+            // A throwaway store: the last-seen change count is one process-wide setting that every other suite's
+            // activation writes, so on a busy runner it changed under this test.
+            let defaults = ThrowawayDefaults.make()
+            defaults.set(false, for: Setting.addsCopiesOnOpen)
             board.string = "copied in Safari"
 
-            await library.state.clipboardDidBecomeActive(pasteboard: board)
+            await library.state.clipboardDidBecomeActive(pasteboard: board, defaults: defaults)
             #expect(library.state.clipboardOfferCount == board.changeCount)
             try await library.refreshed()
             #expect(!library.store.items.contains { $0.displayPreviewText == "copied in Safari" }, "nothing was read")
 
             library.state.dismissClipboardOffer()
-            await library.state.clipboardDidBecomeActive(pasteboard: board)
+            await library.state.clipboardDidBecomeActive(pasteboard: board, defaults: defaults)
             #expect(library.state.clipboardOfferCount == nil, "the same change is not offered twice")
 
-            MobileClipboard.write(.text("copied from Pesto"), protected: false, to: board)
-            await library.state.clipboardDidBecomeActive(pasteboard: board)
+            MobileClipboard.write(.text("copied from Pesto"), protected: false, to: board, defaults: defaults)
+            await library.state.clipboardDidBecomeActive(pasteboard: board, defaults: defaults)
             #expect(library.state.clipboardOfferCount == nil, "Pesto's own copy is not offered")
         }
 
@@ -50,11 +53,11 @@ extension MobilePasteboardGlobals {
         func whenAddingIsOn_thenItIsAdded() async throws {
             let library = try await MobileTestLibrary()
             let board = pasteboard()
-            AppDefaults.store.set(true, for: Setting.addsCopiesOnOpen)
-            defer { AppDefaults.store.set(false, for: Setting.addsCopiesOnOpen) }
+            let defaults = ThrowawayDefaults.make()
+            defaults.set(true, for: Setting.addsCopiesOnOpen)
             board.string = "added on open"
 
-            await library.state.clipboardDidBecomeActive(pasteboard: board)
+            await library.state.clipboardDidBecomeActive(pasteboard: board, defaults: defaults)
             try await library.refreshed()
 
             #expect(library.state.clipboardOfferCount == nil)

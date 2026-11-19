@@ -14,14 +14,15 @@ extension MobilePasteboardGlobals {
             let library = try await MobileTestLibrary()
             let board = AppPasteboard.general
             board.string = "copied in another app"
+            let defaults = ThrowawayDefaults.make()
 
-            try await library.state.addClipboardFromShortcut(pasteboard: board)
+            try await library.state.addClipboardFromShortcut(pasteboard: board, defaults: defaults)
             try await library.refreshed()
 
             #expect(library.store.items.contains {
                 $0.displayPreviewText == "copied in another app" && $0.captureMethod == .shortcut
             })
-            #expect(AppDefaults.store.value(for: Setting.lastSeenPasteboardChange) == board.changeCount)
+            #expect(defaults.value(for: Setting.lastSeenPasteboardChange) == board.changeCount)
             #expect(library.state.clipboardOfferCount == nil)
         }
 

@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      ios: ${{ steps.filter.outputs.ios }}
       tree: ${{ steps.filter.outputs.tree }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -39,6 +40,7 @@ jobs:
           # On a push to main, always run verification.
           if [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "ios=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -56,7 +58,16 @@ jobs:
           # If git diff fails or is empty, fall back to running verify.
           if [ -z "$diff_files" ]; then
             echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "ios=true" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+
+          # The iOS tests (about 15 minutes) run only when something the iPhone and iPad app builds from changed.
+          ios_pattern='^(Sources/(Mobile|Core|Shared|Widget|Resources)|Tests/(PestoMobile|PestoCoreTests/(Sync|Support))|Package\.|Pesto\.yml|Pesto\.resolved|scripts/verify|\.github/workflows/)'
+          if echo "$diff_files" | grep -qE "$ios_pattern"; then
+            echo "ios=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ios=false" >> "$GITHUB_OUTPUT"
           fi
 
           # Check if any changed file matches code, test, project config, or CI scripts.
@@ -105,6 +116,9 @@ jobs:
     timeout-minutes: 60
     env:
       PESTO_DISABLE_TEXT_RECOGNITION: "1"
+      # The Release build (about 4 minutes) is the local gate's; a pull request's run checks the Debug build.
+      PESTO_SKIP_RELEASE_BUILD: "1"
+      PESTO_SKIP_MOBILE: ${{ needs.detect-changes.outputs.ios == 'true' && '0' || '1' }}
     steps:
       - name: Has this exact content already passed?
         id: seen

@@ -12,6 +12,7 @@ struct LibraryGrid: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.layoutDirection) private var layoutDirection
     @Environment(\.pestoSurface) private var ground
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @State private var rowWidth: CGFloat = 0
@@ -90,6 +91,18 @@ struct LibraryGrid: View {
             }
         }
         .scrollTargetLayout()
+        // A hardware keyboard's arrows move the focused card; Return copies it (`ClipCard`). At an edge the key is
+        // left to the system.
+        .onKeyPress(keys: [.upArrow, .downArrow, .leftArrow, .rightArrow]) { press in
+            let direction = GridFocusMove.direction(of: press.key, layout: layoutDirection)
+            guard let current = focusedClip, let index = ids.firstIndex(of: current), let direction else {
+                return .ignored
+            }
+            let next = GridFocusMove.target(from: index, count: ids.count, columns: count, moving: direction)
+            guard let next else { return .ignored }
+            focusedClip = ids[next]
+            return .handled
+        }
         .transaction(value: ids) { transaction in
             transaction.animation = animatesChange ? Motion.animation(.pestoMove) : nil
         }

@@ -6,66 +6,7 @@ import XCTest
 /// preferences and pasteboard): the cards are there, a tap copies, a search filters the same grid, the detail opens,
 /// and on iPad the sidebar, a collection and the inspector work.
 @MainActor
-final class LibrarySmokeUITests: XCTestCase {
-    private let timeout: TimeInterval = 15
-
-    override func setUp() async throws {
-        try await super.setUp()
-        continueAfterFailure = false
-    }
-
-    private func launch(environment: [String: String] = [:], arguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestMode", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + arguments
-        app.launchEnvironment["PESTO_UITEST_SESSION"] = "mobile-\(UUID().uuidString)"
-        app.launchEnvironment["PESTO_UITEST_SEED"] = "basic"
-        for (key, value) in environment {
-            app.launchEnvironment[key] = value
-        }
-        app.launch()
-        return app
-    }
-
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-    }
-
-    private func cards(in app: XCUIApplication) -> XCUIElementQuery {
-        app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
-    }
-
-    private func card(containing text: String, in app: XCUIApplication) -> XCUIElement {
-        cards(in: app).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
-    }
-
-    private func waitForSeededClips(in app: XCUIApplication, atLeast count: Int = 4) {
-        let deadline = Date.now.addingTimeInterval(timeout)
-        while cards(in: app).count < count, Date.now < deadline {
-            _ = cards(in: app).firstMatch.waitForExistence(timeout: 0.5)
-        }
-        XCTAssertGreaterThanOrEqual(cards(in: app).count, count, "the seeded clips are on cards")
-    }
-
-    private func visibleCard(containing text: String, in app: XCUIApplication) -> Bool {
-        let matches = cards(in: app).matching(NSPredicate(format: "label CONTAINS %@", text))
-        return matches.allElementsBoundByIndex.contains { $0.isHittable }
-    }
-
-    private func capture(_ name: String, _ screenshot: XCUIScreenshot = XCUIScreen.main.screenshot()) {
-        let attachment = XCTAttachment(screenshot: screenshot)
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
-    }
-
-    private func openDetail(of target: XCUIElement, in app: XCUIApplication) {
-        target.press(forDuration: 1.0)
-        let edit = app.buttons["Edit Details"]
-        XCTAssertTrue(edit.waitForExistence(timeout: timeout), "the long-press menu offers Edit Details")
-        edit.tap()
-        XCTAssertTrue(element(MobileAccessibilityID.clipDetail, in: app).waitForExistence(timeout: timeout))
-    }
-
+final class LibrarySmokeUITests: MobileUITestCase {
     func test_onIPhone_theLibraryCopiesSearchesAndOpensDetail() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch()

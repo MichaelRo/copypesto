@@ -2,39 +2,12 @@
 import UIKit
 import XCTest
 
-/// The iPhone pass for the History Lock and the content cover (ADR 0054): the lock screen draws no card, and Hide Clip
-/// Contents covers every card until one is shown.
+/// The iPhone and iPad pass for the History Lock and the content cover (ADR 0054): the lock screen draws no card,
+/// and Hide Clip Contents covers every card until one is shown.
 @MainActor
-final class PrivacyUITests: XCTestCase {
-    private let timeout: TimeInterval = 15
-
-    override func setUp() async throws {
-        try await super.setUp()
-        continueAfterFailure = false
-        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
-    }
-
-    private func launch(environment: [String: String] = [:]) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestMode", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        app.launchEnvironment["PESTO_UITEST_SESSION"] = "mobile-\(UUID().uuidString)"
-        app.launchEnvironment["PESTO_UITEST_SEED"] = "basic"
-        for (key, value) in environment {
-            app.launchEnvironment[key] = value
-        }
-        app.launch()
-        return app
-    }
-
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-    }
-
-    private func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
+final class PrivacyUITests: MobileUITestCase {
+    private var idiom: String {
+        UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
     }
 
     func test_whenTheLockIsOn_thenTheLaunchShowsTheLockScreenAndNoCard() {
@@ -46,7 +19,7 @@ final class PrivacyUITests: XCTestCase {
         let unlock = element(MobileAccessibilityID.unlockButton, in: refused)
         XCTAssertTrue(unlock.waitForExistence(timeout: timeout))
         XCTAssertFalse(element(MobileAccessibilityID.clipCard, in: refused).exists, "no card is drawn while locked")
-        capture("Lock screen")
+        capture("\(idiom)-lock-screen")
         unlock.tap()
         XCTAssertTrue(element(MobileAccessibilityID.lockScreen, in: refused).waitForExistence(timeout: 2))
         XCTAssertFalse(element(MobileAccessibilityID.clipCard, in: refused).exists, "a refused prompt keeps it locked")
@@ -65,8 +38,7 @@ final class PrivacyUITests: XCTestCase {
 
     func test_whenClipContentsAreHiddenByHand_thenCardsSayOnlyTheirKind() {
         let app = launch()
-        let packing = app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Packing list")).firstMatch
+        let packing = card(containing: "Packing list", in: app)
         XCTAssertTrue(packing.waitForExistence(timeout: timeout))
         element(MobileAccessibilityID.settingsButton, in: app).tap()
         let hide = app.switches[MobileAccessibilityID.hideContentsToggle].firstMatch
@@ -81,7 +53,7 @@ final class PrivacyUITests: XCTestCase {
 
         XCTAssertTrue(element(MobileAccessibilityID.clipCard, in: app).waitForExistence(timeout: timeout))
         XCTAssertFalse(packing.exists, "a covered card says its kind, never its text")
-        capture("Cards covered by Hide Clip Contents")
+        capture("\(idiom)-cards-covered-hide-contents")
     }
 
     /// Greyed out without the lock, the switch read as a feature the device could not have; it is an exception to the
@@ -104,17 +76,17 @@ final class PrivacyUITests: XCTestCase {
             "PESTO_UITEST_DEFAULT_screenSharingPrivacy": "true",
             "PESTO_UITEST_DEFAULT_uitestForcesSceneCapture": "true"
         ])
-        let cards = app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
+        let allCards = cards(in: app)
         let shows = app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.showUnderCoverButton)
-        XCTAssertTrue(cards.firstMatch.waitForExistence(timeout: timeout))
+        XCTAssertTrue(allCards.firstMatch.waitForExistence(timeout: timeout))
         XCTAssertTrue(shows.firstMatch.waitForExistence(timeout: timeout), "a covered card offers Show")
-        XCTAssertGreaterThan(cards.count, 1)
-        XCTAssertEqual(shows.count, cards.count, "every card on screen is covered and offers Show")
-        let packing = cards.matching(NSPredicate(format: "label CONTAINS %@", "Packing list")).firstMatch
+        XCTAssertGreaterThan(allCards.count, 1)
+        XCTAssertEqual(shows.count, allCards.count, "every card on screen is covered and offers Show")
+        let packing = card(containing: "Packing list", in: app)
         XCTAssertFalse(packing.exists, "a covered card says its kind, never its text")
-        capture("Cards covered while the scene is captured")
+        capture("\(idiom)-cards-covered-scene-capture")
 
         shows.firstMatch.tap()
-        XCTAssertEqual(shows.count, cards.count - 1, "Show uncovers that one card until the capture ends")
+        XCTAssertEqual(shows.count, allCards.count - 1, "Show uncovers that one card until the capture ends")
     }
 }

@@ -186,7 +186,9 @@ struct GridView: View {
         DetailPopoverPolicy.isSuppressed(
             isLocked: appState.isHistoryLocked,
             isShelfVisible: isPinnedHost ? appState.isPinnedWindowVisible : appState.isOverlayVisible,
-            voiceOverEnabled: NSWorkspace.shared.isVoiceOverEnabled
+            voiceOverEnabled: DetailPopoverPolicy.effectiveVoiceOver(
+                systemEnabled: NSWorkspace.shared.isVoiceOverEnabled
+            )
         )
     }
 

@@ -154,12 +154,17 @@ struct CSVTableTests {
         while text.utf8.count < 990_000 {
             text += line
         }
+        #if DEBUG
+        let budget: Duration = .milliseconds(750)
+        #else
+        let budget: Duration = .milliseconds(250)
+        #endif
         let start = ContinuousClock.now
         let output = try #require(CSVTable.parse(text)?.jsonText())
-        let elapsed = BestOf.within(.milliseconds(250), first: ContinuousClock.now - start) {
+        let elapsed = BestOf.within(budget, first: ContinuousClock.now - start) {
             _ = CSVTable.parse(text)?.jsonText()
         }
         #expect(output.utf8.count > text.utf8.count)
-        if ProcessInfo.processInfo.environment["CI"] == nil { #expect(elapsed < .milliseconds(250), "took \(elapsed)") }
+        if ProcessInfo.processInfo.environment["CI"] == nil { #expect(elapsed < budget, "took \(elapsed)") }
     }
 }

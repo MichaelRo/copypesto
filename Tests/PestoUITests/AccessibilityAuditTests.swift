@@ -59,7 +59,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
     /// and its emoji button report there, outside every Pesto window and panel). Everything inside a Pesto window or
     /// panel is judged, contrast included: the pinned window and the quick menu are panels that `app.windows` does not
     /// list, so a check against the window list alone would drop every contrast finding in them.
-    private func runAudit(_ description: String, knownFindings: [KnownAuditFinding] = []) throws {
+    private func assertAuditPasses(_ description: String, knownFindings: [KnownAuditFinding] = []) throws {
         var findings: [String] = []
         var remaining = knownFindings.map(\.allowed)
         var consumedAllowance = false
@@ -134,7 +134,14 @@ final class AccessibilityAuditTests: PestoUITestCase {
 
     /// The audit judges real pixels, so each scenario runs once per appearance, with the app told which to use: a run
     /// in the evening, with the Mac in dark mode, failed what had passed by day.
-    private func auditInBothAppearances(
+    private func auditInBothAppearances(_ name: String, knownFindings: [KnownAuditFinding] = []) throws {
+        try assertAuditPasses("\(name), light", knownFindings: knownFindings)
+        send(.setAppearanceDark)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        try assertAuditPasses("\(name), dark", knownFindings: knownFindings)
+    }
+
+    private func launchAndAuditInBothAppearances(
         _ name: String,
         defaults: [String: String] = ["hasOnboarded": "true"],
         knownFindings: [KnownAuditFinding] = [],
@@ -142,28 +149,49 @@ final class AccessibilityAuditTests: PestoUITestCase {
     ) throws {
         launch(defaults: defaults.merging(["appearanceMode": "light"]) { _, pinned in pinned })
         try prepare()
-        try runAudit("\(name), light", knownFindings: knownFindings)
-        send(.setAppearanceDark)
+        try auditInBothAppearances(name, knownFindings: knownFindings)
+    }
+
+    private func auditSubState(
+        _ name: String,
+        knownFindings: [KnownAuditFinding] = [],
+        prepare: () throws -> Void,
+        reset: () throws -> Void
+    ) throws {
+        try prepare()
+        try auditInBothAppearances(name, knownFindings: knownFindings)
+        try reset()
+        send(.setAppearanceLight)
         RunLoop.current.run(until: Date().addingTimeInterval(0.25))
-        try runAudit("\(name), dark", knownFindings: knownFindings)
     }
 
-    func test_overlay_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("shelf") { showOverlay() }
-    }
+    func test_shelfSurfaces_passTheAccessibilityAudit() throws {
+        launch(defaults: ["hasOnboarded": "true", "appearanceMode": "light"])
+        showOverlay()
 
-    func test_selectionBar_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("selection bar", knownFindings: [
+        try auditHoverCardSubState()
+
+        try auditSubState("shelf", prepare: {
+            assertOverlayNamesEachRegionOnce()
+        }, reset: {})
+
+        try auditSubState("selection bar", knownFindings: [
             KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 1)
-        ]) {
-            showOverlay()
+        ], prepare: {
             overlay.typeKey("a", modifierFlags: .command)
             XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitUntilExists(timeout: 5))
-        }
+        }, reset: {
+            overlay.typeKey(.escape, modifierFlags: [])
+            waitForNonExistence(element(AccessibilityID.pasteOneByOneButton), timeout: 5)
+        })
+
+        try auditSearchAndDeleteSubStates()
+        send(.hideOverlay)
+        waitForNonExistence(overlay, timeout: 5)
     }
 
-    func test_searchMode_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("search mode", knownFindings: [
+    private func auditSearchAndDeleteSubStates() throws {
+        try auditSubState("search mode", knownFindings: [
             // Same composited-overlay quirk as the locked-history scenario, tripped here by the
             // search field's own focus-driven layout change; the audit gives no element for it.
             KnownAuditFinding(.parentChild, "Parent/Child mismatch", on: nil),
@@ -174,28 +202,95 @@ final class AccessibilityAuditTests: PestoUITestCase {
                 .sufficientElementDescription, "Element has no description", on: .window,
                 identifier: "SafariPlatformSupportAutoCompleteWindow"
             )
-        ]) {
-            showOverlay()
+        ], prepare: {
             element(AccessibilityID.searchButton).click()
             XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5))
-        }
-    }
+        }, reset: {
+            overlay.typeKey(.escape, modifierFlags: [])
+            waitForNonExistence(element(AccessibilityID.searchField), timeout: 5)
+        })
 
-    /// A-12: the surfaces the audit never saw, whose contrast and target-size findings (A-08 to A-10) were therefore
-    /// invisible to the gate.
-    func test_deleteQuestion_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("delete question", knownFindings: [
+        // A-12: the surfaces the audit never saw, whose contrast and target-size findings (A-08 to A-10) were
+        // therefore invisible to the gate.
+        try auditSubState("delete question", knownFindings: [
             // The same composited-overlay quirk as the locked-history scenario: two nodes with no element or frame.
             KnownAuditFinding(.parentChild, "Parent/Child mismatch", on: nil, allowed: 2)
-        ]) {
-            showOverlay()
+        ], prepare: {
             overlay.typeKey(.delete, modifierFlags: [])
             XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitUntilExists(timeout: 5))
-        }
+        }, reset: {
+            overlay.typeKey(.escape, modifierFlags: [])
+            waitForNonExistence(element(AccessibilityID.deleteConfirmButton), timeout: 5)
+        })
+    }
+
+    /// The hover card is a borderless child window that never becomes key, so VoiceOver does not enter it: it gets
+    /// the same facts from the focused card (`voiceOverContent`). What the audit judges here is the panel's pixels
+    /// and the elements XCUITest can see in it (contrast, labels, target size); how VoiceOver reads the facts from the
+    /// card is a hand check in `docs/testing.md`.
+    private func auditHoverCardSubState() throws {
+        try auditSubState("hover card", knownFindings: [
+            Self.hostedPanelGroup,
+            // The preview text (primary colour) and the facts line (72% of it) read clearly in the run's screenshot,
+            // dark on a light card; the audit reports them while the same text passes inside the shelf. Measured
+            // against what lies behind the card's translucent ground, so a measurement artefact; ceiling two, and one
+            // more on the facts line, which inherits the card's identifier.
+            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 2),
+            KnownAuditFinding(
+                .contrast, "Contrast failed", on: .staticText, identifier: AccessibilityID.cardDetailPopover
+            )
+        ], prepare: {
+            overlay.typeKey(.rightArrow, modifierFlags: [])
+            if !element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 2) {
+                cards.element(boundBy: 1).hover()
+                cards.element(boundBy: 0).hover()
+            }
+            XCTAssertTrue(
+                element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 5), "the hover card never opened"
+            )
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        }, reset: {
+            if element(AccessibilityID.cardDetailPopover).exists {
+                overlay.typeKey(.escape, modifierFlags: [])
+                waitForNonExistence(element(AccessibilityID.cardDetailPopover), timeout: 5)
+            }
+            parkPointer()
+        })
+    }
+
+    func test_panels_passTheAccessibilityAudit() throws {
+        launch(defaults: ["hasOnboarded": "true", "appearanceMode": "light"])
+
+        try auditSubState("pinned window", prepare: {
+            send(.togglePinnedWindow)
+            XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitUntilExists(timeout: 10))
+        }, reset: {
+            send(.togglePinnedWindow)
+            waitForNonExistence(element(AccessibilityID.pinnedPanel), timeout: 5)
+        })
+
+        try auditSubState("quick menu", knownFindings: [
+            // The horizontal ScrollView's content is wider than the panel (5 cards need more room
+            // than the visible window), and SwiftUI reports an unlabelled "Other" node for that full
+            // scrollable content size — a ScrollView implementation detail, not a view QuickMenuView
+            // itself creates or can attach a modifier to.
+            KnownAuditFinding(.sufficientElementDescription, "Element has no description", on: .other)
+        ], prepare: {
+            send(.showQuickMenu)
+            XCTAssertTrue(element(AccessibilityID.quickMenuPanel).waitUntilExists(timeout: 10))
+        }, reset: {
+            cards.firstMatch.click()
+            waitForNonExistence(element(AccessibilityID.quickMenuPanel), timeout: 5)
+        })
+
+        send(.showToast)
+        XCTAssertTrue(element(AccessibilityID.toast).waitUntilExists(timeout: 5), "the toast never appeared")
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        try auditInBothAppearances("toast", knownFindings: [Self.hostedPanelGroup])
     }
 
     func test_undoBanner_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("undo banner", knownFindings: [
+        try launchAndAuditInBothAppearances("undo banner", knownFindings: [
             KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 1)
         ]) {
             showOverlay()
@@ -208,7 +303,7 @@ final class AccessibilityAuditTests: PestoUITestCase {
 
     /// A-12: a card the shelf covers (hidden as sensitive) and the AI answer panel, which the audit never saw.
     func test_coveredCard_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("covered card", knownFindings: [
+        try launchAndAuditInBothAppearances("covered card", knownFindings: [
             KnownAuditFinding(.parentChild, "Parent/Child mismatch", on: nil, allowed: 2)
         ]) {
             showOverlay()
@@ -242,170 +337,70 @@ final class AccessibilityAuditTests: PestoUITestCase {
             XCTAssertTrue(
                 element(AccessibilityID.aiResultPasteButton).waitUntilExists(timeout: 15), "no AI answer panel"
             )
-            try runAudit("AI answer panel, \(mode)", knownFindings: [
+            try assertAuditPasses("AI answer panel, \(mode)", knownFindings: [
                 KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 2)
             ])
         }
     }
 
-    func test_toast_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("toast", knownFindings: [Self.hostedPanelGroup]) {
-            send(.showToast)
-            XCTAssertTrue(element(AccessibilityID.toast).waitUntilExists(timeout: 5), "the toast never appeared")
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-        }
-    }
-
-    /// The hover card is a borderless child window that never becomes key, so VoiceOver does not enter it: it gets
-    /// the same facts from the focused card (`voiceOverContent`). What the audit judges here is the panel's pixels
-    /// and the elements XCUITest can see in it (contrast, labels, target size); how VoiceOver reads the facts from the
-    /// card is a hand check in `docs/testing.md`.
-    func test_hoverCard_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("hover card", knownFindings: [
-            Self.hostedPanelGroup,
-            // The preview text (primary colour) and the facts line (72% of it) read clearly in the run's screenshot,
-            // dark on a light card; the audit reports them while the same text passes inside the shelf. Measured
-            // against what lies behind the card's translucent ground, so a measurement artefact; ceiling two, and one
-            // more on the facts line, which inherits the card's identifier.
-            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 2),
-            KnownAuditFinding(
-                .contrast, "Contrast failed", on: .staticText, identifier: AccessibilityID.cardDetailPopover
-            )
-        ]) {
-            showOverlay()
-            overlay.typeKey(.rightArrow, modifierFlags: [])
-            XCTAssertTrue(
-                element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 5), "the hover card never opened"
-            )
-            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-        }
-    }
-
     func test_everyTheme_passesTheAccessibilityAudit() throws {
         for theme in ["parmesan", "pineNut", "mortar"] {
-            try auditInBothAppearances(
+            try launchAndAuditInBothAppearances(
                 "shelf in the \(theme) theme", defaults: ["hasOnboarded": "true", "appTheme": theme]
             ) { showOverlay() }
         }
     }
 
-    func test_settings_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("Settings", knownFindings: Self.navigationSplitViewFindings) {
-            send(.openSettings)
-            XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
-            RunLoop.current.run(until: Date().addingTimeInterval(1))
-            capture("settings-audited")
+    func test_settingsAllPanes_passTheAccessibilityAudit() throws {
+        launch(defaults: ["hasOnboarded": "true", "appearanceMode": "light"])
+        send(.openSettings)
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
+
+        for mode in ["light", "dark"] {
+            if mode == "dark" {
+                send(.setAppearanceDark)
+                RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+            }
+            for (pane, extra) in Self.settingsPanes {
+                let row = element(AccessibilityID.settingsSidebar(pane))
+                XCTAssertTrue(row.waitUntilExists(timeout: 5), "no sidebar row for \(pane)")
+                row.click()
+                RunLoop.current.run(until: Date().addingTimeInterval(1))
+                if mode == "light", pane == "General" { capture("settings-audited") }
+                try assertAuditPasses(
+                    "Settings, \(pane), \(mode)", knownFindings: Self.navigationSplitViewFindings + extra
+                )
+            }
         }
     }
 
-    /// A-12: the other Settings panes, which the Settings scenario (it opens on General) never measured.
-    private func auditSettingsPane(_ pane: String, plus extra: [KnownAuditFinding] = []) throws {
-        try auditInBothAppearances("Settings, \(pane)", knownFindings: Self.navigationSplitViewFindings + extra) {
-            send(.openSettings)
-            XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
-            let row = element(AccessibilityID.settingsSidebar(pane))
-            XCTAssertTrue(row.waitUntilExists(timeout: 5), "no sidebar row for \(pane)")
-            row.click()
-            RunLoop.current.run(until: Date().addingTimeInterval(1))
-        }
-    }
+    func test_onboardingSteps_passTheAccessibilityAudit() throws {
+        launch(defaults: ["appearanceMode": "light"])
+        send(.showOnboarding)
+        XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
+        try auditInBothAppearances("onboarding")
 
-    func test_settingsAppearance_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Appearance")
-    }
-
-    /// One or two of the fact rows ("Encryption", "Update checks", …) measure under 4.5:1 in a run, and which ones
-    /// moves
-    /// from run to run: at 70% of the primary colour (about 7:1 by calculation) and at 95% alike, while the others in
-    /// the same style pass. A measurement artefact, so the ceiling is two and a third such finding still fails.
-    func test_settingsPrivacy_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Privacy", plus: [
-            KnownAuditFinding(
-                .contrast, "Contrast failed", on: .staticText, identifierPrefix: "settings-privacy-fact-", allowed: 2
-            ),
-            Self.popUpButtons(1),
-            // The system disclosure triangle reports no press action, as the one under "Ask for Touch ID again after"
-            // ("How the timer works", same control) does not; neither has been checked with VoiceOver.
-            KnownAuditFinding(
-                .action, "Action is missing", on: .disclosureTriangle, label: "What stays readable"
-            )
-        ])
-    }
-
-    /// The 2-column shelf-keys cells combine `Text` and `Keycap` into one `.isStaticText` element
-    /// (`accessibilityElement(children: .ignore)`),
-    /// so the audit's contrast sampler reads the keycap chrome inside the staticText bounds as a false positive.
-    func test_settingsShortcuts_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Shortcuts", plus: [
-            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 4)
-        ])
-    }
-
-    /// Two or three starter captions ("Every swatch you have copied.", …) measure under 4.5:1 in a run, a different set
-    /// each time, while the captions in the same style around them pass and the text reads at about 7:1 by
-    /// calculation: a measurement artefact. They have no identifier; with the shared allowance the ceiling is three.
-    func test_settingsCollections_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Collections", plus: [
-            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 2)
-        ])
-    }
-
-    /// By calculation the caption is about 8:1 (70% of black on the pane's light grey). Up to three of the placeholder
-    /// meanings ("today's date", "the current time", …) measure under 4.5:1 in a run,
-    /// at 70% of the primary colour and at 85% alike (a rerun at 85% moved the finding to other rows), while the
-    /// rest of the same style pass: the artefact the Collections pane shows. The ceiling is three, so a fourth, or a
-    /// finding on any other element, still fails.
-    func test_settingsSnippets_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Snippets", plus: [
-            KnownAuditFinding(
-                .contrast, "Contrast failed", on: .staticText,
-                identifierPrefix: "settings-snippet-placeholder-", allowed: 3
-            )
-        ])
-    }
-
-    func test_settingsData_passesTheAccessibilityAudit() throws {
-        try auditSettingsPane("Data", plus: [
-            Self.popUpButtons(2),
-            // The summary row is read as one line; the audit measures it as text against the grouped form behind it and
-            // the footer under the switches against the same ground, where both read clearly on the screen.
-            KnownAuditFinding(
-                .contrast, "Contrast failed", on: .staticText, identifier: AccessibilityID.backupStatus
-            ),
-            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText),
-            KnownAuditFinding(.contrast, "Contrast nearly passed", on: .staticText)
-        ])
-    }
-
-    func test_onboarding_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("onboarding", defaults: [:]) {
-            send(.showOnboarding)
-            XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
-        }
-    }
-
-    func test_onboardingLastStep_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("onboarding last step", defaults: [:]) {
-            send(.showOnboarding)
-            XCTAssertTrue(onboardingWindow.waitUntilExists(timeout: 10))
-            let next = element(AccessibilityID.onboardingContinueButton)
-            XCTAssertTrue(next.waitUntilExists(timeout: 5))
-            next.click()
-            let pasting = element(AccessibilityID.onboardingContinueButton)
-            XCTAssertTrue(element(AccessibilityID.onboardingAccessibilityStep).waitUntilExists(timeout: 5))
-            XCTAssertTrue(pasting.waitUntilExists(timeout: 5))
-            pasting.click()
-            XCTAssertTrue(element(AccessibilityID.onboardingGetStartedButton).waitUntilExists(timeout: 5))
-            waitForNonExistence(
-                element(AccessibilityID.onboardingShelfStep),
-                timeout: 5,
-                "the first step is still showing"
-            )
-        }
+        let next = element(AccessibilityID.onboardingContinueButton)
+        XCTAssertTrue(next.waitUntilExists(timeout: 5))
+        next.click()
+        XCTAssertTrue(element(AccessibilityID.onboardingAccessibilityStep).waitUntilExists(timeout: 5))
+        let pasting = element(AccessibilityID.onboardingContinueButton)
+        XCTAssertTrue(pasting.waitUntilExists(timeout: 5))
+        pasting.click()
+        XCTAssertTrue(element(AccessibilityID.onboardingGetStartedButton).waitUntilExists(timeout: 5))
+        waitForNonExistence(
+            element(AccessibilityID.onboardingShelfStep),
+            timeout: 5,
+            "the first step is still showing"
+        )
+        try assertAuditPasses("onboarding last step, dark")
+        send(.setAppearanceLight)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+        try assertAuditPasses("onboarding last step, light")
     }
 
     func test_lockedHistory_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("locked history", defaults: [
+        try launchAndAuditInBothAppearances("locked history", defaults: [
             "hasOnboarded": "true", "biometricLockEnabled": "true",
             "uitestAuthenticationGranted": "false"
         ], knownFindings: [
@@ -416,26 +411,6 @@ final class AccessibilityAuditTests: PestoUITestCase {
         ]) {
             showOverlay(expectingCards: false)
             XCTAssertTrue(element(AccessibilityID.lockOverlay).waitUntilExists(timeout: 5))
-        }
-    }
-
-    func test_quickMenu_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("quick menu", knownFindings: [
-            // The horizontal ScrollView's content is wider than the panel (5 cards need more room
-            // than the visible window), and SwiftUI reports an unlabelled "Other" node for that full
-            // scrollable content size — a ScrollView implementation detail, not a view QuickMenuView
-            // itself creates or can attach a modifier to.
-            KnownAuditFinding(.sufficientElementDescription, "Element has no description", on: .other)
-        ]) {
-            send(.showQuickMenu)
-            XCTAssertTrue(element(AccessibilityID.quickMenuPanel).waitUntilExists(timeout: 10))
-        }
-    }
-
-    func test_pinnedWindow_passesTheAccessibilityAudit() throws {
-        try auditInBothAppearances("pinned window") {
-            send(.togglePinnedWindow)
-            XCTAssertTrue(element(AccessibilityID.pinnedPanel).waitUntilExists(timeout: 10))
         }
     }
 
@@ -470,16 +445,42 @@ final class AccessibilityAuditTests: PestoUITestCase {
         KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 1)
     ]
 
+    /// One or two Privacy fact rows, up to three Collections/Snippets captions and Shortcuts keycap cells measure under
+    /// 4.5:1 as a measurement artefact while surrounding rows in the same style pass; ceilings keep new regressions
+    /// failing.
+    private static let settingsPanes: [(name: String, extra: [KnownAuditFinding])] = [
+        ("General", []),
+        ("Appearance", []),
+        ("Privacy", [
+            KnownAuditFinding(
+                .contrast, "Contrast failed", on: .staticText, identifierPrefix: "settings-privacy-fact-", allowed: 2
+            ),
+            popUpButtons(1),
+            KnownAuditFinding(.action, "Action is missing", on: .disclosureTriangle, label: "What stays readable")
+        ]),
+        ("Shortcuts", [KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 4)]),
+        ("Collections", [KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 2)]),
+        ("Snippets", [
+            KnownAuditFinding(
+                .contrast, "Contrast failed", on: .staticText,
+                identifierPrefix: "settings-snippet-placeholder-", allowed: 3
+            )
+        ]),
+        ("Data", [
+            popUpButtons(2),
+            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, identifier: AccessibilityID.backupStatus),
+            KnownAuditFinding(.contrast, "Contrast failed", on: .staticText),
+            KnownAuditFinding(.contrast, "Contrast nearly passed", on: .staticText)
+        ])
+    ]
+
     /// VoiceOver reads "Clipboard history" and "Clips"/"Clipboard cards" as several
     /// nested stops for one region. Only the "Clips" side was collapsible — the two "Clipboard
     /// history" labels (the hosting view and the SwiftUI root beneath it) are each their own AX
-    /// node; removing either one fails `test_overlay_passesTheAccessibilityAudit` with "Element
+    /// node; removing either one fails `test_shelfSurfaces_passTheAccessibilityAudit` with "Element
     /// has no description", so both stay named. This locks the count so a third one isn't added
     /// by accident, without pretending the duplication is fixed.
-    func test_overlay_namesEachRegionOnce() {
-        launch()
-        showOverlay()
-
+    private func assertOverlayNamesEachRegionOnce() {
         let historyLabelled = app.descendants(matching: .any).matching(
             NSPredicate(format: "label == %@", "Clipboard history")
         )

@@ -224,11 +224,23 @@ step_mobile() {
     return
   fi
   [[ -n "${CI:-}" ]] && echo '{}' >"$LOGS/mobile-pad.json"
+  local action="test" target_flags=()
+  if [[ $SKIP_UI -eq 0 && -z "${CI:-}" ]]; then
+    extra+=(--pad-ui-only)
+  fi
   for device in "${devices[@]}"; do
     name="${device##*:}"
+    if [[ "$name" == "pad" && $SKIP_UI -eq 0 ]]; then
+      target_flags=(-only-testing:PestoMobileUITests)
+      [[ $failed -eq 0 ]] && action="test-without-building"
+    else
+      action="test"
+      target_flags=()
+    fi
     xcodebuild -project Pesto.xcodeproj -scheme "$scheme" -configuration Debug \
       -derivedDataPath .build/xcode-ios-app -destination "platform=iOS Simulator,name=${device%:*}" \
-      -resultBundlePath "$LOGS/mobile-$name.xcresult" test >"$LOGS/mobile-$name.log" 2>&1 || failed=1
+      ${target_flags[@]+"${target_flags[@]}"} \
+      -resultBundlePath "$LOGS/mobile-$name.xcresult" "$action" >"$LOGS/mobile-$name.log" 2>&1 || failed=1
     xcrun xcresulttool get test-results tests --path "$LOGS/mobile-$name.xcresult" --compact \
       >"$LOGS/mobile-$name.json" 2>/dev/null || echo '{}' >"$LOGS/mobile-$name.json"
   done

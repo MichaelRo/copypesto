@@ -211,10 +211,14 @@ public extension ClipboardItem {
     /// after ADR 0002 lands this round-trips through `BlobEncryption`; for non-text
     /// items and pre-migration text items it returns the stored `previewText` directly.
     var displayPreviewText: String {
+        displayPreviewText(using: .shared)
+    }
+
+    func displayPreviewText(using cache: PreviewTextCache) -> String {
         guard let ciphertext = previewCiphertext, let nonce = previewNonce else {
             return previewText
         }
-        let text = PreviewTextCache.shared.text(id: id, nonce: nonce) {
+        let text = cache.text(id: id, nonce: nonce) {
             let envelope = BlobEncryption.EncryptedEnvelope(ciphertext: ciphertext, nonce: nonce)
             return (try? BlobEncryption().decrypt(envelope, associatedData: previewAssociatedData))
                 .flatMap { String(data: $0, encoding: .utf8) }

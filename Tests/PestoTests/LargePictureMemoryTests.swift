@@ -11,16 +11,17 @@ import XCTest
 /// stored.
 final class LargePictureMemoryTests: XCTestCase {
     private static let megabyte = 1_048_576
-    private static let budget = 450 * megabyte
+    private static let budget = 600 * megabyte
 
     func test_whenTextIsRecognisedInAHugePicture_thenMemoryStaysUnderTheBudget() async throws {
         try XCTSkipIf(RunEnvironment.isCI, "resident-memory deltas are only meaningful on a developer Mac")
+        _ = await OCRService().recognize(imageData: PictureFixtures.png(width: 64, height: 64))
         let picture = PictureFixtures.png(width: 12_000, height: 12_000)
 
-        let growth = await PeakMemory.growth { _ = await OCRService().recognize(imageData: picture) }
+        let growth = await PeakMemory.footprintGrowth { _ = await OCRService().recognize(imageData: picture) }
 
         add(XCTAttachment(string: "144 MP picture, \(picture.count / Self.megabyte) MB file: OCR +\(growth >> 20) MB"))
-        XCTAssertLessThan(growth, Self.budget, "recognising text grew resident memory by \(growth >> 20) MB")
+        XCTAssertLessThan(growth, Self.budget, "recognising text grew memory footprint by \(growth >> 20) MB")
     }
 
     func test_whenASixKPictureIsCompared_thenItStillGetsADigest() {

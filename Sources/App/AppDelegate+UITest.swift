@@ -132,6 +132,9 @@ extension AppDelegate {
         case .setAppearanceDark:
             AppDefaults.store.set("dark", for: Setting.appearanceMode)
             applyAppearance()
+        case .setAppearanceLight:
+            AppDefaults.store.set("light", for: Setting.appearanceMode)
+            applyAppearance()
         case .stackUserPaste: stackUserPasted()
         case .setAccessibilityTrusted:
             AccessibilityAccess.setUITestOverride(.trusted)

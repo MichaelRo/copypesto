@@ -1,0 +1,186 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Add Clipboard to Pesto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add Clipboard to Pesto"
+          }
+        }
+      }
+    },
+    "Add clipboard to ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add clipboard to ${applicationName}"
+          }
+        }
+      }
+    },
+    "Add my clipboard to ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add my clipboard to ${applicationName}"
+          }
+        }
+      }
+    },
+    "Add to ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to ${applicationName}"
+          }
+        }
+      }
+    },
+    "Add to Pesto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to Pesto"
+          }
+        }
+      }
+    },
+    "Copy from Pesto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy from Pesto"
+          }
+        }
+      }
+    },
+    "Copy Text to Pesto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Text to Pesto"
+          }
+        }
+      }
+    },
+    "Copy text to ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy text to ${applicationName}"
+          }
+        }
+      }
+    },
+    "Hide Clip Contents" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Clip Contents"
+          }
+        }
+      }
+    },
+    "Hide clip contents in ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide clip contents in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Open ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open ${applicationName}"
+          }
+        }
+      }
+    },
+    "Open Pesto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Pesto"
+          }
+        }
+      }
+    },
+    "Paste from ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paste from ${applicationName}"
+          }
+        }
+      }
+    },
+    "Save to ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to ${applicationName}"
+          }
+        }
+      }
+    },
+    "Search ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search ${applicationName}"
+          }
+        }
+      }
+    },
+    "Search my clipboard in ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search my clipboard in ${applicationName}"
+          }
+        }
+      }
+    },
+    "Search Pesto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search Pesto"
+          }
+        }
+      }
+    },
+    "Show my clipboard in ${applicationName}" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show my clipboard in ${applicationName}"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

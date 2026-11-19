@@ -11,11 +11,11 @@ struct AddClipboardToPestoIntent: AppIntent {
     )
     static let openAppWhenRun = true
 
-    @Dependency private var state: MobileAppState
+    @Dependency private var handler: any ClipboardShortcutHandling
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        try await state.addClipboardFromShortcut()
+        try await handler.addClipboardFromShortcut()
         return .result(dialog: "Added to Pesto.")
     }
 }

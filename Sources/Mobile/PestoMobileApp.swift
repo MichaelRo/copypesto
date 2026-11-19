@@ -12,6 +12,7 @@ struct PestoMobileApp: App {
         let state = MobileAppState()
         _appState = State(initialValue: state)
         AppDependencyManager.shared.add(dependency: state)
+        AppDependencyManager.shared.add(dependency: state as any ClipboardShortcutHandling)
         state.registerBackgroundRefresh()
     }
 

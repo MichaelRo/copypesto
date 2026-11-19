@@ -68,6 +68,9 @@ struct WidgetRenderingTests {
             WidgetClip(
                 id: UUID(), kind: .image, text: "Panorama", source: "Photos", date: now - 95_000,
                 thumbnail: picture(width: 240, height: 80)
+            ),
+            WidgetClip(
+                id: UUID(), kind: .file, text: "recipe.pdf", source: "Finder", date: now - 100_000
             )
         ]
         return WidgetSnapshot(createdAt: now, theme: .brand, clips: clips, pinned: [clips[4]])
@@ -117,7 +120,9 @@ struct WidgetRenderingTests {
                 }
             }
         }
-        for (index, name) in [(1, "link"), (2, "color"), (3, "picture"), (4, "code"), (6, "panorama")] {
+        for (index, name) in [
+            (0, "text"), (1, "link"), (2, "color"), (3, "picture"), (4, "code"), (6, "panorama"), (7, "file")
+        ] {
             let one = WidgetSnapshot(createdAt: now, theme: .brand, clips: [full.clips[index]])
             for dark in [false, true] {
                 try render(

@@ -94,7 +94,7 @@ To publish with the Mac's privacy page at release. Check each line against the b
 >
 > **The keyboard.** Optional, and off until you add it in iOS Settings. It has no letter keys, so it never sees what
 > you type on another keyboard; it sees only taps on its own keys. It needs Full Access only to open the sealed file of
-> clips; without it, it offers the date, the time and a new ID. It has no network access and never reads your
+> clips; without it, it offers the date, the time and a new ID. It makes no network requests and never reads your
 > clipboard.
 >
 > **Sharing out.** When you share a picture or a GIF, iOS needs a file: Pesto writes one for the share and deletes it

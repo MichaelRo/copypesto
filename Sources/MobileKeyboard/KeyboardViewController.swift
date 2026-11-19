@@ -6,7 +6,7 @@ import UIKit
 
 /// Pesto's optional keyboard (ADR 0061). It inserts the starters, and with Full Access the clips of the sealed
 /// quick-insert set that AutoFill reads too. It never opens the store, the history key or the inbox, never reads the
-/// general pasteboard and has no network.
+/// general pasteboard and makes no network request.
 final class KeyboardViewController: UIInputViewController {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "Keyboard")
     private static let compactHeight: CGFloat = 280

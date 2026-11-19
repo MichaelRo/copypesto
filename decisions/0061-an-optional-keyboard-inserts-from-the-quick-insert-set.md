@@ -28,7 +28,9 @@ not hold for a keyboard that has no letters:
   `$(AppIdentifierPrefix)net.copypesto.pesto.quick-insert`, nothing else (`EntitlementsTests`).
 - **What it reaches.** With Full Access, the same sealed quick-insert set AutoFill reads (`QuickInsertFile`), with the
   same key. Never the store, the history key, the inbox key or a sync key. It never reads `UIPasteboard.general`, so it
-  never causes a paste prompt, and it has no network code.
+  never causes a paste prompt, and it makes no network request: its own sources name no network API
+  (`EntitlementsTests`). It loads the shared `PestoCore` framework, which holds the app's link-preview code, so the
+  claim is "makes no request", not "has no network code"; iOS has no network entitlement to withhold.
 - **Keys.** The clips of the set as cards, in the sections Pinned, Snippets and Recent; filters All, Pinned, Snippets
   and Recent only when two or more sections have clips (`KeyboardMenu`). A tap inserts `entry.insertionText()` (a
   snippet expanded as in AutoFill) and shows a checkmark for 0.6 s. Above them, starters that need no data: Date, Time,
@@ -51,8 +53,8 @@ not hold for a keyboard that has no letters:
 
 ## Consequences
 - The trade-off is iOS's own warning. Allowing Full Access shows a system alert that a keyboard with it can transmit
-  what is typed. For Pesto's keyboard that is broader than what it does (nothing is typed on it and it has no network
-  code), but Pesto cannot change the alert, and the person decides. Without Full Access the keyboard is still useful
+  what is typed. For Pesto's keyboard that is broader than what it does (nothing is typed on it and it makes no network
+  request), but Pesto cannot change the alert, and the person decides. Without Full Access the keyboard is still useful
   for the starters and says what Full Access would add.
 - A second process holds the quick-insert key, as the AutoFill extension already does. Code signed by the same team
   could read the set, as before (ADR 0051); nothing else can.

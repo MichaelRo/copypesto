@@ -65,8 +65,8 @@ struct KeyboardRootView: View {
             note(
                 "Allow Full Access to Insert Your Clips",
                 """
-                Turn it on in Settings > General > Keyboard > Keyboards > Pesto. The keyboard has no network access, \
-                and the keys above work without it.
+                Turn it on in Settings > General > Keyboard > Keyboards > Pesto. The keyboard makes no network \
+                requests, and the keys above work without it.
                 """
             )
         case .unavailable:

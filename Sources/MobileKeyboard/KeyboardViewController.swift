@@ -12,6 +12,7 @@ final class KeyboardViewController: UIInputViewController {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "Keyboard")
     private static let compactHeight: CGFloat = 280
     private static let regularHeight: CGFloat = 300
+    private static let searchExtraHeight: CGFloat = 40
 
     private let model = KeyboardModel()
     private var heightConstraint: NSLayoutConstraint?
@@ -26,7 +27,11 @@ final class KeyboardViewController: UIInputViewController {
             deleteBackward: { [weak self] in self?.textDocumentProxy.deleteBackward() },
             switchKeyboard: { [weak self] in self?.advanceToNextInputMode() },
             contextBefore: { [weak self] in self?.textDocumentProxy.documentContextBeforeInput },
-            contextAfter: { [weak self] in self?.textDocumentProxy.documentContextAfterInput }
+            contextAfter: { [weak self] in self?.textDocumentProxy.documentContextAfterInput },
+            relayout: { [weak self] in
+                guard let self else { return }
+                heightConstraint?.constant = currentHeight
+            }
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
         host.view.backgroundColor = .clear
@@ -53,6 +58,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        heightConstraint?.constant = currentHeight
         refresh()
     }
 
@@ -62,6 +68,7 @@ final class KeyboardViewController: UIInputViewController {
         model.menu = KeyboardMenu(hasFullAccess: false) { nil }
         model.word = nil
         model.dismissedWord = nil
+        model.closeSearch()
         openedStamp = nil
     }
 
@@ -75,8 +82,10 @@ final class KeyboardViewController: UIInputViewController {
         refresh()
     }
 
+    /// The search page adds a row for the query and three rows of letters, so it is taller than the shelf.
     private var currentHeight: CGFloat {
-        traitCollection.horizontalSizeClass == .regular ? Self.regularHeight : Self.compactHeight
+        let base = traitCollection.horizontalSizeClass == .regular ? Self.regularHeight : Self.compactHeight
+        return model.isSearching ? base + Self.searchExtraHeight : base
     }
 
     /// Opens the set again only when the app has rewritten it since, so moving between text fields does not decrypt

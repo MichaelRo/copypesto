@@ -3,7 +3,8 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// The keyboard as a small Pesto shelf (ADRs 0061, 0062): chips on top like the Mac shelf's (the word typed before
+/// The keyboard as a small Pesto shelf (ADRs 0061, 0062, 0063; the search key opens `KeyboardSearchPage`): chips on top
+/// like the Mac shelf's (the word typed before
 /// switching, then Recent, Pinned, Snippets and the chosen collections), the clips as cards in a row that scrolls
 /// sideways (two rows on iPhone, one on iPad), or the numbers pad, above Globe, 123, Space, Return and Delete.
 struct KeyboardRootView: View {
@@ -19,11 +20,24 @@ struct KeyboardRootView: View {
     var body: some View {
         // Searched once per pass: every chip and card below reads the same matches.
         let matches = word.map(model.menu.entries(matching:)) ?? []
-        VStack(spacing: 6) {
-            if model.menu.state == .ready, !showsPad { chipRow(matches: matches) }
-            content(matches: matches)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            bottomRow
+        Group {
+            if model.isSearching {
+                KeyboardSearchPage(
+                    model: model, controller: controller,
+                    pick: { entry, longPress in
+                        setSearching(false)
+                        insert(entry, longPress: longPress, matches: [])
+                    },
+                    close: { setSearching(false) }
+                )
+            } else {
+                VStack(spacing: 6) {
+                    if model.menu.state == .ready, !showsPad { chipRow(matches: matches) }
+                    content(matches: matches)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    bottomRow
+                }
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
@@ -156,6 +170,11 @@ struct KeyboardRootView: View {
         }
     }
 
+    private func setSearching(_ isOn: Bool) {
+        if isOn { model.openSearch() } else { model.closeSearch() }
+        keys.relayout()
+    }
+
     private var bottomRow: some View {
         HStack(spacing: 6) {
             if model.showsGlobeKey {
@@ -167,6 +186,13 @@ struct KeyboardRootView: View {
                     padToggleLabel.frame(width: 52, height: 40)
                 }
                 .buttonStyle(.bordered)
+            }
+            if model.menu.state == .ready {
+                Button { setSearching(true) } label: {
+                    Image(systemName: "magnifyingglass").frame(width: 44, height: 40)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel(Text("Search Clips"))
             }
             Button { keys.insert(" ") } label: {
                 Text("Space").frame(maxWidth: .infinity, minHeight: 40)

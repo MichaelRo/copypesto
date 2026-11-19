@@ -9,6 +9,13 @@ struct QuickInsertTarget {
     let file: QuickInsertFile
     let keys: QuickInsertKeyStore
     let isEnabled: @MainActor () -> Bool
+    /// The collections and the after-insert choice the person made for the keyboard (ADR 0062).
+    var options: @MainActor () -> QuickInsertSelection.Options = {
+        QuickInsertSelection.Options(
+            storedCollections: AppDefaults.store.value(for: Setting.keyboardCollections),
+            returnsAfterInsert: AppDefaults.store.value(for: Setting.keyboardReturnsAfterInsert)
+        )
+    }
 
     private static let uiTestSecrets = InMemorySecretStore()
 
@@ -18,8 +25,9 @@ struct QuickInsertTarget {
         let secrets: any SecretStoring = mode == .uiTest
             ? uiTestSecrets
             : SharedKeychainSecretStore(accessGroup: AppIdentity.quickInsertKeychainGroup(in: .main))
-        return QuickInsertTarget(file: file, keys: QuickInsertKeyStore(secrets: secrets)) {
-            AppDefaults.store.value(for: Setting.quickInsertEnabled)
-        }
+        return QuickInsertTarget(
+            file: file, keys: QuickInsertKeyStore(secrets: secrets),
+            isEnabled: { AppDefaults.store.value(for: Setting.quickInsertEnabled) }
+        )
     }
 }

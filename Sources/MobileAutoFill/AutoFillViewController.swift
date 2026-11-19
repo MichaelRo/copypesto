@@ -65,14 +65,8 @@ final class AutoFillViewController: ASCredentialProviderViewController {
 
     private static func loadSet() -> QuickInsertSet? {
         guard let file = QuickInsertFile.current else { return nil }
-        let keys = QuickInsertKeyStore(
-            secrets: SharedKeychainSecretStore(accessGroup: AppIdentity.quickInsertKeychainGroup(in: .main))
-        )
         do {
-            guard let key = try keys.key() else { return nil }
-            return try file.read(with: key)
-        } catch QuickInsertError.missing {
-            return nil
+            return try file.openSet(keys: .shared())
         } catch {
             logger.error("The AutoFill set did not open: \(String(describing: error), privacy: .public)")
             return nil

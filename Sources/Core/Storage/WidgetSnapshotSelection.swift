@@ -111,7 +111,7 @@ public enum WidgetSnapshotSelection {
                     newest.fetchLimit = WidgetSnapshotPolicy.smartScanLimit
                     window = try context.fetch(newest)
                 }
-                items = smartMatches(of: board, in: window ?? [])
+                items = smartMatches(of: board, in: window ?? [], limit: WidgetSnapshotPolicy.maxClips)
             } else {
                 let id = board.id
                 var newest = FetchDescriptor<ClipboardItem>(
@@ -178,11 +178,11 @@ public enum WidgetSnapshotSelection {
     }
 
     /// A smart collection whose rules do not decode or compile shows nothing, as it does in Pesto.
-    private static func smartMatches(of board: Pinboard, in window: [ClipboardItem]) -> [ClipboardItem] {
+    static func smartMatches(of board: Pinboard, in window: [ClipboardItem], limit: Int) -> [ClipboardItem] {
         guard let data = board.smartPredicateData, let rules = try? SmartCollectionPredicate.decodeRuleSet(data),
               SmartCollectionPredicate.canCompileRuleSet(rules) else { return [] }
         var matches: [ClipboardItem] = []
-        for item in window where matches.count < WidgetSnapshotPolicy.maxClips && isEligible(item) {
+        for item in window where matches.count < limit && isEligible(item) {
             if rules.matches(item) { matches.append(item) }
         }
         return matches

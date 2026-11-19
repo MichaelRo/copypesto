@@ -123,7 +123,19 @@ card's shape, a link leads with its host, short text is large, one foot line giv
 widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
 Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent, Pinned or Collection, and then
 which collection, from those the snapshot carries (ADR 0060): "No clips in this collection yet" when it is empty,
-"Choose a collection" when none is chosen or it is gone. With the History Lock on it says "Locked" and "Open Pesto to see your clips." unless "Show clips in widgets and AutoFill" is on (ADR 0055).
+"Choose a collection" when none is chosen or it is gone. With the History Lock on it says "Locked" and "Open Pesto to see your clips." unless "Show clips in widgets, AutoFill and the keyboard while locked" is on (ADR 0055).
+
+## The keyboard (ADR 0061)
+Optional, added in iOS Settings. No letter keys. A small shelf (ADR 0062): chips like the Mac shelf's (Recent, Pinned,
+Snippets, then the collections chosen in Settings → AutoFill and keyboard → Collections), and the clips as small Pesto
+cards in a row that scrolls sideways, two rows on iPhone and one on iPad, each with the kind's glyph and a laptop when
+it came from another device; snippets shown as they would insert. The word typed before switching is the search: it
+leads the chips in quotes, and picking a card replaces it. A "123" pad of numbers and punctuation; Space, Return and
+Delete, with the globe key when iOS asks for it. A tap inserts and returns to the person's keyboard, or stays, as
+"After inserting a clip" says; a long press does the other. Without Full Access the pad and one line on Full Access;
+with no set one line on turning on Insert from Pesto; with an empty one "No text clips yet." The magnifying glass opens
+the search page (ADR 0063): Pesto's own search field, the matches in one row, letters or numbers that type only into
+that field, and Done; the keyboard grows 40 points while it is open.
 
 ## FAQ for the release notes: Add Clipboard to Pesto
 The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to
@@ -153,5 +165,5 @@ Three steps once over the library (iPhone full screen, iPad form sheet; Skip on 
 
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds
-section, a keyboard extension, glass on a card, reading a long text for AI a part at a time (the Mac does; the iOS answer says how much was read). Source-app chips: Core's index keeps the bundle id
+section, a keyboard with typing keys (the optional keyboard has none, ADR 0061), glass on a card, reading a long text for AI a part at a time (the Mac does; the iOS answer says how much was read). Source-app chips: Core's index keeps the bundle id
 private and iOS cannot name an app, so there is no cheap list to show.

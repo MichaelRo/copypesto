@@ -11,6 +11,7 @@ struct MobileSubmissionTests {
         "Sources/Mobile",
         "Sources/MobileShare",
         "Sources/MobileAutoFill",
+        "Sources/MobileKeyboard",
         "Sources/MobileWidget"
     ]
 

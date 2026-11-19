@@ -98,5 +98,6 @@ device alone with `xcodebuild -scheme PestoMobile -only-testing:PestoMobileUITes
 | `ios-store-ipad-04-smart-collection-rules.png` | A smart collection's rules | App Store, iPad |
 
 The AutoFill picker is not taken: it is a system extension that only another app's keyboard can open, so the app's own UI
-test cannot show it. Take it by hand on a device.
+test cannot show it. Take it by hand on a device. The keyboard (ADR 0061) is not taken either: a UI test cannot add it
+in iOS Settings.
 

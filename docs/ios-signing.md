@@ -1,6 +1,6 @@
 # Signing the iPhone and iPad app
 
-The iOS app (`PestoMobile`) and its three extensions build and test on a simulator with no signing at all. A real
+The iOS app (`PestoMobile`) and its four extensions build and test on a simulator with no signing at all. A real
 iPhone or iPad needs an Apple Developer account, a few identifiers on the developer portal, and provisioning
 profiles. This page lists them once. ADR 0046 explains why the iOS app shares the Mac app's bundle identifier.
 
@@ -14,13 +14,16 @@ Identifiers → App IDs (explicit, type App), each with the capabilities listed:
 | `net.copypesto.pesto.share` | `PestoShare` | App Groups |
 | `net.copypesto.pesto.autofill` | `PestoAutoFill` | App Groups, AutoFill Credential Provider |
 | `net.copypesto.pesto.widget` | `PestoWidget` | App Groups |
+| `net.copypesto.pesto.keyboard` | `PestoKeyboard` | App Groups |
 
-Identifiers → App Groups: register `group.net.copypesto.pesto`, then tick it under App Groups on each of the four App
+Identifiers → App Groups: register `group.net.copypesto.pesto`, then tick it under App Groups on each of the five App
 IDs.
 
-The shared Keychain groups (`net.copypesto.pesto.quick-insert` for AutoFill, ADR 0051; `net.copypesto.pesto.widget`
-for the widget, ADR 0052) are entitlements prefixed with the team's identifier. As far as is known they need no switch
-on the portal; if a profile is refused for them, add Keychain Sharing to that App ID.
+The shared Keychain groups (`net.copypesto.pesto.quick-insert` for AutoFill and the keyboard, ADR 0051 and 0061;
+`net.copypesto.pesto.widget` for the widget, ADR 0052) are entitlements prefixed with the team's identifier; the
+keyboard carries the quick-insert group alone. As far as is known they need no switch on the portal; if a profile is
+refused for them, add Keychain Sharing to that App ID. Each extension needs its own profile (Xcode makes them with
+automatic signing; an App Store build needs one per App ID).
 
 ## Building to a device
 
@@ -51,6 +54,8 @@ checks on a device:
 - a screen recording, mirroring or AirPlay covering the cards;
 - AutoFill: Settings → General → AutoFill & Passwords → turn Pesto on, then insert a clip from a text field's AutoFill
   menu; no secret is ever offered (ADR 0051);
+- the keyboard: Settings → General → Keyboard → Keyboards → Add New Keyboard → Pesto, with and without Full Access,
+  in another app's text field (ADR 0061; the list is in `docs/testing.md`, "The keyboard on a device");
 - the widget on the Home Screen, its Copy action, and the Locked state (ADR 0052, 0055);
 - the share sheet from Safari, Notes and Photos (ADR 0047);
 - "Add Clipboard to Pesto" from the Action Button or Back Tap, and iOS's paste prompt;
@@ -79,4 +84,5 @@ Each release:
 
 Device builds from Xcode need no App Store Connect record. Giving the app to anyone else means the App Store (TestFlight
 is its optional beta stage); there is no iOS equivalent of the Mac's Developer ID download. That record and its review
-notes (AutoFill is text insertion only, not a password manager) wait until a release is planned.
+notes (AutoFill is text insertion only, not a password manager; why the keyboard asks for Full Access) wait until a
+release is planned.

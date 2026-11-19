@@ -8,4 +8,11 @@ public extension QuickInsertEntry {
         guard expandsOnInsert else { return text }
         return TemplateExpander.expansion(of: text, isSnippet: true, at: date, clipboardProvider: { "" }) ?? text
     }
+
+    /// The line a picker shows: a snippet's title filled in as it would insert now, so `Thanks, {{date}}` reads as the
+    /// date it gives; a title the person wrote has no placeholders and stands as it is.
+    func label(at date: Date = .now) -> String {
+        guard expandsOnInsert else { return title }
+        return TemplateExpander.expansion(of: title, isSnippet: true, at: date, clipboardProvider: { "" }) ?? title
+    }
 }

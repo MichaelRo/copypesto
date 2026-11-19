@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
+    @AppStorage(Setting.keyboardReturnsAfterInsert) private var keyboardReturns: Bool
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
@@ -49,12 +50,21 @@ struct SettingsView: View {
                 Toggle("Insert from Pesto in other apps", isOn: $quickInsertEnabled)
                     .accessibilityIdentifier(MobileAccessibilityID.quickInsertToggle)
                     .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
+                if quickInsertEnabled {
+                    NavigationLink("Keyboard collections") { KeyboardCollectionsView() }
+                    Picker("After inserting a clip", selection: $keyboardReturns) {
+                        Text("Return to my keyboard").tag(true)
+                        Text("Stay in Pesto").tag(false)
+                    }
+                    .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
+                }
             } header: {
-                Text("Clipboard & AutoFill")
+                Text("Clipboard, AutoFill & keyboard")
             } footer: {
                 Text(
-                    "AutoFill keeps a sealed set of non-secret text clips. Turn on Pesto in Settings > General > " +
-                        "AutoFill & Passwords."
+                    "AutoFill and Pesto's keyboard use a sealed set of non-secret text clips. Turn on Pesto in " +
+                        "Settings > General > AutoFill & Passwords, or add it in Settings > General > Keyboard > " +
+                        "Keyboards and allow Full Access."
                 )
             }
             Section {
@@ -80,13 +90,14 @@ struct SettingsView: View {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
                     .accessibilityIdentifier(MobileAccessibilityID.historyLockToggle)
-                // Only the lock empties widgets and AutoFill, so this exception exists only while the lock is on;
-                // greyed
-                // out without it, it read as a feature this device could not have.
+                // Only the lock empties widgets, AutoFill and the keyboard, so this exception exists only while the
+                // lock is on; greyed out without it, it read as a feature this device could not have.
                 if lockEnabled {
-                    Toggle("Show clips in widgets and AutoFill while locked", isOn: $showsClipsOutside)
-                        .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
-                        .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
+                    Toggle(
+                        "Show clips in widgets, AutoFill and the keyboard while locked", isOn: $showsClipsOutside
+                    )
+                    .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
+                    .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
                 }
                 Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
                     ForEach(AuthenticationGrace.choices, id: \.self) { minutes in

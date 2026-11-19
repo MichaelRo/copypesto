@@ -361,6 +361,15 @@ leaves it, and the extension's read path opens what the app wrote), with a temp 
 menu offers AutoFill, but Settings > General > AutoFill & Passwords did not list Pesto (nor with `ProvidesPasswords`
 added as an experiment), so picking a clip through the real AutoFill sheet is a hand check on a signed device build.
 
+The keyboard (ADR 0061) reads the same set. Its decisions are tested in Core (`KeyboardMenuTests`: the four states,
+that without Full Access the set is never loaded and the order of sections; `QuickInsertEntryLabelTests`: a snippet
+shown as it would insert; `QuickInsertEnvelopeTests`: the file's modification date that
+tells the keyboard to re-open it, and `openSet`, the read AutoFill and the keyboard share). The iOS test target compiles
+`Sources/MobileKeyboard` and `KeyboardRenderingTests` draws each state at iPhone and iPad width, light and dark, into
+`.build/keyboard-renders` (in a window of the app's scene: `ImageRenderer` draws its UIKit parts as placeholders). A
+UI test cannot add a keyboard in iOS Settings or grant it Full Access, so the keyboard in another app is a hand check
+on a device (below).
+
 The widget snapshot (ADR 0052) is tested in Core (`WidgetSnapshotSelectionTests`: what may enter, the order and the
 bounds, the fullest snapshot still sealing; `WidgetSnapshotSealingTests`: refusals, no plaintext in the file, neither
 file's key opening the other; `WidgetContentTests`: each family's clips and state and the timeline's moments;
@@ -383,11 +392,44 @@ Pass 3 (ADR 0058) is covered in `CardCopyActionsTests` (Copy As JSON and Markdow
 
 ### iPhone and iPad: what only a device can check
 
-Device-only checks are listed in `docs/ios-signing.md` ("What only a device can check"): iCloud Keychain key arrival, the Files picker against real iCloud Drive, Face ID and the App Switcher cover, a real screen recording or AirPlay, AutoFill from the system menu, the widget on a real Home Screen, the share sheet from real apps and the Action Button or Back Tap shortcut. Pass 3 adds, on a device with Apple Intelligence:
+Device-only checks are listed in `docs/ios-signing.md` ("What only a device can check"): iCloud Keychain key arrival, the Files picker against real iCloud Drive, Face ID and the App Switcher cover, a real screen recording or AirPlay, AutoFill from the system menu, the keyboard (below), the widget on a real Home Screen, the share sheet from real apps and the Action Button or Back Tap shortcut. Pass 3 adds, on a device with Apple Intelligence:
 - an AI action on a long note (the answer says how much was read), Describe Image on a picture where the model can read pictures, and the same menu greyed out with the reason once Apple Intelligence is switched off in the iOS Settings app (Apple Intelligence & Siri) or in Pesto's own Apple Intelligence switch;
 - Ask with the real model: type "pictures from last week" and choose Ask (then again with Apple Intelligence off: the rules answer);
 - Decode JWT with Face ID, not the stub: a refusal opens nothing;
 - share an animated GIF from Safari, Photos and Messages into Pesto and watch the card animate; share it back out to Messages and Files and check the receiver animates it.
+
+### The keyboard on a device
+
+On a signed device build, with a pinned clip, a snippet with a date placeholder and a few recent text clips in Pesto:
+- **Add it**: Settings → General → Keyboard → Keyboards → Add New Keyboard → Pesto. Pesto is listed, Full Access off.
+- **Without Full Access**: in Notes, switch to Pesto with the globe key. The numbers pad shows under one line on Full
+  Access; no clip shows. Its keys type into the field.
+- **Full Access on** (Keyboards → Pesto → Allow Full Access; read iOS's alert): with Insert from Pesto in other apps
+  off, the line on turning it on; turned on in Pesto, the clips appear in Pinned, Snippets and Recent (the snippet
+  shown with today's date), and a tap inserts the clip (the snippet expanded) and moves to your own keyboard. A long
+  press inserts and stays, with a checkmark. Note which keyboard the tap lands on with three or more keyboards. A clip
+  with a secret never appears.
+- **Fresh set**: pin another clip in Pesto, switch back to the keyboard: it shows without restarting anything.
+- **Chips and collections** (ADR 0062): in Pesto's iOS settings, under AutoFill and keyboard, open Collections and add two and reorder
+  them: the keyboard's chips follow, after Recent, Pinned and Snippets. A clip copied on the Mac shows a laptop.
+- **Word search**: in Notes type `basil`, switch to Pesto: a `"basil"` chip leads and only matches show; pick one:
+  `basil` is replaced by the clip. Type `zzq`: the chip dims and the clips show unfiltered; × drops it. With the caret
+  inside a word, no chip. Repeat the replace in a Safari web page's text field (each Delete must remove one
+  character there too), and with "Stay in Pesto" tap a second match: the first clip is not touched.
+- **Search page** (ADR 0063): tap the magnifying glass: the field, a row of clips and the letters show and the keyboard
+  grows; type `bas`: the row narrows and nothing appears in the app's field; 123 types digits into the search; pick a
+  clip: it is inserted and the page closes; Done closes it without inserting.
+- **After inserting**: with "Stay in Pesto" chosen, a tap stays and a long press returns; the default is the reverse.
+- **Bottom row**: Space, Return and Delete act in the field, Space and Delete repeat while held, 123 opens the pad and
+  its other face brings the clips back. The globe key
+  shows on a device without a system switch key; a tap moves to the next keyboard, a long press lists them.
+- **History Lock**: turn it on in Pesto and let it lock: the keyboard says "No text clips yet." With "Show clips in widgets,
+  AutoFill and the keyboard while locked" on, the clips come back.
+- **Clear History** empties the set; turning off Insert from Pesto in other apps shows the line on turning it on.
+- **No paste prompt**: in all of the above, iOS never asks to allow a paste from Pesto.
+- **Memory**: run `PestoKeyboard` from Xcode attached to Notes and watch the memory gauge while the full set shows and
+  the pad opens and closes: it stays well under the keyboard extension limit, and drops after the keyboard is hidden.
+- **iPad**: the cards in three columns, and the same states with a hardware keyboard attached.
 
 ## Lessons from the test suite
 

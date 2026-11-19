@@ -8,8 +8,8 @@ App Store and does not change (Developer ID, notarized). Signing and the develop
 
 - [ ] An App Store Connect record for `net.copypesto.pesto`, platform iOS (the maintainer; the bundle ID is the Mac
       app's on purpose, ADR 0046, so the sync key can arrive through iCloud Keychain).
-- [ ] A distribution certificate and an App Store profile for the app and its three extensions
-      (`.share`, `.autofill`, `.widget`), each with the app group `group.net.copypesto.pesto` and the Keychain groups
+- [ ] A distribution certificate and an App Store profile for the app and its four extensions
+      (`.share`, `.autofill`, `.widget`, `.keyboard`), each with the app group `group.net.copypesto.pesto` and the Keychain groups
       in [ios-signing.md](ios-signing.md).
 - [ ] A privacy policy URL. App Store Connect requires one even for an app that collects nothing. The guide's
       [Privacy and security](guide/privacy-and-security.md) describes only the Mac, so it is not enough by itself:
@@ -49,7 +49,7 @@ across iPhone, iPad and Mac through a chosen folder. No account, no server.
 > • Pinned clips, collections and smart collections
 > • Snippets with fill-ins
 > • Edit a clip's text
-> • Insert clips in any app through AutoFill (text only, never passwords)
+> • Insert clips in any app through AutoFill (text only, never passwords) or the optional Pesto keyboard
 > • A Home Screen widget with your recent clips
 > • Lock your history with Face ID
 > • On iPad: a sidebar, keyboard shortcuts, drag and drop, and every multitasking size
@@ -90,9 +90,15 @@ To publish with the Mac's privacy page at release. Check each line against the b
 >
 > **Face ID.** The History Lock asks iOS to check your face or passcode. Pesto never sees your face data.
 >
-> **Extensions.** The share extension, AutoFill and the widget never open your history. The app gives each a small
-> sealed file: AutoFill gets pinned clips, snippets and recent text, the widget gets recent clips, and neither ever
-> gets a secret. With the History Lock on they stay empty unless you choose otherwise.
+> **Extensions.** The share extension, AutoFill, the keyboard and the widget never open your history. The app gives
+> them small sealed files: AutoFill and the keyboard share one of pinned clips, snippets and recent text, the widget
+> gets recent clips, and none ever gets a secret. With the History Lock on they stay empty unless you choose otherwise.
+>
+> **The keyboard.** Optional, and off until you add it in iOS Settings. Its letters type only into its own search
+> field, never into your apps; it sees taps on its own keys and, with Full Access, only the last word before the cursor,
+> to find matching clips; it never keeps either. It
+> needs Full Access to open the sealed file of clips; without it, it types numbers and punctuation. It makes no network requests and never reads your
+> clipboard.
 >
 > **Sharing out.** When you share a picture or a GIF, iOS needs a file: Pesto writes one for the share and deletes it
 > when the share ends, when the history locks or is cleared, and at the next launch.
@@ -114,6 +120,18 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 > - AutoFill: Pesto's AutoFill extension provides text insertion only (the "ProvidesTextToInsert" capability). It does
 >   not store, offer or fill passwords, passkeys or one-time codes. To try it: Settings → General → AutoFill &
 >   Passwords → turn on Pesto, then in any text field long-press → AutoFill → Pesto, and pick a clip.
+> - Keyboard: Pesto's keyboard (`net.copypesto.pesto.keyboard`) has no letter keys: it shows the person's own pinned
+>   clips, snippets and recent text, a numbers-and-punctuation pad (typed input, available without Full Access),
+>   Space, Return, Delete and the Next Keyboard key. It requests Full Access only because iOS opens the app group and the shared Keychain group to a
+>   keyboard with Full Access alone; it uses them to read one sealed file the app writes. It makes no network requests,
+>   reads only the last word before the cursor (to find matching clips, in memory, never kept), never reads the
+>   pasteboard, and sees nothing else typed on another keyboard. Without Full Access it still works
+>   (the numbers-and-punctuation pad) and explains what Full Access adds. Its letters (on the search page) type only into
+>   Pesto's own search field to find a clip, never into the app; a keyboard that typed letters into apps would see
+>   everything the person writes, which Pesto chooses not to. To try it: Settings → General → Keyboard →
+>   Keyboards → Add New Keyboard → Pesto, tap Pesto and turn on Allow Full Access; in Pesto turn on Settings → Insert
+>   from Pesto in other apps and pin a clip; then in any text field switch keyboards with the globe key and tap the
+>   clip.
 > - Sync is optional: any two devices with Pesto (iPhone, iPad, Mac) and a folder both can open (such as iCloud Drive). It goes through
 >   files in that folder; there is no server. It can be skipped on the welcome screen.
 > - The History Lock (Settings, or the welcome's second step) asks for Face ID before clips show.
@@ -129,7 +147,7 @@ simulators with the seeded UI-test launch (`PESTO_UITEST_SEED=basic`), light app
 2. A search that finds text inside a picture
 3. A clip's detail with Edit Text
 4. Collections (iPad sidebar)
-5. The AutoFill picker
+5. The AutoFill picker, or the keyboard in another app
 6. The widget on the Home Screen (needs a device or a hand-made frame; the simulator's Home Screen works)
 7. The welcome's sync step
 

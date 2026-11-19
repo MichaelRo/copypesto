@@ -30,6 +30,37 @@ struct QuickInsertEnvelopeTests {
         return QuickInsertFile(root: root)
     }
 
+    @Test("the file's modification date is nil before it is written and moves on with each write")
+    func whenWritten_thenTheModificationDateMoves() throws {
+        let file = try temporaryFile()
+        let key = SymmetricKey(size: .bits256)
+        #expect(file.modificationDate == nil)
+        try file.write(sampleSet(), with: key)
+        let first = try #require(file.modificationDate)
+        try FileManager.default.setAttributes(
+            [.modificationDate: first.addingTimeInterval(-60)], ofItemAtPath: file.url.path
+        )
+        try file.write(.empty, with: key)
+        #expect(try #require(file.modificationDate) > first.addingTimeInterval(-60))
+    }
+
+    @Test("an extension's read: nothing without a key or a file, the set with both, and a throw for another key")
+    func whenAnExtensionOpensTheSet_thenMissingPartsAreNilAndAWrongKeyThrows() throws {
+        let file = try temporaryFile()
+        let secrets = MemorySecrets()
+        let keys = QuickInsertKeyStore(secrets: secrets)
+        #expect(try file.openSet(keys: keys) == nil)
+
+        let key = try keys.loadOrCreate()
+        #expect(try file.openSet(keys: keys) == nil)
+
+        try file.write(sampleSet(), with: key)
+        #expect(try file.openSet(keys: keys) == sampleSet())
+
+        try file.write(sampleSet(), with: SymmetricKey(size: .bits256))
+        #expect(throws: QuickInsertError.wrongKey) { try file.openSet(keys: keys) }
+    }
+
     @Test("a sealed set opens with its key and holds what was sealed")
     func whenOpenedWithItsKey_thenTheSetComesBack() throws {
         let key = SymmetricKey(size: .bits256)

@@ -47,7 +47,7 @@ struct InsertPickerView: View {
         let groups = menu.groups(matching: query)
         return List {
             ForEach(groups) { group in
-                Section(Self.title(of: group.section)) {
+                Section(group.collection?.name ?? Self.title(of: group.section)) {
                     ForEach(group.entries) { entry in
                         row(entry)
                     }
@@ -63,7 +63,7 @@ struct InsertPickerView: View {
     private func row(_ entry: QuickInsertEntry) -> some View {
         Button { insert(entry) } label: {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.title)
+                Text(entry.label())
                     .font(.body)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
@@ -75,7 +75,7 @@ struct InsertPickerView: View {
                 }
             }
         }
-        .accessibilityLabel(entry.title)
+        .accessibilityLabel(entry.label())
         .accessibilityValue(Self.detail(of: entry) ?? "")
         .accessibilityHint("Inserts this clip")
     }
@@ -91,6 +91,7 @@ struct InsertPickerView: View {
         case .pinned: String(localized: "Pinned")
         case .snippets: String(localized: "Snippets")
         case .recent: String(localized: "Recent")
+        case .collection: String(localized: "Collections")
         }
     }
 }

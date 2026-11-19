@@ -77,6 +77,7 @@ struct VocabularyTests {
             ("Mobile", 3),
             ("MobileShare", 3),
             ("MobileAutoFill", 2),
+            ("MobileKeyboard", 4),
             ("MobileWidget", 2),
             ("Widget", 10)
         ] {
@@ -137,6 +138,7 @@ struct VocabularyTests {
             ("Mobile", 3),
             ("MobileShare", 3),
             ("MobileAutoFill", 2),
+            ("MobileKeyboard", 4),
             ("MobileWidget", 2),
             ("Widget", 10)
         ] {

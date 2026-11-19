@@ -102,11 +102,13 @@ final class StoreScreenshotTests: XCTestCase {
         let field = app.searchFields.firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: timeout))
         field.tap()
-        field.typeText("boarding")
-        XCTAssertTrue(
-            cards(in: app).firstMatch.waitForExistence(timeout: timeout),
-            "a picture's printed words are found"
-        )
+        // "Gate" is in a text clip and printed on the boarding pass: the picture shows beside the text it matches.
+        field.typeText("Gate")
+        let deadline = Date.now.addingTimeInterval(timeout)
+        while cards(in: app).count < 2, Date.now < deadline {
+            _ = cards(in: app).firstMatch.waitForExistence(timeout: 0.5)
+        }
+        XCTAssertGreaterThanOrEqual(cards(in: app).count, 2, "the text clip and the picture's printed words are found")
         XCTAssertTrue(
             card(containing: "Packing list", in: app).waitForNonExistence(timeout: timeout),
             "the search narrows the grid"

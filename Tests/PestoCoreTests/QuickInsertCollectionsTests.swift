@@ -33,7 +33,7 @@ struct QuickInsertCollectionsTests {
         }
 
         func collection(_ name: String, order: Int) throws -> Pinboard {
-            let board = try Pinboard(name: name, symbolName: "briefcase", colorHex: "#2F8B4C", sortOrder: order)
+            let board = Pinboard(name: name, symbolName: "briefcase", colorHex: "#2F8B4C", sortOrder: order)
             context.insert(board)
             return board
         }

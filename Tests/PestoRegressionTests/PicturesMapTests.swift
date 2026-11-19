@@ -51,4 +51,14 @@ struct PicturesMapTests {
         let stamp = try read("docs/images/SOURCE").trimmingCharacters(in: .whitespacesAndNewlines)
         #expect(stamp.wholeMatch(of: /commit ([0-9a-f]{40}( dirty)?|unrecorded)/) != nil, "stamp is \(stamp)")
     }
+
+    @Test("an App Store picture the suite takes is in the map")
+    func whenStoreSuiteNamesPicture_thenMapNamesIt() throws {
+        let suite = try read("Tests/PestoMobileUITests/StoreScreenshotTests.swift")
+        let taken = Set(suite.matches(of: /"(ios-store-[a-z0-9-]+)"/).map { String($0.output.1) })
+        #expect(taken.count >= 8, "found too few App Store pictures: \(taken.count)")
+        let map = try read("docs/pictures.md")
+        let missing = taken.filter { !map.contains("`\($0).png`") }
+        #expect(missing.isEmpty, "not in docs/pictures.md: \(missing.sorted())")
+    }
 }

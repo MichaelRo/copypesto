@@ -43,6 +43,7 @@ struct ClipboardCard: View {
     /// Ghost shortcut badge shown when a shortcut offer suggestion targets this clip.
     var suggestedHotkeySlot: Int?
     var showsFirstCopyTime = false
+    var inCollection = false
 
     @AppStorage(Setting.cardSize) var cardSizeRaw: String
     @AppStorage(Setting.cardWidth) var cardWidth: Int

@@ -30,22 +30,24 @@ struct CardTreatmentTests {
         #expect(CardTreatment.decide(input(.image, picture: ordinary)) == .fullBleedPicture(.fill, isAnimated: false))
     }
 
-    @Test("a 3:2 picture fills the card edge-to-edge")
-    func whenWidePicture_thenFill() {
+    @Test("a 3:2 picture is shown whole over a blurred copy (ADR 0041)")
+    func whenWidePicture_thenFit() {
         let pass = CardTreatmentInput.Picture(aspectRatio: 1.5, isAnimated: false)
-        #expect(CardTreatment.decide(input(.image, picture: pass)) == .fullBleedPicture(.fill, isAnimated: false))
+        #expect(CardTreatment.decide(input(.image, picture: pass)) == .fullBleedPicture(.fit, isAnimated: false))
     }
 
-    @Test("a GIF fills the card and says it is one")
+    @Test("a GIF fills the card and says it is one; a wide GIF fits whole")
     func whenGIF_thenAnimatedFullBleed() {
         let gif = CardTreatmentInput.Picture(aspectRatio: 1, isAnimated: true)
         #expect(CardTreatment.decide(input(.image, picture: gif)) == .fullBleedPicture(.fill, isAnimated: true))
+        let wideGif = CardTreatmentInput.Picture(aspectRatio: 1.5, isAnimated: true)
+        #expect(CardTreatment.decide(input(.image, picture: wideGif)) == .fullBleedPicture(.fit, isAnimated: true))
     }
 
-    @Test("a tall screenshot fills the card edge-to-edge")
-    func whenTallScreenshot_thenFill() {
+    @Test("a tall screenshot is shown whole over a blurred copy (ADR 0041)")
+    func whenTallScreenshot_thenFit() {
         let tall = CardTreatmentInput.Picture(aspectRatio: 0.3, isAnimated: false)
-        #expect(CardTreatment.decide(input(.image, picture: tall)) == .fullBleedPicture(.fill, isAnimated: false))
+        #expect(CardTreatment.decide(input(.image, picture: tall)) == .fullBleedPicture(.fit, isAnimated: false))
     }
 
     @Test("a picture still loading keeps the standard card, with its placeholder")

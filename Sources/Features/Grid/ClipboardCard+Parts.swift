@@ -29,9 +29,22 @@ extension ClipboardCard {
         return raw
     }
 
+    var trimmedOgTitle: String? {
+        guard !concealment.isConcealed,
+              item.type == .url,
+              let raw = item.ogTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !raw.isEmpty else { return nil }
+        return raw
+    }
+
+    var faceLinkTitle: String? {
+        guard item.type == .url else { return nil }
+        return inCollection ? (trimmedCustomTitle ?? trimmedOgTitle) : (trimmedOgTitle ?? trimmedCustomTitle)
+    }
+
     var showsTitleOnCardFace: Bool {
         guard trimmedCustomTitle != nil else { return false }
-        if item.type == .url, item.ogTitle != nil { return false }
+        if !inCollection, item.type == .url, trimmedOgTitle != nil { return false }
         return true
     }
 
@@ -56,8 +69,8 @@ extension ClipboardCard {
         }
     }
 
-    private var usesRichURLBody: Bool {
-        item.type == .url && (item.ogTitle != nil || item.ogSiteName != nil || urlFavicon != nil)
+    var usesRichURLBody: Bool {
+        item.type == .url && (trimmedOgTitle != nil || item.ogSiteName != nil || urlFavicon != nil)
     }
 
     func beginRenamingTitle() {
@@ -206,8 +219,8 @@ extension ClipboardCard {
                     .pestoQuiet()
                     .lineLimit(1)
             }
-            if let title = item.ogTitle ?? trimmedCustomTitle {
-                renameableTitleChip(enabled: item.ogTitle == nil) {
+            if let title = faceLinkTitle {
+                renameableTitleChip(enabled: inCollection ? trimmedCustomTitle != nil : trimmedOgTitle == nil) {
                     Text(title)
                         .scaledFont(size: bodySize(13), weight: .semibold, maxScale: 1.3)
                         .lineLimit(3)

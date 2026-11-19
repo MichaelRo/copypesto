@@ -62,11 +62,21 @@ struct PictureScrimTests {
 
 @Suite("Picture fit")
 struct PictureFitTests {
-    @Test("valid pictures fill the card edge-to-edge", arguments: [
-        0.3, 0.6, 0.8, 1.0, 1.35, 1.5, 1.78, 2.0, 3.0
-    ])
-    func whenValidAspect_thenFill(aspect: Double) {
+    @Test("the fill range matches ADR 0041")
+    func fillRangeMatchesADR() {
+        #expect(PictureFit.fillRange == 0.8...1.35)
+    }
+
+    @Test("pictures near the card's shape fill the card edge-to-edge", arguments: [0.8, 1.0, 1.11, 1.35])
+    func whenNearCardShape_thenFill(aspect: Double) {
         #expect(PictureFit.decide(aspectRatio: aspect) == .fill)
+    }
+
+    @Test("wide and tall pictures are fitted whole over a blurred copy", arguments: [
+        0.3, 0.4, 0.6, 0.79, 1.36, 1.5, 1.78, 2.0, 3.0
+    ])
+    func whenOutsideFillRange_thenFit(aspect: Double) {
+        #expect(PictureFit.decide(aspectRatio: aspect) == .fit)
     }
 
     @Test("an aspect that cannot be trusted is fitted", arguments: [0.0, -1.0, Double.nan, Double.infinity])

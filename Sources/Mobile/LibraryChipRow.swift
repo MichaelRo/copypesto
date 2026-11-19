@@ -7,6 +7,7 @@ struct LibraryChipRow: View {
     @Environment(LibraryModel.self) private var library
     @Environment(MobileAppState.self) private var appState
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
+    @State private var isAsking = false
 
     var body: some View {
         let chips = LibraryChip.row(
@@ -62,12 +63,18 @@ struct LibraryChipRow: View {
                 Task { await ask() }
             } label: {
                 HStack(spacing: 4) {
-                    Image(systemName: "sparkles").accessibilityHidden(true)
+                    if isAsking {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "sparkles").accessibilityHidden(true)
+                    }
                     Text("Ask")
                 }
             }
             .buttonStyle(MobileChipStyle(isActive: false, tint: nil))
+            .disabled(isAsking)
             .accessibilityLabel(String(localized: "Ask Pesto"))
+            .accessibilityInputLabels([Text("Ask"), Text("Ask Pesto")])
             .accessibilityHint(String(localized: "Turns what you typed into filters."))
             .accessibilityIdentifier(MobileAccessibilityID.askChip)
         case .asked:
@@ -77,8 +84,14 @@ struct LibraryChipRow: View {
     }
 
     private func ask() async {
-        let query = await appState.askPesto(library.query)
-        withAnimation(Motion.animation(.pestoQuick)) { library.apply(query) }
+        guard !isAsking else { return }
+        let sentence = library.query
+        isAsking = true
+        defer { isAsking = false }
+        let query = await appState.askPesto(sentence)
+        _ = withAnimation(Motion.animation(.pestoQuick)) {
+            library.applyAnswer(query, to: sentence, isLocked: appState.isHistoryLocked)
+        }
     }
 
     private func chipButton(_ chip: LibraryChip, label: String, symbol: String, tint: Color? = nil) -> some View {

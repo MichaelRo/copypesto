@@ -217,7 +217,8 @@ extension MobileAppState {
             existing: others
         )
         report("Couldn\u{2019}t save the collection.") {
-            let rules = try board.isSmart && draft.isSmart ? draft.rules?.encoded() : nil
+            let rules = try board.isSmart && draft.isSmart && draft.rulesDiffer(from: board) ? draft.rules?
+                .encoded() : nil
             try collectionStore(context: context).edit(.edit, [board]) {
                 board.name = unique
                 board.symbolName = draft.symbol
@@ -245,6 +246,7 @@ extension MobileAppState {
     func clearHistory() async {
         guard let service = storageService else { return }
         dismissUndoOffer()
+        ShareFile.removeAll()
         secretReveal.hideAll()
         decodedJWT = nil
         closeAI()
@@ -263,6 +265,8 @@ extension MobileAppState {
     func didLeaveForeground() {
         isActivated = false
         historyLock.didLeaveForeground(at: clock())
+        closeAI()
+        ShareFile.removeAll()
         secretReveal.hideAll()
         decodedJWT = nil
         writeQuickInsert()

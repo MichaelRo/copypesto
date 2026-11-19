@@ -76,7 +76,6 @@ struct JWTDecodeSheet: View {
                 .foregroundStyle(.secondary)
             Text(json)
                 .font(.system(.footnote, design: .monospaced))
-                .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(10)
                 .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10, style: .continuous))

@@ -111,4 +111,34 @@ struct MobileAITests {
         #expect(!library.state.showsAI)
         #expect(!library.state.aiIsLoading)
     }
+
+    @Test("leaving the foreground drops the answer and anything still being worked out")
+    func whenPestoLeavesTheForeground_thenTheAnswerIsDropped() async throws {
+        let library = try await MobileTestLibrary()
+        ready(library)
+        let note = try await library.add("text to summarize")
+        library.state.runAIAction(.summarize, on: note)
+        await finish(library.state)
+        #expect(library.state.aiResult != nil)
+
+        library.state.didLeaveForeground()
+
+        #expect(library.state.aiResult == nil)
+        #expect(!library.state.showsAI)
+        #expect(library.state.aiTask == nil)
+    }
+
+    @Test("a locked history runs no action")
+    func whenLocked_thenNoActionRuns() async throws {
+        let lock = MobileHistoryLock(
+            authenticator: StubUserAuthenticator(available: true, grants: true), grace: AuthenticationGrace(),
+            isEnabled: { true }
+        )
+        let library = try await MobileTestLibrary(lock: lock)
+        ready(library)
+        let note = try await library.add("text to summarize")
+        library.state.lockHistory()
+        library.state.runAIAction(.summarize, on: note)
+        #expect(!library.state.showsAI)
+    }
 }

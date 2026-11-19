@@ -125,6 +125,7 @@ struct CardCopyActionsTests {
     @Test("a token's Decode JWT asks first, reads header and payload, and Copy Payload closes it")
     func whenDecodingAToken_thenItAsksAndIsHeldInMemory() async throws {
         let library = try await MobileTestLibrary()
+        library.state.isActivated = true
         let token = Self.token(#"{"sub":"42","name":"Ada"}"#)
         try await library.service.ingest(#require(ClipCapture.text(token)))
         let item = try await library.settle()
@@ -151,6 +152,7 @@ struct CardCopyActionsTests {
             coversWhileCaptured: false
         )
         let library = try await MobileTestLibrary(reveal: reveal)
+        library.state.isActivated = true
         try await library.service.ingest(#require(ClipCapture.text(Self.token(#"{"sub":"42"}"#))))
         let item = try await library.settle()
 

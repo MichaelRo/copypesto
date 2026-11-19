@@ -56,7 +56,9 @@ struct SmartCollectionEditingTests {
     @Test("the words say what a rule means for a pinned and for an other-device rule")
     func whenAnOperatorIsNamed_thenItIsPlainForItsField() {
         #expect(SmartRuleWords.title(of: .isTrue, field: .isPinned) == "is pinned")
-        #expect(SmartRuleWords.title(of: .isTrue, field: .isRemote) == "came from another device")
+        #expect(SmartRuleWords.title(of: .isTrue, field: .isRemote) == "another device")
+        #expect(SmartRuleWords.title(of: .isFalse, field: .isRemote) == "this device")
+        #expect(SmartRuleWords.title(of: .isRemote) == "Copied on")
         #expect(SmartRuleWords.ageTitle(seconds: 86_400) == "A day")
         #expect(!SmartRuleWords.ageTitle(seconds: 5400).isEmpty)
     }
@@ -152,5 +154,75 @@ struct SmartCollectionEditingTests {
         let board = try #require(library.state.addCollection(named: "Trip", existing: []))
         #expect(!board.isSmart && board.smartPredicateData == nil)
         #expect(!CollectionDraft(board).isSmart)
+    }
+
+    @Test("removing a rule removes that rule, wherever it is, and the others keep their ids and their values")
+    func whenARuleIsRemoved_thenTheRightOneGoes() {
+        var draft = SmartRulesDraft.starter
+        let group = draft.groupIDs[0]
+        draft.addRule(to: group)
+        draft.addRule(to: group)
+        let ids = draft.ruleIDs(in: group)
+        draft.setRule(ids[0], to: SmartRulesDraft.rule(for: .isPinned))
+        draft.setRule(ids[1], to: SmartRulesDraft.rule(for: .previewText))
+        draft.setRule(ids[2], to: SmartRulesDraft.rule(for: .tags))
+
+        draft.removeRule(ids[1])
+        #expect(draft.ruleIDs(in: group) == [ids[0], ids[2]])
+        #expect(draft.rule(ids[0])?.field == .isPinned)
+        #expect(draft.rule(ids[2])?.field == .tags)
+        #expect(draft.rule(ids[1]) == nil)
+
+        draft.removeRule(ids[2])
+        #expect(draft.ruleIDs(in: group) == [ids[0]])
+        draft.removeRule(ids[0])
+        #expect(draft.ruleIDs(in: group) == [ids[0]], "a group keeps its last rule")
+        #expect(draft.ruleSet.groups[0].rules.map(\.field) == [.isPinned])
+    }
+
+    @Test("removing a group removes that group and keeps the last one; new groups and rules get ids of their own")
+    func whenAGroupIsRemoved_thenTheRightOneGoes() {
+        var draft = SmartRulesDraft.starter
+        draft.addGroup()
+        draft.addGroup()
+        let groups = draft.groupIDs
+        #expect(Set(groups).count == 3)
+        draft.setRule(draft.ruleIDs(in: groups[1])[0], to: SmartRulesDraft.rule(for: .isRemote))
+        draft.removeGroup(groups[0])
+        #expect(draft.groupIDs == [groups[1], groups[2]])
+        #expect(draft.ruleSet.groups[0].rules[0].field == .isRemote)
+        draft.removeGroup(groups[2])
+        draft.removeGroup(groups[1])
+        #expect(draft.groupIDs == [groups[1]])
+    }
+
+    @Test("a rule set the editor reads keeps its own shape, including one with no groups")
+    func whenThereAreNoGroups_thenTheRulesAreReadable() throws {
+        let empty = PredicateRuleSet(combinator: .and, groups: [])
+        let data = try SmartCollectionPredicate.encodeRuleSet(empty)
+        let draft = try #require(SmartRulesDraft(data: data))
+        #expect(draft.groupIDs.isEmpty)
+        #expect(draft.isComplete)
+    }
+
+    @Test("a rename leaves the stored rules byte for byte as they were, even in an older format")
+    func whenOnlyTheNameChanges_thenTheRulesAreNotWrittenAgain() async throws {
+        let library = try await MobileTestLibrary()
+        let v1 = try SmartCollectionPredicate.encode(PredicateRule(field: .type, op: .equals, value: .string("url")))
+        let context = try #require(library.state.historyContainer?.mainContext)
+        let board = Pinboard(
+            name: "Old", symbolName: "folder", colorHex: "3DAF60", sortOrder: 0, isSmart: true,
+            smartPredicateData: v1
+        )
+        context.insert(board)
+        try context.save()
+
+        var draft = CollectionDraft(board)
+        #expect(draft.rules != nil)
+        draft.name = "Renamed"
+        library.state.updateCollection(board, to: draft, existing: [board])
+
+        #expect(board.name == "Renamed")
+        #expect(board.smartPredicateData == v1)
     }
 }

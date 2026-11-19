@@ -29,7 +29,7 @@ struct ClipDetailView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
-            .clipResultSheets(.detail)
+            .clipResultSheets(.detail(isSheet: isSheet))
             #if DEBUG
                 .overlay(alignment: .top) {
                     UITestLayout.swapControl(

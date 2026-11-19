@@ -11,7 +11,6 @@ final class Pass3UITests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         continueAfterFailure = false
-        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
     }
 
     private func launch(environment: [String: String] = [:]) -> XCUIApplication {
@@ -42,7 +41,8 @@ final class Pass3UITests: XCTestCase {
         add(attachment)
     }
 
-    func test_whenAHiddenTokenIsDecoded_thenItsPayloadShowsAndCopyPayloadClosesTheSheet() {
+    func test_whenAHiddenTokenIsDecoded_thenItsPayloadShowsAndCopyPayloadClosesTheSheet() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch(environment: [
             "PESTO_UITEST_JWT": "1", "PESTO_UITEST_DEFAULT_uitestAuthenticationGranted": "true"
         ])
@@ -69,7 +69,8 @@ final class Pass3UITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Ada Lovelace"].exists, "the card stays hidden")
     }
 
-    func test_whenAHiddenTokenIsDecodedWithoutAuthentication_thenNothingOpens() {
+    func test_whenAHiddenTokenIsDecodedWithoutAuthentication_thenNothingOpens() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch(environment: [
             "PESTO_UITEST_JWT": "1", "PESTO_UITEST_DEFAULT_uitestAuthenticationGranted": "false"
         ])
@@ -82,7 +83,8 @@ final class Pass3UITests: XCTestCase {
         XCTAssertFalse(element(MobileAccessibilityID.decodeJWTSheet, in: app).waitForExistence(timeout: 2))
     }
 
-    func test_whenAnAIActionRuns_thenItsAnswerIsInASheetWithCopy() {
+    func test_whenAnAIActionRuns_thenItsAnswerIsInASheetWithCopy() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch(environment: ["PESTO_UITEST_AI_FIXTURE": "1"])
         let note = card(containing: "Packing list", in: app)
         XCTAssertTrue(note.waitForExistence(timeout: timeout))
@@ -103,7 +105,8 @@ final class Pass3UITests: XCTestCase {
         XCTAssertTrue(element(MobileAccessibilityID.aiSheet, in: app).waitForNonExistence(timeout: timeout))
     }
 
-    func test_whenTheModelIsOff_thenAIActionsAreGreyedOutWithTheReason() {
+    func test_whenTheModelIsOff_thenAIActionsAreGreyedOutWithTheReason() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch(environment: [
             "PESTO_UITEST_AI_FIXTURE": "1", "PESTO_UITEST_DEFAULT_appleIntelligenceEnabled": "false"
         ])
@@ -123,7 +126,8 @@ final class Pass3UITests: XCTestCase {
         )
     }
 
-    func test_whenAskIsChosen_thenTheSentenceBecomesFilters() {
+    func test_whenAskIsChosen_thenTheSentenceBecomesFilters() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch()
         XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout))
         let field = app.searchFields.firstMatch
@@ -145,7 +149,8 @@ final class Pass3UITests: XCTestCase {
         XCTAssertFalse(asked.waitForExistence(timeout: 1), "choosing the chip takes the filters off")
     }
 
-    func test_whenASmartCollectionIsMade_thenItFillsItselfFromItsRule() {
+    func test_whenASmartCollectionIsMade_thenItFillsItselfFromItsRule() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch()
         XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout))
         app.buttons["New Collection"].firstMatch.tap()
@@ -164,5 +169,62 @@ final class Pass3UITests: XCTestCase {
         XCTAssertTrue(chip.waitForExistence(timeout: timeout))
         XCTAssertTrue(card(containing: "copypesto.net", in: app).waitForExistence(timeout: timeout))
         XCTAssertFalse(card(containing: "Packing list", in: app).exists, "the rule leaves the notes out")
+    }
+
+    func test_whenARuleIsRemoved_thenTheOtherRuleKeepsItsValue() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
+        let app = launch()
+        XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout))
+        app.buttons["New Collection"].firstMatch.tap()
+        XCTAssertTrue(element(MobileAccessibilityID.collectionNameField, in: app).waitForExistence(timeout: timeout))
+        app.buttons["Smart"].firstMatch.tap()
+        let values = app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.smartRuleValue)
+        XCTAssertTrue(values.firstMatch.waitForExistence(timeout: timeout))
+        values.firstMatch.tap()
+        app.buttons["Link"].firstMatch.tap()
+        element(MobileAccessibilityID.smartAddRule, in: app).tap()
+        XCTAssertEqual(values.count, 2)
+
+        app.buttons["Remove Rule"].firstMatch.tap()
+
+        XCTAssertEqual(values.count, 1, "one rule is left")
+        let left = values.firstMatch
+        XCTAssertTrue(
+            left.label.contains("Text") || (left.value as? String)?.contains("Text") == true,
+            "the first rule, Link, went and the second, Text, stayed: \(left.label)"
+        )
+        XCTAssertFalse(app.buttons["Remove Rule"].exists, "a group keeps its last rule")
+    }
+
+    func test_onIPad_anAIActionFromTheInlineDetailShowsOneSheetWithItsAnswer() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad, "the iPad pass")
+        XCUIDevice.shared.orientation = .landscapeLeft
+        addTeardownBlock { @MainActor in XCUIDevice.shared.orientation = .portrait }
+        let app = launch(environment: ["PESTO_UITEST_AI_FIXTURE": "1"])
+        let note = card(containing: "Packing list", in: app)
+        XCTAssertTrue(note.waitForExistence(timeout: timeout))
+        note.press(forDuration: 1.0)
+        let details = app.buttons["Edit Details"]
+        XCTAssertTrue(details.waitForExistence(timeout: timeout))
+        details.tap()
+        XCTAssertTrue(element(MobileAccessibilityID.clipDetail, in: app).waitForExistence(timeout: timeout))
+
+        app.buttons["More"].firstMatch.tap()
+        let menu = app.buttons["AI Actions"]
+        XCTAssertTrue(menu.waitForExistence(timeout: timeout))
+        menu.tap()
+        let summarize = app.buttons["Summarize"]
+        XCTAssertTrue(summarize.waitForExistence(timeout: timeout))
+        summarize.tap()
+
+        let answer = element(MobileAccessibilityID.aiAnswer, in: app)
+        XCTAssertTrue(answer.waitForExistence(timeout: timeout), "the answer opens")
+        XCTAssertTrue(answer.label.contains("Summary:"), answer.label)
+        XCTAssertEqual(
+            app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.aiSheet).count, 1,
+            "one sheet, not one from the library and one from the inspector"
+        )
+        element(MobileAccessibilityID.aiDone, in: app).tap()
+        XCTAssertTrue(element(MobileAccessibilityID.aiSheet, in: app).waitForNonExistence(timeout: timeout))
     }
 }

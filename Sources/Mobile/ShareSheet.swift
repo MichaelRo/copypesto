@@ -8,6 +8,11 @@ struct ClipShare: Identifiable {
     let id = UUID()
     let items: [Any]
 
+    /// The files made for this share, removed when the share sheet is done.
+    var files: [URL] {
+        items.compactMap { $0 as? URL }.filter { ShareFile.owns($0) }
+    }
+
     init(_ content: ClipContent) {
         items = switch content {
         case let .text(text): [text]
@@ -30,9 +35,12 @@ struct ClipShare: Identifiable {
 
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
+    var files: [URL] = []
 
     func makeUIViewController(context _: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.completionWithItemsHandler = { _, _, _, _ in files.forEach(ShareFile.remove) }
+        return controller
     }
 
     func updateUIViewController(_: UIActivityViewController, context _: Context) {}

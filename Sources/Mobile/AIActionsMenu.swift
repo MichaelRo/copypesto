@@ -24,8 +24,16 @@ struct AIActionsMenu: View {
 
     private func rows(_ offer: CardAIActions.Offer) -> some View {
         ForEach(offer.actions, id: \.self) { action in
-            Button(action.rawValue, systemImage: action.symbolName) { appState.runAIAction(action, on: item) }
-                .disabled(!offer.isEnabled)
+            Button {
+                appState.runAIAction(action, on: item)
+            } label: {
+                Label {
+                    Text(action.title)
+                } icon: {
+                    Image(systemName: action.symbolName)
+                }
+            }
+            .disabled(!offer.isEnabled)
         }
     }
 }

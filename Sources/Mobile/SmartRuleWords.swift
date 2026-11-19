@@ -33,7 +33,7 @@ enum SmartRuleWords {
         case .previewText: String(localized: "Text")
         case .timestamp: String(localized: "Copied")
         case .isPinned: String(localized: "Pinned")
-        case .isRemote: String(localized: "Other Device")
+        case .isRemote: String(localized: "Copied on")
         case .detectedLanguage: String(localized: "Language")
         case .sensitivity: String(localized: "Hidden Clip")
         case .tags: String(localized: "Tag")
@@ -52,12 +52,12 @@ enum SmartRuleWords {
         case .newerThanSeconds: String(localized: "more recently than")
         case .isTrue: remoteOrPinned(
                 field,
-                remote: String(localized: "came from another device"),
+                remote: String(localized: "another device"),
                 pinned: String(localized: "is pinned")
             )
         case .isFalse:
             remoteOrPinned(
-                field, remote: String(localized: "was copied on this device"),
+                field, remote: String(localized: "this device"),
                 pinned: String(localized: "is not pinned")
             )
         }

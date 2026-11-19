@@ -55,7 +55,7 @@ struct CollectionDraft: Equatable {
             || !CollectionPalette.isSame(colorHex, board.colorHex) || rulesDiffer(from: board)
     }
 
-    private func rulesDiffer(from board: Pinboard) -> Bool {
+    func rulesDiffer(from board: Pinboard) -> Bool {
         guard board.isSmart, isSmart, let rules else { return false }
         return rules != SmartRulesDraft(data: board.smartPredicateData)
     }

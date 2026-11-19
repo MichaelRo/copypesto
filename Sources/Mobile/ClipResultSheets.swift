@@ -8,7 +8,9 @@ import SwiftUI
 struct ClipResultSheets: ViewModifier {
     enum Host {
         case library
-        case detail
+        /// A clip's detail that is itself a sheet (a compact width). On a regular width the detail is the inspector, a
+        /// column beside the library, and the library presents.
+        case detail(isSheet: Bool)
     }
 
     let host: Host
@@ -19,7 +21,7 @@ struct ClipResultSheets: ViewModifier {
     private var presents: Bool {
         switch host {
         case .library: !(library.openClipID != nil && sizeClass == .compact)
-        case .detail: true
+        case let .detail(isSheet): isSheet
         }
     }
 

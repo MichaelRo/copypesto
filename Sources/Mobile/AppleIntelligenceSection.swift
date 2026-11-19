@@ -28,8 +28,10 @@ struct AppleIntelligenceSection: View {
             Text("Apple Intelligence")
         } footer: {
             Text(
-                "Powers AI Actions, Describe Image and sentence understanding in Ask. It runs on this device with " +
-                    "Apple\u{2019}s on-device model: no account, no key, and nothing you copy is sent anywhere."
+                """
+                Powers AI Actions, Describe Image and sentence understanding in Ask. It runs on this device with \
+                Apple\u{2019}s on-device model: no account, no key, and nothing you copy is sent anywhere.
+                """
             )
         }
     }

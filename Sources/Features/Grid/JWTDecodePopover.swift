@@ -91,7 +91,6 @@ struct JWTDecodePopover: View {
     private func jsonText(_ json: String) -> some View {
         Text(json)
             .font(.system(.caption, design: .monospaced))
-            .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 

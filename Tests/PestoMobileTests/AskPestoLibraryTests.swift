@@ -106,4 +106,34 @@ struct AskPestoLibraryTests {
         #expect(model.isSearching)
         #expect(model.filter.kinds == [.url])
     }
+
+    @MainActor
+    @Test("an answer is applied only to the search it was asked about")
+    func whenTheSearchMovedOn_thenTheAnswerIsDropped() {
+        let answer = AskPestoQuery(keywords: "", types: [.url], range: .today)
+        let model = LibraryModel()
+        model.isSearching = true
+        model.query = "links today"
+        #expect(!model.applyAnswer(answer, to: "links today", isLocked: true))
+        model.query = "links today and more"
+        #expect(!model.applyAnswer(answer, to: "links today", isLocked: false))
+        model.query = "links today"
+        model.isSearching = false
+        #expect(!model.applyAnswer(answer, to: "links today", isLocked: false))
+        #expect(!model.filter.hasAsk)
+
+        model.isSearching = true
+        #expect(model.applyAnswer(answer, to: "links today", isLocked: false))
+        #expect(model.filter.kinds == [.url])
+    }
+
+    @MainActor
+    @Test("closing everything for the lock takes Ask's filters with it, so nothing comes back after the unlock")
+    func whenTheLibraryCloses_thenTheAskedFiltersGo() {
+        let model = LibraryModel()
+        model.apply(AskPestoQuery(keywords: "basil", types: [.url], range: .week))
+        model.closeEverything()
+        #expect(!model.filter.hasAsk && model.filter.kinds.isEmpty)
+        #expect(model.query.isEmpty && !model.isSearching)
+    }
 }

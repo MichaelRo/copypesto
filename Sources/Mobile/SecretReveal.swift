@@ -49,7 +49,11 @@ final class SecretReveal {
         if isContentCovered { shownUnderCover.insert(id) }
     }
 
+    /// Told when the content cover goes up, so what was opened in a sheet from a hidden clip closes with it.
+    @ObservationIgnored var coverWasRaised: (@MainActor () -> Void)?
+
     private func forgetShowsUnlessCovered() {
+        if isContentCovered { coverWasRaised?() }
         if !isContentCovered, !shownUnderCover.isEmpty { shownUnderCover = [] }
     }
 

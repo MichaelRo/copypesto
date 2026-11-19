@@ -22,8 +22,22 @@ enum ShareFile {
         let folder = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try manager.createDirectory(at: folder, withIntermediateDirectories: true)
         let file = folder.appendingPathComponent("Pesto.\(fileExtension)")
-        try data.write(to: file, options: .completeFileProtectionUntilFirstUserAuthentication)
+        try data.write(to: file, options: .completeFileProtection)
         return file
+    }
+
+    /// A shared file is plaintext, so it goes as soon as the share sheet is done with it, and with the lock, a clear,
+    /// leaving the app and the next launch.
+    static func owns(_ file: URL, in root: URL = directory) -> Bool {
+        file.standardizedFileURL.path.hasPrefix(root.standardizedFileURL.path + "/")
+    }
+
+    static func remove(_ file: URL) {
+        try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
+    }
+
+    static func removeAll(in root: URL = directory) {
+        try? FileManager.default.removeItem(at: root)
     }
 
     static func sweep(in root: URL = directory, now: Date = .now) {

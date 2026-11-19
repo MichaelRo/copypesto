@@ -30,7 +30,7 @@ extension MobileAppState {
         CardAIActions.Facts(
             type: item.type, isSecret: item.sensitivityRaw != nil,
             isCovered: secretReveal.concealment(for: item).isConcealed, isFiltered: item.isNSFW,
-            isPending: item.analysisPending, isLocked: isHistoryLockedNow(), availability: aiAvailability(),
+            isPending: item.analysisPending, isLocked: isHistoryLocked, availability: aiAvailability(),
             supportsVision: aiSupportsVision()
         )
     }
@@ -41,6 +41,7 @@ extension MobileAppState {
 
     /// Runs one action on the clip and presents the sheet. A second request replaces the first.
     func runAIAction(_ action: AIAction, on item: ClipboardItem) {
+        guard !isHistoryLockedNow() else { return }
         let offer = aiOffer(for: item)
         guard offer.isEnabled, offer.actions.contains(action) else { return }
         aiTask?.cancel()
@@ -106,7 +107,7 @@ extension MobileAppState {
     }
 
     static func announcement(for result: AIResult) -> String {
-        let name = result.action.rawValue
+        let name = String(localized: result.action.title)
         if result.isError { return String(localized: "\(name) failed. \(result.result)") }
         let note = result.coverage.flatMap { $0.isPartial ? " " + $0.note : nil } ?? ""
         return String(localized: "\(name) result: \(result.result)") + note

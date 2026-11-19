@@ -62,6 +62,7 @@ extension MobileAppState {
     private func forgetUnlockedState() {
         showsWelcome = false
         syncSetUpRequested = false
+        ShareFile.removeAll()
         secretReveal.hideAll()
         decodedJWT = nil
         closeAI()

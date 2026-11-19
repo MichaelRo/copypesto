@@ -8,8 +8,9 @@ import Testing
 struct SmartRuleWordingTests {
     @Test("the device rule says where the clip came from, not that it is pinned")
     func whenTheFieldIsFromAnotherDevice_thenTheConditionNamesTheDevice() {
-        #expect(PredicateRule.Operator.isTrue.displayName(for: .isRemote) == "came from another device")
-        #expect(PredicateRule.Operator.isFalse.displayName(for: .isRemote) == "was copied on this Mac")
+        #expect(PredicateRule.Field.isRemote.displayName == "Copied on")
+        #expect(PredicateRule.Operator.isTrue.displayName(for: .isRemote) == "another device")
+        #expect(PredicateRule.Operator.isFalse.displayName(for: .isRemote) == "this Mac")
     }
 
     @Test("the pinned rule and the other conditions keep their words")

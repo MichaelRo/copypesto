@@ -22,7 +22,7 @@ struct LibraryPresentations: ViewModifier {
             .sheet(isPresented: $library.showsSettings, onDismiss: showWelcomeIfAsked) { SettingsSheet() }
             .sheet(isPresented: $library.isComposing) { NewNoteView() }
             .sheet(item: $library.sharing) { share in
-                ShareSheet(items: share.items).presentationDetents([.medium, .large])
+                ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])
             }
             .sheet(isPresented: $library.isNamingCollection) {
                 CollectionEditorView(board: nil).presentationDetents([.medium, .large])

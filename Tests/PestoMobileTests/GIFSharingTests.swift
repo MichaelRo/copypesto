@@ -50,4 +50,49 @@ struct GIFSharingTests {
         #expect(FileManager.default.fileExists(atPath: fresh.path))
         #expect(fresh.lastPathComponent == "Pesto.gif")
     }
+
+    @Test(
+        "a share file is sealed by the device's file protection, owned by the share folder, and removed with its folder"
+    )
+    func whenAFileIsWritten_thenItIsProtectedAndRemovable() throws {
+        let root = temporaryRoot()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = try ShareFile.write(Self.gif, fileExtension: "gif", in: root)
+        let protection = try FileManager.default
+            .attributesOfItem(atPath: file.path)[.protectionKey] as? FileProtectionType
+        #expect(protection == .complete || protection == nil, "the simulator may not report one")
+        #expect(ShareFile.owns(file, in: root))
+        #expect(!ShareFile.owns(URL(fileURLWithPath: "/tmp/other.gif"), in: root))
+        ShareFile.remove(file)
+        #expect(!FileManager.default.fileExists(atPath: file.deletingLastPathComponent().path))
+    }
+
+    @Test("a share's files are the ones in the share folder, and only those")
+    func whenItemsAreShared_thenOnlyOurFilesAreListed() {
+        let share = ClipShare(.picture(Self.gif, typeIdentifier: UTType.gif.identifier))
+        defer { ShareFile.removeAll() }
+        #expect(share.files.count == 1)
+        #expect(ClipShare(.text("words")).files.isEmpty)
+    }
+
+    @Test("locking the history and Clear History take every share file away")
+    @MainActor
+    func whenTheHistoryLocksOrClears_thenTheShareFolderIsEmpty() async throws {
+        let lock = MobileHistoryLock(
+            authenticator: StubUserAuthenticator(available: true, grants: true), grace: AuthenticationGrace(),
+            isEnabled: { true }
+        )
+        let library = try await MobileTestLibrary(lock: lock)
+        _ = try ShareFile.write(Self.gif, fileExtension: "gif")
+        library.state.lockHistory()
+        #expect(!FileManager.default.fileExists(atPath: ShareFile.directory.path))
+
+        _ = try ShareFile.write(Self.gif, fileExtension: "gif")
+        await library.state.clearHistory()
+        #expect(!FileManager.default.fileExists(atPath: ShareFile.directory.path))
+
+        _ = try ShareFile.write(Self.gif, fileExtension: "gif")
+        library.state.didLeaveForeground()
+        #expect(!FileManager.default.fileExists(atPath: ShareFile.directory.path))
+    }
 }

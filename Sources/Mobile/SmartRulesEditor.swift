@@ -9,7 +9,7 @@ struct SmartRulesEditor: View {
     @Binding var draft: SmartRulesDraft
 
     var body: some View {
-        if draft.ruleSet.groups.count > 1 {
+        if draft.groupIDs.count > 1 {
             Section {
                 Picker("Match", selection: $draft.ruleSet.combinator) {
                     Text("All groups").tag(PredicateRuleSet.Combinator.and)
@@ -18,53 +18,49 @@ struct SmartRulesEditor: View {
                 .accessibilityIdentifier(MobileAccessibilityID.smartGroupsMatch)
             }
         }
-        ForEach(draft.ruleSet.groups.indices, id: \.self) { index in
-            groupSection(index)
+        ForEach(Array(draft.groupIDs.enumerated()), id: \.element) { position, group in
+            groupSection(group, position: position)
         }
         Section {
-            Button("Add Group", systemImage: "plus.rectangle.on.rectangle") {
-                draft.ruleSet.groups.append(PredicateRuleSet.Group(
-                    combinator: .and, rules: [SmartRulesDraft.newRule()]
-                ))
-            }
-            .accessibilityIdentifier(MobileAccessibilityID.smartAddGroup)
+            Button("Add Group", systemImage: "plus.rectangle.on.rectangle") { draft.addGroup() }
+                .accessibilityIdentifier(MobileAccessibilityID.smartAddGroup)
         }
     }
 
     @ViewBuilder
-    private func groupSection(_ index: Int) -> some View {
-        let group = $draft.ruleSet.groups[index]
+    private func groupSection(_ group: UUID, position: Int) -> some View {
+        let rules = draft.ruleIDs(in: group)
         Section {
-            if group.wrappedValue.rules.count > 1 {
-                Picker("Match", selection: group.combinator) {
+            if rules.count > 1 {
+                Picker("Match", selection: Binding(
+                    get: { draft.combinator(of: group) }, set: { draft.setCombinator(of: group, to: $0) }
+                )) {
                     Text("All of these").tag(PredicateRuleSet.Combinator.and)
                     Text("Any of these").tag(PredicateRuleSet.Combinator.or)
                 }
             }
-            ForEach(group.wrappedValue.rules.indices, id: \.self) { ruleIndex in
+            ForEach(rules, id: \.self) { id in
                 SmartRuleRow(
-                    rule: group.rules[ruleIndex], fields: draft.fields,
-                    onRemove: group.wrappedValue.rules
-                        .count > 1 ? { group.wrappedValue.rules.remove(at: ruleIndex) } : nil
+                    rule: Binding(
+                        get: { draft.rule(id) ?? SmartRulesDraft.newRule() }, set: { draft.setRule(id, to: $0) }
+                    ),
+                    fields: draft.fields,
+                    onRemove: rules.count > 1 ? { draft.removeRule(id) } : nil
                 )
             }
-            Button("Add Rule", systemImage: "plus") {
-                group.wrappedValue.rules.append(SmartRulesDraft.newRule())
-            }
-            .accessibilityIdentifier(MobileAccessibilityID.smartAddRule)
-            if draft.ruleSet.groups.count > 1 {
-                Button("Remove Group", systemImage: "minus.circle", role: .destructive) {
-                    draft.ruleSet.groups.remove(at: index)
-                }
+            Button("Add Rule", systemImage: "plus") { draft.addRule(to: group) }
+                .accessibilityIdentifier(MobileAccessibilityID.smartAddRule)
+            if draft.groupIDs.count > 1 {
+                Button("Remove Group", systemImage: "minus.circle", role: .destructive) { draft.removeGroup(group) }
             }
         } header: {
-            if index == 0, draft.ruleSet.groups.count == 1 {
+            if position == 0, draft.groupIDs.count == 1 {
                 Text("Rules")
             } else {
-                Text("Group \(index + 1)")
+                Text("Group \(position + 1)")
             }
         } footer: {
-            if index == draft.ruleSet.groups.count - 1 {
+            if position == draft.groupIDs.count - 1 {
                 Text("A smart collection fills itself with the clips that match, and keeps filling as you copy.")
             }
         }

@@ -46,7 +46,8 @@ struct AIResultSheet: View {
 
     private var title: String {
         guard let result = appState.aiResult else { return String(localized: "AI Actions") }
-        return result.isError ? String(localized: "\(result.action.rawValue) failed") : result.action.rawValue
+        let name = String(localized: result.action.title)
+        return result.isError ? String(localized: "\(name) failed") : name
     }
 
     @ViewBuilder

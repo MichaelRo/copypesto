@@ -106,6 +106,7 @@ final class MobileAppState {
         self.secretReveal = secretReveal ?? SecretReveal()
         self.historyLock = historyLock ?? MobileHistoryLock()
         self.clock = clock
+        self.secretReveal.coverWasRaised = { [weak self] in self?.decodedJWT = nil }
     }
 
     isolated deinit {
@@ -143,6 +144,7 @@ final class MobileAppState {
             )
         )
         storageService = service
+        if LaunchMode.current != .hostedTests { ShareFile.removeAll() }
         startQuickInsert(container: container)
         startWidget(container: container)
         launchWork = Task(priority: .utility) {

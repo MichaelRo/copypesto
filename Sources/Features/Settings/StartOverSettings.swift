@@ -39,9 +39,10 @@ struct StartOverSettings: View {
                     .pestoCaption()
                 InfoPopoverButton(
                     "Start over",
-                    message: "Removes every clip, pinned ones too, every collection and every snippet, along with " +
-                        "previews and the last-clip file. Your settings stay. It asks for Touch ID or your " +
-                        "password first."
+                    message: """
+                    Removes every clip, pinned ones too, every collection and every snippet, along with previews and \
+                    the last-clip file. Your settings stay. It asks for Touch ID or your password first.
+                    """
                 )
             }
         }

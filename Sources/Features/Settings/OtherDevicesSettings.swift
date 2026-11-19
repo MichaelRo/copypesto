@@ -16,10 +16,12 @@ struct OtherDevicesSettings: View {
                 Spacer()
                 InfoPopoverButton(
                     "Other devices",
-                    message: "Copies from your iPhone, iPad or another Mac signed in to your Apple Account reach " +
-                        "this Mac through Universal Clipboard. Off, Pesto keeps only what you copy on this Mac; " +
-                        "pasting with \u{2318}V still works. On, they join your history and can be found with " +
-                        "the Other Devices filter. Photos and files copied on another device are not kept."
+                    message: """
+                    Copies from your iPhone, iPad or another Mac signed in to your Apple Account reach this Mac \
+                    through Universal Clipboard. Off, Pesto keeps only what you copy on this Mac; pasting with \
+                    \u{2318}V still works. On, they join your history and can be found with the Other Devices \
+                    filter. Photos and files copied on another device are not kept.
+                    """
                 )
             }
             .settingsRow("Keep copies from other devices")
@@ -29,10 +31,12 @@ struct OtherDevicesSettings: View {
                 Spacer()
                 InfoPopoverButton(
                     "Screen sharing",
-                    message: "Clip contents are covered while a display is mirrored, a known sharing or recording " +
-                        "app is open (Zoom, Teams, FaceTime, Discord, OBS), or a browser shows its " +
-                        "\u{201C}sharing your screen\u{201D} bar. Safari and single-tab shares are not seen: " +
-                        "choose Hide Clip Contents in the menu bar for those."
+                    message: """
+                    Clip contents are covered while a display is mirrored, a known sharing or recording app is open \
+                    (Zoom, Teams, FaceTime, Discord, OBS), or a browser shows its \u{201C}sharing your \
+                    screen\u{201D} bar. Safari and single-tab shares are not seen: choose Hide Clip Contents in the \
+                    menu bar for those.
+                    """
                 )
             }
             .settingsRow("Hide contents during screen sharing")
@@ -43,8 +47,10 @@ struct OtherDevicesSettings: View {
                 Spacer()
                 InfoPopoverButton(
                     "Link previews",
-                    message: "Link previews show a link\u{2019}s title and picture on its card. Pesto has to ask " +
-                        "the website, so the site can see a request from your Mac."
+                    message: """
+                    Link previews show a link\u{2019}s title and picture on its card. Pesto has to ask the website, \
+                    so the site can see a request from your Mac.
+                    """
                 )
             }
             .settingsRow("Load link previews")

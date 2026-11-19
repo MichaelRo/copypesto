@@ -102,10 +102,11 @@ struct GeneralSettings: View {
                         Text(UpdateCheckCaption.text(lastCheck: appState.lastUpdateCheck)).pestoCaption()
                         InfoPopoverButton(
                             title: "Automatic updates",
-                            message: "Pesto asks copypesto.net whether a new version exists. The request carries " +
-                                "Pesto\u{2019}s version and your IP address, and nothing from your clips. When " +
-                                "automatic install is on, a new version installs when Pesto quits; when off, " +
-                                "Pesto asks first."
+                            message: """
+                            Pesto asks copypesto.net whether a new version exists. The request carries \
+                            Pesto\u{2019}s version and your IP address, and nothing from your clips. When automatic \
+                            install is on, a new version installs when Pesto quits; when off, Pesto asks first.
+                            """
                         )
                         Spacer()
                         Button("Check Now") { appState.checkForUpdates?() }
@@ -158,9 +159,11 @@ struct GeneralSettings: View {
                 .pestoCaption()
                 InfoPopoverButton(
                     title: "Shelf options",
-                    message: "In a text field, at-cursor mode shows your latest clips near the caret for the mouse. " +
-                        "Suggestions propose a shortcut or snippet for clips you paste often, or removing unused " +
-                        "shortcuts, using paste counts kept on this Mac."
+                    message: """
+                    In a text field, at-cursor mode shows your latest clips near the caret for the mouse. \
+                    Suggestions propose a shortcut or snippet for clips you paste often, or removing unused \
+                    shortcuts, using paste counts kept on this Mac.
+                    """
                 )
             }
         }
@@ -201,9 +204,11 @@ struct GeneralSettings: View {
                 .pestoCaption()
                 InfoPopoverButton(
                     title: "Copy and paste options",
-                    message: "\u{2318}S on a picture saves it to your chosen folder without asking. Double-press " +
-                        "\u{2318}C is off by default: it watches every \u{2318}C keystroke system-wide and records " +
-                        "only whether \u{2318}C was pressed twice within half a second."
+                    message: """
+                    \u{2318}S on a picture saves it to your chosen folder without asking. Double-press \u{2318}C is \
+                    off by default: it watches every \u{2318}C keystroke system-wide and records only whether \
+                    \u{2318}C was pressed twice within half a second.
+                    """
                 )
             }
         }

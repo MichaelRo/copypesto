@@ -93,8 +93,10 @@ struct CaptureSettings: View {
                     )
                     .foregroundStyle(Color.statusWarning)
                     .help(
-                        "Allow \u{201C}Paste from Other Apps\u{201D} for Pesto in System Settings, " +
-                            "under Privacy & Security, or history stops filling."
+                        """
+                        Allow \u{201C}Paste from Other Apps\u{201D} for Pesto in System Settings, under Privacy & \
+                        Security, or history stops filling.
+                        """
                     )
                 }
                 .settingsRow("Paste access (clipboard permission)")
@@ -104,8 +106,10 @@ struct CaptureSettings: View {
         } footer: {
             if !isAXTrusted {
                 Text(
-                    "Without Accessibility access, Pesto puts the clip on the clipboard and you press " +
-                        "\u{2318}V to paste it."
+                    """
+                    Without Accessibility access, Pesto puts the clip on the clipboard and you press \u{2318}V to \
+                    paste it.
+                    """
                 )
                 .pestoCaption()
             } else {
@@ -186,10 +190,12 @@ struct CaptureSettings: View {
                     .pestoCaption()
                 InfoPopoverButton(
                     "How the timer works",
-                    message: "After you confirm, Pesto does not ask again for this long. With the lock on it is " +
-                        "also how long your history stays open; showing a hidden clip and, with the lock on, " +
-                        "backups and exports use it too. Clearing everything and showing the recovery key always " +
-                        "ask. Locking the screen or the history ends it."
+                    message: """
+                    After you confirm, Pesto does not ask again for this long. With the lock on it is also how long \
+                    your history stays open; showing a hidden clip and, with the lock on, backups and exports use it \
+                    too. Clearing everything and showing the recovery key always ask. Locking the screen or the \
+                    history ends it.
+                    """
                 )
             }
         }
@@ -264,8 +270,10 @@ struct CaptureSettings: View {
 
     /// What Privacy tells about encryption at rest; it must say that some details stay readable (a test checks).
     static let encryptionCaption =
-        "What you copy, its preview, and your titles, notes and tags are encrypted with AES-256-GCM before " +
-        "they are written to disk. The key is kept in this Mac\u{2019}s Keychain and is never sent " +
-        "anywhere. A few details stay readable, such as the app a clip came from, when it was copied, " +
-        "collection names and the masked preview of a secret; the guide lists them all."
+        """
+        What you copy, its preview, and your titles, notes and tags are encrypted with AES-256-GCM \
+        before they are written to disk. The key is kept in this Mac\u{2019}s Keychain and is never sent \
+        anywhere. A few details stay readable, such as the app a clip came from, when it was copied, \
+        collection names and the masked preview of a secret; the guide lists them all.
+        """
 }

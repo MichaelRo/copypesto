@@ -117,8 +117,10 @@ struct SnippetsView: View {
                     InfoPopoverButton(
                         "Remember fill-in values",
                         message: remembersFillIns
-                            ? "A snippet starts with what you typed last time. It is kept with the snippet, " +
-                            "sealed like its text."
+                            ? """
+                            A snippet starts with what you typed last time. It is kept with the snippet, sealed \
+                            like its text.
+                            """
                             : "A snippet starts empty every time. What was remembered is erased."
                     )
                 }

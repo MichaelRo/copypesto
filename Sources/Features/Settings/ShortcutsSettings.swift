@@ -53,10 +53,12 @@ struct ShortcutsSettings: View {
                     .pestoCaption()
                 InfoPopoverButton(
                     "Global shortcuts",
-                    message: "Click a shortcut, then press the new keys. It needs \u{2318}, \u{2325} or \u{2303}, " +
-                        "and Esc cancels. Pesto pauses its own shortcuts while you record, so you can record the " +
-                        "one you have now. A shortcut that shows no keys is off until you record one. " +
-                        "\u{21E7}\u{2318}V is also Paste As in some apps: change it here if it clashes."
+                    message: """
+                    Click a shortcut, then press the new keys. It needs \u{2318}, \u{2325} or \u{2303}, and Esc \
+                    cancels. Pesto pauses its own shortcuts while you record, so you can record the one you have \
+                    now. A shortcut that shows no keys is off until you record one. \u{21E7}\u{2318}V is also Paste \
+                    As in some apps: change it here if it clashes.
+                    """
                 )
             }
         }
@@ -156,8 +158,10 @@ private struct PinnedShortcutsSection: View {
                 Text("Right-click a pinned clip to assign \u{2303}1 to \u{2303}9.").pestoCaption()
                 InfoPopoverButton(
                     "Pinned clip shortcuts",
-                    message: "Right-click a pinned clip and choose a shortcut to paste it from any app with " +
-                        "\u{2303}1 to \u{2303}9. Pesto claims a shortcut only while a clip uses it."
+                    message: """
+                    Right-click a pinned clip and choose a shortcut to paste it from any app with \u{2303}1 to \
+                    \u{2303}9. Pesto claims a shortcut only while a clip uses it.
+                    """
                 )
             }
         }

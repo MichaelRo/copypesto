@@ -39,9 +39,11 @@ struct AppleIntelligenceSettings: View {
                 .pestoCaption()
                 InfoPopoverButton(
                     title: "Apple Intelligence",
-                    message: "Powers Summarize, Translate and Extract, Describe Image, picture screening for the " +
-                        "content filter and sentence understanding in Ask. It runs on this Mac with Apple\u{2019}s " +
-                        "on-device model: no account, no key, and nothing you copy is sent anywhere."
+                    message: """
+                    Powers Summarize, Translate and Extract, Describe Image, picture screening for the content filter \
+                    and sentence understanding in Ask. It runs on this Mac with Apple\u{2019}s on-device model: no \
+                    account, no key, and nothing you copy is sent anywhere.
+                    """
                 )
             }
         }

@@ -26,6 +26,7 @@ extension HostedGlobals {
 
             let window = try #require(editor.window)
             #expect(window.title == "Edit Text")
+            #expect(window.level.rawValue > NSWindow.Level.floating.rawValue)
             #expect(window.identifier?.rawValue == AccessibilityID.textEditWindow)
             #expect(window.styleMask.contains(.resizable))
             #expect(window.styleMask.contains(.titled))

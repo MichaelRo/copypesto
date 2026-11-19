@@ -74,6 +74,9 @@ final class TextEditWindowController {
         // The controller owns this window; the default (true) makes AppKit release it on close as well, and the second
         // release crashes in the next display cycle (NSTouchBarFinder, macOS 27).
         window.isReleasedWhenClosed = false
+        // Keep Edit Text above the floating Pinned window (.floating) so editing a clip from the floating window
+        // never opens behind it.
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue + 1)
         window.title = String(localized: "Edit Text")
         window.identifier = NSUserInterfaceItemIdentifier(AccessibilityID.textEditWindow)
         window.contentMinSize = NSSize(width: 360, height: 220)

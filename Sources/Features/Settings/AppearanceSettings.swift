@@ -116,8 +116,9 @@ struct AppearanceSettings: View {
                                 "Shelf surface",
                                 message: reduceTransparency
                                     ? "Reduce Transparency is on in System Settings, so the shelf is solid."
-                                    : "Glass shows a little of your desktop. Solid is plain and the same on every " +
-                                    "desktop."
+                                    : """
+                                    Glass shows a little of your desktop. Solid is plain and the same on every desktop.
+                                    """
                             )
                         }
                         PreviewPicker(
@@ -144,8 +145,10 @@ struct AppearanceSettings: View {
                             Text("Shelf position")
                             InfoPopoverButton(
                                 "Shelf position",
-                                message: "Bottom rests on the Dock. Top hangs from the menu bar, below the notch if " +
-                                    "your Mac has one."
+                                message: """
+                                Bottom rests on the Dock. Top hangs from the menu bar, below the notch if your Mac \
+                                has one.
+                                """
                             )
                         }
                         PreviewPicker(

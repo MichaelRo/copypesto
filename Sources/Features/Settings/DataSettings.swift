@@ -38,11 +38,7 @@ struct DataSettings: View {
             fileRow(
                 "Text history",
                 caption: "JSON previews (secrets masked, no pictures).",
-                info: (
-                    "Text history",
-                    "A JSON file of your text, code, link and color clips. Not encrypted: secrets are " +
-                        "masked, pictures and files are left out, and an import skips clips you already have."
-                ),
+                info: DataImportInfo.textHistory,
                 messages: [.exportHistory, .importHistory]
             ) {
                 Button("Import\u{2026}", action: importHistory)
@@ -56,11 +52,7 @@ struct DataSettings: View {
             fileRow(
                 "Another app\u{2019}s library",
                 caption: "Clips or snippets from another app (read-only).",
-                info: (
-                    "Another app\u{2019}s library",
-                    "Clips from another clipboard app, or snippets from a Raycast export. Pesto reads a " +
-                        "copy and never changes the original. Your own clips stay."
-                ),
+                info: DataImportInfo.otherLibrary,
                 messages: [.importPaste, .importSnippets]
             ) {
                 Menu("Import\u{2026}") {
@@ -423,5 +415,27 @@ struct DataSettings: View {
         panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
         return panel.runModal() == .OK ? panel.url : nil
+    }
+}
+
+private enum DataImportInfo {
+    static var textHistory: (title: LocalizedStringKey, message: LocalizedStringKey) {
+        (
+            "Text history",
+            """
+            A JSON file of your text, code, link and color clips. Not encrypted: secrets are \
+            masked, pictures and files are left out, and an import skips clips you already have.
+            """
+        )
+    }
+
+    static var otherLibrary: (title: LocalizedStringKey, message: LocalizedStringKey) {
+        (
+            "Another app\u{2019}s library",
+            """
+            Clips from another clipboard app, or snippets from a Raycast export. Pesto reads a \
+            copy and never changes the original. Your own clips stay.
+            """
+        )
     }
 }

@@ -13,7 +13,9 @@ struct RecentClipsWidget: Widget {
             RecentClipsView(entry: entry)
         }
         .configurationDisplayName("Recent Clips")
-        .description("Your newest clips as Pesto cards, ready to copy. Clips with secrets never appear.")
+        .description(
+            "Your newest clips, pinned clips or a collection as Pesto cards. Clips with secrets never appear."
+        )
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

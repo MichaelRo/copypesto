@@ -142,6 +142,55 @@ struct WidgetRenderingTests {
         )
     }
 
+    @Test("a widget set to a collection draws its clips, its empty state and Choose a collection, in every family")
+    func whenSetToACollection_thenItsStatesRender() throws {
+        let full = try snapshot()
+        let only = WidgetClip(id: UUID(), kind: .text, text: "Ana's number: call after six", date: now - 600)
+        let work = WidgetCollection(id: UUID(), name: "Work", symbolName: "briefcase", colorHex: "#2F8B4C")
+        let links = WidgetCollection(
+            id: UUID(), name: "Links", symbolName: "link", colorHex: "#1E5AA8", isSmart: true
+        )
+        let empty = WidgetCollection(id: UUID(), name: "Later", symbolName: "clock", colorHex: "#8A4F16")
+        let snapshot = WidgetSnapshot(
+            createdAt: now, theme: .brand, clips: full.clips, pinned: full.pinned, collections: [work, links, empty],
+            collectionClipIDs: [work.id: [only.id, full.clips[1].id, full.clips[3].id], links.id: [], empty.id: []],
+            collectionClips: [only]
+        )
+        let cases: [String: (source: WidgetClipSource, state: WidgetContent.State)] = [
+            "collection": (.collection(work.id), .clips), "collection-empty": (.collection(empty.id), .empty),
+            "collection-smart-empty": (.collection(links.id), .empty),
+            "collection-unchosen": (.collection(nil), .noCollection),
+            "collection-deleted": (.collection(UUID()), .noCollection)
+        ]
+        for (name, (source, state)) in cases {
+            for size in WidgetSize.allCases {
+                #expect(WidgetContent(snapshot: snapshot, size: size, source: source).state == state, "\(name)")
+                for dark in [false, true] {
+                    let label = "\(size)-\(name)-\(dark ? "dark" : "light")"
+                    let image = try render(
+                        RecentClipsEntry(date: now, snapshot: snapshot, source: source), size, dark: dark, name: label
+                    )
+                    let frame = try #require(Self.sizes[size])
+                    #expect(image.size.width == frame.width + 24, "\(label)")
+                }
+            }
+        }
+        let shown = WidgetContent(snapshot: snapshot, size: .large, source: .collection(work.id))
+        #expect(shown.clips.map(\.text) == [
+            "Ana's number: call after six",
+            "https://copypesto.net/guide/sync",
+            "Basil on the sill"
+        ])
+        let timeline = RecentClipsProvider.timeline(snapshot: snapshot, now: now, source: .collection(work.id))
+        #expect(timeline.entries.allSatisfy { $0.source == .collection(work.id) })
+
+        let entity = WidgetCollectionEntity(work)
+        #expect(RecentClipsConfiguration(tapAction: .copy, source: .collection, collection: entity).clipSource
+            == .collection(work.id))
+        #expect(RecentClipsConfiguration(tapAction: .copy, source: .collection).clipSource == .collection(nil))
+        #expect(RecentClipsConfiguration(tapAction: .copy, source: .pinned, collection: entity).clipSource == .pinned)
+    }
+
     @Test("the timeline is one opened snapshot with an entry each time an age changes, and none to wait for when empty")
     func whenTheTimelineIsMade_thenItFollowsTheAges() throws {
         let timeline = try RecentClipsProvider.timeline(snapshot: snapshot(), now: now)

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import Foundation
 
-/// What the app keeps ready for its Recent Clips widget (ADR 0052, 0059), sealed in the app group: the newest clips that
-/// may be shown outside Pesto, the collections a widget may be set to and their clips (ADR 0060), and the theme's
+/// What the app keeps ready for its Recent Clips widget (ADR 0052, 0059), sealed in the app group: the newest clips
+/// that may be shown outside Pesto, the collections a widget may be set to and their clips (ADR 0060), and the theme's
 /// colors, which the widget cannot read from the app's settings.
 public struct WidgetSnapshot: Codable, Equatable, Sendable {
     public struct Theme: Codable, Equatable, Sendable {

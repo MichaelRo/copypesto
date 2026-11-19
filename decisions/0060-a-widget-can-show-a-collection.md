@@ -23,8 +23,10 @@ the snapshot, under the same rules as the clips already there.
   `collectionClipIDs`, each collection's clip ids in its order; and `collectionClips`, the clips a collection shows
   that neither Recent nor Pinned holds, each once. `clips` and `pinned` are unchanged, so Recent and Pinned show
   exactly what they did.
-- **Which clips** (`WidgetSnapshotSelection.members`): a plain collection's members (`collectionID`) in
-  `CollectionOrder.sorted` (the hand order, then first copied, newest first); a smart collection's matches by its
+- **Which collections**: the first 24 by `sortOrder` alone, as the apps' own collection lists sort them, so the cap
+  leaves out the ones the person sees last.
+- **Which clips** (`WidgetSnapshotSelection.members`): a plain collection's newest `collectionScanLimit` (300) members
+  (`collectionID`, by last use) in `CollectionOrder.sorted` (the hand order, then first copied, newest first); a smart collection's matches by its
   `PredicateRuleSet` among the newest `smartScanLimit` (300) clips, newest first, and none when its rules do not decode
   or compile. Each keeps at most `maxClips` (8) that `ShortcutClipSearch.isOfferedOutsidePesto` allows: never a secret,
   a clip being judged, a flagged clip or one that expires. Each clip is read as ADR 0052 says; a collection's clip
@@ -46,9 +48,13 @@ the snapshot, under the same rules as the clips already there.
 ## Consequences
 - What sits outside the store while a widget is installed now also holds the first 24 collections' names, symbols and
   colors, and up to 192 more previews of clips that may leave Pesto, sealed as before; at most 1.5 MB.
-- A plain collection's members are all fetched and opened for their hand order on every write (a collection of
-  thousands costs a metadata read each); a smart collection sees only the newest 300 clips, so an old match may be
-  missing from its widget while Pesto shows it.
+- Both windows bound a rewrite's cost, which runs a second after every save while a widget is installed. A plain
+  collection orders only its newest 300 members, so a clip placed by hand but older than those is missing from its
+  widget while Pesto shows it; a smart collection sees only the newest 300 clips, so an old match is missing the same
+  way. Measured in a debug build (`WidgetSnapshotPerformanceTests`, sealed metadata on every clip, none opened yet):
+  one plain collection of 5,000 clips took about 170 ms to choose before the window and 13 ms with it (budget 50 ms);
+  5,000 clips spread over 24 plain collections take about 180 ms either way, since each holds about 208 (budget
+  400 ms). About 100 ms of that is the 24 fetches themselves, not the metadata opens.
 - Whether WidgetKit offers the Collection picker as expected on the Home Screen and the Mac desktop, and drops a
   deleted collection from a widget's settings, is a hand check: the tests cover the snapshot, the states, the drawing and
   the configuration's mapping, not the system picker.

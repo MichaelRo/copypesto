@@ -94,11 +94,11 @@ public enum WidgetSnapshotSelection {
         )
     }
 
-    /// The first collections in Pesto's order, each with the clips that may be shown, in its order: a plain
-    /// collection's members as `CollectionOrder` lists them, a smart one's matches among the newest
-    /// `smartScanLimit` clips, newest first.
+    /// The first collections by `sortOrder` (as Pesto's own lists sort them), each with the clips that may be shown, in
+    /// its order: a plain collection's newest `collectionScanLimit` members as `CollectionOrder` lists them, a smart
+    /// one's matches among the newest `smartScanLimit` clips, newest first.
     public static func members(in context: ModelContext) throws -> [Members] {
-        var boards = FetchDescriptor<Pinboard>(sortBy: [SortDescriptor(\.sortOrder), SortDescriptor(\.name)])
+        var boards = FetchDescriptor<Pinboard>(sortBy: [SortDescriptor(\.sortOrder)])
         boards.fetchLimit = WidgetSnapshotPolicy.maxCollections
         let collections = try context.fetch(boards)
         var window: [ClipboardItem]?
@@ -114,10 +114,13 @@ public enum WidgetSnapshotSelection {
                 items = smartMatches(of: board, in: window ?? [])
             } else {
                 let id = board.id
-                let all = try context.fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate {
-                    $0.collectionID == id
-                }))
-                items = Array(CollectionOrder.sorted(all.filter(isEligible)).prefix(WidgetSnapshotPolicy.maxClips))
+                var newest = FetchDescriptor<ClipboardItem>(
+                    predicate: #Predicate { $0.collectionID == id },
+                    sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+                )
+                newest.fetchLimit = WidgetSnapshotPolicy.collectionScanLimit
+                let window = try context.fetch(newest).filter(isEligible)
+                items = Array(CollectionOrder.sorted(window).prefix(WidgetSnapshotPolicy.maxClips))
             }
             members.append(Members(collection: widgetCollection(board), items: items))
         }

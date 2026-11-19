@@ -96,6 +96,35 @@ struct WidgetSnapshotSelectionTests {
         #expect(!snapshot.allClips.contains { $0.text == "masked" || $0.text == "expiring" })
     }
 
+    @Test("a hand-placed clip among a plain collection's newest members keeps its place; one older than them does not")
+    func whenACollectionIsLarge_thenItsOrderComesFromItsNewestMembers() throws {
+        let clips = try Clips()
+        let big = try clips.collection("Big", order: 0)
+        clips.add("placed long ago", in: big, order: 0)
+        let window = WidgetSnapshotPolicy.collectionScanLimit
+        for index in 0..<window - 1 {
+            clips.add("member \(index)", in: big, order: index == 0 ? 1 : nil)
+        }
+        clips.add("placed first, still recent", in: big, order: 0)
+
+        let shown = try texts(clips.snapshot(), in: big)
+
+        #expect(shown.first == "placed first, still recent")
+        #expect(shown.dropFirst().first == "member 0")
+        #expect(!shown.contains("placed long ago"))
+        #expect(shown.count == WidgetSnapshotPolicy.maxClips)
+    }
+
+    @Test("the collections carried are the first by sortOrder, as Pesto's lists sort them")
+    func whenCollectionsShareASortOrder_thenTheirOrderIsTheStores() throws {
+        let clips = try Clips()
+        try clips.collection("Zebra", order: 1)
+        try clips.collection("Apple", order: 2)
+        try clips.collection("Mango", order: 0)
+
+        #expect(try clips.snapshot().collections.map(\.name) == ["Mango", "Zebra", "Apple"])
+    }
+
     @Test("a smart collection shows the newest clips its rules match, and only those that may be shown")
     func whenASmartCollectionIsCarried_thenItsRulesChoose() throws {
         let clips = try Clips()

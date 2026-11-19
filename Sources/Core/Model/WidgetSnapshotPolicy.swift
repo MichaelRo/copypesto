@@ -29,6 +29,11 @@ public enum WidgetSnapshotPolicy {
     public static let maxSymbolNameCharacters = 60
     /// How many of the newest clips a smart collection's rules are matched against.
     public static let smartScanLimit = 300
+    /// How many of a plain collection's newest members (by last use) are put in its order, so a rewrite never opens
+    /// the sealed metadata of a whole large collection: a clip placed by hand but older than these is not on the
+    /// widget (ADR 0060). Measured (debug build, `WidgetSnapshotPerformanceTests`): one collection of 5,000 clips took
+    /// about 170 ms to choose without it and 13 ms with it.
+    public static let collectionScanLimit = 300
     /// How long the app waits after a change to the history before it writes the snapshot again.
     public static let rewriteDelay: Duration = .seconds(1)
     /// How long a tile that copied in place says Copied.

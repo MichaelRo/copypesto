@@ -275,27 +275,47 @@ struct TwoProcessSyncTests {
             return s?.clips?.contains("after-reset") == true
         }
 
-        _ = try peerA?.send(["op": "copy", "text": "tamper-target"])
         let layout = SyncFolderLayout(root: configA.syncDir)
-        let peerAID = try #require(layout.deviceIDs().first { $0.hasPrefix("peer-a") })
         let peerBID = try #require(layout.deviceIDs().first { $0.hasPrefix("peer-b") })
+        try await verifyTamperedSegmentIsRefused(layout: layout, peerA: peerA, peerB: peerB)
+
+        try verifyRelaunchAndLeave(configA: configA, peerA: &peerA, peerB: peerB, layout: layout, peerBID: peerBID)
+    }
+
+    private func verifyTamperedSegmentIsRefused(
+        layout: SyncFolderLayout, peerA: PeerProcess?, peerB: PeerProcess?
+    ) async throws {
+        // B is paused while A writes the segment to tamper with: a running B (its folder watcher) could read it first
+        // and
+        // never see the damage. Only a segment A wrote after this point is tampered with, never an older one B read.
+        let peerAID = try #require(layout.deviceIDs().first { $0.hasPrefix("peer-a") })
+        func segments() -> [String] {
+            ((try? FileManager.default.contentsOfDirectory(atPath: layout.log(peerAID).path)) ?? [])
+                .filter { $0.hasSuffix(".pestolog") }.sorted()
+        }
+        let before = Set(segments())
+        _ = try peerB?.send(["op": "pause"])
+        _ = try peerA?.send(["op": "copy", "text": "tamper-target"])
         try await pollUntil {
             _ = try peerA?.send(["op": "syncNow"])
-            let files = (try? FileManager.default.contentsOfDirectory(atPath: layout.log(peerAID).path)) ?? []
-            return files.contains { $0.hasSuffix(".pestolog") }
+            return !Set(segments()).subtracting(before).isEmpty
         }
-        let logFiles = try FileManager.default.contentsOfDirectory(atPath: layout.log(peerAID).path)
-            .filter { $0.hasSuffix(".pestolog") }.sorted()
-        let latestSeg = try #require(logFiles.last)
+        let latestSeg = try #require(segments().last { !before.contains($0) })
         let segURL = layout.log(peerAID).appendingPathComponent(latestSeg)
         var segData = try Data(contentsOf: segURL)
         segData[segData.count / 2] ^= 1
         try segData.write(to: segURL)
 
-        let bAfterTamper = try peerB?.send(["op": "syncNow"])
+        let turnOnB = try peerB?.send(["op": "turnOn"])
+        if turnOnB?.flow == "joinOffer" {
+            _ = try peerB?.send(["op": "confirmJoin"])
+        }
+        var bAfterTamper: PeerReply?
+        try await pollUntil {
+            bAfterTamper = try peerB?.send(["op": "syncNow"])
+            return bAfterTamper?.status?.hasPrefix("refused:") == true
+        }
         #expect(bAfterTamper?.status?.hasPrefix("refused:") == true)
-
-        try verifyRelaunchAndLeave(configA: configA, peerA: &peerA, peerB: peerB, layout: layout, peerBID: peerBID)
     }
 
     private func verifyRelaunchAndLeave(

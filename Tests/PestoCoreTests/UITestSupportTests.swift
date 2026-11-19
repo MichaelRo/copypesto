@@ -45,9 +45,12 @@ struct UITestSupportTests {
 
         try UITestCommandQueue.enqueue(.showOverlay, in: directory)
         try UITestCommandQueue.enqueue(.openSettings, in: directory)
+        try UITestCommandQueue.enqueue(.setAppearanceLight, in: directory)
         try UITestCommandQueue.enqueue(.hideOverlay, in: directory)
 
-        #expect(UITestCommandQueue.drain(in: directory) == [.showOverlay, .openSettings, .hideOverlay])
+        #expect(
+            UITestCommandQueue.drain(in: directory) == [.showOverlay, .openSettings, .setAppearanceLight, .hideOverlay]
+        )
     }
 
     @Test("a directory that does not exist yet drains to nothing")

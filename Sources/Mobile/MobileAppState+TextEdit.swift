@@ -47,13 +47,15 @@ extension MobileAppState {
     /// the card a new identity.
     private func drawAgain(_ item: ClipboardItem, after oldHash: String) async {
         let id = item.id
-        let deadline = ContinuousClock.now + .seconds(2)
+        let deadline = ContinuousClock.now + .seconds(5)
         while ContinuousClock.now < deadline, !TextArrival.hasArrived([id: oldHash], current: { _ in
-            item.modelContext == nil || item.isDeleted ? nil : item.contentHash
+            let current = historyStore?.item(for: id) ?? item
+            return current.modelContext == nil || current.isDeleted ? nil : current.contentHash
         }) {
             try? await Task.sleep(for: .milliseconds(20))
         }
         historyStore?.refresh()
         textEdits += 1
+        await Task.yield()
     }
 }

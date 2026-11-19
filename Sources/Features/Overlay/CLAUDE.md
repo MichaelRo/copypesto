@@ -4,7 +4,7 @@ The bottom-shelf overlay panel, floating window, shelf background (solid or glas
 
 ## Accessibility naming
 
-- **Every AX layer must be named, and the repeated names are structural.** `AccessibilityAuditTests` fails on any unnamed node, including ones SwiftUI creates for the `LazyHStack`. Do not remove either half of a name pair (window and hosting view, ScrollView and LazyHStack) without re-running the audit; `test_overlay_namesEachRegionOnce` locks the count.
+- **Every AX layer must be named, and the repeated names are structural.** `AccessibilityAuditTests` fails on any unnamed node, including ones SwiftUI creates for the `LazyHStack`. Do not remove either half of a name pair (window and hosting view, ScrollView and LazyHStack) without re-running the audit; `assertOverlayNamesEachRegionOnce` in `test_shelfSurfaces_passTheAccessibilityAudit` locks the count.
 - **A shared open or closed state that both a SwiftUI view and an AppKit key coordinator set belongs on `AppState`**, not in the view's `@State` (the inline collection creator, `isCreatingCollection`).
 
 ## High-Risk Zones

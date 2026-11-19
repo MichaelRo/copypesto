@@ -18,7 +18,7 @@ struct SettingsStatStrip: View {
             ForEach(stats) { stat in
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: stat.value)
-                        .font(.title3.weight(.semibold))
+                        .font(.headline.monospacedDigit())
                         .foregroundStyle(stat.tint ?? Color.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -27,10 +27,10 @@ struct SettingsStatStrip: View {
                         .pestoQuiet()
                         .lineLimit(1)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.05)))
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.primary.opacity(0.05)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(Color.primary.opacity(0.10), lineWidth: 1)

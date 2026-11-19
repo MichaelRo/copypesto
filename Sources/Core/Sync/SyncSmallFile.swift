@@ -5,13 +5,42 @@ import Foundation
 /// read through this, so a huge file that someone put in the shared folder is refused before it is read, instead of
 /// being loaded whole.
 enum SyncSmallFile {
+    struct UbiquitousStatus {
+        let isUbiquitousItem: Bool
+        let downloadingStatus: URLUbiquitousItemDownloadingStatus?
+    }
+
     static let maxBytes = 1 << 20
+
+    static func defaultUbiquitousStatus(_ url: URL) -> UbiquitousStatus? {
+        guard let values = try? url.resourceValues(forKeys: [
+            .isUbiquitousItemKey,
+            .ubiquitousItemDownloadingStatusKey
+        ]) else { return nil }
+        return UbiquitousStatus(
+            isUbiquitousItem: values.isUbiquitousItem == true,
+            downloadingStatus: values.ubiquitousItemDownloadingStatus
+        )
+    }
 
     /// Nil for a file a provider has listed but not downloaded: reading it would wait for the network, on whichever
     /// thread asked. It is fetched in the background and found on a later pass.
-    static func read(_ url: URL, flags: (URL) -> UInt32? = DatalessFile.fileFlags) -> Data? {
+    static func read(
+        _ url: URL,
+        flags: (URL) -> UInt32? = DatalessFile.fileFlags,
+        ubiquitousStatus: (URL) -> UbiquitousStatus? = defaultUbiquitousStatus,
+        startUbiquitousDownload: (URL) -> Void = { try? FileManager.default.startDownloadingUbiquitousItem(at: $0) }
+    )
+        -> Data?
+    {
         if DatalessFile.isDataless(url, flags: flags) {
             DatalessFile.fetchInBackground(url)
+            return nil
+        }
+        if let values = ubiquitousStatus(url), values.isUbiquitousItem,
+           values.downloadingStatus != .current, values.downloadingStatus != .downloaded
+        {
+            startUbiquitousDownload(url)
             return nil
         }
         guard (try? url.resourceValues(forKeys: [.isRegularFileKey]))?.isRegularFile == true,

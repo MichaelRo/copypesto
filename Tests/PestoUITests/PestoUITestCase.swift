@@ -96,8 +96,16 @@ class PestoUITestCase: XCTestCase {
         if suggestionsLive { environment["PESTO_UITEST_SUGGESTIONS_LIVE"] = "1" }
         if updates { environment["PESTO_UITEST_UPDATES"] = "1" }
         if recordsPerfTimeline { environment["PESTO_UITEST_PERF_TIMELINE"] = "1" }
-        let heavySeeds: Set = ["large", "imported", "mixed", "pictures"]
-        let canCacheSeed = !keyLoss && importFixture == nil && heavySeeds.contains(seed)
+        let heavySeeds: Set = ["basic", "large", "imported", "mixed", "pictures"]
+        let canCacheSeed = !keyLoss
+            && importFixture == nil
+            && linkStubMillis == nil
+            && !aiFixture
+            && !realDevice
+            && !suggestionsLive
+            && !updates
+            && Self.defaultsAllowSeedCache(defaults)
+            && heavySeeds.contains(seed)
         if canCacheSeed {
             environment["PESTO_UITEST_KEY_SEED"] = "seed-\(seed)"
             restoreCachedSeed(seed)
@@ -106,6 +114,22 @@ class PestoUITestCase: XCTestCase {
         app.launch()
         // The lost-key alert (`keyLoss`) is modal, and the ready marker comes when it is answered.
         if !keyLoss { finishSeedLaunch(seed: seed, canCache: canCacheSeed, timeout: timeout) }
+    }
+
+    private static let seedAffectingDefaults: Set<String> = [
+        "linkPreviewsEnabled",
+        "retentionDays",
+        "retentionMaxItems",
+        "nsfwMode",
+        "ruleStripTracking",
+        "ruleTrimWhitespace",
+        "ruleNormalizeLineEndings",
+        "ruleRemoveDuplicateSpaces",
+        "additionalExcludedBundleIDs"
+    ]
+
+    private static func defaultsAllowSeedCache(_ defaults: [String: String]) -> Bool {
+        defaults.keys.allSatisfy { !seedAffectingDefaults.contains($0) }
     }
 
     private func finishSeedLaunch(seed: String, canCache: Bool, timeout: TimeInterval) {
@@ -144,9 +168,15 @@ class PestoUITestCase: XCTestCase {
               ) else { return }
         let stage = cache.appendingPathExtension("tmp-\(UUID().uuidString.prefix(6))")
         try? fm.createDirectory(at: stage, withIntermediateDirectories: true)
-        let skip: Set<String> = ["commands", "commands.log", "perf-timeline.tsv", UITestSupport.readyFileName]
-        for item in items where !skip.contains(item.lastPathComponent) {
-            try? fm.copyItem(at: item, to: stage.appendingPathComponent(item.lastPathComponent))
+        let skip: Set<String> = [
+            "commands", "commands.log", "perf-timeline.tsv",
+            "paste-log.jsonl", "last-item.json", "screenshots",
+            UITestSupport.readyFileName
+        ]
+        for item in items {
+            let name = item.lastPathComponent
+            guard !skip.contains(name), !name.hasPrefix("defaults") else { continue }
+            try? fm.copyItem(at: item, to: stage.appendingPathComponent(name))
         }
         let srcReady = workDirectory.appendingPathComponent(UITestSupport.readyFileName)
         try? fm.copyItem(at: srcReady, to: stage.appendingPathComponent(UITestSupport.readyFileName))

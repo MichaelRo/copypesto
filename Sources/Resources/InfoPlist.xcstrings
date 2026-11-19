@@ -1,0 +1,66 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesto"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesto"
+          }
+        }
+      }
+    },
+    "NSAccessibilityUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesto uses Accessibility to paste clips directly into the app you were using, and to notice a double ⌘C."
+          }
+        }
+      }
+    },
+    "NSFaceIDUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesto asks for Face ID before it shows your clips when the History Lock is on, and before it shows a hidden clip."
+          }
+        }
+      }
+    },
+    "NSHumanReadableCopyright" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 Michael Roytman. Released under the MIT License."
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pesto saves a picture from your history to Photos when you choose Save to Photos."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

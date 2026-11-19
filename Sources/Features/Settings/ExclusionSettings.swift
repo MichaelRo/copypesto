@@ -46,29 +46,41 @@ struct ExclusionSettings: View {
 
     var body: some View {
         Section {
-            Text("Pesto never captures a copy made in these apps.")
-                .pestoCaption()
-            ForEach(entries) { entry in
-                HStack {
-                    appLabel(entry)
-                    Spacer()
-                    if entry.isBuiltIn {
-                        builtInControl(id: entry.id, name: entry.name)
-                    } else {
-                        if !entry.isInstalled {
-                            Text("Not installed").pestoCaption()
+            ScrollView {
+                LazyVStack(spacing: 6) {
+                    ForEach(entries) { entry in
+                        HStack(spacing: 8) {
+                            appLabel(entry)
+                            Spacer()
+                            if entry.isBuiltIn {
+                                builtInControl(id: entry.id, name: entry.name)
+                            } else {
+                                if !entry.isInstalled {
+                                    Text("Not installed").pestoCaption()
+                                }
+                                Button("Remove") { removeID(entry.id) }
+                                    .controlSize(.small)
+                                    .accessibilityIdentifier(AccessibilityID.removeExcludedApp(entry.id))
+                            }
                         }
-                        Button("Remove") { removeID(entry.id) }
-                            .accessibilityIdentifier(AccessibilityID.removeExcludedApp(entry.id))
                     }
                 }
+                .padding(.vertical, 2)
             }
-            addMenu
+            .frame(height: 92)
             if let message { Text(message).pestoCaption() }
         } header: {
-            Text("App exclusions").settingsRow("App exclusions")
+            HStack {
+                Text("App exclusions").settingsRow("App exclusions")
+                Spacer()
+                addMenu
+            }
         } footer: {
-            Text(footer)
+            HStack(spacing: 6) {
+                Text("Pesto never captures a copy made in these apps.")
+                    .pestoCaption()
+                InfoPopoverButton("About app exclusions", verbatimMessage: footer)
+            }
         }
         .alert("Add an app by bundle ID", isPresented: $enteringBundleID) {
             TextField("com.example.app", text: $newBundleID)
@@ -100,6 +112,7 @@ struct ExclusionSettings: View {
             }
         }
         .buttonStyle(.bordered)
+        .controlSize(.small)
         .accessibilityIdentifier(AccessibilityID.addExcludedAppButton)
     }
 
@@ -150,6 +163,7 @@ struct ExclusionSettings: View {
                 }
             }
             .buttonStyle(.bordered)
+            .controlSize(.small)
             .disabled(appState.authenticationAvailability == .unavailable)
             .help(appState.authenticationAvailability.explanation ?? "")
             .accessibilityIdentifier(AccessibilityID.allowExclusion(app.id))
@@ -160,12 +174,8 @@ struct ExclusionSettings: View {
         HStack(spacing: 8) {
             SourceAppIconView(bundleID: entry.id, appName: entry.name, size: 20)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(entry.name)
-                if entry.name != entry.id {
-                    Text(entry.id).font(.caption2).pestoQuiet()
-                }
-            }
+            Text(entry.name)
+                .help(entry.id)
         }
     }
 

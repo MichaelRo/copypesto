@@ -44,10 +44,6 @@ struct LoginItemToggle: View {
             status = service.status
         }
 
-        if failure == nil, status != .requiresApproval {
-            Text("Pesto opens quietly in the menu bar each time you log in.").pestoCaption()
-        }
-
         if let failure {
             Text(Self.explanation(for: failure, bundlePath: bundlePath))
                 .pestoCaption()

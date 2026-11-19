@@ -309,6 +309,7 @@ struct MobileWidgetTests {
         #expect(try library.state
             .open(#require(URL(string: "pesto://clip/\(shown.id.uuidString)?then=delete"))) == .ignored)
         #expect(try library.state.open(#require(URL(string: "pesto://paste?id=\(shown.id.uuidString)"))) == .ignored)
+        #expect(try library.state.open(#require(URL(string: "pesto://open"))) == .ignored)
         #expect(library.state.linkedClip == before)
     }
 

@@ -5,41 +5,10 @@ import XCTest
 /// The iPhone passes for what the polish round added: editing a clip's text, the appearance handed back to the
 /// system after Dark, a collection's icon and the offer to add what was copied.
 @MainActor
-final class LibraryEditingUITests: XCTestCase {
-    private let timeout: TimeInterval = 15
-
+final class LibraryEditingUITests: MobileUITestCase {
     override func setUp() async throws {
         try await super.setUp()
-        continueAfterFailure = false
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
-    }
-
-    private func launch(environment: [String: String] = [:]) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestMode", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        app.launchEnvironment["PESTO_UITEST_SESSION"] = "mobile-\(UUID().uuidString)"
-        app.launchEnvironment["PESTO_UITEST_SEED"] = "basic"
-        for (key, value) in environment {
-            app.launchEnvironment[key] = value
-        }
-        app.launch()
-        return app
-    }
-
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-    }
-
-    private func card(containing text: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
-            .matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
-    }
-
-    private func capture(_ name: String, _ screenshot: XCUIScreenshot = XCUIScreen.main.screenshot()) {
-        let attachment = XCTAttachment(screenshot: screenshot)
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
     }
 
     /// The relative luminance (0 black, 1 white) of one point of a screenshot, in points.
@@ -67,10 +36,7 @@ final class LibraryEditingUITests: XCTestCase {
         let app = launch()
         let target = card(containing: "Packing list", in: app)
         XCTAssertTrue(target.waitForExistence(timeout: timeout))
-        target.press(forDuration: 1.0)
-        let details = app.buttons["Edit Details"]
-        XCTAssertTrue(details.waitForExistence(timeout: timeout))
-        details.tap()
+        openDetail(of: target, in: app)
 
         let edit = element(MobileAccessibilityID.editTextButton, in: app)
         XCTAssertTrue(edit.waitForExistence(timeout: timeout), "a text clip offers Edit Text")
@@ -82,8 +48,11 @@ final class LibraryEditingUITests: XCTestCase {
         editor.tap()
         editor.typeText(" and sunscreen")
         capture("iphone-text-editing")
-        element(MobileAccessibilityID.saveTextButton, in: app).tap()
+        let save = element(MobileAccessibilityID.saveTextButton, in: app)
+        XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        save.tap()
 
+        XCTAssertTrue(editor.waitForNonExistence(timeout: timeout))
         XCTAssertTrue(element(MobileAccessibilityID.undoButton, in: app).waitForExistence(timeout: timeout))
         XCTAssertTrue(element(MobileAccessibilityID.editTextButton, in: app).waitForExistence(timeout: timeout))
         capture("iphone-text-edited")

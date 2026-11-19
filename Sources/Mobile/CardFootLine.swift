@@ -25,12 +25,20 @@ struct CardFootLine: Equatable {
         )
     }
 
-    static func make(_ origin: Origin, title: String?, age: String, device: Device) -> CardFootLine {
+    static func make(
+        _ origin: Origin, title: String?, age: String, device: Device, showsTitleOnFace: Bool = false
+    )
+    -> CardFootLine {
         let source = source(origin, device: device)
         let symbol = source.isThisDevice ? device.symbol : nil
-        let cleanTitle = title.flatMap { $0.isEmpty ? nil : $0 }
-        let texts = CardMetaLine.candidates(.init(title: cleanTitle, source: source.name, age: age))
-        return CardFootLine(symbol: cleanTitle == nil ? symbol : nil, texts: texts)
+        let cleanTitle = title.flatMap { raw in
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+        let texts = CardMetaLine.candidates(
+            .init(title: cleanTitle, source: source.name, age: age, showsTitleOnFace: showsTitleOnFace)
+        )
+        return CardFootLine(symbol: (cleanTitle == nil || showsTitleOnFace) ? symbol : nil, texts: texts)
     }
 
     /// Where the clip came from, as the foot line and the widget name it: the app, another device, nothing for a synced

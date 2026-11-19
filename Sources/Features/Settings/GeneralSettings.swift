@@ -44,18 +44,17 @@ struct GeneralSettings: View {
     }
 
     private var hiddenIconHint: String {
-        iconHint(lead: "With the icon hidden, ", startsSentence: false)
+        iconHint(lead: "Hidden — ")
     }
 
     private var crowdedBarHint: String {
-        iconHint(lead: "Your menu bar is full, so macOS left Pesto's icon out. ", startsSentence: true)
+        iconHint(lead: "Menu bar is full — ")
     }
 
-    private func iconHint(lead: String, startsSentence: Bool) -> String {
-        let reopen = "open Pesto again from Applications to see Settings."
-        guard !openShelfShortcut.isEmpty else { return lead + (startsSentence ? "Open" + reopen.dropFirst(4) : reopen) }
-        return lead + (startsSentence ? "Press" : "press")
-            + " \(openShelfShortcut) to open the shelf and choose Settings there, or \(reopen)"
+    private func iconHint(lead: String) -> String {
+        let reopen = "open Pesto from Applications for Settings."
+        guard !openShelfShortcut.isEmpty else { return lead + reopen }
+        return lead + "press \(openShelfShortcut) for the shelf, or \(reopen)"
     }
 
     /// A status item takes a moment to be placed, and the person may free room in the bar, so this looks again when
@@ -74,8 +73,10 @@ struct GeneralSettings: View {
                     Text("Show Pesto in the menu bar")
                     if !showMenuBarIcon {
                         Text(hiddenIconHint).pestoCaption()
+                            .fixedSize(horizontal: false, vertical: true)
                     } else if iconIsLeftOut {
                         Text(crowdedBarHint).pestoCaption()
+                            .fixedSize(horizontal: false, vertical: true)
                             .accessibilityIdentifier(AccessibilityID.settingsChoice("menuBarIcon", "crowdedHint"))
                     }
                 }
@@ -84,46 +85,47 @@ struct GeneralSettings: View {
             .accessibilityIdentifier(AccessibilityID.settingsChoice("menuBarIcon", "toggle"))
             .settingsRow("Menu bar icon")
             if let updates = appState.automaticUpdateChecks {
-                Toggle(isOn: $checksForUpdates) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Check for updates automatically")
-                        Text(
-                            "Pesto asks copypesto.net whether a new version exists. The request carries Pesto's " +
-                                "version and your IP address, and nothing from your clips."
-                        )
-                        .pestoCaption()
-                    }
-                }
-                .onAppear { checksForUpdates = updates.get() }
-                .onChange(of: checksForUpdates) { _, on in updates.set(on) }
-                .settingsRow("Check for updates automatically")
+                Toggle("Check for updates automatically", isOn: $checksForUpdates)
+                    .onAppear { checksForUpdates = updates.get() }
+                    .onChange(of: checksForUpdates) { _, on in updates.set(on) }
+                    .settingsRow("Check for updates automatically")
                 if let installs = appState.automaticUpdateInstalls {
-                    Toggle(isOn: $installsUpdates) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Install updates automatically")
-                            Text("On: a new version installs when Pesto quits. Off: Pesto asks first.").pestoCaption()
-                        }
-                    }
-                    .onAppear { installsUpdates = installs.get() }
-                    .onChange(of: installsUpdates) { _, on in installs.set(on) }
-                    .accessibilityIdentifier(AccessibilityID.settingsChoice("installUpdates", "toggle"))
-                    .settingsRow("Install updates automatically")
+                    Toggle("Install updates automatically", isOn: $installsUpdates)
+                        .onAppear { installsUpdates = installs.get() }
+                        .onChange(of: installsUpdates) { _, on in installs.set(on) }
+                        .accessibilityIdentifier(AccessibilityID.settingsChoice("installUpdates", "toggle"))
+                        .settingsRow("Install updates automatically")
                 }
-                if let staged = appState.stagedUpdate {
-                    HStack {
-                        Text("Pesto \(staged.version) is ready. It installs when Pesto quits.").pestoCaption()
+            }
+        } footer: {
+            if appState.automaticUpdateChecks != nil {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Text(UpdateCheckCaption.text(lastCheck: appState.lastUpdateCheck)).pestoCaption()
+                        InfoPopoverButton(
+                            title: "Automatic updates",
+                            message: """
+                            Pesto asks copypesto.net whether a new version exists. The request carries \
+                            Pesto\u{2019}s version and your IP address, and nothing from your clips. When automatic \
+                            install is on, a new version installs when Pesto quits; when off, Pesto asks first.
+                            """
+                        )
                         Spacer()
-                        if let notes = staged.whatsNew {
-                            Link("What\u{2019}s New", destination: notes).buttonStyle(.pestoLink)
-                        }
-                        Button("Restart Now") { staged.install() }
+                        Button("Check Now") { appState.checkForUpdates?() }
+                            .controlSize(.small)
+                            .disabled(appState.checkForUpdates == nil)
                     }
-                }
-                HStack {
-                    Text(UpdateCheckCaption.text(lastCheck: appState.lastUpdateCheck)).pestoCaption()
-                    Spacer()
-                    Button("Check Now") { appState.checkForUpdates?() }
-                        .disabled(appState.checkForUpdates == nil)
+                    if let staged = appState.stagedUpdate {
+                        HStack(spacing: 8) {
+                            Text("Pesto \(staged.version) is ready. It installs when Pesto quits.").pestoCaption()
+                            Spacer()
+                            if let notes = staged.whatsNew {
+                                Link("What\u{2019}s New", destination: notes).buttonStyle(.pestoLink)
+                            }
+                            Button("Restart Now") { staged.install() }
+                                .controlSize(.small)
+                        }
+                    }
                 }
             }
         }
@@ -131,40 +133,41 @@ struct GeneralSettings: View {
 
     private var shelfSection: some View {
         Section {
-            Toggle(isOn: $opensQuickMenuAtCursor) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Open a small menu at the cursor")
-                    Text(
-                        opensQuickMenuAtCursor
-                            ? "In a text field the shortcut shows your latest clips by the cursor, for the mouse."
-                            : "The shortcut always opens the full shelf, which works fully from the keyboard."
-                    )
-                    .pestoCaption()
+            Toggle("Open a small menu at the cursor", isOn: $opensQuickMenuAtCursor)
+                .settingsRow("Open a small menu at the cursor")
+            LabeledContent("Show suggestions on the shelf") {
+                HStack(spacing: 10) {
+                    Button("Reset Suggestions") {
+                        appState.resetShelfSuggestions()
+                    }
+                    .controlSize(.small)
+                    .accessibilityIdentifier(AccessibilityID.resetSuggestionsButton)
+                    Toggle("Show suggestions on the shelf", isOn: $shelfSuggestionsEnabled)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .accessibilityIdentifier(AccessibilityID.shelfSuggestionsSettingsToggle)
                 }
             }
-            .settingsRow("Open a small menu at the cursor")
-            Toggle(isOn: $shelfSuggestionsEnabled) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Show suggestions on the shelf")
-                    Text(
-                        "Suggests a shortcut or a snippet for a clip you paste often, and suggests removing "
-                            + "a shortcut you stopped using. It uses paste counts kept on this Mac."
-                    )
-                    .pestoCaption()
-                }
-            }
-            .accessibilityIdentifier(AccessibilityID.shelfSuggestionsSettingsToggle)
             .settingsRow("Show suggestions on the shelf")
-            HStack {
-                Text("Reset suggestions")
-                Spacer()
-                Button("Reset Suggestions") {
-                    appState.resetShelfSuggestions()
-                }
-                .accessibilityIdentifier(AccessibilityID.resetSuggestionsButton)
-            }
         } header: {
             Text("Shelf")
+        } footer: {
+            HStack(spacing: 6) {
+                Text(
+                    opensQuickMenuAtCursor
+                        ? "In text fields, the shortcut opens a menu at the cursor; suggestions use local paste counts."
+                        : "The shortcut opens the full keyboard shelf; suggestions use local paste counts."
+                )
+                .pestoCaption()
+                InfoPopoverButton(
+                    title: "Shelf options",
+                    message: """
+                    In a text field, at-cursor mode shows your latest clips near the caret for the mouse. \
+                    Suggestions propose a shortcut or snippet for clips you paste often, or removing unused \
+                    shortcuts, using paste counts kept on this Mac.
+                    """
+                )
+            }
         }
     }
 
@@ -172,23 +175,20 @@ struct GeneralSettings: View {
         Section {
             Toggle("Play sounds on copy and paste", isOn: $soundEffects)
                 .settingsRow("Play sounds on copy and paste")
-            LabeledContent {
-                HStack {
+            LabeledContent("Save pictures to") {
+                HStack(spacing: 8) {
                     Text(pictureSaveFolder.isEmpty ? "Downloads" : URL(fileURLWithPath: pictureSaveFolder)
                         .lastPathComponent)
                         .pestoQuiet()
                     Button("Choose\u{2026}") { choosePictureFolder() }
+                        .controlSize(.small)
                     if !pictureSaveFolder.isEmpty {
                         Button("Use Downloads") { pictureSaveFolder = "" }
+                            .controlSize(.small)
                     }
                 }
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Save pictures to")
-                    Text("\u{2318}S on a picture saves it here without asking; a name already there gets a number.")
-                        .pestoCaption()
-                }
             }
+            .help("\u{2318}S on a picture saves it here without asking; a name already there gets a number.")
             .settingsRow("Save pictures to")
             Toggle("Double-press ⌘C to append to the last clip", isOn: $doubleCopyAppend)
                 .disabled(!isAXTrusted && !doubleCopyAppend)
@@ -197,61 +197,73 @@ struct GeneralSettings: View {
         } header: {
             Text("Copy and paste")
         } footer: {
-            VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
                 Text(
-                    "Double-press is off by default: it watches every \u{2318}C keystroke system-wide and records " +
-                        "only whether \u{2318}C was pressed twice within half a second."
+                    isAXTrusted
+                        ? "Double-press \u{2318}C watches for two \u{2318}C presses within half a second."
+                        : "Double-press \u{2318}C needs Accessibility permission (see Permissions below)."
                 )
-                if !isAXTrusted {
-                    Text("It needs Accessibility, which is not granted yet (see Permissions, below).")
-                }
+                .pestoCaption()
+                InfoPopoverButton(
+                    title: "Copy and paste options",
+                    message: """
+                    \u{2318}S on a picture saves it to your chosen folder without asking. Double-press \u{2318}C is \
+                    off by default: it watches every \u{2318}C keystroke system-wide and records only whether \
+                    \u{2318}C was pressed twice within half a second.
+                    """
+                )
             }
-            .pestoCaption()
         }
         .onAppear { isAXTrusted = AccessibilityAccess.isTrusted }
     }
 
     private var floatingWindowSection: some View {
         Section {
-            Toggle(isOn: $pinnedWindowAutoPaste) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Paste from the floating window")
-                    Text(
-                        pinnedWindowAutoPaste
-                            ? "Clicking a clip or pressing Return in the floating window pastes it into the active app."
-                            : "Clicking a clip or pressing Return in the floating window copies it without pasting."
-                    )
-                    .pestoCaption()
-                }
-            }
-            .settingsRow("Paste from the floating window")
+            Toggle("Paste from the floating window", isOn: $pinnedWindowAutoPaste)
+                .settingsRow("Paste from the floating window")
         } header: {
             Text("Floating window")
+        } footer: {
+            Text(
+                pinnedWindowAutoPaste
+                    ? "Clicking a clip or pressing Return in the floating window pastes into the active app."
+                    : "Clicking a clip or pressing Return in the floating window copies without pasting."
+            )
+            .pestoCaption()
         }
     }
 
     private var retentionSection: some View {
         Section {
-            Picker("Keep clips for", selection: $retentionDays) {
-                ForEach(RetentionChoices.ageDays, id: \.self) { Text(Self.ageLabel($0)).tag($0) }
-                if !RetentionChoices.isPresetAge(retentionDays) {
-                    Text(String(localized: "Custom (\(retentionDays) days)")).tag(retentionDays)
+            HStack(spacing: 16) {
+                Picker("Keep clips for", selection: $retentionDays) {
+                    ForEach(RetentionChoices.ageDays, id: \.self) { Text(Self.ageLabel($0)).tag($0) }
+                    if !RetentionChoices.isPresetAge(retentionDays) {
+                        Text(String(localized: "Custom (\(retentionDays) days)")).tag(retentionDays)
+                    }
                 }
-            }
-            .accessibilityIdentifier(AccessibilityID.settingsChoice("retention", "age"))
-            .settingsRow("Keep clips for a number of days")
-            Picker("Keep at most", selection: $retentionMaxItems) {
-                ForEach(RetentionChoices.itemCounts, id: \.self) { Text("\($0.formatted()) clips").tag($0) }
-                if !RetentionChoices.isPresetCount(retentionMaxItems) {
-                    Text(String(localized: "Custom (\(retentionMaxItems) clips)")).tag(retentionMaxItems)
+                .accessibilityIdentifier(AccessibilityID.settingsChoice("retention", "age"))
+                .settingsRow("Keep clips for a number of days")
+
+                Picker("Keep at most", selection: $retentionMaxItems) {
+                    ForEach(RetentionChoices.itemCounts, id: \.self) { Text("\($0.formatted()) clips").tag($0) }
+                    if !RetentionChoices.isPresetCount(retentionMaxItems) {
+                        Text(String(localized: "Custom (\(retentionMaxItems) clips)")).tag(retentionMaxItems)
+                    }
                 }
+                .accessibilityIdentifier(AccessibilityID.settingsChoice("retention", "count"))
+                .settingsRow("Keep up to a number of clips")
             }
-            .accessibilityIdentifier(AccessibilityID.settingsChoice("retention", "count"))
-            .settingsRow("Keep up to a number of clips")
-            Toggle("Clear history when the screen locks", isOn: $clearOnScreenLock)
-                .settingsRow("Clear history when the screen locks")
-            Toggle("Clear history on quit", isOn: $clearOnQuit)
-                .settingsRow("Clear history on quit")
+            HStack(spacing: 20) {
+                Toggle("Clear history when the screen locks", isOn: $clearOnScreenLock)
+                    .toggleStyle(.checkbox)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .settingsRow("Clear history when the screen locks")
+                Toggle("Clear history on quit", isOn: $clearOnQuit)
+                    .toggleStyle(.checkbox)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .settingsRow("Clear history on quit")
+            }
         } header: {
             Text("History")
         } footer: {

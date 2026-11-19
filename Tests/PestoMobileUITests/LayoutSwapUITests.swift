@@ -7,42 +7,11 @@ import XCTest
 /// the library's width class and a small control flips it (`UITestLayout`); the two layouts are torn down and built
 /// exactly as a real change of width does.
 @MainActor
-final class LayoutSwapUITests: XCTestCase {
-    private let timeout: TimeInterval = 15
-
-    override func setUp() async throws {
-        try await super.setUp()
-        continueAfterFailure = false
-    }
-
+final class LayoutSwapUITests: MobileUITestCase {
     private func launch(extraClips: Int = 0) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestMode", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        app.launchEnvironment["PESTO_UITEST_SESSION"] = "mobile-\(UUID().uuidString)"
-        app.launchEnvironment["PESTO_UITEST_SEED"] = "basic"
-        app.launchEnvironment["PESTO_UITEST_SIZE_CLASS"] = "regular"
-        if extraClips > 0 { app.launchEnvironment["PESTO_UITEST_EXTRA_CLIPS"] = String(extraClips) }
-        app.launch()
-        return app
-    }
-
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-    }
-
-    private func cards(in app: XCUIApplication) -> XCUIElementQuery {
-        app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
-    }
-
-    private func card(containing text: String, in app: XCUIApplication) -> XCUIElement {
-        cards(in: app).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
-    }
-
-    private func capture(_ name: String, _ screenshot: XCUIScreenshot = XCUIScreen.main.screenshot()) {
-        let attachment = XCTAttachment(screenshot: screenshot)
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
+        var environment = ["PESTO_UITEST_SIZE_CLASS": "regular"]
+        if extraClips > 0 { environment["PESTO_UITEST_EXTRA_CLIPS"] = String(extraClips) }
+        return launch(environment: environment)
     }
 
     private func swap(_ app: XCUIApplication, to layout: String) {
@@ -56,14 +25,6 @@ final class LayoutSwapUITests: XCTestCase {
             _ = root.waitForExistence(timeout: 0.3)
         }
         XCTAssertEqual(root.label, layout)
-    }
-
-    private func openDetail(of target: XCUIElement, in app: XCUIApplication) {
-        target.press(forDuration: 1.0)
-        let edit = app.buttons["Edit Details"]
-        XCTAssertTrue(edit.waitForExistence(timeout: timeout), "the long-press menu offers Edit Details")
-        edit.tap()
-        XCTAssertTrue(element(MobileAccessibilityID.clipDetail, in: app).waitForExistence(timeout: timeout))
     }
 
     func test_onIPad_anUnsavedTextEditAndTheSearchSurviveTheSwapThereAndBack() throws {

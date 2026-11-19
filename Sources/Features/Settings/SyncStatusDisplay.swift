@@ -17,6 +17,8 @@ extension SyncStatus {
         case .folderMissing: "Folder Missing"
         case let .nothingNew(since): "Nothing New Since \(time(since))"
         case .needsKey: "New key needed"
+        case let .storageFull(isICloud):
+            if isICloud { String(localized: "iCloud Drive is full") } else { String(localized: "Sync folder is full") }
         case .refused: "Refused"
         }
     }
@@ -31,6 +33,7 @@ extension SyncStatus {
         case .folderMissing: String(localized: "The Pesto Sync folder was moved or deleted.")
         case .nothingNew: String(localized: "Your other Macs may be asleep, or iCloud Drive is paused.")
         case .needsKey: String(localized: "Sync was reset on another Mac. Enter its new recovery key.")
+        case .storageFull: String(localized: "New clips wait on this Mac until space is free.")
         case let .refused(reason): reason
         }
     }
@@ -38,7 +41,7 @@ extension SyncStatus {
     var dotColor: Color {
         switch self {
         case .upToDate, .receiving: .statusGood
-        case .refused, .folderMissing: .statusBad
+        case .refused, .folderMissing, .storageFull: .statusBad
         case .waitingForFolder, .nothingNew, .needsKey, .paused: .statusWarning
         case .off: .secondary
         }

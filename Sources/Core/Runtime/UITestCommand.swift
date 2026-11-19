@@ -15,8 +15,9 @@ public enum UITestCommand: String, CaseIterable, Sendable {
     case toggleHideContents
     /// Shows the toast and keeps it up (it fades after 2.5 s otherwise), so the accessibility audit can measure it.
     case showToast
-    /// Switches the running UI-test app to dark appearance so audits can test light and dark in one launch.
+    /// Switches the running UI-test app between dark and light appearance so audits can test both in one launch.
     case setAppearanceDark
+    case setAppearanceLight
     /// Moves the focus along the shelf to its last clip in steps, so every card in between is drawn once; writes
     /// `walk-done` into the work directory when it arrives (`scripts/check-memory-budget.sh`).
     case walkShelfToEnd

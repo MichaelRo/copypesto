@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import SwiftData
+import SwiftUI
 import Testing
+import UIKit
 @testable import PestoCore
 @testable import PestoMobile
 
@@ -78,5 +81,154 @@ struct CardFaceTests {
     func whenCodeOrFile_thenTheirOwnFaces() {
         #expect(face(.code, "let pesto = blend(basil)") == .code)
         #expect(face(.file, "file:///Users/me/recipe.pdf") == .file)
+    }
+
+    @Test("in All, no clip shows a title on the card face")
+    func whenInAll_thenNoFaceTitle() {
+        for type in [ClipboardType.text, .code, .file, .color, .image, .url] {
+            let title = CardFace.faceTitle(
+                type: type,
+                inCollection: false,
+                isConcealed: false,
+                customTitle: "My Title",
+                ogTitle: "Page Title"
+            )
+            #expect(title == nil)
+            #expect(!CardFace.showsCustomTitleOnFace(inCollection: false, isConcealed: false, customTitle: "My Title"))
+        }
+    }
+
+    @Test("in a collection, every non-concealed clip with a custom title shows it on the face")
+    func whenInCollectionWithCustomTitle_thenShownOnFace() {
+        for type in [ClipboardType.text, .code, .file, .color, .image, .url] {
+            let title = CardFace.faceTitle(
+                type: type,
+                inCollection: true,
+                isConcealed: false,
+                customTitle: "  My Title  ",
+                ogTitle: "Page Title"
+            )
+            #expect(title == "My Title")
+            #expect(
+                CardFace.showsCustomTitleOnFace(inCollection: true, isConcealed: false, customTitle: "  My Title  ")
+            )
+        }
+    }
+
+    @Test("in a collection, a link without a custom title falls back to its page title")
+    func whenInCollectionLinkWithPageTitleOnly_thenPageTitleShownOnFace() {
+        let title = CardFace.faceTitle(
+            type: .url,
+            inCollection: true,
+            isConcealed: false,
+            customTitle: nil,
+            ogTitle: "  SwiftUI Overview  "
+        )
+        #expect(title == "SwiftUI Overview")
+        #expect(!CardFace.showsCustomTitleOnFace(inCollection: true, isConcealed: false, customTitle: nil))
+    }
+
+    @Test("in a collection, a non-link clip ignores any page title and whitespace custom title gives nil")
+    func whenInCollectionNonLinkOrBlankTitle_thenNil() {
+        #expect(CardFace.faceTitle(
+            type: .text, inCollection: true, isConcealed: false, customTitle: "   ", ogTitle: "Ignored"
+        ) == nil)
+        #expect(!CardFace.showsCustomTitleOnFace(inCollection: true, isConcealed: false, customTitle: "   "))
+    }
+
+    @Test("a concealed clip hides its title even inside a collection")
+    func whenConcealedInCollection_thenNoFaceTitle() {
+        #expect(CardFace.faceTitle(
+            type: .url, inCollection: true, isConcealed: true, customTitle: "Secret", ogTitle: "Hidden"
+        ) == nil)
+        #expect(!CardFace.showsCustomTitleOnFace(inCollection: true, isConcealed: true, customTitle: "Secret"))
+    }
+
+    @Test("a card title reduces the body height budget while keeping at least one line")
+    func whenCardHasFaceTitle_thenBodyHeightAccountsForTitle() {
+        let metrics = PestoMobile.CardMetrics(width: 179, typeSize: .large)
+        #expect(metrics.bodyHeight(hasTitle: true) < metrics.bodyHeight(hasTitle: false))
+        #expect(metrics.lines(.callout, hasTitle: true) <= metrics.lines(.callout, hasTitle: false))
+
+        let huge = PestoMobile.CardMetrics(width: 179, typeSize: .accessibility5)
+        #expect(huge.bodyHeight(hasTitle: true) >= 0)
+        #expect(huge.lines(.callout, hasTitle: true) >= 1)
+    }
+
+    @MainActor
+    private func renderFace(_ item: ClipboardItem, face: CardFace, media: CardMediaState, inCollection: Bool) -> Data {
+        let cardSize = CGSize(width: 179, height: CardGridLayout.cardHeight(forWidth: 179))
+        let view = ClipCardFace(
+            item: item,
+            face: face,
+            media: media,
+            width: cardSize.width,
+            revision: ClipCard.Revision(item),
+            inCollection: inCollection
+        )
+        .frame(width: cardSize.width, height: cardSize.height)
+        .background(Color.white)
+        .environment(\.pestoSurface, .white)
+        let host = UIHostingController(rootView: view)
+        host.overrideUserInterfaceStyle = .light
+        host.view.bounds = CGRect(origin: .zero, size: cardSize)
+        host.view.layoutIfNeeded()
+        return UIGraphicsImageRenderer(size: cardSize).pngData { _ in
+            host.view.drawHierarchy(in: host.view.bounds, afterScreenUpdates: true)
+        }
+    }
+
+    @Test("rendering ClipCardFace in a collection draws titles across text, links, pictures, and colors")
+    @MainActor
+    func whenClipCardFaceRenderedInCollection_thenTitleAppearsAcrossAllKinds() throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let context = ModelContext(container)
+
+        let textItem = ClipboardItem(
+            type: .text, sourceAppName: "Notes", previewText: "Body line one\nBody line two",
+            contentHash: "h1", byteSize: 27, deviceID: "d", sequenceNumber: 1
+        )
+        textItem.customTitle = "Release notes"
+        context.insert(textItem)
+        #expect(
+            renderFace(textItem, face: .text, media: CardMediaState(), inCollection: false)
+                != renderFace(textItem, face: .text, media: CardMediaState(), inCollection: true)
+        )
+
+        let linkItem = ClipboardItem(
+            type: .url, sourceAppName: "Safari", previewText: "https://developer.apple.com/documentation/swiftui",
+            contentHash: "h2", byteSize: 50, deviceID: "d", sequenceNumber: 2
+        )
+        linkItem.ogTitle = "SwiftUI Documentation"
+        context.insert(linkItem)
+        let linkFace = CardFace.decide(.init(
+            type: .url, text: linkItem.previewText, isConcealed: false, hasLinkPicture: false
+        ))
+        #expect(
+            renderFace(linkItem, face: linkFace, media: CardMediaState(), inCollection: false)
+                != renderFace(linkItem, face: linkFace, media: CardMediaState(), inCollection: true)
+        )
+
+        let samplePicture = UIGraphicsImageRenderer(size: CGSize(width: 240, height: 160)).image { ctx in
+            UIColor.systemTeal.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 240, height: 160))
+        }
+        let linkMedia = CardMediaState(linkPicture: samplePicture)
+        #expect(
+            renderFace(linkItem, face: .linkPicture, media: linkMedia, inCollection: false)
+                != renderFace(linkItem, face: .linkPicture, media: linkMedia, inCollection: true)
+        )
+
+        let colorItem = ClipboardItem(
+            type: .color, sourceAppName: "Photos", previewText: "#2F7A49",
+            contentHash: "h3", byteSize: 7, deviceID: "d", sequenceNumber: 3
+        )
+        colorItem.customTitle = "Basil accent"
+        context.insert(colorItem)
+        let colorFace = CardFace.decide(.init(type: .color, text: "#2F7A49", isConcealed: false))
+        #expect(
+            renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: false)
+                != renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: true)
+        )
     }
 }

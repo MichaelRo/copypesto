@@ -11,12 +11,12 @@ struct SettingsPaneHeader<Accessory: View>: View {
     @Environment(\.pestoAccent) private var accent
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             Image(systemName: symbol)
-                .font(.system(size: 22, weight: .medium))
+                .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(accent)
-                .frame(width: 48, height: 48)
-                .background(RoundedRectangle(cornerRadius: 13, style: .continuous).fill(accent.opacity(0.16)))
+                .frame(width: 36, height: 36)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(accent.opacity(0.16)))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -25,14 +25,14 @@ struct SettingsPaneHeader<Accessory: View>: View {
                 subtitle
                     .font(.callout)
                     .foregroundStyle(Color.primary.opacity(0.7))
-                    .lineLimit(2)
+                    .lineLimit(1)
             }
             Spacer(minLength: 8)
             HStack(spacing: 8) { accessory() }.fixedSize()
         }
         .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 8)
+        .padding(.top, 10)
+        .padding(.bottom, 10)
     }
 }
 

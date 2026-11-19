@@ -10,12 +10,13 @@ struct CardFootLineView: View {
     var onPicture = false
     var ink: Color?
     var showsGIF = false
+    var showsTitleOnFace = false
     var trailingMark: String?
     @Environment(\.clipRevision) private var revision
     @Environment(\.cardClock) private var clock
 
     var body: some View {
-        let line = Self.line(for: item, now: clock ?? .now, device: Self.device)
+        let line = Self.line(for: item, now: clock ?? .now, device: Self.device, showsTitleOnFace: showsTitleOnFace)
         HStack(spacing: 6) {
             lead(line).modifier(PillGround(isOn: onPicture))
             Spacer(minLength: 4)
@@ -65,12 +66,16 @@ struct CardFootLineView: View {
         }
     }
 
-    static func line(for item: ClipboardItem, now: Date, device: CardFootLine.Device) -> CardFootLine {
+    static func line(
+        for item: ClipboardItem, now: Date, device: CardFootLine.Device, showsTitleOnFace: Bool = false
+    )
+    -> CardFootLine {
         CardFootLine.make(
             CardFootLine.origin(of: item),
             title: item.customTitle,
             age: CardAge.text(for: item, inCollection: false, now: now),
-            device: device
+            device: device,
+            showsTitleOnFace: showsTitleOnFace
         )
     }
 

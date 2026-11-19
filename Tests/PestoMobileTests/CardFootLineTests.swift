@@ -95,4 +95,46 @@ struct CardFootLineTests {
         #expect(capture.captureMethod == .share)
         #expect(capture.with(timestamp: .distantPast).captureMethod == .share)
     }
+
+    @Test("when the title is shown on the card face, the foot line keeps the source and device symbol")
+    func whenTitleShownOnFace_thenSourceAndSymbolStayInFootLine() {
+        let appLine = CardFootLine.make(
+            .init(appName: "Safari", arrivedBySync: true), title: "Swift Docs", age: "4m ago",
+            device: phone, showsTitleOnFace: true
+        )
+        #expect(appLine.texts == ["Safari \u{00B7} 4m ago", "4m ago"])
+        #expect(appLine.symbol == nil)
+
+        let localLine = CardFootLine.make(
+            .init(isRemote: false, appName: nil, arrivedBySync: false, captureMethod: .note),
+            title: "Grocery List", age: "just now", device: phone, showsTitleOnFace: true
+        )
+        #expect(localLine.texts == ["Note \u{00B7} just now", "just now"])
+        #expect(localLine.symbol == "iphone")
+
+        let remoteLine = CardFootLine.make(
+            .init(isRemote: true, appName: "Safari", arrivedBySync: false),
+            title: "Recipe", age: "2m ago", device: phone, showsTitleOnFace: true
+        )
+        #expect(remoteLine.texts == ["Another device \u{00B7} 2m ago", "2m ago"])
+        #expect(remoteLine.symbol == nil)
+    }
+
+    @Test("CardFootLineView respects showsTitleOnFace for clips with a custom title")
+    @MainActor
+    func whenCardFootLineViewLine_thenRespectsShowsTitleOnFace() {
+        let copied = Date(timeIntervalSince1970: 1_800_000_000)
+        let item = ClipboardItem(
+            timestamp: copied, type: .text, sourceAppName: "Notes", previewText: "body",
+            contentHash: "h", byteSize: 4, deviceID: "d", sequenceNumber: 1
+        )
+        item.customTitle = "Trip Plan"
+        let now = copied.addingTimeInterval(120)
+
+        let inAll = CardFootLineView.line(for: item, now: now, device: phone, showsTitleOnFace: false)
+        #expect(inAll.texts == ["Trip Plan \u{00B7} 2m ago", "Trip Plan"])
+
+        let inCollection = CardFootLineView.line(for: item, now: now, device: phone, showsTitleOnFace: true)
+        #expect(inCollection.texts == ["Notes \u{00B7} 2m ago", "2m ago"])
+    }
 }

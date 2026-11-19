@@ -78,13 +78,14 @@ struct SecretShownBody: View {
     let item: ClipboardItem
     let text: String?
     let metrics: CardMetrics
+    var hasTitle = false
     @Environment(MobileAppState.self) private var appState
 
     var body: some View {
         HStack(alignment: .top, spacing: 6) {
             Text(text ?? item.gridPreview)
                 .font(.footnote.monospaced())
-                .lineLimit(metrics.lines(.footnote))
+                .lineLimit(metrics.lines(.footnote, hasTitle: hasTitle))
                 .textSelection(.disabled)
             Spacer(minLength: 4)
             Button("Hide", systemImage: "eye.slash") { appState.secretReveal.hide(item.id) }

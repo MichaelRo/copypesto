@@ -9,6 +9,7 @@ import UIKit
 struct CardMetrics {
     static let inset: CGFloat = 12
     static let footGap: CGFloat = 6
+    static let titleGap: CGFloat = 4
 
     let width: CGFloat
     private let category: UIContentSizeCategory
@@ -33,11 +34,16 @@ struct CardMetrics {
     }
 
     var bodyHeight: CGFloat {
-        height - Self.inset * 2 - Self.footGap - lineHeight(.caption1)
+        bodyHeight(hasTitle: false)
     }
 
-    func lines(_ style: UIFont.TextStyle) -> Int {
-        CardGridLayout.lineLimit(height: bodyHeight, lineHeight: lineHeight(style))
+    func bodyHeight(hasTitle: Bool = false) -> CGFloat {
+        let titleReserve = hasTitle ? lineHeight(.footnote) + Self.titleGap : 0
+        return max(0, height - Self.inset * 2 - Self.footGap - lineHeight(.caption1) - titleReserve)
+    }
+
+    func lines(_ style: UIFont.TextStyle, hasTitle: Bool = false) -> Int {
+        CardGridLayout.lineLimit(height: bodyHeight(hasTitle: hasTitle), lineHeight: lineHeight(style))
     }
 }
 

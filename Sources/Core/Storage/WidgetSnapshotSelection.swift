@@ -13,14 +13,17 @@ public enum WidgetSnapshotSelection {
         public var source: (ClipboardItem) -> String?
         public var thumbnail: (ClipboardItem) -> Data?
         public var fullText: (ClipboardItem) -> String?
+        public var recognizedText: (ClipboardItem) -> String?
 
         public init(
             source: @escaping (ClipboardItem) -> String?, thumbnail: @escaping (ClipboardItem) -> Data? = { _ in nil },
-            fullText: @escaping (ClipboardItem) -> String? = { _ in nil }
+            fullText: @escaping (ClipboardItem) -> String? = { _ in nil },
+            recognizedText: @escaping (ClipboardItem) -> String? = { _ in nil }
         ) {
             self.source = source
             self.thumbnail = thumbnail
             self.fullText = fullText
+            self.recognizedText = recognizedText
         }
     }
 
@@ -54,6 +57,7 @@ public enum WidgetSnapshotSelection {
     /// with the given context, so it runs wherever that context belongs.
     public static func snapshot(
         in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, previous: WidgetSnapshot? = nil,
+        recognizedTexts: RecognizedTextStore = RecognizedTextStore(),
         source: @escaping (ClipboardItem) -> String?
     ) throws
     -> WidgetSnapshot {
@@ -71,6 +75,9 @@ public enum WidgetSnapshotSelection {
             },
             fullText: { item in
                 item.byteSize <= WidgetSnapshotPolicy.maxFullTextBytes ? item.blob?.decryptedText() : nil
+            },
+            recognizedText: { item in
+                item.type == .image && recognizedTexts.exists(for: item.id) ? recognizedTexts.load(for: item.id) : nil
             }
         )
         return try snapshot(in: context, now: now, theme: theme, reader: reader)
@@ -138,7 +145,10 @@ public enum WidgetSnapshotSelection {
         let clips = choose(from: newest, limit: WidgetSnapshotPolicy.maxClips, reader: reader, budget: &budget)
         var chosen = Dictionary(clips.map { ($0.id, $0) }) { first, _ in first }
         var pins: [WidgetClip] = []
-        for item in pinned where pins.count < WidgetSnapshotPolicy.maxPinned && item.isPinned && isEligible(item) {
+        for item in pinned where pins.count < WidgetSnapshotPolicy.maxPinned && item.isPinned && mayInclude(
+            item,
+            reader: reader
+        ) {
             if let known = chosen[item.id] {
                 pins.append(known)
             } else {
@@ -151,7 +161,10 @@ public enum WidgetSnapshotSelection {
         var extra: [WidgetClip] = []
         for members in collections.prefix(WidgetSnapshotPolicy.maxCollections) {
             var listed: [UUID] = []
-            for item in members.items where listed.count < WidgetSnapshotPolicy.maxClips && isEligible(item) {
+            for item in members.items where listed.count < WidgetSnapshotPolicy.maxClips && mayInclude(
+                item,
+                reader: reader
+            ) {
                 guard !listed.contains(item.id) else { continue }
                 if chosen[item.id] == nil {
                     let made = clip(for: item, reader: reader, budget: &budget)
@@ -177,6 +190,18 @@ public enum WidgetSnapshotSelection {
         ShortcutClipSearch.isOfferedOutsidePesto(item)
     }
 
+    private static func mayInclude(_ item: ClipboardItem, reader: Reader) -> Bool {
+        guard isEligible(item) else { return false }
+        guard item.type == .image else { return true }
+        if SensitiveContentDetector.detectAnywhere(in: item.displayPreviewText) != nil {
+            return false
+        }
+        if let ocr = reader.recognizedText(item), SensitiveContentDetector.detectAnywhere(in: ocr) != nil {
+            return false
+        }
+        return true
+    }
+
     /// A smart collection whose rules do not decode or compile shows nothing, as it does in Pesto.
     static func smartMatches(of board: Pinboard, in window: [ClipboardItem], limit: Int) -> [ClipboardItem] {
         guard let data = board.smartPredicateData, let rules = try? SmartCollectionPredicate.decodeRuleSet(data),
@@ -199,7 +224,7 @@ public enum WidgetSnapshotSelection {
     private static func choose(from items: [ClipboardItem], limit: Int, reader: Reader, budget: inout Budget)
     -> [WidgetClip] {
         var chosen: [WidgetClip] = []
-        for item in items where chosen.count < limit && isEligible(item) {
+        for item in items where chosen.count < limit && mayInclude(item, reader: reader) {
             chosen.append(clip(for: item, reader: reader, budget: &budget))
         }
         return chosen

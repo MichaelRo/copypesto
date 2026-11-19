@@ -134,4 +134,14 @@ struct QuickInsertSelectionTests {
         #expect(set.entries.map(\.text) == [long])
         #expect(set.entries.first?.title == "line one")
     }
+
+    @Test("a clip whose text holds a card number without a sensitivity flag stays out of AutoFill")
+    func whenClipTextHasCardNumberWithoutFlag_thenExcludedFromQuickInsert() throws {
+        let clips = try Clips()
+        clips.add("safe snippet", pinned: true)
+        clips.add("Cardholder: Jane\n4111 1111 1111 1111", pinned: true)
+        clips.add("4111 1111 1111 1111")
+
+        #expect(clips.entries().map(\.text) == ["safe snippet"])
+    }
 }

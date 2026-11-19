@@ -33,8 +33,10 @@ public extension LaunchMigration {
                 let result = try await service.repairMisreadClips()
                 return .done("\(result.reclassified) reclassified, \(result.rebuilt) rebuilt")
             },
-            LaunchMigration(name: "Secret masks", version: Setting.secretMaskVersion, currentVersion: 2) {
-                try await .done("\(service.modernizeSecretMasks()) masks rewritten")
+            LaunchMigration(name: "Secret masks", version: Setting.secretMaskVersion, currentVersion: 3) {
+                let rewritten = try await service.modernizeSecretMasks()
+                let scanned = try await service.scanRecognizedTextSecrets()
+                return .done("\(rewritten) masks rewritten, \(scanned) OCR secrets masked")
             }
         ]
     }

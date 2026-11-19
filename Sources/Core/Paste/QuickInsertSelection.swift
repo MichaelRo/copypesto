@@ -120,7 +120,8 @@ public enum QuickInsertSelection {
         var chosen: Set<UUID> = []
         func entry(_ item: ClipboardItem, section: QuickInsertEntry.Section) -> QuickInsertEntry? {
             guard isEligible(item), let body = text(item), !body.isEmpty,
-                  body.utf8.count <= QuickInsertPolicy.maxEntryBytes, body.utf8.count <= budget else { return nil }
+                  body.utf8.count <= QuickInsertPolicy.maxEntryBytes, body.utf8.count <= budget,
+                  SensitiveContentDetector.detectAnywhere(in: body) == nil else { return nil }
             // A pinned clip with placeholders is a snippet wherever it is listed: one that asks for a value never
             // comes in, and a collection never carries one the snippets section turned away.
             if item.isPinned, TemplateExpander.containsPlaceholders(body), section != .pinned { return nil }

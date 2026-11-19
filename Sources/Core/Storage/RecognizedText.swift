@@ -46,13 +46,14 @@ public enum RecognizedText {
             && !item.displayPreviewText(using: cache).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// The text to write, nil when the picture does not offer it or its file will not open. A file that will not open
-    /// is not replaced by the preview.
+    /// The text to write, nil when the picture does not offer it, its file will not open, or the text holds a secret.
+    /// A file that will not open is not replaced by the preview.
     @MainActor
     public static func text(of item: ClipboardItem, store: RecognizedTextStore = RecognizedTextStore()) -> String? {
         guard isEligible(item) else { return nil }
-        if store.exists(for: item.id) { return store.load(for: item.id) }
-        return wholePreview(of: item)
+        let text = store.exists(for: item.id) ? store.load(for: item.id) : wholePreview(of: item)
+        guard let text, SensitiveContentDetector.detectAnywhere(in: text) == nil else { return nil }
+        return text
     }
 
     @MainActor

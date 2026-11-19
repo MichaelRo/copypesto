@@ -237,4 +237,38 @@ struct RecognizedTextIngestTests {
             .sorted { $0.timestamp > $1.timestamp }
         #expect(order.first?.type == .text)
     }
+
+    @Test("a card-number screenshot fixture masks the picture and keeps no OCR file")
+    func whenCardNumberInScreenshotOCR_thenMaskedAndNoFile() async throws {
+        let cardOCR = words(300) + "\nCardholder: Jane Doe\n4111 1111 1111 1111\nExp 12/28"
+        let (_, item) = try await read(cardOCR)
+
+        #expect(item.sensitivityRaw == SensitivityCategory.creditCard.rawValue)
+        #expect(!store.exists(for: item.id))
+        #expect(RecognizedText.text(of: item, store: store) == nil)
+        #expect(!RecognizedText.isOffered(for: item, store: store))
+    }
+
+    @Test("repairing older OCR files masks a card number and deletes its sealed file")
+    func whenRepairingOldOCRFileWithCardNumber_thenMaskedAndFileDeleted() async throws {
+        let context = ModelContext(container)
+        let cardOCR = words(300) + "\nVISA 4111 1111 1111 1111\n"
+        let item = ClipboardItem(
+            type: .image, previewText: String(cardOCR.prefix(CardPreviewText.previewLength)),
+            contentHash: UUID().uuidString, byteSize: 1024, deviceID: "test", sequenceNumber: 1
+        )
+        context.insert(item)
+        try context.save()
+        try store.save(cardOCR, for: item.id)
+        let service = service(reading: nil)
+
+        let masked = try await service.scanRecognizedTextSecrets()
+
+        #expect(masked == 1)
+        #expect(try await service.scanRecognizedTextSecrets() == 0)
+        let fresh = try #require(try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).first)
+        #expect(fresh.sensitivityRaw == SensitivityCategory.creditCard.rawValue)
+        #expect(fresh.sensitivityMaskedPreview != nil)
+        #expect(!store.exists(for: item.id))
+    }
 }

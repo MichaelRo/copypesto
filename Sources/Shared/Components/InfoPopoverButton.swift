@@ -29,7 +29,7 @@ struct InfoPopoverButton: View {
         } label: {
             Image(systemName: "info.circle")
                 .foregroundStyle(isOpen ? accent : Color.primary.opacity(0.7))
-                .pestoQuiet()
+                .opacity(isOpen ? 1 : 0.72)
                 .frame(minWidth: 24, minHeight: 24)
                 .contentShape(Rectangle())
         }

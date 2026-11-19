@@ -72,9 +72,11 @@ struct GeneralSettings: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Show Pesto in the menu bar")
                     if !showMenuBarIcon {
-                        Text(hiddenIconHint).pestoCaption().lineLimit(1)
+                        Text(hiddenIconHint).pestoCaption()
+                            .fixedSize(horizontal: false, vertical: true)
                     } else if iconIsLeftOut {
-                        Text(crowdedBarHint).pestoCaption().lineLimit(1)
+                        Text(crowdedBarHint).pestoCaption()
+                            .fixedSize(horizontal: false, vertical: true)
                             .accessibilityIdentifier(AccessibilityID.settingsChoice("menuBarIcon", "crowdedHint"))
                     }
                 }

@@ -6,4 +6,7 @@ struct KeyboardKeys {
     let insert: (String) -> Void
     let deleteBackward: () -> Void
     let switchKeyboard: () -> Void
+    /// The field's text around the caret, read again at the moment a search's word is replaced.
+    let contextBefore: () -> String?
+    let contextAfter: () -> String?
 }

@@ -122,4 +122,46 @@ struct QuickInsertCollectionsTests {
         #expect(QuickInsertSelection.Options(storedCollections: messy, returnsAfterInsert: false).collectionIDs == ids)
         #expect(QuickInsertSelection.Options(storedCollections: "", returnsAfterInsert: true).collectionIDs.isEmpty)
     }
+
+    @Test("at most fifty pinned clips, however many are pinned")
+    func whenManyArePinned_thenTheCapHolds() throws {
+        let store = try Store()
+        for index in 0..<60 {
+            store.add("pin \(index)", pinned: true)
+        }
+        let set = try store.set([])
+        #expect(set.entries.count(where: { $0.section == .pinned }) == QuickInsertPolicy.maxPinned)
+    }
+
+    @Test("a pinned snippet that asks for a value stays out, even when its collection is chosen")
+    func whenASnippetNeedsThePerson_thenNoCollectionCarriesIt() throws {
+        let store = try Store()
+        let work = try store.collection("Work", order: 0)
+        store.add("Hi {{input:Name}}", pinned: true, in: work)
+        store.add("Plain note", in: work)
+        let set = try store.set([work.id])
+        #expect(!set.entries.contains { $0.text.contains("{{input") })
+        #expect(set.collections.first?.entryIDs.count == 1)
+    }
+
+    @Test("collection-only clips share the set's size budget")
+    func whenCollectionsAreLarge_thenTheBudgetHolds() throws {
+        let store = try Store()
+        let work = try store.collection("Work", order: 0)
+        let chunk = String(repeating: "a", count: QuickInsertPolicy.maxEntryBytes - 8)
+        for index in 0..<12 {
+            store.add("\(index) " + chunk, in: work)
+        }
+        let set = try store.set([work.id])
+        #expect(set.entries.reduce(0) { $0 + $1.text.utf8.count } <= QuickInsertPolicy.maxTotalBytes)
+    }
+
+    @Test("AutoFill lists each chosen collection under its name after Recent")
+    func whenAutoFillGroups_thenCollectionsFollowTheSections() throws {
+        let store = try Store()
+        let work = try store.collection("Work", order: 0)
+        store.add("Standup at 10", in: work)
+        let groups = try QuickInsertMenu(set: store.set([work.id])).groups(matching: "")
+        #expect(groups.map { $0.collection?.name ?? $0.section.rawValue } == ["recent", "Work"])
+    }
 }

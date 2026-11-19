@@ -56,8 +56,10 @@ public struct KeyboardMenu: Equatable, Sendable {
             ChipLabel(chip: .snippets, title: String(localized: "Snippets"), symbolName: "text.badge.plus")
         ]
         let found = entries
+        let carried = Set(found.map(\.id))
         chips = sections.filter { label in found.contains { Self.section(of: label.chip) == $0.section } }
-            + collections.map { ChipLabel(chip: .collection($0.id), title: $0.name, symbolName: $0.symbolName) }
+            + collections.filter { $0.entryIDs.contains(where: carried.contains) }
+            .map { ChipLabel(chip: .collection($0.id), title: $0.name, symbolName: $0.symbolName) }
     }
 
     public func entries(for chip: Chip) -> [QuickInsertEntry] {

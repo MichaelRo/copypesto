@@ -13,14 +13,15 @@ struct KeyboardRootView: View {
 
     @State private var showsPad = false
     @State private var chip: KeyboardMenu.Chip?
-    @State private var dismissedWord: String?
     @State private var inserted: UUID?
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
+        // Searched once per pass: every chip and card below reads the same matches.
+        let matches = word.map(model.menu.entries(matching:)) ?? []
         VStack(spacing: 6) {
-            if model.menu.state == .ready, !showsPad { chipRow }
-            content
+            if model.menu.state == .ready, !showsPad { chipRow(matches: matches) }
+            content(matches: matches)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             bottomRow
         }
@@ -31,12 +32,8 @@ struct KeyboardRootView: View {
 
     /// The word the person typed before switching, unless they took it off with its chip.
     private var word: String? {
-        guard let word = model.word, word != dismissedWord else { return nil }
+        guard let word = model.word, word != model.dismissedWord else { return nil }
         return word
-    }
-
-    private var matches: [QuickInsertEntry] {
-        word.map(model.menu.entries(matching:)) ?? []
     }
 
     private var selectedChip: KeyboardMenu.Chip? {
@@ -45,14 +42,14 @@ struct KeyboardRootView: View {
         return available.first
     }
 
-    private var shown: [QuickInsertEntry] {
+    private func shown(_ matches: [QuickInsertEntry]) -> [QuickInsertEntry] {
         if !matches.isEmpty { return matches }
         guard let selectedChip else { return [] }
         return model.menu.entries(for: selectedChip)
     }
 
     @ViewBuilder
-    private var content: some View {
+    private func content(matches: [QuickInsertEntry]) -> some View {
         switch model.menu.state {
         case .restricted:
             VStack(spacing: 8) {
@@ -66,7 +63,7 @@ struct KeyboardRootView: View {
         case .empty:
             note("No text clips yet. Clips with secrets never appear here.")
         case .ready:
-            shelf
+            shelf(matches: matches)
         }
     }
 
@@ -79,14 +76,14 @@ struct KeyboardRootView: View {
             .padding(.horizontal)
     }
 
-    private var chipRow: some View {
+    private func chipRow(matches: [QuickInsertEntry]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
                 if let word {
                     KeyboardChip(
                         title: "\u{201C}\(word)\u{201D}", symbolName: "xmark", isSelected: !matches.isEmpty,
                         isDimmed: matches.isEmpty
-                    ) { dismissedWord = word }
+                    ) { model.dismissedWord = word }
                         .accessibilityLabel(Text("Matching \(word)"))
                         .accessibilityHint(Text("Shows all clips again"))
                 }
@@ -95,7 +92,7 @@ struct KeyboardRootView: View {
                         title: label.title, symbolName: label.symbolName,
                         isSelected: matches.isEmpty && label.chip == selectedChip, isDimmed: false
                     ) {
-                        if let word { dismissedWord = word }
+                        if let word { model.dismissedWord = word }
                         chip = label.chip
                     }
                 }
@@ -105,20 +102,20 @@ struct KeyboardRootView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    private var shelf: some View {
+    private func shelf(matches: [QuickInsertEntry]) -> some View {
         let rows = Array(repeating: GridItem(.flexible(), spacing: 6), count: sizeClass == .regular ? 1 : 2)
         return ScrollView(.horizontal, showsIndicators: false) {
             LazyHGrid(rows: rows, spacing: 6) {
-                ForEach(shown) { entry in
+                ForEach(shown(matches)) { entry in
                     KeyboardClipKey(entry: entry, isInserted: inserted == entry.id)
                         .frame(width: sizeClass == .regular ? 180 : 150)
-                        .onTapGesture { insert(entry, longPress: false) }
-                        .onLongPressGesture(minimumDuration: 0.4) { insert(entry, longPress: true) }
-                        .accessibilityAction { insert(entry, longPress: false) }
-                        .accessibilityAction(named: Text(model.menu
-                                .returnsAfterInsert ? "Insert and Stay" : "Insert and Return"))
+                        .onTapGesture { insert(entry, longPress: false, matches: matches) }
+                        .onLongPressGesture(minimumDuration: 0.4) { insert(entry, longPress: true, matches: matches) }
+                        .accessibilityAction { insert(entry, longPress: false, matches: matches) }
+                        .accessibilityAction(named: model.menu.returnsAfterInsert
+                            ? Text("Insert and Stay") : Text("Insert and Return"))
                         {
-                            insert(entry, longPress: true)
+                            insert(entry, longPress: true, matches: matches)
                         }
                 }
             }
@@ -134,11 +131,18 @@ struct KeyboardRootView: View {
 
     /// A tap does what the person chose in Settings (return to their keyboard, or stay); a long press does the other.
     /// A clip picked from a search replaces the word it was found by.
-    private func insert(_ entry: QuickInsertEntry, longPress: Bool) {
+    private func insert(_ entry: QuickInsertEntry, longPress: Bool, matches: [QuickInsertEntry]) {
         if let word, matches.contains(entry) {
-            for _ in 0..<KeyboardWord.deletions(for: word) {
+            // The field is read again now: if the caret moved, or the word was already replaced, nothing is deleted.
+            let count = KeyboardWord.deletions(
+                replacing: word,
+                before: keys.contextBefore(),
+                after: keys.contextAfter()
+            )
+            for _ in 0..<(count ?? 0) {
                 keys.deleteBackward()
             }
+            model.dismissedWord = word
         }
         keys.insert(entry.insertionText())
         if model.menu.returnsAfterInsert != longPress {

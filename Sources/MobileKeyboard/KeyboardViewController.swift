@@ -24,7 +24,9 @@ final class KeyboardViewController: UIInputViewController {
         let keys = KeyboardKeys(
             insert: { [weak self] text in self?.textDocumentProxy.insertText(text) },
             deleteBackward: { [weak self] in self?.textDocumentProxy.deleteBackward() },
-            switchKeyboard: { [weak self] in self?.advanceToNextInputMode() }
+            switchKeyboard: { [weak self] in self?.advanceToNextInputMode() },
+            contextBefore: { [weak self] in self?.textDocumentProxy.documentContextBeforeInput },
+            contextAfter: { [weak self] in self?.textDocumentProxy.documentContextAfterInput }
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
         host.view.backgroundColor = .clear
@@ -59,7 +61,13 @@ final class KeyboardViewController: UIInputViewController {
         // A keyboard process can stay warm in the background: keep no opened clips in it.
         model.menu = KeyboardMenu(hasFullAccess: false) { nil }
         model.word = nil
+        model.dismissedWord = nil
         openedStamp = nil
+    }
+
+    override func selectionDidChange(_ textInput: (any UITextInput)?) {
+        super.selectionDidChange(textInput)
+        refresh()
     }
 
     override func textDidChange(_ textInput: (any UITextInput)?) {
@@ -81,15 +89,18 @@ final class KeyboardViewController: UIInputViewController {
             openedStamp = nil
             return
         }
-        // Only the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
-        model.word = KeyboardWord.before(
-            textDocumentProxy.documentContextBeforeInput, after: textDocumentProxy.documentContextAfterInput
-        )
         let file = QuickInsertFile.current
         let stamp = file?.modificationDate
-        if let openedStamp, openedStamp == stamp { return }
-        model.menu = KeyboardMenu(hasFullAccess: true) { file.flatMap(Self.open) }
-        openedStamp = .some(stamp)
+        if openedStamp != .some(stamp) {
+            model.menu = KeyboardMenu(hasFullAccess: true) { file.flatMap(Self.open) }
+            openedStamp = .some(stamp)
+        }
+        // Only to search the clips: the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
+        model.word = model.menu.state == .ready
+            ? KeyboardWord.before(
+                textDocumentProxy.documentContextBeforeInput, after: textDocumentProxy.documentContextAfterInput
+            )
+            : nil
     }
 
     private static func open(_ file: QuickInsertFile) -> QuickInsertSet? {

@@ -20,9 +20,23 @@ struct KeyboardWordTests {
         #expect(KeyboardWord.before(nil, after: nil) == nil)
     }
 
-    @Test("the length to delete counts what the caret moves over, so an accent or emoji counts once")
+    @Test("the length to delete counts what the caret moves over, so an accent counts once")
     func whenReplaced_thenEachCharacterIsOneDelete() {
-        #expect(KeyboardWord.deletions(for: "café") == 4)
-        #expect(KeyboardWord.deletions(for: "hi👋🏽") == 3)
+        #expect(KeyboardWord.deletions(replacing: "café", before: "a café", after: nil) == 4)
+    }
+
+    @Test("punctuation around the word is not part of the search, and a word ending in punctuation is not one")
+    func whenPunctuated_thenOnlyTheWordCounts() {
+        #expect(KeyboardWord.before("see (home", after: nil) == "home")
+        #expect(KeyboardWord.before("to addr.", after: nil) == nil)
+        #expect(KeyboardWord.before("שלום", after: nil) == "שלום")
+        #expect(KeyboardWord.before("👋🏽👋🏽", after: nil) == nil)
+    }
+
+    @Test("the word is replaced only while the field still ends with it")
+    func whenTheFieldChanged_thenNothingIsDeleted() {
+        #expect(KeyboardWord.deletions(replacing: "addr", before: "Send addr", after: nil) == 4)
+        #expect(KeyboardWord.deletions(replacing: "addr", before: "Send addr 12 Basil Lane", after: nil) == nil)
+        #expect(KeyboardWord.deletions(replacing: "addr", before: "Send ad", after: "dr") == nil)
     }
 }

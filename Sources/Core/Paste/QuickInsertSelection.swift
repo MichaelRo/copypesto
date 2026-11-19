@@ -121,16 +121,17 @@ public enum QuickInsertSelection {
         func entry(_ item: ClipboardItem, section: QuickInsertEntry.Section) -> QuickInsertEntry? {
             guard isEligible(item), let body = text(item), !body.isEmpty,
                   body.utf8.count <= QuickInsertPolicy.maxEntryBytes, body.utf8.count <= budget else { return nil }
+            // A pinned clip with placeholders is a snippet wherever it is listed: one that asks for a value never
+            // comes in, and a collection never carries one the snippets section turned away.
+            if item.isPinned, TemplateExpander.containsPlaceholders(body), section != .pinned { return nil }
             let isSnippet = section == .pinned && TemplateExpander.containsPlaceholders(body)
-            if isSnippet {
-                guard snippets.count < QuickInsertPolicy.maxSnippets, TemplateExpander.fillsWithoutAsking(body) else {
-                    return nil
-                }
-            } else if section == .pinned ? pins.count >= QuickInsertPolicy.maxPinned
-                : section == .recent, latest.count >= QuickInsertPolicy.maxRecent
-            {
-                return nil
+            let isFull = switch section {
+            case .pinned: isSnippet ? snippets.count >= QuickInsertPolicy.maxSnippets
+                : pins.count >= QuickInsertPolicy.maxPinned
+            case .recent: latest.count >= QuickInsertPolicy.maxRecent
+            case .snippets, .collection: false
             }
+            guard !isFull, !isSnippet || TemplateExpander.fillsWithoutAsking(body) else { return nil }
             budget -= body.utf8.count
             chosen.insert(item.id)
             return QuickInsertEntry(

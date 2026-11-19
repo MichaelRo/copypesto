@@ -65,4 +65,13 @@ struct KeyboardMenuTests {
         #expect(menu.entries(matching: "BASIL").map(\.text) == ["Basil pesto recipe", "12 Basil Lane"])
         #expect(menu.entries(matching: "zzq").isEmpty)
     }
+
+    @Test("a chosen collection with no clip to offer gets no chip")
+    func whenACollectionIsEmpty_thenItHasNoChip() {
+        let set = QuickInsertSet(
+            createdAt: .now, entries: [entry("Basil pesto recipe", .recent)],
+            collections: [QuickInsertCollection(id: UUID(), name: "Empty", symbolName: "folder", entryIDs: [])]
+        )
+        #expect(KeyboardMenu(hasFullAccess: true) { set }.chips.map(\.title) == ["Recent"])
+    }
 }

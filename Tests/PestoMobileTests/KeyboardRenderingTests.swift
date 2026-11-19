@@ -59,7 +59,9 @@ struct KeyboardRenderingTests {
         let model = KeyboardModel()
         model.menu = menu
         model.word = word
-        let keys = KeyboardKeys(insert: { _ in }, deleteBackward: {}, switchKeyboard: {})
+        let keys = KeyboardKeys(
+            insert: { _ in }, deleteBackward: {}, switchKeyboard: {}, contextBefore: { nil }, contextAfter: { nil }
+        )
         let size = CGSize(width: width, height: regular ? 300 : 280)
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: nil))
         host.view.backgroundColor = .systemGroupedBackground

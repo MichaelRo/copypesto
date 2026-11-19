@@ -10,4 +10,6 @@ final class KeyboardModel {
     var menu = KeyboardMenu(hasFullAccess: false) { nil }
     var showsGlobeKey = true
     var word: String?
+    /// A word the person took off with its chip, or one already replaced, so it does not search again.
+    var dismissedWord: String?
 }

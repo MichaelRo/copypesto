@@ -410,11 +410,12 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
   press inserts and stays, with a checkmark. Note which keyboard the tap lands on with three or more keyboards. A clip
   with a secret never appears.
 - **Fresh set**: pin another clip in Pesto, switch back to the keyboard: it shows without restarting anything.
-- **Chips and collections** (ADR 0062): in Pesto, Settings → AutoFill and keyboard → Collections, add two and reorder
+- **Chips and collections** (ADR 0062): in Pesto's iOS settings, under AutoFill and keyboard, open Collections and add two and reorder
   them: the keyboard's chips follow, after Recent, Pinned and Snippets. A clip copied on the Mac shows a laptop.
 - **Word search**: in Notes type `basil`, switch to Pesto: a `"basil"` chip leads and only matches show; pick one:
   `basil` is replaced by the clip. Type `zzq`: the chip dims and the clips show unfiltered; × drops it. With the caret
-  inside a word, no chip.
+  inside a word, no chip. Repeat the replace in a Safari web page's text field (each Delete must remove one
+  character there too), and with "Stay in Pesto" tap a second match: the first clip is not touched.
 - **After inserting**: with "Stay in Pesto" chosen, a tap stays and a long press returns; the default is the reverse.
 - **Bottom row**: Space, Return and Delete act in the field, Space and Delete repeat while held, 123 opens the pad and
   its other face brings the clips back. The globe key

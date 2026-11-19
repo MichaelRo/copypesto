@@ -17,6 +17,11 @@ struct CardMenu: View {
         }
         Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") { card.togglePin() }
         AddToCollectionMenu(item: item, collections: card.collections)
+        if card.appState.canEditSnippet(item), let text = ClipContent.of(item)?.plainText {
+            Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
+                card.library.beginSnippetEdit(of: item, text: text)
+            }
+        }
         if card.appState.canSaveAsSnippet(item) {
             Button("Save as Snippet", systemImage: "text.badge.plus") {
                 Task { await card.appState.saveAsSnippet(item) }

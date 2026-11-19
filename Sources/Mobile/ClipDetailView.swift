@@ -41,11 +41,18 @@ struct ClipDetailView: View {
                 .sheet(item: fillBinding) { request in
                         SnippetFillSheet(request: request).presentationDetents([.medium, .large])
                     }
+                    .sheet(item: snippetEditorBinding) { target in
+                        MobileSnippetEditorView(target: target)
+                    }
         }
     }
 
     private var fillBinding: Binding<SnippetFillRequest?> {
         Binding(get: { isSheet ? appState.pendingFill : nil }, set: { appState.pendingFill = $0 })
+    }
+
+    private var snippetEditorBinding: Binding<LibraryModel.SnippetEditorTarget?> {
+        Binding(get: { isSheet ? library.snippetEditor : nil }, set: { library.snippetEditor = $0 })
     }
 
     private func detail(_ item: ClipboardItem) -> some View {
@@ -56,8 +63,18 @@ struct ClipDetailView: View {
                     ClipTextEditor(item: item, onClose: { library.endTextEdit() }, draft: draftBinding)
                 } else {
                     if appState.canEditText(item), let text = content?.plainText {
-                        Button("Edit Text", systemImage: "pencil") { library.beginTextEdit(of: item.id, text: text) }
+                        HStack(spacing: 16) {
+                            Button("Edit Text", systemImage: "pencil") {
+                                library.beginTextEdit(of: item.id, text: text)
+                            }
                             .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
+                            if appState.canEditSnippet(item) {
+                                Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
+                                    library.beginSnippetEdit(of: item, text: text)
+                                }
+                                .accessibilityIdentifier(MobileAccessibilityID.editSnippetButton)
+                            }
+                        }
                     }
                     ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
                         .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
@@ -172,6 +189,11 @@ struct ClipDetailView: View {
                 }
                 CopyActionsMenu(item: item)
                 AIActionsMenu(item: item)
+                if appState.canEditSnippet(item), let text = content?.plainText {
+                    Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
+                        library.beginSnippetEdit(of: item, text: text)
+                    }
+                }
                 if appState.canSaveAsSnippet(item) {
                     Button("Save as Snippet", systemImage: "text.badge.plus") {
                         Task { await appState.saveAsSnippet(item) }

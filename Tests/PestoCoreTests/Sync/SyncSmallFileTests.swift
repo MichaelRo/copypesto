@@ -47,8 +47,49 @@ struct SyncSmallFileTests {
     @Test("a dataless placeholder is not read: it would wait for the network on the calling thread")
     func whenDataless_thenNil() throws {
         let url = try file(of: 10)
+        var startedUbiquitous = false
 
-        #expect(SyncSmallFile.read(url, flags: { _ in DatalessFile.flag }) == nil)
+        #expect(SyncSmallFile.read(
+            url,
+            flags: { _ in DatalessFile.flag },
+            ubiquitousStatus: { _ in .init(isUbiquitousItem: true, downloadingStatus: .notDownloaded) },
+            startUbiquitousDownload: { _ in startedUbiquitous = true }
+        ) == nil)
+        #expect(!startedUbiquitous)
         #expect(SyncSmallFile.read(url, flags: { _ in 0 })?.count == 10)
+    }
+
+    @Test("an iCloud placeholder that is not downloaded starts downloading and returns nil")
+    func whenUbiquitousNotDownloaded_thenNilAndStartsDownload() throws {
+        let url = try file(of: 10)
+        var started = false
+
+        let data = SyncSmallFile.read(
+            url,
+            flags: { _ in 0 },
+            ubiquitousStatus: { _ in .init(isUbiquitousItem: true, downloadingStatus: .notDownloaded) },
+            startUbiquitousDownload: { _ in started = true }
+        )
+
+        #expect(data == nil)
+        #expect(started)
+    }
+
+    @Test("an iCloud item that is downloaded or current is read without starting a download", arguments: [
+        URLUbiquitousItemDownloadingStatus.downloaded, .current
+    ])
+    func whenUbiquitousDownloadedOrCurrent_thenRead(status: URLUbiquitousItemDownloadingStatus) throws {
+        let url = try file(of: 10)
+        var started = false
+
+        let data = SyncSmallFile.read(
+            url,
+            flags: { _ in 0 },
+            ubiquitousStatus: { _ in .init(isUbiquitousItem: true, downloadingStatus: status) },
+            startUbiquitousDownload: { _ in started = true }
+        )
+
+        #expect(data?.count == 10)
+        #expect(!started)
     }
 }

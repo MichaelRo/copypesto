@@ -70,6 +70,7 @@ private func describeStatus(_ status: SyncStatus) -> String {
     case .folderMissing: "folderMissing"
     case .nothingNew: "nothingNew"
     case .needsKey: "needsKey"
+    case let .storageFull(isICloud): "storageFull:\(isICloud ? "icloud" : "folder")"
     case let .refused(reason): "refused:\(reason)"
     }
 }

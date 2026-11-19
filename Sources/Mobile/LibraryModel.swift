@@ -34,6 +34,7 @@ final class LibraryModel {
     var columns: NavigationSplitViewVisibility = .all
     var showsSettings = false
     var isComposing = false
+    var snippetEditor: SnippetEditorTarget?
     var picksSyncFolder = false
     var isNamingCollection = false
     var editingCollection: Pinboard?
@@ -44,6 +45,18 @@ final class LibraryModel {
     /// Bumped when the grid should take the history's order again (`GridOrder`).
     private(set) var orderVersion = 0
     @ObservationIgnored let order = GridOrder()
+
+    enum SnippetEditorTarget: Equatable, Identifiable {
+        case new
+        case edit(id: UUID, title: String, text: String)
+
+        var id: String {
+            switch self {
+            case .new: "new"
+            case let .edit(id, _, _): id.uuidString
+            }
+        }
+    }
 
     struct TextEditSession: Equatable {
         let clipID: UUID
@@ -67,6 +80,14 @@ final class LibraryModel {
         textEdit?.clipID == id
     }
 
+    func beginNewSnippet() {
+        snippetEditor = .new
+    }
+
+    func beginSnippetEdit(of item: ClipboardItem, text: String) {
+        snippetEditor = .edit(id: item.id, title: item.customTitle ?? "", text: text)
+    }
+
     /// The history locked: nothing it had open, typed or was about to delete comes back with the unlock.
     func closeEverything() {
         query = ""
@@ -74,6 +95,7 @@ final class LibraryModel {
         filter.endSearch()
         openClipID = nil
         textEdit = nil
+        snippetEditor = nil
         scrollAnchor = nil
         showsSettings = false
         isComposing = false

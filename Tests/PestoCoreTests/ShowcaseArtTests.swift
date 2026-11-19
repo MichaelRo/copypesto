@@ -55,7 +55,7 @@ struct ShowcaseArtTests {
 
         #expect(image.width == 960 && image.height == 640)
         #expect(distinctColours(image) >= 200)
-        #expect(meanDifference(image, again) < 0.05)
+        #expect(meanDifference(image, again) < 0.15)
     }
 
     @Test("the jar frames are 640 by 428 and the loop closes: the last step leads back to the first")

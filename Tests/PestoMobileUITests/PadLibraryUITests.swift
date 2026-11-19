@@ -3,52 +3,12 @@ import UIKit
 import XCTest
 
 /// What only the iPad has, on a seeded, isolated launch: the hardware keyboard's commands, a card's menu reaching the
-/// sidebar, and the grid in both orientations.
+/// sidebar, the inline inspector and smart collections, and the grid in both orientations.
 @MainActor
-final class PadLibraryUITests: XCTestCase {
-    private let timeout: TimeInterval = 15
-
+final class PadLibraryUITests: MobileUITestCase {
     override func setUp() async throws {
         try await super.setUp()
-        continueAfterFailure = false
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad, "the iPad pass")
-    }
-
-    private func launch() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestMode", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        app.launchEnvironment["PESTO_UITEST_SESSION"] = "mobile-\(UUID().uuidString)"
-        app.launchEnvironment["PESTO_UITEST_SEED"] = "basic"
-        app.launch()
-        return app
-    }
-
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-    }
-
-    private func cards(in app: XCUIApplication) -> XCUIElementQuery {
-        app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
-    }
-
-    private func card(containing text: String, in app: XCUIApplication) -> XCUIElement {
-        cards(in: app).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
-    }
-
-    private func visibleCard(containing text: String, in app: XCUIApplication) -> Bool {
-        cards(in: app).matching(NSPredicate(format: "label CONTAINS %@", text))
-            .allElementsBoundByIndex.contains { $0.isHittable }
-    }
-
-    private func waitForSeededClips(in app: XCUIApplication) {
-        XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout), "seeded")
-    }
-
-    private func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
     }
 
     /// XCUITest sends a key only to an element with text focus, and a card never has it, so ⌘F from the grid is a hand
@@ -84,10 +44,7 @@ final class PadLibraryUITests: XCTestCase {
         if !sidebar.exists { app.buttons["Show Sidebar"].firstMatch.tap() }
         XCTAssertTrue(sidebar.waitForExistence(timeout: timeout))
 
-        card(containing: "Packing list", in: app).press(forDuration: 1.0)
-        let pin = app.buttons["Pin"]
-        XCTAssertTrue(pin.waitForExistence(timeout: timeout), "the card's menu offers Pin")
-        pin.tap()
+        chooseContextMenuItem("Pin", on: card(containing: "Packing list", in: app), in: app)
 
         sidebar.staticTexts["Pinned"].tap()
         XCTAssertTrue(
@@ -96,7 +53,7 @@ final class PadLibraryUITests: XCTestCase {
         )
         XCTAssertTrue(visibleCard(containing: "Packing list", in: app), "the newly pinned clip is in Pinned")
         XCTAssertTrue(visibleCard(containing: "Gate B7", in: app), "the seeded pin stays")
-        card(containing: "Packing list", in: app).press(forDuration: 1.0)
+        pressForContextMenu(card(containing: "Packing list", in: app), in: app)
         XCTAssertTrue(app.buttons["Unpin"].waitForExistence(timeout: timeout), "the pin was saved")
         capture("ipad-pinned")
     }
@@ -117,5 +74,88 @@ final class PadLibraryUITests: XCTestCase {
             capture("ipad-grid-\(orientation == .portrait ? "portrait" : "landscape")")
             app.terminate()
         }
+    }
+
+    func test_onIPad_editingTextInTheInspectorUpdatesTheGridAndOffersUndo() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        addTeardownBlock { @MainActor in XCUIDevice.shared.orientation = .portrait }
+        let app = launch()
+        let target = card(containing: "Packing list", in: app)
+        XCTAssertTrue(target.waitForExistence(timeout: timeout))
+        openDetail(of: target, in: app)
+
+        let edit = element(MobileAccessibilityID.editTextButton, in: app)
+        XCTAssertTrue(edit.waitForExistence(timeout: timeout), "a text clip offers Edit Text")
+        edit.tap()
+        let editor = element(MobileAccessibilityID.textEditor, in: app)
+        XCTAssertTrue(editor.waitForExistence(timeout: timeout))
+        editor.tap()
+        editor.typeText(" and sunscreen")
+        let save = element(MobileAccessibilityID.saveTextButton, in: app)
+        XCTAssertTrue(save.waitForExistence(timeout: timeout))
+        save.tap()
+
+        XCTAssertTrue(editor.waitForNonExistence(timeout: timeout))
+        XCTAssertTrue(card(containing: "sunscreen", in: app).waitForExistence(timeout: timeout), "grid updates inline")
+        capture("ipad-inspector-text-edited")
+
+        let undo = element(MobileAccessibilityID.undoButton, in: app)
+        XCTAssertTrue(undo.waitForExistence(timeout: timeout), "Undo is offered after saving")
+        undo.tap()
+        XCTAssertTrue(card(containing: "sunscreen", in: app).waitForNonExistence(timeout: timeout), "Undo reverts edit")
+        XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout))
+    }
+
+    func test_onIPad_aSmartCollectionFromTheSidebarJoinsItAndFiltersTheGrid() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        addTeardownBlock { @MainActor in XCUIDevice.shared.orientation = .portrait }
+        let app = launch()
+        waitForSeededClips(in: app)
+        let sidebar = element(MobileAccessibilityID.sidebar, in: app)
+        if !sidebar.exists { app.buttons["Show Sidebar"].firstMatch.tap() }
+        XCTAssertTrue(sidebar.waitForExistence(timeout: timeout))
+
+        sidebar.buttons["New Collection"].firstMatch.tap()
+        let name = element(MobileAccessibilityID.collectionNameField, in: app)
+        XCTAssertTrue(name.waitForExistence(timeout: timeout))
+        name.typeText("Web")
+        app.buttons["Smart"].firstMatch.tap()
+        let value = element(MobileAccessibilityID.smartRuleValue, in: app)
+        XCTAssertTrue(value.waitForExistence(timeout: timeout), "a smart collection asks for a rule")
+        value.tap()
+        app.buttons["Link"].firstMatch.tap()
+        element(MobileAccessibilityID.saveCollectionButton, in: app).tap()
+
+        XCTAssertTrue(sidebar.staticTexts["Web"].waitForExistence(timeout: timeout), "smart collection joins sidebar")
+        XCTAssertTrue(card(containing: "copypesto.net", in: app).waitForExistence(timeout: timeout))
+        XCTAssertFalse(visibleCard(containing: "Packing list", in: app), "the rule leaves the notes out")
+        capture("ipad-smart-collection")
+    }
+
+    func test_onIPad_decodeJWTFromTheInspectorMoreMenuShowsThePayload() {
+        XCUIDevice.shared.orientation = .landscapeLeft
+        addTeardownBlock { @MainActor in XCUIDevice.shared.orientation = .portrait }
+        let app = launch(environment: [
+            "PESTO_UITEST_JWT": "1", "PESTO_UITEST_DEFAULT_uitestAuthenticationGranted": "true"
+        ])
+        let token = card(containing: "108 characters hidden", in: app)
+        XCTAssertTrue(token.waitForExistence(timeout: timeout))
+        openDetail(of: token, in: app)
+
+        app.buttons["More"].firstMatch.tap()
+        let decode = app.buttons["Decode JWT"]
+        XCTAssertTrue(decode.waitForExistence(timeout: timeout))
+        decode.tap()
+
+        XCTAssertTrue(element(MobileAccessibilityID.decodeJWTSheet, in: app).waitForExistence(timeout: timeout))
+        XCTAssertTrue(
+            app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Ada Lovelace")).firstMatch.exists,
+            "the payload is readable"
+        )
+        capture("ipad-decode-jwt")
+
+        element(MobileAccessibilityID.decodeJWTCopyPayload, in: app).tap()
+        XCTAssertTrue(element(MobileAccessibilityID.decodeJWTSheet, in: app).waitForNonExistence(timeout: timeout))
+        XCTAssertFalse(app.staticTexts["Ada Lovelace"].exists, "the card stays hidden")
     }
 }

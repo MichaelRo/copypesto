@@ -5,6 +5,7 @@ import SwiftUI
 /// The few settings the iOS app has. What only a Mac does (shortcuts, the login item, app exclusions) is not here.
 struct SettingsView: View {
     @Environment(MobileAppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     @AppStorage(Setting.appTheme) private var theme: String
     @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
@@ -134,6 +135,11 @@ struct SettingsView: View {
                 Text("Pinned clips are kept.")
             }
             Section {
+                Button("Show Welcome Again") {
+                    appState.requestWelcomeAgain()
+                    dismiss()
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.showWelcomeAgain)
                 LabeledContent("Pesto", value: AppVersion.displayString())
             }
         }

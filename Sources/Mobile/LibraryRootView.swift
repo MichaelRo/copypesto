@@ -44,6 +44,10 @@ struct LibraryRootView: View {
         #endif
             .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 || Self.forcesSceneCapture })
             .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(in: scenePhase)))
+            .modifier(WelcomePresentation(onDismiss: startRequestedSync))
+            .onChange(of: appState.hasBooted, initial: true) { _, booted in
+                if booted { appState.presentWelcomeOnFirstLaunch() }
+            }
             .animation(Motion.animation(.pestoWash), value: appState.isHistoryLocked)
             .onChange(of: appState.isHistoryLocked) { _, locked in if locked { library.closeEverything() } }
     }
@@ -82,6 +86,12 @@ struct LibraryRootView: View {
 }
 
 extension LibraryRootView {
+    /// Turn On Sync in the welcome: the library opens the sync flow once the welcome has gone.
+    private func startRequestedSync() {
+        guard appState.takeSyncSetUpRequest(), let sync = appState.sync else { return }
+        if sync.canBeginSetUp { sync.beginSetUp() } else { library.picksSyncFolder = true }
+    }
+
     /// A regular width starts with the sidebar shown or hidden by how wide the window is, and follows the width until
     /// the person shows or hides the sidebar themselves.
     private func decideColumns() {

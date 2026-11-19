@@ -114,6 +114,10 @@ public enum Setting {
     /// Whether setup has already offered "Launch Pesto at login" turned on (ADR 0024); this Mac's own state.
     public static let loginItemOffered = SettingKey("loginItemOffered", default: false)
     public static let onboardingDefaultsOffered = SettingKey("onboardingDefaultsOffered", default: false)
+    /// Whether the iPhone and iPad welcome has been shown, finished or skipped (ADR 0057); this device's own state.
+    public static let welcomeShown = SettingKey("welcomeShown", default: false)
+    /// Whether the one-time AutoFill tip has been shown or answered on iPhone and iPad (ADR 0057).
+    public static let autoFillTipShown = SettingKey("autoFillTipShown", default: false)
     /// Ids of collection suggestions the person dismissed, one per line.
     /// Ids of snippet suggestions (a starter's id, or a clip's UUID) the person dismissed, one per line.
     public static let dismissedSnippetSuggestions = SettingKey("dismissedSnippetSuggestions", default: "")
@@ -142,6 +146,8 @@ public enum Setting {
     public static let uitestAuthenticationGranted = SettingKey("uitestAuthenticationGranted", default: false)
     public static let uitestAuthenticationUnavailable = SettingKey("uitestAuthenticationUnavailable", default: false)
     public static let uitestForcesSceneCapture = SettingKey("uitestForcesSceneCapture", default: false)
+    public static let uitestShowsWelcome = SettingKey("uitestShowsWelcome", default: false)
+    public static let uitestShowsAutoFillTip = SettingKey("uitestShowsAutoFillTip", default: false)
 
     /// Every key's name, for the tests that keep the list honest.
     public static let allNames: [String] = [
@@ -170,6 +176,7 @@ public enum Setting {
         toggleClipContentsHotkeyKeyCode.name, toggleClipContentsHotkeyModifiers.name,
         settingsWindowFrame.name, lastSettingsPane.name, declinedAutoPaste.name, pinnedWindowFrame.name,
         samplesSeeded.name, importOffered.name, loginItemOffered.name, onboardingDefaultsOffered.name,
+        welcomeShown.name, autoFillTipShown.name,
         dismissedSnippetSuggestions.name,
         dismissedCollectionSuggestions.name,
         installPromptSuppressed.name,
@@ -182,6 +189,7 @@ public enum Setting {
         shelfSuggestionsLastShownAt.name,
         shelfSuggestionDeclines.name,
         shelfSuggestionLedger.name, clickHintShownCount.name, doubleClickPasted.name,
-        uitestAuthenticationGranted.name, uitestAuthenticationUnavailable.name, uitestForcesSceneCapture.name
+        uitestAuthenticationGranted.name, uitestAuthenticationUnavailable.name, uitestForcesSceneCapture.name,
+        uitestShowsWelcome.name, uitestShowsAutoFillTip.name
     ]
 }

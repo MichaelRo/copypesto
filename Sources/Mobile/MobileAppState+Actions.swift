@@ -127,9 +127,11 @@ extension MobileAppState {
 
     func togglePin(_ id: UUID) async {
         guard let service = storageService else { return }
+        var pinned = false
         await reportAsync("Couldn\u{2019}t save the change.") {
-            _ = try await service.togglePinned(id: id)
+            pinned = try await service.togglePinned(id: id) == true
         }
+        if pinned { clipWasKept() }
     }
 
     /// Copies the clip's real content (a secret too, without showing it) and moves the clip to the front, as a copy

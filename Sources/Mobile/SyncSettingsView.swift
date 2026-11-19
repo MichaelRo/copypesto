@@ -84,7 +84,7 @@ private struct SyncSettingsForm: View {
     private var offSections: some View {
         Section {
             Button("Turn On Sync\u{2026}") {
-                if sync.hasFolder, sync.folderProblem == nil, sync.controller != nil {
+                if sync.canBeginSetUp {
                     sync.beginSetUp()
                 } else {
                     picksFolder = true

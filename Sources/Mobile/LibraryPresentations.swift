@@ -2,6 +2,7 @@
 import PestoCore
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Everything the library page presents over itself, once for both layouts: Settings, a new note, a new or edited
 /// collection, the delete confirmation from the keyboard, and the share sheet a card's menu opens.
@@ -17,7 +18,7 @@ struct LibraryPresentations: ViewModifier {
             .sheet(item: fillBinding) { request in
                 SnippetFillSheet(request: request).presentationDetents([.medium, .large])
             }
-            .sheet(isPresented: $library.showsSettings) { SettingsSheet() }
+            .sheet(isPresented: $library.showsSettings, onDismiss: showWelcomeIfAsked) { SettingsSheet() }
             .sheet(isPresented: $library.isComposing) { NewNoteView() }
             .sheet(item: $library.sharing) { share in
                 ShareSheet(items: share.items).presentationDetents([.medium, .large])
@@ -37,7 +38,26 @@ struct LibraryPresentations: ViewModifier {
                     SyncApproveView(sync: sync, pending: pending)
                 }
             }
+            .sheet(isPresented: syncFlowBinding) {
+                if let sync = appState.sync { SyncFlowSheet(sync: sync) }
+            }
+            .fileImporter(isPresented: $library.picksSyncFolder, allowedContentTypes: [.folder]) { result in
+                if case let .success(url) = result { appState.sync?.useFolder(url) }
+            }
             .task(id: appState.sync?.isEnabled ?? false) { await watchForJoinRequests() }
+    }
+
+    private func showWelcomeIfAsked() {
+        if appState.takeWelcomeAgainRequest() { appState.showWelcomeAgain() }
+    }
+
+    /// Turn On Sync from the welcome opens the same flow as Settings > Sync, over the library. While Settings is up
+    /// its own Sync screen presents the flow.
+    private var syncFlowBinding: Binding<Bool> {
+        Binding(
+            get: { appState.sync.map { $0.flow != .idle } == true && !library.showsSettings },
+            set: { if !$0 { appState.sync?.cancelFlow() } }
+        )
     }
 
     /// A request from another device appears in the sync folder; the library looks for it while sync is on, as the

@@ -52,6 +52,14 @@ final class MobileAppState {
     @ObservationIgnored var widget: WidgetTarget? = .current
     @ObservationIgnored var backgroundWork = BackgroundWork.system
     @ObservationIgnored var linkPreviewLoader = LinkPreviewLoader()
+    /// The first-run welcome is up (`MobileAppState+Welcome.swift`).
+    var showsWelcome = false
+    /// The welcome's Turn On Sync asked the library to open the sync flow once the welcome has gone.
+    @ObservationIgnored var syncSetUpRequested = false
+    @ObservationIgnored var welcomeAgainRequested = false
+    /// The one-time AutoFill tip is on screen (`MobileAppState+AutoFillTip.swift`).
+    var offersAutoFillTip = false
+    @ObservationIgnored var opensAutoFillSettings: @MainActor () async -> Void = AutoFillSettings.open
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?
     @ObservationIgnored var retentionPolicy: @Sendable () -> RetentionPolicy = {

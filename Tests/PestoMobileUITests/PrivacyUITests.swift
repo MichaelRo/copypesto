@@ -84,6 +84,21 @@ final class PrivacyUITests: XCTestCase {
         capture("Cards covered by Hide Clip Contents")
     }
 
+    /// Greyed out without the lock, the switch read as a feature the device could not have; it is an exception to the
+    /// lock, so it appears only with the lock on.
+    func test_whenTheLockIsOff_thenSettingsOffersNoWidgetAndAutoFillException() {
+        let app = launch()
+        XCTAssertTrue(element(MobileAccessibilityID.clipCard, in: app).waitForExistence(timeout: timeout))
+        element(MobileAccessibilityID.settingsButton, in: app).tap()
+        let lock = app.switches[MobileAccessibilityID.historyLockToggle].firstMatch
+        for _ in 0..<6 where !lock.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(lock.waitForExistence(timeout: timeout))
+        XCTAssertEqual(lock.value as? String, "0")
+        XCTAssertFalse(app.switches[MobileAccessibilityID.showsClipsOutsideToggle].exists)
+    }
+
     func test_whenTheSceneIsCaptured_thenEveryCardIsCoveredAndOffersShow() {
         let app = launch(environment: [
             "PESTO_UITEST_DEFAULT_screenSharingPrivacy": "true",

@@ -56,6 +56,25 @@ checks on a device:
 - "Add Clipboard to Pesto" from the Action Button or Back Tap, and iOS's paste prompt;
 - the checks that need Apple Intelligence or a real GIF in another app (AI actions, Ask, Describe Image, sharing a GIF in and out) are listed in `docs/testing.md`, "iPhone and iPad: what only a device can check".
 
+## Uploading to App Store Connect
+
+Once, on the portal and in App Store Connect:
+1. An **Apple Distribution** certificate (Xcode → Settings → Accounts → the team → Manage Certificates → + → Apple
+   Distribution). It is separate from the Developer ID certificate; keep its .p12 and password in the password
+   manager.
+2. An App Store profile for each of the five App IDs above (Profiles → + → App Store Connect). They are not secret and
+   can be downloaded again; Xcode → Settings → Accounts → Download Manual Profiles installs them.
+3. The app record: App Store Connect → Apps → + → New App → iOS, name Pesto, bundle ID `net.copypesto.pesto`, any SKU
+   (an internal reference no one sees, such as `pesto-ios`), and Full Access for the team's users.
+
+Each release:
+1. `make archive-mobile` archives `PestoMobile` and its extensions (Release, any iOS device) into
+   `.build/xcode-ios-app/Pesto-iOS.xcarchive`, signed for the team the `Makefile` finds (`APPLE_TEAM_ID`).
+2. `open .build/xcode-ios-app/Pesto-iOS.xcarchive` opens it in Xcode's Organizer: Distribute App → App Store Connect →
+   Upload, with automatic signing (or Manual, choosing the five App Store profiles).
+3. In App Store Connect the build appears after processing; fill in the listing and review notes from
+   `docs/app-store-ios.md` and submit.
+
 ## Distribution
 
 Device builds from Xcode need no App Store Connect record. Giving the app to anyone else means the App Store (TestFlight

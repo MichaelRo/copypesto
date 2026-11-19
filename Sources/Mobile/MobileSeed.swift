@@ -9,7 +9,7 @@ import UniformTypeIdentifiers
 
 /// A clip of each kind for a `-UITestMode` launch, added through ingest like any capture, then one pinned and one in a
 /// collection through the app's own actions. A launch with `PESTO_UITEST_SEED=empty` starts with none, and
-/// `PESTO_UITEST_JWT=1` adds a token.
+/// `PESTO_UITEST_JWT=1` adds a token and `PESTO_UITEST_PICTURE_TEXT=1` a picture with printed words in it.
 enum MobileSeed {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "MobileSeed")
     static let noteText = "Packing list: passport, charger, the blue notebook"
@@ -69,6 +69,13 @@ enum MobileSeed {
         {
             try? await service.ingest(capture)
         }
+        if ProcessInfo.processInfo.environment["PESTO_UITEST_PICTURE_TEXT"] == "1",
+           let capture = ClipCapture.picture(
+               pictureOfText(), typeIdentifier: UTType.png.identifier, at: .now.addingTimeInterval(-2)
+           )
+        {
+            try? await service.ingest(capture)
+        }
         await service.waitForBackgroundWork()
         await arrange(state)
     }
@@ -114,6 +121,24 @@ enum MobileSeed {
             (ClipCapture.text(noteText, at: earlier(1)), nil)
         ]
         return list.compactMap { capture, id in capture.map { ($0, id) } }
+    }
+
+    static let pictureWords = ["Boarding pass", "Flight PS 404", "Gate B7", "Seat 14A"]
+
+    private static func pictureOfText() -> Data {
+        let size = CGSize(width: 720, height: 480)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: size, format: format).pngData { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(origin: .zero, size: size))
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 56, weight: .semibold), .foregroundColor: UIColor.black
+            ]
+            for (row, line) in pictureWords.enumerated() {
+                line.draw(at: CGPoint(x: 48, y: 40 + CGFloat(row) * 108), withAttributes: attributes)
+            }
+        }
     }
 
     private static func picture(width: CGFloat, height: CGFloat) -> Data {

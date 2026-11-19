@@ -123,6 +123,9 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     public var pasteboardAccess: PasteboardAccessStub?
     /// Forces embedded Touch ID prompt availability in UI-test mode (`PESTO_UITEST_EMBEDDED_BIOMETRICS=1`).
     public var embeddedBiometrics: Bool
+    /// Reads the text in a picture on ingest, which a UI-test launch skips; the App Store pictures need a search that
+    /// finds words inside a picture (`PESTO_UITEST_READ_PICTURES=1`). UI-test mode only.
+    public var readsPictureText: Bool
 
     static let defaultOverridePrefix = "PESTO_UITEST_DEFAULT_"
 
@@ -148,7 +151,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         linkPreviewStubMillis: Int? = nil,
         menuBarIsFull: Bool = false,
         pasteboardAccess: PasteboardAccessStub? = nil,
-        embeddedBiometrics: Bool = false
+        embeddedBiometrics: Bool = false,
+        readsPictureText: Bool = false
     ) {
         self.mode = mode
         self.session = session
@@ -170,6 +174,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         self.menuBarIsFull = menuBarIsFull
         self.pasteboardAccess = pasteboardAccess
         self.embeddedBiometrics = embeddedBiometrics
+        self.readsPictureText = readsPictureText
     }
 
     public static let current = parse(
@@ -211,7 +216,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             menuBarIsFull: environment["PESTO_UITEST_MENUBAR_FULL"] == "1",
             pasteboardAccess: environment["PESTO_UITEST_PASTEBOARD_ACCESS"]
                 .flatMap(PasteboardAccessStub.init(rawValue:)),
-            embeddedBiometrics: environment["PESTO_UITEST_EMBEDDED_BIOMETRICS"] == "1"
+            embeddedBiometrics: environment["PESTO_UITEST_EMBEDDED_BIOMETRICS"] == "1",
+            readsPictureText: environment["PESTO_UITEST_READ_PICTURES"] == "1"
         )
     }
 

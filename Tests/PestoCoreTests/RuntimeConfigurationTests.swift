@@ -189,4 +189,16 @@ struct RuntimeConfigurationTests {
         #expect(parse(["-UITestMode"]).backdrop == .none)
         #expect(parse([], ["PESTO_UITEST_BACKDROP": "hero"]).backdrop == .none, "a normal launch never draws one")
     }
+
+    @Test("a UI-test launch reads the text in pictures only when it asks")
+    func whenPictureReadingRequested_thenOnlyInUITestMode() {
+        let asking = parse(["-UITestMode"], ["PESTO_UITEST_READ_PICTURES": "1"])
+        #expect(asking.readsPictureText)
+        #expect(StorageService.readsImages(in: asking))
+        let plain = parse(["-UITestMode"])
+        #expect(!plain.readsPictureText)
+        #expect(!StorageService.readsImages(in: plain), "a UI-test launch skips Vision unless asked")
+        #expect(!parse([], ["PESTO_UITEST_READ_PICTURES": "1"]).readsPictureText)
+        #expect(StorageService.readsImages(in: parse([])), "a normal launch always reads pictures")
+    }
 }

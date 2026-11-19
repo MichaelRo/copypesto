@@ -15,6 +15,9 @@ public enum QuickInsertPolicy {
     public static let maxEntryBytes = 32 * 1024
     public static let maxTotalBytes = 256 * 1024
     public static let maxTitleCharacters = 120
+    public static let maxSourceCharacters = 60
+    public static let thumbnailMaxPixel = 240
+    public static let maxThumbnailBytes = 24 * 1024
     /// How many clips of each kind are looked at to find the ones that may be offered.
     public static let scanLimit = 200
     /// Encoding escapes a control character as six bytes (`\u0000`), so even a set of nothing else fits.

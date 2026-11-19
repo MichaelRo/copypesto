@@ -6,25 +6,64 @@ import SwiftData
 /// then the newest text, each newest first, within `QuickInsertPolicy`. Only text a field can take (text, code, a
 /// link as its address, a color as its value), and only what `ShortcutClipSearch.isOfferedOutsidePesto` allows.
 public enum QuickInsertSelection {
-    private static let insertableTypes: Set<ClipboardType> = [.text, .code, .url, .color]
+    private static let insertableTypes: Set<ClipboardType> = [.text, .code, .url, .color, .image]
+
+    /// How a clip's parts are read: asked only of clips that may be offered, and within the set's size budget.
+    public struct Reader {
+        public var text: (ClipboardItem) -> String?
+        public var thumbnail: (ClipboardItem) -> Data?
+        public var recognizedText: (ClipboardItem) -> String?
+        public var source: (ClipboardItem) -> (name: String?, isThisDevice: Bool)
+        public var isAnimated: (ClipboardItem) -> Bool
+
+        public init(
+            text: @escaping (ClipboardItem) -> String?,
+            thumbnail: @escaping (ClipboardItem) -> Data? = { _ in nil },
+            recognizedText: @escaping (ClipboardItem) -> String? = { _ in nil },
+            source: @escaping (ClipboardItem) -> (name: String?, isThisDevice: Bool) = {
+                QuickInsertSelection.defaultSource(for: $0)
+            },
+            isAnimated: @escaping (ClipboardItem) -> Bool = {
+                $0.blob?.mimeType == "com.compuserve.gif" || $0.blob?.mimeType == "public.gif"
+            }
+        ) {
+            self.text = text
+            self.thumbnail = thumbnail
+            self.recognizedText = recognizedText
+            self.source = source
+            self.isAnimated = isAnimated
+        }
+    }
 
     /// What the person chose in iOS Settings for the keyboard and AutoFill (ADR 0062).
     public struct Options: Equatable, Sendable {
         public var collectionIDs: [UUID]
         public var returnsAfterInsert: Bool
+        public var keyboardSize: KeyboardSize
+        public var accent: WidgetSnapshot.Theme
 
-        public init(collectionIDs: [UUID] = [], returnsAfterInsert: Bool = true) {
+        public init(
+            collectionIDs: [UUID] = [], returnsAfterInsert: Bool = true,
+            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand
+        ) {
             self.collectionIDs = collectionIDs
             self.returnsAfterInsert = returnsAfterInsert
+            self.keyboardSize = keyboardSize
+            self.accent = accent
         }
 
         /// As the settings hold them: `Setting.keyboardCollections` is ids joined by commas; one that does not read
         /// as an id, or a repeat, is dropped.
-        public init(storedCollections: String, returnsAfterInsert: Bool) {
+        public init(
+            storedCollections: String, returnsAfterInsert: Bool,
+            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand
+        ) {
             var seen: Set<UUID> = []
             collectionIDs = storedCollections.split(separator: ",").compactMap { UUID(uuidString: String($0)) }
                 .filter { seen.insert($0).inserted }
             self.returnsAfterInsert = returnsAfterInsert
+            self.keyboardSize = keyboardSize
+            self.accent = accent
         }
 
         public static func stored(_ ids: [UUID]) -> String {
@@ -41,7 +80,34 @@ public enum QuickInsertSelection {
     @MainActor
     public static func set(
         in context: ModelContext, now: Date, options: Options = Options(),
-        text: (ClipboardItem) -> String? = { $0.blob?.decryptedText() }
+        recognizedTexts: RecognizedTextStore = RecognizedTextStore(),
+        source: ((ClipboardItem) -> (name: String?, isThisDevice: Bool))? = nil,
+        text: @escaping (ClipboardItem) -> String? = { $0.blob?.decryptedText() }
+    ) throws
+        -> QuickInsertSet
+    {
+        let reader = Reader(
+            text: text,
+            thumbnail: { item in
+                guard item.type == .image else { return nil }
+                return item.blob?.decryptedData().flatMap {
+                    ImageDownsampler.thumbnailJPEG(
+                        from: $0, maxPixel: QuickInsertPolicy.thumbnailMaxPixel,
+                        maxBytes: QuickInsertPolicy.maxThumbnailBytes
+                    )
+                }
+            },
+            recognizedText: { item in
+                item.type == .image && recognizedTexts.exists(for: item.id) ? recognizedTexts.load(for: item.id) : nil
+            },
+            source: source ?? { defaultSource(for: $0) }
+        )
+        return try set(in: context, now: now, options: options, reader: reader)
+    }
+
+    @MainActor
+    public static func set(
+        in context: ModelContext, now: Date, options: Options = Options(), reader: Reader
     ) throws
         -> QuickInsertSet
     {
@@ -54,12 +120,13 @@ public enum QuickInsertSelection {
         )
         recent.fetchLimit = QuickInsertPolicy.scanLimit
         let chosen = try members(of: options.collectionIDs, in: context)
-        let lists = try lists(
-            pinned: context.fetch(pinned), recent: context.fetch(recent), collections: chosen, text: text
+        let lists = lists(
+            pinned: try context.fetch(pinned), recent: try context.fetch(recent), collections: chosen, reader: reader
         )
         return QuickInsertSet(
             createdAt: now, entries: lists.entries, collections: lists.collections,
-            returnsAfterInsert: options.returnsAfterInsert
+            returnsAfterInsert: options.returnsAfterInsert,
+            accent: options.accent, keyboardSize: options.keyboardSize
         )
     }
 
@@ -103,13 +170,22 @@ public enum QuickInsertSelection {
         pinned: [ClipboardItem], recent: [ClipboardItem], text: (ClipboardItem) -> String?
     )
     -> [QuickInsertEntry] {
-        lists(pinned: pinned, recent: recent, collections: [], text: text).entries
+        withoutActuallyEscaping(text) { escapingText in
+            lists(pinned: pinned, recent: recent, collections: [], text: escapingText).entries
+        }
     }
 
     /// Pinned, snippets and recent clips first, then each chosen collection's: a clip already chosen is listed by the
     /// collection rather than carried twice, and all of it shares one size budget.
     public static func lists(
-        pinned: [ClipboardItem], recent: [ClipboardItem], collections: [Members], text: (ClipboardItem) -> String?
+        pinned: [ClipboardItem], recent: [ClipboardItem], collections: [Members], text: @escaping (ClipboardItem) -> String?
+    )
+    -> (entries: [QuickInsertEntry], collections: [QuickInsertCollection]) {
+        lists(pinned: pinned, recent: recent, collections: collections, reader: Reader(text: text))
+    }
+
+    public static func lists(
+        pinned: [ClipboardItem], recent: [ClipboardItem], collections: [Members], reader: Reader
     )
     -> (entries: [QuickInsertEntry], collections: [QuickInsertCollection]) {
         var budget = QuickInsertPolicy.maxTotalBytes
@@ -119,7 +195,51 @@ public enum QuickInsertSelection {
         var extra: [QuickInsertEntry] = []
         var chosen: Set<UUID> = []
         func entry(_ item: ClipboardItem, section: QuickInsertEntry.Section) -> QuickInsertEntry? {
-            guard isEligible(item), let body = text(item), !body.isEmpty,
+            guard isEligible(item) else { return nil }
+            let src = reader.source(item)
+            let trimmedSource = src.name.flatMap { name in
+                let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                return clean.isEmpty ? nil : String(clean.prefix(QuickInsertPolicy.maxSourceCharacters))
+            }
+            if item.type == .image {
+                let isFull = switch section {
+                case .pinned: pins.count >= QuickInsertPolicy.maxPinned
+                case .recent: latest.count >= QuickInsertPolicy.maxRecent
+                case .snippets, .collection: false
+                }
+                guard !isFull,
+                      SensitiveContentDetector.detectAnywhere(in: item.displayPreviewText) == nil else { return nil }
+                let rawOCR = reader.recognizedText(item)
+                if let rawOCR, SensitiveContentDetector.detectAnywhere(in: rawOCR) != nil { return nil }
+                guard let thumb = reader.thumbnail(item), !thumb.isEmpty,
+                      thumb.count <= QuickInsertPolicy.maxThumbnailBytes,
+                      thumb.count <= budget else { return nil }
+                let ocr: String? = rawOCR.flatMap { value in
+                    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty,
+                          trimmed.utf8.count <= QuickInsertPolicy.maxEntryBytes,
+                          thumb.count + trimmed.utf8.count <= budget else { return nil }
+                    return trimmed
+                }
+                budget -= thumb.count + (ocr?.utf8.count ?? 0)
+                chosen.insert(item.id)
+                let labelTitle = title(of: item, text: ocr ?? "")
+                return QuickInsertEntry(
+                    id: item.id, section: section, kind: .image,
+                    title: labelTitle, text: "",
+                    expandsOnInsert: false,
+                    fromAnotherDevice: item.syncOrigin != nil || item.isRemote,
+                    customTitle: item.customTitle,
+                    ogTitle: nil,
+                    date: item.timestamp,
+                    source: trimmedSource,
+                    sourceIsThisDevice: src.isThisDevice,
+                    thumbnail: thumb,
+                    recognizedText: ocr,
+                    isAnimated: reader.isAnimated(item)
+                )
+            }
+            guard let body = reader.text(item), !body.isEmpty,
                   body.utf8.count <= QuickInsertPolicy.maxEntryBytes, body.utf8.count <= budget,
                   SensitiveContentDetector.detectAnywhere(in: body) == nil else { return nil }
             // A pinned clip with placeholders is a snippet wherever it is listed: one that asks for a value never
@@ -139,7 +259,12 @@ public enum QuickInsertSelection {
                 id: item.id, section: isSnippet ? .snippets : section, kind: item.type,
                 title: title(of: item, text: body), text: body,
                 expandsOnInsert: isSnippet,
-                fromAnotherDevice: item.syncOrigin != nil || item.isRemote
+                fromAnotherDevice: item.syncOrigin != nil || item.isRemote,
+                customTitle: item.customTitle,
+                ogTitle: item.ogTitle,
+                date: item.timestamp,
+                source: trimmedSource,
+                sourceIsThisDevice: src.isThisDevice
             )
         }
         for item in pinned {
@@ -165,10 +290,18 @@ public enum QuickInsertSelection {
             carried.append(QuickInsertCollection(
                 id: board.id, name: String(board.name.prefix(QuickInsertPolicy.maxCollectionNameCharacters)),
                 symbolName: String(board.symbolName.prefix(WidgetSnapshotPolicy.maxSymbolNameCharacters)),
+                color: String(board.colorHex.prefix(7)),
                 entryIDs: ids
             ))
         }
         return (pins + snippets + latest + extra, carried)
+    }
+
+    public static func defaultSource(for item: ClipboardItem) -> (name: String?, isThisDevice: Bool) {
+        if item.isRemote { return (PasteboardCapture.remoteSourceName, false) }
+        if let appName = item.knownSourceAppName { return (appName, false) }
+        if item.syncOrigin != nil { return (nil, false) }
+        return (nil, true)
     }
 
     public static func isEligible(_ item: ClipboardItem) -> Bool {

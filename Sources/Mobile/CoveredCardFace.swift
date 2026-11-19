@@ -12,7 +12,7 @@ struct CoveredCardFace: View {
     var body: some View {
         VStack(alignment: .leading, spacing: CardMetrics.footGap) {
             if isSecret { secretBody } else { coveredBody }
-            CardFootLineView(item: item, trailingMark: isSecret ? item.sensitivity?.badgeLabel : nil)
+            ItemFootLineView(item: item, trailingMark: isSecret ? item.sensitivity?.badgeLabel : nil)
         }
         .padding(CardMetrics.inset)
     }

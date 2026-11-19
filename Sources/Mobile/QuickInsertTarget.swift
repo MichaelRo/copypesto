@@ -13,7 +13,9 @@ struct QuickInsertTarget {
     var options: @MainActor () -> QuickInsertSelection.Options = {
         QuickInsertSelection.Options(
             storedCollections: AppDefaults.store.value(for: Setting.keyboardCollections),
-            returnsAfterInsert: AppDefaults.store.value(for: Setting.keyboardReturnsAfterInsert)
+            returnsAfterInsert: AppDefaults.store.value(for: Setting.keyboardReturnsAfterInsert),
+            keyboardSize: KeyboardSize(rawValue: AppDefaults.store.value(for: Setting.keyboardSize)) ?? .medium,
+            accent: MobileAppState.widgetTheme()
         )
     }
 

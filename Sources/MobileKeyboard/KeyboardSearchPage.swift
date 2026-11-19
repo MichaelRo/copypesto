@@ -9,6 +9,7 @@ struct KeyboardSearchPage: View {
     /// iOS's switch key, built by the root: the page holds no input controller, so nothing on it can reach the field.
     let globe: GlobeKey?
     let pick: (QuickInsertEntry, _ longPress: Bool) -> Void
+    var pickRecognizedText: (QuickInsertEntry, String) -> Void = { _, _ in }
     let close: () -> Void
 
     @State private var showsDigits = false
@@ -90,10 +91,18 @@ struct KeyboardSearchPage: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollView(.horizontal, showsIndicators: false) {
+                let width: CGFloat = sizeClass == .regular ? 180 : 150
+                let cardSize = CGSize(width: width, height: 58)
                 LazyHStack(spacing: 6) {
                     ForEach(results) { entry in
-                        KeyboardClipKey(entry: entry, isInserted: false)
-                            .frame(width: sizeClass == .regular ? 180 : 150)
+                        KeyboardClipKey(
+                            entry: entry,
+                            cardSize: cardSize,
+                            feedback: nil,
+                            onInsertRecognizedText: entry.hasRecognizedText
+                                ? { text in pickRecognizedText(entry, text) }
+                                : nil
+                        )
                             .onTapGesture { pick(entry, false) }
                             .onLongPressGesture(minimumDuration: 0.4) { pick(entry, true) }
                             .accessibilityAction { pick(entry, false) }

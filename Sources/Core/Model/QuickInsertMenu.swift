@@ -32,7 +32,7 @@ public struct QuickInsertMenu: Equatable, Sendable {
     private let collections: [QuickInsertCollection]
 
     public init(set: QuickInsertSet?) {
-        entries = set?.entries ?? []
+        entries = (set?.entries ?? []).filter { $0.kind != .image }
         collections = set?.collections ?? []
         state = set == nil ? .unavailable : entries.isEmpty ? .empty : .ready
     }

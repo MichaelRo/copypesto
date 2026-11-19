@@ -72,6 +72,7 @@ struct EntitlementsTests {
         #expect(try Set(plist("Sources/MobileShare/PestoShare.entitlements").keys) == [group])
         #expect(try Set(plist("Sources/MobileAutoFill/PestoAutoFill.entitlements").keys) == [group, keychain, autofill])
         #expect(try plist("Sources/MobileAutoFill/PestoAutoFill.entitlements")[autofill] as? Bool == true)
+        #expect(try Set(plist("Sources/MobileKeyboard/PestoKeyboard.entitlements").keys) == [group, keychain])
         #expect(try Set(plist("Sources/MobileWidget/PestoWidget.entitlements").keys) == [group, keychain])
         for path in ["Sources/Resources/Pesto.entitlements", "Sources/Resources/PestoSync.entitlements"] {
             for key in [group, keychain, autofill] {
@@ -80,11 +81,13 @@ struct EntitlementsTests {
         }
     }
 
-    @Test("the app's own Keychain group comes first; AutoFill and the widget each hold only the group of their own key")
+    @Test("the app's own Keychain group comes first; AutoFill, the keyboard and the widget hold only their key's group")
     func iOSKeychainGroups_keepTheAppsItemsItsOwn() throws {
         let prefix = "$(AppIdentifierPrefix)"
         let app = try plist("Sources/Resources/PestoMobile.entitlements")["keychain-access-groups"] as? [String]
         let autoFill = try plist("Sources/MobileAutoFill/PestoAutoFill.entitlements")["keychain-access-groups"]
+            as? [String]
+        let keyboard = try plist("Sources/MobileKeyboard/PestoKeyboard.entitlements")["keychain-access-groups"]
             as? [String]
         let widget = try plist("Sources/MobileWidget/PestoWidget.entitlements")["keychain-access-groups"] as? [String]
         #expect(app == [
@@ -92,10 +95,11 @@ struct EntitlementsTests {
             AppIdentity.widgetKeychainGroup(prefix: prefix)
         ])
         #expect(autoFill == [AppIdentity.quickInsertKeychainGroup(prefix: prefix)])
+        #expect(keyboard == [AppIdentity.quickInsertKeychainGroup(prefix: prefix)])
         #expect(widget == [AppIdentity.widgetKeychainGroup(prefix: prefix)])
         for path in [
             "Sources/Resources/PestoMobile-Info.plist", "Sources/MobileAutoFill/Info.plist",
-            "Sources/MobileWidget/Info.plist"
+            "Sources/MobileKeyboard/Info.plist", "Sources/MobileWidget/Info.plist"
         ] {
             #expect(try plist(path)[AppIdentity.appIdentifierPrefixInfoKey] as? String == prefix, "\(path)")
         }
@@ -114,6 +118,34 @@ struct EntitlementsTests {
         let capabilities = try #require(attributes["ASCredentialProviderExtensionCapabilities"] as? [String: Any])
         #expect(Set(capabilities.keys) == ["ProvidesTextToInsert"])
         #expect(capabilities["ProvidesTextToInsert"] as? Bool == true)
+    }
+
+    @Test("the keyboard is a keyboard extension that asks for Full Access and can be switched away from")
+    func keyboardExtension_isAKeyboardThatAsksForFullAccess() throws {
+        let info = try plist("Sources/MobileKeyboard/Info.plist")
+        let extensionInfo = try #require(info["NSExtension"] as? [String: Any])
+        #expect(extensionInfo["NSExtensionPointIdentifier"] as? String == "com.apple.keyboard-service")
+        #expect(
+            extensionInfo["NSExtensionPrincipalClass"] as? String == "$(PRODUCT_MODULE_NAME).KeyboardViewController"
+        )
+        let attributes = try #require(extensionInfo["NSExtensionAttributes"] as? [String: Any])
+        #expect(attributes["RequestsOpenAccess"] as? Bool == true)
+        #expect(attributes["IsASCIICapable"] as? Bool == false)
+    }
+
+    @Test("the keyboard reads no pasteboard, opens no connection and never touches the store or the history key")
+    func keyboardSources_reachOnlyTheQuickInsertSet() throws {
+        let forbidden = [
+            "UIPasteboard", "URLSession", "NWConnection", "ModelContainer", "ModelContext", "StorageService",
+            "blobKeyAccount", "inboxKeyAccount", "InboxKeyStore", "BackupKeyStore", "SyncKeyStore",
+            "KeychainDeviceKeyStore", "AppKeychainGroup"
+        ]
+        for file in try SourceTree.swiftFiles(in: "MobileKeyboard", minimum: 4) {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            for name in forbidden {
+                #expect(!text.contains(name), "\(file.lastPathComponent) names \(name)")
+            }
+        }
     }
 
     @Test("the widget is a WidgetKit extension, and the app opens pesto:// links, the widget's among them")

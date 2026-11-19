@@ -275,12 +275,20 @@ struct TwoProcessSyncTests {
             return s?.clips?.contains("after-reset") == true
         }
 
+        let layout = SyncFolderLayout(root: configA.syncDir)
+        let peerBID = try #require(layout.deviceIDs().first { $0.hasPrefix("peer-b") })
+        try await verifyTamperedSegmentIsRefused(layout: layout, peerA: peerA, peerB: peerB)
+
+        try verifyRelaunchAndLeave(configA: configA, peerA: &peerA, peerB: peerB, layout: layout, peerBID: peerBID)
+    }
+
+    private func verifyTamperedSegmentIsRefused(
+        layout: SyncFolderLayout, peerA: PeerProcess?, peerB: PeerProcess?
+    ) async throws {
         // B is paused while A writes the segment to tamper with: a running B (its folder watcher) could read it first
         // and
         // never see the damage. Only a segment A wrote after this point is tampered with, never an older one B read.
-        let layout = SyncFolderLayout(root: configA.syncDir)
         let peerAID = try #require(layout.deviceIDs().first { $0.hasPrefix("peer-a") })
-        let peerBID = try #require(layout.deviceIDs().first { $0.hasPrefix("peer-b") })
         func segments() -> [String] {
             ((try? FileManager.default.contentsOfDirectory(atPath: layout.log(peerAID).path)) ?? [])
                 .filter { $0.hasSuffix(".pestolog") }.sorted()
@@ -308,8 +316,6 @@ struct TwoProcessSyncTests {
             return bAfterTamper?.status?.hasPrefix("refused:") == true
         }
         #expect(bAfterTamper?.status?.hasPrefix("refused:") == true)
-
-        try verifyRelaunchAndLeave(configA: configA, peerA: &peerA, peerB: peerB, layout: layout, peerBID: peerBID)
     }
 
     private func verifyRelaunchAndLeave(

@@ -46,7 +46,7 @@ extension MobileAppState {
     }
 }
 
-extension MobileAppState: ClipboardShortcutHandling {
+extension MobileAppState {
     func addClipboardFromShortcut() async throws {
         try await addClipboardFromShortcut(pasteboard: AppPasteboard.general, defaults: AppDefaults.store)
     }

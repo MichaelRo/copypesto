@@ -8,7 +8,7 @@ import UIKit
 /// What the iPhone and iPad app holds for its views: the opened store and the services on it (ADR 0046).
 @MainActor
 @Observable
-final class MobileAppState {
+final class MobileAppState: ClipboardShortcutHandling {
     struct Notice: Equatable {
         let text: String
         let isProblem: Bool

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import AppKit
 import XCTest
 
 /// The panel's height is fixed (`ShelfHeight`), so where the cards sit in it is a budget: the command bar above, the
@@ -25,5 +26,41 @@ final class ShelfGeometryTests: PestoUITestCase {
         let card = cards.element(boundBy: 3).frame
         XCTAssertEqual(panel.maxY - button.frame.maxY, 11, accuracy: 1.5, "8 pt under the capsule and its 3 pt rim")
         XCTAssertGreaterThanOrEqual(button.frame.minY - card.maxY, 8, "the capsule must clear the row")
+    }
+
+    /// A user's shelf showed the Undo offer after a delete cut in half by the panel's lower edge (2026-11-19). Every
+    /// card size and both resting places must keep the whole capsule inside the panel and on the screen.
+    func test_undoOfferAfterADeleteIsWhollyInsideThePanel() {
+        let setups: [[String: String]] = [
+            [:], ["cardSize": "compact"], ["cardSize": "large"], ["shelfPosition": "top"],
+            ["cardSize": "compact", "shelfPosition": "top"]
+        ]
+        for extra in setups {
+            launch(defaults: ["hasOnboarded": "true"].merging(extra) { $1 })
+            showOverlay()
+            overlay.typeKey(.delete, modifierFlags: [])
+            let confirm = element(AccessibilityID.deleteConfirmButton)
+            XCTAssertTrue(confirm.waitUntilExists(timeout: 5), "\(extra)")
+            confirm.click()
+            let banner = element(AccessibilityID.undoBanner)
+            XCTAssertTrue(banner.waitUntilExists(timeout: 5), "undo offer missing \(extra)")
+            let panel = overlay.frame
+            let offer = banner.frame
+            let screen = app.windows.firstMatch.screenFrame
+            XCTAssertGreaterThanOrEqual(offer.minY, panel.minY, "top edge inside the panel \(extra)")
+            XCTAssertLessThanOrEqual(offer.maxY, panel.maxY - 2, "bottom edge inside the panel \(extra)")
+            XCTAssertLessThanOrEqual(offer.maxY, screen.maxY, "bottom edge on the screen \(extra)")
+            let card = cards.firstMatch.frame
+            XCTAssertGreaterThanOrEqual(offer.minY - card.maxY, 0, "the offer covers no card \(extra)")
+            app.terminate()
+        }
+    }
+}
+
+private extension XCUIElement {
+    /// The main display's frame. XCUITest frames are top-left based and `NSScreen` frames bottom-left based, but for
+    /// the main display (origin 0, 0) the height is the bottom edge in both.
+    var screenFrame: CGRect {
+        NSScreen.screens.first?.frame ?? .infinite
     }
 }

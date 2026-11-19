@@ -62,4 +62,30 @@ struct LibraryLayoutSwapTests {
         #expect(LibraryChrome.initialColumns(width: 1180) == .all)
         #expect(LibraryChrome.showsChipRow(isRegular: true, columns: LibraryChrome.initialColumns(width: 600)))
     }
+
+    struct WidthCase: CustomTestStringConvertible {
+        let width: CGFloat
+        let isRegular: Bool
+        let columns: NavigationSplitViewVisibility
+        let showsChipRow: Bool
+        var testDescription: String {
+            "\(Int(width)) pt, \(isRegular ? "regular" : "compact")"
+        }
+    }
+
+    nonisolated static let widths: [WidthCase] = [
+        WidthCase(width: 375, isRegular: false, columns: .detailOnly, showsChipRow: true),
+        WidthCase(width: 700, isRegular: true, columns: .detailOnly, showsChipRow: true),
+        WidthCase(width: 800, isRegular: true, columns: .all, showsChipRow: false)
+    ]
+
+    @Test(
+        "a folded phone keeps the chip row, an unfolded one under 800 points hides the sidebar, 800 shows it",
+        arguments: widths
+    )
+    func whenTheWindowIsResized_thenTheChromeFollows(_ size: WidthCase) {
+        let columns = LibraryChrome.initialColumns(width: size.width)
+        #expect(columns == size.columns)
+        #expect(LibraryChrome.showsChipRow(isRegular: size.isRegular, columns: columns) == size.showsChipRow)
+    }
 }

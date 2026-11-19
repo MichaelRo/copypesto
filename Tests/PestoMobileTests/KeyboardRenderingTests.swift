@@ -49,7 +49,7 @@ struct KeyboardRenderingTests {
     /// Hosted in a real window of the app's scene: `ImageRenderer` draws the scroll views, the segmented filter and
     /// the Globe key as placeholders, because they are UIKit underneath.
     private func render(
-        _ menu: KeyboardMenu, width: CGFloat, regular: Bool, dark: Bool, word: String? = nil
+        _ menu: KeyboardMenu, width: CGFloat, regular: Bool, dark: Bool, word: String? = nil, search: String? = nil
     ) async throws
     -> UIImage {
         let scene = try #require(
@@ -59,10 +59,18 @@ struct KeyboardRenderingTests {
         let model = KeyboardModel()
         model.menu = menu
         model.word = word
+        if let search {
+            model.openSearch()
+            model.typeInSearch(search)
+        }
         let keys = KeyboardKeys(
-            insert: { _ in }, deleteBackward: {}, switchKeyboard: {}, contextBefore: { nil }, contextAfter: { nil }
+            insert: { _ in }, deleteBackward: {}, switchKeyboard: {}, contextBefore: { nil }, contextAfter: { nil },
+            relayout: {}
         )
-        let size = CGSize(width: width, height: regular ? 300 : 280)
+        let size = CGSize(
+            width: width,
+            height: (regular ? 300 : 280) + (search == nil ? 0 : KeyboardModel.searchExtraHeight)
+        )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: nil))
         host.view.backgroundColor = .systemGroupedBackground
         // An input view sits below the text field, outside the status bar and home indicator insets of a window.
@@ -109,6 +117,18 @@ struct KeyboardRenderingTests {
             let image = try await render(menu, width: 402, regular: false, dark: dark, word: "basil")
             let data = try #require(image.pngData())
             try data.write(to: Self.output.appendingPathComponent("matching-iphone-\(dark ? "dark" : "light").png"))
+        }
+    }
+
+    @Test("the search page draws its field, the matching row and the letters, empty and with a query")
+    func whenSearching_thenThePageDraws() async throws {
+        let menu = Self.menus[3].1
+        for (name, search) in [("search-empty", ""), ("search-basil", "basil")] {
+            for dark in [false, true] {
+                let image = try await render(menu, width: 402, regular: false, dark: dark, search: search)
+                let data = try #require(image.pngData())
+                try data.write(to: Self.output.appendingPathComponent("\(name)-iphone-\(dark ? "dark" : "light").png"))
+            }
         }
     }
 

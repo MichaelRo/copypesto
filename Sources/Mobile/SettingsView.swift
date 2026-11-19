@@ -51,7 +51,7 @@ struct SettingsView: View {
                     .accessibilityIdentifier(MobileAccessibilityID.quickInsertToggle)
                     .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
                 if quickInsertEnabled {
-                    NavigationLink("Collections") { KeyboardCollectionsView() }
+                    NavigationLink("Keyboard collections") { KeyboardCollectionsView() }
                     Picker("After inserting a clip", selection: $keyboardReturns) {
                         Text("Return to my keyboard").tag(true)
                         Text("Stay in Pesto").tag(false)

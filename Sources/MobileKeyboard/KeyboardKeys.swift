@@ -9,4 +9,6 @@ struct KeyboardKeys {
     /// The field's text around the caret, read again at the moment a search's word is replaced.
     let contextBefore: () -> String?
     let contextAfter: () -> String?
+    /// Sets the keyboard's height again, after the search page opens or closes.
+    let relayout: () -> Void
 }

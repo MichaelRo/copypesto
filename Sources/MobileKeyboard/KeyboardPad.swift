@@ -20,11 +20,10 @@ struct KeyboardPad: View {
                         Button { insert(character) } label: {
                             Text(verbatim: character)
                                 .font(.title3)
-                                .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 44)
+                                .minimumScaleFactor(0.6)
+                                .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 40)
                         }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.roundedRectangle(radius: 6))
-                        .tint(.primary)
+                        .buttonStyle(KeyboardKeyStyle())
                     }
                 }
             }

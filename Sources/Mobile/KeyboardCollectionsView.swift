@@ -58,7 +58,7 @@ struct KeyboardCollectionsView: View {
                 }
             }
         }
-        .navigationTitle("Collections")
+        .navigationTitle("Keyboard Collections")
         .toolbar { EditButton() }
     }
 

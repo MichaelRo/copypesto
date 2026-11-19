@@ -92,8 +92,9 @@ To publish with the Mac's privacy page at release. Check each line against the b
 > them small sealed files: AutoFill and the keyboard share one of pinned clips, snippets and recent text, the widget
 > gets recent clips, and none ever gets a secret. With the History Lock on they stay empty unless you choose otherwise.
 >
-> **The keyboard.** Optional, and off until you add it in iOS Settings. It has no letter keys, so it sees taps on its
-> own keys and, with Full Access, only the last word before the cursor, to find matching clips; it never keeps it. It
+> **The keyboard.** Optional, and off until you add it in iOS Settings. Its letters type only into its own search
+> field, never into your apps; it sees taps on its own keys and, with Full Access, only the last word before the cursor,
+> to find matching clips; it never keeps either. It
 > needs Full Access to open the sealed file of clips; without it, it types numbers and punctuation. It makes no network requests and never reads your
 > clipboard.
 >
@@ -123,8 +124,9 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 >   keyboard with Full Access alone; it uses them to read one sealed file the app writes. It makes no network requests,
 >   reads only the last word before the cursor (to find matching clips, in memory, never kept), never reads the
 >   pasteboard, and sees nothing else typed on another keyboard. Without Full Access it still works
->   (the numbers-and-punctuation pad) and explains what Full Access adds. It has no letter keys on purpose: a keyboard
->   that typed letters would see everything the person writes, which Pesto chooses not to. To try it: Settings → General → Keyboard →
+>   (the numbers-and-punctuation pad) and explains what Full Access adds. Its letters (on the search page) type only into
+>   Pesto's own search field to find a clip, never into the app; a keyboard that typed letters into apps would see
+>   everything the person writes, which Pesto chooses not to. To try it: Settings → General → Keyboard →
 >   Keyboards → Add New Keyboard → Pesto, tap Pesto and turn on Allow Full Access; in Pesto turn on Settings → Insert
 >   from Pesto in other apps and pin a clip; then in any text field switch keyboards with the globe key and tap the
 >   clip.

@@ -1,6 +1,7 @@
 # 0062. The keyboard is a small shelf with chips and a word search
 
-Status: Accepted (owner request after a design consult, 2026-11-19)
+Status: Accepted (owner request after a design consult, 2026-11-19); its search is extended by ADR 0063 (a search page
+with letters that type only into Pesto's own field)
 
 Amends ADR 0061 (the keyboard's layout, and its promise about text typed elsewhere) and ADR 0051 (what the
 quick-insert set carries). Everything else they decide stands.

@@ -14,8 +14,8 @@ a clip into another app.
 AutoFill is a few taps deep (long-press, AutoFill, Pesto) and some fields never offer it. A keyboard is one switch of
 the Globe key away in every text field. The fears of ADR 0046 hold for a keyboard that replaces the system one; they do
 not hold for a keyboard that has no letters:
-- A keyboard sees only what is typed on it. Pesto's has no typing keys, so what it sees is taps on its own keys (a clip,
-  a starter, Space, Return, Delete). What the person types on any other keyboard never reaches it.
+- A keyboard sees only what is typed on it. Pesto's has no letter keys, so what it sees is taps on its own keys (a clip,
+  a number or punctuation mark, Space, Return, Delete). What the person types on any other keyboard never reaches it.
 - The key it would hold is not the history key. The quick-insert key opens one file, the quick-insert set, which is
   already filtered (no secret, no pending, flagged or expiring clip) and already bounded (256 KB of text, read with a
   2 MB bound).
@@ -31,17 +31,20 @@ not hold for a keyboard that has no letters:
   never causes a paste prompt, and it makes no network request: its own sources name no network API
   (`EntitlementsTests`). It loads the shared `PestoCore` framework, which holds the app's link-preview code, so the
   claim is "makes no request", not "has no network code"; iOS has no network entitlement to withhold.
-- **Keys.** The clips of the set as cards, in the sections Pinned, Snippets and Recent; filters All, Pinned, Snippets
-  and Recent only when two or more sections have clips (`KeyboardMenu`). A tap inserts `entry.insertionText()` (a
-  snippet expanded as in AutoFill) and shows a checkmark for 0.6 s. Above them, starters that need no data: Date, Time,
-  ISO Date, Weekday and UUID (`KeyboardStarter`), made at the tap through `TemplateExpander`. The bottom row: the Globe
-  key (only when iOS asks for it, `needsInputModeSwitchKey`, with `handleInputModeList` for the long-press list), Space,
-  Return and Delete. No search field: a keyboard cannot type into itself.
-- **States** (`KeyboardMenu.State`). Without Full Access, *restricted*: the set is not even read; the starters and a
-  calm note, "Allow Full Access to Insert Your Clips", which says where the switch is and that the keyboard has no
-  network access. With Full Access and no set (Insert from Pesto in other apps off, or not written yet), *unavailable*:
-  "Nothing to Insert Yet" and how to turn the setting on. A set with no clip, *empty*: "No Text Clips". Otherwise
-  *ready*.
+- **Keys.** The clips of the set as small Pesto cards (the library's fill, corner and hairline, a foot line with the
+  kind's glyph; `KeyboardClipKey`), in one list: Pinned, then Snippets, then Recent (`KeyboardMenu`). A snippet shows
+  as it would insert now ("Thanks, 11/19/26", `QuickInsertEntry.label(at:)`, in AutoFill too). A tap inserts
+  `entry.insertionText()` and moves to the next keyboard (`advanceToNextInputMode`, the person's own when Pesto was
+  added last); a long press inserts and stays, with a checkmark for 0.6 s. A "123" key opens a pad of numbers and
+  punctuation (`KeyboardPad`): real typed input, which App Store Review Guideline 4.4.1 asks of every keyboard, and
+  it works without Full Access. The bottom row: the Globe key (only when iOS asks for it, `needsInputModeSwitchKey`,
+  with `handleInputModeList` for the long-press list), 123, Space, Return and Delete (Space and Delete repeat while
+  held). No search field: a keyboard cannot type into itself. The first version's row of date, time and UUID keys and
+  its section filters were cut after a design review (2026-11-19): they took the best row for little use.
+- **States** (`KeyboardMenu.State`). Without Full Access, *restricted*: the set is not even read; the pad and one line
+  saying where Full Access is turned on. With Full Access and no set (Insert from Pesto in other apps off, or not
+  written yet), *unavailable*: one line on turning the setting on. A set with no clip, *empty*: "No text clips yet.
+  Clips with secrets never appear here." Otherwise *ready*.
 - **Freshness.** The keyboard re-opens the set only when its modification date (`QuickInsertFile.modificationDate`)
   shows the app rewrote it, and drops the opened set when it disappears.
 - **The rules of the set are unchanged** and reach the keyboard for free: the app empties it under the History Lock
@@ -54,16 +57,19 @@ not hold for a keyboard that has no letters:
 ## Consequences
 - The trade-off is iOS's own warning. Allowing Full Access shows a system alert that a keyboard with it can transmit
   what is typed. For Pesto's keyboard that is broader than what it does (nothing is typed on it and it makes no network
-  request), but Pesto cannot change the alert, and the person decides. Without Full Access the keyboard is still useful
-  for the starters and says what Full Access would add.
+  request), but Pesto cannot change the alert, and the person decides. Without Full Access the keyboard still types
+  numbers and punctuation and says what Full Access would add.
+- App Review may still read 4.4.1 as asking for letter keys; the review note explains the pad and why there are no
+  letters. A typing keyboard was considered and rejected (2026-11-19): it would see every keystroke, which is the
+  whole argument above.
 - A second process holds the quick-insert key, as the AutoFill extension already does. Code signed by the same team
   could read the set, as before (ADR 0051); nothing else can.
 - On a device: an App ID for `net.copypesto.pesto.keyboard` with App Groups (and Keychain Sharing if the profile asks
   for it), in the development and App Store profiles. App Review gets a note on why the keyboard requests Full Access.
 - Hand checks on a real device (`docs/testing.md`): the Full Access alert and both states, insertion into another app,
   the Globe key and its long-press list, the History Lock and the setting turned off, and memory in Xcode's gauge.
-  Core tests cover the states, the filters and the starters (`KeyboardMenuTests`, `KeyboardStarterTests`) and the
-  modification date and the shared read (`QuickInsertEnvelopeTests`); `KeyboardRenderingTests` draws every state.
+  Core tests cover the states and the order (`KeyboardMenuTests`), a snippet's label (`QuickInsertEntryLabelTests`),
+  the modification date and the shared read (`QuickInsertEnvelopeTests`); `KeyboardRenderingTests` draws every state.
 
 ## Docs affected
 `AGENTS.md` (the Mobile paragraph and security invariant 2: a second holder of the quick-insert key),

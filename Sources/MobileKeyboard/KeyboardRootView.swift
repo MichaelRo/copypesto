@@ -3,21 +3,19 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// The keyboard: the starters, then the clips by section (no search field, since this keyboard is the one typing),
-/// then a row of Space, Return and Delete so a quick edit needs no switch.
+/// The keyboard: the clips as Pesto cards in one list (Pinned, Snippets, Recent; no search field, since this keyboard
+/// is the one typing), or the numbers pad, above a row of Globe, 123, Space, Return and Delete.
 struct KeyboardRootView: View {
     let model: KeyboardModel
     let keys: KeyboardKeys
     weak var controller: UIInputViewController?
 
-    @State private var filter = KeyboardMenu.Filter.all
+    @State private var showsPad = false
     @State private var inserted: UUID?
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         VStack(spacing: 8) {
-            starterRow
-            if !model.menu.filters.isEmpty { filterRow }
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             bottomRow
@@ -25,118 +23,78 @@ struct KeyboardRootView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .tint(BrandAccent.color)
-        .onChange(of: model.menu) {
-            if !model.menu.filters.contains(filter) { filter = .all }
-        }
-    }
-
-    private var starterRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(model.menu.starters) { starter in
-                    Button(starter.title) { keys.insert(starter.text()) }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                        .font(.subheadline)
-                        // A UUID is new at the tap, so reading one out would name a different value.
-                        .accessibilityValue(starter == .uuid ? Text(verbatim: "") : Text(starter.text()))
-                        .accessibilityHint(Text("Inserts it now"))
-                }
-            }
-        }
-        // iOS 26's soft edge blurred the whole row: it is shorter than the edge effect.
-        .scrollEdgeEffectHidden(true, for: .all)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var filterRow: some View {
-        Picker("Show", selection: $filter) {
-            ForEach(model.menu.filters) { filter in
-                Text(filter.title).tag(filter)
-            }
-        }
-        .pickerStyle(.segmented)
     }
 
     @ViewBuilder
     private var content: some View {
         switch model.menu.state {
         case .restricted:
-            note(
-                "Allow Full Access to Insert Your Clips",
-                """
-                Turn it on in Settings > General > Keyboard > Keyboards > Pesto. The keyboard makes no network \
-                requests, and the keys above work without it.
-                """
-            )
+            VStack(spacing: 8) {
+                note("To show your clips, allow Full Access in Settings > General > Keyboard > Keyboards > Pesto.")
+                KeyboardPad(insert: keys.insert)
+            }
+        case _ where showsPad:
+            KeyboardPad(insert: keys.insert)
         case .unavailable:
-            note("Nothing to Insert Yet", "In Pesto, open Settings and turn on Insert from Pesto in other apps.")
+            note("Turn on Insert from Pesto in other apps in Pesto's Settings.")
         case .empty:
-            note(
-                "No Text Clips",
-                """
-                Your pinned and recent text clips appear here. Clips with secrets never do, and while the History \
-                Lock is on none do unless you allow it in Pesto's Settings.
-                """
-            )
+            note("No text clips yet. Clips with secrets never appear here.")
         case .ready:
-            grid
+            list
         }
     }
 
-    private func note(_ title: LocalizedStringKey, _ detail: LocalizedStringKey) -> some View {
-        VStack(spacing: 4) {
-            Text(title)
-                .font(.headline)
-            Text(detail)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .multilineTextAlignment(.center)
-        .padding(.horizontal)
-        .accessibilityElement(children: .combine)
+    private func note(_ text: LocalizedStringKey) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal)
     }
 
-    private var grid: some View {
+    private var list: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: sizeClass == .regular ? 3 : 2)
         return ScrollView {
-            LazyVGrid(columns: columns, spacing: 6) {
-                ForEach(model.menu.entries(for: filter)) { entry in
-                    clipKey(entry)
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 6) {
+                ForEach(model.menu.groups) { group in
+                    Section {
+                        ForEach(group.entries) { entry in
+                            KeyboardClipKey(entry: entry, isInserted: inserted == entry.id)
+                                .onTapGesture { insert(entry, thenSwitch: true) }
+                                .onLongPressGesture(minimumDuration: 0.4) { insert(entry, thenSwitch: false) }
+                                .accessibilityAction { insert(entry, thenSwitch: true) }
+                                .accessibilityAction(named: Text("Insert and Stay")) {
+                                    insert(entry, thenSwitch: false)
+                                }
+                        }
+                    } header: {
+                        Text(KeyboardClipKey.title(of: group.section))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.top, 2)
+                            .accessibilityAddTraits(.isHeader)
+                    }
                 }
             }
         }
+        .scrollEdgeEffectHidden(true, for: .all)
     }
 
-    private func clipKey(_ entry: QuickInsertEntry) -> some View {
-        Button {
-            keys.insert(entry.insertionText())
-            inserted = entry.id
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(600))
-                if inserted == entry.id { inserted = nil }
-            }
-        } label: {
-            HStack(spacing: 4) {
-                Text(entry.title)
-                    .font(.subheadline)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                if inserted == entry.id {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(BrandAccent.color)
-                        .accessibilityHidden(true)
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .background(Color(uiColor: .secondarySystemGroupedBackground), in: .rect(cornerRadius: 8))
+    /// A tap inserts and hands the person back to the keyboard they type with; a long press inserts and stays, for a
+    /// second clip. iOS offers only "the next keyboard", which is the person's own when Pesto was added last.
+    private func insert(_ entry: QuickInsertEntry, thenSwitch: Bool) {
+        keys.insert(entry.insertionText())
+        if thenSwitch {
+            keys.switchKeyboard()
+            return
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(entry.title)
-        .accessibilityHint(Text("Inserts this clip"))
+        inserted = entry.id
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(600))
+            if inserted == entry.id { inserted = nil }
+        }
     }
 
     private var bottomRow: some View {
@@ -144,6 +102,12 @@ struct KeyboardRootView: View {
             if model.showsGlobeKey {
                 GlobeKey(controller: controller)
                     .frame(width: 44, height: 40)
+            }
+            if model.menu.state != .restricted {
+                Button { showsPad.toggle() } label: {
+                    padToggleLabel.frame(width: 52, height: 40)
+                }
+                .buttonStyle(.bordered)
             }
             Button { keys.insert(" ") } label: {
                 Text("Space").frame(maxWidth: .infinity, minHeight: 40)
@@ -164,5 +128,16 @@ struct KeyboardRootView: View {
         }
         .font(.body)
         .tint(.primary)
+    }
+
+    @ViewBuilder
+    private var padToggleLabel: some View {
+        if showsPad {
+            Image(systemName: "rectangle.on.rectangle")
+                .accessibilityLabel(Text("Clips"))
+        } else {
+            Text(verbatim: "123")
+                .accessibilityLabel(Text("Numbers"))
+        }
     }
 }

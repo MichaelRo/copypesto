@@ -63,7 +63,7 @@ struct InsertPickerView: View {
     private func row(_ entry: QuickInsertEntry) -> some View {
         Button { insert(entry) } label: {
             VStack(alignment: .leading, spacing: 2) {
-                Text(entry.title)
+                Text(entry.label())
                     .font(.body)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
@@ -75,7 +75,7 @@ struct InsertPickerView: View {
                 }
             }
         }
-        .accessibilityLabel(entry.title)
+        .accessibilityLabel(entry.label())
         .accessibilityValue(Self.detail(of: entry) ?? "")
         .accessibilityHint("Inserts this clip")
     }

@@ -5,4 +5,5 @@
 struct KeyboardKeys {
     let insert: (String) -> Void
     let deleteBackward: () -> Void
+    let switchKeyboard: () -> Void
 }

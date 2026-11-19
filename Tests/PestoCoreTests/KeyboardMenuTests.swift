@@ -30,8 +30,7 @@ struct KeyboardMenuTests {
         }
         #expect(menu.state == .restricted)
         #expect(reads == 0)
-        #expect(menu.filters.isEmpty)
-        #expect(menu.entries(for: .all).isEmpty)
+        #expect(menu.groups.isEmpty)
     }
 
     @Test("with Full Access: no set is unavailable, an empty set is empty, otherwise ready")
@@ -41,42 +40,12 @@ struct KeyboardMenuTests {
         #expect(KeyboardMenu(hasFullAccess: true) { full }.state == .ready)
     }
 
-    @Test("the starters are offered in every state")
-    func whenAnyState_thenStartersAreThere() {
-        for menu in [
-            KeyboardMenu(hasFullAccess: false) { full }, KeyboardMenu(hasFullAccess: true) { nil },
-            KeyboardMenu(hasFullAccess: true) { .empty }, KeyboardMenu(hasFullAccess: true) { full }
-        ] {
-            #expect(menu.starters == KeyboardStarter.allCases)
-        }
-    }
-
-    @Test("All lists Pinned, then Snippets, then Recent; a section filter lists only its own")
-    func whenFiltered_thenSectionsInOrder() {
+    @Test("one list: Pinned, then Snippets, then Recent, and a section with no clip is left out")
+    func whenReady_thenOneListInSectionOrder() {
         let menu = KeyboardMenu(hasFullAccess: true) { full }
-        #expect(menu.entries(for: .all).map(\.section) == [.pinned, .snippets, .recent, .recent])
-        #expect(menu.entries(for: .recent).map(\.text) == ["Basil pesto recipe", "tracking 1Z999"])
-        #expect(menu.entries(for: .pinned).map(\.text) == ["12 Basil Lane"])
-    }
-
-    @Test("a filter for an empty section is not offered")
-    func whenASectionIsEmpty_thenItsFilterIsHidden() {
-        let menu = KeyboardMenu(hasFullAccess: true) { full }
-        #expect(menu.filters == [.all, .pinned, .snippets, .recent])
+        #expect(menu.groups.map(\.section) == [.pinned, .snippets, .recent])
+        #expect(menu.groups.last?.entries.map(\.text) == ["Basil pesto recipe", "tracking 1Z999"])
         let noSnippets = QuickInsertSet(createdAt: .now, entries: full.entries.filter { $0.section != .snippets })
-        #expect(KeyboardMenu(hasFullAccess: true) { noSnippets }.filters == [.all, .pinned, .recent])
-    }
-
-    @Test("with one section there is nothing to choose, so no filters show")
-    func whenOneSection_thenNoFilters() {
-        let onlyRecent = QuickInsertSet(createdAt: .now, entries: full.entries.filter { $0.section == .recent })
-        let menu = KeyboardMenu(hasFullAccess: true) { onlyRecent }
-        #expect(menu.filters.isEmpty)
-        #expect(menu.entries(for: .all).count == 2)
-    }
-
-    @Test("each filter has a title")
-    func whenTitled_thenNotEmpty() {
-        #expect(KeyboardMenu.Filter.allCases.allSatisfy { !$0.title.isEmpty })
+        #expect(KeyboardMenu(hasFullAccess: true) { noSnippets }.groups.map(\.section) == [.pinned, .recent])
     }
 }

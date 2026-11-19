@@ -4,8 +4,9 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// Pesto's optional keyboard (ADR 0061). It inserts the starters, and with Full Access the clips of the sealed
-/// quick-insert set that AutoFill reads too. It never opens the store, the history key or the inbox, never reads the
+/// Pesto's optional keyboard (ADR 0061). It types numbers and punctuation, and with Full Access inserts the clips of
+/// the sealed quick-insert set that AutoFill reads too. It never opens the store, the history key or the inbox, never
+/// reads the
 /// general pasteboard and makes no network request.
 final class KeyboardViewController: UIInputViewController {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "Keyboard")
@@ -22,7 +23,8 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidLoad()
         let keys = KeyboardKeys(
             insert: { [weak self] text in self?.textDocumentProxy.insertText(text) },
-            deleteBackward: { [weak self] in self?.textDocumentProxy.deleteBackward() }
+            deleteBackward: { [weak self] in self?.textDocumentProxy.deleteBackward() },
+            switchKeyboard: { [weak self] in self?.advanceToNextInputMode() }
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
         host.view.backgroundColor = .clear

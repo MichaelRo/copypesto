@@ -362,8 +362,8 @@ menu offers AutoFill, but Settings > General > AutoFill & Passwords did not list
 added as an experiment), so picking a clip through the real AutoFill sheet is a hand check on a signed device build.
 
 The keyboard (ADR 0061) reads the same set. Its decisions are tested in Core (`KeyboardMenuTests`: the four states,
-that without Full Access the set is never loaded, the order of sections and when the filters show;
-`KeyboardStarterTests`: each starter's value at the tap; `QuickInsertEnvelopeTests`: the file's modification date that
+that without Full Access the set is never loaded and the order of sections; `QuickInsertEntryLabelTests`: a snippet
+shown as it would insert; `QuickInsertEnvelopeTests`: the file's modification date that
 tells the keyboard to re-open it, and `openSet`, the read AutoFill and the keyboard share). The iOS test target compiles
 `Sources/MobileKeyboard` and `KeyboardRenderingTests` draws each state at iPhone and iPad width, light and dark, into
 `.build/keyboard-renders` (in a window of the app's scene: `ImageRenderer` draws its UIKit parts as placeholders). A
@@ -402,21 +402,23 @@ Device-only checks are listed in `docs/ios-signing.md` ("What only a device can 
 
 On a signed device build, with a pinned clip, a snippet with a date placeholder and a few recent text clips in Pesto:
 - **Add it**: Settings → General → Keyboard → Keyboards → Add New Keyboard → Pesto. Pesto is listed, Full Access off.
-- **Without Full Access**: in Notes, switch to Pesto with the globe key. The starters show with "Allow Full Access to
-  Insert Your Clips"; no clip shows. Date, Time, ISO Date, Weekday and UUID insert today's values, and a second UUID
-  differs from the first.
+- **Without Full Access**: in Notes, switch to Pesto with the globe key. The numbers pad shows under one line on Full
+  Access; no clip shows. Its keys type into the field.
 - **Full Access on** (Keyboards → Pesto → Allow Full Access; read iOS's alert): with Insert from Pesto in other apps
-  off, "Nothing to Insert Yet"; turned on in Pesto, the clips appear in Pinned, Snippets and Recent, the filters show,
-  and a tap inserts the clip (the snippet expanded) with a checkmark. A clip with a secret never appears.
+  off, the line on turning it on; turned on in Pesto, the clips appear in Pinned, Snippets and Recent (the snippet
+  shown with today's date), and a tap inserts the clip (the snippet expanded) and moves to your own keyboard. A long
+  press inserts and stays, with a checkmark. Note which keyboard the tap lands on with three or more keyboards. A clip
+  with a secret never appears.
 - **Fresh set**: pin another clip in Pesto, switch back to the keyboard: it shows without restarting anything.
-- **Bottom row**: Space, Return and Delete act in the field. The globe key
+- **Bottom row**: Space, Return and Delete act in the field, Space and Delete repeat while held, 123 opens the pad and
+  its other face brings the clips back. The globe key
   shows on a device without a system switch key; a tap moves to the next keyboard, a long press lists them.
-- **History Lock**: turn it on in Pesto and let it lock: the keyboard says "No Text Clips". With "Show clips in widgets,
+- **History Lock**: turn it on in Pesto and let it lock: the keyboard says "No text clips yet." With "Show clips in widgets,
   AutoFill and the keyboard while locked" on, the clips come back.
-- **Clear History** empties the set; turning off Insert from Pesto in other apps shows "Nothing to Insert Yet".
+- **Clear History** empties the set; turning off Insert from Pesto in other apps shows the line on turning it on.
 - **No paste prompt**: in all of the above, iOS never asks to allow a paste from Pesto.
 - **Memory**: run `PestoKeyboard` from Xcode attached to Notes and watch the memory gauge while the full set shows and
-  the filters switch: it stays well under the keyboard extension limit, and drops after the keyboard is hidden.
+  the pad opens and closes: it stays well under the keyboard extension limit, and drops after the keyboard is hidden.
 - **iPad**: the cards in three columns, and the same states with a hardware keyboard attached.
 
 ## Lessons from the test suite

@@ -126,11 +126,13 @@ which collection, from those the snapshot carries (ADR 0060): "No clips in this 
 "Choose a collection" when none is chosen or it is gone. With the History Lock on it says "Locked" and "Open Pesto to see your clips." unless "Show clips in widgets, AutoFill and the keyboard while locked" is on (ADR 0055).
 
 ## The keyboard (ADR 0061)
-Optional, added in iOS Settings. No letter keys: the quick-insert set's clips as small cards (two columns on iPhone,
-three in a regular width), with All, Pinned, Snippets and Recent above them only when two or more sections have clips;
-a row of starters (Date, Time, ISO Date, Weekday, UUID); and Space, Return and Delete, with the globe key when iOS asks
-for it. A tap inserts and shows a checkmark for 0.6 s. Without Full Access only the starters and "Allow Full Access to
-Insert Your Clips"; with no set "Nothing to Insert Yet"; with an empty one "No Text Clips". No search field.
+Optional, added in iOS Settings. No letter keys: the quick-insert set's clips as small Pesto cards (the library's
+fill, corner and hairline, the kind's glyph in a foot line; two columns on iPhone, three in a regular width) in one
+list, Pinned, Snippets, Recent, with snippets shown as they would insert; a "123" pad of numbers and punctuation; and
+Space, Return and Delete, with the globe key when iOS asks for it. A tap inserts and moves to the next keyboard; a long
+press inserts and stays. Without Full Access the pad and one line on Full Access; with no set one line on turning on
+Insert from Pesto; with an empty one "No text clips yet." No search field, no filters. Next: a row of collection chips
+on top, chosen in Settings, like the Mac shelf's.
 
 ## FAQ for the release notes: Add Clipboard to Pesto
 The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to

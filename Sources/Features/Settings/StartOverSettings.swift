@@ -34,10 +34,17 @@ struct StartOverSettings: View {
         } header: {
             Text("Start over")
         } footer: {
-            Text(
-                "Removes every clip, pinned ones too, every collection and every snippet, along with previews " +
-                    "and the last-clip file. Your settings stay. It asks for Touch ID or your password first."
-            )
+            HStack(spacing: 6) {
+                Text("Removes all clips, collections, and snippets. Your settings stay.")
+                    .pestoCaption()
+                InfoPopoverButton(
+                    "Start over",
+                    message: """
+                    Removes every clip, pinned ones too, every collection and every snippet, along with previews and \
+                    the last-clip file. Your settings stay. It asks for Touch ID or your password first.
+                    """
+                )
+            }
         }
         .task { snapshot = await appState.privacySnapshot?() }
         .alert("Clear everything?", isPresented: $confirmingClear) {

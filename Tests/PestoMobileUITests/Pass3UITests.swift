@@ -5,42 +5,7 @@ import XCTest
 /// The iPhone passes for the Mac features pass 3 brought over: Decode JWT, an AI action, Ask Pesto and a smart
 /// collection. The model is a fixture here (`PESTO_UITEST_AI_FIXTURE`): a real one is a hand check.
 @MainActor
-final class Pass3UITests: XCTestCase {
-    private let timeout: TimeInterval = 15
-
-    override func setUp() async throws {
-        try await super.setUp()
-        continueAfterFailure = false
-    }
-
-    private func launch(environment: [String: String] = [:]) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestMode", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
-        app.launchEnvironment["PESTO_UITEST_SESSION"] = "mobile-\(UUID().uuidString)"
-        app.launchEnvironment["PESTO_UITEST_SEED"] = "basic"
-        for (key, value) in environment {
-            app.launchEnvironment[key] = value
-        }
-        app.launch()
-        return app
-    }
-
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-    }
-
-    private func card(containing text: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
-            .matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
-    }
-
-    private func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
-    }
-
+final class Pass3UITests: MobileUITestCase {
     func test_whenAHiddenTokenIsDecoded_thenItsPayloadShowsAndCopyPayloadClosesTheSheet() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
         let app = launch(environment: [
@@ -50,10 +15,7 @@ final class Pass3UITests: XCTestCase {
         XCTAssertTrue(token.waitForExistence(timeout: timeout))
         XCTAssertFalse(app.staticTexts["Ada Lovelace"].exists, "the token is hidden until it is decoded")
 
-        token.press(forDuration: 1.0)
-        let decode = app.buttons["Decode JWT"]
-        XCTAssertTrue(decode.waitForExistence(timeout: timeout), "a hidden token's menu offers Decode JWT")
-        decode.tap()
+        chooseContextMenuItem("Decode JWT", on: token, in: app)
 
         XCTAssertTrue(element(MobileAccessibilityID.decodeJWTSheet, in: app).waitForExistence(timeout: timeout))
         XCTAssertTrue(app.staticTexts["Not verified: Pesto never checks the signature."].exists)
@@ -76,10 +38,7 @@ final class Pass3UITests: XCTestCase {
         ])
         let token = card(containing: "108 characters hidden", in: app)
         XCTAssertTrue(token.waitForExistence(timeout: timeout))
-        token.press(forDuration: 1.0)
-        let decode = app.buttons["Decode JWT"]
-        XCTAssertTrue(decode.waitForExistence(timeout: timeout))
-        decode.tap()
+        chooseContextMenuItem("Decode JWT", on: token, in: app)
         XCTAssertFalse(element(MobileAccessibilityID.decodeJWTSheet, in: app).waitForExistence(timeout: 2))
     }
 
@@ -88,13 +47,7 @@ final class Pass3UITests: XCTestCase {
         let app = launch(environment: ["PESTO_UITEST_AI_FIXTURE": "1"])
         let note = card(containing: "Packing list", in: app)
         XCTAssertTrue(note.waitForExistence(timeout: timeout))
-        note.press(forDuration: 1.0)
-        let menu = app.buttons["AI Actions"]
-        XCTAssertTrue(menu.waitForExistence(timeout: timeout), "a text clip's menu offers AI Actions")
-        menu.tap()
-        let summarize = app.buttons["Summarize"]
-        XCTAssertTrue(summarize.waitForExistence(timeout: timeout))
-        summarize.tap()
+        chooseContextMenuItem("AI Actions", "Summarize", on: note, in: app)
 
         let answer = element(MobileAccessibilityID.aiAnswer, in: app)
         XCTAssertTrue(answer.waitForExistence(timeout: timeout))
@@ -112,10 +65,7 @@ final class Pass3UITests: XCTestCase {
         ])
         let note = card(containing: "Packing list", in: app)
         XCTAssertTrue(note.waitForExistence(timeout: timeout))
-        note.press(forDuration: 1.0)
-        let menu = app.buttons["AI Actions"]
-        XCTAssertTrue(menu.waitForExistence(timeout: timeout))
-        menu.tap()
+        chooseContextMenuItem("AI Actions", on: note, in: app)
         let summarize = app.buttons["Summarize"]
         XCTAssertTrue(summarize.waitForExistence(timeout: timeout))
         XCTAssertFalse(summarize.isEnabled)
@@ -203,11 +153,7 @@ final class Pass3UITests: XCTestCase {
         let app = launch(environment: ["PESTO_UITEST_AI_FIXTURE": "1"])
         let note = card(containing: "Packing list", in: app)
         XCTAssertTrue(note.waitForExistence(timeout: timeout))
-        note.press(forDuration: 1.0)
-        let details = app.buttons["Edit Details"]
-        XCTAssertTrue(details.waitForExistence(timeout: timeout))
-        details.tap()
-        XCTAssertTrue(element(MobileAccessibilityID.clipDetail, in: app).waitForExistence(timeout: timeout))
+        openDetail(of: note, in: app)
 
         app.buttons["More"].firstMatch.tap()
         let menu = app.buttons["AI Actions"]

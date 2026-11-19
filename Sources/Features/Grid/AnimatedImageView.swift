@@ -54,9 +54,7 @@ final class SynchronizedGIFImageView: NSImageView {
             lastRenderedFrameIndex = nil
         }
         imageScaling = scaling
-        if aspectFit {
-            layer?.contentsGravity = .resizeAspect
-        }
+        layer?.contentsGravity = aspectFit ? .resizeAspect : .resizeAspectFill
         super.animates = false
         shouldAnimate = animates
         AnimatedGIFClock.shared.updateMembership(for: self)

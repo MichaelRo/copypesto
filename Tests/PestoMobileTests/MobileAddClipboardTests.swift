@@ -47,5 +47,20 @@ extension MobilePasteboardGlobals {
             }
             #expect(!locked.store.items.contains { $0.displayPreviewText == "while locked" })
         }
+
+        @Test("MobileAppState conforms to ClipboardShortcutHandling for the intent")
+        func whenInvokedThroughProtocol_thenClipboardIsAdded() async throws {
+            let library = try await MobileTestLibrary()
+            let board = AppPasteboard.general
+            board.string = "via shortcut protocol"
+            let handler: any ClipboardShortcutHandling = library.state
+
+            try await handler.addClipboardFromShortcut()
+            try await library.refreshed()
+
+            #expect(library.store.items.contains {
+                $0.displayPreviewText == "via shortcut protocol" && $0.captureMethod == .shortcut
+            })
+        }
     }
 }

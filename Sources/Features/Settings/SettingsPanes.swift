@@ -51,14 +51,11 @@ struct ShortcutsPane: View {
 struct PrivacyPane: View {
     var body: some View {
         Form {
-            PrivacySettings(part: .promise)
+            PrivacySettings()
             CaptureSettings(part: .lock)
             ExclusionSettings()
-            OtherDevicesSettings()
-            PrivacySettings(part: .ignored)
             CaptureSettings(part: .sensitiveContent)
-            CaptureSettings(part: .screenSharing)
-            CaptureSettings(part: .outside)
+            OtherDevicesSettings()
         }
         .formStyle(.grouped)
         .settingsRowScrolling()
@@ -74,6 +71,7 @@ struct PrivacyPane: View {
 struct DataPane: View {
     let hasStorage: Bool
     @Environment(AppState.self) private var appState: AppState
+    @State private var showingInsights = false
 
     var body: some View {
         Form {
@@ -82,13 +80,15 @@ struct DataPane: View {
             CaptureSettings(part: .rules)
             FoundOnThisMacSection()
             DataSettings(part: .importExport)
-            DataSettings(part: .maintenance)
-            if hasStorage { HistoryLockGate { InsightsView() } }
+            DataSettings(part: .maintenance, hasStorage: hasStorage, onOpenInsights: { showingInsights = true })
             StartOverSettings()
         }
         .formStyle(.grouped)
         .settingsRowScrolling()
         .onAppear { appState.refreshInstalledImportSources() }
+        .sheet(isPresented: $showingInsights) {
+            insightsSheet
+        }
         .settingsPaneTop {
             VStack(spacing: 0) {
                 SettingsPaneHeader(
@@ -98,5 +98,34 @@ struct DataPane: View {
                 if hasStorage { DataStatStrip().padding(.horizontal, 20).padding(.bottom, 8) }
             }
         }
+    }
+
+    private var insightsSheet: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Activity insights").font(.headline)
+                Spacer()
+                Button("Done") { showingInsights = false }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.pestoProminent)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+            Divider()
+            if let container = appState.historyContainer {
+                Form {
+                    HistoryLockGate { InsightsView() }
+                }
+                .formStyle(.grouped)
+                .modelContainer(container)
+            } else {
+                Form {
+                    HistoryLockGate { InsightsView() }
+                }
+                .formStyle(.grouped)
+            }
+        }
+        .frame(width: 560, height: 520)
     }
 }

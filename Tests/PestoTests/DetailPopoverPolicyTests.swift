@@ -46,6 +46,14 @@ struct DetailPopoverPolicyTests {
         #expect(!DetailPopoverPolicy.isSuppressed(isLocked: false, isShelfVisible: true))
     }
 
+    @Test("UI tests ignore host VoiceOver unless explicitly enabled")
+    func whenUITestMode_thenHostVoiceOverIsIgnoredUnlessForced() {
+        #expect(DetailPopoverPolicy.effectiveVoiceOver(systemEnabled: true, isUITest: false, forcedInUITest: false))
+        #expect(!DetailPopoverPolicy.effectiveVoiceOver(systemEnabled: false, isUITest: false, forcedInUITest: true))
+        #expect(!DetailPopoverPolicy.effectiveVoiceOver(systemEnabled: true, isUITest: true, forcedInUITest: false))
+        #expect(DetailPopoverPolicy.effectiveVoiceOver(systemEnabled: false, isUITest: true, forcedInUITest: true))
+    }
+
     @Test("a keyboard reveal belongs to one clip and is gone once cleared")
     func whenRevealIsOneShot_thenOnlyThatClip() {
         let first = UUID()

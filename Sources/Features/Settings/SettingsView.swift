@@ -45,7 +45,7 @@ struct SettingsView: View {
         .searchable(text: $query, placement: .sidebar, prompt: "Search settings")
         .searchFocused($searchFocused)
         .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 760, idealWidth: 800, minHeight: 640, idealHeight: 720)
+        .frame(minWidth: 760, idealWidth: 820, minHeight: 640, idealHeight: 750)
         .pestoAccented(stored: accentColorHex, theme: appThemeRaw, darkTheme: appThemeDarkRaw)
         .environment(rowFocus)
         .onAppear {

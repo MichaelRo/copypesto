@@ -42,18 +42,25 @@ struct CollectionListView: View {
             } header: {
                 Text("Your collections")
             } footer: {
-                Text("Drag to reorder. They appear on the shelf in this order.").pestoCaption()
+                if pinboards.count >= 2 {
+                    Text("Drag to reorder. They appear on the shelf in this order.").pestoCaption()
+                }
             }
 
-            ForEach(CollectionSuggestion.Group.allCases, id: \.self) { group in
-                let rows = suggestions.filter { $0.group == group }
-                if !rows.isEmpty {
-                    Section {
-                        ForEach(rows) { suggestionRow($0) }
-                    } header: {
-                        Text(group.title)
-                    } footer: {
-                        Text(group.caption).pestoCaption()
+            let activeGroups: [(group: CollectionSuggestion.Group, rows: [CollectionSuggestion])] =
+                CollectionSuggestion.Group.allCases.compactMap { group in
+                    let rows = suggestions.filter { $0.group == group }
+                    return rows.isEmpty ? nil : (group, rows)
+                }
+            if !activeGroups.isEmpty {
+                Section("Suggested") {
+                    ForEach(activeGroups, id: \.group) { item in
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(item.group.title).font(.subheadline.weight(.semibold))
+                            Text(item.group.caption).pestoCaption()
+                        }
+                        .padding(.top, item.group == activeGroups.first?.group ? 0 : 4)
+                        ForEach(item.rows) { suggestionRow($0) }
                     }
                 }
             }
@@ -91,8 +98,8 @@ struct CollectionListView: View {
             HStack(spacing: 12) {
                 CollectionIcon(symbolName: pinboard.symbolName)
                     .foregroundStyle(tint)
-                    .frame(width: 30, height: 30)
-                    .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.07)))
+                    .frame(width: 26, height: 26)
+                    .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color.primary.opacity(0.07)))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(pinboard.name)
                     if let bid = pinboard.triggerBundleID {
@@ -125,8 +132,8 @@ struct CollectionListView: View {
         return HStack(spacing: 12) {
             CollectionIcon(symbolName: suggestion.symbol)
                 .foregroundStyle(tint)
-                .frame(width: 30, height: 30)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.primary.opacity(0.07)))
+                .frame(width: 26, height: 26)
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color.primary.opacity(0.07)))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {

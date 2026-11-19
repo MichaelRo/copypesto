@@ -8,7 +8,7 @@ struct AppIconPicker: View {
     @Environment(\.pestoAccent) private var accent
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             ForEach(AppIconChoice.allCases, id: \.self) { choice in
                 let isSelected = AppIconChoice(stored: selection) == choice
                 Button {
@@ -18,10 +18,10 @@ struct AppIconPicker: View {
                         Image(choice.previewImageName)
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 44, height: 44)
-                            .padding(3)
+                            .frame(width: 34, height: 34)
+                            .padding(2)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                RoundedRectangle(cornerRadius: 11, style: .continuous)
                                     .strokeBorder(isSelected ? accent : Color.clear, lineWidth: 2)
                             )
                     }

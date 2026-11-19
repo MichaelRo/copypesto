@@ -57,7 +57,15 @@ final class SettingsPolishTests: PestoUITestCase {
     }
 
     func test_settingsSearch_scrollsToARowThatStartsBelowTheFold() {
-        openSettings(pane: "Data")
+        launch(defaults: [
+            "hasOnboarded": "true",
+            "autoBackupEnabled": "true",
+            "autoBackupFolder": "/private/tmp/pesto-ui-test-no-such-folder",
+            "autoBackupProtection": "Recovery key only"
+        ])
+        send(.openSettings)
+        XCTAssertTrue(settingsWindow.waitUntilExists(timeout: 10))
+        element(AccessibilityID.settingsSidebar("Data")).click()
         let clear = element(AccessibilityID.clearEverythingButton)
         XCTAssertTrue(clear.waitUntilExists(timeout: 5))
         let window = settingsWindow.frame

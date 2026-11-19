@@ -52,7 +52,7 @@ extension ClipboardCard {
             isConcealed: concealment.isConcealed || hidesItsContent || isRenamingTitle,
             picture: picture,
             linkPictureShown: urlOGImage != nil,
-            hasLinkMetadata: item.ogTitle != nil || item.ogSiteName != nil || urlFavicon != nil,
+            hasLinkMetadata: trimmedOgTitle != nil || item.ogSiteName != nil || urlFavicon != nil,
             colorFill: item.type == .color ? ColorStringDetector.components(in: item.gridPreview) : nil,
             backdropIsDark: colorScheme == .dark
         ))
@@ -64,13 +64,21 @@ extension ClipboardCard {
         let over = pictureOverlay
         return ZStack(alignment: .top) {
             surface
+            if fit == .fit, let shown = shownThumbnail {
+                pictureBackdrop(shown.image)
+            }
             pictureLayer(fit: fit)
+                .padding(.bottom, fit == .fit ? CardLayout.footerReserve + (trimmedCustomTitle == nil ? 0 : 20) : 0)
             contentFirstChrome(
                 MetaLineStyle(over: over, onPicture: true, showsGIF: isAnimated),
                 title: trimmedCustomTitle,
                 label: nil
             )
         }
+    }
+
+    var fullBleedLinkChromeTitle: String? {
+        nil
     }
 
     var fullBleedLinkCard: some View {
@@ -80,7 +88,7 @@ extension ClipboardCard {
             urlImageBody
             contentFirstChrome(
                 MetaLineStyle(over: over, onPicture: true, showsGIF: urlOGImageIsAnimated),
-                title: item.ogTitle == nil ? trimmedCustomTitle : nil,
+                title: fullBleedLinkChromeTitle,
                 label: nil
             )
         }
@@ -97,22 +105,39 @@ extension ClipboardCard {
     }
 
     @ViewBuilder
-    private func pictureLayer(fit _: PictureFit) -> some View {
+    private func pictureLayer(fit: PictureFit) -> some View {
         if let shown = shownThumbnail {
             let aspect = shown.image.size.height > 0 ? shown.image.size.width / shown.image.size.height : 1
             Color.clear
                 .overlay {
                     if shown.isAnimated {
-                        AnimatedImageView(image: shown.image, animates: playsAnimations)
-                            .aspectRatio(aspect, contentMode: .fill)
+                        if fit == .fill {
+                            AnimatedImageView(image: shown.image, animates: playsAnimations)
+                                .aspectRatio(aspect, contentMode: .fill)
+                        } else {
+                            AnimatedImageView(image: shown.image, animates: playsAnimations, aspectFit: true)
+                                .aspectRatio(aspect, contentMode: .fit)
+                        }
                     } else {
                         Image(nsImage: shown.image)
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .aspectRatio(contentMode: fit == .fill ? .fill : .fit)
                     }
                 }
                 .clipped()
         }
+    }
+
+    private func pictureBackdrop(_ image: NSImage) -> some View {
+        Color.clear
+            .overlay {
+                Image(nsImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .blur(radius: 14, opaque: true)
+            }
+            .overlay(Color.black.opacity(0.35))
+            .clipped()
     }
 
     private func contentFirstChrome(_ style: MetaLineStyle, title: String?, label: String?) -> some View {

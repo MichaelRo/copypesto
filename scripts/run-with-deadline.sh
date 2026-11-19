@@ -16,11 +16,11 @@ set -m
 "$@" &
 COMMAND=$!
 (
-  sleep "$LIMIT"
+  sleep "$LIMIT" </dev/null >/dev/null 2>&1
   : > "$FIRED"
   echo "run-with-deadline: gave up on '$1' after ${LIMIT}s" >&2
   kill -TERM -- "-$COMMAND" 2>/dev/null
-  sleep 5
+  sleep 5 </dev/null >/dev/null 2>&1
   kill -KILL -- "-$COMMAND" 2>/dev/null
 ) &
 WATCHDOG=$!
@@ -31,6 +31,7 @@ if [ -e "$FIRED" ]; then
   rm -f "$FIRED"
   exit 124
 fi
-kill -- "-$WATCHDOG" 2>/dev/null || kill "$WATCHDOG" 2>/dev/null
+pkill -P "$WATCHDOG" 2>/dev/null || true
+kill -TERM -- "-$WATCHDOG" 2>/dev/null || kill "$WATCHDOG" 2>/dev/null
 wait "$WATCHDOG" 2>/dev/null
 exit "$STATUS"

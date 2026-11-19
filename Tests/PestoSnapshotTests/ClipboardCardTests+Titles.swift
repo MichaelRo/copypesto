@@ -67,4 +67,59 @@ extension ClipboardCardTests {
         lightFill.customTitle = "Parmesan gold"
         snapshotCard(ClipboardCard(item: lightFill), named: "lightInk", colorScheme: .light)
     }
+
+    func test_collectionLinkCard_customTitleAndOGTitle() throws {
+        let ctx = try makeContext()
+        let item = makeItem(
+            in: ctx,
+            type: .url,
+            preview: "https://developer.apple.com/documentation/swiftui/view"
+        )
+        item.sourceAppName = "Safari"
+        item.customTitle = "SwiftUI View Docs"
+        item.ogTitle = "View | Apple Developer Documentation"
+        item.ogSiteName = "Apple Developer"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1, inCollection: true))
+    }
+
+    func test_collectionLinkCard_ogTitleOnly() throws {
+        let ctx = try makeContext()
+        let item = makeItem(
+            in: ctx,
+            type: .url,
+            preview: "https://developer.apple.com/documentation/swiftui/view"
+        )
+        item.sourceAppName = "Safari"
+        item.ogTitle = "View | Apple Developer Documentation"
+        item.ogSiteName = "Apple Developer"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1, inCollection: true))
+    }
+
+    func test_collectionLinkCard_customTitleOnly() throws {
+        let ctx = try makeContext()
+        let item = makeItem(
+            in: ctx,
+            type: .url,
+            preview: "https://developer.apple.com/documentation/swiftui/view"
+        )
+        item.sourceAppName = "Safari"
+        item.customTitle = "SwiftUI View Docs"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1, inCollection: true))
+    }
+
+    func test_collectionPictureCard_fittedWithTitle() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 1.5, source: "Preview")
+        item.customTitle = "Boarding pass"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1, inCollection: true))
+    }
+
+    func test_collectionColorCard_withTitle() throws {
+        let ctx = try makeContext()
+        let item = makeItem(in: ctx, type: .color, preview: "#2F7A49")
+        item.sourceAppName = "ColorSync Utility"
+        item.customTitle = "Basil accent"
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 1, inCollection: true))
+    }
 }

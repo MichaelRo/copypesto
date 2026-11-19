@@ -58,7 +58,8 @@ extension GridView {
             canRevealHidden: appState.authenticationAvailability == .available,
             isSuggested: isSuggested,
             suggestedHotkeySlot: suggestedHotkeySlot,
-            showsFirstCopyTime: showsFirstCopyTime
+            showsFirstCopyTime: showsFirstCopyTime,
+            inCollection: appState.selectedCollectionID != nil
         )
         .equatable()
         .overlay(alignment: cardInsertionBar?.target == item.id && cardInsertionBar?

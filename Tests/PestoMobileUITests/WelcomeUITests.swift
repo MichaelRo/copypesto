@@ -5,44 +5,24 @@ import XCTest
 /// The first-run welcome (ADR 0057) on a seeded, isolated launch that asks for it, and the one-time AutoFill tip.
 /// Every step attaches a screenshot, in light and dark and at a large accessibility text size.
 @MainActor
-final class WelcomeUITests: XCTestCase {
-    private let timeout: TimeInterval = 15
-    private let session = "mobile-\(UUID().uuidString)"
-
-    override func setUp() async throws {
-        try await super.setUp()
-        continueAfterFailure = false
-    }
-
+final class WelcomeUITests: MobileUITestCase {
     private var idiom: String {
         UIDevice.current.userInterfaceIdiom == .pad ? "ipad" : "iphone"
     }
 
-    private func launch(
+    private func launchWelcome(
         environment: [String: String] = [:], arguments: [String] = [], asksForWelcome: Bool = true
     )
     -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestMode", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"] + arguments
-        app.launchEnvironment["PESTO_UITEST_SESSION"] = session
-        app.launchEnvironment["PESTO_UITEST_SEED"] = "basic"
-        if asksForWelcome { app.launchEnvironment["PESTO_UITEST_DEFAULT_uitestShowsWelcome"] = "true" }
+        var merged = asksForWelcome ? ["PESTO_UITEST_DEFAULT_uitestShowsWelcome": "true"] : [:]
         for (key, value) in environment {
-            app.launchEnvironment[key] = value
+            merged[key] = value
         }
-        app.launch()
-        return app
+        return launch(environment: merged, arguments: arguments, seed: "basic")
     }
 
-    private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(identifier: identifier).firstMatch
-    }
-
-    private func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        attachment.name = "\(idiom)-\(name)"
-        attachment.lifetime = .keepAlways
-        add(attachment)
+    func captureWelcome(_ name: String) {
+        capture("\(idiom)-\(name)")
     }
 
     private func tap(_ identifier: String, in app: XCUIApplication) {
@@ -73,19 +53,19 @@ final class WelcomeUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Step 1 of 3. Keep what you copy"].exists, "the title says which step this is")
         XCTAssertFalse(app.staticTexts["Step 2 of 3. Two choices"].exists, "VoiceOver reaches only the step in view")
         sleep(2)
-        capture("\(label)-step1-keep")
+        captureWelcome("\(label)-step1-keep")
         tap(MobileAccessibilityID.welcomeContinue, in: app)
         XCTAssertTrue(element(MobileAccessibilityID.welcomeChoicesStep, in: app).waitForExistence(timeout: timeout))
         sleep(1)
-        capture("\(label)-step2-choices")
+        captureWelcome("\(label)-step2-choices")
         tap(MobileAccessibilityID.welcomeContinue, in: app)
         XCTAssertTrue(element(MobileAccessibilityID.welcomeSyncStep, in: app).waitForExistence(timeout: timeout))
         sleep(2)
-        capture("\(label)-step3-sync")
+        captureWelcome("\(label)-step3-sync")
     }
 
     func test_whenFirstLaunch_thenThreeStepsLeadToTheLibraryAndAreNotShownAgain() {
-        let app = launch()
+        let app = launchWelcome()
         XCTAssertTrue(element(MobileAccessibilityID.welcomeKeepStep, in: app).waitForExistence(timeout: timeout))
         XCTAssertTrue(element(MobileAccessibilityID.welcomeSkip, in: app).exists, "Skip is on the first step")
         tap(MobileAccessibilityID.welcomeContinue, in: app)
@@ -108,7 +88,7 @@ final class WelcomeUITests: XCTestCase {
         XCTAssertEqual(linkPreviewsValue(in: app), "1", "Settings shows the choice the welcome made")
         app.terminate()
 
-        let second = launch()
+        let second = launchWelcome()
         waitForLibrary(in: second)
         XCTAssertFalse(
             element(MobileAccessibilityID.welcomeKeepStep, in: second).exists,
@@ -117,7 +97,7 @@ final class WelcomeUITests: XCTestCase {
     }
 
     func test_whenSkippedOnTheFirstStep_thenTheLibraryShowsAndLinkPreviewsStayOff() {
-        let app = launch()
+        let app = launchWelcome()
         XCTAssertTrue(element(MobileAccessibilityID.welcomeKeepStep, in: app).waitForExistence(timeout: timeout))
         tap(MobileAccessibilityID.welcomeSkip, in: app)
 
@@ -127,7 +107,7 @@ final class WelcomeUITests: XCTestCase {
     }
 
     func test_whenShowWelcomeAgainIsChosen_thenItOpensAgainWithTheStoredChoice() {
-        let app = launch()
+        let app = launchWelcome()
         XCTAssertTrue(element(MobileAccessibilityID.welcomeKeepStep, in: app).waitForExistence(timeout: timeout))
         tap(MobileAccessibilityID.welcomeSkip, in: app)
         waitForLibrary(in: app)
@@ -151,18 +131,20 @@ final class WelcomeUITests: XCTestCase {
     }
 
     func test_whenEachStepIsShown_thenAScreenshotIsAttachedInLightAndDark() {
-        let light = launch(environment: ["PESTO_UITEST_DEFAULT_appearanceMode": "light"])
+        let light = launchWelcome(environment: ["PESTO_UITEST_DEFAULT_appearanceMode": "light"])
         walkThrough("light", in: light)
         light.terminate()
 
-        let dark = launch(
+        let dark = launchWelcome(
             environment: ["PESTO_UITEST_DEFAULT_appearanceMode": "dark", "PESTO_UITEST_DEFAULT_welcomeShown": "false"]
         )
         walkThrough("dark", in: dark)
     }
 
     func test_whenTextIsVeryLarge_thenEachStepStillShowsItsButtons() {
-        let app = launch(arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        let app = launchWelcome(
+            arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+        )
         walkThrough("large-text", in: app)
         XCTAssertTrue(element(MobileAccessibilityID.welcomeTurnOnSync, in: app).isHittable, "buttons stay pinned")
         XCTAssertTrue(element(MobileAccessibilityID.welcomeNotNow, in: app).isHittable, "buttons stay pinned")
@@ -175,7 +157,7 @@ final class WelcomeUITests: XCTestCase {
     }
 
     func test_whenOnALaterStep_thenBackReturnsOneStepWithoutADrag() {
-        let app = launch()
+        let app = launchWelcome()
         XCTAssertTrue(element(MobileAccessibilityID.welcomeKeepStep, in: app).waitForExistence(timeout: timeout))
         XCTAssertFalse(element(MobileAccessibilityID.welcomeBack, in: app).exists, "no Back on the first step")
         tap(MobileAccessibilityID.welcomeContinue, in: app)
@@ -192,7 +174,7 @@ final class WelcomeUITests: XCTestCase {
 
     func test_onIPad_whenTheSheetIsSwipedDown_thenItCountsAsSkip() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .pad, "the iPad pass")
-        let app = launch()
+        let app = launchWelcome()
         let step = element(MobileAccessibilityID.welcomeKeepStep, in: app)
         XCTAssertTrue(step.waitForExistence(timeout: timeout))
         XCTAssertLessThan(step.frame.width, app.windows.firstMatch.frame.width * 0.9, "a form sheet, not full screen")
@@ -209,19 +191,17 @@ final class WelcomeUITests: XCTestCase {
 
     func test_whenTheFirstClipIsPinned_thenTheAutoFillTipAppearsOnceAndCanBeDismissed() throws {
         try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
-        let app = launch(
+        let app = launchWelcome(
             environment: ["PESTO_UITEST_DEFAULT_uitestShowsAutoFillTip": "true"], asksForWelcome: false
         )
-        let packing = app.descendants(matching: .any).matching(identifier: MobileAccessibilityID.clipCard)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Packing list")).firstMatch
+        let packing = card(containing: "Packing list", in: app)
         XCTAssertTrue(packing.waitForExistence(timeout: timeout))
         XCTAssertFalse(element(MobileAccessibilityID.autoFillTip, in: app).exists, "not before a clip is kept")
-        packing.press(forDuration: 1.0)
-        app.buttons["Pin"].firstMatch.tap()
+        chooseContextMenuItem("Pin", on: packing, in: app)
 
         XCTAssertTrue(element(MobileAccessibilityID.autoFillTip, in: app).waitForExistence(timeout: timeout))
         XCTAssertTrue(element(MobileAccessibilityID.autoFillTipTurnOn, in: app).exists)
-        capture("autofill-tip")
+        captureWelcome("autofill-tip")
         tap(MobileAccessibilityID.autoFillTipDismiss, in: app)
         XCTAssertFalse(element(MobileAccessibilityID.autoFillTip, in: app).waitForExistence(timeout: 2))
     }

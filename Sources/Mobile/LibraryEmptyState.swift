@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
+import SwiftData
 import SwiftUI
 
 struct LibraryEmptyState: View {
@@ -7,6 +8,7 @@ struct LibraryEmptyState: View {
     let hasClips: Bool
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
+    @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
 
     var body: some View {
         if isEmpty {
@@ -23,10 +25,31 @@ struct LibraryEmptyState: View {
                         Task { await appState.add(from: providers, method: .paste) }
                     }
                 }
+            } else if isSnippetsScope {
+                ContentUnavailableView {
+                    Label("No Snippets Yet", systemImage: "curlybraces")
+                } description: {
+                    Text("Create a snippet with fill-ins, or save a clip as a snippet from its menu.")
+                } actions: {
+                    Button("New Snippet\u{2026}", systemImage: "curlybraces") {
+                        library.beginNewSnippet()
+                    }
+                    .buttonStyle(.pestoProminent)
+                    .accessibilityIdentifier(MobileAccessibilityID.newSnippetButton)
+                }
             } else {
                 ContentUnavailableView("Nothing Here", systemImage: "tray", description: Text(scopeText))
             }
         }
+    }
+
+    private var isSnippetsScope: Bool {
+        guard case let .collection(id) = library.filter.scope else { return false }
+        if id == PredicateRuleSet.snippetsCollectionID { return true }
+        guard let board = collections.first(where: { $0.id == id }), board.isSmart,
+              let data = board.smartPredicateData,
+              let ruleSet = try? SmartCollectionPredicate.decodeRuleSet(data) else { return false }
+        return ruleSet == PredicateRuleSet.snippets
     }
 
     private var scopeText: String {

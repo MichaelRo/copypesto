@@ -19,6 +19,9 @@ struct LibraryPresentations: ViewModifier {
                 SnippetFillSheet(request: request).presentationDetents([.medium, .large])
             }
             .clipResultSheets(.library)
+            .sheet(item: snippetEditorBinding) { target in
+                MobileSnippetEditorView(target: target)
+            }
             .sheet(isPresented: $library.showsSettings, onDismiss: showWelcomeIfAsked) { SettingsSheet() }
             .sheet(isPresented: $library.isComposing) { NewNoteView() }
             .sheet(item: $library.sharing) { share in
@@ -72,9 +75,9 @@ struct LibraryPresentations: ViewModifier {
     }
 
     private var anotherSheetIsUp: Bool {
-        library.showsSettings || library.isComposing || library.isNamingCollection || library.editingCollection != nil
-            || library.sharing != nil || appState.pendingFill != nil || appState.decodedJWT != nil
-            || appState.showsAI
+        library.showsSettings || library.isComposing || library.snippetEditor != nil || library.isNamingCollection
+            || library.editingCollection != nil || library.sharing != nil || appState.pendingFill != nil
+            || appState.decodedJWT != nil || appState.showsAI
             || library.openClipID != nil && sizeClass == .compact
     }
 
@@ -95,6 +98,13 @@ struct LibraryPresentations: ViewModifier {
         Binding(
             get: { library.openClipID != nil && sizeClass == .compact ? nil : appState.pendingFill },
             set: { appState.pendingFill = $0 }
+        )
+    }
+
+    private var snippetEditorBinding: Binding<LibraryModel.SnippetEditorTarget?> {
+        Binding(
+            get: { library.openClipID != nil && sizeClass == .compact ? nil : library.snippetEditor },
+            set: { library.snippetEditor = $0 }
         )
     }
 

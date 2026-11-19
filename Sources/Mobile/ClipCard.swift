@@ -11,6 +11,7 @@ struct ClipCard: View {
     let width: CGFloat
     let collections: [Pinboard]
     var isFocused = false
+    var inCollection = false
     /// A change saved by the storage actor (a pin, a sync) reaches this context's objects without telling the card,
     /// so the grid hands the fields the card draws from as a value; a new value redraws it.
     var revision: Revision?
@@ -109,7 +110,8 @@ struct ClipCard: View {
                     playsAnimation: CardAnimation.plays(
                         isAnimated: media.picture?.animation != nil, isOnScreen: isOnScreen,
                         isConcealed: concealment.isConcealed, reduceMotion: Motion.reduceMotion
-                    )
+                    ),
+                    inCollection: inCollection
                 )
                 .environment(\.clipRevision, revision ?? Revision(item))
             }

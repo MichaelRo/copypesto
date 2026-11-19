@@ -38,9 +38,77 @@ struct SharedInboxTests {
             let opened = try InboxEnvelope.open(sealed, with: key)
             #expect(opened.typeIdentifier == item.typeIdentifier)
             #expect(opened.payload == item.payload)
+            #expect(opened.sourceImageURL == nil)
             #expect(abs(opened.createdAt.timeIntervalSince(item.createdAt)) < 0.002)
             #expect(sealed.range(of: item.payload) == nil, "the payload is in the file in the clear")
         }
+    }
+
+    @Test("a picture with a sourceImageURL round-trips through the envelope, and version 1 payloads still parse")
+    func whenSourceImageURLOrVersion1_thenBothOpen() throws {
+        let key = Curve25519.KeyAgreement.PrivateKey()
+        let picture = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        let gifURL = try #require(URL(string: "https://media.giphy.com/media/abc/giphy.gif"))
+        let item = InboxItem(
+            typeIdentifier: "public.png", payload: picture, createdAt: date, sourceImageURL: gifURL
+        )
+
+        let sealed = try InboxEnvelope.seal(item, to: InboxPublicKey(key.publicKey))
+        let opened = try InboxEnvelope.open(sealed, with: key)
+        #expect(opened.typeIdentifier == "public.png")
+        #expect(opened.payload == picture)
+        #expect(opened.sourceImageURL == gifURL)
+        #expect(abs(opened.createdAt.timeIntervalSince(date)) < 0.002)
+
+        // An explicit version 1 plaintext (version, 8-byte millis, 2-byte type length, type, payload).
+        let type = Data("public.png".utf8)
+        let millis = UInt64(bitPattern: Int64((date.timeIntervalSince1970 * 1000).rounded()))
+        var v1 = Data([1])
+        v1.append(contentsOf: (0..<8).reversed().map { UInt8(truncatingIfNeeded: millis >> (8 * $0)) })
+        v1.append(contentsOf: [UInt8(type.count >> 8), UInt8(truncatingIfNeeded: type.count)])
+        v1.append(type)
+        v1.append(picture)
+        let parsedV1 = try InboxItem.parse(plaintext: v1)
+        #expect(parsedV1.typeIdentifier == "public.png")
+        #expect(parsedV1.payload == picture)
+        #expect(parsedV1.sourceImageURL == nil)
+        #expect(abs(parsedV1.createdAt.timeIntervalSince(date)) < 0.002)
+    }
+
+    @Test("ineligible, oversized, truncated, or zero-length v2 sourceImageURLs are rejected")
+    func whenSourceImageURLInvalidOrTruncated_thenRejected() throws {
+        let picture = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        let fileURL = try #require(URL(string: "file:///etc/passwd"))
+        let invalidItem = InboxItem(
+            typeIdentifier: "public.png", payload: picture, createdAt: date, sourceImageURL: fileURL
+        )
+        #expect(throws: InboxError.unsupported) { try invalidItem.validated() }
+
+        let longURL = try #require(URL(string: "https://example.com/" + String(repeating: "a", count: 65_536)))
+        let longItem = InboxItem(
+            typeIdentifier: "public.png", payload: picture, createdAt: date, sourceImageURL: longURL
+        )
+        #expect(throws: InboxError.unsupported) { try longItem.validated() }
+
+        let type = Data("public.png".utf8)
+        let millis = UInt64(bitPattern: Int64((date.timeIntervalSince1970 * 1000).rounded()))
+        var header = Data([2])
+        header.append(contentsOf: (0..<8).reversed().map { UInt8(truncatingIfNeeded: millis >> (8 * $0)) })
+        header.append(contentsOf: [UInt8(type.count >> 8), UInt8(truncatingIfNeeded: type.count)])
+        header.append(type)
+
+        // Truncated before 2-byte URL length
+        #expect(throws: InboxError.damaged) { try InboxItem.parse(plaintext: header) }
+        // Zero urlLength in v2
+        #expect(throws: InboxError.damaged) { try InboxItem.parse(plaintext: header + Data([0, 0]) + picture) }
+        // Truncated URL bytes
+        #expect(throws: InboxError.damaged) {
+            try InboxItem.parse(plaintext: header + Data([0, 10]) + Data("https".utf8))
+        }
+        // Ineligible scheme in v2
+        let fileData = Data("file:///etc/passwd".utf8)
+        let badV2 = header + Data([UInt8(fileData.count >> 8), UInt8(fileData.count & 0xFF)]) + fileData + picture
+        #expect(throws: InboxError.damaged) { try InboxItem.parse(plaintext: badV2) }
     }
 
     @Test("a file sealed to another key, or with any byte changed, does not open")

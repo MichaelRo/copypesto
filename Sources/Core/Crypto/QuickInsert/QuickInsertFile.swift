@@ -2,7 +2,8 @@
 import CryptoKit
 import Foundation
 
-/// The one quick-insert file in the app group (ADR 0051). Only the app writes it; the AutoFill extension only reads it.
+/// The one quick-insert file in the app group (ADRs 0051, 0061). Only the app writes it; AutoFill and the keyboard only
+/// read it.
 public struct QuickInsertFile: Sendable {
     private let file: SealedGroupFile
 
@@ -25,6 +26,13 @@ public struct QuickInsertFile: Sendable {
 
     public var exists: Bool {
         file.exists
+    }
+
+    /// When the app last wrote the file, so a reader that stays running opens it again only after a change; nil when
+    /// there is no file.
+    public var modificationDate: Date? {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        return attributes?[.modificationDate] as? Date
     }
 
     public func write(_ set: QuickInsertSet, with key: SymmetricKey) throws {

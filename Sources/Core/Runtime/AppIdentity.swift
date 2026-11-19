@@ -22,10 +22,11 @@ public enum AppIdentity {
     public static let inboxPublicKeyFileName = "inbox-key.pestokey"
     public static let inboxFileExtension = "pestoinbox"
     public static let autofillBundleID = "\(bundleID).autofill"
+    public static let keyboardBundleID = "\(bundleID).keyboard"
     public static let quickInsertKeyAccount = "\(bundleID).quickInsertKey"
     public static let quickInsertFileName = "quick-insert.pestoquick"
-    /// The Keychain group the iOS app and its AutoFill extension share, after the team prefix their entitlements
-    /// files name as `$(AppIdentifierPrefix)` (ADR 0051).
+    /// The Keychain group the iOS app, its AutoFill extension and its keyboard share, after the team prefix their
+    /// entitlements files name as `$(AppIdentifierPrefix)` (ADRs 0051, 0061).
     public static let quickInsertKeychainGroupName = "\(bundleID).quick-insert"
     /// The Info.plist key both iOS bundles carry `$(AppIdentifierPrefix)` in, so the code knows the group's full name.
     public static let appIdentifierPrefixInfoKey = "PestoAppIdentifierPrefix"

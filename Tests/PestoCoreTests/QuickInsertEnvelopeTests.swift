@@ -30,6 +30,20 @@ struct QuickInsertEnvelopeTests {
         return QuickInsertFile(root: root)
     }
 
+    @Test("the file's modification date is nil before it is written and moves on with each write")
+    func whenWritten_thenTheModificationDateMoves() throws {
+        let file = try temporaryFile()
+        let key = SymmetricKey(size: .bits256)
+        #expect(file.modificationDate == nil)
+        try file.write(sampleSet(), with: key)
+        let first = try #require(file.modificationDate)
+        try FileManager.default.setAttributes(
+            [.modificationDate: first.addingTimeInterval(-60)], ofItemAtPath: file.url.path
+        )
+        try file.write(.empty, with: key)
+        #expect(try #require(file.modificationDate) > first.addingTimeInterval(-60))
+    }
+
     @Test("a sealed set opens with its key and holds what was sealed")
     func whenOpenedWithItsKey_thenTheSetComesBack() throws {
         let key = SymmetricKey(size: .bits256)

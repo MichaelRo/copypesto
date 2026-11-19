@@ -388,9 +388,10 @@ struct MobileWidgetTests {
     func whenWidgetsDisabled_thenSnapshotAndKeyAreRemoved() async throws {
         let fixture = try fixture(installed: true)
         defer { try? FileManager.default.removeItem(at: fixture.file.root) }
-        var enabled = true
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(true, for: Setting.widgetsEnabled)
         var target = fixture.target
-        target.isEnabled = { enabled }
+        target.isEnabled = { defaults.value(for: Setting.widgetsEnabled) }
         let library = try await MobileTestLibrary()
         library.state.widget = target
         try await library.add("12 Basil Lane")
@@ -398,7 +399,7 @@ struct MobileWidgetTests {
         await library.state.refreshWidgetPresence()
         #expect(fixture.file.exists)
 
-        enabled = false
+        defaults.set(false, for: Setting.widgetsEnabled)
         await library.state.writeWidget()
 
         #expect(!fixture.file.exists)

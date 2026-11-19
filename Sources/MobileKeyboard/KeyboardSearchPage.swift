@@ -12,7 +12,20 @@ struct KeyboardSearchPage: View {
     let close: () -> Void
 
     @State private var showsDigits = false
+    @State private var alphabetIndex = 0
     @Environment(\.horizontalSizeClass) private var sizeClass
+
+    private var alphabets: [KeyboardLetters.Alphabet] {
+        KeyboardLetters.resolvedAlphabets()
+    }
+
+    private var activeAlphabet: KeyboardLetters.Alphabet {
+        alphabets[alphabetIndex % alphabets.count]
+    }
+
+    private var searchDirection: LayoutDirection {
+        activeAlphabet.isRTL ? .rightToLeft : .leftToRight
+    }
 
     private var query: KeyboardQuery {
         model.searchQuery ?? KeyboardQuery()
@@ -26,9 +39,11 @@ struct KeyboardSearchPage: View {
     var body: some View {
         VStack(spacing: 6) {
             field
+                .environment(\.layoutDirection, searchDirection)
             resultRow
+                .environment(\.layoutDirection, searchDirection)
                 .frame(height: 58)
-            KeyboardLetters(model: model, layout: showsDigits ? .digits : .letters)
+            KeyboardLetters(model: model, layout: showsDigits ? .digits : .letters(activeAlphabet))
             bottomRow
         }
     }
@@ -100,10 +115,18 @@ struct KeyboardSearchPage: View {
                 globe.frame(width: 44, height: 40)
             }
             Button { showsDigits.toggle() } label: {
-                Text(verbatim: showsDigits ? "ABC" : "123").frame(width: 52, height: 40)
+                Text(verbatim: showsDigits ? activeAlphabet.badge : "123").frame(width: 52, height: 40)
             }
             .buttonStyle(KeyboardKeyStyle(isFunction: true))
             .accessibilityLabel(showsDigits ? Text("Letters") : Text("Numbers"))
+            if alphabets.count > 1, !showsDigits {
+                let next = alphabets[(alphabetIndex + 1) % alphabets.count]
+                Button { alphabetIndex = (alphabetIndex + 1) % alphabets.count } label: {
+                    Text(verbatim: next.badge).frame(width: 44, height: 40)
+                }
+                .buttonStyle(KeyboardKeyStyle(isFunction: true))
+                .accessibilityLabel(Text("Switch Search Keyboard"))
+            }
             Button { model.typeInSearch(" ") } label: {
                 Text("Space").frame(maxWidth: .infinity, minHeight: 40)
             }

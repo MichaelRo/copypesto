@@ -114,6 +114,7 @@ struct KeyboardRootView: View {
             }
         }
         .scrollEdgeEffectHidden(true, for: .all)
+        .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
         .fixedSize(horizontal: false, vertical: true)
     }
 
@@ -136,6 +137,7 @@ struct KeyboardRootView: View {
             }
         }
         .scrollEdgeEffectHidden(true, for: .all)
+        .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
         .id(shownIdentity)
     }
 

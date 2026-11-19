@@ -42,7 +42,7 @@ struct BackupSummaryRow: View {
                 if let sync { chipView(color: sync.dotColor, text: sync.chipText) }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             "Your clips stay on this Mac. \(summary).\(sync.map { " \($0.chipText)." } ?? "")"

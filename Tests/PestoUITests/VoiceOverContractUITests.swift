@@ -19,10 +19,16 @@ final class VoiceOverContractUITests: PestoUITestCase {
         let retentionPicker = element(AccessibilityID.settingsChoice("retention", "age"))
         XCTAssertTrue(retentionPicker.waitUntilExists(timeout: 5), "Settings Data retention picker missing")
 
-        // Disclosure in Privacy
+        // Details & Info popover buttons in Privacy (replaced inline DisclosureGroups)
         element(AccessibilityID.settingsSidebar("Privacy")).click()
-        let disclosures = settingsWindow.disclosureTriangles
-        XCTAssertGreaterThan(disclosures.count, 0, "Privacy disclosure triangle missing")
+        XCTAssertTrue(
+            settingsWindow.buttons["Details\u{2026}"].waitUntilExists(timeout: 5),
+            "Privacy Details button missing from AX tree"
+        )
+        XCTAssertTrue(
+            settingsWindow.buttons["What stays readable"].exists,
+            "Privacy info popover button missing from AX tree"
+        )
     }
 
     func test_whenInspectingCards_thenCustomContentDetailsTextAndCustomActionsExist() {

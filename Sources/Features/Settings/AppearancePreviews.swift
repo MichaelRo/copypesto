@@ -120,7 +120,7 @@ struct SettingsShelfPreview: View {
     var darkThemeRaw = ""
     var position: ShelfPosition = .bottom
 
-    private static let scale: CGFloat = 0.62
+    private static let scale: CGFloat = 0.50
 
     @Environment(\.colorScheme) private var colorSchemeFallback
 
@@ -158,10 +158,10 @@ struct SettingsShelfPreview: View {
             .background(PreviewShelfFill(shape: barShape, themeRaw: themeRaw, darkThemeRaw: darkThemeRaw))
             .overlay(barShape.strokeBorder(Color.primary.opacity(0.10)))
             .padding(.horizontal, 24)
-            .padding(atTop ? .bottom : .top, 28)
+            .padding(atTop ? .bottom : .top, 18)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: barHeight + 32)
+        .frame(height: barHeight + 20)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.primary.opacity(0.10)))
         .environment(\.colorScheme, scheme)
@@ -184,19 +184,19 @@ struct FilterModePreview: View {
     let mode: NSFWMode
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 5) {
             miniCard(flagged: false)
             switch mode {
             case .blur:
                 miniCard(flagged: true).overlay {
-                    RoundedRectangle(cornerRadius: 7, style: .continuous).fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.ultraThinMaterial)
                     Image(systemName: "eye.slash.fill").pestoCaption()
                 }
             case .hide:
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     .foregroundStyle(.secondary.opacity(0.6))
-                    .frame(width: 30, height: 46)
+                    .frame(width: 24, height: 34)
             case .show:
                 miniCard(flagged: true)
             }
@@ -204,13 +204,13 @@ struct FilterModePreview: View {
     }
 
     private func miniCard(flagged: Bool) -> some View {
-        RoundedRectangle(cornerRadius: 7, style: .continuous)
+        RoundedRectangle(cornerRadius: 6, style: .continuous)
             .fill(.background)
             .overlay(alignment: .topLeading) {
                 Circle().fill(flagged ? Color.orange.opacity(0.8) : accent.opacity(0.8))
-                    .frame(width: 6, height: 6).padding(5)
+                    .frame(width: 5, height: 5).padding(4)
             }
-            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(Color.primary.opacity(0.14)))
-            .frame(width: 30, height: 46)
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(Color.primary.opacity(0.14)))
+            .frame(width: 24, height: 34)
     }
 }

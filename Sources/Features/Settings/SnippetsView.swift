@@ -109,17 +109,18 @@ struct SnippetsView: View {
             }
 
             Section {
-                Toggle(isOn: $remembersFillIns) {
-                    VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Toggle(isOn: $remembersFillIns) {
                         Text("Remember fill-in values")
-                        Text(
-                            remembersFillIns
-                                ? "A snippet starts with what you typed last time. It is kept with the snippet, "
-                                + "sealed like its text."
-                                : "A snippet starts empty every time. What was remembered is erased."
-                        )
-                        .pestoCaption()
                     }
+                    Spacer()
+                    InfoPopoverButton(
+                        "Remember fill-in values",
+                        message: remembersFillIns
+                            ? "A snippet starts with what you typed last time. It is kept with the snippet, " +
+                            "sealed like its text."
+                            : "A snippet starts empty every time. What was remembered is erased."
+                    )
                 }
                 .settingsRow("Remember fill-in values")
                 .onChange(of: remembersFillIns) { _, remembers in
@@ -175,25 +176,35 @@ struct SnippetsView: View {
 
     private var placeholderReference: some View {
         VStack(alignment: .leading, spacing: 8) {
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 8) {
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3),
+                alignment: .leading,
+                spacing: 6
+            ) {
                 ForEach(SnippetDraft.placeholders, id: \.token) { placeholder in
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         Keycap(symbol: placeholder.token)
                         Text(placeholder.meaning).pestoCaption()
+                            .lineLimit(1)
                             .accessibilityIdentifier(AccessibilityID.snippetPlaceholderMeaning(placeholder.token))
                     }
                 }
             }
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Placeholders you can use in a snippet")
-            Text("Filled in when you paste. Add Question\u{2026} in the editor asks one instead.").pestoCaption()
-            if let guide = URL(string: "https://copypesto.net/docs/settings/#snippets") {
-                Link("See the guide", destination: guide)
-                    .buttonStyle(.pestoLink)
+            HStack(spacing: 8) {
+                Text("Filled in when you paste. Add Question\u{2026} in the editor asks one instead.")
                     .pestoCaption()
+                    .lineLimit(1)
+                Spacer()
+                if let guide = URL(string: "https://copypesto.net/docs/settings/#snippets") {
+                    Link("See the guide", destination: guide)
+                        .buttonStyle(.pestoLink)
+                        .pestoCaption()
+                }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
     }
 
     private var suggestionStatistics: some View {
@@ -230,18 +241,17 @@ struct SnippetsView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 6) {
+        HStack(spacing: 10) {
             Image(systemName: "curlybraces")
-                .font(.title)
                 .foregroundStyle(accent)
                 .accessibilityHidden(true)
             Text("No snippets yet").fontWeight(.medium)
             Text("Add a snippet with {{placeholders}} to expand at paste time.")
                 .pestoCaption()
-                .multilineTextAlignment(.center)
+                .lineLimit(1)
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .frame(minHeight: 34)
     }
 
     private func starterRow(_ starter: SnippetStarter) -> some View {

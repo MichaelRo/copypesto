@@ -97,8 +97,8 @@ private struct SyncSettingsForm: View {
             }
         } footer: {
             Text(
-                "Choose the folder your Macs sync to, such as iCloud Drive. Pesto keeps its encrypted files in " +
-                    "\u{201C}Pesto Sync\u{201D} inside it. Clips with secrets stay here unless you choose."
+                "Choose your sync folder (such as iCloud Drive). Clips with secrets stay on this \(device.name) " +
+                    "unless you choose."
             )
         }
     }

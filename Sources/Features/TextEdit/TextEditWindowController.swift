@@ -64,12 +64,13 @@ final class TextEditWindowController {
     }
 
     private func makeWindow(model: TextEditModel) -> NSWindow {
-        let window = NSWindow(
+        let window = TextEditWindow(
             contentRect: NSRect(origin: .zero, size: Self.defaultSize),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
+        window.onEscape = { [weak model] in model?.cancel() }
         // The controller owns this window; the default (true) makes AppKit release it on close as well, and the second
         // release crashes in the next display cycle (NSTouchBarFinder, macOS 27).
         window.isReleasedWhenClosed = false
@@ -89,5 +90,26 @@ final class TextEditWindowController {
             window.center()
         }
         return window
+    }
+}
+
+private final class TextEditWindow: NSWindow {
+    var onEscape: (() -> Void)?
+
+    override func cancelOperation(_: Any?) {
+        guard (firstResponder as? any NSTextInputClient)?.hasMarkedText() != true else { return }
+        onEscape?()
+    }
+
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .keyDown,
+           event.keyCode == 53,
+           event.modifierFlags.isDisjoint(with: [.command, .option, .control, .shift]),
+           (firstResponder as? any NSTextInputClient)?.hasMarkedText() != true
+        {
+            onEscape?()
+            return
+        }
+        super.sendEvent(event)
     }
 }

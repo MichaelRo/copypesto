@@ -7,7 +7,7 @@ import SwiftUI
 /// Settings sections about what Pesto captures and how it protects it: access, rules, the lock, the content filter.
 struct CaptureSettings: View {
     enum Part {
-        case accessibility, rules, sensitiveContent, screenSharing, outside, lock
+        case accessibility, rules, sensitiveContent, lock
     }
 
     let part: Part
@@ -20,15 +20,11 @@ struct CaptureSettings: View {
     @AppStorage(Setting.ruleNormalizeLineEndings) private var ruleNormalizeLineEndings: Bool
     @AppStorage(Setting.ruleRemoveDuplicateSpaces) private var ruleRemoveDuplicateSpaces: Bool
 
-    /// Privacy
-    @AppStorage(Setting.screenSharingPrivacy) private var screenSharingPrivacy: Bool
-
     /// Biometric lock
     @AppStorage(Setting.biometricLockEnabled) private var biometricLockEnabled: Bool
 
     /// Content filtering
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
-    @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
 
     /// Refreshed each time the view appears so the badge reflects live state.
     @State private var isAXTrusted = AccessibilityAccess.isTrusted
@@ -46,8 +42,6 @@ struct CaptureSettings: View {
             case .accessibility: accessibilitySection
             case .rules: rulesSection
             case .sensitiveContent: sensitiveContentSection
-            case .screenSharing: screenSharingSection
-            case .outside: outsideSection
             case .lock: lockSection
             }
         }
@@ -65,77 +59,91 @@ struct CaptureSettings: View {
     // MARK: - Sections
 
     private var accessibilitySection: some View {
-        Section("Permissions") {
+        Section {
             LabeledContent("Accessibility (auto-paste)") {
-                Label(
-                    isAXTrusted ? "Granted" : "Not granted",
-                    systemImage: isAXTrusted ? "checkmark.circle.fill" : "xmark.circle.fill"
-                )
-                .foregroundStyle(isAXTrusted ? Color.statusGood : Color.statusBad)
+                HStack(spacing: 8) {
+                    Label(
+                        isAXTrusted ? "Granted" : "Not granted",
+                        systemImage: isAXTrusted ? "checkmark.circle.fill" : "xmark.circle.fill"
+                    )
+                    .foregroundStyle(isAXTrusted ? Color.statusGood : Color.statusBad)
+                    if !isAXTrusted {
+                        Button("Open Settings\u{2026}") {
+                            AccessibilityPermission.openSystemSettings()
+                            // Re-check after a short delay in case the user grants it immediately.
+                            Task {
+                                try? await Task.sleep(for: .seconds(3))
+                                isAXTrusted = AccessibilityAccess.isTrusted
+                            }
+                        }
+                        .controlSize(.small)
+                    }
+                }
             }
             .settingsRow("Accessibility access")
             if captureAccess.needsAttention {
-                Label(
-                    captureAccess == .blocked ? "Clipboard capture is blocked" :
-                        "macOS asks before Pesto reads the clipboard",
-                    systemImage: "exclamationmark.triangle.fill"
-                )
-                .foregroundStyle(Color.statusWarning)
-                Text(
-                    "Allow “Paste from Other Apps” for Pesto in System Settings, under Privacy & Security, " +
-                        "or history stops filling."
-                )
-                .pestoCaption()
-                Button("Open Pasteboard Settings…") { PasteboardAccessSettings.open() }
-                    .settingsRow("Paste access (clipboard permission)")
+                LabeledContent {
+                    Button("Open Pasteboard Settings\u{2026}") { PasteboardAccessSettings.open() }
+                        .controlSize(.small)
+                } label: {
+                    Label(
+                        captureAccess == .blocked ? "Clipboard capture is blocked" :
+                            "macOS asks before Pesto reads the clipboard",
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .foregroundStyle(Color.statusWarning)
+                    .help(
+                        "Allow \u{201C}Paste from Other Apps\u{201D} for Pesto in System Settings, " +
+                            "under Privacy & Security, or history stops filling."
+                    )
+                }
+                .settingsRow("Paste access (clipboard permission)")
             }
+        } header: {
+            Text("Permissions")
+        } footer: {
             if !isAXTrusted {
                 Text(
-                    "Without Accessibility access, Pesto puts the clip on the clipboard and you press ⌘V to paste it."
+                    "Without Accessibility access, Pesto puts the clip on the clipboard and you press " +
+                        "\u{2318}V to paste it."
                 )
                 .pestoCaption()
-                Button("Open Accessibility Settings…") {
-                    AccessibilityPermission.openSystemSettings()
-                    // Re-check after a short delay in case the user grants it immediately.
-                    Task {
-                        try? await Task.sleep(for: .seconds(3))
-                        isAXTrusted = AccessibilityAccess.isTrusted
-                    }
-                }
+            } else {
+                Text("Accessibility lets Pesto paste directly when you pick a clip.")
+                    .pestoCaption()
             }
         }
     }
 
     private var rulesSection: some View {
         Section {
-            Toggle("Strip URL tracking parameters", isOn: $ruleStripTracking)
-                .settingsRow("Strip URL tracking parameters")
-            Toggle("Trim spaces at the start and end", isOn: $ruleTrimWhitespace)
-                .settingsRow("Trim whitespace")
-            Toggle("Use one kind of line break", isOn: $ruleNormalizeLineEndings)
-                .settingsRow("Normalize line endings")
-            Toggle("Collapse duplicate spaces", isOn: $ruleRemoveDuplicateSpaces)
-                .settingsRow("Collapse duplicate spaces")
+            Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 6) {
+                GridRow {
+                    Toggle("Strip URL tracking parameters", isOn: $ruleStripTracking)
+                        .toggleStyle(.checkbox)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .settingsRow("Strip URL tracking parameters")
+                    Toggle("Trim spaces at the start and end", isOn: $ruleTrimWhitespace)
+                        .toggleStyle(.checkbox)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .settingsRow("Trim whitespace")
+                }
+                GridRow {
+                    Toggle("Use one kind of line break", isOn: $ruleNormalizeLineEndings)
+                        .toggleStyle(.checkbox)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .settingsRow("Normalize line endings")
+                    Toggle("Collapse duplicate spaces", isOn: $ruleRemoveDuplicateSpaces)
+                        .toggleStyle(.checkbox)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .settingsRow("Collapse duplicate spaces")
+                }
+            }
+            .padding(.vertical, 2)
         } header: {
             Text("Clean up copied text")
         } footer: {
             Text("Applied silently to every copied text clip before it is stored.").pestoCaption()
-        }
-    }
-
-    private var outsideSection: some View {
-        Section {
-            Toggle("Load link previews", isOn: $linkPreviews)
-                .accessibilityIdentifier(AccessibilityID.settingsChoice("linkPreviews", "toggle"))
-                .settingsRow("Load link previews")
-        } header: {
-            Text("Outside Pesto")
-        } footer: {
-            Text(
-                "Link previews show a link\u{2019}s title and picture on its card. Setup turns them on; " +
-                    "switch them off here. Pesto has to ask the website, so the site can see a request from your Mac."
-            )
-            .pestoCaption()
         }
     }
 
@@ -173,20 +181,16 @@ struct CaptureSettings: View {
         } header: {
             Text("History lock")
         } footer: {
-            VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
                 Text("When locked, your history is blurred until you authenticate with \(lockMethod.name).")
                     .pestoCaption()
-                DisclosureGroup("How the timer works") {
-                    Text(
-                        "After you confirm, Pesto does not ask again for this long. With the lock on it is also how " +
-                            "long your history stays open; showing a hidden clip and, with the lock on, backups and " +
-                            "exports use it too. " +
-                            "Clearing everything and showing the recovery key always ask. Locking the screen or the " +
-                            "history ends it."
-                    )
-                    .pestoCaption()
-                }
-                .font(.caption)
+                InfoPopoverButton(
+                    "How the timer works",
+                    message: "After you confirm, Pesto does not ask again for this long. With the lock on it is " +
+                        "also how long your history stays open; showing a hidden clip and, with the lock on, " +
+                        "backups and exports use it too. Clearing everything and showing the recovery key always " +
+                        "ask. Locking the screen or the history ends it."
+                )
             }
         }
     }
@@ -197,14 +201,18 @@ struct CaptureSettings: View {
 
     private var sensitiveContentSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .center, spacing: 12) {
                 Text("Explicit pictures and links")
+                Spacer()
                 PreviewPicker(
                     title: "Explicit pictures and links", options: NSFWMode.allCases, selection: nsfwModeBinding,
                     label: \.title,
                     identifier: { AccessibilityID.settingsChoice("nsfwMode", $0.rawValue) },
+                    tileSize: CGSize(width: 72, height: 44),
+                    cornerRadius: 8,
                     preview: { FilterModePreview(mode: $0) }
                 )
+                .fixedSize()
             }
             .settingsRow("Sensitive content filter")
             .onChange(of: nsfwModeRaw) {
@@ -216,28 +224,20 @@ struct CaptureSettings: View {
         } header: {
             Text("Sensitive content")
         } footer: {
-            Text(ContentFilterNotice.text(pictureScreeningAvailable: AppleIntelligenceClient.supportsVision))
+            HStack(spacing: 6) {
+                Text(
+                    AppleIntelligenceClient.supportsVision
+                        ? "Secrets and explicit content are screened on this Mac."
+                        : "Secrets are masked on this Mac; picture screening needs Apple Intelligence."
+                )
                 .pestoCaption()
-        }
-    }
-
-    private var screenSharingSection: some View {
-        Section {
-            Toggle("Hide contents during screen sharing", isOn: $screenSharingPrivacy)
-                .settingsRow("Hide contents during screen sharing")
-        } header: {
-            Text("Screen sharing")
-        } footer: {
-            Text(
-                "Clip contents are covered while a display is mirrored, a known sharing or recording app is open " +
-                    "(Zoom, Teams, FaceTime, Discord, OBS and a few more), or Chrome, Firefox, Edge, Brave or Arc " +
-                    "show their \u{201C}sharing your screen\u{201D} bar. That bar is the same for a whole " +
-                    "screen and for one window, and Pesto cannot tell which window is shared without Screen " +
-                    "Recording permission, so any such share covers your clips. Safari and a share of one tab " +
-                    "are not seen: for those choose Hide Clip Contents in the menu bar. It is also an action in " +
-                    "Shortcuts and a Focus filter, and you can record a shortcut for it in Shortcuts."
-            )
-            .pestoCaption()
+                InfoPopoverButton(
+                    "About sensitive content",
+                    verbatimMessage: ContentFilterNotice.text(
+                        pictureScreeningAvailable: AppleIntelligenceClient.supportsVision
+                    )
+                )
+            }
         }
     }
 

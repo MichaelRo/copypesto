@@ -13,6 +13,8 @@ struct DataSettings: View {
     }
 
     let part: Part
+    var hasStorage = false
+    var onOpenInsights: () -> Void = {}
     enum Action {
         case exportHistory, importHistory, importPaste, importSnippets, rebuildIndex
     }
@@ -35,23 +37,29 @@ struct DataSettings: View {
         Section {
             fileRow(
                 "Text history",
-                caption: LocalizedStringKey(
-                    "A JSON file of your text, code, link and color clips. Not encrypted: secrets are masked, " +
-                        "pictures and files are left out, and an import skips clips you already have."
+                caption: "JSON previews (secrets masked, no pictures).",
+                info: (
+                    "Text history",
+                    "A JSON file of your text, code, link and color clips. Not encrypted: secrets are " +
+                        "masked, pictures and files are left out, and an import skips clips you already have."
                 ),
                 messages: [.exportHistory, .importHistory]
             ) {
                 Button("Import\u{2026}", action: importHistory)
+                    .controlSize(.small)
                     .accessibilityLabel("Import History")
                 Button("Export\u{2026}", action: exportHistory)
+                    .controlSize(.small)
                     .accessibilityLabel("Export Text Previews")
             }
             .settingsRow("Export clips")
             fileRow(
                 "Another app\u{2019}s library",
-                caption: LocalizedStringKey(
-                    "Clips from another clipboard app, or snippets from a Raycast "
-                        + "export. Pesto reads a copy and never changes the original. Your own clips stay."
+                caption: "Clips or snippets from another app (read-only).",
+                info: (
+                    "Another app\u{2019}s library",
+                    "Clips from another clipboard app, or snippets from a Raycast export. Pesto reads a " +
+                        "copy and never changes the original. Your own clips stay."
                 ),
                 messages: [.importPaste, .importSnippets]
             ) {
@@ -84,6 +92,7 @@ struct DataSettings: View {
                         .accessibilityIdentifier(AccessibilityID.importSnippetsButton)
                 }
                 .menuStyle(.borderedButton)
+                .controlSize(.small)
                 .fixedSize()
                 .accessibilityLabel("Import from another app")
                 .accessibilityIdentifier(AccessibilityID.importFromAppMenu)
@@ -144,29 +153,43 @@ struct DataSettings: View {
 
     private var maintenanceSection: some View {
         Section {
+            if hasStorage {
+                LabeledContent("Insights") {
+                    HStack(spacing: 8) {
+                        Text("Activity, top apps, and most-pasted clips.").pestoCaption()
+                        Button("View Insights\u{2026}", action: onOpenInsights).controlSize(.small)
+                    }
+                }
+                .settingsRow("Activity insights")
+            }
             LabeledContent {
-                HStack {
+                HStack(spacing: 8) {
                     message(for: .rebuildIndex)
                     if isRebuildingIndex { ProgressView().controlSize(.small) }
                     Button("Rebuild") { rebuildSemanticIndex() }
+                        .controlSize(.small)
                         .accessibilityLabel("Rebuild search index")
                         .disabled(isRebuildingIndex)
                 }
             } label: {
-                VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
                     Text("Search index")
-                    Text("Rebuilds the search index for text and code clips. It runs on this Mac; nothing is sent.")
-                        .pestoCaption()
+                    InfoPopoverButton(
+                        "Search index",
+                        message: "Rebuilds the on-device search index for text and code. Nothing is sent."
+                    )
                 }
             }
             .settingsRow("Rebuild search index")
         } header: {
-            Text("Maintenance")
+            Text("Insights & Maintenance")
         }
     }
 
     private func fileRow(
-        _ title: LocalizedStringKey, caption: LocalizedStringKey, messages actions: [Action],
+        _ title: LocalizedStringKey, caption: LocalizedStringKey,
+        info: (title: LocalizedStringKey, message: LocalizedStringKey),
+        messages actions: [Action],
         @ViewBuilder buttons: () -> some View
     )
     -> some View {
@@ -177,7 +200,10 @@ struct DataSettings: View {
             }
         } label: {
             VStack(alignment: .leading, spacing: 1) {
-                Text(title)
+                HStack(spacing: 4) {
+                    Text(title)
+                    InfoPopoverButton(info.title, message: info.message)
+                }
                 Text(caption).pestoCaption()
             }
         }

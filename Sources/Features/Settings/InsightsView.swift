@@ -50,7 +50,7 @@ struct InsightsView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
             } header: {
-                Text("Activity").settingsRow("Activity insights")
+                Text("Activity")
             }
 
             if !summary.hasItems {

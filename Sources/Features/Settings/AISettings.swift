@@ -19,47 +19,62 @@ struct AppleIntelligenceSettings: View {
                     .pestoQuiet()
                     .accessibilityIdentifier(AccessibilityID.aiUnavailableNotice)
             } else {
-                Toggle("Use Apple Intelligence", isOn: $enabled)
-                    .accessibilityIdentifier(AccessibilityID.settingsChoice("appleIntelligence", "toggle"))
-                status
+                LabeledContent("Use Apple Intelligence") {
+                    HStack(spacing: 10) {
+                        status
+                        Toggle("Use Apple Intelligence", isOn: $enabled)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .accessibilityIdentifier(AccessibilityID.settingsChoice("appleIntelligence", "toggle"))
+                    }
+                }
             }
         } header: {
             Text("Apple Intelligence").settingsRow("Apple Intelligence")
         } footer: {
-            Text(
-                "Powers Summarize, Translate and Extract, Describe Image, picture screening for the content filter " +
-                    "and sentence understanding in Ask. It runs on this Mac with Apple\u{2019}s on-device model: no " +
-                    "account, no key, and nothing you copy is sent anywhere."
-            )
-            .pestoCaption()
+            HStack(spacing: 6) {
+                Text(
+                    "Runs on this Mac with Apple\u{2019}s on-device model. Nothing you copy is sent anywhere."
+                )
+                .pestoCaption()
+                InfoPopoverButton(
+                    title: "Apple Intelligence",
+                    message: "Powers Summarize, Translate and Extract, Describe Image, picture screening for the " +
+                        "content filter and sentence understanding in Ask. It runs on this Mac with Apple\u{2019}s " +
+                        "on-device model: no account, no key, and nothing you copy is sent anywhere."
+                )
+            }
         }
     }
 
     @ViewBuilder
     private var status: some View {
         if !enabled {
-            Label("Turned off. The AI actions are grayed out.", systemImage: "minus.circle")
-                .pestoQuiet()
+            EmptyView()
         } else if system.isAvailable {
             Label {
                 Text("Ready on this Mac")
             } icon: {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(accent)
             }
-            if !AppleIntelligenceClient.supportsVision {
-                Text("Describe Image needs a model that can read pictures, which this Mac\u{2019}s does not have yet.")
-                    .pestoCaption()
-            }
+            .font(.callout)
+            .help(
+                AppleIntelligenceClient.supportsVision
+                    ? ""
+                    : "Describe Image needs a model that can read pictures, which this Mac\u{2019}s does not have yet."
+            )
         } else {
             Label(system.message, systemImage: "exclamationmark.circle")
+                .font(.callout)
                 .pestoQuiet()
                 .accessibilityIdentifier(AccessibilityID.aiUnavailableNotice)
             if system.canBeFixedInSystemSettings {
-                Button("Open Apple Intelligence Settings\u{2026}") {
+                Button("Open Settings\u{2026}") {
                     if let url = URL(string: "x-apple.systempreferences:com.apple.Siri-Settings.extension") {
                         NSWorkspace.shared.open(url)
                     }
                 }
+                .controlSize(.small)
             }
         }
     }

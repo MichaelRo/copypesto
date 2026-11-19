@@ -68,6 +68,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0057](0057-the-ios-welcome.md) | The iOS welcome: three steps shown once, link previews on only when step two appears, the lock offered off, sync offered never started, AutoFill as a one-time tip, no permission prompts. |
 | [0058](0058-the-mac-features-pass-3-brings-to-ios.md) | On iOS: Decode JWT behind Show's gate in a memory-only sheet, AI actions as a submenu and a sheet (none for a secret, no chunked reading), Ask Pesto as a chip in the search, smart collections in the collection editor, a GIF kept whole in and out. |
 | [0059](0059-the-mac-widget.md) | The Mac gets the Recent Clips widget only in a release signed with the app's and the extension's provisioning profiles: the same sealed snapshot as iOS in the app group, Locked while the lock is on, hidden while clip contents are covered, and a chosen clip copied, shown or opened by the app through its own write path |
+| [0060](0060-a-widget-can-show-a-collection.md) | A widget can be set to one collection: the sealed snapshot carries the first 24 collections (name, symbol, color) and up to eight clips each that may leave Pesto, a plain one in its hand order and a smart one by its rules over the newest 300; the bound rises to 1.5 MB |
 
 ## Template
 

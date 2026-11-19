@@ -4,8 +4,9 @@ import SwiftUI
 import WidgetKit
 
 /// The widget on the theme's ground: Pesto cards, one filling a small widget, a row of them in a medium one and a grid
-/// in a large one, each doing what "When a Clip Is Chosen" says; "No clips yet" for an empty list, "Open Pesto to
-/// show your clips" when there is no snapshot to show. On the Mac a message opens the shelf, which is also when Pesto
+/// in a large one, each doing what "When a Clip Is Chosen" says; "No clips yet" for an empty list, "Choose a
+/// collection" for a collection the snapshot does not carry (ADR 0060), "Open Pesto to show your clips" when there is
+/// no snapshot to show. On the Mac a message opens the shelf, which is also when Pesto
 /// asks whether a widget is installed (ADR 0059).
 struct RecentClipsView: View {
     let entry: RecentClipsEntry
@@ -52,15 +53,14 @@ struct RecentClipsView: View {
                     compact: resolvedSize == .small
                 )
                 .opensShelfOnTheMac()
-            case .empty:
+            case .noCollection:
                 WidgetMessage(
-                    symbol: entry.source == .pinned ? "pin" : "doc.on.clipboard",
-                    title: entry.source == .pinned ? "No pinned clips yet" : "No clips yet",
-                    detail: entry.source == .pinned
-                        ? "Pin a clip in Pesto, and it shows up here." : "Copy something, and it shows up here.",
-                    compact: resolvedSize == .small
+                    symbol: "square.stack", title: "Choose a collection",
+                    detail: "Edit the widget to choose the collection it shows.", compact: resolvedSize == .small
                 )
                 .opensShelfOnTheMac()
+            case .empty:
+                emptyMessage(content.collection).opensShelfOnTheMac()
             case .clips:
                 if let single {
                     WidgetTapArea(tap: tap(for: single), isWholeWidget: true) {
@@ -101,6 +101,28 @@ struct RecentClipsView: View {
             }
             if rows.count < 2, resolvedSize == .large { Spacer(minLength: 0) }
         }
+    }
+
+    private func emptyMessage(_ collection: WidgetCollection?) -> WidgetMessage {
+        let compact = resolvedSize == .small
+        if let collection {
+            return WidgetMessage(
+                symbol: collection.symbolName, title: "No clips in this collection yet",
+                detail: collection.isSmart
+                    ? "Clips that match it show up here." : "Add a clip to it in Pesto, and it shows up here.",
+                compact: compact
+            )
+        }
+        if entry.source == .pinned {
+            return WidgetMessage(
+                symbol: "pin", title: "No pinned clips yet", detail: "Pin a clip in Pesto, and it shows up here.",
+                compact: compact
+            )
+        }
+        return WidgetMessage(
+            symbol: "doc.on.clipboard", title: "No clips yet", detail: "Copy something, and it shows up here.",
+            compact: compact
+        )
     }
 
     private func tap(for clip: WidgetClip) -> WidgetTap {

@@ -121,7 +121,9 @@ Pesto cards at widget scale on the theme's ground carried in the snapshot: one c
 in a row in the medium one, six in two columns in the large one. A color fills its card, a picture fills it near a
 card's shape, a link leads with its host, short text is large, one foot line gives the source and `CardAge`. The
 widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
-Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent or Pinned. With the History Lock on it says "Locked" and "Open Pesto to see your clips." unless "Show clips in widgets and AutoFill" is on (ADR 0055).
+Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent, Pinned or Collection, and then
+which collection, from those the snapshot carries (ADR 0060): "No clips in this collection yet" when it is empty,
+"Choose a collection" when none is chosen or it is gone. With the History Lock on it says "Locked" and "Open Pesto to see your clips." unless "Show clips in widgets and AutoFill" is on (ADR 0055).
 
 ## FAQ for the release notes: Add Clipboard to Pesto
 The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to

@@ -181,7 +181,7 @@ public final class WidgetSnapshotKeeper {
         guard let snapshot else { return dropFile() }
         do {
             try target.file.write(snapshot, with: target.keys.loadOrCreate())
-            lastSnapshot = snapshot.clips.isEmpty && snapshot.pinned.isEmpty ? nil : snapshot
+            lastSnapshot = snapshot.allClips.isEmpty ? nil : snapshot
             lastWritten = written
             target.reload()
         } catch {

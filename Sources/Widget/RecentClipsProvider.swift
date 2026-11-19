@@ -23,14 +23,14 @@ struct RecentClipsProvider: AppIntentTimelineProvider {
     func snapshot(for configuration: RecentClipsConfiguration, in context: Context) async -> RecentClipsEntry {
         RecentClipsEntry(
             date: .now, snapshot: context.isPreview ? nil : WidgetSnapshotReader.read(),
-            tapAction: configuration.tapAction.action, source: configuration.source.source
+            tapAction: configuration.tapAction.action, source: configuration.clipSource
         )
     }
 
     func timeline(for configuration: RecentClipsConfiguration, in _: Context) async -> Timeline<RecentClipsEntry> {
         Self.timeline(
             snapshot: WidgetSnapshotReader.read(), now: .now, tapAction: configuration.tapAction.action,
-            source: configuration.source.source, copied: WidgetCopyRecord.recent(at: .now)
+            source: configuration.clipSource, copied: WidgetCopyRecord.recent(at: .now)
         )
     }
 

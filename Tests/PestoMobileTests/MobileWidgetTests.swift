@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import SwiftData
 import Testing
 import UIKit
 import UniformTypeIdentifiers
@@ -224,6 +225,67 @@ struct MobileWidgetTests {
 
         #expect(snapshot?.clips.map(\.text) == ["for the Home Screen"])
         #expect(WidgetSnapshotReader.read(file: fixture.file, keys: wrong) == nil)
+    }
+
+    /// A collection made the way the library saves one, with `item` in it, so the save reaches the widget's observer.
+    private func collection(
+        _ name: String, holding item: ClipboardItem, in library: MobileTestLibrary
+    ) throws
+    -> (board: Pinboard, context: ModelContext) {
+        let context = try ModelContext(#require(library.state.historyContainer))
+        let board = Pinboard(name: name, symbolName: "briefcase", colorHex: "#2F8B4C", sortOrder: 0)
+        context.insert(board)
+        let id = item.id
+        let member = try #require(context.fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id }))
+            .first)
+        member.collectionID = board.id
+        try context.saveOrRollback()
+        return (board, context)
+    }
+
+    @Test("the widget's reader sees the collections the app wrote, and a renamed collection is written again")
+    func whenACollectionChanges_thenTheWidgetSeesIt() async throws {
+        let fixture = try fixture(installed: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        let library = try await library(with: fixture)
+        let item = try await library.add("for the Work widget")
+        let made = try collection("Work", holding: item, in: library)
+        await library.state.refreshWidgetPresence()
+
+        let reader = SharedFileKeyStore(secrets: fixture.secrets, account: AppIdentity.widgetKeyAccount)
+        let snapshot = try #require(WidgetSnapshotReader.read(file: fixture.file, keys: reader))
+        #expect(snapshot.collections.map(\.name) == ["Work"])
+        #expect(snapshot.clips(inCollection: made.board.id).map(\.text) == ["for the Work widget"])
+
+        made.board.name = "Office"
+        try made.context.saveOrRollback()
+        let deadline = ContinuousClock.now + .seconds(10)
+        while ContinuousClock.now < deadline, try fixture.read().collections.map(\.name) != ["Office"] {
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        #expect(try fixture.read().collections.map(\.name) == ["Office"])
+        let bytes = try Data(contentsOf: fixture.file.url)
+        #expect(bytes.range(of: Data("Office".utf8)) == nil)
+    }
+
+    @Test("a link to a clip a collection widget showed that has since become secret only opens the library")
+    func whenACollectionClipBecameSecret_thenItsLinkIsRefused() async throws {
+        let fixture = try fixture(installed: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        let library = try await library(with: fixture)
+        let item = try await library.add("harmless, in Work")
+        let made = try collection("Work", holding: item, in: library)
+        await library.state.refreshWidgetPresence()
+        #expect(try fixture.read().clips(inCollection: made.board.id).map(\.id) == [item.id])
+
+        #expect(try await library.service.updateText(id: item.id, text: secret) == .saved)
+        try await library.refreshed()
+
+        for action in WidgetLink.Action.allCases {
+            #expect(library.state.open(WidgetLink.url(for: item.id, action: action)) == .ignored)
+        }
+        await library.state.writeWidget()
+        #expect(try fixture.read().allClips.isEmpty)
     }
 
     @Test("a copy link copies a clip it may show and the library flashes it; anything else only opens the library")

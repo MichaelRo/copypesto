@@ -259,6 +259,27 @@ struct AutomationURLHandlerTests {
         #expect(host.events == ["show"])
     }
 
+    @Test("a clip a collection widget showed that has since become secret only opens the shelf (ADR 0060)")
+    func whenACollectionClipBecameSecret_thenOnlyTheShelf() async throws {
+        let id = try await ingest("Lunch at noon on Thursday")
+        let context = ModelContext(container)
+        let board = Pinboard(name: "Work", symbolName: "folder", colorHex: "#2F8B4C", sortOrder: 0)
+        context.insert(board)
+        let item = try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == id })
+        item.collectionID = board.id
+        try context.saveOrRollback()
+        let shown = try WidgetSnapshotSelection.snapshot(in: context, now: .now, theme: .brand, source: { _ in nil })
+        #expect(shown.clips(inCollection: board.id).map(\.id) == [id])
+
+        item.sensitivityRaw = SensitivityCategory.apiKey.rawValue
+        try context.saveOrRollback()
+        for action in WidgetLink.Action.allCases {
+            await run(.widget(.init(id: id, action: action)))
+        }
+
+        #expect(host.events == ["show", "show", "show"])
+    }
+
     @Test("while clip contents are covered, Show and Open only open the shelf; Copy still copies (ADR 0003)")
     func whenContentsAreCovered_thenShowAndOpenRevealNothing() async throws {
         let text = try await ingest("Lunch at noon on Thursday")

@@ -2,9 +2,10 @@
 import Foundation
 import SwiftData
 
-/// Which clips the widget snapshot holds (ADR 0052): the newest clips, and the newest pinned ones, of any kind that
-/// `ShortcutClipSearch.isOfferedOutsidePesto` allows, within `WidgetSnapshotPolicy`, each reduced to what a widget
-/// draws and, for a short text, its whole text for an in-place copy.
+/// Which clips the widget snapshot holds (ADR 0052, 0060): the newest clips, the newest pinned ones and the clips of
+/// the first collections, of any kind that `ShortcutClipSearch.isOfferedOutsidePesto` allows, within
+/// `WidgetSnapshotPolicy`, each reduced to what a widget draws and, for a short text, its whole text for an in-place
+/// copy.
 public enum WidgetSnapshotSelection {
     /// How a clip's parts are read: asked only of clips that may be shown, and a thumbnail or a whole text only while
     /// the snapshot has room for it.
@@ -23,6 +24,25 @@ public enum WidgetSnapshotSelection {
         }
     }
 
+    /// A collection and the clips it lists, in its order, before eligibility and the bounds are applied.
+    public struct Members {
+        public let collection: WidgetCollection
+        public let items: [ClipboardItem]
+
+        public init(collection: WidgetCollection, items: [ClipboardItem]) {
+            self.collection = collection
+            self.items = items
+        }
+    }
+
+    public struct Lists {
+        public let clips: [WidgetClip]
+        public let pinned: [WidgetClip]
+        public let collections: [WidgetCollection]
+        public let collectionClipIDs: [UUID: [UUID]]
+        public let collectionClips: [WidgetClip]
+    }
+
     private struct Budget {
         var thumbnails = WidgetSnapshotPolicy.maxThumbnailTotalBytes
         var fullTexts = WidgetSnapshotPolicy.maxFullTextTotalBytes
@@ -37,15 +57,7 @@ public enum WidgetSnapshotSelection {
         source: @escaping (ClipboardItem) -> String?
     ) throws
     -> WidgetSnapshot {
-        var newest = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
-        newest.fetchLimit = WidgetSnapshotPolicy.scanLimit
-        var pinned = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { $0.isPinned }, sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-        )
-        pinned.fetchLimit = WidgetSnapshotPolicy.scanLimit
-        let earlier = (previous.map { $0.clips + $0.pinned } ?? []).compactMap { clip in
-            clip.thumbnail.map { (clip.id, $0) }
-        }
+        let earlier = (previous?.allClips ?? []).compactMap { clip in clip.thumbnail.map { (clip.id, $0) } }
         let kept = Dictionary(earlier) { first, _ in first }
         let reader = Reader(
             source: source,
@@ -61,26 +73,99 @@ public enum WidgetSnapshotSelection {
                 item.byteSize <= WidgetSnapshotPolicy.maxFullTextBytes ? item.blob?.decryptedText() : nil
             }
         )
-        let lists = try lists(newest: context.fetch(newest), pinned: context.fetch(pinned), reader: reader)
-        return WidgetSnapshot(createdAt: now, theme: theme, clips: lists.clips, pinned: lists.pinned)
+        return try snapshot(in: context, now: now, theme: theme, reader: reader)
     }
 
-    /// Both lists come newest first. The newest clips are chosen first, so they have the first claim on the room for
-    /// thumbnails and whole texts; a pinned clip already chosen is reused rather than read twice.
-    public static func lists(newest: [ClipboardItem], pinned: [ClipboardItem], reader: Reader)
-    -> (clips: [WidgetClip], pinned: [WidgetClip]) {
+    public static func snapshot(in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, reader: Reader) throws
+    -> WidgetSnapshot {
+        var newest = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
+        newest.fetchLimit = WidgetSnapshotPolicy.scanLimit
+        var pinned = FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { $0.isPinned }, sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        pinned.fetchLimit = WidgetSnapshotPolicy.scanLimit
+        let lists = try lists(
+            newest: context.fetch(newest), pinned: context.fetch(pinned), collections: members(in: context),
+            reader: reader
+        )
+        return WidgetSnapshot(
+            createdAt: now, theme: theme, clips: lists.clips, pinned: lists.pinned, collections: lists.collections,
+            collectionClipIDs: lists.collectionClipIDs, collectionClips: lists.collectionClips
+        )
+    }
+
+    /// The first collections by `sortOrder` (as Pesto's own lists sort them), each with the clips that may be shown, in
+    /// its order: a plain collection's newest `collectionScanLimit` members as `CollectionOrder` lists them, a smart
+    /// one's matches among the newest `smartScanLimit` clips, newest first.
+    public static func members(in context: ModelContext) throws -> [Members] {
+        var boards = FetchDescriptor<Pinboard>(sortBy: [SortDescriptor(\.sortOrder)])
+        boards.fetchLimit = WidgetSnapshotPolicy.maxCollections
+        let collections = try context.fetch(boards)
+        var window: [ClipboardItem]?
+        var members: [Members] = []
+        for board in collections {
+            let items: [ClipboardItem]
+            if board.isSmart {
+                if window == nil {
+                    var newest = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
+                    newest.fetchLimit = WidgetSnapshotPolicy.smartScanLimit
+                    window = try context.fetch(newest)
+                }
+                items = smartMatches(of: board, in: window ?? [])
+            } else {
+                let id = board.id
+                var newest = FetchDescriptor<ClipboardItem>(
+                    predicate: #Predicate { $0.collectionID == id },
+                    sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+                )
+                newest.fetchLimit = WidgetSnapshotPolicy.collectionScanLimit
+                let window = try context.fetch(newest).filter(isEligible)
+                items = Array(CollectionOrder.sorted(window).prefix(WidgetSnapshotPolicy.maxClips))
+            }
+            members.append(Members(collection: widgetCollection(board), items: items))
+        }
+        return members
+    }
+
+    /// The lists come newest first and each collection in its own order. The newest clips are chosen first, then the
+    /// pinned ones, then the collections', so they claim the room for thumbnails and whole texts in that order; a
+    /// clip already chosen is reused rather than read twice.
+    public static func lists(
+        newest: [ClipboardItem], pinned: [ClipboardItem], collections: [Members] = [], reader: Reader
+    )
+    -> Lists {
         var budget = Budget()
         let clips = choose(from: newest, limit: WidgetSnapshotPolicy.maxClips, reader: reader, budget: &budget)
-        let chosen = Dictionary(clips.map { ($0.id, $0) }) { first, _ in first }
+        var chosen = Dictionary(clips.map { ($0.id, $0) }) { first, _ in first }
         var pins: [WidgetClip] = []
         for item in pinned where pins.count < WidgetSnapshotPolicy.maxPinned && item.isPinned && isEligible(item) {
             if let known = chosen[item.id] {
                 pins.append(known)
             } else {
-                pins.append(clip(for: item, reader: reader, budget: &budget))
+                let made = clip(for: item, reader: reader, budget: &budget)
+                chosen[item.id] = made
+                pins.append(made)
             }
         }
-        return (clips, pins)
+        var ids: [UUID: [UUID]] = [:]
+        var extra: [WidgetClip] = []
+        for members in collections.prefix(WidgetSnapshotPolicy.maxCollections) {
+            var listed: [UUID] = []
+            for item in members.items where listed.count < WidgetSnapshotPolicy.maxClips && isEligible(item) {
+                guard !listed.contains(item.id) else { continue }
+                if chosen[item.id] == nil {
+                    let made = clip(for: item, reader: reader, budget: &budget)
+                    chosen[item.id] = made
+                    extra.append(made)
+                }
+                listed.append(item.id)
+            }
+            ids[members.collection.id] = listed
+        }
+        return Lists(
+            clips: clips, pinned: pins, collections: collections.prefix(WidgetSnapshotPolicy.maxCollections)
+                .map(\.collection), collectionClipIDs: ids, collectionClips: extra
+        )
     }
 
     /// The newest clips only, as `lists` chooses them.
@@ -90,6 +175,25 @@ public enum WidgetSnapshotSelection {
 
     public static func isEligible(_ item: ClipboardItem) -> Bool {
         ShortcutClipSearch.isOfferedOutsidePesto(item)
+    }
+
+    /// A smart collection whose rules do not decode or compile shows nothing, as it does in Pesto.
+    private static func smartMatches(of board: Pinboard, in window: [ClipboardItem]) -> [ClipboardItem] {
+        guard let data = board.smartPredicateData, let rules = try? SmartCollectionPredicate.decodeRuleSet(data),
+              SmartCollectionPredicate.canCompileRuleSet(rules) else { return [] }
+        var matches: [ClipboardItem] = []
+        for item in window where matches.count < WidgetSnapshotPolicy.maxClips && isEligible(item) {
+            if rules.matches(item) { matches.append(item) }
+        }
+        return matches
+    }
+
+    private static func widgetCollection(_ board: Pinboard) -> WidgetCollection {
+        WidgetCollection(
+            id: board.id, name: cut(board.name, WidgetSnapshotPolicy.maxCollectionNameCharacters),
+            symbolName: cut(board.symbolName, WidgetSnapshotPolicy.maxSymbolNameCharacters),
+            colorHex: cut(board.colorHex, 7), isSmart: board.isSmart
+        )
     }
 
     private static func choose(from items: [ClipboardItem], limit: Int, reader: Reader, budget: inout Budget)

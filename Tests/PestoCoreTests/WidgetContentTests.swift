@@ -87,6 +87,60 @@ struct WidgetContentTests {
         #expect(WidgetContent(snapshot: both, size: .small).state == .locked)
     }
 
+    @Test("a widget set to a collection shows its clips in its order, from whichever list holds them")
+    func whenSetToACollection_thenItsClipsAreShown() {
+        let recent = snapshot(clips: 3).clips
+        let only = WidgetClip(id: UUID(), kind: .text, text: "only in it", date: now - 9000)
+        let work = WidgetCollection(id: UUID(), name: "Work", symbolName: "briefcase", colorHex: "#2F8B4C")
+        let empty = WidgetCollection(id: UUID(), name: "Later", symbolName: "clock", colorHex: "#000000")
+        let snapshot = WidgetSnapshot(
+            createdAt: now, theme: .brand, clips: recent, collections: [work, empty],
+            collectionClipIDs: [work.id: [only.id, recent[2].id, UUID()], empty.id: []], collectionClips: [only]
+        )
+
+        #expect(snapshot.clips(inCollection: work.id).map(\.text) == ["only in it", "clip 2"])
+        #expect(snapshot.clips(from: .recent) == recent, "Recent never shows a collection's own clips")
+        #expect(snapshot.clip(id: only.id) == only)
+        let content = WidgetContent(snapshot: snapshot, size: .large, source: .collection(work.id))
+        #expect(content.state == .clips)
+        #expect(content.collection == work)
+        #expect(content.clips.map(\.text) == ["only in it", "clip 2"])
+        #expect(WidgetContent(snapshot: snapshot, size: .small, source: .collection(empty.id)).state == .empty)
+    }
+
+    @Test("a collection not chosen, deleted or past the cap says Choose a collection; Locked and Hidden still win")
+    func whenTheCollectionIsMissing_thenTheWidgetAsksForOne() {
+        let snapshot = snapshot(clips: 3)
+        #expect(WidgetContent(snapshot: snapshot, size: .medium, source: .collection(nil)).state == .noCollection)
+        #expect(WidgetContent(snapshot: snapshot, size: .medium, source: .collection(UUID())).state == .noCollection)
+        #expect(snapshot.clips(inCollection: UUID()).isEmpty)
+        let locked = WidgetSnapshot.locked(theme: .brand, at: now)
+        #expect(WidgetContent(snapshot: locked, size: .medium, source: .collection(UUID())).state == .locked)
+        #expect(WidgetContent(snapshot: nil, size: .medium, source: .collection(nil)).state == .unavailable)
+    }
+
+    @Test("Locked and Hidden carry no collection; a snapshot written before collections decodes with none")
+    func whenLockedOrOld_thenThereAreNoCollections() throws {
+        for placeholder in [WidgetSnapshot.locked(theme: .brand, at: now), .hidden(theme: .brand, at: now)] {
+            #expect(placeholder.collections.isEmpty)
+            #expect(placeholder.collectionClipIDs.isEmpty)
+            #expect(placeholder.collectionClips.isEmpty)
+        }
+        let json = #"{"createdAt":0,"theme":{"lightGround":"FFFFFF","darkGround":"000000","#
+            + #""lightAccent":"8A4F16","darkAccent":"E2A15E"},"clips":[],"pinned":[]}"#
+        let old = try JSONDecoder().decode(WidgetSnapshot.self, from: Data(json.utf8))
+        #expect(old.collections.isEmpty)
+        #expect(old.collectionClips.isEmpty)
+
+        let work = WidgetCollection(id: UUID(), name: "Work", symbolName: "briefcase", colorHex: "#2F8B4C")
+        let clip = WidgetClip(id: UUID(), kind: .text, text: "kept", date: now)
+        let full = WidgetSnapshot(
+            createdAt: now, theme: .brand, clips: [], collections: [work], collectionClipIDs: [work.id: [clip.id]],
+            collectionClips: [clip]
+        )
+        #expect(try JSONDecoder().decode(WidgetSnapshot.self, from: JSONEncoder().encode(full)) == full)
+    }
+
     @Test("the timeline has an entry each time an age reads differently, soonest first and bounded")
     func whenAgesMove_thenTheEntriesFollow() {
         let fresh = WidgetClip(id: UUID(), kind: .text, text: "a", date: now - 30)

@@ -61,6 +61,8 @@ Check each line against the build being submitted: a feature that is not in it c
 
 **Keywords (100):** clipboard,clipboard manager,copy paste,history,snippets,notes,paste,clips,text,sync
 
+Localized App Store metadata for Spanish (`es`), French (`fr`), German (`de`), Japanese (`ja`), Simplified Chinese (`zh-Hans`), Portuguese (`pt-BR`), and Hebrew (`he`) is in [app-store-localizations.md](app-store-localizations.md).
+
 ## App Privacy (the "nutrition label")
 
 - **Data collection: "No, we do not collect data from this app."** Pesto sends nothing to the developer or to anyone

@@ -31,7 +31,7 @@ App Store and does not change (Developer ID, notarized). Signing and the develop
 | Support URL | The GitHub repository's issues page, or the website's support page |
 
 **Promotional text (170):** Your copies, kept and searchable on iPhone and iPad. Sealed on your device, and in step
-with Pesto on your Mac through a folder you choose. No account, no server.
+across your iPhone, iPad and Mac through a folder you choose. No account, no server.
 
 **Description:**
 
@@ -41,8 +41,9 @@ with Pesto on your Mac through a folder you choose. No account, no server.
 > Your history is encrypted on your device. Things that look like passwords, keys or card numbers are masked until you
 > ask to see them, and copies an app marks as private are never kept.
 >
-> With Pesto on your Mac, turn on sync and choose the same folder, such as iCloud Drive. Clips are sealed so that only
-> your own devices can open them; there is no Pesto server and no account.
+> Pesto works on its own on your iPhone or iPad. To keep clips in step across your iPhone, iPad and Mac, turn on sync
+> on each and choose the same folder, such as iCloud Drive. Clips are sealed so that only your own devices can open
+> them; there is no Pesto server and no account.
 >
 > • One page of clip cards, with search that finds words inside pictures
 > • Pinned clips, collections and smart collections
@@ -111,7 +112,7 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 > - AutoFill: Pesto's AutoFill extension provides text insertion only (the "ProvidesTextToInsert" capability). It does
 >   not store, offer or fill passwords, passkeys or one-time codes. To try it: Settings → General → AutoFill &
 >   Passwords → turn on Pesto, then in any text field long-press → AutoFill → Pesto, and pick a clip.
-> - Sync is optional and needs Pesto for Mac and a folder both devices can open (such as iCloud Drive). It goes through
+> - Sync is optional: any two devices with Pesto (iPhone, iPad, Mac) and a folder both can open (such as iCloud Drive). It goes through
 >   files in that folder; there is no server. It can be skipped on the welcome screen.
 > - The History Lock (Settings, or the welcome's second step) asks for Face ID before clips show.
 > - The widget: add "Recent Clips" from the Home Screen's widget gallery. Tap a clip to copy it.

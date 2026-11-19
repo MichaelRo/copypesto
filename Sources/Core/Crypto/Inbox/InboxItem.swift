@@ -41,7 +41,7 @@ public struct InboxItem: Equatable, Sendable {
             }
         }
         if let sourceImageURL {
-            guard LinkPreviewEligibility.isEligible(sourceImageURL),
+            guard Self.isWebURL(sourceImageURL),
                   sourceImageURL.absoluteString.utf8.count <= Int(UInt16.max) else
             {
                 throw InboxError.unsupported
@@ -93,7 +93,7 @@ public struct InboxItem: Equatable, Sendable {
             guard urlLength > 0, bytes.count >= urlEnd,
                   let urlString = String(data: bytes.subdata(in: (typeEnd + 2)..<urlEnd), encoding: .utf8),
                   let parsed = URL(string: urlString),
-                  LinkPreviewEligibility.isEligible(parsed) else { throw InboxError.damaged }
+                  Self.isWebURL(parsed) else { throw InboxError.damaged }
             sourceImageURL = parsed
             payloadStart = urlEnd
         }
@@ -102,6 +102,11 @@ public struct InboxItem: Equatable, Sendable {
             createdAt: Date(timeIntervalSince1970: Double(millis) / 1000),
             sourceImageURL: sourceImageURL
         )
+    }
+
+    private static func isWebURL(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http" else { return false }
+        return url.host?.isEmpty == false
     }
 
     private static let version1: UInt8 = 1

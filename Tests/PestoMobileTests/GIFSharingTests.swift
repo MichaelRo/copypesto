@@ -91,8 +91,10 @@ struct GIFSharingTests {
         await library.state.clearHistory()
         #expect(!FileManager.default.fileExists(atPath: ShareFile.directory.path))
 
-        _ = try ShareFile.write(Self.gif, fileExtension: "gif")
+        // Some share targets send Pesto to the background mid-share: the file must outlive that, and goes when the
+        // share ends, the history locks or clears, or Pesto launches.
+        let sharing = try ShareFile.write(Self.gif, fileExtension: "gif")
         library.state.didLeaveForeground()
-        #expect(!FileManager.default.fileExists(atPath: ShareFile.directory.path))
+        #expect(FileManager.default.fileExists(atPath: sharing.path))
     }
 }

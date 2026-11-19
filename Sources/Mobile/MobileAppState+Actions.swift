@@ -266,7 +266,6 @@ extension MobileAppState {
         isActivated = false
         historyLock.didLeaveForeground(at: clock())
         closeAI()
-        ShareFile.removeAll()
         secretReveal.hideAll()
         decodedJWT = nil
         writeQuickInsert()

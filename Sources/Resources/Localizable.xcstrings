@@ -6709,7 +6709,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "The clip was pasted"
+                  "value": "%lld clip pasted"
                 }
               },
               "other": {
@@ -6727,7 +6727,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Der Clip wurde eingesetzt"
+                  "value": "%lld Clip eingesetzt"
                 }
               },
               "other": {
@@ -6745,7 +6745,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Se pegó el clip"
+                  "value": "Se pegó %lld clip"
                 }
               },
               "other": {
@@ -6763,7 +6763,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Le clip a été collé"
+                  "value": "%lld clip collé"
                 }
               },
               "other": {
@@ -6781,7 +6781,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "הקטע הודבק"
+                  "value": "הודבק קטע %lld"
                 }
               },
               "two": {
@@ -6823,7 +6823,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "O clipe foi colado"
+                  "value": "%lld clipe colado"
                 }
               },
               "other": {
@@ -6883,7 +6883,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Кліп вставлено"
+                  "value": "Вставлено %lld фрагмент"
                 }
               },
               "few": {
@@ -6925,7 +6925,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Clip incollato"
+                  "value": "%lld clip incollato"
                 }
               },
               "other": {
@@ -6943,7 +6943,7 @@
               "one": {
                 "stringUnit": {
                   "state": "translated",
-                  "value": "Klip byl vložen"
+                  "value": "Vložen %lld klip"
                 }
               },
               "few": {

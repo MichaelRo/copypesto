@@ -185,7 +185,7 @@ Localized App Store Connect listing copy for [app-store-ios.md](app-store-ios.md
 - **Promotional text (170):** Всё скопированное — всегда под рукой на iPhone и iPad. Шифрование на устройстве и синхронизация с Mac через выбранную вами папку. Без аккаунтов и серверов.
 - **Keywords (100):** буфер обмена,история,копирование,вставка,сниппеты,заметки,текст,синхронизация,менеджер,поиск
 - **Description:**
-> Pesto сохраняет всё, что вы копируете. Добавляйте записи из Paste, через меню «Поделиться» в любом приложении или быстрой командой «Добавить буфер обмена в Pesto» и находите нужное на карточках — с поиском, закреплением, редактированием и коллекциями.
+> Pesto сохраняет всё, что вы копируете. Добавляйте записи кнопкой «Вставить», через меню «Поделиться» в любом приложении или быстрой командой «Добавить буфер обмена в Pesto» и находите нужное на карточках — с поиском, закреплением, редактированием и коллекциями.
 >
 > История шифруется прямо на вашем устройстве. Всё похожее на пароль, ключ или номер карты остаётся скрытым, пока вы не откроете его сами, а данные, помеченные приложением как приватные, вообще не сохраняются.
 >
@@ -235,7 +235,7 @@ Localized App Store Connect listing copy for [app-store-ios.md](app-store-ios.md
 - **Promotional text (170):** 복사한 모든 내용을 iPhone과 iPad에 저장하고 바로 찾아보세요. 기기에서 직접 암호화되며, 원하는 폴더를 통해 Mac과 안전하게 동기화됩니다. 계정도, 서버도 필요 없습니다.
 - **Keywords (100):** 클립보드,기록,복사,붙여넣기,스니펫,메모,클립,텍스트,동기화,관리,단축키,암호화,백업,모음
 - **Description:**
-> Pesto는 복사한 모든 것을 보관해 줍니다. Paste에서 가져오거나, 어느 앱에서든 공유 시트나 'Pesto에 클립보드 추가' 단축어로 추가하고, 검색·고정·편집·컬렉션 정리가 가능한 카드로 바로 찾아보세요.
+> Pesto는 복사한 모든 것을 보관해 줍니다. '붙여넣기'로 추가하거나, 어느 앱에서든 공유 시트나 'Pesto에 클립보드 추가' 단축어로 추가하고, 검색·고정·편집·컬렉션 정리가 가능한 카드로 바로 찾아보세요.
 >
 > 기록은 기기에서 직접 암호화됩니다. 암호나 키, 카드 번호처럼 보이는 항목은 직접 보기를 요청하기 전까지 가려지며, 앱이 비공개로 표시한 복사 내용은 절대 저장하지 않습니다.
 >
@@ -260,7 +260,7 @@ Localized App Store Connect listing copy for [app-store-ios.md](app-store-ios.md
 - **Promotional text (170):** Tutto ciò che copi, salvato e cercabile su iPhone e iPad. Cifrato sul dispositivo e sincronizzato col Mac dalla cartella che scegli. Nessun account, nessun server.
 - **Keywords (100):** appunti,cronologia,copia,incolla,snippet,note,clip,testo,sincronizzazione,gestione,ocr,mac
 - **Description:**
-> Pesto conserva tutto ciò che copi. Aggiungi clip da Paste, dal menu Condividi di qualsiasi app o dal comando rapido Aggiungi gli appunti a Pesto, poi ritrovali in schede facili da cercare, fissare, modificare e organizzare in raccolte.
+> Pesto conserva tutto ciò che copi. Aggiungi clip con Incolla, dal menu Condividi di qualsiasi app o dal comando rapido Aggiungi gli appunti a Pesto, poi ritrovali in schede facili da cercare, fissare, modificare e organizzare in raccolte.
 >
 > La cronologia è cifrata sul tuo dispositivo. Tutto ciò che assomiglia a una password, una chiave o un numero di carta resta nascosto finché non chiedi di vederlo, e ciò che un'app segna come privato non viene mai salvato.
 >
@@ -285,7 +285,7 @@ Localized App Store Connect listing copy for [app-store-ios.md](app-store-ios.md
 - **Promotional text (170):** Vše, co zkopírujete, uložené a prohledávatelné na iPhonu i iPadu. Šifrováno v zařízení a synchronizováno s Macem přes vybranou složku. Bez účtu, bez serveru.
 - **Keywords (100):** schránka,historie,kopírování,vkládání,úryvky,poznámky,klipy,text,synchronizace,správce
 - **Description:**
-> Pesto uchovává všechno, co zkopírujete. Přidávejte položky z aplikace Paste, přes nabídku sdílení v jakékoli aplikaci nebo zkratkou Přidat schránku do Pesta a vše najdete na kartách, které můžete prohledávat, připínat, upravovat a třídit do kolekcí.
+> Pesto uchovává všechno, co zkopírujete. Přidávejte klipy pomocí Vložit, přes nabídku sdílení v jakékoli aplikaci nebo zkratkou Přidat schránku do Pesta a vše najdete na kartách, které můžete prohledávat, připínat, upravovat a třídit do kolekcí.
 >
 > Vaše historie je šifrovaná přímo v zařízení. Vše, co vypadá jako heslo, klíč nebo číslo karty, zůstane skryté, dokud si to nevyžádáte, a vše, co jiná aplikace označí jako soukromé, se nikdy neuloží.
 >

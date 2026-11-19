@@ -111,7 +111,7 @@ struct LocalizationRoutingTests {
         }
     }
 
-    @Test("all three string catalogs translate every key into all seven target locales plus English")
+    @Test("all three string catalogs translate every key into all twelve target locales plus English")
     func allCatalogsCoverAllSupportedLocales() throws {
         let locales = ["en", "es", "fr", "de", "ja", "zh-Hans", "pt-BR", "he", "ru", "uk", "ko", "it", "cs"]
         for file in ["InfoPlist.xcstrings", "AppShortcuts.xcstrings", "Localizable.xcstrings"] {
@@ -168,11 +168,14 @@ struct LocalizationRoutingTests {
         }
         if let variations = locale["variations"] as? [String: Any],
            let plural = variations["plural"] as? [String: Any],
-           let other = plural["other"] as? [String: Any],
-           let unit = other["stringUnit"] as? [String: Any],
-           let value = unit["value"] as? String
+           !plural.isEmpty
         {
-            return !value.isEmpty
+            return plural.values.allSatisfy { rawForm in
+                guard let form = rawForm as? [String: Any],
+                      let unit = form["stringUnit"] as? [String: Any],
+                      let value = unit["value"] as? String else { return false }
+                return !value.isEmpty
+            }
         }
         return false
     }

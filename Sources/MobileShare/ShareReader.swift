@@ -53,7 +53,36 @@ enum ShareReader {
                 continuation.resume(with: Result { try readPicture(at: url, type: type, keepsOriginal: keepsOriginal) })
             }
         }
-        return InboxItem(typeIdentifier: payload.1, payload: payload.0, createdAt: .now)
+        let sourceURL = (payload.1 == UTType.gif.identifier || !LinkPreviewPolicy.isEnabled())
+            ? nil
+            : await animatedAddress(from: provider)
+        return InboxItem(typeIdentifier: payload.1, payload: payload.0, createdAt: .now, sourceImageURL: sourceURL)
+    }
+
+    nonisolated static let maxHTMLBytes = 1_000_000
+
+    nonisolated static func animatedAddress(inHTML data: Data?) -> URL? {
+        guard let data, data.count <= maxHTMLBytes, let html = String(data: data, encoding: .utf8) else { return nil }
+        return ImageSourceAddress.animatedPictureURL(inHTML: html)
+    }
+
+    private static func animatedAddress(from provider: NSItemProvider) async -> URL? {
+        let html = UTType.html.identifier
+        guard provider.hasItemConformingToTypeIdentifier(html) else { return nil }
+        return await withCheckedContinuation { continuation in
+            _ = provider.loadFileRepresentation(forTypeIdentifier: html) { url, _ in
+                guard let url else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? Int.max
+                guard size <= maxHTMLBytes, let data = try? Data(contentsOf: url) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: animatedAddress(inHTML: data))
+            }
+        }
     }
 
     /// Runs inside the provider's callback, while the file it lent still exists.

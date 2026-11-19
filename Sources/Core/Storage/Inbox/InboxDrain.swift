@@ -86,6 +86,8 @@ public struct InboxDrain: Sendable {
         return PasteboardCapture(
             typeIdentifier: item.typeIdentifier, payload: item.payload, payloadString: item.text,
             timestamp: min(item.createdAt, now), contentHash: hash
-        ).with(captureMethod: .share)
+        )
+        .with(sourceImageURL: item.sourceImageURL)
+        .with(captureMethod: .share)
     }
 }

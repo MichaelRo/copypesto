@@ -6,11 +6,13 @@ public struct InboxItem: Equatable, Sendable {
     public let typeIdentifier: String
     public let payload: Data
     public let createdAt: Date
+    public let sourceImageURL: URL?
 
-    public init(typeIdentifier: String, payload: Data, createdAt: Date) {
+    public init(typeIdentifier: String, payload: Data, createdAt: Date, sourceImageURL: URL? = nil) {
         self.typeIdentifier = typeIdentifier
         self.payload = payload
         self.createdAt = createdAt
+        self.sourceImageURL = sourceImageURL
     }
 
     public static func text(_ text: String, at date: Date = .now) -> InboxItem? {
@@ -38,25 +40,41 @@ public struct InboxItem: Equatable, Sendable {
                 throw InboxError.unsupported
             }
         }
+        if let sourceImageURL {
+            guard Self.isWebURL(sourceImageURL),
+                  sourceImageURL.absoluteString.utf8.count <= Int(UInt16.max) else
+            {
+                throw InboxError.unsupported
+            }
+        }
         return self
     }
 
-    /// version, milliseconds since 1970, the type's length and bytes, then the payload.
+    /// version, milliseconds since 1970, the type's length and bytes, optional sourceImageURL (v2), then the payload.
     func plaintext() throws -> Data {
         let type = Data(typeIdentifier.utf8)
         guard type.count <= InboxPolicy.maxTypeIdentifierBytes else { throw InboxError.unsupported }
-        var out = Data([Self.version])
+        let formatVersion: UInt8 = sourceImageURL == nil ? Self.version1 : Self.version
+        var out = Data([formatVersion])
         let millis = UInt64(bitPattern: Int64((createdAt.timeIntervalSince1970 * 1000).rounded()))
         out.append(contentsOf: (0..<8).reversed().map { UInt8(truncatingIfNeeded: millis >> (8 * $0)) })
         out.append(contentsOf: [UInt8(type.count >> 8), UInt8(truncatingIfNeeded: type.count)])
         out.append(type)
+        if let sourceImageURL {
+            let urlData = Data(sourceImageURL.absoluteString.utf8)
+            guard urlData.count <= Int(UInt16.max) else { throw InboxError.unsupported }
+            out.append(contentsOf: [UInt8(urlData.count >> 8), UInt8(truncatingIfNeeded: urlData.count)])
+            out.append(urlData)
+        }
         out.append(payload)
         return out
     }
 
     static func parse(plaintext data: Data) throws -> InboxItem {
         let bytes = Data(data)
-        guard bytes.count > 11, bytes[0] == version else { throw InboxError.damaged }
+        guard bytes.count > 11 else { throw InboxError.damaged }
+        let formatVersion = bytes[0]
+        guard formatVersion == version1 || formatVersion == version else { throw InboxError.damaged }
         let millis = Int64(bitPattern: bytes.readBigEndianUInt64(at: 1))
         let typeLength = Int(bytes.readBigEndianUInt16(at: 9))
         let typeEnd = 11 + typeLength
@@ -66,13 +84,33 @@ public struct InboxItem: Equatable, Sendable {
         guard let type = String(data: bytes.subdata(in: 11..<typeEnd), encoding: .utf8) else {
             throw InboxError.damaged
         }
+        var payloadStart = typeEnd
+        var sourceImageURL: URL?
+        if formatVersion == version {
+            guard bytes.count >= typeEnd + 2 else { throw InboxError.damaged }
+            let urlLength = Int(bytes.readBigEndianUInt16(at: typeEnd))
+            let urlEnd = typeEnd + 2 + urlLength
+            guard urlLength > 0, bytes.count >= urlEnd,
+                  let urlString = String(data: bytes.subdata(in: (typeEnd + 2)..<urlEnd), encoding: .utf8),
+                  let parsed = URL(string: urlString),
+                  Self.isWebURL(parsed) else { throw InboxError.damaged }
+            sourceImageURL = parsed
+            payloadStart = urlEnd
+        }
         return InboxItem(
-            typeIdentifier: type, payload: bytes.subdata(in: (11 + typeLength)..<bytes.count),
-            createdAt: Date(timeIntervalSince1970: Double(millis) / 1000)
+            typeIdentifier: type, payload: bytes.subdata(in: payloadStart..<bytes.count),
+            createdAt: Date(timeIntervalSince1970: Double(millis) / 1000),
+            sourceImageURL: sourceImageURL
         )
     }
 
-    private static let version: UInt8 = 1
+    private static func isWebURL(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(), scheme == "https" || scheme == "http" else { return false }
+        return url.host?.isEmpty == false
+    }
+
+    private static let version1: UInt8 = 1
+    private static let version: UInt8 = 2
 }
 
 private extension Data {

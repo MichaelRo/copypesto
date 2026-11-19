@@ -141,6 +141,31 @@ struct InboxDrainTests {
         #expect(try fixture.items().isEmpty)
     }
 
+    @Test("a shared picture's sourceImageURL threads into PasteboardCapture and triggers GIF upgrade")
+    func whenSharedItemHasSourceImageURL_thenDrainThreadsItIntoIngest() async throws {
+        let gifURL = try #require(URL(string: "https://media.giphy.com/media/shared/giphy.gif"))
+        let still = Data("STILL-FRAME".utf8)
+        let item = InboxItem(typeIdentifier: "public.png", payload: still, createdAt: .now, sourceImageURL: gifURL)
+        let capture = InboxDrain.capture(of: item)
+        #expect(capture.sourceImageURL == gifURL)
+
+        let fixture = try Fixture()
+        defer { try? FileManager.default.removeItem(at: fixture.directory) }
+        let gif = SeedFixtures.animatedGIFData(side: 16)
+        let service = StorageService(modelContainer: fixture.container, environment: .testing {
+            $0.remoteGIFFetcher = { requested in requested == gifURL ? gif : nil }
+        })
+        try fixture.inbox.deposit(item)
+
+        let report = await fixture.drain.run(into: service)
+        await service.waitForBackgroundWork()
+
+        #expect(report.added == 1)
+        let saved = try #require(try fixture.items().first)
+        #expect(saved.mimeType == "com.compuserve.gif")
+        #expect(saved.blob?.decryptedData() == gif)
+    }
+
     /// A planted file over the text limit, which `seal` itself refuses to make.
     private static func sealUnchecked(_ item: InboxItem, to key: InboxPublicKey) throws -> Data {
         let fitting = InboxItem(typeIdentifier: item.typeIdentifier, payload: Data("x".utf8), createdAt: item.createdAt)

@@ -50,4 +50,92 @@ struct LocalizationRoutingTests {
 
         #expect(offenders.isEmpty, "wrap in String(localized:): \(offenders.joined(separator: ", "))")
     }
+
+    @Test("all six app and extension targets include Localizable.xcstrings in Pesto.yml")
+    func allTargetsIncludeLocalizableCatalog() throws {
+        let project = try String(
+            contentsOf: SourceTree.repositoryRoot.appendingPathComponent("Pesto.yml"), encoding: .utf8
+        )
+        let targets = ["Pesto", "PestoControls", "PestoMobile", "PestoShare", "PestoAutoFill", "PestoWidget"]
+        for name in targets {
+            let block = try targetBlock(named: name, in: project)
+            #expect(
+                block.contains("Sources/Resources/Localizable.xcstrings"),
+                "\(name) is missing Sources/Resources/Localizable.xcstrings in Pesto.yml"
+            )
+        }
+        for name in ["Pesto", "PestoMobile"] {
+            let block = try targetBlock(named: name, in: project)
+            #expect(
+                block.contains("Sources/Resources/InfoPlist.xcstrings"),
+                "\(name) is missing Sources/Resources/InfoPlist.xcstrings in Pesto.yml"
+            )
+            #expect(
+                block.contains("Sources/Resources/AppShortcuts.xcstrings"),
+                "\(name) is missing Sources/Resources/AppShortcuts.xcstrings in Pesto.yml"
+            )
+        }
+    }
+
+    @Test("InfoPlist.xcstrings and AppShortcuts.xcstrings parse as valid JSON string catalogs")
+    func infoPlistAndAppShortcutsCatalogsAreValid() throws {
+        let infoURL = SourceTree.sources.appendingPathComponent("Resources/InfoPlist.xcstrings")
+        let infoStrings = try parseStringCatalog(at: infoURL)
+        for key in [
+            "CFBundleDisplayName",
+            "CFBundleName",
+            "NSAccessibilityUsageDescription",
+            "NSPhotoLibraryAddUsageDescription",
+            "NSFaceIDUsageDescription",
+            "NSHumanReadableCopyright"
+        ] {
+            #expect(hasEnglishTranslation(infoStrings, key: key), "InfoPlist.xcstrings missing en entry for \(key)")
+        }
+
+        let shortcutsURL = SourceTree.sources.appendingPathComponent("Resources/AppShortcuts.xcstrings")
+        let shortcutStrings = try parseStringCatalog(at: shortcutsURL)
+        for key in [
+            "Add to ${applicationName}",
+            "Save to ${applicationName}",
+            "Add my clipboard to ${applicationName}",
+            "Add clipboard to ${applicationName}",
+            "Search ${applicationName}",
+            "Add to Pesto",
+            "Add Clipboard to Pesto",
+            "Search Pesto"
+        ] {
+            #expect(
+                hasEnglishTranslation(shortcutStrings, key: key),
+                "AppShortcuts.xcstrings missing en entry for \(key)"
+            )
+        }
+    }
+
+    private func targetBlock(named name: String, in project: String) throws -> String {
+        let marker = "\n  \(name):\n"
+        let start = try #require(project.range(of: marker), "\(name) target in Pesto.yml").upperBound
+        let rest = project[start...]
+        let end = rest.range(of: "\n  [A-Za-z]+:\n", options: .regularExpression)?.lowerBound
+            ?? rest.range(of: "\nschemes:\n")?.lowerBound
+            ?? rest.endIndex
+        return String(rest[..<end])
+    }
+
+    private func parseStringCatalog(at url: URL) throws -> [String: Any] {
+        let data = try Data(contentsOf: url)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let root = try #require(json, "\(url.lastPathComponent) is a JSON object")
+        #expect(root["sourceLanguage"] as? String == "en")
+        #expect(root["version"] as? String == "1.0")
+        return try #require(root["strings"] as? [String: Any], "\(url.lastPathComponent) has a strings dictionary")
+    }
+
+    private func hasEnglishTranslation(_ strings: [String: Any], key: String) -> Bool {
+        guard let entry = strings[key] as? [String: Any],
+              let localizations = entry["localizations"] as? [String: Any],
+              let en = localizations["en"] as? [String: Any],
+              let unit = en["stringUnit"] as? [String: Any],
+              let value = unit["value"] as? String else { return false }
+        return !value.isEmpty
+    }
 }

@@ -196,4 +196,16 @@ struct VerifyJudgeScriptTests {
         let unitOnly = try runMobile(phone: mobileTree(unit: 427), pad: mobileTree(unit: 427), extra: ["--no-ui"])
         #expect(unitOnly.code == 0, "\(unitOnly.output)")
     }
+
+    @Test("CI runs the iPhone's unit tests only: with --phone-only the iPad is not judged, without it the run fails")
+    func phoneOnlyRun() throws {
+        let phone = try mobileTree(unit: 427)
+        let ciRun = try runMobile(phone: phone, pad: "{}", extra: ["--no-ui", "--phone-only"])
+        #expect(ciRun.code == 0, "\(ciRun.output)")
+        #expect(ciRun.output.contains("iPhone unit=427 iPad not run"))
+
+        let gateRun = try runMobile(phone: phone, pad: "{}", extra: ["--no-ui"])
+        #expect(gateRun.code == 1)
+        #expect(gateRun.output.contains("only 0 iPad unit tests passed"))
+    }
 }

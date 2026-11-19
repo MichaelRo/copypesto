@@ -32,7 +32,10 @@ A green summary has to mean the tests ran. `scripts/verify_judge.py` fails the g
 tests) or when a test was skipped that `scripts/verify-allowed-skips.txt` does not name (a Mac without the on-device
 model, memory deltas on CI). The iOS app runs last, on the iPhone 17 and then the iPad Air 11-inch (M4) simulator; an
 iOS UI test that belongs to one device skips on the other, so it counts as skipped only when it passed on neither. A
-runner without those simulators (CI) records the step as SKIP; a developer Mac without them fails it. `scripts/verify-rerun-failed.sh` re-runs only the Mac's tests: to re-run a failed iOS test, run its `-only-testing` on the simulator named in the step's log (`mobile-phone.log`, `mobile-pad.log`), then the whole gate. The script
+CI runs only the iPhone's unit tests (its iPad simulator hangs, and both devices run past the job's time limit), and only when
+something the iOS app builds from changed (`detect-changes` sets `PESTO_SKIP_MOBILE`); a pull request's run also skips
+the Release build (`PESTO_SKIP_RELEASE_BUILD`), which the local gate keeps,
+and records SKIP when the runner has no iPhone simulator; a developer Mac without either simulator fails the step. `scripts/verify-rerun-failed.sh` re-runs only the Mac's tests: to re-run a failed iOS test, run its `-only-testing` on the simulator named in the step's log (`mobile-phone.log`, `mobile-pad.log`), then the whole gate. The script
 refuses to start while Pesto is running (a running copy answers for the tests' windows), holds the Mac awake with
 `caffeinate -dis`, and takes the Core totals from every "Test run with" line, because Swift Testing prints one per run.
 

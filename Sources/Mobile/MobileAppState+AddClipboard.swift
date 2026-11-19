@@ -11,7 +11,9 @@ import UIKit
 extension MobileAppState {
     private static let addClipboardLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "AddClipboard")
 
-    func addClipboardFromShortcut(pasteboard: UIPasteboard = AppPasteboard.general) async throws {
+    func addClipboardFromShortcut(
+        pasteboard: UIPasteboard = AppPasteboard.general, defaults: UserDefaults = AppDefaults.store
+    ) async throws {
         boot()
         guard let service = storageService else { throw ShortcutFailure.notReady }
         guard !isHistoryLockedNow() else { throw ShortcutFailure.locked }
@@ -39,7 +41,7 @@ extension MobileAppState {
                 .error("Adding the clipboard failed: \(error.localizedDescription, privacy: .public)")
             throw ShortcutFailure.failed
         }
-        AppDefaults.store.set(count, for: Setting.lastSeenPasteboardChange)
+        defaults.set(count, for: Setting.lastSeenPasteboardChange)
         clipboardOfferCount = nil
     }
 }

@@ -89,4 +89,21 @@ struct KeyboardMenuTests {
         #expect(menu.entries(matching: "שלום").map(\.text) == ["שָׁלוֹם עוֹלָם"])
         #expect(menu.entries(matching: "מכתבימ").map(\.text) == ["מכתב רשמי"])
     }
+
+    @Test("when keyboardEnabled is false in the set, the menu is unavailable with no chips or entries")
+    func whenKeyboardDisabled_thenUnavailable() {
+        let base = full()
+        let disabled = QuickInsertSet(
+            createdAt: base.createdAt,
+            entries: base.entries,
+            collections: base.collections,
+            returnsAfterInsert: base.returnsAfterInsert,
+            keyboardEnabled: false
+        )
+        let menu = KeyboardMenu(hasFullAccess: true) { disabled }
+        #expect(menu.state == .unavailable)
+        #expect(menu.chips.isEmpty)
+        #expect(menu.entries(for: .recent).isEmpty)
+        #expect(menu.entries(matching: "Basil").isEmpty)
+    }
 }

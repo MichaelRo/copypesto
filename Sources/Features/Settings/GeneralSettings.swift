@@ -5,7 +5,7 @@ import SwiftUI
 
 struct GeneralSettings: View {
     enum Part {
-        case startup, shelf, copyPaste, floatingWindow, retention
+        case startup, shelf, copyPaste, floatingWindow, widgets, retention
     }
 
     let part: Part
@@ -20,6 +20,7 @@ struct GeneralSettings: View {
     @AppStorage(Setting.showMenuBarIcon) private var showMenuBarIcon: Bool
     @AppStorage(Setting.shelfSuggestionsEnabled) private var shelfSuggestionsEnabled: Bool
     @AppStorage(Setting.doubleCopyAppend) private var doubleCopyAppend: Bool
+    @AppStorage(Setting.widgetsEnabled) private var widgetsEnabled: Bool
     @State private var isAXTrusted = AccessibilityAccess.isTrusted
     @State private var iconIsLeftOut = false
     @Environment(AppState.self) private var appState: AppState
@@ -32,6 +33,7 @@ struct GeneralSettings: View {
         case .shelf: shelfSection
         case .copyPaste: copyPasteSection
         case .floatingWindow: floatingWindowSection
+        case .widgets: widgetsSection
         case .retention: retentionSection
         }
     }
@@ -228,6 +230,23 @@ struct GeneralSettings: View {
                 pinnedWindowAutoPaste
                     ? "Clicking a clip or pressing Return in the floating window pastes into the active app."
                     : "Clicking a clip or pressing Return in the floating window copies without pasting."
+            )
+            .pestoCaption()
+        }
+    }
+
+    private var widgetsSection: some View {
+        Section {
+            Toggle("Recent Clips widget", isOn: $widgetsEnabled)
+                .settingsRow("Recent Clips widget")
+        } header: {
+            Text("Widgets")
+        } footer: {
+            Text(
+                widgetsEnabled
+                    ? "Keeps a sealed snapshot for the Recent Clips widget while one is on your desktop or in " +
+                    "Notification Center."
+                    : "The Recent Clips widget stays empty until you turn this on."
             )
             .pestoCaption()
         }

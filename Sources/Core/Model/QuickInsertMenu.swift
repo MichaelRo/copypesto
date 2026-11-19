@@ -32,9 +32,10 @@ public struct QuickInsertMenu: Equatable, Sendable {
     private let collections: [QuickInsertCollection]
 
     public init(set: QuickInsertSet?) {
-        entries = (set?.entries ?? []).filter { $0.kind != .image }
-        collections = set?.collections ?? []
-        state = set == nil ? .unavailable : entries.isEmpty ? .empty : .ready
+        let activeSet = (set?.autoFillEnabled == true) ? set : nil
+        entries = (activeSet?.entries ?? []).filter { $0.kind != .image }
+        collections = activeSet?.collections ?? []
+        state = activeSet == nil ? .unavailable : entries.isEmpty ? .empty : .ready
     }
 
     /// Pinned, Snippets and Recent, then each chosen collection under its name; a group with no match is left out.

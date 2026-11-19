@@ -57,4 +57,55 @@ struct QuickInsertMenuTests {
         #expect(expanded.hasSuffix("."))
         #expect(plain.insertionText(at: date) == "Due {{isodate}}")
     }
+
+    @Test("when autoFillEnabled is false in the set, the menu is unavailable with no groups")
+    func whenAutoFillDisabled_thenUnavailable() {
+        let disabled = QuickInsertSet(
+            createdAt: .now,
+            entries: [entry("12 Basil Lane", .pinned, title: "Home")],
+            autoFillEnabled: false
+        )
+        let menu = QuickInsertMenu(set: disabled)
+        #expect(menu.state == .unavailable)
+        #expect(menu.groups(matching: "").isEmpty)
+    }
+
+    @Test("legacy QuickInsertSet JSON without keyboardEnabled or autoFillEnabled decodes both as true")
+    func whenLegacyQuickInsertSetDecoded_thenFlagsDefaultToTrue() throws {
+        let legacyJSON = """
+        {
+            "createdAt": 1800000000,
+            "entries": []
+        }
+        """
+        let decoded = try JSONDecoder().decode(QuickInsertSet.self, from: Data(legacyJSON.utf8))
+        #expect(decoded.keyboardEnabled)
+        #expect(decoded.autoFillEnabled)
+    }
+
+    @Test("Setting keys for keyboard, autoFill, and widgets have expected defaults and are registered")
+    func whenSettingsChecked_thenDefaultsAndAllNamesMatch() {
+        #expect(Setting.keyboardEnabled.defaultValue == false)
+        #expect(Setting.autoFillEnabled.defaultValue == false)
+        #expect(Setting.widgetsEnabled.defaultValue == true)
+        #expect(Setting.allNames.contains(Setting.keyboardEnabled.name))
+        #expect(Setting.allNames.contains(Setting.autoFillEnabled.name))
+        #expect(Setting.allNames.contains(Setting.widgetsEnabled.name))
+    }
+
+    @Test("QuickInsertSelection.Options carries keyboardEnabled and autoFillEnabled")
+    func whenOptionsConstructed_thenFlagsArePreserved() {
+        let defaults = QuickInsertSelection.Options()
+        #expect(defaults.keyboardEnabled)
+        #expect(defaults.autoFillEnabled)
+
+        let custom = QuickInsertSelection.Options(
+            storedCollections: "",
+            returnsAfterInsert: true,
+            keyboardEnabled: false,
+            autoFillEnabled: false
+        )
+        #expect(!custom.keyboardEnabled)
+        #expect(!custom.autoFillEnabled)
+    }
 }

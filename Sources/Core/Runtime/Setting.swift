@@ -55,6 +55,9 @@ public enum Setting {
     public static let lastSeenPasteboardChange = SettingKey("lastSeenPasteboardChange", default: -1)
     /// iOS: keep a small sealed set of pinned and recent text ready for AutoFill's text insertion (ADR 0051).
     public static let quickInsertEnabled = SettingKey("quickInsertEnabled", default: false)
+    public static let keyboardEnabled = SettingKey("keyboardEnabled", default: false)
+    public static let autoFillEnabled = SettingKey("autoFillEnabled", default: false)
+    public static let widgetsEnabled = SettingKey("widgetsEnabled", default: true)
     public static let showsClipsOutsideWhileLocked = SettingKey("showsClipsOutsideWhileLocked", default: false)
     /// iOS: the collections the keyboard and AutoFill carry, in the person's order, as comma-separated ids (ADR 0062).
     public static let keyboardCollections = SettingKey("keyboardCollections", default: "")
@@ -164,7 +167,8 @@ public enum Setting {
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
         syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
-        quickInsertEnabled.name, showsClipsOutsideWhileLocked.name, keyboardCollections.name,
+        quickInsertEnabled.name, keyboardEnabled.name, autoFillEnabled.name, widgetsEnabled.name,
+        showsClipsOutsideWhileLocked.name, keyboardCollections.name,
         keyboardReturnsAfterInsert.name, keyboardSize.name, widgetLastCopy.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,

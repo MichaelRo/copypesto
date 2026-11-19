@@ -3,7 +3,8 @@ import PestoCore
 import SwiftUI
 
 /// One clip on the keyboard, drawn as a small Pesto card: the iOS library's fill, corner and hairline, the text on
-/// top and a foot line with the kind's glyph, as the cards on the Mac and in the app end.
+/// top and a foot line with the kind's glyph (and a laptop when it was copied on another device), as the cards on the
+/// Mac and in the app end.
 struct KeyboardClipKey: View {
     let entry: QuickInsertEntry
     let isInserted: Bool
@@ -26,39 +27,33 @@ struct KeyboardClipKey: View {
             HStack(spacing: 4) {
                 Image(systemName: isInserted ? "checkmark" : Self.symbol(of: entry))
                     .foregroundStyle(isInserted ? BrandAccent.color : .secondary)
-                Text(Self.footLabel(of: entry))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                if entry.fromAnotherDevice {
+                    Image(systemName: "laptopcomputer")
+                        .foregroundStyle(.secondary)
+                }
             }
             .font(.caption2)
             .accessibilityHidden(true)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, minHeight: 64, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(colorScheme == .dark ? Color.white.opacity(0.10) : .white, in: shape)
         .overlay { shape.strokeBorder(Color.primary.opacity(contrast == .increased ? 0.45 : 0.14), lineWidth: 0.75) }
         .contentShape(shape)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(entry.label())
-        .accessibilityValue(Text(Self.footLabel(of: entry)))
-        .accessibilityHint(Text("Inserts this clip and returns to your keyboard"))
+        .accessibilityValue(Text(Self.accessibilityValue(of: entry)))
+        .accessibilityHint(Text("Inserts this clip"))
         .accessibilityAddTraits(.isButton)
-    }
-
-    static func title(of section: QuickInsertEntry.Section) -> String {
-        switch section {
-        case .pinned: String(localized: "Pinned")
-        case .snippets: String(localized: "Snippets")
-        case .recent: String(localized: "Recent")
-        }
     }
 
     private static func symbol(of entry: QuickInsertEntry) -> String {
         entry.expandsOnInsert ? "text.badge.plus" : entry.kind.presentation.symbolName
     }
 
-    private static func footLabel(of entry: QuickInsertEntry) -> String {
-        entry.expandsOnInsert ? String(localized: "Snippet") : entry.kind.presentation.label
+    private static func accessibilityValue(of entry: QuickInsertEntry) -> String {
+        let kind = entry.expandsOnInsert ? String(localized: "Snippet") : entry.kind.presentation.label
+        return entry.fromAnotherDevice ? kind + ", " + String(localized: "from another device") : kind
     }
 }

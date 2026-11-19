@@ -58,6 +58,7 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidDisappear(animated)
         // A keyboard process can stay warm in the background: keep no opened clips in it.
         model.menu = KeyboardMenu(hasFullAccess: false) { nil }
+        model.word = nil
         openedStamp = nil
     }
 
@@ -76,9 +77,14 @@ final class KeyboardViewController: UIInputViewController {
         model.showsGlobeKey = needsInputModeSwitchKey
         guard hasFullAccess else {
             model.menu = KeyboardMenu(hasFullAccess: false) { nil }
+            model.word = nil
             openedStamp = nil
             return
         }
+        // Only the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
+        model.word = KeyboardWord.before(
+            textDocumentProxy.documentContextBeforeInput, after: textDocumentProxy.documentContextAfterInput
+        )
         let file = QuickInsertFile.current
         let stamp = file?.modificationDate
         if let openedStamp, openedStamp == stamp { return }

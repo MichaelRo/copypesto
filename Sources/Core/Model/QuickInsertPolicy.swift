@@ -7,6 +7,10 @@ public enum QuickInsertPolicy {
     public static let maxPinned = 50
     public static let maxSnippets = 50
     public static let maxRecent = 30
+    /// The collections the person may choose for the keyboard and AutoFill, and the clips each carries (ADR 0062).
+    public static let maxCollections = 12
+    public static let maxCollectionClips = 30
+    public static let maxCollectionNameCharacters = 40
     /// A longer clip is not offered: inserting a whole document into a text field is not what this is for.
     public static let maxEntryBytes = 32 * 1024
     public static let maxTotalBytes = 256 * 1024

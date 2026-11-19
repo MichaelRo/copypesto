@@ -3,19 +3,23 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// The keyboard: the clips as Pesto cards in one list (Pinned, Snippets, Recent; no search field, since this keyboard
-/// is the one typing), or the numbers pad, above a row of Globe, 123, Space, Return and Delete.
+/// The keyboard as a small Pesto shelf (ADRs 0061, 0062): chips on top like the Mac shelf's (the word typed before
+/// switching, then Recent, Pinned, Snippets and the chosen collections), the clips as cards in a row that scrolls
+/// sideways (two rows on iPhone, one on iPad), or the numbers pad, above Globe, 123, Space, Return and Delete.
 struct KeyboardRootView: View {
     let model: KeyboardModel
     let keys: KeyboardKeys
     weak var controller: UIInputViewController?
 
     @State private var showsPad = false
+    @State private var chip: KeyboardMenu.Chip?
+    @State private var dismissedWord: String?
     @State private var inserted: UUID?
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
+            if model.menu.state == .ready, !showsPad { chipRow }
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             bottomRow
@@ -23,6 +27,28 @@ struct KeyboardRootView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .tint(BrandAccent.color)
+    }
+
+    /// The word the person typed before switching, unless they took it off with its chip.
+    private var word: String? {
+        guard let word = model.word, word != dismissedWord else { return nil }
+        return word
+    }
+
+    private var matches: [QuickInsertEntry] {
+        word.map(model.menu.entries(matching:)) ?? []
+    }
+
+    private var selectedChip: KeyboardMenu.Chip? {
+        let available = model.menu.chips.map(\.chip)
+        if let chip, available.contains(chip) { return chip }
+        return available.first
+    }
+
+    private var shown: [QuickInsertEntry] {
+        if !matches.isEmpty { return matches }
+        guard let selectedChip else { return [] }
+        return model.menu.entries(for: selectedChip)
     }
 
     @ViewBuilder
@@ -40,7 +66,7 @@ struct KeyboardRootView: View {
         case .empty:
             note("No text clips yet. Clips with secrets never appear here.")
         case .ready:
-            list
+            shelf
         }
     }
 
@@ -53,40 +79,69 @@ struct KeyboardRootView: View {
             .padding(.horizontal)
     }
 
-    private var list: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: sizeClass == .regular ? 3 : 2)
-        return ScrollView {
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 6) {
-                ForEach(model.menu.groups) { group in
-                    Section {
-                        ForEach(group.entries) { entry in
-                            KeyboardClipKey(entry: entry, isInserted: inserted == entry.id)
-                                .onTapGesture { insert(entry, thenSwitch: true) }
-                                .onLongPressGesture(minimumDuration: 0.4) { insert(entry, thenSwitch: false) }
-                                .accessibilityAction { insert(entry, thenSwitch: true) }
-                                .accessibilityAction(named: Text("Insert and Stay")) {
-                                    insert(entry, thenSwitch: false)
-                                }
-                        }
-                    } header: {
-                        Text(KeyboardClipKey.title(of: group.section))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.top, 2)
-                            .accessibilityAddTraits(.isHeader)
+    private var chipRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                if let word {
+                    KeyboardChip(
+                        title: "\u{201C}\(word)\u{201D}", symbolName: "xmark", isSelected: !matches.isEmpty,
+                        isDimmed: matches.isEmpty
+                    ) { dismissedWord = word }
+                        .accessibilityLabel(Text("Matching \(word)"))
+                        .accessibilityHint(Text("Shows all clips again"))
+                }
+                ForEach(model.menu.chips, id: \.chip) { label in
+                    KeyboardChip(
+                        title: label.title, symbolName: label.symbolName,
+                        isSelected: matches.isEmpty && label.chip == selectedChip, isDimmed: false
+                    ) {
+                        if let word { dismissedWord = word }
+                        chip = label.chip
                     }
                 }
             }
         }
         .scrollEdgeEffectHidden(true, for: .all)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
-    /// A tap inserts and hands the person back to the keyboard they type with; a long press inserts and stays, for a
-    /// second clip. iOS offers only "the next keyboard", which is the person's own when Pesto was added last.
-    private func insert(_ entry: QuickInsertEntry, thenSwitch: Bool) {
+    private var shelf: some View {
+        let rows = Array(repeating: GridItem(.flexible(), spacing: 6), count: sizeClass == .regular ? 1 : 2)
+        return ScrollView(.horizontal, showsIndicators: false) {
+            LazyHGrid(rows: rows, spacing: 6) {
+                ForEach(shown) { entry in
+                    KeyboardClipKey(entry: entry, isInserted: inserted == entry.id)
+                        .frame(width: sizeClass == .regular ? 180 : 150)
+                        .onTapGesture { insert(entry, longPress: false) }
+                        .onLongPressGesture(minimumDuration: 0.4) { insert(entry, longPress: true) }
+                        .accessibilityAction { insert(entry, longPress: false) }
+                        .accessibilityAction(named: Text(model.menu
+                                .returnsAfterInsert ? "Insert and Stay" : "Insert and Return"))
+                        {
+                            insert(entry, longPress: true)
+                        }
+                }
+            }
+        }
+        .scrollEdgeEffectHidden(true, for: .all)
+        .id(shownIdentity)
+    }
+
+    /// A new chip or search starts the row at its first card.
+    private var shownIdentity: String {
+        word.map { "word:\($0)" } ?? "\(String(describing: selectedChip))"
+    }
+
+    /// A tap does what the person chose in Settings (return to their keyboard, or stay); a long press does the other.
+    /// A clip picked from a search replaces the word it was found by.
+    private func insert(_ entry: QuickInsertEntry, longPress: Bool) {
+        if let word, matches.contains(entry) {
+            for _ in 0..<KeyboardWord.deletions(for: word) {
+                keys.deleteBackward()
+            }
+        }
         keys.insert(entry.insertionText())
-        if thenSwitch {
+        if model.menu.returnsAfterInsert != longPress {
             keys.switchKeyboard()
             return
         }

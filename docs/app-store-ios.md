@@ -92,9 +92,9 @@ To publish with the Mac's privacy page at release. Check each line against the b
 > them small sealed files: AutoFill and the keyboard share one of pinned clips, snippets and recent text, the widget
 > gets recent clips, and none ever gets a secret. With the History Lock on they stay empty unless you choose otherwise.
 >
-> **The keyboard.** Optional, and off until you add it in iOS Settings. It has no letter keys, so it never sees what
-> you type on another keyboard; it sees only taps on its own keys. It needs Full Access only to open the sealed file of
-> clips; without it, it types numbers and punctuation. It makes no network requests and never reads your
+> **The keyboard.** Optional, and off until you add it in iOS Settings. It has no letter keys, so it sees taps on its
+> own keys and, with Full Access, only the last word before the cursor, to find matching clips; it never keeps it. It
+> needs Full Access to open the sealed file of clips; without it, it types numbers and punctuation. It makes no network requests and never reads your
 > clipboard.
 >
 > **Sharing out.** When you share a picture or a GIF, iOS needs a file: Pesto writes one for the share and deletes it
@@ -121,7 +121,8 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 >   clips, snippets and recent text, a numbers-and-punctuation pad (typed input, available without Full Access),
 >   Space, Return, Delete and the Next Keyboard key. It requests Full Access only because iOS opens the app group and the shared Keychain group to a
 >   keyboard with Full Access alone; it uses them to read one sealed file the app writes. It makes no network requests,
->   never reads the pasteboard, and never sees text typed on another keyboard. Without Full Access it still works
+>   reads only the last word before the cursor (to find matching clips, in memory, never kept), never reads the
+>   pasteboard, and sees nothing else typed on another keyboard. Without Full Access it still works
 >   (the numbers-and-punctuation pad) and explains what Full Access adds. It has no letter keys on purpose: a keyboard
 >   that typed letters would see everything the person writes, which Pesto chooses not to. To try it: Settings → General → Keyboard →
 >   Keyboards → Add New Keyboard → Pesto, tap Pesto and turn on Allow Full Access; in Pesto turn on Settings → Insert

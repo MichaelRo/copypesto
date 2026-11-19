@@ -12,31 +12,48 @@ public struct QuickInsertMenu: Equatable, Sendable {
 
     public struct Group: Equatable, Identifiable, Sendable {
         public let section: QuickInsertEntry.Section
+        /// Set for a collection the person chose (ADR 0062), whose name titles the group.
+        public let collection: QuickInsertCollection?
         public let entries: [QuickInsertEntry]
 
-        public var id: QuickInsertEntry.Section {
-            section
+        public var id: String {
+            collection.map { "collection:\($0.id.uuidString)" } ?? "section:\(section.rawValue)"
+        }
+
+        init(section: QuickInsertEntry.Section, collection: QuickInsertCollection? = nil, entries: [QuickInsertEntry]) {
+            self.section = section
+            self.collection = collection
+            self.entries = entries
         }
     }
 
     public let state: State
     private let entries: [QuickInsertEntry]
+    private let collections: [QuickInsertCollection]
 
     public init(set: QuickInsertSet?) {
         entries = set?.entries ?? []
+        collections = set?.collections ?? []
         state = set == nil ? .unavailable : entries.isEmpty ? .empty : .ready
     }
 
+    /// Pinned, Snippets and Recent, then each chosen collection under its name; a group with no match is left out.
     public func groups(matching query: String) -> [Group] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        let found = needle.isEmpty ? entries : entries.filter { entry in
-            [entry.title, entry.text].contains {
+        func matches(_ entry: QuickInsertEntry) -> Bool {
+            needle.isEmpty || [entry.title, entry.text].contains {
                 $0.range(of: needle, options: [.caseInsensitive, .diacriticInsensitive]) != nil
             }
         }
-        return QuickInsertEntry.Section.allCases.compactMap { section in
+        let found = entries.filter(matches)
+        let sections: [QuickInsertEntry.Section] = [.pinned, .snippets, .recent]
+        let byID = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }
+        return sections.compactMap { section in
             let inSection = found.filter { $0.section == section }
             return inSection.isEmpty ? nil : Group(section: section, entries: inSection)
+        } + collections.compactMap { collection in
+            let members = collection.entryIDs.compactMap { byID[$0] }.filter(matches)
+            return members.isEmpty ? nil : Group(section: .collection, collection: collection, entries: members)
         }
     }
 }

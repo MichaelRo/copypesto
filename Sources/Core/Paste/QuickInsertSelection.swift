@@ -8,8 +8,43 @@ import SwiftData
 public enum QuickInsertSelection {
     private static let insertableTypes: Set<ClipboardType> = [.text, .code, .url, .color]
 
+    /// What the person chose in iOS Settings for the keyboard and AutoFill (ADR 0062).
+    public struct Options: Equatable, Sendable {
+        public var collectionIDs: [UUID]
+        public var returnsAfterInsert: Bool
+
+        public init(collectionIDs: [UUID] = [], returnsAfterInsert: Bool = true) {
+            self.collectionIDs = collectionIDs
+            self.returnsAfterInsert = returnsAfterInsert
+        }
+
+        /// As the settings hold them: `Setting.keyboardCollections` is ids joined by commas; one that does not read
+        /// as an id, or a repeat, is dropped.
+        public init(storedCollections: String, returnsAfterInsert: Bool) {
+            var seen: Set<UUID> = []
+            collectionIDs = storedCollections.split(separator: ",").compactMap { UUID(uuidString: String($0)) }
+                .filter { seen.insert($0).inserted }
+            self.returnsAfterInsert = returnsAfterInsert
+        }
+
+        public static func stored(_ ids: [UUID]) -> String {
+            ids.map(\.uuidString).joined(separator: ",")
+        }
+    }
+
+    /// A chosen collection and its clips in its own order.
+    public struct Members {
+        public let collection: Pinboard
+        public let items: [ClipboardItem]
+    }
+
     @MainActor
-    public static func set(in context: ModelContext, now: Date) throws -> QuickInsertSet {
+    public static func set(
+        in context: ModelContext, now: Date, options: Options = Options(),
+        text: (ClipboardItem) -> String? = { $0.blob?.decryptedText() }
+    ) throws
+        -> QuickInsertSet
+    {
         var pinned = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate { $0.isPinned }, sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
@@ -18,10 +53,48 @@ public enum QuickInsertSelection {
             predicate: #Predicate { !$0.isPinned }, sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         recent.fetchLimit = QuickInsertPolicy.scanLimit
-        let entries = try entries(pinned: context.fetch(pinned), recent: context.fetch(recent)) {
-            $0.blob?.decryptedText()
+        let chosen = try members(of: options.collectionIDs, in: context)
+        let lists = try lists(
+            pinned: context.fetch(pinned), recent: context.fetch(recent), collections: chosen, text: text
+        )
+        return QuickInsertSet(
+            createdAt: now, entries: lists.entries, collections: lists.collections,
+            returnsAfterInsert: options.returnsAfterInsert
+        )
+    }
+
+    /// The chosen collections that still exist, in the person's order, at most `maxCollections`: a plain one's newest
+    /// members as `CollectionOrder` lists them, a smart one's matches among the newest clips.
+    public static func members(of ids: [UUID], in context: ModelContext) throws -> [Members] {
+        var window: [ClipboardItem]?
+        var found: [Members] = []
+        for id in ids where found.count < QuickInsertPolicy.maxCollections {
+            var board = FetchDescriptor<Pinboard>(predicate: #Predicate { $0.id == id })
+            board.fetchLimit = 1
+            guard let collection = try context.fetch(board).first else { continue }
+            let items: [ClipboardItem]
+            if collection.isSmart {
+                if window == nil {
+                    var newest = FetchDescriptor<ClipboardItem>(
+                        sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+                    )
+                    newest.fetchLimit = WidgetSnapshotPolicy.smartScanLimit
+                    window = try context.fetch(newest)
+                }
+                items = WidgetSnapshotSelection.smartMatches(
+                    of: collection, in: window ?? [], limit: QuickInsertPolicy.maxCollectionClips
+                )
+            } else {
+                var newest = FetchDescriptor<ClipboardItem>(
+                    predicate: #Predicate { $0.collectionID == id },
+                    sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+                )
+                newest.fetchLimit = WidgetSnapshotPolicy.collectionScanLimit
+                items = try CollectionOrder.sorted(context.fetch(newest))
+            }
+            found.append(Members(collection: collection, items: items))
         }
-        return QuickInsertSet(createdAt: now, entries: entries)
+        return found
     }
 
     /// `pinned` and `recent` come newest first; `text` opens a clip's whole text, and is asked only of clips that
@@ -30,36 +103,70 @@ public enum QuickInsertSelection {
         pinned: [ClipboardItem], recent: [ClipboardItem], text: (ClipboardItem) -> String?
     )
     -> [QuickInsertEntry] {
+        lists(pinned: pinned, recent: recent, collections: [], text: text).entries
+    }
+
+    /// Pinned, snippets and recent clips first, then each chosen collection's: a clip already chosen is listed by the
+    /// collection rather than carried twice, and all of it shares one size budget.
+    public static func lists(
+        pinned: [ClipboardItem], recent: [ClipboardItem], collections: [Members], text: (ClipboardItem) -> String?
+    )
+    -> (entries: [QuickInsertEntry], collections: [QuickInsertCollection]) {
         var budget = QuickInsertPolicy.maxTotalBytes
         var pins: [QuickInsertEntry] = []
         var snippets: [QuickInsertEntry] = []
         var latest: [QuickInsertEntry] = []
-        func take(_ item: ClipboardItem, pinned: Bool) {
+        var extra: [QuickInsertEntry] = []
+        var chosen: Set<UUID> = []
+        func entry(_ item: ClipboardItem, section: QuickInsertEntry.Section) -> QuickInsertEntry? {
             guard isEligible(item), let body = text(item), !body.isEmpty,
-                  body.utf8.count <= QuickInsertPolicy.maxEntryBytes, body.utf8.count <= budget else { return }
-            let isSnippet = pinned && TemplateExpander.containsPlaceholders(body)
+                  body.utf8.count <= QuickInsertPolicy.maxEntryBytes, body.utf8.count <= budget else { return nil }
+            let isSnippet = section == .pinned && TemplateExpander.containsPlaceholders(body)
             if isSnippet {
                 guard snippets.count < QuickInsertPolicy.maxSnippets, TemplateExpander.fillsWithoutAsking(body) else {
-                    return
+                    return nil
                 }
-            } else if pinned ? pins.count >= QuickInsertPolicy.maxPinned : latest.count >= QuickInsertPolicy.maxRecent {
-                return
+            } else if section == .pinned ? pins.count >= QuickInsertPolicy.maxPinned
+                : section == .recent, latest.count >= QuickInsertPolicy.maxRecent
+            {
+                return nil
             }
-            let section: QuickInsertEntry.Section = isSnippet ? .snippets : pinned ? .pinned : .recent
-            let entry = QuickInsertEntry(
-                id: item.id, section: section, kind: item.type, title: title(of: item, text: body), text: body,
-                expandsOnInsert: isSnippet
-            )
             budget -= body.utf8.count
-            switch section {
-            case .pinned: pins.append(entry)
-            case .snippets: snippets.append(entry)
-            case .recent: latest.append(entry)
-            }
+            chosen.insert(item.id)
+            return QuickInsertEntry(
+                id: item.id, section: isSnippet ? .snippets : section, kind: item.type,
+                title: title(of: item, text: body), text: body,
+                expandsOnInsert: isSnippet,
+                fromAnotherDevice: item.syncOrigin != nil || item.isRemote
+            )
         }
-        pinned.forEach { take($0, pinned: true) }
-        recent.forEach { take($0, pinned: false) }
-        return pins + snippets + latest
+        for item in pinned {
+            guard let made = entry(item, section: .pinned) else { continue }
+            if made.section == .snippets { snippets.append(made) } else { pins.append(made) }
+        }
+        for item in recent {
+            if let made = entry(item, section: .recent) { latest.append(made) }
+        }
+        var carried: [QuickInsertCollection] = []
+        for members in collections {
+            var ids: [UUID] = []
+            for item in members.items where ids.count < QuickInsertPolicy.maxCollectionClips {
+                guard !ids.contains(item.id) else { continue }
+                if chosen.contains(item.id) {
+                    ids.append(item.id)
+                } else if let made = entry(item, section: .collection) {
+                    extra.append(made)
+                    ids.append(item.id)
+                }
+            }
+            let board = members.collection
+            carried.append(QuickInsertCollection(
+                id: board.id, name: String(board.name.prefix(QuickInsertPolicy.maxCollectionNameCharacters)),
+                symbolName: String(board.symbolName.prefix(WidgetSnapshotPolicy.maxSymbolNameCharacters)),
+                entryIDs: ids
+            ))
+        }
+        return (pins + snippets + latest + extra, carried)
     }
 
     public static func isEligible(_ item: ClipboardItem) -> Bool {

@@ -3,10 +3,10 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// The keyboard as a small Pesto shelf (ADRs 0061, 0062, 0063; the search key opens `KeyboardSearchPage`): chips on top
-/// like the Mac shelf's (the word typed before
+/// The keyboard as a small Pesto shelf (ADRs 0061, 0062): chips on top like the Mac shelf's (the word typed before
 /// switching, then Recent, Pinned, Snippets and the chosen collections), the clips as cards in a row that scrolls
-/// sideways (two rows on iPhone, one on iPad), or the numbers pad, above Globe, 123, Space, Return and Delete.
+/// sideways (two rows on iPhone, one on iPad), or the numbers pad, above Globe, 123, Search, Space, Return and Delete.
+/// The search key opens `KeyboardSearchPage` (ADR 0063).
 struct KeyboardRootView: View {
     let model: KeyboardModel
     let keys: KeyboardKeys
@@ -23,9 +23,10 @@ struct KeyboardRootView: View {
         Group {
             if model.isSearching {
                 KeyboardSearchPage(
-                    model: model, controller: controller,
+                    model: model, globe: model.showsGlobeKey ? GlobeKey(controller: controller) : nil,
                     pick: { entry, longPress in
                         setSearching(false)
+                        // No matches on purpose: a clip found by the page's own query never deletes the app's text.
                         insert(entry, longPress: longPress, matches: [])
                     },
                     close: { setSearching(false) }
@@ -185,29 +186,29 @@ struct KeyboardRootView: View {
                 Button { showsPad.toggle() } label: {
                     padToggleLabel.frame(width: 52, height: 40)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(KeyboardKeyStyle(isFunction: true))
             }
             if model.menu.state == .ready {
                 Button { setSearching(true) } label: {
                     Image(systemName: "magnifyingglass").frame(width: 44, height: 40)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(KeyboardKeyStyle(isFunction: true))
                 .accessibilityLabel(Text("Search Clips"))
             }
             Button { keys.insert(" ") } label: {
                 Text("Space").frame(maxWidth: .infinity, minHeight: 40)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(KeyboardKeyStyle(isFunction: true))
             .buttonRepeatBehavior(.enabled)
             Button { keys.insert("\n") } label: {
                 Image(systemName: "return").frame(width: 44, height: 40)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(KeyboardKeyStyle(isFunction: true))
             .accessibilityLabel(Text("Return"))
             Button(action: keys.deleteBackward) {
                 Image(systemName: "delete.left").frame(width: 44, height: 40)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(KeyboardKeyStyle(isFunction: true))
             .buttonRepeatBehavior(.enabled)
             .accessibilityLabel(Text("Delete"))
         }

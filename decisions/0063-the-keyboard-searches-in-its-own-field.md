@@ -18,8 +18,9 @@ field, where what is typed is a search the person makes in Pesto, as in the app'
   top (`KeyboardQuery`, at most 64 characters, gone when the page closes or the keyboard hides), the matching clips in
   one row (the first chip's clips while it is empty), lowercase letters or the numbers pad, then Globe, 123/ABC, Space,
   Delete and Done. The keyboard is 40 points taller while it is open.
-- **The letters never reach the app.** `KeyboardLetters` is given only what to do with a letter; the model's search
-  methods change only the query; neither can name the text field (`KeyboardSearchTests` scans both). Picking a clip is
+- **The letters never reach the app.** `KeyboardLetters` holds only the model, whose search methods change only the
+  query; the page holds no input controller (the root hands it the Globe key); `KeyboardSearchTests` scans the page,
+  its keys and the model for any name of the text field. Picking a clip is
   the one thing that reaches the app: it inserts the clip, closes the page and returns or stays as Settings says.
 - **The word-before-the-caret search stays**, for the quick case.
 - **Ask** is not part of this decision: whether Apple's on-device model runs within a keyboard extension's memory limit

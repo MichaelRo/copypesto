@@ -67,7 +67,10 @@ struct KeyboardRenderingTests {
             insert: { _ in }, deleteBackward: {}, switchKeyboard: {}, contextBefore: { nil }, contextAfter: { nil },
             relayout: {}
         )
-        let size = CGSize(width: width, height: (regular ? 300 : 280) + (search == nil ? 0 : 40))
+        let size = CGSize(
+            width: width,
+            height: (regular ? 300 : 280) + (search == nil ? 0 : KeyboardModel.searchExtraHeight)
+        )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: nil))
         host.view.backgroundColor = .systemGroupedBackground
         // An input view sits below the text field, outside the status bar and home indicator insets of a window.

@@ -21,7 +21,7 @@ struct KeyboardPad: View {
                             Text(verbatim: character)
                                 .font(.title3)
                                 .minimumScaleFactor(0.6)
-                                .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 44)
+                                .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 40)
                         }
                         .buttonStyle(KeyboardKeyStyle())
                     }

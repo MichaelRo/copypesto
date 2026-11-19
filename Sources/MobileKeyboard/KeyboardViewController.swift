@@ -4,15 +4,14 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// Pesto's optional keyboard (ADR 0061). It types numbers and punctuation, and with Full Access inserts the clips of
-/// the sealed quick-insert set that AutoFill reads too. It never opens the store, the history key or the inbox, never
-/// reads the
-/// general pasteboard and makes no network request.
+/// Pesto's optional keyboard (ADRs 0061-0063). It types numbers and punctuation into the app, and with Full Access
+/// inserts the clips of the sealed quick-insert set that AutoFill reads too; its search page's letters type only into
+/// its own field. It never opens the store, the history key or the inbox, never reads the general pasteboard and makes
+/// no network request.
 final class KeyboardViewController: UIInputViewController {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "Keyboard")
     private static let compactHeight: CGFloat = 280
     private static let regularHeight: CGFloat = 300
-    private static let searchExtraHeight: CGFloat = 40
 
     private let model = KeyboardModel()
     private var heightConstraint: NSLayoutConstraint?
@@ -85,13 +84,20 @@ final class KeyboardViewController: UIInputViewController {
     /// The search page adds a row for the query and three rows of letters, so it is taller than the shelf.
     private var currentHeight: CGFloat {
         let base = traitCollection.horizontalSizeClass == .regular ? Self.regularHeight : Self.compactHeight
-        return model.isSearching ? base + Self.searchExtraHeight : base
+        return model.isSearching ? base + KeyboardModel.searchExtraHeight : base
     }
 
     /// Opens the set again only when the app has rewritten it since, so moving between text fields does not decrypt
     /// it each time; the person may switch to Pesto, pin a clip and come back without this process ending.
     private func refresh() {
         model.showsGlobeKey = needsInputModeSwitchKey
+        defer {
+            // Full Access taken away or the set emptied while searching: the page has nothing left to search.
+            if model.isSearching, model.menu.state != .ready {
+                model.closeSearch()
+                heightConstraint?.constant = currentHeight
+            }
+        }
         guard hasFullAccess else {
             model.menu = KeyboardMenu(hasFullAccess: false) { nil }
             model.word = nil

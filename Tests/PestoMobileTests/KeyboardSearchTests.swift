@@ -25,11 +25,12 @@ struct KeyboardSearchTests {
         #expect(!model.isSearching)
     }
 
-    @Test("the letters and the model know nothing of the app's text field")
+    @Test("the search page, its keys and the model know nothing of the app's text field")
     func whenScanned_thenTheLettersCannotReachTheApp() throws {
+        // SourceTree lives in the regression target; this one reads the three files by name and throws if one moves.
         let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("Sources/MobileKeyboard")
-        for name in ["KeyboardLetters.swift", "KeyboardModel.swift"] {
+        for name in ["KeyboardLetters.swift", "KeyboardModel.swift", "KeyboardSearchPage.swift"] {
             let text = try String(contentsOf: folder.appendingPathComponent(name), encoding: .utf8)
             for forbidden in ["textDocumentProxy", "KeyboardKeys", "insertText", "UIInputViewController"] {
                 #expect(!text.contains(forbidden), "\(name) names \(forbidden)")

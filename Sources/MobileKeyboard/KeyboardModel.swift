@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import CoreGraphics
 import Observation
 import PestoCore
 
@@ -15,6 +16,9 @@ final class KeyboardModel {
     /// The search page's query while it is open, nil when it is closed. Its letter keys change only this: the model
     /// has no way to reach the app's text field.
     private(set) var searchQuery: KeyboardQuery?
+
+    /// How much taller the keyboard is while the search page is open: a row for the field and the letters.
+    static let searchExtraHeight: CGFloat = 40
 
     var isSearching: Bool {
         searchQuery != nil

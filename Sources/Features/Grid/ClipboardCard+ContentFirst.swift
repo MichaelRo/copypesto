@@ -68,7 +68,7 @@ extension ClipboardCard {
                 pictureBackdrop(shown.image)
             }
             pictureLayer(fit: fit)
-                .padding(.bottom, fit == .fit ? CardLayout.footerReserve : 0)
+                .padding(.bottom, fit == .fit ? CardLayout.footerReserve + (trimmedCustomTitle == nil ? 0 : 20) : 0)
             contentFirstChrome(
                 MetaLineStyle(over: over, onPicture: true, showsGIF: isAnimated),
                 title: trimmedCustomTitle,

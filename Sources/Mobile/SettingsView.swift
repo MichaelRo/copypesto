@@ -94,9 +94,11 @@ struct SettingsView: View {
                 // Only the lock empties widgets, AutoFill and the keyboard, so this exception exists only while the
                 // lock is on; greyed out without it, it read as a feature this device could not have.
                 if lockEnabled {
-                    Toggle("Show clips in widgets, AutoFill and the keyboard while locked", isOn: $showsClipsOutside)
-                        .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
-                        .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
+                    Toggle(
+                        "Show clips in widgets, AutoFill and the keyboard while locked", isOn: $showsClipsOutside
+                    )
+                    .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
+                    .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
                 }
                 Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
                     ForEach(AuthenticationGrace.choices, id: \.self) { minutes in
@@ -112,9 +114,10 @@ struct SettingsView: View {
                 Text("""
                 With the lock on, Pesto asks when it opens and after it has been away this long. Without it, the \
                 widget, AutoFill and the keyboard show your clips; with it, the widget says Locked and AutoFill and \
-                the keyboard hold nothing, unless you show clips there, which anyone holding this device can then read. Hidden clips stay \
-                masked until you show them. Copying one never shows it. Link previews contact the page a link \
-                points to, once, to show its title and picture; nothing else leaves this device.
+                the keyboard hold nothing, unless you show clips there, which anyone holding this device can then \
+                read. Hidden clips stay masked until you show them. Copying one never shows it. Link previews \
+                contact the page a link points to, once, to show its title and picture; nothing else leaves this \
+                device.
                 """)
             }
             Section {

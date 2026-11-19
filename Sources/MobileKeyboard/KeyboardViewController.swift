@@ -85,16 +85,10 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     private static func open(_ file: QuickInsertFile) -> QuickInsertSet? {
-        let keys = QuickInsertKeyStore(
-            secrets: SharedKeychainSecretStore(accessGroup: AppIdentity.quickInsertKeychainGroup(in: .main))
-        )
         do {
-            guard let key = try keys.key() else { return nil }
-            return try file.read(with: key)
-        } catch QuickInsertError.missing {
-            return nil
+            return try file.openSet(keys: .shared())
         } catch {
-            logger.error("The keyboard's set did not open: \(String(describing: type(of: error)), privacy: .public)")
+            logger.error("The keyboard's set did not open: \(String(describing: error), privacy: .public)")
             return nil
         }
     }

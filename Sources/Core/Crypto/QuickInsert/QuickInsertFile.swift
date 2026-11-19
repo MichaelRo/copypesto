@@ -43,6 +43,17 @@ public struct QuickInsertFile: Sendable {
         try file.read(QuickInsertSet.self, with: key)
     }
 
+    /// How AutoFill and the keyboard read the set: nil when there is nothing to open yet (no key, or no file),
+    /// otherwise the set; a set that will not open throws, so the caller can log why.
+    public func openSet(keys: QuickInsertKeyStore) throws -> QuickInsertSet? {
+        guard let key = try keys.key() else { return nil }
+        do {
+            return try read(with: key)
+        } catch QuickInsertError.missing {
+            return nil
+        }
+    }
+
     public func remove() {
         file.remove()
     }

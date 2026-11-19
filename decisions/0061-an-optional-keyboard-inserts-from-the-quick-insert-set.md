@@ -61,7 +61,7 @@ not hold for a keyboard that has no letters:
 - Hand checks on a real device (`docs/testing.md`): the Full Access alert and both states, insertion into another app,
   the Globe key and its long-press list, the History Lock and the setting turned off, and memory in Xcode's gauge.
   Core tests cover the states, the filters and the starters (`KeyboardMenuTests`, `KeyboardStarterTests`) and the
-  modification date (`QuickInsertEnvelopeTests`).
+  modification date and the shared read (`QuickInsertEnvelopeTests`); `KeyboardRenderingTests` draws every state.
 
 ## Docs affected
 `AGENTS.md` (the Mobile paragraph and security invariant 2: a second holder of the quick-insert key),

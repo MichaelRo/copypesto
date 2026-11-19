@@ -364,8 +364,11 @@ added as an experiment), so picking a clip through the real AutoFill sheet is a 
 The keyboard (ADR 0061) reads the same set. Its decisions are tested in Core (`KeyboardMenuTests`: the four states,
 that without Full Access the set is never loaded, the order of sections and when the filters show;
 `KeyboardStarterTests`: each starter's value at the tap; `QuickInsertEnvelopeTests`: the file's modification date that
-tells the keyboard to re-open it). `PestoKeyboard` has no test target, and a UI test cannot add a keyboard in iOS
-Settings or grant it Full Access, so the keyboard itself is a hand check on a device (below).
+tells the keyboard to re-open it, and `openSet`, the read AutoFill and the keyboard share). The iOS test target compiles
+`Sources/MobileKeyboard` and `KeyboardRenderingTests` draws each state at iPhone and iPad width, light and dark, into
+`.build/keyboard-renders` (in a window of the app's scene: `ImageRenderer` draws its UIKit parts as placeholders). A
+UI test cannot add a keyboard in iOS Settings or grant it Full Access, so the keyboard in another app is a hand check
+on a device (below).
 
 The widget snapshot (ADR 0052) is tested in Core (`WidgetSnapshotSelectionTests`: what may enter, the order and the
 bounds, the fullest snapshot still sealing; `WidgetSnapshotSealingTests`: refusals, no plaintext in the file, neither

@@ -38,6 +38,8 @@ struct KeyboardRootView: View {
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.capsule)
                         .font(.subheadline)
+                        // A UUID is new at the tap, so reading one out would name a different value.
+                        .accessibilityValue(starter == .uuid ? Text(verbatim: "") : Text(starter.text()))
                         .accessibilityHint(Text("Inserts it now"))
                 }
             }
@@ -130,7 +132,7 @@ struct KeyboardRootView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: 44)
-            .background(.background.secondary, in: .rect(cornerRadius: 8))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: .rect(cornerRadius: 8))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(entry.title)
@@ -147,6 +149,7 @@ struct KeyboardRootView: View {
                 Text("Space").frame(maxWidth: .infinity, minHeight: 40)
             }
             .buttonStyle(.bordered)
+            .buttonRepeatBehavior(.enabled)
             Button { keys.insert("\n") } label: {
                 Image(systemName: "return").frame(width: 44, height: 40)
             }
@@ -156,6 +159,7 @@ struct KeyboardRootView: View {
                 Image(systemName: "delete.left").frame(width: 44, height: 40)
             }
             .buttonStyle(.bordered)
+            .buttonRepeatBehavior(.enabled)
             .accessibilityLabel(Text("Delete"))
         }
         .font(.body)

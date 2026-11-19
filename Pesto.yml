@@ -309,6 +309,10 @@ targets:
       - path: Sources/MobileWidget
         excludes: ["Info.plist", "*.entitlements", "PestoWidgetBundle.swift"]
       - path: Sources/Widget
+      # The keyboard's views, compiled again so a test can draw each state.
+      - path: Sources/MobileKeyboard
+        excludes: ["Info.plist", "*.entitlements", "*.xcprivacy"]
+      - path: Sources/MobileShare/BrandAccent.swift
     dependencies:
       - target: PestoMobile
       - package: PestoCore

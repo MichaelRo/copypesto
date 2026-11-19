@@ -221,7 +221,9 @@ struct MobileHistoryLockTests {
         #expect(try surfaces.widgetSnapshot().isLocked)
     }
 
-    @Test("with Show clips in widgets, AutoFill and the keyboard on, they are written as without the lock, and the toggle moves them")
+    @Test(
+        "with Show clips while locked on, they are written as without the lock, and the toggle moves them"
+    )
     func whenShowsOutside_thenTheyAreWrittenAsWithoutTheLock() async throws {
         let setting = LockSetting(true)
         setting.showsOutside = true

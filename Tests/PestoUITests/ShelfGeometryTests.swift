@@ -36,10 +36,16 @@ final class ShelfGeometryTests: PestoUITestCase {
         let setups: [(defaults: [String: String], accessibility: String)] = [
             ([:], "trusted"), (["cardSize": "compact"], "trusted"), (["cardSize": "large"], "trusted"),
             (["shelfPosition": "top"], "trusted"), (["cardSize": "compact", "shelfPosition": "top"], "trusted"),
-            ([:], "denied"), (["shelfPosition": "top"], "denied")
+            ([:], "denied"), (["shelfPosition": "top"], "denied"), ([:], "import")
         ]
         for (extra, accessibility) in setups {
-            launch(accessibility: accessibility, defaults: ["hasOnboarded": "true"].merging(extra) { $1 })
+            // "import" is the import offer's banner (another clipboard app's library found), with Accessibility
+            // trusted.
+            if accessibility == "import" {
+                launch(defaults: ["hasOnboarded": "true"].merging(extra) { $1 }, importFixture: "maccy")
+            } else {
+                launch(accessibility: accessibility, defaults: ["hasOnboarded": "true"].merging(extra) { $1 })
+            }
             showOverlay()
             overlay.typeKey(.delete, modifierFlags: [])
             let confirm = element(AccessibilityID.deleteConfirmButton)
@@ -49,10 +55,14 @@ final class ShelfGeometryTests: PestoUITestCase {
             XCTAssertTrue(banner.waitUntilExists(timeout: 5), "undo offer missing \(extra)")
             let panel = overlay.frame
             let offer = banner.frame
-            let screen = app.windows.firstMatch.screenFrame
+            let screen = overlay.screenFrame
             XCTAssertGreaterThanOrEqual(offer.minY, panel.minY, "top edge inside the panel \(extra)")
             XCTAssertLessThanOrEqual(offer.maxY, panel.maxY - 2, "bottom edge inside the panel \(extra)")
-            XCTAssertLessThanOrEqual(offer.maxY, screen.maxY, "bottom edge on the screen \(extra)")
+            XCTAssertLessThanOrEqual(
+                offer.maxY, screen.maxY,
+                "bottom edge on the screen \(extra) \(accessibility) panel \(panel) offer \(offer) screen \(screen) "
+                    + "window \(app.windows.matching(identifier: AccessibilityID.overlayPanel).firstMatch.frame)"
+            )
             let card = cards.firstMatch.frame
             XCTAssertGreaterThanOrEqual(offer.minY - card.maxY, 0, "the offer covers no card \(extra)")
             XCTAssertEqual(
@@ -67,9 +77,18 @@ final class ShelfGeometryTests: PestoUITestCase {
 }
 
 private extension XCUIElement {
-    /// The main display's frame. XCUITest frames are top-left based and `NSScreen` frames bottom-left based, but for
-    /// the main display (origin 0, 0) the height is the bottom edge in both.
+    /// The frame of the display this element is on, in XCUITest's top-left coordinates. `NSScreen` frames are
+    /// bottom-left based from the main display's corner; the shelf opens on the display of the frontmost app, which on
+    /// a Mac with two displays is not always the main one.
     var screenFrame: CGRect {
-        NSScreen.screens.first?.frame ?? .infinite
+        guard let mainHeight = NSScreen.screens.first?.frame.height else { return .infinite }
+        let displays = NSScreen.screens.map { screen in
+            CGRect(
+                x: screen.frame.minX, y: mainHeight - screen.frame.maxY,
+                width: screen.frame.width, height: screen.frame.height
+            )
+        }
+        let centre = CGPoint(x: frame.midX, y: frame.midY)
+        return displays.first { $0.contains(centre) } ?? .infinite
     }
 }

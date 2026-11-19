@@ -110,7 +110,7 @@ final class OverlayWindowController {
     func prewarmLayout() {
         guard !panel.isVisible, !appState.isOverlayVisible else { return }
         let interval = PerfSignposts.shelf.begin("prewarmLayout")
-        panel.setFrame(BottomShelfPositioning.frame(banners: appState.shelfBannerHeight), display: false)
+        panel.setFrame(BottomShelfPositioning.frame(banners: appState.shelfTopOverflow), display: false)
         panel.contentView?.layoutSubtreeIfNeeded()
         interval.end()
     }
@@ -118,8 +118,14 @@ final class OverlayWindowController {
     /// A banner came or went while the shelf is open: the panel takes its new height at once, so the cards and the
     /// Undo offer under them stay inside it. Only the frame moves, never a layer transform (see this folder's notes).
     private func fitBanners() {
-        guard panel.isVisible, !isHiding else { return }
-        panel.setFrame(BottomShelfPositioning.frame(banners: appState.shelfBannerHeight), display: true)
+        // While it opens the panel is not visible yet, but the content measures itself then: a banner present from
+        // the start (an import offer) arrived before `isVisible` and the panel kept the shorter height.
+        guard !isHiding, panel.isVisible || appState.isOverlayVisible else { return }
+        // The display the shelf is on, not the frontmost app's now: focus may have moved to another display since it
+        // opened, and asking again moved the shelf there.
+        panel.setFrame(
+            BottomShelfPositioning.frame(for: panel.screen, banners: appState.shelfTopOverflow), display: true
+        )
     }
 
     func show() {
@@ -127,8 +133,13 @@ final class OverlayWindowController {
         isHiding = false
         showGeneration += 1
         panel.contentView?.layer?.removeAnimation(forKey: "hideOverlay")
-        let frame = BottomShelfPositioning.frame(banners: appState.shelfBannerHeight)
+        let frame = BottomShelfPositioning.frame(banners: appState.shelfTopOverflow)
         panel.setFrame(frame, display: false)
+        // Laying the content out measures the block above the row (a banner present from the start), and that
+        // measure arrives before the shelf counts as open; size the panel by it now, or it keeps the shorter height.
+        panel.contentView?.layoutSubtreeIfNeeded()
+        let measured = BottomShelfPositioning.frame(banners: appState.shelfTopOverflow)
+        if measured != frame { panel.setFrame(measured, display: false) }
         // Keep panel fully opaque — layer opacity drives the fade so we never touch
         // NSAnimatablePropertyContainer (panel.animator()), which would spin up NSAnimation
         // machinery and re-trigger the CA transaction / windowDidLayout crash.

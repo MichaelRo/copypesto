@@ -80,11 +80,11 @@ final class AppState {
     var isSearchActive = false
     var selectedCollectionID: UUID?
     var hasAccessibilityPermission = false
-    /// The height of the banners drawn above the command bar (storage, Accessibility, an import offer), as measured by
-    /// the shelf. The panel grows by it, so the cards and what sits under them keep their place (a banner once pushed
-    /// the Undo offer below the panel's edge). Views never read it.
-    @ObservationIgnored var shelfBannerHeight: CGFloat = 0 {
-        didSet { if shelfBannerHeight != oldValue { onShelfBannerHeightChange?() } }
+    /// How far the block above the row (the banners, then the command bar) passes its budget
+    /// (`ShelfHeight.commandBlock`), as the shelf measured it. The panel grows by it, so the cards and what sits under
+    /// them keep their place (a banner once pushed the Undo offer below the panel's edge). Views never read it.
+    @ObservationIgnored var shelfTopOverflow: CGFloat = 0 {
+        didSet { if shelfTopOverflow != oldValue { onShelfBannerHeightChange?() } }
     }
 
     @ObservationIgnored var onShelfBannerHeightChange: (() -> Void)?

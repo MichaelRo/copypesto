@@ -31,12 +31,25 @@ enum PeakMemory {
 
     /// How far the resident size rose above where it started while `work` ran.
     static func growth(during work: () async throws -> Void) async rethrows -> Int {
-        let baseline = residentBytes()
+        try await peakGrowth(measuring: residentBytes, during: work)
+    }
+
+    /// How far the physical footprint (`phys_footprint`) rose above where it started while `work` ran.
+    static func footprintGrowth(during work: () async throws -> Void) async rethrows -> Int {
+        try await peakGrowth(measuring: footprintBytes, during: work)
+    }
+
+    private static func peakGrowth(
+        measuring sample: @escaping @Sendable () -> Int, during work: () async throws -> Void
+    ) async rethrows
+        -> Int
+    {
+        let baseline = sample()
         let peak = Mutex(baseline)
         let running = Mutex(true)
         let sampler = Thread {
             while running.withLock({ $0 }) {
-                let now = residentBytes()
+                let now = sample()
                 peak.withLock { $0 = max($0, now) }
                 usleep(500)
             }
@@ -44,6 +57,8 @@ enum PeakMemory {
         sampler.start()
         defer { running.withLock { $0 = false } }
         try await work()
+        let after = sample()
+        peak.withLock { $0 = max($0, after) }
         return peak.withLock { $0 } - baseline
     }
 }

@@ -30,10 +30,21 @@ public enum ClipboardAppLibraryReader {
     public static let maxDatabaseBytes = 1_000_000_000
     public static let maxRecords = 20_000
     public static let maxValueBytes = 50_000_000
+    static let inlineMarker: UInt8 = 0x01
 
     static func withCopy<Result>(
         of url: URL, named name: String, fileManager: FileManager = .default,
         _ body: (OpaquePointer) throws -> Result
+    )
+    throws -> Result {
+        try withCopy(of: url, named: name, fileManager: fileManager) { db, _ in
+            try body(db)
+        }
+    }
+
+    static func withCopy<Result>(
+        of url: URL, named name: String, fileManager: FileManager = .default,
+        _ body: (OpaquePointer, URL) throws -> Result
     )
     throws -> Result {
         guard fileManager.fileExists(atPath: url.path) else { throw ReadError.notFound }
@@ -62,19 +73,39 @@ public enum ClipboardAppLibraryReader {
             throw ReadError.unreadable
         }
         defer { sqlite3_close(db) }
-        return try body(db)
+        return try body(db, PasteExternalPayload.folder(besideDatabaseAt: url))
     }
 
-    static func hasTables(_ db: OpaquePointer, _ names: [String]) -> Bool {
+    static func tableNames(in db: OpaquePointer) -> Set<String> {
         var statement: OpaquePointer?
         guard sqlite3_prepare_v2(db, "SELECT name FROM sqlite_master WHERE type = 'table'", -1, &statement, nil)
-            == SQLITE_OK, let rows = statement else { return false }
+            == SQLITE_OK, let rows = statement else { return [] }
         defer { sqlite3_finalize(rows) }
         var found = Set<String>()
         while sqlite3_step(rows) == SQLITE_ROW {
             if let text = text(rows, 0) { found.insert(text) }
         }
+        return found
+    }
+
+    static func hasTables(_ db: OpaquePointer, _ names: [String]) -> Bool {
+        let found = tableNames(in: db)
         return names.allSatisfy(found.contains)
+    }
+
+    static func columnNames(of table: String, in db: OpaquePointer) -> Set<String> {
+        guard table.range(of: #"^[A-Za-z_][A-Za-z0-9_]*$"#, options: .regularExpression) != nil else {
+            return []
+        }
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "PRAGMA table_info(\"\(table)\")", -1, &statement, nil) == SQLITE_OK,
+              let rows = statement else { return [] }
+        defer { sqlite3_finalize(rows) }
+        var columns = Set<String>()
+        while sqlite3_step(rows) == SQLITE_ROW {
+            if let name = text(rows, 1) { columns.insert(name) }
+        }
+        return columns
     }
 
     static func prepare(_ db: OpaquePointer, _ query: String) throws -> OpaquePointer {
@@ -89,20 +120,121 @@ public enum ClipboardAppLibraryReader {
         sqlite3_column_text(statement, column).map { String(cString: $0) }
     }
 
-    /// A value that is only Core Data's reference to an external file (`PasteExternalPayload`) is nil: it is a file
-    /// name
-    /// of 38 bytes, never the clip's data, and importing it would store a broken picture. The clip is counted as left
-    /// out.
-    static func blob(_ statement: OpaquePointer, _ column: Int32) -> Data? {
+    static func blob(
+        _ statement: OpaquePointer,
+        _ column: Int32,
+        externalFolder: URL? = nil,
+        unwrapsInlineMarker: Bool = true,
+        limit: Int = maxValueBytes
+    )
+    -> Data? {
         guard let bytes = sqlite3_column_blob(statement, column) else { return nil }
         let count = Int(sqlite3_column_bytes(statement, column))
-        if count == PasteExternalPayload.referenceLength,
-           bytes.load(as: UInt8.self) == PasteExternalPayload.externalMarker
-        {
+        guard count > 0 else { return nil }
+        let firstByte = bytes.load(as: UInt8.self)
+        if count < 64, firstByte == PasteExternalPayload.externalMarker {
             let value = Data(bytes: bytes, count: count)
-            if PasteExternalPayload.fileName(in: value) != nil { return nil }
+            if let fileName = PasteExternalPayload.fileName(in: value) {
+                return PasteExternalPayload.read(fileName, in: externalFolder, limit: limit)
+            }
+            if value.dropFirst().contains(0) { return nil }
         }
+        if unwrapsInlineMarker, firstByte == inlineMarker {
+            guard count > 1, count - 1 <= limit else { return nil }
+            return Data(bytes: bytes.advanced(by: 1), count: count - 1)
+        }
+        guard count <= limit else { return nil }
         return Data(bytes: bytes, count: count)
+    }
+
+    static func isPlainFileName(_ name: String) -> Bool {
+        !name.isEmpty && name != "." && name != ".."
+            && !name.contains("/") && !name.contains("\\") && !name.contains("\0")
+    }
+
+    static func readExternalFile(named fileName: String, in folder: URL, limit: Int = maxValueBytes) -> Data? {
+        readContainedFile(relativeComponents: [fileName], inside: folder, limit: limit)
+    }
+
+    static func readContainedFile(
+        relativeComponents: [String],
+        inside rootFolder: URL,
+        limit: Int = maxValueBytes
+    )
+    -> Data? {
+        guard !relativeComponents.isEmpty, relativeComponents.allSatisfy(isPlainFileName) else { return nil }
+        var dirFD = Darwin.open(rootFolder.path, O_RDONLY | O_DIRECTORY)
+        guard dirFD >= 0 else { return nil }
+        for component in relativeComponents.dropLast() {
+            let nextFD = Darwin.openat(dirFD, component, O_RDONLY | O_NOFOLLOW | O_DIRECTORY)
+            close(dirFD)
+            guard nextFD >= 0 else { return nil }
+            dirFD = nextFD
+        }
+        guard let last = relativeComponents.last else {
+            close(dirFD)
+            return nil
+        }
+        let fileFD = Darwin.openat(dirFD, last, O_RDONLY | O_NOFOLLOW)
+        close(dirFD)
+        guard fileFD >= 0 else { return nil }
+        var info = stat()
+        guard fstat(fileFD, &info) == 0,
+              (info.st_mode & S_IFMT) == S_IFREG,
+              info.st_size > 0,
+              Int(info.st_size) <= limit else
+        {
+            close(fileFD)
+            return nil
+        }
+        let handle = FileHandle(fileDescriptor: fileFD, closeOnDealloc: true)
+        guard let data = try? handle.read(upToCount: limit + 1), !data.isEmpty, data.count <= limit else {
+            return nil
+        }
+        return data
+    }
+
+    static func imageUTI(forExtension ext: String) -> String? {
+        switch ext.lowercased() {
+        case "tiff", "tif": "public.tiff"
+        case "png": "public.png"
+        case "jpg", "jpeg": "public.jpeg"
+        case "gif": "com.compuserve.gif"
+        case "heic": "public.heic"
+        case "webp": "public.webp"
+        default: nil
+        }
+    }
+
+    static func imageUTI(forBytes data: Data) -> String? {
+        guard data.count >= 4 else { return nil }
+        let head = [UInt8](data.prefix(12))
+        if head.starts(with: [0x89, 0x50, 0x4E, 0x47]) { return "public.png" }
+        if head.starts(with: [0xFF, 0xD8, 0xFF]) { return "public.jpeg" }
+        if head.starts(with: [0x47, 0x49, 0x46, 0x38]) { return "com.compuserve.gif" }
+        if head.starts(with: [0x49, 0x49, 0x2A, 0x00]) || head.starts(with: [0x4D, 0x4D, 0x00, 0x2A]) {
+            return "public.tiff"
+        }
+        if head.count >= 12,
+           head[0...3] == [0x52, 0x49, 0x46, 0x46],
+           head[8...11] == [0x57, 0x45, 0x42, 0x50]
+        {
+            return "public.webp"
+        }
+        if head.count >= 12,
+           head[4...7] == [0x66, 0x74, 0x79, 0x70],
+           let brand = String(bytes: head[8...11], encoding: .ascii),
+           brand.hasPrefix("hei") || brand == "mif1"
+        {
+            return "public.heic"
+        }
+        return nil
+    }
+
+    static func date(from rawTime: Double) -> Date {
+        rawTime > 1_000_000_000
+            ? Date(timeIntervalSince1970: rawTime)
+            : (rawTime > 0 ? Date(timeIntervalSinceReferenceDate: rawTime) : .now)
     }
 }
 #endif

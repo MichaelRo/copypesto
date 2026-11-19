@@ -15,8 +15,15 @@ struct LibraryToolbar: ToolbarContent {
             }
         }
         ToolbarItem(placement: .primaryAction) {
-            Button("New Note", systemImage: "square.and.pencil") { library.isComposing = true }
-                .accessibilityIdentifier(MobileAccessibilityID.newNoteButton)
+            Menu {
+                Button("New Note", systemImage: "square.and.pencil") { library.isComposing = true }
+                    .accessibilityIdentifier(MobileAccessibilityID.newNoteButton)
+                Button("New Snippet\u{2026}", systemImage: "curlybraces") { library.beginNewSnippet() }
+                    .accessibilityIdentifier(MobileAccessibilityID.newSnippetButton)
+            } label: {
+                Label("New", systemImage: "plus")
+            }
+            .accessibilityIdentifier(MobileAccessibilityID.addClipMenuButton)
         }
         ToolbarSpacer(.fixed, placement: .primaryAction)
         ToolbarItem(placement: .primaryAction) {

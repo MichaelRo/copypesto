@@ -11,46 +11,95 @@ struct ClipCardFace: View {
     let width: CGFloat
     let revision: ClipCard.Revision
     var playsAnimation = false
+    var inCollection = false
     @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var isConcealed: Bool {
+        if case .covered = face { return true }
+        return false
+    }
+
+    private var faceTitle: String? {
+        CardFace.faceTitle(
+            type: item.type,
+            inCollection: inCollection,
+            isConcealed: isConcealed,
+            customTitle: item.customTitle,
+            ogTitle: item.ogTitle
+        )
+    }
+
+    private var showsCustomTitleOnFace: Bool {
+        CardFace.showsCustomTitleOnFace(
+            inCollection: inCollection,
+            isConcealed: isConcealed,
+            customTitle: item.customTitle
+        )
+    }
 
     var body: some View {
         let metrics = CardMetrics(width: width, typeSize: typeSize)
+        let title = faceTitle
+        let showsTitleInBody = title != nil
         switch face {
         case let .covered(isSecret):
             CoveredCardFace(item: item, isSecret: isSecret)
         case .shownSecret:
-            framed { SecretShownBody(item: item, text: media.revealedText, metrics: metrics) }
+            framed(title: title) {
+                SecretShownBody(item: item, text: media.revealedText, metrics: metrics, hasTitle: showsTitleInBody)
+            }
         case let .picture(fills, isAnimated):
             PictureCardFace(
                 image: media.picture?.image, fillsCard: fills,
-                animation: playsAnimation ? media.picture?.animation : nil
+                animation: playsAnimation ? media.picture?.animation : nil,
+                title: title
             ) {
-                CardFootLineView(item: item, onPicture: true, showsGIF: isAnimated)
+                CardFootLineView(
+                    item: item, onPicture: true, showsGIF: isAnimated, showsTitleOnFace: showsCustomTitleOnFace
+                )
             }
         case .linkPicture:
-            PictureCardFace(image: media.linkPicture, fillsCard: true) {
-                CardFootLineView(item: item, onPicture: true)
+            PictureCardFace(image: media.linkPicture, fillsCard: true, title: title) {
+                CardFootLineView(item: item, onPicture: true, showsTitleOnFace: showsCustomTitleOnFace)
             }
         case let .color(fill, ink):
-            ColorCardFace(item: item, fill: fill, ink: ink, metrics: metrics)
+            ColorCardFace(
+                item: item, fill: fill, ink: ink, metrics: metrics,
+                title: title, showsTitleOnFace: showsCustomTitleOnFace
+            )
         case let .largeText(points):
-            framed { LargeTextBody(text: CardPreviewText.display(item.gridPreview), points: points, metrics: metrics) }
+            framed(title: title) {
+                LargeTextBody(text: CardPreviewText.display(item.gridPreview), points: points, metrics: metrics)
+            }
         case let .link(link):
-            framed { LinkBody(link: link, metrics: metrics) }
+            framed(title: title) { LinkBody(link: link, metrics: metrics, hasTitle: showsTitleInBody) }
         case .code:
-            framed { PlainTextBody(text: item.gridPreview, isCode: true, metrics: metrics) }
+            framed(title: title) {
+                PlainTextBody(text: item.gridPreview, isCode: true, metrics: metrics, hasTitle: showsTitleInBody)
+            }
         case .file:
-            framed { FileBody(preview: item.gridPreview) }
+            framed(title: title) { FileBody(preview: item.gridPreview, hasTitle: showsTitleInBody) }
         case .text:
-            framed { PlainTextBody(text: item.gridPreview, isCode: false, metrics: metrics) }
+            framed(title: title) {
+                PlainTextBody(text: item.gridPreview, isCode: false, metrics: metrics, hasTitle: showsTitleInBody)
+            }
         }
     }
 
-    private func framed(@ViewBuilder _ content: () -> some View) -> some View {
+    private func framed(title: String?, @ViewBuilder _ content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: CardMetrics.footGap) {
-            content()
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            CardFootLineView(item: item)
+            VStack(alignment: .leading, spacing: CardMetrics.titleGap) {
+                if let title {
+                    Text(title)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.primary.opacity(0.95))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                content()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            CardFootLineView(item: item, showsTitleOnFace: showsCustomTitleOnFace)
         }
         .padding(CardMetrics.inset)
     }

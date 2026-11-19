@@ -208,4 +208,17 @@ struct VerifyJudgeScriptTests {
         #expect(gateRun.code == 1)
         #expect(gateRun.output.contains("only 0 iPad unit tests passed"))
     }
+
+    @Test("local gate can run UI only on iPad: --pad-ui-only waives the iPad unit floor without dropping UI checks")
+    func padUIOnlyRun() throws {
+        let phone = try mobileTree(unit: 427, uiPassed: everyUITest + ["phoneOnly"], uiSkipped: ["padOnly"])
+        let pad = try mobileTree(unit: 0, uiPassed: everyUITest + ["padOnly"], uiSkipped: ["phoneOnly"])
+        let pass = try runMobile(phone: phone, pad: pad, extra: ["--pad-ui-only"])
+        #expect(pass.code == 0, "\(pass.output)")
+        #expect(pass.output.contains("iPhone unit=427 iPad ui-only ui=22"))
+
+        let strict = try runMobile(phone: phone, pad: pad)
+        #expect(strict.code == 1)
+        #expect(strict.output.contains("only 0 iPad unit tests passed"))
+    }
 }

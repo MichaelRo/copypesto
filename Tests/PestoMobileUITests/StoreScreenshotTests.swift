@@ -124,6 +124,60 @@ final class StoreScreenshotTests: XCTestCase {
         sleep(1)
         store("ios-store-iphone-03-detail-edit-text")
         app.buttons["Done"].firstMatch.tap()
+
+        captureFilterChips(in: app, searchField: field, searchKey: searchKey)
+        captureCopyAs(in: app)
+        captureSnippetFill(in: app)
+    }
+
+    private func captureFilterChips(in app: XCUIApplication, searchField: XCUIElement, searchKey: XCUIElement) {
+        searchField.tap()
+        let linksChip = element(MobileAccessibilityID.chipRow, in: app).buttons["Links"].firstMatch
+        XCTAssertTrue(linksChip.waitForExistence(timeout: timeout), "searching offers kind filter chips")
+        linksChip.tap()
+        XCTAssertTrue(card(containing: "copypesto.net", in: app).waitForExistence(timeout: timeout))
+        XCTAssertTrue(card(containing: "Packing list", in: app).waitForNonExistence(timeout: timeout))
+        if searchKey.exists, searchKey.isEnabled { searchKey.tap() }
+        sleep(1)
+        store("ios-store-iphone-05-filter-chips")
+        app.buttons["close"].firstMatch.tap()
+    }
+
+    private func captureCopyAs(in app: XCUIApplication) {
+        let note = card(containing: "Packing list", in: app)
+        XCTAssertTrue(note.waitForExistence(timeout: timeout))
+        note.press(forDuration: 1.0)
+        let copyAs = app.buttons["Copy As"].firstMatch
+        XCTAssertTrue(copyAs.waitForExistence(timeout: timeout), "a text clip's menu offers Copy As")
+        copyAs.tap()
+        XCTAssertTrue(app.buttons["UPPERCASE"].waitForExistence(timeout: timeout))
+        sleep(1)
+        store("ios-store-iphone-06-copy-as")
+        app.buttons["Title Case"].firstMatch.tap()
+    }
+
+    private func captureSnippetFill(in app: XCUIApplication) {
+        element(MobileAccessibilityID.newNoteButton, in: app).tap()
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: timeout))
+        editor.tap()
+        editor.typeText("Hi {Name}, gate {Gate} boards at 10:30.")
+        app.buttons["Save"].firstMatch.tap()
+
+        let draft = card(containing: "boards at 10:30", in: app)
+        XCTAssertTrue(draft.waitForExistence(timeout: timeout))
+        draft.press(forDuration: 1.0)
+        let saveSnippet = app.buttons["Save as Snippet"].firstMatch
+        XCTAssertTrue(saveSnippet.waitForExistence(timeout: timeout))
+        saveSnippet.tap()
+
+        let snippet = card(containing: "{{input:Name}}", in: app)
+        XCTAssertTrue(snippet.waitForExistence(timeout: timeout))
+        snippet.tap()
+        XCTAssertTrue(element(MobileAccessibilityID.snippetFillSheet, in: app).waitForExistence(timeout: timeout))
+        sleep(1)
+        store("ios-store-iphone-07-snippet-fill")
+        app.buttons["Cancel"].firstMatch.tap()
     }
 
     func test_onIPhone_storePictureOfTheWelcomeSync() throws {

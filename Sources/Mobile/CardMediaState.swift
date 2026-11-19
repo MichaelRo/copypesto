@@ -14,8 +14,9 @@ final class CardMediaState {
     private(set) var linkPicture: UIImage?
     private(set) var revealedText: String?
 
-    init(picture: CardMedia.Picture? = nil) {
+    init(picture: CardMedia.Picture? = nil, linkPicture: UIImage? = nil) {
         self.picture = picture
+        self.linkPicture = linkPicture
     }
 
     struct Key: Hashable {

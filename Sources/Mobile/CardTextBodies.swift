@@ -6,12 +6,13 @@ struct PlainTextBody: View {
     let text: String
     let isCode: Bool
     let metrics: CardMetrics
+    var hasTitle = false
 
     var body: some View {
         Text(CardPreviewText.display(text))
             .font(isCode ? .footnote.monospaced() : .callout)
             .foregroundStyle(.primary.opacity(0.92))
-            .lineLimit(metrics.lines(isCode ? .footnote : .callout))
+            .lineLimit(metrics.lines(isCode ? .footnote : .callout, hasTitle: hasTitle))
     }
 }
 
@@ -32,6 +33,7 @@ struct LargeTextBody: View {
 struct LinkBody: View {
     let link: LinkDisplay
     let metrics: CardMetrics
+    var hasTitle = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -48,7 +50,7 @@ struct LinkBody: View {
                 Text(link.rest)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                    .lineLimit(hasTitle ? 2 : 3)
                     .truncationMode(.middle)
             }
         }
@@ -57,6 +59,7 @@ struct LinkBody: View {
 
 struct FileBody: View {
     let preview: String
+    var hasTitle = false
 
     var body: some View {
         let files = FileClip.summary(of: preview)
@@ -68,7 +71,7 @@ struct FileBody: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(files.title)
                     .font(.callout.weight(.semibold))
-                    .lineLimit(3)
+                    .lineLimit(hasTitle ? 2 : 3)
                 if !files.subtitle.isEmpty {
                     Text(files.subtitle)
                         .font(.caption)

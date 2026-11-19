@@ -33,6 +33,7 @@ final class SyncSite {
     init(
         name: String, layout: SyncFolderLayout, time: TimeBox, timing custom: SyncFolderService.Timing? = nil,
         isReadable: @escaping @Sendable (URL) -> Bool = { SyncFileAvailability.isReadable($0) },
+        folderProbe: SyncFolderService.FolderProbe = .init(),
         environment: StorageEnvironment? = nil
     ) throws {
         self.name = name
@@ -52,7 +53,7 @@ final class SyncSite {
         service = SyncFolderService(
             container: container, storage: storage, layout: layout, identity: identity, keyStore: keyStore,
             highWater: highWater, timing: timing, includeSensitive: { false }, isLocked: { flag.value },
-            isReadable: isReadable, now: { time.now }
+            isReadable: isReadable, folderProbe: folderProbe, now: { time.now }
         )
         lockedFlag = flag
     }

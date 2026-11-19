@@ -74,6 +74,8 @@ targets:
       # Sparkle's licence must travel with the app
       - path: Sources/Resources/Assets.xcassets
       - path: Sources/Resources/Localizable.xcstrings
+      - path: Sources/Resources/InfoPlist.xcstrings
+      - path: Sources/Resources/AppShortcuts.xcstrings
       - path: Sources/Resources/Pesto.sdef
       - path: Sources/Resources/Pesto.icon
     dependencies:
@@ -144,6 +146,8 @@ targets:
       - path: Sources/Mobile
       - path: Sources/Shared
       - path: Sources/Resources/Localizable.xcstrings
+      - path: Sources/Resources/InfoPlist.xcstrings
+      - path: Sources/Resources/AppShortcuts.xcstrings
       - path: Sources/Resources/Pesto.icon
     dependencies:
       - package: PestoCore
@@ -195,6 +199,7 @@ targets:
     sources:
       - path: Sources/MobileShare
         excludes: ["Info.plist", "*.entitlements"]
+      - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
         product: PestoCore
@@ -221,6 +226,7 @@ targets:
       - path: Sources/MobileAutoFill
         excludes: ["Info.plist", "*.entitlements"]
       - path: Sources/MobileShare/BrandAccent.swift
+      - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
         product: PestoCore
@@ -275,6 +281,8 @@ targets:
     sources:
       - path: Sources/MobileWidget
         excludes: ["Info.plist", "*.entitlements"]
+      - path: Sources/Mobile/AddClipboardToPestoIntent.swift
+      - path: Sources/Mobile/ClipboardShortcutHandling.swift
       - path: Sources/Widget
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
@@ -307,7 +315,7 @@ targets:
         excludes: ["FakePasteboard.swift", "PasteboardDumpFixture.swift"]
       # The widget's views and reader, compiled again so a test can open a snapshot and draw each family.
       - path: Sources/MobileWidget
-        excludes: ["Info.plist", "*.entitlements", "PestoWidgetBundle.swift"]
+        excludes: ["Info.plist", "*.entitlements", "PestoWidgetBundle.swift", "MobileControls.swift"]
       - path: Sources/Widget
       # The keyboard's views, compiled again so a test can draw each state.
       - path: Sources/MobileKeyboard

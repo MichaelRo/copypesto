@@ -89,6 +89,9 @@ device alone with `xcodebuild -scheme PestoMobile -only-testing:PestoMobileUITes
 | `ios-store-iphone-02-search-in-pictures.png` | A search that finds words inside a picture | App Store, iPhone |
 | `ios-store-iphone-03-detail-edit-text.png` | A clip's detail with Edit Text | App Store, iPhone |
 | `ios-store-iphone-04-welcome-sync.png` | The welcome's sync step | App Store, iPhone |
+| `ios-store-iphone-05-filter-chips.png` | The library narrowed by an active filter chip | App Store, iPhone |
+| `ios-store-iphone-06-copy-as.png` | The Copy As transform menu on a clip | App Store, iPhone |
+| `ios-store-iphone-07-snippet-fill.png` | A snippet's fill-in sheet | App Store, iPhone |
 | `ios-store-ipad-01-library.png` | The library with the sidebar, landscape | App Store, iPad 13-inch |
 | `ios-store-ipad-02-collection.png` | A collection selected | App Store, iPad |
 | `ios-store-ipad-03-inspector.png` | A clip's detail in the inspector | App Store, iPad |

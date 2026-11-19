@@ -34,5 +34,6 @@ extension ClipboardCard: Equatable {
             && lhs.isSuggested == rhs.isSuggested
             && lhs.suggestedHotkeySlot == rhs.suggestedHotkeySlot
             && lhs.showsFirstCopyTime == rhs.showsFirstCopyTime
+            && lhs.inCollection == rhs.inCollection
     }
 }

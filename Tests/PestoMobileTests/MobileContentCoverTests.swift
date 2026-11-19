@@ -2,6 +2,7 @@
 import Foundation
 import SwiftUI
 import Testing
+import UIKit
 @testable import PestoCore
 @testable import PestoMobile
 
@@ -92,5 +93,31 @@ struct MobileContentCoverTests {
         #expect(!PrivacyCoverHost.covers(in: .active))
         #expect(PrivacyCoverHost.covers(in: .inactive))
         #expect(PrivacyCoverHost.covers(in: .background))
+    }
+
+    @Test("SceneCaptureReader delivers trait changes when a hosting window flips sceneCaptureState")
+    func whenSceneCaptureTraitToggles_thenSceneCaptureReaderReportsChanges() throws {
+        let scene = try #require(
+            UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first,
+            "the hosted test app needs a window scene"
+        )
+        var changes: [Bool] = []
+        let window = UIWindow(windowScene: scene)
+        window.traitOverrides.sceneCaptureState = .inactive
+        let controller = UIHostingController(rootView: SceneCaptureReader { changes.append($0) })
+        window.rootViewController = controller
+        window.isHidden = false
+        window.layoutIfNeeded()
+        #expect(changes == [false])
+
+        window.traitOverrides.sceneCaptureState = .active
+        window.updateTraitsIfNeeded()
+        window.layoutIfNeeded()
+        #expect(changes == [false, true])
+
+        window.traitOverrides.sceneCaptureState = .inactive
+        window.updateTraitsIfNeeded()
+        window.layoutIfNeeded()
+        #expect(changes == [false, true, false])
     }
 }

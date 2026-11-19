@@ -2,6 +2,9 @@
 import AppIntents
 import PestoCore
 import SwiftUI
+#if DEBUG
+import UIKit
+#endif
 
 @main
 struct PestoMobileApp: App {
@@ -9,9 +12,16 @@ struct PestoMobileApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        #if DEBUG
+        if LaunchMode.current == .uiTest, !CommandLine.arguments.contains("-UITestMotion") {
+            Motion.reduceMotionOverride = true
+            UIView.setAnimationsEnabled(false)
+        }
+        #endif
         let state = MobileAppState()
         _appState = State(initialValue: state)
         AppDependencyManager.shared.add(dependency: state)
+        AppDependencyManager.shared.add(dependency: state as any ClipboardShortcutHandling)
         state.registerBackgroundRefresh()
     }
 

@@ -50,7 +50,8 @@ struct ClipboardCardEqualityTests {
             ("canRevealHidden", { $0.canRevealHidden = false }),
             ("isSuggested", { $0.isSuggested = true }),
             ("suggestedHotkeySlot", { $0.suggestedHotkeySlot = 4 }),
-            ("showsFirstCopyTime", { $0.showsFirstCopyTime = true })
+            ("showsFirstCopyTime", { $0.showsFirstCopyTime = true }),
+            ("inCollection", { $0.inCollection = true })
         ]
         for (name, change) in changes {
             #expect(card() != card(change), "\(name) must make two cards differ")

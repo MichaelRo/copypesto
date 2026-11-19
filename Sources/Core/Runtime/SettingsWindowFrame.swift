@@ -7,7 +7,7 @@ public enum SettingsWindowFrame {
     /// Taller than this the panes only add empty room: the window an older build saved (860 pt of content) came back
     /// too tall on every open.
     public static let maximumHeight: CGFloat = 780
-    public static let defaultSize = CGSize(width: 800, height: 720)
+    public static let defaultSize = CGSize(width: 820, height: 750)
     private static let screenMargin: CGFloat = 40
 
     /// The saved frame, kept on a display and limited to a height that suits the Settings panes; nil when it is too

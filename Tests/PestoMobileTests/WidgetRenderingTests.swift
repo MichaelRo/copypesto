@@ -99,7 +99,8 @@ struct WidgetRenderingTests {
     func whenDrawn_thenEveryFamilyAndStateRenders() throws {
         let full = try snapshot()
         let states: [(String, WidgetSnapshot?)] = [
-            ("clips", full), ("empty", .empty(theme: .brand, at: now)), ("unavailable", nil)
+            ("clips", full), ("empty", .empty(theme: .brand, at: now)), ("locked", .locked(theme: .brand, at: now)),
+            ("unavailable", nil)
         ]
         for (state, snapshot) in states {
             for size in WidgetSize.allCases {

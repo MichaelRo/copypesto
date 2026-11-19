@@ -11,38 +11,41 @@ struct PreviewPicker<Value: Hashable, Preview: View>: View {
     @Binding var selection: Value
     let label: (Value) -> String
     let identifier: (Value) -> String
+    var tileSize: CGSize = .init(width: 112, height: 92)
+    var cornerRadius: CGFloat = 12
     @ViewBuilder let preview: (Value) -> Preview
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: tileSize.width < 90 ? 10 : 14) {
             ForEach(options, id: \.self) { option in
                 tile(for: option)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 4)
+        .padding(.vertical, tileSize.height < 60 ? 2 : 4)
     }
 
     private func tile(for option: Value) -> some View {
         let isSelected = option == selection
+        let isCompact = tileSize.height < 60
         return Button {
             selection = option
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: isCompact ? 5 : 8) {
                 preview(option)
-                    .frame(width: 112, height: 92)
+                    .frame(width: tileSize.width, height: tileSize.height)
                     .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.quaternary.opacity(0.6))
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous).fill(.quaternary.opacity(0.6))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                             .strokeBorder(
                                 isSelected ? accent : Color.primary.opacity(0.10),
-                                lineWidth: isSelected ? 2.5 : 1
+                                lineWidth: isSelected ? 2 : 1
                             )
                     )
                 Text(label(option))
-                    .font(.callout.weight(isSelected ? .semibold : .regular))
+                    .font((isCompact ? Font.caption : Font.callout).weight(isSelected ? .semibold : .regular))
                     .foregroundStyle(isSelected ? Color.primary : AdaptiveContrast.quiet(contrast))
             }
         }

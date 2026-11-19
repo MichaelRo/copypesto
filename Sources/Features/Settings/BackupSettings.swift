@@ -50,9 +50,8 @@ struct BackupSettings: View {
                 backupSwitch
                 if isConfigured {
                     configured
-                } else {
-                    offActions
-                    if hasRecoveryKey { recoveryKeyRow }
+                } else if hasRecoveryKey {
+                    recoveryKeyRow
                 }
                 if unreadableCount > 0 {
                     Button("Delete Unreadable Clips\u{2026}", role: .destructive) { confirmsDeletingUnreadable = true }
@@ -64,7 +63,7 @@ struct BackupSettings: View {
             } header: {
                 Text("Backup").settingsRow("Backup")
             } footer: {
-                if sync == nil { Text(footerText) }
+                if sync == nil { Text(footerText).pestoCaption() }
             }
             if let sync {
                 let showsTable = isConfigured || sync.isEnabled
@@ -73,9 +72,9 @@ struct BackupSettings: View {
                 } header: {
                     Text("Sync")
                 } footer: {
-                    if !showsTable { Text(footerText) }
+                    if !showsTable { Text(footerText).pestoCaption() }
                 }
-                if showsTable { Section { contentsTable } footer: { Text(footerText) } }
+                if showsTable { Section { contentsTable } footer: { Text(footerText).pestoCaption() } }
             } else if isConfigured {
                 Section { contentsTable }
             }
@@ -153,20 +152,37 @@ struct BackupSettings: View {
 
     private var backupSwitch: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Toggle("Back up this Mac", isOn: Binding(
-                get: { isConfigured },
-                set: { on in
-                    if on { show(.setUp) } else { confirmsTurningOff = true }
+            HStack(spacing: 8) {
+                Toggle("Back up this Mac", isOn: Binding(
+                    get: { isConfigured },
+                    set: { on in
+                        if on { show(.setUp) } else { confirmsTurningOff = true }
+                    }
+                ))
+                .accessibilityIdentifier(AccessibilityID.backupSwitch)
+                InfoPopoverButton(
+                    "About backup",
+                    verbatimMessage: DataCardCopy.backupSentence(isConfigured: isConfigured)
+                )
+                Spacer()
+                if !isConfigured {
+                    Button("Set Up Backup\u{2026}") { show(.setUp) }
+                        .buttonStyle(.pestoProminent)
+                        .controlSize(.small)
+                        .accessibilityIdentifier(AccessibilityID.setUpBackupButton)
+                    Button("Restore from Backup\u{2026}") { show(.restore) }
+                        .controlSize(.small)
+                        .accessibilityIdentifier(AccessibilityID.restoreBackupButton)
                 }
-            ))
-            .accessibilityIdentifier(AccessibilityID.backupSwitch)
-            Text(DataCardCopy.backupSentence(isConfigured: isConfigured))
-                .pestoCaption()
+            }
             if isConfigured {
                 BackupStatusLine(
                     chip: chip, lastBytes: settings.lastBytes, lastMessage: status, pulse: pulse,
                     automatic: automatic, nextText: nextText
                 )
+            } else {
+                Text("One encrypted file of your clips, collections, snippets, and settings.")
+                    .pestoCaption()
             }
         }
     }
@@ -197,17 +213,6 @@ struct BackupSettings: View {
             },
             keepsHere: sync?.keepsHere ?? 0
         )
-    }
-
-    private var offActions: some View {
-        HStack(spacing: 8) {
-            Button("Set Up Backup\u{2026}") { show(.setUp) }
-                .buttonStyle(.pestoProminent)
-                .accessibilityIdentifier(AccessibilityID.setUpBackupButton)
-            Button("Restore from Backup\u{2026}") { show(.restore) }
-                .accessibilityIdentifier(AccessibilityID.restoreBackupButton)
-            Spacer()
-        }
     }
 
     private var recoveryKeyRow: some View {

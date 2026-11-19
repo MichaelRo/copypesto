@@ -49,37 +49,37 @@ The import tells you how many clips came in and how many were left out.
 *Settings → Data → Another app's library → Import…* has dedicated importers for Maccy and Alfred, and detects both automatically if installed.
 
 ### Maccy
-*Settings → Data → Another app's library → Import… → From Maccy…* opens Maccy's library file (`Storage.sqlite` in `~/Library/Containers/org.p0deje.Maccy/Data/Library/Application Support/Maccy/`). The file chooser starts in Maccy's folder, and Maccy can stay running while you import.
-- **What comes over:** All stored pasteboard types (plain text, rich text, HTML, links and pictures), source apps and original copy times.
+*Settings → Data → Another app's library → Import… → From Maccy…* opens Maccy's library file (`Storage.sqlite` in Maccy 2.x or `CoreData.sqlite` in Maccy 1.x, in `~/Library/Containers/org.p0deje.Maccy/Data/Library/Application Support/Maccy/` or `~/Library/Application Support/Maccy/`). The file chooser starts in Maccy's folder, and Maccy can stay running while you import.
+- **What comes over:** All stored pasteboard types (plain text, rich text, HTML, links and pictures — including large pictures stored beside the database), source apps and original copy times.
 - **Pinned clips:** Pinned clips go to a collection called "Pinned in Maccy".
 - **What is skipped:** Clips you already have, copies marked concealed or transient, and clips with no readable content.
 
 ### Alfred
 *Settings → Data → Another app's library → Import… → From Alfred…* opens Alfred's clipboard database (`clipboard.alfdb` in `~/Library/Application Support/Alfred/Databases/`). The file chooser starts in Alfred's database folder, and Alfred can stay running while you import.
-- **What comes over:** Text clips and copied file paths, with their source apps and original copy times.
-- **What is skipped:** Pictures (which Alfred stores outside the table), clips you already have and concealed copies.
+- **What comes over:** Text clips, copied file paths (including multi-file lists), and pictures stored in Alfred's `clipboard.alfdb.data` folder beside the database, with their source apps and original copy times.
+- **What is skipped:** Clips you already have and concealed copies.
 - **Snippets:** Alfred snippets use separate `.alfredsnippets` files; see *Moving snippets from another app* below to import snippets from a JSON file.
 
 ## Moving from other clipboard apps
 *Settings → Data → Another app's library → Import…* also includes dedicated importers for eight other macOS clipboard managers. For each app, the file chooser starts in its default folder, Pesto reads a copy read-only and leaves the original untouched, and the preview sheet shows what was found before you confirm.
 
 ### CleanClip
-Reads CleanClip's database (`Storage.sqlite` in `~/Library/Application Support/CleanClip/`). Brings in stored clip types, custom titles, source apps and copy times. Pinned clips go to a collection called "Pinned in CleanClip".
+Reads CleanClip's database (`Storage.sqlite` in `~/Library/Application Support/CleanClip/` or `com.antiless.cleanclip.mac`). Brings in stored clip types, pictures (including items stored in CleanClip's `PrivateData/HistoryItemContents` folder and thumbnail fallbacks), custom aliases, collections, source apps and copy times. Pinned clips without a list go to "Pinned in CleanClip".
 
 ### PasteNow
-Reads PasteNow's database (`PasteNow.sqlite`). Brings in plain text, rich text, links, titles, source apps and copy times. Each Pastelist list becomes its own collection.
+Reads PasteNow's database (`PasteNow.sqlite`). Brings in plain text, rich text, links, files, pictures (from `ZPASTEITEMDATA` or thumbnail fallbacks), titles, source apps and copy times. Each list becomes its own collection.
 
 ### CopyClip
 Reads CopyClip's database (`copyclip.sqlite` or `CopyClip.sqlite`). Brings in plain-text clips with their original copy times.
 
 ### PastePal
-Reads PastePal's database (`PastePal2.sqlite` or `PastePal.sqlite`). Brings in plain-text clips, source apps and copy times. Pinned clips go to a collection called "Pinned in PastePal".
+Reads PastePal's database (`PastePal2.sqlite` or `PastePal.sqlite`). Brings in text, rich text, links, files, pictures, custom names, collections, source apps and copy times (skipping deleted clips). Pinned clips without a collection go to "Pinned in PastePal".
 
 ### Pastebot
-Reads Pastebot's database (`Pastebot.sqlite`). Brings in stored pasteboard types, custom titles, source apps and copy times.
+Reads Pastebot's database (`Pastebot.sqlite`, including Group Container locations). Brings in stored pasteboard types (text, rich text, pictures), custom titles, folders/pasteboards, source apps and copy times.
 
 ### Clipy
-Reads Clipy's database (`sqlite.db` in `~/Library/Application Support/com.clipy-app.Clipy/`). Brings in stored pasteboard types, titles and copy times.
+Reads Clipy's database (`sqlite.db` in `~/Library/Application Support/com.clipy-app.Clipy/`). Brings in stored pasteboard types (text, links, pictures and thumbnails), enabled Clipy snippets organized by folder, and copy times.
 
 ### Flycut
 Reads Flycut's preferences store (`com.generalarcade.flycut.plist`). Brings in plain-text clips, source apps and copy times. Favorites go to a collection called "Favorites in Flycut".

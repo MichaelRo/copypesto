@@ -47,15 +47,6 @@ struct SettingsView: View {
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
                     .accessibilityIdentifier(MobileAccessibilityID.addsCopiesToggle)
-            } header: {
-                Text("Clipboard")
-            } footer: {
-                Text(
-                    "Pesto adds what you copied in another app each time it opens, and iOS asks for permission to " +
-                        "paste. Off, Pesto offers it with a Paste button and never reads the clipboard on its own."
-                )
-            }
-            Section {
                 Toggle("Insert from Pesto in other apps", isOn: $quickInsertEnabled)
                     .accessibilityIdentifier(MobileAccessibilityID.quickInsertToggle)
                     .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
@@ -68,14 +59,13 @@ struct SettingsView: View {
                     .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
                 }
             } header: {
-                Text("AutoFill and keyboard")
+                Text("Clipboard, AutoFill & keyboard")
             } footer: {
-                Text("""
-                Pesto keeps a small set of your pinned and recent text clips ready, sealed, so AutoFill or Pesto's \
-                keyboard can insert one in any text field. Clips with secrets are never in it. For AutoFill, turn on \
-                Pesto in Settings > General > AutoFill & Passwords. For the keyboard, add Pesto in Settings > \
-                General > Keyboard > Keyboards and allow Full Access.
-                """)
+                Text(
+                    "AutoFill and Pesto's keyboard use a sealed set of non-secret text clips. Turn on Pesto in " +
+                        "Settings > General > AutoFill & Passwords, or add it in Settings > General > Keyboard > " +
+                        "Keyboards and allow Full Access."
+                )
             }
             Section {
                 Picker("Keep clips for", selection: retentionDaysChoice) {
@@ -117,28 +107,17 @@ struct SettingsView: View {
                 }
                 Toggle("Load link previews", isOn: $linkPreviews)
                     .accessibilityIdentifier(MobileAccessibilityID.linkPreviewsToggle)
-            } header: {
-                Text("Privacy")
-            } footer: {
-                Text("""
-                With the lock on, Pesto asks when it opens and after it has been away this long. Without it, the \
-                widget, AutoFill and the keyboard show your clips; with it, the widget says Locked and AutoFill and \
-                the keyboard hold nothing, unless you show clips there, which anyone holding this device can then \
-                read. Hidden clips stay masked until you show them. Copying one never shows it. Link previews \
-                contact the page a link points to, once, to show its title and picture; nothing else leaves this \
-                device.
-                """)
-            }
-            Section {
                 Toggle("Hide clips while the screen is recorded or shared", isOn: $coversWhileCaptured)
                     .accessibilityIdentifier(MobileAccessibilityID.captureCoverToggle)
                     .onChange(of: coversWhileCaptured) { _, on in appState.secretReveal.coversWhileCaptured = on }
                 Toggle("Hide clip contents now", isOn: hiddenByHand)
                     .accessibilityIdentifier(MobileAccessibilityID.hideContentsToggle)
+            } header: {
+                Text("Privacy")
             } footer: {
                 Text(
-                    "While iOS records, mirrors or AirPlays the screen, cards show only their kind until you show " +
-                        "one. Hiding by hand lasts until you show the contents again or Pesto quits."
+                    "Masked secrets and screen-capture covers stay hidden until shown. Only link previews ever " +
+                        "contact a link\u{2019}s site."
                 )
             }
             AppleIntelligenceSection()
@@ -151,12 +130,17 @@ struct SettingsView: View {
                 Text("Pinned clips are kept.")
             }
             Section {
-                Button("Show Welcome Again") {
-                    appState.requestWelcomeAgain()
-                    dismiss()
+                HStack {
+                    Button("Show Welcome Again") {
+                        appState.requestWelcomeAgain()
+                        dismiss()
+                    }
+                    .accessibilityIdentifier(MobileAccessibilityID.showWelcomeAgain)
+                    Spacer()
+                    Text(AppVersion.displayString())
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
-                .accessibilityIdentifier(MobileAccessibilityID.showWelcomeAgain)
-                LabeledContent("Pesto", value: AppVersion.displayString())
             }
         }
         .navigationTitle("Settings")

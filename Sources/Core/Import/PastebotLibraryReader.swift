@@ -207,8 +207,8 @@ public enum PastebotLibraryReader {
     -> PasteImportRecord.Representation? {
         typealias Reader = ClipboardAppLibraryReader
         if let rawData = Reader.blob(rows, 6, externalFolder: externalFolder), !rawData.isEmpty {
-            let uti = Reader.text(rows, 7).flatMap { $0.isEmpty ? nil : $0 }
-                ?? Reader.imageUTI(forBytes: rawData)
+            let uti = Reader.imageUTI(forBytes: rawData)
+                ?? Reader.text(rows, 7).flatMap { $0.isEmpty ? nil : $0 }
                 ?? (String(data: rawData, encoding: .utf8) != nil ? "public.utf8-plain-text" : nil)
             if let uti { return .init(uti: uti, dataBase64: rawData.base64EncodedString()) }
         }

@@ -140,7 +140,10 @@ enum PasteExternalPayload {
         guard let name, let folder,
               !name.isEmpty, name != ".", name != "..",
               !name.contains("/"), !name.contains("\\"), !name.contains("\0") else { return nil }
-        let descriptor = Darwin.open(folder.appendingPathComponent(name).path, O_RDONLY | O_NOFOLLOW)
+        let dirFD = Darwin.open(folder.path, O_RDONLY | O_NOFOLLOW | O_DIRECTORY)
+        guard dirFD >= 0 else { return nil }
+        let descriptor = Darwin.openat(dirFD, name, O_RDONLY | O_NOFOLLOW)
+        close(dirFD)
         guard descriptor >= 0 else { return nil }
         var info = stat()
         guard fstat(descriptor, &info) == 0, info.st_mode & S_IFMT == S_IFREG else {

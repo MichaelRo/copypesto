@@ -164,13 +164,13 @@ public enum ClipyLibraryReader {
         var status = sqlite3_step(rows)
         while status == SQLITE_ROW {
             defer { status = sqlite3_step(rows) }
-            guard records.count < remainingCapacity else { throw Reader.ReadError.tooLarge }
             guard let content = Reader.text(rows, 1), !content.isEmpty,
                   content.utf8.count <= Reader.maxValueBytes else
             {
                 skipped += 1
                 continue
             }
+            guard records.count < remainingCapacity else { throw Reader.ReadError.tooLarge }
             let title = Reader.text(rows, 0).flatMap { $0.isEmpty ? nil : $0 }
             let folder = Reader.text(rows, 2).flatMap { $0.isEmpty ? nil : $0 } ?? "Snippets in Clipy"
             records.append(PasteImportRecord(

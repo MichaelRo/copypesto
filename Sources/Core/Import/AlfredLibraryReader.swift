@@ -83,9 +83,8 @@ public enum AlfredLibraryReader {
             guard let dataHash, Reader.isPlainFileName(dataHash),
                   let data = Reader.readExternalFile(named: dataHash, in: dataFolder) else { return nil }
             let ext = (dataHash as NSString).pathExtension
-            guard let uti = ext.isEmpty
-                ? Reader.imageUTI(forBytes: data)
-                : Reader.imageUTI(forExtension: ext) else { return nil }
+            guard let uti = Reader.imageUTI(forBytes: data)
+                ?? (ext.isEmpty ? nil : Reader.imageUTI(forExtension: ext)) else { return nil }
             return .init(uti: uti, dataBase64: data.base64EncodedString())
         case 2:
             if let urls = fileURLsFromPlist(dataHash: dataHash, in: dataFolder) {

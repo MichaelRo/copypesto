@@ -42,6 +42,8 @@ struct KeyboardRootView: View {
                 }
             }
         }
+        // iOS 26's soft edge blurred the whole row: it is shorter than the edge effect.
+        .scrollEdgeEffectHidden(true, for: .all)
         .fixedSize(horizontal: false, vertical: true)
     }
 

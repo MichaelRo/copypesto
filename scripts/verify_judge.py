@@ -4,7 +4,8 @@
 
   verify_judge.py core  CORE_LOG
   verify_judge.py hosted TESTS_JSON [--no-ui] [--snapshots]   (TESTS_JSON: `xcresulttool get test-results tests --compact`)
-  verify_judge.py mobile IPHONE_JSON IPAD_JSON [--no-ui]       (the PestoMobile scheme on each simulator)
+  verify_judge.py mobile IPHONE_JSON IPAD_JSON [--no-ui] [--phone-only]   (the PestoMobile scheme on each simulator;
+                                                               CI runs the iPhone's unit tests only)
 
 Prints a one-line summary, then one line per problem. Exits 1 when a floor is missed or a test was skipped that
 scripts/verify-allowed-skips.txt does not name, so a green summary cannot hide tests that did not run.
@@ -96,7 +97,7 @@ def judge_hosted(tree, includes_ui=True, includes_snapshots=False, allowed=None)
     return summary, problems
 
 
-def judge_mobile(phone_tree, pad_tree, includes_ui=True, allowed=None):
+def judge_mobile(phone_tree, pad_tree, includes_ui=True, allowed=None, phone_only=False):
     """An iOS UI test that belongs to one device skips on the other (`XCTSkipUnless`), so a skip counts only when the
     same test passed on neither device."""
     allowed = allowed_skips() if allowed is None else allowed
@@ -104,7 +105,8 @@ def judge_mobile(phone_tree, pad_tree, includes_ui=True, allowed=None):
     ui_passed = set()
     ui_skipped = set()
     problems = []
-    for device, tree in (("iPhone", phone_tree), ("iPad", pad_tree)):
+    devices = (("iPhone", phone_tree),) if phone_only else (("iPhone", phone_tree), ("iPad", pad_tree))
+    for device, tree in devices:
         unit[device] = 0
         for bundle, identifier, result in collect_cases(tree):
             if bundle == "PestoMobileTests":
@@ -127,7 +129,8 @@ def judge_mobile(phone_tree, pad_tree, includes_ui=True, allowed=None):
             for name in sorted(ui_skipped - ui_passed)
             if not is_allowed(name, allowed)
         ]
-    summary = f"iPhone unit={unit['iPhone']} iPad unit={unit['iPad']} ui={len(ui_passed)}"
+    pad = "iPad not run" if phone_only else f"iPad unit={unit['iPad']}"
+    summary = f"iPhone unit={unit['iPhone']} {pad} ui={len(ui_passed)}"
     return summary, problems
 
 
@@ -140,7 +143,9 @@ def main(argv):
             print(__doc__)
             return 2
         phone, pad = (json.loads(pathlib.Path(p).read_text()) for p in argv[2:4])
-        summary, problems = judge_mobile(phone, pad, includes_ui="--no-ui" not in argv)
+        summary, problems = judge_mobile(
+            phone, pad, includes_ui="--no-ui" not in argv, phone_only="--phone-only" in argv
+        )
     elif argv[1] == "core":
         summary, problems = judge_core(pathlib.Path(argv[2]).read_text(errors="replace"))
     else:

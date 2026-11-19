@@ -55,9 +55,10 @@ While the history lock is off, the preview of your latest clip that holds no sec
 your user account can read, so the `pesto` command and AppleScript can show it; turning the lock on removes it. Pesto
 puts nothing into Spotlight: a version that offered it left an index, and the first launch of this one removes it.
 In a release that includes the Recent Clips desktop widget, while you have one on your desktop, Pesto keeps a small
-encrypted copy of your newest clips that are not secrets (short previews, small pictures, short texts whole) in its app
-group folder, with a key in your keychain that only Pesto and its widget can read; with the history lock on it holds
-none, and removing the widget removes it.
+encrypted copy of your newest clips that are not secrets (short previews, small pictures, short texts whole), and of
+your first 24 collections (their names, icons and colors, and up to eight such clips each, never their rules) so a
+widget can be set to one, in its app group folder, with a key in your keychain that only Pesto and its widget can read;
+with the history lock on it holds none, and removing the widget removes it.
 The title of a page behind a link is encrypted along with your own titles, notes and tags, and so are the numeric
 vectors used for search by meaning (they describe a clip's topic and can hint at its words).
 

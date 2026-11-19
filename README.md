@@ -112,7 +112,8 @@ The full list of what is stored and sent, including what encryption does *not* p
   CopyClip, PastePal, Pastebot, Clipy, Flycut and Unclutter. Pesto reads a copy of the library and leaves the original
   alone. Snippets come in from Raycast's JSON export. See [Moving from another app](docs/guide/moving-from.md).
 - **Yours to script.** Shortcuts, Spotlight and a Control Center button (macOS 26 and later), a Recent Clips desktop
-  widget in releases signed for it (encrypted, never a secret, nothing while the history is locked), a `pesto://` URL scheme,
+  widget in releases signed for it (recent, pinned or one collection's clips; encrypted, never a secret, nothing while the
+  history is locked), a `pesto://` URL scheme,
   AppleScript, a Copy to Pesto item in the Services menu, a Copy Text to Pesto action in Shortcuts, and a command-line tool you can build from source. A Hide Clip Contents action (menu bar, Shortcuts or a
   Focus) blurs your clips for a screen share.
 - **Made for the Mac.** A Solid or a Liquid Glass shelf surface (Glass needs macOS 26 and switches to Solid when Reduce Transparency is on), light and dark, four themes (Basil, Parmesan,

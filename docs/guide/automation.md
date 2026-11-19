@@ -58,3 +58,11 @@ it is on.
 On macOS 26 and later, Pesto offers an **Open Pesto** control. Open Control Center, choose *Edit Controls*, and add it;
 pressing it opens the shelf. It carries no data: it only opens `pesto://open`.
 
+
+## Recent Clips widget
+In a release that includes it, Pesto offers a **Recent Clips** widget for the desktop and Notification Center, in three
+sizes. Edit the widget to choose what it shows: **Recent**, **Pinned** or **Collection**, and with Collection, which
+collection (your first 24, in the order Pesto lists them). A plain collection shows its clips in the order you gave
+them, a smart one the newest clips its rules match. Clips with secrets, clips still being checked, adult clips and clips
+set to expire never appear. If the collection is deleted, the widget says "Choose a collection"; renaming it changes the
+widget too. Choosing a clip copies it, shows it in Pesto or opens a link, as **When a Clip Is Chosen** says.

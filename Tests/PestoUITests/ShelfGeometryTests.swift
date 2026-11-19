@@ -28,15 +28,18 @@ final class ShelfGeometryTests: PestoUITestCase {
         XCTAssertGreaterThanOrEqual(button.frame.minY - card.maxY, 8, "the capsule must clear the row")
     }
 
-    /// A user's shelf showed the Undo offer after a delete cut in half by the panel's lower edge (2026-11-19). Every
-    /// card size and both resting places must keep the whole capsule inside the panel and on the screen.
+    /// A user's shelf showed the Undo offer after a delete cut in half by the panel's lower edge (2026-11-19): a banner
+    /// above the command bar (Accessibility not granted here) took height the fixed panel did not have, and pushed
+    /// everything under it down. Every card size, both resting places and a banner must keep the whole capsule inside
+    /// the panel, on the screen and under the cards, and the cards where the height budget puts them.
     func test_undoOfferAfterADeleteIsWhollyInsideThePanel() {
-        let setups: [[String: String]] = [
-            [:], ["cardSize": "compact"], ["cardSize": "large"], ["shelfPosition": "top"],
-            ["cardSize": "compact", "shelfPosition": "top"]
+        let setups: [(defaults: [String: String], accessibility: String)] = [
+            ([:], "trusted"), (["cardSize": "compact"], "trusted"), (["cardSize": "large"], "trusted"),
+            (["shelfPosition": "top"], "trusted"), (["cardSize": "compact", "shelfPosition": "top"], "trusted"),
+            ([:], "denied"), (["shelfPosition": "top"], "denied")
         ]
-        for extra in setups {
-            launch(defaults: ["hasOnboarded": "true"].merging(extra) { $1 })
+        for (extra, accessibility) in setups {
+            launch(accessibility: accessibility, defaults: ["hasOnboarded": "true"].merging(extra) { $1 })
             showOverlay()
             overlay.typeKey(.delete, modifierFlags: [])
             let confirm = element(AccessibilityID.deleteConfirmButton)
@@ -52,6 +55,12 @@ final class ShelfGeometryTests: PestoUITestCase {
             XCTAssertLessThanOrEqual(offer.maxY, screen.maxY, "bottom edge on the screen \(extra)")
             let card = cards.firstMatch.frame
             XCTAssertGreaterThanOrEqual(offer.minY - card.maxY, 0, "the offer covers no card \(extra)")
+            XCTAssertEqual(
+                panel.maxY - card.maxY,
+                46,
+                accuracy: 1.5,
+                "the band under the cards \(extra) \(accessibility)"
+            )
             app.terminate()
         }
     }

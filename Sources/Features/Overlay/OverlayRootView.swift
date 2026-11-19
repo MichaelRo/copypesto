@@ -165,18 +165,28 @@ struct OverlayRootView: View {
             // swiftlint:disable:next redundant_discardable_let
             let _ = RenderProbe.hit("OverlayRootView")
             VStack(spacing: 0) {
-                if let notice = StorageNotice.message(
-                    hasStorage: appState.historyContainer != nil, isOnDisk: appState.storeIsOnDisk
-                ) {
-                    storageBanner(notice)
-                }
+                // The banners take height the panel's fixed budget (`ShelfHeight.chrome`) does not have: their
+                // measured height grows the panel (`AppState.shelfBannerHeight`), or they push the row and the Undo
+                // offer under it past the lower edge.
+                VStack(spacing: 0) {
+                    if let notice = StorageNotice.message(
+                        hasStorage: appState.historyContainer != nil, isOnDisk: appState.storeIsOnDisk
+                    ) {
+                        storageBanner(notice)
+                    }
 
-                if !appState.hasAccessibilityPermission {
-                    axPermissionBanner
-                }
+                    if !appState.hasAccessibilityPermission {
+                        axPermissionBanner
+                    }
 
-                if !appState.importOffer.isEmpty {
-                    importOfferBanner(appState.importOffer)
+                    if !appState.importOffer.isEmpty {
+                        importOfferBanner(appState.importOffer)
+                    }
+                }
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { height in
+                    appState.shelfBannerHeight = height
                 }
 
                 CommandBarView()

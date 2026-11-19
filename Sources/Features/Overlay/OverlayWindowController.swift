@@ -36,6 +36,7 @@ final class OverlayWindowController {
         panel.title = String(localized: "Pesto clipboard history")
         panel.setAccessibilityLabel(String(localized: "Pesto clipboard history"))
 
+        appState.onShelfBannerHeightChange = { [weak self] in self?.fitBanners() }
         let rootView = OverlayRootView()
             .environment(appState)
             .environment(\.shelfActions, appState.asShelfActions)
@@ -109,9 +110,16 @@ final class OverlayWindowController {
     func prewarmLayout() {
         guard !panel.isVisible, !appState.isOverlayVisible else { return }
         let interval = PerfSignposts.shelf.begin("prewarmLayout")
-        panel.setFrame(BottomShelfPositioning.frame(), display: false)
+        panel.setFrame(BottomShelfPositioning.frame(banners: appState.shelfBannerHeight), display: false)
         panel.contentView?.layoutSubtreeIfNeeded()
         interval.end()
+    }
+
+    /// A banner came or went while the shelf is open: the panel takes its new height at once, so the cards and the
+    /// Undo offer under them stay inside it. Only the frame moves, never a layer transform (see this folder's notes).
+    private func fitBanners() {
+        guard panel.isVisible, !isHiding else { return }
+        panel.setFrame(BottomShelfPositioning.frame(banners: appState.shelfBannerHeight), display: true)
     }
 
     func show() {
@@ -119,7 +127,7 @@ final class OverlayWindowController {
         isHiding = false
         showGeneration += 1
         panel.contentView?.layer?.removeAnimation(forKey: "hideOverlay")
-        let frame = BottomShelfPositioning.frame()
+        let frame = BottomShelfPositioning.frame(banners: appState.shelfBannerHeight)
         panel.setFrame(frame, display: false)
         // Keep panel fully opaque — layer opacity drives the fade so we never touch
         // NSAnimatablePropertyContainer (panel.animator()), which would spin up NSAnimation
@@ -145,7 +153,7 @@ final class OverlayWindowController {
         CATransaction.commit()
 
         let slide = CABasicAnimation(keyPath: "transform.translation.y")
-        slide.fromValue = BottomShelfPositioning.position.slideOffset(height: BottomShelfPositioning.overlayHeight)
+        slide.fromValue = BottomShelfPositioning.position.slideOffset(height: panel.frame.height)
 
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 0
@@ -204,7 +212,7 @@ final class OverlayWindowController {
         let slide = CABasicAnimation(keyPath: "transform.translation.y")
         slide.fromValue = 0
         // Explicit toValue instead of relying on model state.
-        slide.toValue = BottomShelfPositioning.position.slideOffset(height: BottomShelfPositioning.overlayHeight)
+        slide.toValue = BottomShelfPositioning.position.slideOffset(height: panel.frame.height)
 
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 1

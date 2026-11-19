@@ -40,6 +40,13 @@ public struct InboxItem: Equatable, Sendable {
                 throw InboxError.unsupported
             }
         }
+        if let sourceImageURL {
+            guard LinkPreviewEligibility.isEligible(sourceImageURL),
+                  sourceImageURL.absoluteString.utf8.count <= Int(UInt16.max) else
+            {
+                throw InboxError.unsupported
+            }
+        }
         return self
     }
 
@@ -83,12 +90,11 @@ public struct InboxItem: Equatable, Sendable {
             guard bytes.count >= typeEnd + 2 else { throw InboxError.damaged }
             let urlLength = Int(bytes.readBigEndianUInt16(at: typeEnd))
             let urlEnd = typeEnd + 2 + urlLength
-            guard bytes.count >= urlEnd else { throw InboxError.damaged }
-            if urlLength > 0 {
-                guard let urlString = String(data: bytes.subdata(in: (typeEnd + 2)..<urlEnd), encoding: .utf8),
-                      let parsed = URL(string: urlString) else { throw InboxError.damaged }
-                sourceImageURL = parsed
-            }
+            guard urlLength > 0, bytes.count >= urlEnd,
+                  let urlString = String(data: bytes.subdata(in: (typeEnd + 2)..<urlEnd), encoding: .utf8),
+                  let parsed = URL(string: urlString),
+                  LinkPreviewEligibility.isEligible(parsed) else { throw InboxError.damaged }
+            sourceImageURL = parsed
             payloadStart = urlEnd
         }
         return InboxItem(

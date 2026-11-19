@@ -10,7 +10,8 @@ struct OpenPestoIntent: AppIntent {
     static let openAppWhenRun = false
 
     func perform() async throws -> some IntentResult & OpensIntent {
-        .result(opensIntent: OpenURLIntent(URL(string: "pesto://open") ?? URL(fileURLWithPath: "/")))
+        guard let url = URL(string: "pesto://open") else { throw CocoaError(.fileNoSuchFile) }
+        return .result(opensIntent: OpenURLIntent(url))
     }
 }
 

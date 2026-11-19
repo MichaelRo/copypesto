@@ -15,11 +15,17 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
   trailing `.inspector`, only on demand. With the sidebar hidden the grid carries the chip row and the gear
   (`LibraryChrome.showsChipRow`, driven by the size class and the column visibility, never by the device). A regular
   width under 800 pt (an iPad window in Split View) starts with the sidebar hidden (`LibraryChrome.initialColumns`).
-- **A change of layout** (an iPad window resized across the compact boundary, a foldable iPhone later) tears down one
+- **A foldable iPhone** follows the same rule as an iPad window: folded it is compact and gets the phone layout;
+  unfolded it is regular and gets the iPad layout, with the sidebar hidden while the width is under 800 pt. The root
+  decides the columns from the width in either class and builds the split view only once they are decided, so an
+  unfold never shows the sidebar and then hides it (`LibraryResizeHostingTests`, at 375, 700 and 800 pt).
+  Fold-specific checks (the hinge, a half-open posture) wait for a device.
+- **A change of layout** (an iPad window resized across the compact boundary, a fold or an unfold) tears down one
   layout and builds the other, so what the person is doing lives in `LibraryModel` above both: the scope, the search,
-  the open clip, the unsaved Edit Text draft (memory only, never scene storage: it holds plaintext) and the first
-  visible card, which the grid scrolls back to (`scrollPosition`). `LayoutSwapUITests` flips a forced size class on
-  the iPad simulator, because XCUITest cannot resize a window.
+  the open clip, the unsaved Edit Text draft (memory only, never `@SceneStorage`, which `no_scene_storage` in
+  `.swiftlint.yml` rejects: it would write plaintext to disk) and the first visible card, which the grid scrolls back
+  to (`scrollPosition`). `LayoutSwapUITests` flips a forced size class on the iPad simulator, because XCUITest cannot
+  resize a window.
 - **Chips** (`LibraryChip.row`): All, Pinned, each collection, then "+". While a search is open the row adds the six
   kinds (Text, Links, Pictures, Colors, Code, Files) after a divider and drops "+"; kinds appear nowhere else. A kind
   narrows the scope; ending the search clears it (`LibraryFilter`). A collection chip's menu edits (name, icon, color) or deletes it

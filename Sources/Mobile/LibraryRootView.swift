@@ -9,9 +9,13 @@ struct LibraryRootView: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.scenePhase) private var scenePhase
-    @State private var library = LibraryModel()
+    @State private var library: LibraryModel
     @State private var width: CGFloat = 0
     @State private var automaticColumns: NavigationSplitViewVisibility?
+
+    init(library: LibraryModel = LibraryModel()) {
+        _library = State(initialValue: library)
+    }
 
     private var layoutSizeClass: UserInterfaceSizeClass? {
         #if DEBUG
@@ -59,7 +63,9 @@ struct LibraryRootView: View {
         } else if let container = appState.historyContainer, let store = appState.historyStore {
             Group {
                 if layoutSizeClass == .regular {
-                    PadLibraryView(store: store)
+                    // Built only once the width has decided the columns: built with the default and changed after
+                    // the first layout, the split view's pending transition wrote the sidebar back as shown.
+                    if width > 0 { PadLibraryView(store: store) } else { Color.clear }
                 } else {
                     PhoneLibraryView(store: store)
                 }
@@ -93,9 +99,10 @@ extension LibraryRootView {
     }
 
     /// A regular width starts with the sidebar shown or hidden by how wide the window is, and follows the width until
-    /// the person shows or hides the sidebar themselves.
+    /// the person shows or hides the sidebar themselves. A compact width keeps them decided too, so a change to regular
+    /// (unfolding, a wider Split View) builds the split view with them instead of changing them under it.
     private func decideColumns() {
-        guard width > 0, layoutSizeClass == .regular else { return }
+        guard width > 0 else { return }
         guard automaticColumns == nil || library.columns == automaticColumns else { return }
         let wanted = LibraryChrome.initialColumns(width: width)
         automaticColumns = wanted

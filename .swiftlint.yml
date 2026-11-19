@@ -121,6 +121,13 @@ custom_rules:
     message: "Core/ is UI-free. Move UI-dependent code to Features/."
     severity: error
 
+  no_scene_storage:
+    name: "No @SceneStorage"
+    regex: '@SceneStorage\b'
+    included: 'Sources/.*'
+    message: "@SceneStorage writes plaintext to disk; keep scene state in LibraryModel (memory only)."
+    severity: error
+
   no_direct_user_defaults:
     name: "Use AppDefaults.store, not UserDefaults.standard"
     regex: 'UserDefaults\.standard'

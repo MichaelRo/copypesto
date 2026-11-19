@@ -19,6 +19,15 @@ struct CardGridLayoutTests {
         #expect(CardGridLayout.columnCount(width: 0, isAccessibilitySize: false) == 2)
     }
 
+    @Test("a grid as wide as a 375, 700 or 800 point window, less its margins, holds two, three and three columns")
+    func whenAFoldableIsResized_thenColumnsFollow() {
+        let row = { (window: CGFloat) in window - CardGridLayout.margin * 2 }
+        #expect(CardGridLayout.columnCount(width: row(375), isAccessibilitySize: false) == 2)
+        #expect(CardGridLayout.columnCount(width: row(700), isAccessibilitySize: false) == 3)
+        #expect(CardGridLayout.columnCount(width: row(800), isAccessibilitySize: false) == 3)
+        #expect(CardGridLayout.columnCount(width: row(828), isAccessibilitySize: false) == 4)
+    }
+
     @Test("an accessibility text size gives one column at any width")
     func whenAccessibilitySize_thenOneColumn() {
         #expect(CardGridLayout.columnCount(width: 370, isAccessibilitySize: true) == 1)

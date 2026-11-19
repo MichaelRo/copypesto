@@ -112,6 +112,26 @@ struct LocalizationRoutingTests {
         }
     }
 
+    @Test("all three string catalogs translate every key into all twelve target locales plus English")
+    func allCatalogsCoverAllSupportedLocales() throws {
+        let locales = ["en", "es", "fr", "de", "ja", "zh-Hans", "pt-BR", "he", "ru", "uk", "ko", "it", "cs"]
+        for file in ["InfoPlist.xcstrings", "AppShortcuts.xcstrings", "Localizable.xcstrings"] {
+            let url = SourceTree.sources.appendingPathComponent("Resources/\(file)")
+            let strings = try parseStringCatalog(at: url)
+            #expect(!strings.isEmpty, "\(file) should not be empty")
+            for (key, rawEntry) in strings {
+                let entry = try #require(rawEntry as? [String: Any], "\(file)[\(key)]")
+                let localizations = try #require(entry["localizations"] as? [String: Any], "\(file)[\(key)]")
+                for locale in locales {
+                    #expect(
+                        hasTranslatedContent(localizations[locale]),
+                        "\(file) missing translated \(locale) entry for \(key)"
+                    )
+                }
+            }
+        }
+    }
+
     private func targetBlock(named name: String, in project: String) throws -> String {
         let marker = "\n  \(name):\n"
         let start = try #require(project.range(of: marker), "\(name) target in Pesto.yml").upperBound
@@ -138,5 +158,26 @@ struct LocalizationRoutingTests {
               let unit = en["stringUnit"] as? [String: Any],
               let value = unit["value"] as? String else { return false }
         return !value.isEmpty
+    }
+
+    private func hasTranslatedContent(_ rawLocale: Any?) -> Bool {
+        guard let locale = rawLocale as? [String: Any] else { return false }
+        if let unit = locale["stringUnit"] as? [String: Any],
+           let value = unit["value"] as? String
+        {
+            return !value.isEmpty
+        }
+        if let variations = locale["variations"] as? [String: Any],
+           let plural = variations["plural"] as? [String: Any],
+           !plural.isEmpty
+        {
+            return plural.values.allSatisfy { rawForm in
+                guard let form = rawForm as? [String: Any],
+                      let unit = form["stringUnit"] as? [String: Any],
+                      let value = unit["value"] as? String else { return false }
+                return !value.isEmpty
+            }
+        }
+        return false
     }
 }

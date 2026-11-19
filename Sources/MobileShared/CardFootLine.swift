@@ -18,13 +18,6 @@ struct CardFootLine: Equatable {
         var captureMethod: CaptureMethod?
     }
 
-    static func origin(of item: ClipboardItem) -> Origin {
-        Origin(
-            isRemote: item.isRemote, appName: item.knownSourceAppName, arrivedBySync: item.syncOrigin != nil,
-            captureMethod: item.captureMethod
-        )
-    }
-
     static func make(
         _ origin: Origin, title: String?, age: String, device: Device, showsTitleOnFace: Bool = false
     )

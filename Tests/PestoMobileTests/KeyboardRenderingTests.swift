@@ -138,4 +138,20 @@ struct KeyboardRenderingTests {
         let ready = try await render(Self.menus[3].1, width: 402, regular: false, dark: false).pngData()
         #expect(restricted != ready)
     }
+
+    @Test("KeyboardLayout matches iPhone and iPad card sizes and row counts")
+    func whenKeyboardLayoutQueried_thenSizesMatchSpec() {
+        #expect(KeyboardLayout.rows(size: .small, isRegular: false, isLandscape: false) == 1)
+        #expect(KeyboardLayout.rows(size: .medium, isRegular: false, isLandscape: false) == 2)
+        #expect(KeyboardLayout.rows(size: .large, isRegular: false, isLandscape: false) == 2)
+        #expect(KeyboardLayout.rows(size: .medium, isRegular: false, isLandscape: true) == 1)
+        #expect(KeyboardLayout.rows(size: .large, isRegular: false, isLandscape: true) == 1)
+        #expect(KeyboardLayout.rows(size: .large, isRegular: true, isLandscape: false) == 1)
+
+        #expect(KeyboardLayout.cardSize(size: .medium, isRegular: false) == CGSize(width: 150, height: 88))
+        #expect(KeyboardLayout.cardSize(size: .large, isRegular: false) == CGSize(width: 180, height: 110))
+        #expect(KeyboardLayout.cardSize(size: .small, isRegular: true).width == 180)
+        #expect(KeyboardLayout.cardSize(size: .medium, isRegular: true).width == 228)
+        #expect(KeyboardLayout.cardSize(size: .large, isRegular: true).width == 260)
+    }
 }

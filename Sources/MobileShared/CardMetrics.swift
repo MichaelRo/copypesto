@@ -12,15 +12,17 @@ struct CardMetrics {
     static let titleGap: CGFloat = 4
 
     let width: CGFloat
+    private let fixedHeight: CGFloat?
     private let category: UIContentSizeCategory
 
-    init(width: CGFloat, typeSize: DynamicTypeSize) {
+    init(width: CGFloat, height: CGFloat? = nil, typeSize: DynamicTypeSize) {
         self.width = width
+        fixedHeight = height
         category = UIContentSizeCategory(typeSize)
     }
 
     var height: CGFloat {
-        CardGridLayout.cardHeight(forWidth: width)
+        fixedHeight ?? CardGridLayout.cardHeight(forWidth: width)
     }
 
     static let maxTextScale: CGFloat = 1.6

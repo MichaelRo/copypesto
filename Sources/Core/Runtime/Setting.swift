@@ -60,6 +60,8 @@ public enum Setting {
     public static let keyboardCollections = SettingKey("keyboardCollections", default: "")
     /// iOS: after a tap inserts a clip, the keyboard moves to the person's own keyboard (ADR 0062).
     public static let keyboardReturnsAfterInsert = SettingKey("keyboardReturnsAfterInsert", default: true)
+    /// iOS: how large the keyboard's clip cards are (Small, Medium, Large).
+    public static let keyboardSize = SettingKey("keyboardSize", default: KeyboardSize.medium.rawValue)
     /// In the widget extension's own preferences: the clip a tile last copied in place and when, as
     /// `<UUID>@<seconds since 1970>`, so that tile shows Copied for a moment (ADR 0052). Never any content.
     public static let widgetLastCopy = SettingKey("widgetLastCopy", default: "")
@@ -163,7 +165,7 @@ public enum Setting {
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
         syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
         quickInsertEnabled.name, showsClipsOutsideWhileLocked.name, keyboardCollections.name,
-        keyboardReturnsAfterInsert.name, widgetLastCopy.name, deviceID.name,
+        keyboardReturnsAfterInsert.name, keyboardSize.name, widgetLastCopy.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,

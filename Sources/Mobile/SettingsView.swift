@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
     @AppStorage(Setting.keyboardReturnsAfterInsert) private var keyboardReturns: Bool
+    @AppStorage(Setting.keyboardSize) private var keyboardSize: String
+    @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
@@ -38,6 +40,7 @@ struct SettingsView: View {
                         Text(choice.displayName).tag(choice.rawValue)
                     }
                 }
+                .onChange(of: theme) { appState.writeQuickInsert() }
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
                         Text(mode.label).tag(mode.rawValue)
@@ -52,6 +55,12 @@ struct SettingsView: View {
                     .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
                 if quickInsertEnabled {
                     NavigationLink("Keyboard collections") { KeyboardCollectionsView() }
+                    Picker("Keyboard size", selection: $keyboardSize) {
+                        Text("Small").tag(KeyboardSize.small.rawValue)
+                        Text("Medium").tag(KeyboardSize.medium.rawValue)
+                        Text("Large").tag(KeyboardSize.large.rawValue)
+                    }
+                    .onChange(of: keyboardSize) { appState.writeQuickInsert() }
                     Picker("After inserting a clip", selection: $keyboardReturns) {
                         Text("Return to my keyboard").tag(true)
                         Text("Stay in Pesto").tag(false)
@@ -107,6 +116,11 @@ struct SettingsView: View {
                 }
                 Toggle("Load link previews", isOn: $linkPreviews)
                     .accessibilityIdentifier(MobileAccessibilityID.linkPreviewsToggle)
+                Picker("Explicit pictures and links", selection: $nsfwModeRaw) {
+                    Text("Blur").tag(NSFWMode.blur.rawValue)
+                    Text("Hide").tag(NSFWMode.hide.rawValue)
+                    Text("Show").tag(NSFWMode.show.rawValue)
+                }
                 Toggle("Hide clips while the screen is recorded or shared", isOn: $coversWhileCaptured)
                     .accessibilityIdentifier(MobileAccessibilityID.captureCoverToggle)
                     .onChange(of: coversWhileCaptured) { _, on in appState.secretReveal.coversWhileCaptured = on }

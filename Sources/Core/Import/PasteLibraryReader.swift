@@ -137,7 +137,9 @@ enum PasteExternalPayload {
 
     /// Opens without following a link and reads the size of the open file, so what is measured is what is read.
     private static func open(_ name: String?, in folder: URL?) -> (descriptor: Int32, size: Int)? {
-        guard let name, let folder else { return nil }
+        guard let name, let folder,
+              !name.isEmpty, name != ".", name != "..",
+              !name.contains("/"), !name.contains("\\"), !name.contains("\0") else { return nil }
         let descriptor = Darwin.open(folder.appendingPathComponent(name).path, O_RDONLY | O_NOFOLLOW)
         guard descriptor >= 0 else { return nil }
         var info = stat()
@@ -156,8 +158,14 @@ enum PasteExternalPayload {
 
     /// The file's bytes, or nil when it is missing, not a plain file, or over `limit` (nothing is read then).
     static func read(_ name: String?, in folder: URL?, limit: Int) -> Data? {
-        guard let file = open(name, in: folder), file.size <= limit else { return nil }
-        return try? FileHandle(fileDescriptor: file.descriptor, closeOnDealloc: true).readToEnd() ?? Data()
+        guard let file = open(name, in: folder) else { return nil }
+        guard file.size <= limit else {
+            close(file.descriptor)
+            return nil
+        }
+        let handle = FileHandle(fileDescriptor: file.descriptor, closeOnDealloc: true)
+        guard let data = try? handle.read(upToCount: limit + 1) else { return file.size == 0 ? Data() : nil }
+        return data.count <= limit ? data : nil
     }
 }
 

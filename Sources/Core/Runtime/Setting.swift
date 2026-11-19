@@ -56,6 +56,10 @@ public enum Setting {
     /// iOS: keep a small sealed set of pinned and recent text ready for AutoFill's text insertion (ADR 0051).
     public static let quickInsertEnabled = SettingKey("quickInsertEnabled", default: false)
     public static let showsClipsOutsideWhileLocked = SettingKey("showsClipsOutsideWhileLocked", default: false)
+    /// iOS: the collections the keyboard and AutoFill carry, in the person's order, as comma-separated ids (ADR 0062).
+    public static let keyboardCollections = SettingKey("keyboardCollections", default: "")
+    /// iOS: after a tap inserts a clip, the keyboard moves to the person's own keyboard (ADR 0062).
+    public static let keyboardReturnsAfterInsert = SettingKey("keyboardReturnsAfterInsert", default: true)
     /// In the widget extension's own preferences: the clip a tile last copied in place and when, as
     /// `<UUID>@<seconds since 1970>`, so that tile shows Copied for a moment (ADR 0052). Never any content.
     public static let widgetLastCopy = SettingKey("widgetLastCopy", default: "")
@@ -158,7 +162,8 @@ public enum Setting {
         ruleRemoveDuplicateSpaces.name, doubleCopyAppend.name, additionalExcludedBundleIDs.name,
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
         syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
-        quickInsertEnabled.name, showsClipsOutsideWhileLocked.name, widgetLastCopy.name, deviceID.name,
+        quickInsertEnabled.name, showsClipsOutsideWhileLocked.name, keyboardCollections.name,
+        keyboardReturnsAfterInsert.name, widgetLastCopy.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,

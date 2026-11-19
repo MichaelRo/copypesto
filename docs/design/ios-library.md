@@ -126,13 +126,16 @@ which collection, from those the snapshot carries (ADR 0060): "No clips in this 
 "Choose a collection" when none is chosen or it is gone. With the History Lock on it says "Locked" and "Open Pesto to see your clips." unless "Show clips in widgets, AutoFill and the keyboard while locked" is on (ADR 0055).
 
 ## The keyboard (ADR 0061)
-Optional, added in iOS Settings. No letter keys: the quick-insert set's clips as small Pesto cards (the library's
-fill, corner and hairline, the kind's glyph in a foot line; two columns on iPhone, three in a regular width) in one
-list, Pinned, Snippets, Recent, with snippets shown as they would insert; a "123" pad of numbers and punctuation; and
-Space, Return and Delete, with the globe key when iOS asks for it. A tap inserts and moves to the next keyboard; a long
-press inserts and stays. Without Full Access the pad and one line on Full Access; with no set one line on turning on
-Insert from Pesto; with an empty one "No text clips yet." No search field, no filters. Next: a row of collection chips
-on top, chosen in Settings, like the Mac shelf's.
+Optional, added in iOS Settings. No letter keys. A small shelf (ADR 0062): chips like the Mac shelf's (Recent, Pinned,
+Snippets, then the collections chosen in Settings → AutoFill and keyboard → Collections), and the clips as small Pesto
+cards in a row that scrolls sideways, two rows on iPhone and one on iPad, each with the kind's glyph and a laptop when
+it came from another device; snippets shown as they would insert. The word typed before switching is the search: it
+leads the chips in quotes, and picking a card replaces it. A "123" pad of numbers and punctuation; Space, Return and
+Delete, with the globe key when iOS asks for it. A tap inserts and returns to the person's keyboard, or stays, as
+"After inserting a clip" says; a long press does the other. Without Full Access the pad and one line on Full Access;
+with no set one line on turning on Insert from Pesto; with an empty one "No text clips yet." The magnifying glass opens
+the search page (ADR 0063): Pesto's own search field, the matches in one row, letters or numbers that type only into
+that field, and Done; the keyboard grows 40 points while it is open.
 
 ## FAQ for the release notes: Add Clipboard to Pesto
 The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to

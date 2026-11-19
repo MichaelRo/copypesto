@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
+    @AppStorage(Setting.keyboardReturnsAfterInsert) private var keyboardReturns: Bool
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
@@ -49,6 +50,14 @@ struct SettingsView: View {
                 Toggle("Insert from Pesto in other apps", isOn: $quickInsertEnabled)
                     .accessibilityIdentifier(MobileAccessibilityID.quickInsertToggle)
                     .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
+                if quickInsertEnabled {
+                    NavigationLink("Keyboard collections") { KeyboardCollectionsView() }
+                    Picker("After inserting a clip", selection: $keyboardReturns) {
+                        Text("Return to my keyboard").tag(true)
+                        Text("Stay in Pesto").tag(false)
+                    }
+                    .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
+                }
             } header: {
                 Text("Clipboard, AutoFill & keyboard")
             } footer: {

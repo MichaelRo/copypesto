@@ -5,20 +5,29 @@ import Testing
 
 @Suite("The keyboard's menu")
 struct KeyboardMenuTests {
-    private func entry(_ text: String, _ section: QuickInsertEntry.Section) -> QuickInsertEntry {
+    private let work = UUID()
+
+    private func entry(_ text: String, _ section: QuickInsertEntry.Section, title: String? = nil) -> QuickInsertEntry {
         QuickInsertEntry(
-            id: UUID(), section: section, kind: .text, title: text, text: text,
+            id: UUID(), section: section, kind: .text, title: title ?? text, text: text,
             expandsOnInsert: section == .snippets
         )
     }
 
-    private var full: QuickInsertSet {
-        QuickInsertSet(createdAt: .now, entries: [
-            entry("Basil pesto recipe", .recent),
-            entry("12 Basil Lane", .pinned),
-            entry("Thanks, {{date}}", .snippets),
-            entry("tracking 1Z999", .recent)
-        ])
+    private func full() -> QuickInsertSet {
+        let standup = entry("Standup at 10", .collection)
+        let home = entry("12 Basil Lane", .pinned, title: "Home address")
+        return QuickInsertSet(
+            createdAt: .now,
+            entries: [
+                home, entry("Thanks, {{date}}", .snippets), entry("Basil pesto recipe", .recent),
+                entry("tracking 1Z999", .recent), standup
+            ],
+            collections: [
+                QuickInsertCollection(id: work, name: "Work", symbolName: "briefcase", entryIDs: [standup.id, home.id])
+            ],
+            returnsAfterInsert: false
+        )
     }
 
     @Test("without Full Access the menu is restricted and never asks for the set")
@@ -26,26 +35,43 @@ struct KeyboardMenuTests {
         var reads = 0
         let menu = KeyboardMenu(hasFullAccess: false) {
             reads += 1
-            return full
+            return full()
         }
         #expect(menu.state == .restricted)
         #expect(reads == 0)
-        #expect(menu.groups.isEmpty)
+        #expect(menu.chips.isEmpty)
     }
 
     @Test("with Full Access: no set is unavailable, an empty set is empty, otherwise ready")
     func whenFullAccess_thenTheStateSaysWhatThereIs() {
         #expect(KeyboardMenu(hasFullAccess: true) { nil }.state == .unavailable)
         #expect(KeyboardMenu(hasFullAccess: true) { .empty }.state == .empty)
-        #expect(KeyboardMenu(hasFullAccess: true) { full }.state == .ready)
+        #expect(KeyboardMenu(hasFullAccess: true) { full() }.state == .ready)
     }
 
-    @Test("one list: Pinned, then Snippets, then Recent, and a section with no clip is left out")
-    func whenReady_thenOneListInSectionOrder() {
-        let menu = KeyboardMenu(hasFullAccess: true) { full }
-        #expect(menu.groups.map(\.section) == [.pinned, .snippets, .recent])
-        #expect(menu.groups.last?.entries.map(\.text) == ["Basil pesto recipe", "tracking 1Z999"])
-        let noSnippets = QuickInsertSet(createdAt: .now, entries: full.entries.filter { $0.section != .snippets })
-        #expect(KeyboardMenu(hasFullAccess: true) { noSnippets }.groups.map(\.section) == [.pinned, .recent])
+    @Test("the chips are Recent, Pinned and Snippets when they have clips, then the chosen collections")
+    func whenReady_thenTheChipsFollowTheShelf() {
+        let menu = KeyboardMenu(hasFullAccess: true) { full() }
+        #expect(menu.chips.map(\.title) == ["Recent", "Pinned", "Snippets", "Work"])
+        #expect(menu.entries(for: .recent).map(\.text) == ["Basil pesto recipe", "tracking 1Z999"])
+        #expect(menu.entries(for: .collection(work)).map(\.text) == ["Standup at 10", "12 Basil Lane"])
+        #expect(menu.returnsAfterInsert == false)
+    }
+
+    @Test("a search looks through every clip once, a title starting with the word first")
+    func whenSearched_thenPrefixMatchesLead() {
+        let menu = KeyboardMenu(hasFullAccess: true) { full() }
+        #expect(menu.entries(matching: "home").map(\.text) == ["12 Basil Lane"])
+        #expect(menu.entries(matching: "BASIL").map(\.text) == ["Basil pesto recipe", "12 Basil Lane"])
+        #expect(menu.entries(matching: "zzq").isEmpty)
+    }
+
+    @Test("a chosen collection with no clip to offer gets no chip")
+    func whenACollectionIsEmpty_thenItHasNoChip() {
+        let set = QuickInsertSet(
+            createdAt: .now, entries: [entry("Basil pesto recipe", .recent)],
+            collections: [QuickInsertCollection(id: UUID(), name: "Empty", symbolName: "folder", entryIDs: [])]
+        )
+        #expect(KeyboardMenu(hasFullAccess: true) { set }.chips.map(\.title) == ["Recent"])
     }
 }

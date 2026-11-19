@@ -44,7 +44,7 @@ extension MobileAppState {
         do {
             // A context of its own reads what the store holds now; the main context's copy of a clip the storage
             // actor just edited (made secret, say) is merged only a moment after the save.
-            let set = try QuickInsertSelection.set(in: ModelContext(container), now: clock())
+            let set = try QuickInsertSelection.set(in: ModelContext(container), now: clock(), options: target.options())
             try target.file.write(set, with: target.keys.loadOrCreate())
         } catch {
             Self.quickInsertLogger

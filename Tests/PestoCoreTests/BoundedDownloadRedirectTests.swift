@@ -2,6 +2,7 @@
 import Foundation
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 @Suite("A download follows a redirect only to an address a preview may fetch")
 struct BoundedDownloadRedirectTests {

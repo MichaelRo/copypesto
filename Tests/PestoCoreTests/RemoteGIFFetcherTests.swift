@@ -2,6 +2,7 @@
 import Foundation
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 @Suite("The fetch behind a browser's Copy Image follows the Link Previews switch")
 struct RemoteGIFFetcherTests {

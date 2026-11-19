@@ -5,6 +5,7 @@ import Synchronization
 import Testing
 import UniformTypeIdentifiers
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 /// Unit tests for `URLMetadataFetcher.processOGImageData`.
 ///

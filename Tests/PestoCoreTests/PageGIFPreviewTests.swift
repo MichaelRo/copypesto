@@ -3,6 +3,7 @@ import Foundation
 import ImageIO
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 /// Answers each address with its own body and counts the requests, so a test can say which pages were read twice.
 private final class PerAddressProtocol: URLProtocol {

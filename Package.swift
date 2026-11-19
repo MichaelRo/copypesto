@@ -15,7 +15,9 @@ let package = Package(
         .iOS("26.0")
     ],
     products: [
-        .library(name: "PestoCore", targets: ["PestoCore"])
+        .library(name: "PestoCore", targets: ["PestoCore"]),
+        .library(name: "PestoCoreExtension", targets: ["PestoCore"]),
+        .library(name: "PestoCoreNetworking", targets: ["PestoCoreNetworking"])
     ],
     dependencies: [
         // No third-party deps in Core. Sparkle and snapshot-testing live in the Xcode-side targets.
@@ -30,6 +32,14 @@ let package = Package(
             ],
             // The SwiftData @Model files (Storage/Models) need Xcode's macro plugin, which is the toolchain every
             // supported build already uses (CommandLineTools cannot build this package at all, see AGENTS.md).
+            swiftSettings: [
+                .enableUpcomingFeature("ExistentialAny")
+            ]
+        ),
+        .target(
+            name: "PestoCoreNetworking",
+            dependencies: ["PestoCore"],
+            path: "Sources/CoreNetworking",
             swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny")
             ]
@@ -52,7 +62,7 @@ let package = Package(
         ),
         .testTarget(
             name: "PestoCoreTests",
-            dependencies: ["PestoCore", "SyncPeerTool"],
+            dependencies: ["PestoCore", "PestoCoreNetworking", "SyncPeerTool"],
             path: "Tests/PestoCoreTests",
             exclude: ["Fixtures"]
         ),

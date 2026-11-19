@@ -2,6 +2,7 @@
 import Foundation
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 @Suite("URLMetadataFetcher OpenGraph Scraper")
 struct URLMetadataFetcherScraperTests {

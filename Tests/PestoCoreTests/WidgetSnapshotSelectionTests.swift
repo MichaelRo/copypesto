@@ -39,12 +39,149 @@ struct WidgetSnapshotSelectionTests {
             WidgetSnapshotSelection.clips(from: newest(), reader: .init(source: { _ in "Notes" }, thumbnail: thumbnail))
         }
 
-        func lists(fullText: @escaping (ClipboardItem) -> String?) -> (clips: [WidgetClip], pinned: [WidgetClip]) {
+        func lists(fullText: @escaping (ClipboardItem) -> String?) -> WidgetSnapshotSelection.Lists {
             let all = newest()
             return WidgetSnapshotSelection.lists(
                 newest: all, pinned: all.filter(\.isPinned), reader: .init(source: { _ in nil }, fullText: fullText)
             )
         }
+
+        @discardableResult
+        func collection(_ name: String, order: Int, rules: PredicateRuleSet? = nil) throws -> Pinboard {
+            let board = try Pinboard(
+                name: name, symbolName: "folder", colorHex: "#2F8B4C", sortOrder: order, isSmart: rules != nil,
+                smartPredicateData: rules.map(SmartCollectionPredicate.encodeRuleSet)
+            )
+            context.insert(board)
+            return board
+        }
+
+        @discardableResult
+        func add(_ preview: String, type: ClipboardType = .text, in board: Pinboard, order: Int? = nil)
+        -> ClipboardItem {
+            let item = add(preview, type: type)
+            item.collectionID = board.id
+            if let order { item.collectionOrder = order }
+            return item
+        }
+
+        func snapshot(fullText: @escaping (ClipboardItem) -> String? = { _ in nil }) throws -> WidgetSnapshot {
+            try WidgetSnapshotSelection.snapshot(
+                in: context, now: .now, theme: .brand, reader: .init(source: { _ in nil }, fullText: fullText)
+            )
+        }
+    }
+
+    private func texts(_ snapshot: WidgetSnapshot, in board: Pinboard) -> [String] {
+        snapshot.clips(inCollection: board.id).map(\.text)
+    }
+
+    @Test("a plain collection shows its clips in its own order, hand-placed first, and only those that may be shown")
+    func whenAPlainCollectionIsCarried_thenItsOrderAndEligibilityHold() throws {
+        let clips = try Clips()
+        let work = try clips.collection("Work", order: 0)
+        clips.add("older note", in: work)
+        clips.add("placed first", in: work, order: 0)
+        clips.add("masked", in: work).sensitivityRaw = SensitivityCategory.apiKey.rawValue
+        clips.add("expiring", in: work).expiresAt = Date(timeIntervalSince1970: 1_900_000_000)
+        clips.add("newer note", in: work)
+        clips.add("not in it")
+
+        let snapshot = try clips.snapshot()
+
+        #expect(snapshot.collections == [WidgetCollection(
+            id: work.id, name: "Work", symbolName: "folder", colorHex: "#2F8B4C"
+        )])
+        #expect(texts(snapshot, in: work) == ["placed first", "newer note", "older note"])
+        #expect(!snapshot.allClips.contains { $0.text == "masked" || $0.text == "expiring" })
+    }
+
+    @Test("a smart collection shows the newest clips its rules match, and only those that may be shown")
+    func whenASmartCollectionIsCarried_thenItsRulesChoose() throws {
+        let clips = try Clips()
+        let links = try clips.collection("Links", order: 0, rules: PredicateRuleSet(
+            combinator: .and,
+            groups: [.init(combinator: .and, rules: [PredicateRule(field: .type, op: .equals, value: .string("url"))])]
+        ))
+        clips.add("https://copypesto.net/a", type: .url)
+        clips.add("a note")
+        clips.add("https://copypesto.net/secret", type: .url).sensitivityRaw = SensitivityCategory.apiKey.rawValue
+        clips.add("https://copypesto.net/b", type: .url)
+
+        let snapshot = try clips.snapshot()
+
+        #expect(snapshot.collection(id: links.id)?.isSmart == true)
+        #expect(texts(snapshot, in: links) == ["https://copypesto.net/b", "https://copypesto.net/a"])
+    }
+
+    @Test("at most 24 collections in Pesto's order, each with at most eight clips")
+    func whenThereAreManyCollections_thenTheCapsHold() throws {
+        let clips = try Clips()
+        let boards = try (0..<30).reversed().map { try clips.collection("c\($0)", order: $0) }
+        let first = try #require(boards.last)
+        for index in 0..<12 {
+            clips.add("in c0 \(index)", in: first)
+        }
+
+        let snapshot = try clips.snapshot()
+
+        #expect(snapshot.collections.map(\.name) == (0..<WidgetSnapshotPolicy.maxCollections).map { "c\($0)" })
+        #expect(snapshot.clips(inCollection: first.id).count == WidgetSnapshotPolicy.maxClips)
+        let pastTheCap = try #require(boards.first)
+        #expect(snapshot.collection(id: pastTheCap.id) == nil)
+        #expect(snapshot.clips(from: .collection(pastTheCap.id)).isEmpty)
+    }
+
+    @Test("a clip shown in Recent and in collections is carried once; Recent and Pinned keep their own lists")
+    func whenAClipIsInSeveralLists_thenItIsCarriedOnce() throws {
+        let clips = try Clips()
+        let one = try clips.collection("One", order: 0)
+        let two = try clips.collection("Two", order: 1, rules: PredicateRuleSet(
+            combinator: .and,
+            groups: [.init(
+                combinator: .and, rules: [PredicateRule(field: .previewText, op: .contains, value: .string("both"))]
+            )]
+        ))
+        let old = clips.add("old, in both", in: one)
+        old.timestamp = Date(timeIntervalSince1970: 1)
+        for index in 0..<10 {
+            clips.add("filler \(index)")
+        }
+        let shared = clips.add("shared", in: one)
+
+        let snapshot = try clips.snapshot()
+
+        #expect(snapshot.clips.count == WidgetSnapshotPolicy.maxClips)
+        #expect(snapshot.clips.first?.id == shared.id)
+        #expect(!snapshot.clips.contains { $0.id == old.id })
+        #expect(snapshot.collectionClips.map(\.text) == ["old, in both"])
+        #expect(Set(snapshot.allClips.map(\.id)).count == snapshot.allClips.count)
+        #expect(texts(snapshot, in: one) == ["shared", "old, in both"])
+        #expect(texts(snapshot, in: two) == ["old, in both"])
+        #expect(snapshot.clip(id: old.id)?.text == "old, in both")
+    }
+
+    @Test("a clip only a collection shows gets a whole text only from what Recent and Pinned left")
+    func whenTheBudgetIsSpent_thenACollectionClipGetsNoWholeText() throws {
+        let chunk = String(repeating: "b", count: WidgetSnapshotPolicy.maxFullTextBytes)
+        let full = try Clips()
+        let board = try full.collection("Old", order: 0)
+        full.add("old one", in: board).timestamp = Date(timeIntervalSince1970: 1)
+        for index in 0..<8 {
+            full.add("chunk \(index)")
+        }
+        let spent = try full.snapshot { _ in chunk }
+        #expect(spent.collectionClips.map(\.fullText) == [nil])
+        #expect(spent.allClips.compactMap(\.fullText).reduce(0) { $0 + $1.utf8.count }
+            <= WidgetSnapshotPolicy.maxFullTextTotalBytes)
+
+        let roomy = try Clips()
+        let other = try roomy.collection("Old", order: 0)
+        roomy.add("old one", in: other).timestamp = Date(timeIntervalSince1970: 1)
+        for index in 0..<8 {
+            roomy.add("new \(index)")
+        }
+        #expect(try roomy.snapshot { $0.displayPreviewText }.collectionClips.map(\.fullText) == ["old one"])
     }
 
     private func capture(_ text: String) -> PasteboardCapture {
@@ -193,11 +330,12 @@ struct WidgetSnapshotSelectionTests {
         #expect(sealed.count < WidgetSnapshotPolicy.maxFileBytes)
     }
 
-    @Test("the fullest snapshot the bounds allow still seals under the file's bound")
+    @Test("the fullest snapshot the bounds allow, every collection full of clips no list shares, still seals")
     func whenEverythingIsAtItsBound_thenItStillSeals() throws {
         let worstText = String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxPreviewCharacters)
         let worstPart = String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxLinkPartCharacters)
-        let count = WidgetSnapshotPolicy.maxClips + WidgetSnapshotPolicy.maxPinned
+        let lists = WidgetSnapshotPolicy.maxClips + WidgetSnapshotPolicy.maxPinned
+        let count = lists + WidgetSnapshotPolicy.maxCollections * WidgetSnapshotPolicy.maxClips
         let perThumbnail = WidgetSnapshotPolicy.maxThumbnailTotalBytes / count
         let wholeTexts = WidgetSnapshotPolicy.maxFullTextTotalBytes / WidgetSnapshotPolicy.maxFullTextBytes
         let all = (0..<count).map { index in
@@ -213,13 +351,25 @@ struct WidgetSnapshotSelectionTests {
                 isPinned: true, thumbnail: Data(repeating: 0xFF, count: perThumbnail)
             )
         }
+        let others = Array(all.dropFirst(lists))
+        let collections = (0..<WidgetSnapshotPolicy.maxCollections).map { _ in
+            WidgetCollection(
+                id: UUID(), name: String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxCollectionNameCharacters),
+                symbolName: String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxSymbolNameCharacters),
+                colorHex: "#FFFFFF", isSmart: true
+            )
+        }
+        let members = collections.enumerated().map { index, collection in
+            let start = index * WidgetSnapshotPolicy.maxClips
+            return (collection.id, others[start..<start + WidgetSnapshotPolicy.maxClips].map(\.id))
+        }
         let snapshot = WidgetSnapshot(
             createdAt: .now, theme: .brand, clips: Array(all.prefix(WidgetSnapshotPolicy.maxClips)),
-            pinned: Array(all.dropFirst(WidgetSnapshotPolicy.maxClips))
+            pinned: Array(all.prefix(lists).dropFirst(WidgetSnapshotPolicy.maxClips)), collections: collections,
+            collectionClipIDs: Dictionary(uniqueKeysWithValues: members), collectionClips: others
         )
 
-        #expect(throws: Never.self) {
-            try SealedFileEnvelope.seal(snapshot, as: .widgetSnapshot, with: SymmetricKey(size: .bits256))
-        }
+        let sealed = try SealedFileEnvelope.seal(snapshot, as: .widgetSnapshot, with: SymmetricKey(size: .bits256))
+        #expect(sealed.count <= WidgetSnapshotPolicy.maxFileBytes)
     }
 }

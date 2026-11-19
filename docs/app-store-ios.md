@@ -31,7 +31,7 @@ App Store and does not change (Developer ID, notarized). Signing and the develop
 | Support URL | The GitHub repository's issues page, or the website's support page |
 
 **Promotional text (170):** Your copies, kept and searchable on iPhone and iPad. Sealed on your device, and in step
-across your iPhone, iPad and Mac through a folder you choose. No account, no server.
+across iPhone, iPad and Mac through a chosen folder. No account, no server.
 
 **Description:**
 
@@ -60,6 +60,8 @@ across your iPhone, iPad and Mac through a folder you choose. No account, no ser
 Check each line against the build being submitted: a feature that is not in it comes out of the description.
 
 **Keywords (100):** clipboard,clipboard manager,copy paste,history,snippets,notes,paste,clips,text,sync
+
+Localized App Store metadata for Spanish (`es`), French (`fr`), German (`de`), Japanese (`ja`), Simplified Chinese (`zh-Hans`), Portuguese (`pt-BR`), Hebrew (`he`), Russian (`ru`), Ukrainian (`uk`), Korean (`ko`), Italian (`it`), and Czech (`cs`) is in [app-store-localizations.md](app-store-localizations.md).
 
 ## App Privacy (the "nutrition label")
 

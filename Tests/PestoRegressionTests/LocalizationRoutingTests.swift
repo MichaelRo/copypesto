@@ -57,7 +57,9 @@ struct LocalizationRoutingTests {
         let project = try String(
             contentsOf: SourceTree.repositoryRoot.appendingPathComponent("Pesto.yml"), encoding: .utf8
         )
-        let targets = ["Pesto", "PestoControls", "PestoMobile", "PestoShare", "PestoAutoFill", "PestoWidget"]
+        let targets = [
+            "Pesto", "PestoControls", "PestoMobile", "PestoShare", "PestoAutoFill", "PestoKeyboard", "PestoWidget"
+        ]
         for name in targets {
             let block = try targetBlock(named: name, in: project)
             #expect(
@@ -132,11 +134,13 @@ struct LocalizationRoutingTests {
         }
     }
 
-    @Test("every String(localized:) and Text literal in MobileKeyboard and mobile keyboard settings is in Localizable.xcstrings")
+    @Test("every string in MobileKeyboard and mobile keyboard settings is in Localizable.xcstrings")
     func keyboardStringsExistInLocalizableCatalog() throws {
         let url = SourceTree.sources.appendingPathComponent("Resources/Localizable.xcstrings")
         let strings = try parseStringCatalog(at: url)
-        let pattern = try NSRegularExpression(pattern: #"(?:String\(localized:\s*|Text\()"((?:[^"\\]|\\.)*)""#)
+        let pattern = try NSRegularExpression(
+            pattern: #"(?:String\(localized:\s*|Text\(|note\()"((?:[^"\\]|\\.)*)""#
+        )
         let interpolation = try NSRegularExpression(pattern: #"\\\([^)]*\)"#)
 
         var files = try SourceTree.swiftFiles(in: "MobileKeyboard", minimum: 4)

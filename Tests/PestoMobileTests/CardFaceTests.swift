@@ -156,7 +156,13 @@ struct CardFaceTests {
     }
 
     @MainActor
-    private func renderFace(_ item: ClipboardItem, face: PestoMobile.CardFace, media: CardMediaState, inCollection: Bool) -> Data {
+    private func renderFace(
+        _ item: ClipboardItem,
+        face: PestoMobile.CardFace,
+        media: CardMediaState,
+        inCollection: Bool
+    )
+    -> Data {
         let cardSize = CGSize(width: 179, height: CardGridLayout.cardHeight(forWidth: 179))
         let view = ClipCardFace(
             item: item,

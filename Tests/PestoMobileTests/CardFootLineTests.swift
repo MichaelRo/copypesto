@@ -63,7 +63,11 @@ struct CardFootLineTests {
             sequenceNumber: 1
         )
         let early = PestoMobile.CardFootLineView.line(for: item, now: copied.addingTimeInterval(5), device: mobilePhone)
-        let later = PestoMobile.CardFootLineView.line(for: item, now: copied.addingTimeInterval(3 * 60 + 5), device: mobilePhone)
+        let later = PestoMobile.CardFootLineView.line(
+            for: item,
+            now: copied.addingTimeInterval(3 * 60 + 5),
+            device: mobilePhone
+        )
         #expect(early.texts.first != later.texts.first)
         #expect(later.texts.first?.contains(CardAge.text(interval: 3 * 60 + 5)) == true)
     }
@@ -135,7 +139,12 @@ struct CardFootLineTests {
         let inAll = PestoMobile.CardFootLineView.line(for: item, now: now, device: mobilePhone, showsTitleOnFace: false)
         #expect(inAll.texts == ["Trip Plan \u{00B7} 2m ago", "Trip Plan"])
 
-        let inCollection = PestoMobile.CardFootLineView.line(for: item, now: now, device: mobilePhone, showsTitleOnFace: true)
+        let inCollection = PestoMobile.CardFootLineView.line(
+            for: item,
+            now: now,
+            device: mobilePhone,
+            showsTitleOnFace: true
+        )
         #expect(inCollection.texts == ["Notes \u{00B7} 2m ago", "2m ago"])
     }
 }

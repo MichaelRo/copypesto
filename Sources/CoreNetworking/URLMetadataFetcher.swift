@@ -3,9 +3,8 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import LinkPresentation
-import UniformTypeIdentifiers
-
 import PestoCore
+import UniformTypeIdentifiers
 
 public struct URLPreviewResult: Sendable {
     public let title: String?

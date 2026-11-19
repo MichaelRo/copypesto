@@ -3,7 +3,6 @@
 import AppKit
 import CoreGraphics
 import ImageIO
-
 import PestoCore
 
 /// What a benchmark's link preview answers with instead of a page: a title and a picture drawn in code, after a fixed

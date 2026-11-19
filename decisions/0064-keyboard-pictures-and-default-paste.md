@@ -18,11 +18,11 @@ A custom iOS keyboard extension lets a person reach their recent clips from any 
    - Tapping a picture card in the keyboard writes the picture to `UIPasteboard.general` with `localOnly: true` and an expiration date of 120 seconds (`Date().addingTimeInterval(120)`).
    - This applies to every picture card in the keyboard snapshot, including pictures without recognized text.
    - Writing to `UIPasteboard` requires Full Access (`hasFullAccess`); when Full Access is off, the keyboard surfaces the Full Access requirement instead of silently failing.
-   - After copying, the keyboard shows `"Copied — tap field to Paste"` feedback so the person knows the image is ready to paste into the target field.
+   - After copying, the keyboard shows `"Copied, paste it"` feedback so the person knows the image is ready to paste into the target field.
 
 2. **Secondary action inserts secret-scanned recognized text.**
    - When a picture has recognized text (scanned for secrets under ADR 0034 before entering the snapshot), the card displays a `text.viewfinder` badge.
-   - A long-press `.contextMenu` on the picture card offers **Insert Recognized Text**, which inserts the scanned text directly at the cursor via `textDocumentProxy.insertText(_:)`.
+   - A long-press `.contextMenu` on the picture card (and a VoiceOver `.accessibilityAction`) offers **Insert Text**, which inserts the scanned text directly at the cursor via `textDocumentProxy.insertText(_:)`.
 
 3. **Snapshot exclusions remain strict.**
    - File clips (`.file`), adult clips (`item.isNSFW`), expiring clips, pending-analysis clips, and secrets (including pictures whose recognized text matches `SensitiveContentDetector`) are excluded from the keyboard snapshot (`ShortcutClipSearch.isOfferedOutsidePesto` and `WidgetSnapshotSelection`).

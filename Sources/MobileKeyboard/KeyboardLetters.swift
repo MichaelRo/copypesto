@@ -6,7 +6,7 @@ import UIKit
 /// field and nowhere else: the only thing this view holds is the model, whose search methods change only the query,
 /// and neither knows the app's text field (`KeyboardSearchTests` scans both).
 struct KeyboardLetters: View {
-    enum Alphabet: CaseIterable, Equatable, Sendable {
+    enum Alphabet: CaseIterable, Equatable {
         case qwerty
         case azerty
         case qwertz
@@ -120,7 +120,8 @@ struct KeyboardLetters: View {
     static func resolvedAlphabets(
         inputModeLanguages: [String] = UITextInputMode.activeInputModes.compactMap(\.primaryLanguage),
         preferredLanguages: [String] = Locale.preferredLanguages
-    ) -> [Alphabet] {
+    )
+    -> [Alphabet] {
         let fromModes = deduplicatedAlphabets(from: inputModeLanguages)
         if !fromModes.isEmpty { return fromModes }
         let fromLocales = deduplicatedAlphabets(from: preferredLanguages)

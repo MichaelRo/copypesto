@@ -55,9 +55,13 @@ struct CardFootLineView: View {
                 if let trailingSymbol {
                     if let onTrailingSymbolTap {
                         Button(action: onTrailingSymbolTap) {
-                            Image(systemName: trailingSymbol).imageScale(.small)
+                            Image(systemName: trailingSymbol)
+                                .imageScale(.small)
+                                .padding(6)
+                                .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .padding(-6)
                     } else {
                         Image(systemName: trailingSymbol).imageScale(.small)
                     }

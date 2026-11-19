@@ -25,6 +25,11 @@ struct KeyboardRootView: View {
         Color(hex: model.menu.accent.accent(dark: colorScheme == .dark)) ?? BrandAccent.color
     }
 
+    private var resolvedAccentLabel: Color {
+        let hex = model.menu.accent.accent(dark: colorScheme == .dark)
+        return Color(hex: ContrastRatio.labelHex(onFill: hex)) ?? .white
+    }
+
     private var resolvedSurface: Color {
         Color(hex: model.menu.accent.ground(dark: colorScheme == .dark)) ?? .opaqueSurface
     }
@@ -32,32 +37,49 @@ struct KeyboardRootView: View {
     var body: some View {
         // Searched once per pass: every chip and card below reads the same matches.
         let matches = word.map(model.menu.entries(matching:)) ?? []
-        Group {
-            if model.isSearching {
-                KeyboardSearchPage(
-                    model: model, globe: model.showsGlobeKey ? GlobeKey(controller: controller) : nil,
-                    pick: { entry, longPress in
-                        setSearching(false)
-                        if entry.kind == .image {
-                            copyPicture(entry)
-                        } else {
-                            // No matches on purpose: a clip found by the page's own query never deletes the app's text.
-                            insert(entry, longPress: longPress, matches: [])
-                        }
-                    },
-                    pickRecognizedText: { entry, text in
-                        setSearching(false)
-                        insertRecognizedText(text, for: entry)
-                    },
-                    close: { setSearching(false) }
-                )
-            } else {
-                VStack(spacing: 6) {
-                    if model.menu.state == .ready, !showsPad { chipRow(matches: matches) }
-                    content(matches: matches)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    bottomRow
+        ZStack {
+            Group {
+                if model.isSearching {
+                    KeyboardSearchPage(
+                        model: model, globe: model.showsGlobeKey ? GlobeKey(controller: controller) : nil,
+                        pick: { entry, longPress in
+                            setSearching(false)
+                            if entry.kind == .image {
+                                copyPicture(entry)
+                            } else {
+                                // No matches on purpose: a clip found by the page's own query never deletes the app's
+                                // text.
+                                insert(entry, longPress: longPress, matches: [])
+                            }
+                        },
+                        pickRecognizedText: { entry, text in
+                            setSearching(false)
+                            insertRecognizedText(text, for: entry)
+                        },
+                        close: { setSearching(false) }
+                    )
+                } else {
+                    VStack(spacing: 6) {
+                        if model.menu.state == .ready, !showsPad { chipRow(matches: matches) }
+                        content(matches: matches)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        bottomRow
+                    }
                 }
+            }
+            .blur(radius: isScreenCaptured ? 16 : 0)
+            .allowsHitTesting(!isScreenCaptured)
+            .accessibilityHidden(isScreenCaptured)
+
+            if isScreenCaptured, model.menu.state == .ready {
+                VStack(spacing: 4) {
+                    Image(systemName: "eye.slash.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
+                    note("Clips are hidden while the screen is recorded or shared.")
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .padding(.horizontal, 8)
@@ -66,6 +88,7 @@ struct KeyboardRootView: View {
             SceneCaptureReader { isScreenCaptured = $0 }
         }
         .environment(\.pestoAccent, resolvedAccent)
+        .environment(\.pestoAccentLabel, resolvedAccentLabel)
         .environment(\.pestoSurface, resolvedSurface)
         .tint(resolvedAccent)
     }
@@ -103,21 +126,7 @@ struct KeyboardRootView: View {
         case .empty:
             note("No text clips yet. Clips with secrets never appear here.")
         case .ready:
-            ZStack {
-                shelf(matches: matches)
-                    .blur(radius: isScreenCaptured ? 16 : 0)
-                    .allowsHitTesting(!isScreenCaptured)
-                    .accessibilityHidden(isScreenCaptured)
-                if isScreenCaptured {
-                    VStack(spacing: 4) {
-                        Image(systemName: "eye.slash.fill")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                        note("Clips are hidden while the screen is recorded or shared.")
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            }
+            shelf(matches: matches)
         }
     }
 
@@ -161,7 +170,11 @@ struct KeyboardRootView: View {
     private func shelf(matches: [QuickInsertEntry]) -> some View {
         let isRegular = sizeClass == .regular
         let isLandscape = verticalSizeClass == .compact
-        let rowCount = KeyboardLayout.rows(size: model.menu.keyboardSize, isRegular: isRegular, isLandscape: isLandscape)
+        let rowCount = KeyboardLayout.rows(
+            size: model.menu.keyboardSize,
+            isRegular: isRegular,
+            isLandscape: isLandscape
+        )
         let cardSize = KeyboardLayout.cardSize(size: model.menu.keyboardSize, isRegular: isRegular)
         let rows = Array(repeating: GridItem(.fixed(cardSize.height), spacing: 6), count: rowCount)
         return ScrollView(.horizontal, showsIndicators: false) {
@@ -179,7 +192,8 @@ struct KeyboardRootView: View {
     @ViewBuilder
     private func cardView(
         entry: QuickInsertEntry, cardSize: CGSize, matches: [QuickInsertEntry]
-    ) -> some View {
+    )
+    -> some View {
         let entryFeedback = feedback?.id == entry.id ? feedback?.kind : nil
         let key = KeyboardClipKey(
             entry: entry,
@@ -201,6 +215,11 @@ struct KeyboardRootView: View {
                     }
                 }
                 .accessibilityAction { copyPicture(entry) }
+                .accessibilityAction(named: Text("Insert Text")) {
+                    if let ocr = entry.recognizedText, !ocr.isEmpty {
+                        insertRecognizedText(ocr, for: entry)
+                    }
+                }
         } else {
             key
                 .onTapGesture { insert(entry, longPress: false, matches: matches) }
@@ -253,7 +272,7 @@ struct KeyboardRootView: View {
 
     private func copyPicture(_ entry: QuickInsertEntry) {
         guard model.menu.state == .ready, let data = entry.thumbnail else { return }
-        UIPasteboard.general.setItems(
+        AppPasteboard.general.setItems(
             [[UTType.jpeg.identifier: data]],
             options: [.localOnly: true, .expirationDate: Date.now.addingTimeInterval(120)]
         )
@@ -262,6 +281,11 @@ struct KeyboardRootView: View {
 
     private func showFeedback(_ kind: KeyboardClipKey.Feedback, for id: UUID, duration: Duration) {
         feedback = (id, kind)
+        let announcement = switch kind {
+        case .inserted: String(localized: "Inserted ✓")
+        case .copiedImage: String(localized: "Copied, paste it")
+        }
+        UIAccessibility.post(notification: .announcement, argument: announcement)
         Task { @MainActor in
             try? await Task.sleep(for: duration)
             if feedback?.id == id, feedback?.kind == kind { feedback = nil }

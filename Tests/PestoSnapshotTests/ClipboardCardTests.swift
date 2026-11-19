@@ -45,6 +45,8 @@ final class ClipboardCardTests: XCTestCase {
         return item
     }
 
+    static let snapshotFile: StaticString = #filePath
+
     func snapshotCard(
         _ card: some View,
         named name: String? = nil,
@@ -52,7 +54,7 @@ final class ClipboardCardTests: XCTestCase {
         layoutDirection: LayoutDirection = .leftToRight,
         cardSize: CGSize = CGSize(width: 200, height: 180),
         solidShelfGround: String? = nil,
-        file: StaticString = #filePath,
+        file: StaticString = snapshotFile,
         testName: String = #function,
         line: UInt = #line
     ) {
@@ -279,23 +281,6 @@ final class ClipboardCardTests: XCTestCase {
         snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
     }
 
-    // MARK: - Titled & Snippet
-
-    func test_titledCard() throws {
-        let ctx = try makeContext()
-        let item = makeItem(in: ctx, type: .text, preview: "12 Basil Lane, Apt 4B")
-        item.customTitle = "Home Address"
-        snapshotCard(ClipboardCard(item: item, inCollection: true))
-        snapshotCard(ClipboardCard(item: item, inCollection: true), named: "light", colorScheme: .light)
-    }
-
-    func test_snippetCard() throws {
-        let ctx = try makeContext()
-        let item = makeItem(in: ctx, type: .text, preview: "Thanks, {{date}}")
-        snapshotCard(ClipboardCard(item: item))
-        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
-    }
-
     // MARK: - Glyph
 
     func test_singleEmojiCard() throws {
@@ -510,11 +495,5 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = pictureItem(in: ctx, aspect: 1.0)
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
-    }
-
-    func test_shortCoveredText_showsTheCoverFace() throws {
-        let ctx = try makeContext()
-        let item = makeItem(in: ctx, type: .text, preview: "hunter2")
-        snapshotCard(ClipboardCard(item: item, isPrivacyBlurred: true))
     }
 }

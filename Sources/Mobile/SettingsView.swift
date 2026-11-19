@@ -121,6 +121,17 @@ struct SettingsView: View {
                     Text("Hide").tag(NSFWMode.hide.rawValue)
                     Text("Show").tag(NSFWMode.show.rawValue)
                 }
+                .onChange(of: nsfwModeRaw) { _, newValue in
+                    Task {
+                        if NSFWMode(rawValue: newValue)?.detectsContent == true,
+                           let service = appState.storageService
+                        {
+                            _ = try? await service.rescanNSFWImages()
+                        }
+                        appState.writeQuickInsert()
+                        await appState.writeWidget()
+                    }
+                }
                 Toggle("Hide clips while the screen is recorded or shared", isOn: $coversWhileCaptured)
                     .accessibilityIdentifier(MobileAccessibilityID.captureCoverToggle)
                     .onChange(of: coversWhileCaptured) { _, on in appState.secretReveal.coversWhileCaptured = on }

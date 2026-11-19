@@ -23,11 +23,26 @@ struct KeyboardClipKey: View {
     @Environment(\.pestoAccentLabel) private var accentLabel
     @Environment(\.pestoSurface) private var surface
 
+    @MainActor private static let thumbnailCache: NSCache<NSUUID, UIImage> = {
+        let cache = NSCache<NSUUID, UIImage>()
+        cache.countLimit = 40
+        return cache
+    }()
+
+    private static func decodedThumbnail(for entry: QuickInsertEntry) -> UIImage? {
+        guard let data = entry.thumbnail else { return nil }
+        let key = entry.id as NSUUID
+        if let cached = thumbnailCache.object(forKey: key) { return cached }
+        guard let image = UIImage(data: data) else { return nil }
+        thumbnailCache.setObject(image, forKey: key)
+        return image
+    }
+
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
         let metrics = CardMetrics(width: cardSize.width, height: cardSize.height, typeSize: typeSize)
         let displayBody = entry.expandsOnInsert ? entry.insertionText() : entry.text
-        let image = entry.thumbnail.flatMap(UIImage.init(data:))
+        let image = Self.decodedThumbnail(for: entry)
         let aspect = image.map { Double($0.size.width / max($0.size.height, 1)) }
         let face = CardFace.decide(.init(
             type: entry.kind,
@@ -41,12 +56,9 @@ struct KeyboardClipKey: View {
             type: entry.kind, inCollection: true, isConcealed: false,
             customTitle: entry.customTitle, ogTitle: entry.ogTitle
         )
-        let showsTitleOnFace = CardFace.showsCustomTitleOnFace(
-            inCollection: true, isConcealed: false, customTitle: entry.customTitle
-        )
         let cardDirection = Self.layoutDirection(for: entry.label()) ?? environmentDirection
 
-        cardBody(face: face, image: image, displayBody: displayBody, title: title, showsTitleOnFace: showsTitleOnFace, metrics: metrics)
+        cardBody(face: face, image: image, displayBody: displayBody, title: title, metrics: metrics)
             .frame(width: cardSize.width, height: cardSize.height)
             .environment(\.layoutDirection, cardDirection)
             .background(colorScheme == .dark ? Color.white.opacity(0.10) : .white)
@@ -72,10 +84,12 @@ struct KeyboardClipKey: View {
 
     @ViewBuilder
     private func cardBody(
-        face: CardFace, image: UIImage?, displayBody: String, title: String?,
-        showsTitleOnFace: Bool, metrics: CardMetrics
+        face: CardFace, image: UIImage?, displayBody: String, title: String?, metrics: CardMetrics
     )
     -> some View {
+        let showsTitleOnFace = CardFace.showsCustomTitleOnFace(
+            inCollection: true, isConcealed: false, customTitle: entry.customTitle
+        )
         switch face {
         case let .picture(fills, _):
             pictureBody(image: image, fills: fills, title: title, showsTitleOnFace: showsTitleOnFace)
@@ -107,7 +121,8 @@ struct KeyboardClipKey: View {
 
     private func framed(
         title: String?, showsTitleOnFace: Bool, @ViewBuilder _ content: () -> some View
-    ) -> some View {
+    )
+    -> some View {
         VStack(alignment: .leading, spacing: CardMetrics.footGap) {
             VStack(alignment: .leading, spacing: CardMetrics.titleGap) {
                 if let title {
@@ -127,7 +142,8 @@ struct KeyboardClipKey: View {
 
     private func pictureBody(
         image: UIImage?, fills: Bool, title: String?, showsTitleOnFace: Bool
-    ) -> some View {
+    )
+    -> some View {
         ZStack(alignment: .bottom) {
             if let image {
                 if fills {
@@ -169,7 +185,8 @@ struct KeyboardClipKey: View {
 
     private func footLine(
         onPicture: Bool = false, ink: Color? = nil, showsTitleOnFace: Bool
-    ) -> some View {
+    )
+    -> some View {
         let age = CardAge.text(interval: Date.now.timeIntervalSince(entry.date))
         let symbol: String? = entry.sourceIsThisDevice
             ? CardFootLineView.device.symbol
@@ -205,7 +222,7 @@ struct KeyboardClipKey: View {
     private func feedbackBadge(_ feedback: Feedback) -> some View {
         let text: LocalizedStringKey = switch feedback {
         case .inserted: "Inserted \u{2713}"
-        case .copiedImage: "Copied \u{2014} tap field to Paste"
+        case .copiedImage: "Copied, paste it"
         }
         return Text(text)
             .font(.caption.weight(.semibold))

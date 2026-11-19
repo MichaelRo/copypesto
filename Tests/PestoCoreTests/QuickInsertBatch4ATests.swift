@@ -21,7 +21,12 @@ struct QuickInsertBatch4ATests {
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         let image = try #require(context.makeImage())
         let data = NSMutableData()
-        let destination = try #require(CGImageDestinationCreateWithData(data, UTType.png.identifier as CFString, 1, nil))
+        let destination = try #require(CGImageDestinationCreateWithData(
+            data,
+            UTType.png.identifier as CFString,
+            1,
+            nil
+        ))
         CGImageDestinationAddImage(destination, image, nil)
         #expect(CGImageDestinationFinalize(destination))
         return data as Data
@@ -79,7 +84,7 @@ struct QuickInsertBatch4ATests {
         let decoded = try JSONDecoder().decode(QuickInsertSet.self, from: Data(legacyJSON.utf8))
         #expect(decoded.keyboardSize == .medium)
         #expect(decoded.accent == .brand)
-        #expect(decoded.collections.first?.color == "")
+        #expect(decoded.collections.first?.color.isEmpty == true)
         let entry = try #require(decoded.entries.first)
         #expect(entry.source == nil)
         #expect(entry.sourceIsThisDevice == false)
@@ -201,7 +206,7 @@ struct QuickInsertBatch4ATests {
     @Test("collection color is carried in QuickInsertCollection")
     func whenCollectionIncluded_thenColorIsCarried() throws {
         let context = try ModelContext(ModelContainerSetup.makeInMemory())
-        let board = try Pinboard(name: "Design", symbolName: "paintbrush", colorHex: "#D94F70", sortOrder: 0)
+        let board = Pinboard(name: "Design", symbolName: "paintbrush", colorHex: "#D94F70", sortOrder: 0)
         context.insert(board)
         let item = ClipboardItem(
             type: .text, previewText: "Hex", contentHash: "h1", byteSize: 3, deviceID: "d", sequenceNumber: 1

@@ -166,80 +166,56 @@ struct KeyboardRenderingTests {
         return try #require(image.jpegData(compressionQuality: 0.7))
     }
 
+    private func sampleEntries(now: Date, thumbnail: Data) -> [(String, QuickInsertEntry)] {
+        [
+            ("text", QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .text,
+                title: "Pick up basil, pine nuts and parmesan on the way home",
+                text: "Pick up basil, pine nuts and parmesan on the way home",
+                expandsOnInsert: false, date: now, source: "Notes"
+            )),
+            ("titled", QuickInsertEntry(
+                id: UUID(), section: .collection, kind: .text,
+                title: "12 Basil Lane", text: "12 Basil Lane", expandsOnInsert: false,
+                customTitle: "Home Address", date: now, source: "Notes"
+            )),
+            ("link", QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .url,
+                title: "https://copypesto.net/guide/sync", text: "https://copypesto.net/guide/sync",
+                expandsOnInsert: false, date: now, source: "Safari"
+            )),
+            ("code", QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .code,
+                title: "let pesto = basil + garlic", text: "let pesto = basil + garlic + oil",
+                expandsOnInsert: false, date: now, source: "Xcode"
+            )),
+            ("color", QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .color,
+                title: "#2F7A49", text: "#2F7A49", expandsOnInsert: false, date: now, source: "Pasted"
+            )),
+            ("snippet", QuickInsertEntry(
+                id: UUID(), section: .snippets, kind: .text,
+                title: "Thanks, {{date}}", text: "Thanks, {{date}}",
+                expandsOnInsert: true, date: now, source: "Notes"
+            )),
+            ("picture", QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .image,
+                title: "Basil", text: "", expandsOnInsert: false,
+                date: now, source: "Photos", thumbnail: thumbnail
+            )),
+            ("gif", QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .image,
+                title: "Gif", text: "", expandsOnInsert: false,
+                date: now, source: "Safari", thumbnail: thumbnail, isAnimated: true
+            ))
+        ]
+    }
+
     @Test("every supported keyboard card kind renders in light and dark")
     func whenAllSupportedKindsRendered_thenLightAndDarkRender() throws {
         try FileManager.default.createDirectory(at: Self.output, withIntermediateDirectories: true)
-        let thumbnail = try sampleThumbnail()
+        let entries = try sampleEntries(now: Date(timeIntervalSince1970: 1_800_000_000), thumbnail: sampleThumbnail())
         let cardSize = KeyboardLayout.cardSize(size: .medium, isRegular: false)
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let entries: [(String, QuickInsertEntry)] = [
-            (
-                "text",
-                QuickInsertEntry(
-                    id: UUID(), section: .recent, kind: .text,
-                    title: "Pick up basil, pine nuts and parmesan on the way home",
-                    text: "Pick up basil, pine nuts and parmesan on the way home",
-                    expandsOnInsert: false, date: now, source: "Notes"
-                )
-            ),
-            (
-                "titled",
-                QuickInsertEntry(
-                    id: UUID(), section: .collection, kind: .text,
-                    title: "12 Basil Lane", text: "12 Basil Lane", expandsOnInsert: false,
-                    customTitle: "Home Address", date: now, source: "Notes"
-                )
-            ),
-            (
-                "link",
-                QuickInsertEntry(
-                    id: UUID(), section: .recent, kind: .url,
-                    title: "https://copypesto.net/guide/sync",
-                    text: "https://copypesto.net/guide/sync",
-                    expandsOnInsert: false, date: now, source: "Safari"
-                )
-            ),
-            (
-                "code",
-                QuickInsertEntry(
-                    id: UUID(), section: .recent, kind: .code,
-                    title: "let pesto = basil + garlic", text: "let pesto = basil + garlic + oil",
-                    expandsOnInsert: false, date: now, source: "Xcode"
-                )
-            ),
-            (
-                "color",
-                QuickInsertEntry(
-                    id: UUID(), section: .recent, kind: .color,
-                    title: "#2F7A49", text: "#2F7A49",
-                    expandsOnInsert: false, date: now, source: "Pasted"
-                )
-            ),
-            (
-                "snippet",
-                QuickInsertEntry(
-                    id: UUID(), section: .snippets, kind: .text,
-                    title: "Thanks, {{date}}", text: "Thanks, {{date}}",
-                    expandsOnInsert: true, date: now, source: "Notes"
-                )
-            ),
-            (
-                "picture",
-                QuickInsertEntry(
-                    id: UUID(), section: .recent, kind: .image,
-                    title: "Basil", text: "", expandsOnInsert: false,
-                    date: now, source: "Photos", thumbnail: thumbnail
-                )
-            ),
-            (
-                "gif",
-                QuickInsertEntry(
-                    id: UUID(), section: .recent, kind: .image,
-                    title: "Gif", text: "", expandsOnInsert: false,
-                    date: now, source: "Safari", thumbnail: thumbnail, isAnimated: true
-                )
-            )
-        ]
 
         for (name, entry) in entries {
             var renders: [Bool: Data] = [:]

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 import Foundation
-
 import PestoCore
 
 /// The fetch behind a browser's Copy Image, which hands over a still picture and names the GIF's address: it follows

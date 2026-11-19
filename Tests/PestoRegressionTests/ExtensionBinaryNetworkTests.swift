@@ -21,6 +21,7 @@ struct ExtensionBinaryNetworkTests {
         "PestoControls",
         "PestoShare",
         "PestoAutoFill",
+        "PestoKeyboard",
         "PestoWidget"
     ]
 
@@ -62,9 +63,9 @@ struct ExtensionBinaryNetworkTests {
         process.waitUntilExit()
         #expect(
             process.terminationStatus == 0,
-            "nm failed (\(process.terminationStatus)): \(String(decoding: errData, as: UTF8.self))"
+            "nm failed (\(process.terminationStatus)): \(String(bytes: errData, encoding: .utf8) ?? "")"
         )
-        return String(decoding: outData, as: UTF8.self)
+        return String(bytes: outData, encoding: .utf8) ?? ""
     }
 
     @Test("when inspecting built PestoCore object symbols, no link-preview or URLSession symbols exist")
@@ -127,6 +128,8 @@ struct ExtensionBinaryNetworkTests {
             + SourceTree.swiftFiles(in: "Controls", minimum: 1)
             + SourceTree.swiftFiles(in: "MobileShare", minimum: 3)
             + SourceTree.swiftFiles(in: "MobileAutoFill", minimum: 2)
+            + SourceTree.swiftFiles(in: "MobileKeyboard", minimum: 4)
+            + SourceTree.swiftFiles(in: "MobileShared", minimum: 4)
             + SourceTree.swiftFiles(in: "MobileWidget", minimum: 2)
         var offenders: [String] = []
         for file in files {

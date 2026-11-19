@@ -48,7 +48,10 @@ final class KeyboardViewController: UIInputViewController {
         height.priority = .required - 1
         height.isActive = true
         heightConstraint = height
-        registerForTraitChanges([UITraitHorizontalSizeClass.self, UITraitVerticalSizeClass.self]) { (controller: Self, _) in
+        registerForTraitChanges([
+            UITraitHorizontalSizeClass.self,
+            UITraitVerticalSizeClass.self
+        ]) { (controller: Self, _) in
             controller.heightConstraint?.constant = controller.currentHeight
         }
     }

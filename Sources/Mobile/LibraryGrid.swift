@@ -26,6 +26,7 @@ struct LibraryGrid: View {
     @State private var position: CardIdentity?
     @State private var hasRestoredPosition = false
     @State private var ranking = SemanticRanking()
+    @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
 
     var body: some View {
         let ids = listing.ids
@@ -124,7 +125,7 @@ struct LibraryGrid: View {
         LibraryListing.Key(
             revision: store.revision, query: library.query, filter: library.filter, isSearching: library.isSearching,
             orderVersion: library.orderVersion, textEdits: appState.textEdits, byMeaning: byMeaning,
-            hidesSensitive: NSFWMode.current() == .hide, smartRule: smartBoard?.smartPredicateData
+            hidesSensitive: NSFWMode(rawValue: nsfwModeRaw) == .hide, smartRule: smartBoard?.smartPredicateData
         )
     }
 

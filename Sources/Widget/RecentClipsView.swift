@@ -41,14 +41,15 @@ struct RecentClipsView: View {
                 .opensShelfOnTheMac()
             case .locked:
                 WidgetMessage(
-                    symbol: "lock", title: "Locked", detail: "Open Pesto to see your clips",
+                    symbol: "lock", title: "Locked", detail: "Open Pesto to see your clips.",
                     compact: resolvedSize == .small
                 )
                 .opensShelfOnTheMac()
             case .hidden:
                 WidgetMessage(
                     symbol: "eye.slash", title: "Clip contents hidden",
-                    detail: "They show again when Pesto stops hiding them", compact: resolvedSize == .small
+                    detail: "They come back when sharing ends or you choose Show Clip Contents.",
+                    compact: resolvedSize == .small
                 )
                 .opensShelfOnTheMac()
             case .empty:

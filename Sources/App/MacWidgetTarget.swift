@@ -17,8 +17,13 @@ enum MacWidgetTarget {
                 secrets: SharedKeychainSecretStore(accessGroup: group), account: AppIdentity.widgetKeyAccount
             ),
             isInstalled: {
-                let widgets = try? await WidgetCenter.shared.currentConfigurations()
-                return widgets?.contains { $0.kind == AppIdentity.widgetKind } ?? false
+                // An error is no answer, not "no widget": the keeper then leaves the snapshot and key as they are.
+                do {
+                    return try await WidgetCenter.shared.currentConfigurations()
+                        .contains { $0.kind == AppIdentity.widgetKind }
+                } catch {
+                    return nil
+                }
             },
             reload: { WidgetCenter.shared.reloadTimelines(ofKind: AppIdentity.widgetKind) }
         )

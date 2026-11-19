@@ -56,6 +56,20 @@ struct ReleasePipelineTests {
         )
     }
 
+    @Test("a widget export checks both profiles before anything is notarized or shipped")
+    func widgetExportChecksTheSigning() throws {
+        let makefile = try text("Makefile")
+        let export = try #require(makefile.range(of: "\nexport: "))
+        let notarize = try #require(makefile.range(of: "\nnotarize: ", range: export.upperBound..<makefile.endIndex))
+        let recipe = String(makefile[export.upperBound..<notarize.lowerBound])
+        let app = "\"$(EXPORT_PATH)/Pesto.app\""
+        #expect(recipe.contains("$(if $(WIDGET_PROFILE),scripts/check-sync-signing.sh \(app),)"))
+        #expect(recipe.contains("$(if $(WIDGET_PROFILE),scripts/check-widget-signing.sh \(app),)"))
+        let exportArchive = try #require(recipe.range(of: "-exportArchive"))
+        let check = try #require(recipe.range(of: "check-widget-signing.sh"))
+        #expect(exportArchive.lowerBound < check.lowerBound, "the check runs on the exported app")
+    }
+
     @Test("a build without WIDGET_PROFILE keeps the Controls extension at macOS 26, so macOS 15 never loads it")
     func controlsExtensionStaysAtMacOS26() throws {
         let spec = try text("Pesto.yml")

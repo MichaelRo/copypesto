@@ -11,12 +11,40 @@ final class WidgetSnapshotKeeperTests {
     private let container: ModelContainer
     private let context: ModelContext
     private let secrets = MemorySecrets()
-    private var installed = true
+    private var installed: Bool? = true
     private var gate = WidgetSnapshotGate.clips
     private var readable = true
     private var reloads = 0
     private var clock = Date(timeIntervalSince1970: 1_800_000_000)
     private var keeper: WidgetSnapshotKeeper?
+    private let readGate = ReadGate()
+
+    /// Holds the first clip read of a write until the test lets it go, so the test can act while the write is off the
+    /// main actor.
+    private final class ReadGate: @unchecked Sendable {
+        private let lock = NSLock()
+        private var armed = false
+        let started = DispatchSemaphore(value: 0)
+        let proceed = DispatchSemaphore(value: 0)
+
+        func waitUntilStarted() {
+            started.wait()
+        }
+
+        func arm() {
+            lock.withLock { armed = true }
+        }
+
+        func pass() {
+            let wait = lock.withLock {
+                defer { armed = false }
+                return armed
+            }
+            guard wait else { return }
+            started.signal()
+            proceed.wait()
+        }
+    }
 
     init() throws {
         root = FileManager.default.temporaryDirectory
@@ -39,12 +67,16 @@ final class WidgetSnapshotKeeperTests {
 
     private func makeKeeper() -> WidgetSnapshotKeeper {
         let target = WidgetSnapshotKeeper.Target(
-            file: file, keys: keys, isInstalled: { [unowned self] in installed },
+            file: file, keys: keys,
+            isInstalled: { [unowned self] in installed },
             reload: { [unowned self] in reloads += 1 }
         )
         let inputs = WidgetSnapshotKeeper.Inputs(
             gate: { [unowned self] in gate }, theme: { .brand }, canRead: { [unowned self] in readable },
-            source: { _ in "Notes" }, now: { [unowned self] in clock }
+            source: { [readGate] _ in
+                readGate.pass()
+                return "Notes"
+            }, now: { [unowned self] in clock }
         )
         let made = WidgetSnapshotKeeper(target: target, container: container, inputs: inputs, rewriteDelay: .zero)
         keeper = made
@@ -158,6 +190,59 @@ final class WidgetSnapshotKeeperTests {
         readable = false
         await keeper.write()
         #expect(!file.exists)
+        keeper.stop()
+    }
+
+    @Test("asking again with nothing changed writes nothing: no Keychain read, no seal, no reload")
+    func whenPresenceIsUnchanged_thenNothingIsWritten() async throws {
+        try add("lunch at noon")
+        let keeper = makeKeeper()
+        await keeper.start()
+        let reloadsAfterStart = reloads
+        let readsAfterStart = secrets.readCount
+        let written = try Data(contentsOf: file.url)
+
+        await keeper.refreshPresence()
+        await keeper.refreshPresence()
+
+        #expect(reloads == reloadsAfterStart)
+        #expect(secrets.readCount == readsAfterStart)
+        #expect(try Data(contentsOf: file.url) == written)
+        keeper.stop()
+    }
+
+    @Test("a widget removed while a write is running leaves no file and no key behind")
+    func whenTheWidgetGoesDuringAWrite_thenNothingIsRecreated() async throws {
+        try add("lunch at noon")
+        let keeper = makeKeeper()
+        await keeper.start()
+
+        readGate.arm()
+        let running = Task { await keeper.write() }
+        let gate = readGate
+        await Task.detached { gate.waitUntilStarted() }.value
+        installed = false
+        await keeper.refreshPresence()
+        gate.proceed.signal()
+        await running.value
+
+        #expect(!file.exists)
+        #expect(try keys.key() == nil)
+        keeper.stop()
+    }
+
+    @Test("WidgetKit failing to answer is not a removed widget: the snapshot and key stay")
+    func whenWidgetKitFails_thenTheSnapshotStays() async throws {
+        try add("lunch at noon")
+        let keeper = makeKeeper()
+        await keeper.start()
+
+        installed = nil
+        await keeper.refreshPresence()
+
+        #expect(file.exists)
+        #expect(try keys.key() != nil)
+        #expect(keeper.isInstalled)
         keeper.stop()
     }
 }

@@ -347,6 +347,9 @@ export: archive ## [Release] Export and sign the archive for Developer ID distri
 		-archivePath $(ARCHIVE_PATH) \
 		-exportPath $(EXPORT_PATH) \
 		-exportOptionsPlist $(BUILD_DIR)/exportOptions.plist
+	@# A widget build whose app group claim a profile does not authorize would lose the sync key's iCloud item: stop here.
+	$(if $(WIDGET_PROFILE),scripts/check-sync-signing.sh "$(EXPORT_PATH)/Pesto.app",)
+	$(if $(WIDGET_PROFILE),scripts/check-widget-signing.sh "$(EXPORT_PATH)/Pesto.app",)
 
 .PHONY: notarize
 notarize: export ## [Release] Notarize, wait for Apple's response, and staple the ticket

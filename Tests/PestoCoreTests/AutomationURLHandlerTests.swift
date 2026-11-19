@@ -11,6 +11,7 @@ struct AutomationURLHandlerTests {
     @MainActor
     private final class SpyHost: AutomationHost {
         var isHistoryLocked = false
+        var isContentCovered = false
         var historyContainer: ModelContainer?
         var events: [String] = []
 
@@ -256,5 +257,20 @@ struct AutomationURLHandlerTests {
         host.isHistoryLocked = true
         await run(.widget(.init(id: text, action: .copy)))
         #expect(host.events == ["show"])
+    }
+
+    @Test("while clip contents are covered, Show and Open only open the shelf; Copy still copies (ADR 0003)")
+    func whenContentsAreCovered_thenShowAndOpenRevealNothing() async throws {
+        let text = try await ingest("Lunch at noon on Thursday")
+        let link = try await ingest("https://example.com/menu")
+        host.events = []
+        host.isContentCovered = true
+
+        await run(.widget(.init(id: text, action: .show)))
+        await run(.widget(.init(id: link, action: .open)))
+        await run(.widget(.init(id: link, action: .show)))
+        await run(.widget(.init(id: text, action: .copy)))
+
+        #expect(host.events == ["show", "show", "show", "copy:Lunch at noon on Thursday"])
     }
 }

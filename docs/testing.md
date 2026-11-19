@@ -313,6 +313,12 @@ snapshot logic is covered by `WidgetSnapshotKeeperTests`, `WidgetSnapshotGateTes
   you were in. Show opens the shelf at it; Open on a link clip opens the browser.
 - History Lock on: the widget says Locked. Hide Clip Contents, or a screen share with the setting on: "Clip contents
   hidden". A new secret never appears.
+- On the first profile-signed build, on a Mac that already synced: the existing sync key still opens (sync exchanges
+  without asking for the recovery key or an approval), so adding the app group and the widget's Keychain group left
+  the app's validated entitlements and its iCloud Keychain item alone.
+- Readability in every rendering mode: on the Mac with the desktop dimmed (another app in front, widgets drawn in the
+  desktop's muted style), and on iOS with the Home Screen set to Tinted and to Clear (`widgetRenderingMode` accented
+  and vibrant): the text, the foot line, a color card's hex and the Locked and Hidden messages stay readable.
 
 ## Two Macs: sync
 Run on two physical Macs signed in to the same Apple Account with iCloud Drive on (two-Mac local-folder mechanics are automated in `TwoProcessSyncTests` and `scripts/vm/vm-two-mac-sync.sh`; only real iCloud Drive daemon sync, `Optimize Mac Storage`, and iCloud Keychain cross-Mac join require physical Apple Accounts).

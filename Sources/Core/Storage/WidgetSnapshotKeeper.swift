@@ -10,16 +10,16 @@ import SwiftData
 /// signed for the widget (`WidgetSharing`).
 @MainActor
 public final class WidgetSnapshotKeeper {
-    /// Where the snapshot and its key live, and what WidgetKit says; a test names a temporary folder, a memory key
-    /// store and its own answers.
+    /// Where the snapshot and its key live, and what WidgetKit says (nil when it could not say); a test names a
+    /// temporary folder, a memory key store and its own answers.
     public struct Target {
         public let file: SealedGroupFile
         public let keys: SharedFileKeyStore
-        public let isInstalled: @MainActor () async -> Bool
+        public let isInstalled: @MainActor () async -> Bool?
         public let reload: @MainActor () -> Void
 
         public init(
-            file: SealedGroupFile, keys: SharedFileKeyStore, isInstalled: @escaping @MainActor () async -> Bool,
+            file: SealedGroupFile, keys: SharedFileKeyStore, isInstalled: @escaping @MainActor () async -> Bool?,
             reload: @escaping @MainActor () -> Void
         ) {
             self.file = file
@@ -96,12 +96,16 @@ public final class WidgetSnapshotKeeper {
         await refreshPresence()
     }
 
-    /// Asks whether a Pesto widget is installed: one is, the snapshot is written now; none is, the file and the key
-    /// go (and with no file left, the Keychain is not touched).
+    /// Asks whether a Pesto widget is installed. A widget that appeared, or one with nothing written for it yet, gets
+    /// the snapshot now; one already kept is left alone (saves and state changes keep it current), so asking costs no
+    /// Keychain read, seal or reload on the shelf's way open. None installed, the file and the key go (and with no file
+    /// left, the Keychain is not touched). WidgetKit failing to answer changes nothing: it is not a removed widget.
     public func refreshPresence() async {
-        isInstalled = await target.isInstalled()
-        if isInstalled {
-            await write()
+        guard let installed = await target.isInstalled() else { return }
+        let appeared = installed && !isInstalled
+        isInstalled = installed
+        if installed {
+            if appeared || lastWritten == nil { await write() }
         } else if target.file.exists {
             remove()
         }
@@ -171,6 +175,9 @@ public final class WidgetSnapshotKeeper {
     }
 
     private func store(_ snapshot: WidgetSnapshot?, as written: Written) {
+        // The widget may have gone while the clips were read: `remove()` has run, and nothing may bring the file or
+        // the key back.
+        guard isInstalled else { return }
         guard let snapshot else { return dropFile() }
         do {
             try target.file.write(snapshot, with: target.keys.loadOrCreate())

@@ -9,6 +9,10 @@ extension AppDelegate: AutomationHost {
         appState.isHistoryLockedNow()
     }
 
+    var isContentCovered: Bool {
+        appState.isContentCovered(screenSharingPrivacy: AppDefaults.store.value(for: Setting.screenSharingPrivacy))
+    }
+
     var historyContainer: ModelContainer? {
         appState.historyContainer
     }

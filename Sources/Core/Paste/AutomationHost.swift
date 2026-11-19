@@ -7,6 +7,9 @@ import SwiftData
 @MainActor
 public protocol AutomationHost: AnyObject {
     var isHistoryLocked: Bool { get }
+    /// Clip contents are covered (Hide Clip Contents, or a screen share with that setting on, ADR 0003): a link may
+    /// not put a clip's text on screen or open it.
+    var isContentCovered: Bool { get }
     var historyContainer: ModelContainer? { get }
     func showShelf()
     func togglePinnedWindow()

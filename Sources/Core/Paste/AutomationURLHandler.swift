@@ -112,7 +112,9 @@ public final class AutomationURLHandler {
     }
 
     /// A widget's link acts only on a clip that may still be shown outside Pesto (ADR 0052, 0059); an unknown or no
-    /// longer eligible id only opens the shelf, so a link from anywhere can do no more than the widget could.
+    /// longer eligible id only opens the shelf, so a link from anywhere can do no more than the widget could. While
+    /// contents are covered, Show and Open only open the shelf: neither may type the clip's text into the search or
+    /// open it in a browser on a shared screen. Copy still copies, as a covered card's paste does (ADR 0003).
     private static func widgetTask(_ target: WidgetLink.Target, _ host: some AutomationHost) -> Task<Void, Never> {
         Task { [weak host] in
             guard let host else { return }
@@ -123,6 +125,8 @@ public final class AutomationURLHandler {
                 switch target.action {
                 case .copy:
                     host.copyClip(item)
+                case .show where host.isContentCovered, .open where host.isContentCovered:
+                    host.showShelf()
                 case .open where item.type == .url:
                     if let url = WidgetTap.webURL(in: item.blob?.decryptedText() ?? item.displayPreviewText) {
                         host.openWebLink(url)

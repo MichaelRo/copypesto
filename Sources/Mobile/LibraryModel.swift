@@ -71,6 +71,7 @@ final class LibraryModel {
     func closeEverything() {
         query = ""
         isSearching = false
+        filter.endSearch()
         openClipID = nil
         textEdit = nil
         scrollAnchor = nil
@@ -116,5 +117,21 @@ final class LibraryModel {
 
     func endSearch() {
         filter.endSearch()
+    }
+
+    /// Ask Pesto's answer: its words go to the search field and its kinds and range to the filter.
+    func apply(_ query: AskPestoQuery) {
+        self.query = query.keywords
+        isSearching = true
+        filter.apply(query)
+    }
+
+    /// The answer to `sentence` arrives after the person may have typed on, ended the search or locked the history;
+    /// it is applied only to the search it was asked about. Returns whether it was applied.
+    @discardableResult
+    func applyAnswer(_ query: AskPestoQuery, to sentence: String, isLocked: Bool) -> Bool {
+        guard !isLocked, isSearching, self.query == sentence else { return false }
+        apply(query)
+        return true
     }
 }

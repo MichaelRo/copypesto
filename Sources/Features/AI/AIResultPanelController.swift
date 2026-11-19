@@ -7,8 +7,7 @@ import SwiftUI
 
 enum AIResultTitle {
     static func coverageNote(_ coverage: AIResult.Coverage) -> String {
-        let shown = coverage.shown.formatted(), total = coverage.total.formatted()
-        return String(localized: "Based on the first \(shown) of \(total) characters.")
+        coverage.note
     }
 
     static func text(action: String, isError: Bool) -> String {

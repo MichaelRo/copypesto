@@ -49,7 +49,11 @@ final class SecretReveal {
         if isContentCovered { shownUnderCover.insert(id) }
     }
 
+    /// Told when the content cover goes up, so what was opened in a sheet from a hidden clip closes with it.
+    @ObservationIgnored var coverWasRaised: (@MainActor () -> Void)?
+
     private func forgetShowsUnlessCovered() {
+        if isContentCovered { coverWasRaised?() }
         if !isContentCovered, !shownUnderCover.isEmpty { shownUnderCover = [] }
     }
 
@@ -68,6 +72,11 @@ final class SecretReveal {
         )
         if permitted { shown.insert(id) }
         return permitted
+    }
+
+    /// The same question Show asks, for an action that reads a hidden clip without showing it (Decode JWT).
+    func authenticate(reason: String) async -> Bool {
+        await HiddenClipReveal.permitted(isHidden: true, using: authenticator, reason: reason, grace: grace)
     }
 
     func hide(_ id: UUID) {

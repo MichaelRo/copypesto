@@ -4,7 +4,8 @@ import PestoCore
 import UniformTypeIdentifiers
 
 /// Reads what another app shared into one inbox item, within the extension's memory limit: a picture is read from its
-/// file only when it is small enough to keep as it is, and otherwise scaled down from the file by ImageIO.
+/// file only when it is small enough to keep as it is, and otherwise scaled down from the file by ImageIO (a GIF too
+/// large to keep whole is refused, not reduced to its first frame).
 @MainActor
 enum ShareReader {
     struct Unreadable: Error {}
@@ -61,8 +62,12 @@ enum ShareReader {
     ) throws
     -> (Data, String) {
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? Int.max
-        if keepsOriginal, size <= InboxPolicy.maxPictureBytes {
-            return try (Data(contentsOf: url), type)
+        if keepsOriginal {
+            switch InboxPolicy.handling(ofStoredPictureType: type, byteCount: size) {
+            case .keep: return try (Data(contentsOf: url), type)
+            case .refuse: throw InboxError.tooLarge
+            case .scaleDown: break
+            }
         }
         let png = ImageDownsampler.thumbnailPNG(contentsOf: url, maxPixel: InboxPolicy.maxConvertedPixel)
         guard let png else { throw Unreadable() }

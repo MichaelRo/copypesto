@@ -49,6 +49,12 @@ public struct AIResult: Sendable, Identifiable {
         public var isPartial: Bool {
             shown < total
         }
+
+        /// What the answer's panel says when the model read only the start of a clip.
+        public var note: String {
+            let shown = shown.formatted(), total = total.formatted()
+            return String(localized: "Based on the first \(shown) of \(total) characters.")
+        }
     }
 
     public init(

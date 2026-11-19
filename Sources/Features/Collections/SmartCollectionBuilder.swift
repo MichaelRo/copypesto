@@ -127,10 +127,10 @@ private struct RuleRow: View {
 
             Picker("Condition", selection: $rule.op) {
                 ForEach(allowedOps(for: rule.field), id: \.self) { op in
-                    Text(op.displayName).tag(op)
+                    Text(op.displayName(for: rule.field)).tag(op)
                 }
             }
-            .frame(width: 100)
+            .fixedSize()
 
             valueField
 
@@ -230,7 +230,7 @@ extension PredicateRule.Field {
         case .previewText: "Text"
         case .timestamp: "Date"
         case .isPinned: "Pinned"
-        case .isRemote: "From Another Device"
+        case .isRemote: "Copied on"
         case .detectedLanguage: "Language"
         case .sensitivity: "Sensitivity"
         case .tags: "Tag"
@@ -240,6 +240,15 @@ extension PredicateRule.Field {
 }
 
 extension PredicateRule.Operator {
+    /// The yes/no conditions finish the sentence the field starts: "Copied on another device", "Copied on this Mac".
+    func displayName(for field: PredicateRule.Field) -> String {
+        switch (self, field) {
+        case (.isTrue, .isRemote): "another device"
+        case (.isFalse, .isRemote): "this Mac"
+        default: displayName
+        }
+    }
+
     var displayName: String {
         switch self {
         case .equals: "is"

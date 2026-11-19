@@ -66,6 +66,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0055](0055-widgets-and-autofill-while-the-ios-lock-is-on.md) | The iOS widget says Locked while the lock is on, and one setting, off by default, lets widgets and AutoFill keep showing clips. |
 | [0056](0056-sync-and-undo-corrections-after-the-ios-review.md) | A remote text edit replaces the clip's text in place and keeps what only that device knows; undo, a withdrawal and the echo guard follow ids; an iPhone holds its folder per holder and a stopped pass ends; a stale bookmark is renewed; an older Pesto can move curation between two clips with one text |
 | [0057](0057-the-ios-welcome.md) | The iOS welcome: three steps shown once, link previews on only when step two appears, the lock offered off, sync offered never started, AutoFill as a one-time tip, no permission prompts. |
+| [0058](0058-the-mac-features-pass-3-brings-to-ios.md) | On iOS: Decode JWT behind Show's gate in a memory-only sheet, AI actions as a submenu and a sheet (none for a secret, no chunked reading), Ask Pesto as a chip in the search, smart collections in the collection editor, a GIF kept whole in and out. |
 
 ## Template
 

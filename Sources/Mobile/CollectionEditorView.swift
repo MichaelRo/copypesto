@@ -25,7 +25,20 @@ struct CollectionEditorView: View {
                         TextField("Name", text: draft.name)
                             .focused($nameFocused)
                             .accessibilityIdentifier(MobileAccessibilityID.collectionNameField)
+                        if board == nil {
+                            Picker("Kind", selection: draft.isSmart) {
+                                Text("Plain").tag(false)
+                                Text("Smart").tag(true)
+                            }
+                            .pickerStyle(.segmented)
+                            .accessibilityIdentifier(MobileAccessibilityID.collectionKindPicker)
+                        }
+                    } footer: {
+                        if board == nil {
+                            Text("A plain collection holds the clips you add. A smart one fills itself from rules.")
+                        }
                     }
+                    rulesSections(draft)
                     Section("Icon") { symbolGrid(draft) }
                     Section("Color") { colorRow(draft) }
                 }
@@ -40,6 +53,7 @@ struct CollectionEditorView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(board == nil ? "Add" : "Save") { save() }
+                        .disabled(draft?.canSave == false)
                         .accessibilityIdentifier(MobileAccessibilityID.saveCollectionButton)
                 }
             }
@@ -48,6 +62,20 @@ struct CollectionEditorView: View {
             guard draft == nil else { return }
             draft = board.map(CollectionDraft.init) ?? .new(existing: collections)
             if board == nil { nameFocused = true }
+        }
+    }
+
+    @ViewBuilder
+    private func rulesSections(_ draft: Binding<CollectionDraft>) -> some View {
+        if draft.wrappedValue.isSmart {
+            if let rules = Binding(draft.rules) {
+                SmartRulesEditor(draft: rules)
+            } else {
+                Section {
+                    Text("These rules were made by a newer version of Pesto, so they can\u{2019}t be edited here.")
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
     }
 

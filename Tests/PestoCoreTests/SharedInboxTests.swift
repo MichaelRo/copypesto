@@ -2,6 +2,7 @@
 import CryptoKit
 import Foundation
 import Testing
+import UniformTypeIdentifiers
 @testable import PestoCore
 
 @Suite("The sealed inbox the share extension writes")
@@ -138,5 +139,23 @@ struct SharedInboxTests {
         ))
         #expect(SharedContentChoice.choose(typeIdentifiers: ["public.plain-text", "public.url"]) == .link)
         #expect(SharedContentChoice.choose(typeIdentifiers: ["public.file-url"]) == nil)
+    }
+
+    @Test("a GIF is chosen over the still copies registered beside it, in any order")
+    func whenAGIFIsOffered_thenTheWholeGIFIsChosen() {
+        let gif = UTType.gif.identifier
+        #expect(SharedContentChoice.choose(typeIdentifiers: ["public.png", gif]) == .picture(gif))
+        #expect(SharedContentChoice
+            .choose(typeIdentifiers: [gif, "public.jpeg", "public.utf8-plain-text"]) == .picture(gif))
+        #expect(SharedContentChoice.choose(typeIdentifiers: ["public.png", "public.jpeg"]) == .picture("public.png"))
+    }
+
+    @Test("a picture over the limit is scaled down to a still, except a GIF, which is refused")
+    func whenAPictureIsTooBig_thenOnlyAGIFIsRefused() {
+        let limit = InboxPolicy.maxPictureBytes
+        #expect(InboxPolicy.handling(ofStoredPictureType: UTType.gif.identifier, byteCount: limit) == .keep)
+        #expect(InboxPolicy.handling(ofStoredPictureType: UTType.gif.identifier, byteCount: limit + 1) == .refuse)
+        #expect(InboxPolicy.handling(ofStoredPictureType: UTType.png.identifier, byteCount: limit + 1) == .scaleDown)
+        #expect(InboxPolicy.handling(ofStoredPictureType: UTType.heic.identifier, byteCount: 10) == .keep)
     }
 }

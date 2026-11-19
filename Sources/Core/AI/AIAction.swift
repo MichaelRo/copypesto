@@ -35,6 +35,19 @@ public enum AIAction: String, CaseIterable, Sendable {
         }
     }
 
+    /// What menus and result sheets call the action, in the person's language.
+    public var title: LocalizedStringResource {
+        switch self {
+        case .summarize: "Summarize"
+        case .keyPoints: "Key Points"
+        case .toneProfessional: "Professional"
+        case .toneConcise: "Concise"
+        case .translate: "Translate"
+        case .extract: "Extract"
+        case .describeImage: "Describe Image"
+        }
+    }
+
     /// SF Symbol name for menus and result panels.
     public var symbolName: String {
         switch self {

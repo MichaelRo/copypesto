@@ -9,11 +9,6 @@ struct DecodePopoverKeys {
     var copy: @MainActor () -> Void
 }
 
-enum JWTDecodeResult: Equatable {
-    case decoded(JWTDecoding)
-    case unreadable
-}
-
 /// What Decode JWT shows for a hidden token (ADR 0020): header and payload, the times as dates, and a plain note that
 /// nothing was verified. Its text lives only in this view's inputs.
 struct JWTDecodePopover: View {
@@ -96,7 +91,6 @@ struct JWTDecodePopover: View {
     private func jsonText(_ json: String) -> some View {
         Text(json)
             .font(.system(.caption, design: .monospaced))
-            .textSelection(.enabled)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -120,12 +114,8 @@ struct JWTDecodePopover: View {
         }
     }
 
-    /// In the environment's calendar and locale, so a snapshot draws the same on any Mac; on a person's Mac those are
-    /// their own.
     static func dateText(_ date: Date, calendar: Calendar, locale: Locale) -> String {
-        date.formatted(Date.FormatStyle(
-            date: .abbreviated, time: .shortened, locale: locale, calendar: calendar, timeZone: calendar.timeZone
-        ))
+        JWTDecodingText.dateText(date, calendar: calendar, locale: locale)
     }
 
     static func validityText(
@@ -135,22 +125,6 @@ struct JWTDecodePopover: View {
         locale: Locale = .autoupdatingCurrent
     )
     -> String? {
-        let relative = RelativeDateTimeFormatter()
-        relative.unitsStyle = .full
-        switch validity {
-        case let .expired(date):
-            return String(localized: "Expired \(relative.localizedString(for: date, relativeTo: now))")
-        case let .notYetValid(date):
-            return String(localized: "Not valid until \(dateText(date, calendar: calendar, locale: locale))")
-        case let .validUntil(date):
-            let formatter = DateComponentsFormatter()
-            formatter.unitsStyle = .full
-            formatter.maximumUnitCount = 1
-            formatter.allowedUnits = [.day, .hour, .minute, .second]
-            let span = formatter.string(from: now, to: date) ?? ""
-            return String(localized: "Valid for \(span)")
-        case .noExpiry:
-            return nil
-        }
+        JWTDecodingText.validityText(validity, now: now, calendar: calendar, locale: locale)
     }
 }

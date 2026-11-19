@@ -60,6 +60,17 @@ final class MobileAppState {
     /// The one-time AutoFill tip is on screen (`MobileAppState+AutoFillTip.swift`).
     var offersAutoFillTip = false
     @ObservationIgnored var opensAutoFillSettings: @MainActor () async -> Void = AutoFillSettings.open
+    /// What Decode JWT read, shown in a sheet; memory only, gone with the lock, a clear and leaving the foreground.
+    var decodedJWT: JWTDecodeResult?
+    /// An AI action's answer, shown in a sheet while `showsAI` (`MobileAppState+AI.swift`); memory only.
+    var aiResult: AIResult?
+    var aiIsLoading = false
+    var showsAI = false
+    @ObservationIgnored var aiCoordinator = MobileAppState.makeAICoordinator()
+    /// What the menus ask before offering an action; a test names its own.
+    @ObservationIgnored var aiAvailability: @Sendable () -> AIAvailability = MobileAppState.makeAIAvailability()
+    @ObservationIgnored var aiSupportsVision: @Sendable () -> Bool = { AppleIntelligenceClient.supportsVision }
+    @ObservationIgnored var aiTask: Task<Void, Never>?
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?
     @ObservationIgnored var retentionPolicy: @Sendable () -> RetentionPolicy = {
@@ -95,6 +106,7 @@ final class MobileAppState {
         self.secretReveal = secretReveal ?? SecretReveal()
         self.historyLock = historyLock ?? MobileHistoryLock()
         self.clock = clock
+        self.secretReveal.coverWasRaised = { [weak self] in self?.decodedJWT = nil }
     }
 
     isolated deinit {
@@ -132,6 +144,7 @@ final class MobileAppState {
             )
         )
         storageService = service
+        if LaunchMode.current != .hostedTests { ShareFile.removeAll() }
         startQuickInsert(container: container)
         startWidget(container: container)
         launchWork = Task(priority: .utility) {

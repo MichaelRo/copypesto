@@ -5,10 +5,16 @@ import SwiftUI
 
 struct LibraryChipRow: View {
     @Environment(LibraryModel.self) private var library
+    @Environment(MobileAppState.self) private var appState
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
+    @State private var isAsking = false
 
     var body: some View {
-        let chips = LibraryChip.row(collectionIDs: collections.map(\.id), isSearching: library.isSearching)
+        let chips = LibraryChip.row(
+            collectionIDs: collections.map(\.id), isSearching: library.isSearching,
+            offersAsk: !library.query.trimmingCharacters(in: .whitespaces).isEmpty && !library.filter.hasAsk,
+            hasAsk: library.filter.hasAsk
+        )
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 ForEach(chips, id: \.self) { chip in
@@ -52,6 +58,39 @@ struct LibraryChipRow: View {
             )
         case .otherDevices:
             chipButton(chip, label: String(localized: "Other Devices"), symbol: "laptopcomputer.and.iphone")
+        case .ask:
+            Button {
+                Task { await ask() }
+            } label: {
+                HStack(spacing: 4) {
+                    if isAsking {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Image(systemName: "sparkles").accessibilityHidden(true)
+                    }
+                    Text("Ask")
+                }
+            }
+            .buttonStyle(MobileChipStyle(isActive: false, tint: nil))
+            .disabled(isAsking)
+            .accessibilityLabel(String(localized: "Ask Pesto"))
+            .accessibilityInputLabels([Text("Ask"), Text("Ask Pesto")])
+            .accessibilityHint(String(localized: "Turns what you typed into filters."))
+            .accessibilityIdentifier(MobileAccessibilityID.askChip)
+        case .asked:
+            chipButton(chip, label: library.filter.askedSummary, symbol: "sparkles")
+                .accessibilityIdentifier(MobileAccessibilityID.askedChip)
+        }
+    }
+
+    private func ask() async {
+        guard !isAsking else { return }
+        let sentence = library.query
+        isAsking = true
+        defer { isAsking = false }
+        let query = await appState.askPesto(sentence)
+        _ = withAnimation(Motion.animation(.pestoQuick)) {
+            library.applyAnswer(query, to: sentence, isLocked: appState.isHistoryLocked)
         }
     }
 

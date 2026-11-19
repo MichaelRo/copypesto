@@ -28,16 +28,18 @@ enum LibraryListing {
     )
     -> Result {
         guard let index = store.searchIndex() else { return Result(ids: [], animates: false) }
-        let kind = key.isSearching ? key.filter.kind : nil
-        let cutoff = key.isSearching ? key.filter.dateCutoff(now: now) : nil
+        let kinds = key.isSearching ? key.filter.kinds : []
+        let window = key.isSearching ? key.filter.dateWindow(now: now) : (cutoff: nil, before: nil)
         let remote = key.isSearching && key.filter.otherDevicesOnly
         func ids(query: String) -> [UUID] {
             key.filter.scope.ids(
-                in: index, query: query, kind: kind, smartRule: smartRule, hidesSensitive: key.hidesSensitive,
-                dateCutoff: cutoff, otherDevicesOnly: remote, now: now
+                in: index, query: query, kinds: kinds, smartRule: smartRule, hidesSensitive: key.hidesSensitive,
+                dateCutoff: window.cutoff, dateBefore: window.before, otherDevicesOnly: remote, now: now
             )
         }
-        let context = "\(key.filter.scope)|\(key.query)|\(kind?.rawValue ?? "")|\(cutoff != nil)|\(remote)"
+        let kindNames = kinds.map(\.rawValue).sorted().joined(separator: ",")
+        let bounds = "\(window.cutoff != nil)|\(window.before != nil)"
+        let context = "\(key.filter.scope)|\(key.query)|\(kindNames)|\(bounds)|\(remote)"
         let arranged = order.arrange(ids(query: key.query), context: context)
         var result = arranged
         if !key.byMeaning.isEmpty, SemanticSearch.asksForMeaning(key.query) {

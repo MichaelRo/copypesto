@@ -40,20 +40,23 @@ enum LibraryScope: Hashable {
     /// kind while a search offers kinds. A smart collection's rule reads the clip, so it arrives as `smartRule`;
     /// everything else is decided on the index.
     func ids(
-        in index: HistoryIndex, query: String, kind: ClipboardType? = nil, smartRule: ((UUID) -> Bool)? = nil,
-        hidesSensitive: Bool = false, dateCutoff: Date? = nil, otherDevicesOnly: Bool = false, now: Date = .now
+        in index: HistoryIndex, query: String, kind: ClipboardType? = nil, kinds: Set<ClipboardType> = [],
+        smartRule: ((UUID) -> Bool)? = nil, hidesSensitive: Bool = false, dateCutoff: Date? = nil,
+        dateBefore: Date? = nil, otherDevicesOnly: Bool = false, now: Date = .now
     )
     -> [UUID] {
         var criteria = HistoryCriteria(
             hidesSensitive: hidesSensitive, query: query.trimmingCharacters(in: .whitespaces), now: now
         )
-        if let kind {
+        let narrowed = kind.map { Set([$0]) } ?? kinds
+        if !narrowed.isEmpty {
             criteria.searchActive = true
-            criteria.types = [kind.rawValue]
+            criteria.types = Set(narrowed.map(\.rawValue))
         }
-        if dateCutoff != nil || otherDevicesOnly {
+        if dateCutoff != nil || dateBefore != nil || otherDevicesOnly {
             criteria.searchActive = true
             criteria.dateCutoff = dateCutoff
+            criteria.dateBefore = dateBefore
             criteria.remoteOnly = otherDevicesOnly
         }
         switch self {

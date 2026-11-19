@@ -183,20 +183,22 @@ extension MobileAppState {
     func addCollection(_ draft: CollectionDraft, existing: [Pinboard]) -> Pinboard? {
         guard let context = historyContainer?.mainContext else { return nil }
         let name = draft.trimmedName
-        let board = Pinboard(
-            name: CollectionNaming.uniqueName(
-                name.isEmpty ? CollectionNaming.defaultName : name, existing: existing.map(\.name)
-            ),
-            symbolName: draft.symbol,
-            colorHex: draft.colorHex,
-            sortOrder: (existing.map(\.sortOrder).max() ?? -1) + 1
-        )
-        var added = false
+        var added: Pinboard?
         report("Couldn\u{2019}t add the collection.") {
+            let board = try Pinboard(
+                name: CollectionNaming.uniqueName(
+                    name.isEmpty ? CollectionNaming.defaultName : name, existing: existing.map(\.name)
+                ),
+                symbolName: draft.symbol,
+                colorHex: draft.colorHex,
+                sortOrder: (existing.map(\.sortOrder).max() ?? -1) + 1,
+                isSmart: draft.isSmart,
+                smartPredicateData: draft.isSmart ? draft.rules?.encoded() : nil
+            )
             try collectionStore(context: context).insert(.create, [board])
-            added = true
+            added = board
         }
-        return added ? board : nil
+        return added
     }
 
     func renameCollection(_ board: Pinboard, to name: String, existing: [Pinboard]) {
@@ -215,10 +217,13 @@ extension MobileAppState {
             existing: others
         )
         report("Couldn\u{2019}t save the collection.") {
+            let rules = try board.isSmart && draft.isSmart && draft.rulesDiffer(from: board) ? draft.rules?
+                .encoded() : nil
             try collectionStore(context: context).edit(.edit, [board]) {
                 board.name = unique
                 board.symbolName = draft.symbol
                 board.colorHex = draft.colorHex
+                if let rules { board.smartPredicateData = rules }
             }
         }
     }
@@ -241,7 +246,10 @@ extension MobileAppState {
     func clearHistory() async {
         guard let service = storageService else { return }
         dismissUndoOffer()
+        ShareFile.removeAll()
         secretReveal.hideAll()
+        decodedJWT = nil
+        closeAI()
         await reportAsync("Couldn\u{2019}t clear the history.") {
             let ids = try await service.clearNonPinned(in: .all)
             emptyQuickInsert()
@@ -257,7 +265,9 @@ extension MobileAppState {
     func didLeaveForeground() {
         isActivated = false
         historyLock.didLeaveForeground(at: clock())
+        closeAI()
         secretReveal.hideAll()
+        decodedJWT = nil
         writeQuickInsert()
         let hold = backgroundWork.hold("Widget snapshot")
         Task {

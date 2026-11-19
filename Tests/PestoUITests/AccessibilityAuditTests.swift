@@ -167,30 +167,27 @@ final class AccessibilityAuditTests: PestoUITestCase {
 
     func test_shelfSurfaces_passTheAccessibilityAudit() throws {
         launch(defaults: ["hasOnboarded": "true", "appearanceMode": "light"])
+        showOverlay()
+
+        try auditHoverCardSubState()
 
         try auditSubState("shelf", prepare: {
-            showOverlay()
             assertOverlayNamesEachRegionOnce()
-        }, reset: {
-            send(.hideOverlay)
-            waitForNonExistence(overlay, timeout: 5)
-        })
+        }, reset: {})
 
         try auditSubState("selection bar", knownFindings: [
             KnownAuditFinding(.contrast, "Contrast failed", on: .staticText, allowed: 1)
         ], prepare: {
-            showOverlay()
             overlay.typeKey("a", modifierFlags: .command)
             XCTAssertTrue(element(AccessibilityID.pasteOneByOneButton).waitUntilExists(timeout: 5))
         }, reset: {
             overlay.typeKey(.escape, modifierFlags: [])
             waitForNonExistence(element(AccessibilityID.pasteOneByOneButton), timeout: 5)
-            send(.hideOverlay)
-            waitForNonExistence(overlay, timeout: 5)
         })
 
         try auditSearchAndDeleteSubStates()
-        try auditHoverCardSubState()
+        send(.hideOverlay)
+        waitForNonExistence(overlay, timeout: 5)
     }
 
     private func auditSearchAndDeleteSubStates() throws {
@@ -206,14 +203,11 @@ final class AccessibilityAuditTests: PestoUITestCase {
                 identifier: "SafariPlatformSupportAutoCompleteWindow"
             )
         ], prepare: {
-            showOverlay()
             element(AccessibilityID.searchButton).click()
             XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5))
         }, reset: {
             overlay.typeKey(.escape, modifierFlags: [])
             waitForNonExistence(element(AccessibilityID.searchField), timeout: 5)
-            send(.hideOverlay)
-            waitForNonExistence(overlay, timeout: 5)
         })
 
         // A-12: the surfaces the audit never saw, whose contrast and target-size findings (A-08 to A-10) were
@@ -222,14 +216,11 @@ final class AccessibilityAuditTests: PestoUITestCase {
             // The same composited-overlay quirk as the locked-history scenario: two nodes with no element or frame.
             KnownAuditFinding(.parentChild, "Parent/Child mismatch", on: nil, allowed: 2)
         ], prepare: {
-            showOverlay()
             overlay.typeKey(.delete, modifierFlags: [])
             XCTAssertTrue(element(AccessibilityID.deleteConfirmButton).waitUntilExists(timeout: 5))
         }, reset: {
             overlay.typeKey(.escape, modifierFlags: [])
             waitForNonExistence(element(AccessibilityID.deleteConfirmButton), timeout: 5)
-            send(.hideOverlay)
-            waitForNonExistence(overlay, timeout: 5)
         })
     }
 
@@ -249,15 +240,18 @@ final class AccessibilityAuditTests: PestoUITestCase {
                 .contrast, "Contrast failed", on: .staticText, identifier: AccessibilityID.cardDetailPopover
             )
         ], prepare: {
-            showOverlay()
             overlay.typeKey(.rightArrow, modifierFlags: [])
+            if !element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 2) {
+                cards.element(boundBy: 1).hover()
+                cards.element(boundBy: 0).hover()
+            }
             XCTAssertTrue(
                 element(AccessibilityID.cardDetailPopover).waitUntilExists(timeout: 5), "the hover card never opened"
             )
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         }, reset: {
-            send(.hideOverlay)
-            waitForNonExistence(overlay, timeout: 5)
+            parkPointer()
+            overlay.typeKey(.escape, modifierFlags: [])
             waitForNonExistence(element(AccessibilityID.cardDetailPopover), timeout: 5)
         })
     }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import CoreGraphics
 import Foundation
+import PestoCore
 
 enum DetailPopoverPolicy {
     static let dwell: Duration = .milliseconds(400)
@@ -26,6 +27,17 @@ enum DetailPopoverPolicy {
 
     static func isSuppressed(isLocked: Bool, isShelfVisible: Bool, voiceOverEnabled: Bool = false) -> Bool {
         isLocked || !isShelfVisible || voiceOverEnabled
+    }
+
+    /// UI tests must not inherit whatever VoiceOver setting the host Mac happens to have on, unless a test asks for
+    /// it (`PESTO_UITEST_VOICEOVER=1`).
+    static func effectiveVoiceOver(
+        systemEnabled: Bool,
+        isUITest: Bool = RuntimeConfiguration.current.mode == .uiTest,
+        forcedInUITest: Bool = ProcessInfo.processInfo.environment["PESTO_UITEST_VOICEOVER"] == "1"
+    )
+    -> Bool {
+        isUITest ? forcedInUITest : systemEnabled
     }
 
     static func keyboardReveals(itemID: UUID, revealedID: UUID?) -> Bool {

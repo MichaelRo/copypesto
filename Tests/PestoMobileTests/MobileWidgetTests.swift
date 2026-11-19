@@ -383,4 +383,25 @@ struct MobileWidgetTests {
         #expect(WidgetCopyRecord.recent(at: now + WidgetSnapshotPolicy.copiedFeedback, in: defaults) == nil)
         #expect(WidgetCopyRecord.recent(at: now - 1, in: defaults) == nil)
     }
+
+    @Test("when widgetsEnabled is false, refreshing or writing removes the snapshot and key")
+    func whenWidgetsDisabled_thenSnapshotAndKeyAreRemoved() async throws {
+        let fixture = try fixture(installed: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        var enabled = true
+        var target = fixture.target
+        target.isEnabled = { enabled }
+        let library = try await MobileTestLibrary()
+        library.state.widget = target
+        try await library.add("12 Basil Lane")
+
+        await library.state.refreshWidgetPresence()
+        #expect(fixture.file.exists)
+
+        enabled = false
+        await library.state.writeWidget()
+
+        #expect(!fixture.file.exists)
+        #expect(try target.keys.key() == nil)
+    }
 }

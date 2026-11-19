@@ -15,7 +15,8 @@ struct QuickInsertTarget {
             storedCollections: AppDefaults.store.value(for: Setting.keyboardCollections),
             returnsAfterInsert: AppDefaults.store.value(for: Setting.keyboardReturnsAfterInsert),
             keyboardSize: KeyboardSize(rawValue: AppDefaults.store.value(for: Setting.keyboardSize)) ?? .medium,
-            accent: MobileAppState.widgetTheme()
+            accent: MobileAppState.widgetTheme(),
+            keyboardEnabled: AppDefaults.store.value(for: Setting.keyboardEnabled)
         )
     }
 
@@ -29,7 +30,14 @@ struct QuickInsertTarget {
             : SharedKeychainSecretStore(accessGroup: AppIdentity.quickInsertKeychainGroup(in: .main))
         return QuickInsertTarget(
             file: file, keys: QuickInsertKeyStore(secrets: secrets),
-            isEnabled: { AppDefaults.store.value(for: Setting.quickInsertEnabled) }
+            isEnabled: {
+                let store = AppDefaults.store
+                return store.value(for: Setting.keyboardEnabled)
+                    || store.value(for: Setting.autoFillEnabled)
+                    || (store.object(forKey: Setting.keyboardEnabled.name) == nil
+                        && store.object(forKey: Setting.autoFillEnabled.name) == nil
+                        && store.value(for: Setting.quickInsertEnabled))
+            }
         )
     }
 }

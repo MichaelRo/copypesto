@@ -122,7 +122,7 @@ struct KeyboardRootView: View {
         case _ where showsPad:
             KeyboardPad(insert: keys.insert)
         case .unavailable:
-            note("Turn on Insert from Pesto in other apps in Pesto's Settings.")
+            note("Turn on Pesto Keyboard in Pesto's Settings.")
         case .empty:
             note("No text clips yet. Clips with secrets never appear here.")
         case .ready:

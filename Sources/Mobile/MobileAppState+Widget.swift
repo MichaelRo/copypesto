@@ -21,6 +21,11 @@ extension MobileAppState {
     /// go (and with no file left, the Keychain is not touched).
     func refreshWidgetPresence() async {
         guard let target = widget else { return }
+        guard target.isEnabled() else {
+            widgetIsInstalled = false
+            if target.file.exists { removeWidget() }
+            return
+        }
         widgetIsInstalled = await target.isInstalled()
         if widgetIsInstalled {
             await writeWidget()
@@ -30,7 +35,7 @@ extension MobileAppState {
     }
 
     func widgetHistoryChanged() {
-        guard widgetIsInstalled else { return }
+        guard widgetIsInstalled, widget?.isEnabled() == true else { return }
         widgetRewrite?.cancel()
         widgetRewrite = Task { [weak self] in
             try? await Task.sleep(for: WidgetSnapshotPolicy.rewriteDelay)
@@ -44,6 +49,10 @@ extension MobileAppState {
     func writeWidget() async {
         widgetRewrite?.cancel()
         widgetRewrite = nil
+        if let target = widget, !target.isEnabled() {
+            if target.file.exists { removeWidget() }
+            return
+        }
         await enqueueWidgetWrite { state in await state.performWidgetWrite() }
     }
 
@@ -78,7 +87,7 @@ extension MobileAppState {
     }
 
     private func performWidgetWrite() async {
-        guard let target = widget, widgetIsInstalled else { return }
+        guard let target = widget, widgetIsInstalled, target.isEnabled() else { return }
         guard let container = historyContainer else { return dropWidgetFile(target) }
         if historyLock.holdsOutsideSurfaces {
             performWidgetEmpty()

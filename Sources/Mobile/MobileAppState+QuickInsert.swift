@@ -10,10 +10,19 @@ extension MobileAppState {
     private static let quickInsertLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "QuickInsert")
 
     func startQuickInsert(container: ModelContainer) {
+        Self.migrateQuickInsertSettingsIfNeeded()
         quickInsertObserver = ModelSaveObserver.observeChanges(in: container) { [weak self] _ in
             self?.quickInsertHistoryChanged()
         }
         writeQuickInsert()
+    }
+
+    static func migrateQuickInsertSettingsIfNeeded(defaults: UserDefaults = AppDefaults.store) {
+        guard defaults.object(forKey: Setting.keyboardEnabled.name) == nil,
+              defaults.object(forKey: Setting.autoFillEnabled.name) == nil,
+              defaults.value(for: Setting.quickInsertEnabled) else { return }
+        defaults.set(true, for: Setting.keyboardEnabled)
+        defaults.set(true, for: Setting.autoFillEnabled)
     }
 
     func quickInsertHistoryChanged() {

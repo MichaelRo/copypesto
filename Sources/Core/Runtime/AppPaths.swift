@@ -25,8 +25,9 @@ public enum AppPaths {
             ?? temporary.appendingPathComponent("io.pesto.uitest.\(configuration.session)", isDirectory: true)
     }
 
-    /// The app group the iOS app shares with its share extension (ADR 0047); a test or UI-test launch gets a folder
-    /// inside its own support folder. Nil on the Mac, which has no group, and when the group is not in the signature.
+    /// The app group the iOS app shares with its extensions (ADR 0047); a test or UI-test launch gets a folder inside
+    /// its own support folder. On the Mac only a build signed for the widget has it (`WidgetSharing`, ADR 0059): any
+    /// other Mac build gets nil without asking for the container, which macOS 15 would answer with a prompt.
     public static var sharedGroupDirectory: URL? {
         let configuration = RuntimeConfiguration.current
         guard configuration.mode == .normal else {
@@ -36,11 +37,10 @@ public enum AppPaths {
                 temporary: FileManager.default.temporaryDirectory
             )
         }
-        #if os(iOS)
-        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppIdentity.appGroupID)
-        #else
-        return nil
+        #if os(macOS)
+        guard WidgetSharing.current != nil else { return nil }
         #endif
+        return FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppIdentity.appGroupID)
     }
 
     static func sharedGroupDirectory(

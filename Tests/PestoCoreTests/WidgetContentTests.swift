@@ -72,6 +72,21 @@ struct WidgetContentTests {
         #expect(try JSONDecoder().decode(WidgetSnapshot.self, from: JSONEncoder().encode(locked)).isLocked)
     }
 
+    @Test("a hidden snapshot says so and shows no clip; one written before the field decodes as shown; Locked wins")
+    func whenHidden_thenTheStateIsHidden() throws {
+        let hidden = WidgetSnapshot.hidden(theme: .brand, at: now)
+        let content = WidgetContent(snapshot: hidden, size: .medium)
+        #expect(content.state == .hidden)
+        #expect(content.clips.isEmpty)
+        #expect(try JSONDecoder().decode(WidgetSnapshot.self, from: JSONEncoder().encode(hidden)).isHidden)
+
+        let json = #"{"createdAt":0,"theme":{"lightGround":"FFFFFF","darkGround":"000000","#
+            + #""lightAccent":"8A4F16","darkAccent":"E2A15E"},"clips":[],"pinned":[],"isLocked":false}"#
+        #expect(try !JSONDecoder().decode(WidgetSnapshot.self, from: Data(json.utf8)).isHidden)
+        let both = WidgetSnapshot(createdAt: now, theme: .brand, clips: [], isLocked: true, isHidden: true)
+        #expect(WidgetContent(snapshot: both, size: .small).state == .locked)
+    }
+
     @Test("the timeline has an entry each time an age reads differently, soonest first and bounded")
     func whenAgesMove_thenTheEntriesFollow() {
         let fresh = WidgetClip(id: UUID(), kind: .text, text: "a", date: now - 30)

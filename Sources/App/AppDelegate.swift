@@ -62,6 +62,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     lazy var pinnedWindowController = PinnedWindowController(appState: appState)
     lazy var textEditController = makeTextEditController()
     private lazy var urlSchemeHandler = AutomationURLHandler(host: self)
+    var widgetKeeper: WidgetSnapshotKeeper?
+    var widgetPresenceTimer: Timer?
 
     func applicationWillFinishLaunching(_: Notification) {
         migrateLegacyIdentityIfNormalLaunch()
@@ -112,6 +114,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         startAutoBackupIfNeeded()
         startSyncIfNeeded()
         setupObservers()
+        startWidgetIfSigned()
         startPinnedHotkeyTracking()
         applyOnboardingGate()
         scheduleTestOverlayIfNeeded()
@@ -138,6 +141,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 await watcher.updateExclusionRules(currentExclusionRules())
             }
             if let service = storageService { await service.updateRules(ClipboardRules.fromUserDefaults()) }
+            await widgetSettingsChanged()
         }
     }
 
@@ -402,6 +406,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func application(_: NSApplication, open urls: [URL]) {
         urls.filter { $0.scheme == "pesto" }.forEach(urlSchemeHandler.handle)
+        if urls.contains(where: { $0.scheme == "pesto" }) { refreshWidgetPresence() }
         urls.filter(\.isFileURL).forEach(openCollectionFile)
     }
 
@@ -433,6 +438,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !hasVisibleRegularWindow {
             NSApp.setActivationPolicy(Self.baseActivationPolicy)
         }
+        refreshWidgetPresence()
         // Capture the frontmost app NOW, before the overlay steals focus.
         appState.pasteCoordinator.focusRestoration.capture()
         let frontmost = NSWorkspace.shared.frontmostApplication
@@ -492,6 +498,7 @@ extension AppDelegate {
                         Self.pasteLogger.notice("[cancel] reason=wake-or-screen-unlock")
                     }
                     self?.pasteTasks.interrupt()
+                    if name == NSWorkspace.didWakeNotification { self?.refreshWidgetPresence() }
                 }
             }
             sleepWakeObservers.append(token)

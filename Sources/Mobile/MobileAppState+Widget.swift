@@ -141,17 +141,9 @@ extension MobileAppState {
 
     static func widgetTheme() -> WidgetSnapshot.Theme {
         let defaults = AppDefaults.store
-        func resolve(dark: Bool) -> MobileTheme {
-            MobileTheme.resolve(
-                accent: defaults.value(for: Setting.accentColorHex), theme: defaults.value(for: Setting.appTheme),
-                darkTheme: defaults.value(for: Setting.appThemeDark), isDark: dark
-            )
-        }
-        let light = resolve(dark: false)
-        let dark = resolve(dark: true)
-        return WidgetSnapshot.Theme(
-            lightGround: light.groundHex, darkGround: dark.groundHex, lightAccent: light.accentHex,
-            darkAccent: dark.accentHex
+        return WidgetSnapshot.Theme.resolve(
+            accent: defaults.value(for: Setting.accentColorHex), theme: defaults.value(for: Setting.appTheme),
+            darkTheme: defaults.value(for: Setting.appThemeDark)
         )
     }
 }

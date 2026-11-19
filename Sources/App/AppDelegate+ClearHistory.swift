@@ -11,6 +11,7 @@ extension AppDelegate {
         do {
             try await service.clearNonPinned(in: .all)
             QuickLookPreviewController.sweepStaleTempFiles()
+            await rewriteWidgetAfterClear()
         } catch {
             Self.logger.error("\(context, privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
         }
@@ -27,6 +28,7 @@ extension AppDelegate {
                 let ids = try await service.clearNonPinned(in: range)
                 QuickLookPreviewController.sweepStaleTempFiles()
                 AutoBackupSettings().lowerBaseline(by: ids.count)
+                await rewriteWidgetAfterClear()
                 if range == .all {
                     appState.clearShelfSuggestions()
                 }

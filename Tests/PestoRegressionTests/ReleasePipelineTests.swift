@@ -10,14 +10,14 @@ struct ReleasePipelineTests {
         try String(contentsOf: SourceTree.repositoryRoot.appendingPathComponent(relative), encoding: .utf8)
     }
 
-    private func renderExportOptions(team: String) throws -> (code: Int32, output: String) {
+    private func renderExportOptions(team: String, profiles: [String] = []) throws -> (code: Int32, output: String) {
         let out = FileManager.default.temporaryDirectory.appendingPathComponent("export-\(UUID().uuidString).plist")
         defer { try? FileManager.default.removeItem(at: out) }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
         process.arguments = [
             SourceTree.repositoryRoot.appendingPathComponent("scripts/render-export-options.sh").path, team, out.path
-        ]
+        ] + profiles
         let pipe = Pipe()
         process.standardError = pipe
         process.standardOutput = pipe
@@ -35,6 +35,54 @@ struct ReleasePipelineTests {
         #expect(result.output.contains("<string>ABCDE12345</string>"))
         #expect(!result.output.contains("$("), "a placeholder survived")
         #expect(!result.output.contains("TEAM_ID_PLACEHOLDER"), "a placeholder survived")
+    }
+
+    @Test("the widget's profile signs the Controls extension, and only beside the sync profile (ADR 0059)")
+    func widgetProfileSignsTheExtension() throws {
+        let both = try renderExportOptions(team: "ABCDE12345", profiles: ["Pesto Sync", "Pesto Controls"])
+        #expect(both.code == 0, "\(both.output)")
+        #expect(both.output.contains("<key>net.copypesto.pesto</key>\n\t\t<string>Pesto Sync</string>"))
+        #expect(both.output.contains("<key>net.copypesto.pesto.controls</key>\n\t\t<string>Pesto Controls</string>"))
+        let syncOnly = try renderExportOptions(team: "ABCDE12345", profiles: ["Pesto Sync"])
+        #expect(syncOnly.code == 0)
+        #expect(!syncOnly.output.contains("net.copypesto.pesto.controls"))
+        #expect(try renderExportOptions(team: "ABCDE12345", profiles: ["", "Pesto Controls"]).code != 0)
+
+        let makefile = try text("Makefile")
+        #expect(makefile.contains("archive: check-widget-profile"), "a widget profile alone must stop the archive")
+        #expect(
+            makefile.contains("PESTO_WIDGET_CONDITION=PESTO_MAC_WIDGET PESTO_CONTROLS_MIN_MACOS=15.0,)"),
+            "only WIDGET_PROFILE compiles the widget in and lowers the extension to macOS 15"
+        )
+    }
+
+    @Test("a widget export checks both profiles before anything is notarized or shipped")
+    func widgetExportChecksTheSigning() throws {
+        let makefile = try text("Makefile")
+        let export = try #require(makefile.range(of: "\nexport: "))
+        let notarize = try #require(makefile.range(of: "\nnotarize: ", range: export.upperBound..<makefile.endIndex))
+        let recipe = String(makefile[export.upperBound..<notarize.lowerBound])
+        let app = "\"$(EXPORT_PATH)/Pesto.app\""
+        #expect(recipe.contains("$(if $(WIDGET_PROFILE),scripts/check-sync-signing.sh \(app),)"))
+        #expect(recipe.contains("$(if $(WIDGET_PROFILE),scripts/check-widget-signing.sh \(app),)"))
+        let exportArchive = try #require(recipe.range(of: "-exportArchive"))
+        let check = try #require(recipe.range(of: "check-widget-signing.sh"))
+        #expect(exportArchive.lowerBound < check.lowerBound, "the check runs on the exported app")
+    }
+
+    @Test("a build without WIDGET_PROFILE keeps the Controls extension at macOS 26, so macOS 15 never loads it")
+    func controlsExtensionStaysAtMacOS26() throws {
+        let spec = try text("Pesto.yml")
+        let start = try #require(spec.range(of: "\n  PestoControls:\n"))
+        let end = try #require(spec.range(of: "\n  PestoMobile:\n", range: start.upperBound..<spec.endIndex))
+        let target = String(spec[start.upperBound..<end.lowerBound])
+        #expect(target.contains("deploymentTarget: \"26.0\""))
+        #expect(target.contains("PESTO_CONTROLS_MIN_MACOS: \"26.0\""))
+        #expect(target.contains("MACOSX_DEPLOYMENT_TARGET: $(PESTO_CONTROLS_MIN_MACOS)"))
+        #expect(!target.contains("15.0"), "the lower target belongs to the widget build only")
+        let makefile = try text("Makefile")
+        let mentions = makefile.components(separatedBy: "PESTO_CONTROLS_MIN_MACOS=").count - 1
+        #expect(mentions == 1, "only the WIDGET_PROFILE branch of RELEASE_SIGNING lowers it")
     }
 
     @Test("a missing or malformed team id stops the export instead of signing with a bad one")

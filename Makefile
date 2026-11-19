@@ -39,6 +39,16 @@ ENTITLEMENTS      = Sources/Resources/Pesto.entitlements
 # key (docs/release.md). Unset, nothing about the release changes.
 SYNC_ENTITLEMENTS = Sources/Resources/PestoSync.entitlements
 SYNC_PROFILE     ?=
+# Set WIDGET_PROFILE too (the Developer ID profile of net.copypesto.pesto.controls) to ship the Mac's Recent Clips widget
+# (ADR 0059, docs/release.md "The Mac widget"): the app takes PestoSyncWidget.entitlements, the Controls extension its
+# own profile and PestoControlsWidget.entitlements, the widget is compiled into it and the extension's minimum drops from
+# macOS 26 to 15. Unset, nothing changes.
+WIDGET_PROFILE   ?=
+SYNC_WIDGET_ENTITLEMENTS     = Sources/Resources/PestoSyncWidget.entitlements
+CONTROLS_WIDGET_ENTITLEMENTS = Sources/Controls/PestoControlsWidget.entitlements
+RELEASE_SIGNING = \
+	$(if $(SYNC_PROFILE),PESTO_ENTITLEMENTS=$(if $(WIDGET_PROFILE),$(SYNC_WIDGET_ENTITLEMENTS),$(SYNC_ENTITLEMENTS)) PESTO_PROFILE="$(SYNC_PROFILE)" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application",) \
+	$(if $(WIDGET_PROFILE),PESTO_CONTROLS_ENTITLEMENTS=$(CONTROLS_WIDGET_ENTITLEMENTS) PESTO_CONTROLS_PROFILE="$(WIDGET_PROFILE)" PESTO_WIDGET_CONDITION=PESTO_MAC_WIDGET PESTO_CONTROLS_MIN_MACOS=15.0,)
 
 .DEFAULT_GOAL := help
 
@@ -310,8 +320,15 @@ require-team:
 check-verify-receipt:
 	scripts/check-verify-receipt.sh
 
+# The widget's profile only ever comes with the sync profile: the app's half of the widget is in PestoSyncWidget.entitlements.
+.PHONY: check-widget-profile
+check-widget-profile:
+	@if [ -n "$(WIDGET_PROFILE)" ] && [ -z "$(SYNC_PROFILE)" ]; then \
+		echo "error: WIDGET_PROFILE needs SYNC_PROFILE too (docs/release.md, \"The Mac widget\")."; exit 1; \
+	fi
+
 .PHONY: archive
-archive: check-verify-receipt check-release-placeholders require-team generate ## [Release] Build a release archive (requires Developer ID certificate and a passing 'make verify' receipt)
+archive: check-widget-profile check-verify-receipt check-release-placeholders require-team generate ## [Release] Build a release archive (requires Developer ID certificate and a passing 'make verify' receipt)
 	DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 		-project Pesto.xcodeproj \
 		-scheme Pesto \
@@ -319,17 +336,20 @@ archive: check-verify-receipt check-release-placeholders require-team generate #
 		-destination 'platform=macOS' \
 		-archivePath $(ARCHIVE_PATH) \
 		DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) \
-		$(if $(SYNC_PROFILE),PESTO_ENTITLEMENTS=$(SYNC_ENTITLEMENTS) PESTO_PROFILE="$(SYNC_PROFILE)" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application",) \
+		$(RELEASE_SIGNING) \
 		archive
 
 .PHONY: export
 export: archive ## [Release] Export and sign the archive for Developer ID distribution
-	scripts/render-export-options.sh "$(APPLE_TEAM_ID)" $(BUILD_DIR)/exportOptions.plist "$(SYNC_PROFILE)"
+	scripts/render-export-options.sh "$(APPLE_TEAM_ID)" $(BUILD_DIR)/exportOptions.plist "$(SYNC_PROFILE)" "$(WIDGET_PROFILE)"
 	DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild \
 		-exportArchive \
 		-archivePath $(ARCHIVE_PATH) \
 		-exportPath $(EXPORT_PATH) \
 		-exportOptionsPlist $(BUILD_DIR)/exportOptions.plist
+	@# A widget build whose app group claim a profile does not authorize would lose the sync key's iCloud item: stop here.
+	$(if $(WIDGET_PROFILE),scripts/check-sync-signing.sh "$(EXPORT_PATH)/Pesto.app",)
+	$(if $(WIDGET_PROFILE),scripts/check-widget-signing.sh "$(EXPORT_PATH)/Pesto.app",)
 
 .PHONY: notarize
 notarize: export ## [Release] Notarize, wait for Apple's response, and staple the ticket

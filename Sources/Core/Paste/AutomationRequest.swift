@@ -12,6 +12,8 @@ public enum AutomationRequest: Equatable, Sendable {
     case summary(UUID)
     case collection(String)
     case clear(ClearRange)
+    /// `pesto://clip/<UUID>`, `…/show` or `…/open`, in exactly the shape `WidgetLink` makes.
+    case widget(WidgetLink.Target)
 
     public init?(url: URL) {
         guard url.scheme == AppIdentity.urlScheme, let action = AutomationAction(host: url.host) else { return nil }
@@ -32,6 +34,9 @@ public enum AutomationRequest: Equatable, Sendable {
         case .clear:
             guard let range = ClearRange(automationName: value("range")) else { return nil }
             self = .clear(range)
+        case .clip:
+            guard let target = WidgetLink.target(in: url) else { return nil }
+            self = .widget(target)
         }
     }
 

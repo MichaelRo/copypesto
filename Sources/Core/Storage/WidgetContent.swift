@@ -2,12 +2,13 @@
 import Foundation
 
 /// What one widget draws from the snapshot it opened (ADR 0052): no snapshot is "Open Pesto to show your clips", a
-/// locked one is "Locked", an
-/// empty one is "No clips yet", otherwise the newest clips its family has room for.
+/// locked one is "Locked", a hidden one (the Mac covering clip contents, ADR 0059) "Clip contents hidden", an empty
+/// one "No clips yet", otherwise the newest clips its family has room for.
 public struct WidgetContent: Equatable, Sendable {
     public enum State: Equatable, Sendable {
         case unavailable
         case locked
+        case hidden
         case empty
         case clips
     }
@@ -25,8 +26,14 @@ public struct WidgetContent: Equatable, Sendable {
         theme = snapshot?.theme ?? .brand
         let all = snapshot?.clips(from: source) ?? []
         clips = Array(all.prefix(size.clipCount(accessibilityText: accessibilityText)))
-        state = if snapshot == nil { .unavailable } else if snapshot?.isLocked == true { .locked } else if clips
-            .isEmpty { .empty } else { .clips }
+        state = Self.state(of: snapshot, showing: clips)
+    }
+
+    private static func state(of snapshot: WidgetSnapshot?, showing clips: [WidgetClip]) -> State {
+        guard let snapshot else { return .unavailable }
+        if snapshot.isLocked { return .locked }
+        if snapshot.isHidden { return .hidden }
+        return clips.isEmpty ? .empty : .clips
     }
 
     /// The moments after `now` when an age the widget shows (`CardAge.text`) reads differently, soonest first, at most

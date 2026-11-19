@@ -11,6 +11,7 @@ struct AutomationURLHandlerTests {
     @MainActor
     private final class SpyHost: AutomationHost {
         var isHistoryLocked = false
+        var isContentCovered = false
         var historyContainer: ModelContainer?
         var events: [String] = []
 
@@ -40,6 +41,14 @@ struct AutomationURLHandlerTests {
 
         func requestClear(_ range: ClearRange) {
             events.append("clear:\(range.rawValue)")
+        }
+
+        func copyClip(_ item: ClipboardItem) {
+            events.append("copy:\(item.displayPreviewText)")
+        }
+
+        func openWebLink(_ url: URL) {
+            events.append("browse:\(url.absoluteString)")
         }
     }
 
@@ -210,5 +219,58 @@ struct AutomationURLHandlerTests {
         await run(.summary(UUID()))
 
         #expect(host.events.isEmpty)
+    }
+
+    @Test("a widget's link copies, shows or opens an eligible clip, through the host")
+    func whenAWidgetLinkNamesAnEligibleClip_thenTheHostActs() async throws {
+        let text = try await ingest("Lunch at noon on Thursday")
+        await run(.widget(.init(id: text, action: .copy)))
+        await run(.widget(.init(id: text, action: .show)))
+        await run(.widget(.init(id: text, action: .open)))
+
+        #expect(host.events == [
+            "copy:Lunch at noon on Thursday", "show", "search:Lunch at noon on Thursday", "show",
+            "search:Lunch at noon on Thursday"
+        ])
+    }
+
+    @Test("Open hands a link clip that is one web address to the browser")
+    func whenOpenNamesALinkClip_thenTheBrowserGetsIt() async throws {
+        let id = try await ingest("https://example.com/menu")
+        let item = try #require(ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == id })
+        try #require(item.type == .url)
+
+        await run(.widget(.init(id: id, action: .open)))
+
+        #expect(host.events == ["browse:https://example.com/menu"])
+    }
+
+    @Test("a secret, an unknown id or a locked history only opens the shelf")
+    func whenTheClipMayNotLeave_thenOnlyTheShelf() async throws {
+        let secret = try await ingest("4111 1111 1111 1111 and more words")
+        await run(.widget(.init(id: secret, action: .copy)))
+        await run(.widget(.init(id: UUID(), action: .copy)))
+        #expect(host.events == ["show", "show"])
+
+        let text = try await ingest("an ordinary note")
+        host.events = []
+        host.isHistoryLocked = true
+        await run(.widget(.init(id: text, action: .copy)))
+        #expect(host.events == ["show"])
+    }
+
+    @Test("while clip contents are covered, Show and Open only open the shelf; Copy still copies (ADR 0003)")
+    func whenContentsAreCovered_thenShowAndOpenRevealNothing() async throws {
+        let text = try await ingest("Lunch at noon on Thursday")
+        let link = try await ingest("https://example.com/menu")
+        host.events = []
+        host.isContentCovered = true
+
+        await run(.widget(.init(id: text, action: .show)))
+        await run(.widget(.init(id: link, action: .open)))
+        await run(.widget(.init(id: link, action: .show)))
+        await run(.widget(.init(id: text, action: .copy)))
+
+        #expect(host.events == ["show", "show", "show", "copy:Lunch at noon on Thursday"])
     }
 }

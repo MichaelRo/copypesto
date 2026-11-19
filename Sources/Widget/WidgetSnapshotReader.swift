@@ -10,10 +10,11 @@ enum WidgetSnapshotReader {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "Widget")
 
     static func read() -> WidgetSnapshot? {
-        guard let file = SealedGroupFile.current(.widgetSnapshot) else { return nil }
+        guard let file = SealedGroupFile.current(.widgetSnapshot), let group = WidgetSharing.keychainGroup() else {
+            return nil
+        }
         let keys = SharedFileKeyStore(
-            secrets: SharedKeychainSecretStore(accessGroup: AppIdentity.widgetKeychainGroup(in: .main)),
-            account: AppIdentity.widgetKeyAccount
+            secrets: SharedKeychainSecretStore(accessGroup: group), account: AppIdentity.widgetKeyAccount
         )
         return read(file: file, keys: keys)
     }

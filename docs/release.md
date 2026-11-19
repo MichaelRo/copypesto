@@ -106,6 +106,36 @@ makes macOS refuse to launch the app, which is why `PestoSync.entitlements` is u
    not find the key). Nothing here can be proved on one Mac.
 A development build signed "Pesto Development" can never use the iCloud key, so it always takes the this-device path.
 
+## The Mac widget (optional; needs two provisioning profiles)
+The Recent Clips widget on the Mac (ADR 0059) exists only in a release signed with the sync profile above **and** a
+profile for the Controls extension, which carries the widget. Without `WIDGET_PROFILE` nothing about the release
+changes and the widget is not in the gallery. On macOS an app group claim that no profile authorizes clears the app's
+"entitlements validated" flag, and the data protection keychain then refuses the sync key's iCloud item: never ship a
+build that `scripts/check-widget-signing.sh` refuses.
+1. Identifiers → App Groups: `group.net.copypesto.pesto` (already registered for iOS, `docs/ios-signing.md`; register
+   it if it is not there).
+2. Identifiers → App ID `net.copypesto.pesto`: tick **App Groups**, Configure, tick `group.net.copypesto.pesto`, Save.
+   Then Profiles → the Developer ID profile used as `SYNC_PROFILE` ("Pesto Sync") → Edit → Save, so it is generated
+   again with the group; download and double-click it.
+3. Identifiers → + → App IDs → App, Bundle ID explicit `net.copypesto.pesto.controls`, description "Pesto Controls",
+   capability **App Groups** (Configure: `group.net.copypesto.pesto`). Keychain Sharing needs no switch: a Mac profile
+   authorizes `<Team ID>.*` Keychain groups (the "Pesto Sync" profile lists `NBD55BZ3N4.*`).
+4. Profiles → + → Distribution → **Developer ID** → App ID `net.copypesto.pesto.controls` → the Developer ID
+   Application certificate. Name it "Pesto Controls", download and double-click it.
+5. Check both profiles before building: `security cms -D -i <file>.provisionprofile | plutil -extract Entitlements
+   xml1 -o - -` must list `com.apple.security.application-groups` with `group.net.copypesto.pesto` by name and
+   `keychain-access-groups` with `<Team ID>.*`. A profile that lists only `<Team ID>.*` for app groups may authorize it
+   too (DTS says so for profiles made since June 2025), but `check-widget-signing.sh` refuses it; regenerate the
+   profile after ticking the group, or check by hand with `launchctl procinfo <pid>` that the launched app's
+   entitlements are validated.
+6. `make export SYNC_PROFILE="Pesto Sync" WIDGET_PROFILE="Pesto Controls"` (or `make release` with both). With
+   `WIDGET_PROFILE` set, the export step runs `scripts/check-sync-signing.sh` and `scripts/check-widget-signing.sh` on
+   `.build/xcode/export/Pesto.app` itself and stops before notarizing when either refuses.
+7. Hand checks on the exported, stapled app (`docs/testing.md`, "The Mac widget"): launch it once and look for `AMFI`
+   or "No matching profile found" in the log; the widget is in the gallery (Edit Widgets); with a widget placed,
+   `~/Library/Group Containers/group.net.copypesto.pesto/widget-snapshot.pestowidget` appears and starts with
+   `PESTOWGT`; Copy, Show and Open from the widget; the lock and Hide Clip Contents empty it; sync still finds its key.
+
 ## Each release
 1. Set `MARKETING_VERSION` and bump `CURRENT_PROJECT_VERSION` (an integer that only goes up) in `Pesto.yml`. Move the `## [Unreleased]` entries of `CHANGELOG.md` under a `## [<version>] - <date>` heading and add what is missing; the website's release notes (step 5) say the same in the same words. `ChangelogCoversReleaseTests` fails until the heading exists.
 2. `make check-packages` shows no line starting `!!!`: it compares the two SwiftPM pins in `Pesto.yml` (Sparkle, swift-snapshot-testing) with their latest releases and with GitHub's Swift advisories, and prints the table. Dependabot cannot see `Pesto.yml`, so this is the only reminder. Keep each pin at the newest release that carries no known vulnerability; after a bump run `make update-resolved`, review `Pesto.resolved`, and do the Sparkle local update test below, and delete the stale module caches first (`rm -rf .build/*/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules`): after the 2.10.1 bump `make install` and both benches failed with "Sparkle.framework/Headers/SUAppcastItem.h has been modified since the module file ... was built".

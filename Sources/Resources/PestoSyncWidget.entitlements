@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Only for a release signed with SYNC_PROFILE and WIDGET_PROFILE (docs/release.md, "The Mac widget"; ADR 0059):
+         PestoSync.entitlements, plus the app group and the widget's Keychain group the Recent Clips widget shares.
+         On macOS an app group that the profile does not authorize clears the app's validated entitlements, and the
+         sync key's iCloud Keychain item is then refused, so scripts/check-widget-signing.sh checks the profile. The
+         app's own Keychain group comes first, so every item it writes stays where it was. -->
+    <key>com.apple.application-identifier</key>
+    <string>$(DEVELOPMENT_TEAM).net.copypesto.pesto</string>
+    <key>com.apple.developer.team-identifier</key>
+    <string>$(DEVELOPMENT_TEAM)</string>
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.net.copypesto.pesto</string>
+    </array>
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(DEVELOPMENT_TEAM).net.copypesto.pesto</string>
+        <string>$(DEVELOPMENT_TEAM).net.copypesto.pesto.widget</string>
+    </array>
+</dict>
+</plist>

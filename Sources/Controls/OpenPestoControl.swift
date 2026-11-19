@@ -4,7 +4,7 @@ import SwiftUI
 import WidgetKit
 
 /// A Control Center button that opens the shelf. It carries no data: pressing it opens `pesto://open`, which the app
-/// already handles, so the extension never sees a clip.
+/// already handles, so the control never sees a clip.
 @available(macOS 26.0, *)
 struct OpenPestoIntent: AppIntent {
     static let title: LocalizedStringResource = "Open Pesto"
@@ -28,11 +28,17 @@ struct OpenPestoControl: ControlWidget {
     }
 }
 
+/// The control, and Recent Clips only in a release signed with both provisioning profiles (`PESTO_MAC_WIDGET`, ADR
+/// 0059): a widget bundle cannot leave a widget out at run time, and any other build could neither open the snapshot
+/// nor the key.
 @main
 struct PestoControls: WidgetBundle {
     var body: some Widget {
         if #available(macOS 26.0, *) {
             OpenPestoControl()
         }
+        #if PESTO_MAC_WIDGET
+        RecentClipsWidget()
+        #endif
     }
 }

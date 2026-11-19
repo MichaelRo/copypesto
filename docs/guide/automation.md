@@ -12,6 +12,7 @@ Pesto can be driven from scripts, Alfred, Keyboard Maestro, Shortcuts and the sh
 | `pesto://paste?id=<id>` | Pastes a clip |
 | `pesto://pin?id=<id>` | Pins or unpins a clip |
 | `pesto://collection?name=Work` | Switches to a collection (`pinboard?name=` still works, deprecated) |
+| `pesto://clip/<id>` | Copies a clip, as the Recent Clips widget does; `…/show` opens the shelf at it, `…/open` opens a link clip in your browser. Only a clip that is not a secret, adult, still being checked or set to expire; anything else just opens the shelf |
 | `pesto://clear?range=hour` | Clears history for `hour`, `today` or `all`; always asks you to confirm, and the range is required |
 
 Try one from Terminal: `open "pesto://search?q=invoice"`. Links never call an AI service.

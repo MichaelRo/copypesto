@@ -41,6 +41,13 @@ final class SyncMac {
         SyncController(environment)
     }
 
+    /// The high-water record as a Pesto from before the unsent-history repair wrote it.
+    func forgetUnstampedRepair() {
+        var water = environment.highWater.load()
+        water.sentUnstampedHistory = nil
+        environment.highWater.save(water)
+    }
+
     func clips() throws -> [String] {
         try site.texts()
     }

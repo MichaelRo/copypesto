@@ -11,9 +11,11 @@ App Store and does not change (Developer ID, notarized). Signing and the develop
 - [ ] A distribution certificate and an App Store profile for the app and its three extensions
       (`.share`, `.autofill`, `.widget`), each with the app group `group.net.copypesto.pesto` and the Keychain groups
       in [ios-signing.md](ios-signing.md).
-- [ ] A privacy policy URL. App Store Connect requires one even for an app that collects nothing.
-      [Privacy and security](guide/privacy-and-security.md) is the content; it needs a public page (the guide on
-      GitHub, or the website once it may mention the iPhone app).
+- [ ] A privacy policy URL. App Store Connect requires one even for an app that collects nothing. The guide's
+      [Privacy and security](guide/privacy-and-security.md) describes only the Mac, so it is not enough by itself:
+      publish it together with the iPhone and iPad section drafted under "Privacy policy for iPhone and iPad" below
+      (the guide gets that section at release, ADR 0046). Blocks the upload.
+- [ ] The export compliance answer, confirmed by the maintainer (below). Blocks the upload.
 - [ ] The screenshots below.
 - [x] A privacy manifest in every bundle and a Face ID purpose string (`MobileSubmissionTests`).
 
@@ -66,6 +68,33 @@ Check each line against the build being submitted: a feature that is not in it c
 - **Tracking:** none (`NSPrivacyTracking` false in every manifest).
 - Link previews make a request to the site a clip links to, from the device; Apple's definition of collection is data
   the developer or its partners receive, which this is not. Say so in the review notes if asked.
+
+## Privacy policy for iPhone and iPad (draft)
+
+To publish with the Mac's privacy page at release. Check each line against the build being submitted.
+
+> **What Pesto keeps.** Clips you add on your iPhone or iPad, and clips your other devices send through sync, are
+> stored on the device, encrypted with a key that never leaves it. Nothing is sent to us; we have no server.
+>
+> **Sync.** Optional. Your devices exchange sealed files through a folder you choose, such as iCloud Drive. Only your
+> devices hold the keys that open them.
+>
+> **Link previews.** When on (the welcome offers them, and Settings can turn them off), Pesto asks a link's own site
+> for its title and picture. That site sees your IP address, as it would if you opened the link.
+>
+> **Apple Intelligence.** AI actions, Describe Image and Ask Pesto run on the device's own model. No clip is sent
+> anywhere.
+>
+> **Face ID.** The History Lock asks iOS to check your face or passcode. Pesto never sees your face data.
+>
+> **Extensions.** The share extension, AutoFill and the widget never open your history. The app gives each a small
+> sealed file: AutoFill gets pinned clips, snippets and recent text, the widget gets recent clips, and neither ever
+> gets a secret. With the History Lock on they stay empty unless you choose otherwise.
+>
+> **Sharing out.** When you share a picture or a GIF, iOS needs a file: Pesto writes one for the share and deletes it
+> when the share ends, when the history locks or is cleared, and at the next launch.
+>
+> **No analytics, no tracking, no ads.**
 
 ## Export compliance
 

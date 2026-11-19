@@ -69,7 +69,7 @@ final class PadLibraryUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["New Note"].waitForExistence(timeout: timeout), "⌘N opens the composer")
         app.typeText("Written with the keyboard")
         app.typeKey("s", modifierFlags: .command)
-        XCTAssertFalse(app.navigationBars["New Note"].waitForExistence(timeout: 2), "⌘S saves and closes")
+        XCTAssertTrue(app.navigationBars["New Note"].waitForNonExistence(timeout: timeout), "⌘S saves and closes")
         XCTAssertTrue(
             card(containing: "Written with the keyboard", in: app).waitForExistence(timeout: timeout),
             "the saved note joins the search it matches"
@@ -90,8 +90,14 @@ final class PadLibraryUITests: XCTestCase {
         pin.tap()
 
         sidebar.staticTexts["Pinned"].tap()
-        XCTAssertTrue(card(containing: "Packing list", in: app).waitForExistence(timeout: timeout))
-        XCTAssertTrue(card(containing: "Gate B7", in: app).exists, "the seeded pin stays")
+        XCTAssertTrue(
+            card(containing: "3F7D4E", in: app).waitForNonExistence(timeout: timeout),
+            "Pinned leaves out what is not pinned"
+        )
+        XCTAssertTrue(visibleCard(containing: "Packing list", in: app), "the newly pinned clip is in Pinned")
+        XCTAssertTrue(visibleCard(containing: "Gate B7", in: app), "the seeded pin stays")
+        card(containing: "Packing list", in: app).press(forDuration: 1.0)
+        XCTAssertTrue(app.buttons["Unpin"].waitForExistence(timeout: timeout), "the pin was saved")
         capture("ipad-pinned")
     }
 
@@ -103,7 +109,10 @@ final class PadLibraryUITests: XCTestCase {
             waitForSeededClips(in: app)
             let grid = element(MobileAccessibilityID.clipGrid, in: app)
             XCTAssertTrue(grid.waitForExistence(timeout: timeout))
+            let window = app.windows.firstMatch.frame
+            XCTAssertEqual(window.width > window.height, orientation == .landscapeLeft, "the window turned")
             let first = cards(in: app).firstMatch
+            XCTAssertTrue(first.waitForExistence(timeout: timeout) && first.isHittable, "the grid settled")
             XCTAssertLessThan(first.frame.width, grid.frame.width / 2, "more than one column in \(orientation)")
             capture("ipad-grid-\(orientation == .portrait ? "portrait" : "landscape")")
             app.terminate()

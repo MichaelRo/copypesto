@@ -83,7 +83,11 @@ public extension StorageService {
 
     private func stampUnstamped(clock: SyncClock) async throws -> Int {
         var count = 0
-        let unstampedClips = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.changeClock == nil })
+        // A clip that arrived from another device but lost its stamp (a save between ingest and markApplied failed)
+        // is that device's, never this one's to send.
+        let unstampedClips = FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { $0.changeClock == nil && $0.syncOrigin == nil }
+        )
         try await forEachClip(matching: unstampedClips) { item in
             item.syncFingerprint = item.syncFingerprintValue()
             item.changeClock = clock.next().encoded

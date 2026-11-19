@@ -44,7 +44,6 @@ public final class SyncFolderService {
     private var stopped = false
     var ownLast: (sequence: UInt64, hash: String) = (0, SyncManifest.zeroHash)
     private var ownLogRecovered = false
-    private var unstampedSent = false
     private var lastReceived: Date?
     private var current: Task<Void, Never>?
     var segmentsAfterCompaction = 0
@@ -211,7 +210,7 @@ public final class SyncFolderService {
         let epochChanged = group.map { $0.epoch != found.epoch } ?? false
         if announced, !epochChanged {
             group = found
-            try await sendUnstampedOnce()
+            await sendUnstampedOnce()
             return
         }
         try SyncGroupManager.writeDeviceRecord(
@@ -223,18 +222,26 @@ public final class SyncFolderService {
             ownLogRecovered = false
         }
         if !announced || epochChanged { _ = try await storage.restampForSync(.notFrom(deviceID: identity.deviceID)) }
-        unstampedSent = true
+        water.sentUnstampedHistory = true
+        saveWater()
         group = try SyncGroupManager.openGroup(layout: layout, keyStore: keyStore) ?? found
     }
 
     /// A device announced before turn-on stamped its history (ADR 0056) never sent what it held from before. Once per
-    /// run, whatever still carries no stamp is stamped and goes out; afterwards nothing matches, so this costs one
-    /// empty fetch per launch.
-    private func sendUnstampedOnce() async throws {
-        guard !unstampedSent else { return }
-        let stamped = try await storage.restampForSync(.unstamped)
-        unstampedSent = true
-        if stamped > 0 { logger.info("Sent \(stamped, privacy: .public) clips and collections that were never sent") }
+    /// store (the high-water record remembers it), whatever still carries no stamp goes out. Only once: a clip copied
+    /// later during Pause Sync stays on this device. A failure is logged and tried again on the next pass; it never
+    /// stops the exchange.
+    private func sendUnstampedOnce() async {
+        guard water.sentUnstampedHistory != true else { return }
+        do {
+            let stamped = try await storage.restampForSync(.unstamped)
+            water.sentUnstampedHistory = true
+            saveWater()
+            if stamped >
+                0 { logger.info("Sent \(stamped, privacy: .public) clips and collections that were never sent") }
+        } catch {
+            logger.error("The unsent history could not be marked: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// A Mac that used Leave Sync takes its folder, and so its log, with it, but its clips are still here: this Mac

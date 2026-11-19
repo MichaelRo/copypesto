@@ -252,6 +252,16 @@ build-mobile-device: generate ## [Develop] Build the iPhone and iPad app for a c
 	$(XCODEBUILD_MOBILE) -destination 'platform=iOS,name=$(DEVICE)' -allowProvisioningUpdates \
 		DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) CODE_SIGN_STYLE=Automatic build
 
+.PHONY: archive-mobile
+archive-mobile: generate ## [Release] Archive the iPhone and iPad app for App Store Connect, signed for APPLE_TEAM_ID (docs/ios-signing.md, "Uploading to App Store Connect")
+	@echo "$(APPLE_TEAM_ID)" | grep -Eq '^[A-Z0-9]{10}$$' || { \
+		echo "error: APPLE_TEAM_ID is '$(APPLE_TEAM_ID)'. Install the Developer ID Application certificate or pass APPLE_TEAM_ID=XXXXXXXXXX."; \
+		exit 1; }
+	DEVELOPER_DIR=$(DEVELOPER_DIR) xcodebuild -project Pesto.xcodeproj -scheme PestoMobile -configuration Release \
+		-destination 'generic/platform=iOS' -archivePath $(MOBILE_BUILD_DIR)/Pesto-iOS.xcarchive \
+		-allowProvisioningUpdates DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) CODE_SIGN_STYLE=Automatic archive
+	@echo "Archived: $(MOBILE_BUILD_DIR)/Pesto-iOS.xcarchive. Open it to upload: open $(MOBILE_BUILD_DIR)/Pesto-iOS.xcarchive"
+
 .PHONY: test-mobile
 test-mobile: MOBILE_SCHEME = PestoMobileCITests
 test-mobile: generate ## [Test] Run the iOS unit tests on an iPhone and then an iPad simulator

@@ -33,9 +33,10 @@ extension MobileAppState {
         showsWelcome = false
     }
 
+    /// Nothing starts sync setup while the history is locked: the request is dropped, not kept for the unlock.
     func takeSyncSetUpRequest() -> Bool {
         defer { syncSetUpRequested = false }
-        return syncSetUpRequested
+        return syncSetUpRequested && !isHistoryLocked
     }
 
     /// Turning the lock on from the welcome asks for Face ID, Touch ID or the passcode first; a refusal leaves it off.

@@ -7,11 +7,13 @@ import UIKit
 /// VoiceOver, the line under it, then the step's own content, all in a scroll view above the pinned buttons.
 struct WelcomePage<Art: View, Content: View>: View {
     let stepNumber: Int
+    let isActive: Bool
     let title: String
     let line: String
     @ViewBuilder var art: Art
     @ViewBuilder var content: Content
     @Environment(\.dynamicTypeSize) private var typeSize
+    @AccessibilityFocusState private var titleIsFocused: Bool
 
     var body: some View {
         GeometryReader { proxy in
@@ -26,6 +28,7 @@ struct WelcomePage<Art: View, Content: View>: View {
                             .multilineTextAlignment(.center)
                             .accessibilityLabel(Text("Step \(stepNumber) of \(WelcomeModel.stepCount). \(title)"))
                             .accessibilityAddTraits(.isHeader)
+                            .accessibilityFocused($titleIsFocused)
                         Text(line)
                             .font(.body)
                             .pestoQuiet()
@@ -35,11 +38,29 @@ struct WelcomePage<Art: View, Content: View>: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 8)
-                .padding(.bottom, 16)
+                .padding(.bottom, typeSize.isAccessibilitySize ? 40 : 16)
                 .frame(maxWidth: 520)
                 .frame(maxWidth: .infinity, minHeight: proxy.size.height)
             }
             .scrollBounceBehavior(.basedOnSize)
+            .mask(alignment: .top) { scrollFade }
+            .onChange(of: isActive) { _, active in
+                guard active else { return }
+                Task { titleIsFocused = true }
+            }
+        }
+    }
+
+    /// At accessibility sizes the text runs under the buttons, so its lower edge fades out instead of being cut.
+    @ViewBuilder
+    private var scrollFade: some View {
+        if typeSize.isAccessibilitySize {
+            VStack(spacing: 0) {
+                Rectangle()
+                LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 28)
+            }
+        } else {
+            Rectangle()
         }
     }
 }

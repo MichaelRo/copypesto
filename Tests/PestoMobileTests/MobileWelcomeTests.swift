@@ -176,17 +176,78 @@ struct MobileWelcomeTests {
         #expect(!state.takeSyncSetUpRequest())
     }
 
-    @Test("the lock caption follows the device's biometry and keeps its promise about widgets and AutoFill")
+    private func caption(_ biometry: LABiometryType, outside: Bool) -> String {
+        DeviceAuthenticationWords.lockCaption(for: biometry, canAuthenticate: true, showsClipsOutside: outside)
+    }
+
+    @Test("the lock caption follows the device's biometry and keeps its promise while widgets and AutoFill stay empty")
     func whenBiometryDiffers_thenTheCaptionFollows() {
-        let face = DeviceAuthenticationWords.lockCaption(for: .faceID)
-        let touch = DeviceAuthenticationWords.lockCaption(for: .touchID)
-        let none = DeviceAuthenticationWords.lockCaption(for: .none)
+        let face = caption(.faceID, outside: false)
+        let touch = caption(.touchID, outside: false)
+        let none = caption(.none, outside: false)
 
         #expect(face.hasPrefix("Face ID before your clips show."))
         #expect(touch.hasPrefix("Touch ID before your clips show."))
         #expect(none.hasPrefix("Your passcode before your clips show."))
         #expect([face, touch, none]
             .allSatisfy { $0.hasSuffix("Widgets and AutoFill stay empty while it\u{2019}s on.") })
+    }
+
+    @Test("the lock caption makes no promise about widgets once Settings shows clips there")
+    func whenClipsShowOutside_thenTheCaptionDropsThePromise() {
+        let caption = caption(.faceID, outside: true)
+
+        #expect(caption == "Face ID before your clips show.")
+    }
+
+    @Test("a device with no passcode says why the lock cannot be switched on")
+    func whenNothingCanAuthenticate_thenTheCaptionSaysWhatToDo() {
+        for outside in [true, false] {
+            let caption = DeviceAuthenticationWords.lockCaption(
+                for: .none, canAuthenticate: false, showsClipsOutside: outside
+            )
+            #expect(caption == "Set a passcode in Settings to use the lock.")
+        }
+    }
+
+    @Test("the lock engaging closes the welcome and drops a waiting sync request")
+    func whenTheLockEngages_thenTheWelcomeClosesAndSyncDoesNotStart() {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(true, for: Setting.biometricLockEnabled)
+        let state = state(defaults)
+        state.showsWelcome = true
+        state.closeWelcome(startingSync: true)
+        state.showsWelcome = true
+
+        state.lockHistory()
+
+        #expect(state.isHistoryLocked)
+        #expect(!state.showsWelcome)
+        #expect(!state.takeSyncSetUpRequest())
+    }
+
+    @Test("a sync request left while the history is locked starts nothing")
+    func whenLocked_thenTheSyncRequestIsNotTaken() {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(true, for: Setting.biometricLockEnabled)
+        let state = state(defaults)
+        state.closeWelcome(startingSync: true)
+
+        #expect(state.isHistoryLocked)
+        #expect(!state.takeSyncSetUpRequest())
+    }
+
+    @Test("going back from the first step stays on it, and Back from step three lands on step two")
+    func whenGoingBack_thenTheModelMovesOneStep() {
+        let model = WelcomeModel(defaults: ThrowawayDefaults.make())
+        #expect(!model.canGoBack)
+        model.goToNextStep()
+        model.goToNextStep()
+        #expect(model.canGoBack)
+        model.goToPreviousStep()
+        #expect(model.step == .choices)
+        model.goToPreviousStep()
+        #expect(!model.canGoBack)
     }
 
     @Test("the welcome's markers are registered per device and start off")

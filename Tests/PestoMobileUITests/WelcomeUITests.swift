@@ -166,7 +166,28 @@ final class WelcomeUITests: XCTestCase {
         walkThrough("large-text", in: app)
         XCTAssertTrue(element(MobileAccessibilityID.welcomeTurnOnSync, in: app).isHittable, "buttons stay pinned")
         XCTAssertTrue(element(MobileAccessibilityID.welcomeNotNow, in: app).isHittable, "buttons stay pinned")
-        XCTAssertTrue(element(MobileAccessibilityID.welcomeSkip, in: app).isHittable)
+        XCTAssertFalse(
+            element(MobileAccessibilityID.welcomeSkip, in: app).exists,
+            "at accessibility sizes the last step drops Skip, since Not Now does the same"
+        )
+        tap(MobileAccessibilityID.welcomeNotNow, in: app)
+        waitForLibrary(in: app)
+    }
+
+    func test_whenOnALaterStep_thenBackReturnsOneStepWithoutADrag() {
+        let app = launch()
+        XCTAssertTrue(element(MobileAccessibilityID.welcomeKeepStep, in: app).waitForExistence(timeout: timeout))
+        XCTAssertFalse(element(MobileAccessibilityID.welcomeBack, in: app).exists, "no Back on the first step")
+        tap(MobileAccessibilityID.welcomeContinue, in: app)
+        XCTAssertTrue(app.staticTexts["Step 2 of 3. Two choices"].waitForExistence(timeout: timeout))
+        tap(MobileAccessibilityID.welcomeContinue, in: app)
+        XCTAssertTrue(element(MobileAccessibilityID.welcomeSyncStep, in: app).waitForExistence(timeout: timeout))
+
+        tap(MobileAccessibilityID.welcomeBack, in: app)
+        XCTAssertTrue(app.staticTexts["Step 2 of 3. Two choices"].waitForExistence(timeout: timeout))
+        tap(MobileAccessibilityID.welcomeBack, in: app)
+        XCTAssertTrue(app.staticTexts["Step 1 of 3. Keep what you copy"].waitForExistence(timeout: timeout))
+        XCTAssertFalse(element(MobileAccessibilityID.welcomeBack, in: app).exists)
     }
 
     func test_onIPad_whenTheSheetIsSwipedDown_thenItCountsAsSkip() throws {

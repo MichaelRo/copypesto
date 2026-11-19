@@ -33,18 +33,14 @@ enum DeviceAuthenticationWords {
         String(localized: "Lock history with \(name(for: biometry))")
     }
 
-    static func lockCaption(for biometry: LABiometryType) -> String {
-        switch biometry {
-        case .faceID, .touchID, .opticID:
-            String(localized: """
-            \(name(for: biometry)) before your clips show. \
-            Widgets and AutoFill stay empty while it\u{2019}s on.
-            """)
-        default:
-            String(
-                localized: "Your passcode before your clips show. Widgets and AutoFill stay empty while it\u{2019}s on."
-            )
+    static func lockCaption(for biometry: LABiometryType, canAuthenticate: Bool, showsClipsOutside: Bool) -> String {
+        guard canAuthenticate else { return String(localized: "Set a passcode in Settings to use the lock.") }
+        let method = switch biometry {
+        case .faceID, .touchID, .opticID: String(localized: "\(name(for: biometry)) before your clips show.")
+        default: String(localized: "Your passcode before your clips show.")
         }
+        guard !showsClipsOutside else { return method }
+        return method + " " + String(localized: "Widgets and AutoFill stay empty while it\u{2019}s on.")
     }
 
     static func unlockTitle(for biometry: LABiometryType) -> String {

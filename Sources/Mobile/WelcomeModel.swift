@@ -31,6 +31,10 @@ final class WelcomeModel {
         self.defaults = defaults
     }
 
+    var canGoBack: Bool {
+        step.previous != nil
+    }
+
     func goToNextStep() {
         guard let next = step.next else { return }
         move(to: next)

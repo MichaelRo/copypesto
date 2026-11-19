@@ -9,6 +9,7 @@ struct WelcomeView: View {
     @Environment(\.pestoSurface) private var ground
     @Environment(\.pestoAccent) private var accent
     @Environment(\.layoutDirection) private var layoutDirection
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var model = WelcomeModel()
 
     var body: some View {
@@ -16,17 +17,34 @@ struct WelcomeView: View {
             VStack(spacing: 0) {
                 pages
                     .simultaneousGesture(swipeBack)
+                    .accessibilityAction(named: Text("Back")) { model.goToPreviousStep() }
                 footer
             }
             .background(ground.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Skip") { appState.closeWelcome() }
-                        .accessibilityIdentifier(MobileAccessibilityID.welcomeSkip)
+                if model.canGoBack {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Back") { model.goToPreviousStep() }
+                            .accessibilityIdentifier(MobileAccessibilityID.welcomeBack)
+                    }
+                }
+                if !hidesSkip {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Skip") { appState.closeWelcome() }
+                            .keyboardShortcut(.cancelAction)
+                            .accessibilityIdentifier(MobileAccessibilityID.welcomeSkip)
+                    }
                 }
             }
         }
+        .accessibilityAction(.escape) { appState.closeWelcome() }
+        .modifier(BackArrowKey(isEnabled: UIDevice.current.userInterfaceIdiom == .pad, back: model.goToPreviousStep))
+    }
+
+    /// At accessibility sizes the last step drops Skip, since Not Now does the same.
+    private var hidesSkip: Bool {
+        typeSize.isAccessibilitySize && model.step == .sync
     }
 
     /// The three steps sit side by side and the row slides to the one in view; the others are hidden from VoiceOver
@@ -52,18 +70,19 @@ struct WelcomeView: View {
     private func page(_ step: WelcomeStep) -> some View {
         switch step {
         case .keep: WelcomeKeepStep(isActive: model.step == .keep)
-        case .choices: WelcomeChoicesStep()
+        case .choices: WelcomeChoicesStep(isActive: model.step == .choices)
         case .sync: WelcomeSyncStep(isActive: model.step == .sync)
         }
     }
 
     private var footer: some View {
         VStack(spacing: 16) {
-            dots
+            if !typeSize.isAccessibilitySize { dots }
             VStack(spacing: 12) {
                 if model.step == .sync {
                     Button { appState.closeWelcome(startingSync: true) } label: { buttonLabel("Turn On Sync") }
                         .buttonStyle(.pestoProminent)
+                        .keyboardShortcut(.defaultAction)
                         .accessibilityIdentifier(MobileAccessibilityID.welcomeTurnOnSync)
                     Button { appState.closeWelcome() } label: { buttonLabel("Not Now") }
                         .buttonStyle(.bordered)
@@ -72,6 +91,7 @@ struct WelcomeView: View {
                 } else {
                     Button { advance() } label: { buttonLabel("Continue") }
                         .buttonStyle(.pestoProminent)
+                        .keyboardShortcut(.defaultAction)
                         .accessibilityIdentifier(MobileAccessibilityID.welcomeContinue)
                 }
             }
@@ -109,6 +129,26 @@ struct WelcomeView: View {
             let toward = layoutDirection == .rightToLeft ? -drag.translation.width : drag.translation.width
             guard toward > 80, abs(drag.translation.height) < 60 else { return }
             model.goToPreviousStep()
+        }
+    }
+}
+
+private struct BackArrowKey: ViewModifier {
+    @Environment(\.layoutDirection) private var layoutDirection
+    let isEnabled: Bool
+    let back: () -> Void
+
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content
+                .focusable()
+                .focusEffectDisabled()
+                .onKeyPress(layoutDirection == .rightToLeft ? .rightArrow : .leftArrow) {
+                    back()
+                    return .handled
+                }
+        } else {
+            content
         }
     }
 }

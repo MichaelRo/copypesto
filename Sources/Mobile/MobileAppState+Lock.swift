@@ -60,6 +60,8 @@ extension MobileAppState {
     }
 
     private func forgetUnlockedState() {
+        showsWelcome = false
+        syncSetUpRequested = false
         secretReveal.hideAll()
         storageService?.undoHistory.clear()
         undoOfferDismissal?.cancel()

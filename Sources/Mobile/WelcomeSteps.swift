@@ -22,7 +22,7 @@ struct WelcomeKeepStep: View {
 
     var body: some View {
         WelcomePage(
-            stepNumber: WelcomeStep.keep.rawValue, title: String(localized: "Keep what you copy"),
+            stepNumber: WelcomeStep.keep.rawValue, isActive: isActive, title: String(localized: "Keep what you copy"),
             line: privacyLine
         ) {
             WelcomeKeepArt(isActive: isActive)
@@ -49,14 +49,16 @@ struct WelcomeKeepStep: View {
 }
 
 struct WelcomeChoicesStep: View {
+    let isActive: Bool
     @Environment(MobileAppState.self) private var appState
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
+    @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @State private var biometry = DeviceAuthenticationWords.biometry()
 
     var body: some View {
         WelcomePage(
-            stepNumber: WelcomeStep.choices.rawValue, title: String(localized: "Two choices"),
+            stepNumber: WelcomeStep.choices.rawValue, isActive: isActive, title: String(localized: "Two choices"),
             line: String(localized: "You can change both in Settings.")
         ) {
             EmptyView()
@@ -67,7 +69,7 @@ struct WelcomeChoicesStep: View {
                         title: String(localized: "Load link previews"),
                         caption: String(localized: """
                         Pesto asks a link\u{2019}s site for its title and picture. \
-                        The site sees your address.
+                        The site sees your IP address.
                         """)
                     )
                 }
@@ -76,7 +78,10 @@ struct WelcomeChoicesStep: View {
                 Toggle(isOn: lockBinding) {
                     WelcomeChoiceText(
                         title: DeviceAuthenticationWords.lockToggleTitle(for: biometry),
-                        caption: DeviceAuthenticationWords.lockCaption(for: biometry)
+                        caption: DeviceAuthenticationWords.lockCaption(
+                            for: biometry, canAuthenticate: lockEnabled || appState.historyLock.canAuthenticate,
+                            showsClipsOutside: showsClipsOutside
+                        )
                     )
                 }
                 .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
@@ -115,7 +120,8 @@ struct WelcomeSyncStep: View {
 
     var body: some View {
         WelcomePage(
-            stepNumber: WelcomeStep.sync.rawValue, title: String(localized: "Your Mac\u{2019}s clips, here too"),
+            stepNumber: WelcomeStep.sync.rawValue, isActive: isActive,
+            title: String(localized: "Your Mac\u{2019}s clips, here too"),
             line: String(localized: """
             Sync goes through a folder you choose, such as iCloud Drive. \
             No server: clips are sealed so only your devices can open them.

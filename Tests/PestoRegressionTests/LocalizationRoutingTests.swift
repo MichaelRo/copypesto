@@ -113,7 +113,7 @@ struct LocalizationRoutingTests {
 
     @Test("all three string catalogs translate every key into all seven target locales plus English")
     func allCatalogsCoverAllSupportedLocales() throws {
-        let locales = ["en", "es", "fr", "de", "ja", "zh-Hans", "pt-BR", "he"]
+        let locales = ["en", "es", "fr", "de", "ja", "zh-Hans", "pt-BR", "he", "ru", "uk", "ko", "it", "cs"]
         for file in ["InfoPlist.xcstrings", "AppShortcuts.xcstrings", "Localizable.xcstrings"] {
             let url = SourceTree.sources.appendingPathComponent("Resources/\(file)")
             let strings = try parseStringCatalog(at: url)

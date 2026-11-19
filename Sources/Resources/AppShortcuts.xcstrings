@@ -48,7 +48,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "הוספת הלוח אל Pesto"
+            "value": "הוספת הלוח ל-Pesto"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить буфер обмена в Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати буфер обміну в Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto에 클립보드 추가"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi gli appunti a Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přidat schránku do Pesta"
           }
         }
       }
@@ -100,7 +130,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "הוספת הלוח אל ${applicationName}"
+            "value": "הוספת הלוח ל-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить буфер обмена в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати буфер обміну в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에 클립보드 추가"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi gli appunti a ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přidat schránku do ${applicationName}"
           }
         }
       }
@@ -134,7 +194,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "自分のクリップボードを${applicationName}に追加"
+            "value": "クリップボードの内容を${applicationName}に追加"
           }
         },
         "zh-Hans": {
@@ -152,7 +212,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "הוספת הלוח שלי אל ${applicationName}"
+            "value": "הוספת הלוח שלי ל-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить мой буфер обмена в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати мій буфер обміну в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에 내 클립보드 추가"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi i miei appunti a ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přidat moji schránku do ${applicationName}"
           }
         }
       }
@@ -204,7 +294,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "הוספה אל ${applicationName}"
+            "value": "הוספה ל-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에 추가"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi a ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přidat do ${applicationName}"
           }
         }
       }
@@ -256,7 +376,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "הוספה אל Pesto"
+            "value": "הוספה ל-Pesto"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить в Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Додати в Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto에 추가"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aggiungi a Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přidat do Pesta"
           }
         }
       }
@@ -308,7 +458,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "העתקה מתוך Pesto"
+            "value": "העתקה מ-Pesto"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать из Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіювати з Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto에서 복사"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia da Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zkopírovat z Pesta"
           }
         }
       }
@@ -336,7 +516,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Text in Pesto kopieren"
+            "value": "Text zu Pesto kopieren"
           }
         },
         "ja": {
@@ -348,7 +528,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "拷贝文本到 Pesto"
+            "value": "将文本拷贝到 Pesto"
           }
         },
         "pt-BR": {
@@ -360,7 +540,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "העתקת טקסט אל Pesto"
+            "value": "העתקת טקסט ל-Pesto"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать текст в Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіювати текст у Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto에 텍스트 복사"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia testo in Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zkopírovat text do Pesta"
           }
         }
       }
@@ -388,7 +598,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Text in ${applicationName} kopieren"
+            "value": "Text zu ${applicationName} kopieren"
           }
         },
         "ja": {
@@ -400,19 +610,49 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "拷贝文本到 ${applicationName}"
+            "value": "将文本拷贝到 ${applicationName}"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copiar texto para ${applicationName}"
+            "value": "Copiar texto para o ${applicationName}"
           }
         },
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "העתקת טקסט אל ${applicationName}"
+            "value": "העתקת טקסט ל-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скопировать текст в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копіювати текст у ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에 텍스트 복사"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia testo in ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zkopírovat text do ${applicationName}"
           }
         }
       }
@@ -466,6 +706,36 @@
             "state": "translated",
             "value": "הסתרת תוכן הקטע"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть содержимое записи"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приховати вміст кліпу"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "클립 내용 가리기"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nascondi contenuto del clip"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skrýt obsah klipu"
+          }
         }
       }
     },
@@ -517,6 +787,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "הסתרת תוכן הקטע ב-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть содержимое записи в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приховати вміст кліпу в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에서 클립 내용 가리기"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nascondi contenuto del clip in ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skrýt obsah klipu v ${applicationName}"
           }
         }
       }
@@ -570,6 +870,36 @@
             "state": "translated",
             "value": "פתיחת ${applicationName}"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName} 열기"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otevřít ${applicationName}"
+          }
         }
       }
     },
@@ -622,6 +952,36 @@
             "state": "translated",
             "value": "פתיחת Pesto"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto 열기"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otevřít Pesto"
+          }
         }
       }
     },
@@ -648,7 +1008,7 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aus ${applicationName} einfügen"
+            "value": "Aus ${applicationName} einsetzen"
           }
         },
         "ja": {
@@ -672,7 +1032,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "הדבקה מתוך ${applicationName}"
+            "value": "הדבקה מ-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставить из ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставити з ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에서 붙여넣기"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incolla da ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vložit z ${applicationName}"
           }
         }
       }
@@ -724,7 +1114,37 @@
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "שמירה אל ${applicationName}"
+            "value": "שמירה ב-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зберегти в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에 저장"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salva in ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uložit do ${applicationName}"
           }
         }
       }
@@ -778,6 +1198,36 @@
             "state": "translated",
             "value": "חיפוש ב-${applicationName}"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Найти в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шукати в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName} 검색"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca in ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prohledat ${applicationName}"
+          }
         }
       }
     },
@@ -798,7 +1248,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rechercher dans mon presse-papiers dans ${applicationName}"
+            "value": "Rechercher mon presse-papiers dans ${applicationName}"
           }
         },
         "de": {
@@ -829,6 +1279,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "חיפוש בלוח שלי ב-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Найти в буфере обмена в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шукати в моєму буфері обміну в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에서 내 클립보드 검색"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca nei miei appunti in ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prohledat schránku v ${applicationName}"
           }
         }
       }
@@ -882,6 +1362,36 @@
             "state": "translated",
             "value": "חיפוש ב-Pesto"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Найти в Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шукати в Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto 검색"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cerca in Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prohledat Pesto"
+          }
         }
       }
     },
@@ -933,6 +1443,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "הצגת הלוח שלי ב-${applicationName}"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать буфер обмена в ${applicationName}"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показати мій буфер обміну в ${applicationName}"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "${applicationName}에서 내 클립보드 보기"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostra i miei appunti in ${applicationName}"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zobrazit schránku v ${applicationName}"
           }
         }
       }

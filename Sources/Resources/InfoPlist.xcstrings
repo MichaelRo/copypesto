@@ -50,6 +50,36 @@
             "state": "translated",
             "value": "Pesto"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
         }
       }
     },
@@ -102,6 +132,36 @@
             "state": "translated",
             "value": "Pesto"
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto"
+          }
         }
       }
     },
@@ -116,7 +176,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pesto usa Accesibilidad para pegar clips directamente en la app que estabas usando y para detectar una doble pulsación de ⌘C."
+            "value": "Pesto necesita permiso de Accesibilidad para pegar clips directamente en la app que estabas usando y detectar si pulsas ⌘C dos veces."
           }
         },
         "fr": {
@@ -128,31 +188,61 @@
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pesto nutzt die Bedienungshilfen, um Clips direkt in die aktive App einzufügen und ein doppeltes ⌘C zu erkennen."
+            "value": "Pesto nutzt die Bedienungshilfen, um Clips direkt in die aktive App einzusetzen und ein doppeltes ⌘C zu erkennen."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pestoはアクセシビリティを使って、使用中のアプリにクリップを直接ペーストし、⌘Cの2回押しを検出します。"
+            "value": "Pestoは、使用中のアプリに直接クリップをペーストしたり、⌘Cの2回押しを検出したりするためにアクセシビリティを使用します。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pesto 使用辅助功能将剪贴内容直接粘贴到你正在使用的 App 中，并检测双击 ⌘C。"
+            "value": "Pesto 需要辅助功能权限，才能将剪贴直接粘贴到当前使用的 App 中，并检测双击 ⌘C。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Pesto usa a Acessibilidade para colar clipes diretamente no app em uso e para detectar um toque duplo em ⌘C."
+            "value": "O Pesto usa a Acessibilidade para colar clipes diretamente no app em uso e detectar um toque duplo em ⌘C."
           }
         },
         "he": {
           "stringUnit": {
             "state": "translated",
-            "value": "‏Pesto משתמשת בנגישות כדי להדביק קטעים ישירות ליישום שבו השתמשת וכדי לזהות לחיצה כפולה על ⌘C."
+            "value": "‏Pesto משתמשת בנגישות כדי להדביק קטעים ישירות ליישום שבו עבדת, וכדי לזהות לחיצה כפולה על ⌘C."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto использует Универсальный доступ, чтобы вставлять записи прямо в активное приложение и распознавать двойное нажатие ⌘C."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto використовує Доступність, щоб вставляти кліпи безпосередньо в активну програму й розпізнавати подвійне ⌘C."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto는 사용 중이던 앱에 클립을 바로 붙여넣고 ⌘C 두 번 누르기를 감지하기 위해 손쉬운 사용 권한을 사용합니다."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto usa Accessibilità per incollare i clip direttamente nell'app che stavi usando e per rilevare un doppio ⌘C."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto používá Zpřístupnění k přímému vkládání klipů do aplikace, kterou právě používáte, a k rozpoznání dvojitého stisknutí ⌘C."
           }
         }
       }
@@ -168,7 +258,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pesto pide Face ID antes de mostrar tus clips cuando el bloqueo de historial está activo y antes de mostrar un clip oculto."
+            "value": "Pesto solicita Face ID antes de mostrar tus clips cuando el bloqueo del historial está activo y al revelar un clip oculto."
           }
         },
         "fr": {
@@ -186,25 +276,55 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "履歴ロックがオンのときにクリップを表示する前、および非表示のクリップを表示する前にFace IDを求めます。"
+            "value": "履歴ロックがオンのときや非表示のクリップを表示するときに、Face IDでの認証を求めます。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当历史记录锁定开启时，或显示隐藏的剪贴内容前，Pesto 会请求面容 ID 验证。"
+            "value": "开启历史记录锁定时，或在显示隐藏的剪贴前，Pesto 会请求面容 ID 验证。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Pesto solicita o Face ID antes de mostrar seus clipes quando o Bloqueio de Histórico está ativado e antes de exibir um clipe oculto."
+            "value": "O Pesto pede o Face ID antes de mostrar seus clipes com o Bloqueio de Histórico ativado e antes de revelar um clipe oculto."
           }
         },
         "he": {
           "stringUnit": {
             "state": "translated",
             "value": "‏Pesto מבקשת אימות Face ID לפני הצגת הקטעים שלך כשנעילת ההיסטוריה פעילה, ולפני הצגת קטע מוסתר."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto запрашивает Face ID перед показом истории при включённой блокировке и перед открытием скрытых записей."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto запитує Face ID перед показом кліпів, коли ввімкнено блокування історії, і перед показом прихованого кліпу."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto는 기록 잠금이 켜져 있을 때 클립을 표시하거나 가려진 클립을 보기 전에 Face ID 인증을 요청합니다."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto richiede Face ID prima di mostrare i tuoi clip quando il blocco cronologia è attivo e prima di mostrare un clip nascosto."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto vyžaduje Face ID před zobrazením klipů při zapnutém zámku historie a před odkrytím skrytého klipu."
           }
         }
       }
@@ -258,6 +378,36 @@
             "state": "translated",
             "value": "‏© 2026 Michael Roytman. מופץ תחת רישיון MIT."
           }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "© 2026 Michael Roytman. Лицензия MIT."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copyright © 2026 Michael Roytman. Випущено за ліцензією MIT."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copyright © 2026 Michael Roytman. MIT 라이선스로 배포됩니다."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copyright © 2026 Michael Roytman. Rilasciato sotto licenza MIT."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copyright © 2026 Michael Roytman. Vydáno pod licencí MIT."
+          }
         }
       }
     },
@@ -278,7 +428,7 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pesto enregistre une image de votre historique dans Photos lorsque vous choisissez Enregistrer dans Photos."
+            "value": "Pesto enregistre une image de votre historique dans Photos lorsque vous choisissez « Enregistrer dans Photos »."
           }
         },
         "de": {
@@ -290,13 +440,13 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "「写真に保存」を選ぶと、履歴から画像を「写真」に保存します。"
+            "value": "「写真に保存」を選んだときに、履歴の画像を「写真」アプリに保存します。"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当你选择“保存到照片”时，Pesto 会将历史记录中的图片保存到“照片”。"
+            "value": "当你选择“保存到照片”时，Pesto 会将历史记录中的图片保存至“照片”。"
           }
         },
         "pt-BR": {
@@ -309,6 +459,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "‏Pesto שומרת תמונה מההיסטוריה שלך אל ״תמונות״ כשבוחרים ״שמירה בתמונות״."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto сохраняет изображения из истории в «Фото», когда вы выбираете «Сохранить в Фото»."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto зберігає зображення з історії у «Фотографії», коли ви обираєте «Зберегти у Фотографії»."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'사진에 저장'을 선택하면 Pesto가 기록의 이미지를 사진 앱에 저장합니다."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto salva un'immagine dalla cronologia in Foto quando scegli Salva in Foto."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesto uloží obrázek z vaší historie do aplikace Fotky, když vyberete Uložit do Fotek."
           }
         }
       }

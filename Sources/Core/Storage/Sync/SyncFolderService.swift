@@ -31,6 +31,7 @@ public final class SyncFolderService {
     let includeSensitive: @MainActor () -> Bool
     private let isLocked: @MainActor () -> Bool
     private let isReadable: @Sendable (URL) -> Bool
+    let folderProbe: FolderProbe
     let now: @Sendable () -> Date
     let timing: Timing
     private let deviceKind: SyncDeviceKind
@@ -59,6 +60,7 @@ public final class SyncFolderService {
         includeSensitive: @escaping @MainActor () -> Bool = { false },
         isLocked: @escaping @MainActor () -> Bool = { false },
         isReadable: (@Sendable (URL) -> Bool)? = nil,
+        folderProbe: FolderProbe = FolderProbe(),
         now: @escaping @Sendable () -> Date = { .now },
         deviceKind: SyncDeviceKind = .mac
     ) {
@@ -75,6 +77,7 @@ public final class SyncFolderService {
         self.includeSensitive = includeSensitive
         self.isLocked = isLocked
         self.isReadable = isReadable ?? { SyncFileAvailability.isReadable($0) }
+        self.folderProbe = folderProbe
         self.now = now
     }
 
@@ -179,7 +182,11 @@ public final class SyncFolderService {
         } catch let error as SyncError {
             set(.refused(SyncCopy.refusal(error, device: deviceKind)))
         } catch {
-            set(.refused("Sync stopped: \(error.localizedDescription)"))
+            if Self.isStorageFullError(error) {
+                set(.storageFull(isICloud: folderProbe.isICloud(layout.root)))
+            } else {
+                set(.refused("Sync stopped: \(error.localizedDescription)"))
+            }
         }
     }
 
@@ -325,6 +332,7 @@ public final class SyncFolderService {
                     numbered.sequence = first + UInt64(offset)
                     try writer.append(numbered)
                 }
+                try folderProbe.willWrite(url)
                 let manifest = try writer.finish(to: url, now: now())
                 ownLast = try (last, manifest.hash())
             } catch {
@@ -344,7 +352,8 @@ public final class SyncFolderService {
         for (name, payload) in blobs {
             let url = layout.blobs(identity.deviceID).appendingPathComponent(SyncBlobFile.fileName(name))
             guard !FileManager.default.fileExists(atPath: url.path) else { continue }
-            try SyncBlobFile.seal(payload, name: name, syncKey: found.key).write(to: url, options: .atomic)
+            try folderProbe.willWrite(url)
+            try folderProbe.writeData(SyncBlobFile.seal(payload, name: name, syncKey: found.key), url)
         }
     }
 
@@ -354,10 +363,9 @@ public final class SyncFolderService {
             lastManifestHash: ownLast.hash, cursors: water.marks.mapValues(\.sequence), writtenAt: now(),
             signerKeyID: identity.keys.publicKeys.keyID
         )
-        try head.sealed(syncKey: found.key, signedBy: identity.keys).write(
-            to: layout.head(identity.deviceID),
-            options: .atomic
-        )
+        let url = layout.head(identity.deviceID)
+        try folderProbe.willWrite(url)
+        try folderProbe.writeData(head.sealed(syncKey: found.key, signedBy: identity.keys), url)
     }
 
     // MARK: Reading
@@ -381,6 +389,7 @@ public final class SyncFolderService {
         }
         if received > 0 { lastReceived = now() }
         if let firstFailure { throw firstFailure }
+        if hasUploadQuotaError() { return set(.storageFull(isICloud: true)) }
         if waiting { return set(.waitingForFolder) }
         if !others.isEmpty, let since = lastReceived ?? group?.devices.map(\.createdAt).max(),
            now().timeIntervalSince(since) > timing.quietAfter

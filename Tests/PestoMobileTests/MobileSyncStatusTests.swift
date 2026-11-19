@@ -8,7 +8,8 @@ import Testing
 struct MobileSyncStatusTests {
     private static let notYetExchanged: [SyncStatus] = [
         .off, .paused, .receiving(done: 1, total: 4), .waitingForFolder, .folderMissing,
-        .nothingNew(since: .now), .needsKey, .refused("A file from another device is damaged.")
+        .nothingNew(since: .now), .needsKey, .refused("A file from another device is damaged."),
+        .storageFull(isICloud: true), .storageFull(isICloud: false)
     ]
     private static let successWords = ["up to date", "connected", "synced", "in sync", "all set"]
 
@@ -61,5 +62,27 @@ struct MobileSyncStatusTests {
         #expect(!readsAsSuccess(line))
         #expect(line.detail == SyncCopy.offDetail(.iPhone))
         #expect(!line.detail.contains("Mac"))
+    }
+
+    @Test("iCloud storage-full names iCloud Drive and explains clips wait on this device")
+    func whenICloudStorageIsFull_thenShowsICloudDriveIsFull() {
+        let line = MobileSyncStatus(
+            folderProblem: nil, isEnabled: true, status: .storageFull(isICloud: true), device: .iPhone
+        )
+        #expect(line.tone == .problem)
+        #expect(!readsAsSuccess(line))
+        #expect(line.title == String(localized: "iCloud Drive is full"))
+        #expect(line.detail.contains("wait on this device until space is free"))
+    }
+
+    @Test("non-iCloud storage-full names the sync folder and explains clips wait on this device")
+    func whenSyncFolderStorageIsFull_thenShowsSyncFolderIsFull() {
+        let line = MobileSyncStatus(
+            folderProblem: nil, isEnabled: true, status: .storageFull(isICloud: false), device: .iPad
+        )
+        #expect(line.tone == .problem)
+        #expect(!readsAsSuccess(line))
+        #expect(line.title == String(localized: "Sync folder is full"))
+        #expect(line.detail.contains("wait on this device until space is free"))
     }
 }

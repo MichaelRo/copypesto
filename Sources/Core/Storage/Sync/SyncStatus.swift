@@ -14,6 +14,7 @@ public enum SyncStatus: Equatable, Sendable {
     case folderMissing
     case nothingNew(since: Date)
     case needsKey
+    case storageFull(isICloud: Bool)
     case refused(String)
 }
 

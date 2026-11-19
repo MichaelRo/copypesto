@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import SwiftUI
 import Testing
 @testable import PestoCore
 @testable import PestoMobile
@@ -99,6 +100,89 @@ extension MobilePasteboardGlobals {
             #expect(saved.isPinned)
             #expect(ClipContent.of(saved)?.plainText?.contains("{{") == true)
             #expect(!library.state.canSaveAsSnippet(saved))
+        }
+
+        @Test("createSnippet saves a pinned snippet with its title, refreshes the library, and offers Undo")
+        func whenSnippetCreated_thenLibraryRefreshesAndUndoIsOffered() async throws {
+            let library = try await MobileTestLibrary()
+
+            let created = await library.state.createSnippet(
+                title: "Greeting",
+                text: "Hello {{input:Name}}, today is {{date}}"
+            )
+
+            #expect(created)
+            let saved = try #require(library.store.items.first { $0.isTemplate })
+            #expect(saved.isPinned)
+            #expect(saved.customTitle == "Greeting")
+            #expect(ClipContent.of(saved)?.plainText == "Hello {{input:Name}}, today is {{date}}")
+            #expect(library.state.undoOffer == .addClips(.snippet, 1))
+
+            await library.state.undo()
+            try await library.refreshed()
+            #expect(library.store.items.isEmpty)
+        }
+
+        @Test("createSnippet refuses empty text")
+        func whenCreateSnippetEmpty_thenRefused() async throws {
+            let library = try await MobileTestLibrary()
+
+            let created = await library.state.createSnippet(title: "Empty", text: "  \n")
+
+            #expect(!created)
+            #expect(library.store.items.isEmpty)
+            #expect(library.state.notice?.isProblem == true)
+        }
+
+        @Test("updateSnippet updates title and text, refreshes the library, and offers Undo")
+        func whenSnippetUpdated_thenLibraryRefreshesAndUndoIsOffered() async throws {
+            let library = try await MobileTestLibrary()
+            let item = try await snippet(library, "Hi {{input:Name}}")
+
+            let updated = await library.state.updateSnippet(
+                id: item.id,
+                title: "Updated reply",
+                text: "Hey {{input:Name}} on {{isodate}}"
+            )
+
+            #expect(updated)
+            let refreshed = try #require(library.store.item(for: item.id))
+            #expect(refreshed.customTitle == "Updated reply")
+            #expect(ClipContent.of(refreshed)?.plainText == "Hey {{input:Name}} on {{isodate}}")
+            #expect(library.state.undoOffer == .editSnippet)
+
+            await library.state.undo()
+            try await library.refreshed()
+            let undone = try #require(library.store.item(for: item.id))
+            #expect(undone.customTitle == nil)
+            #expect(ClipContent.of(undone)?.plainText == "Hi {{input:Name}}")
+        }
+
+        @Test("iOS automatic fills exclude Mac-only selection and app placeholders")
+        func whenAutomaticFillsListed_thenMacOnlyTokensExcluded() {
+            let tokens = MobileSnippetPlaceholders.automaticFills.map(\.token)
+
+            #expect(tokens == [
+                "{{date}}", "{{time}}", "{{datetime}}", "{{isodate}}", "{{weekday}}",
+                "{{date+1d}}", "{{clipboard}}", "{{uuid}}", "{{cursor}}"
+            ])
+            #expect(!tokens.contains("{{selection}}"))
+            #expect(!tokens.contains("{{app}}"))
+        }
+
+        @Test("inserting a token replaces the selection or appends at the end")
+        func whenPlaceholderInserted_thenInsertedAtSelectionOrEnd() {
+            let initial = "Hello !"
+            let insertPoint = initial.index(initial.startIndex, offsetBy: 6)
+            let step = MobileSnippetPlaceholders.inserting(
+                "{{input:Name}}",
+                into: initial,
+                selection: TextSelection(insertionPoint: insertPoint)
+            )
+            #expect(step.text == "Hello {{input:Name}}!")
+
+            let appended = MobileSnippetPlaceholders.inserting(" {{date}}", into: "Today:", selection: nil)
+            #expect(appended.text == "Today: {{date}}")
         }
     }
 }

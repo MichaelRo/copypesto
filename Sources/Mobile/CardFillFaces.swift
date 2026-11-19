@@ -9,14 +9,29 @@ struct PictureCardFace<Foot: View>: View {
     let image: UIImage?
     let fillsCard: Bool
     var animation: GIFFrames.Animation?
+    var title: String?
     @ViewBuilder let foot: () -> Foot
+    @Environment(\.pestoSurface) private var surface
 
     var body: some View {
         ZStack(alignment: .bottom) {
             picture
-            foot()
-                .padding(.horizontal, 8)
-                .padding(.bottom, 8)
+            VStack(alignment: .leading, spacing: 4) {
+                if let title {
+                    Text(title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(surface.opacity(PictureScrim.pillOpacity), in: .capsule)
+                        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.5))
+                }
+                foot()
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 8)
         }
     }
 
@@ -27,11 +42,13 @@ struct PictureCardFace<Foot: View>: View {
                 filled(image)
             } else {
                 ZStack {
-                    filled(image)
+                    Color.clear
+                        .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                        .clipped()
                         .blur(radius: 14, opaque: true)
                         .overlay(Color.black.opacity(0.35))
                     still(image, fills: false)
-                        .padding(.bottom, 30)
+                        .padding(.bottom, title == nil ? 30 : 54)
                 }
             }
         } else {
@@ -63,6 +80,8 @@ struct ColorCardFace: View {
     let fill: HexColorComponents
     let ink: CardInk
     let metrics: CardMetrics
+    var title: String?
+    var showsTitleOnFace = false
 
     var body: some View {
         let inkColor: Color = ink == .white ? .white : .black
@@ -70,16 +89,25 @@ struct ColorCardFace: View {
         ZStack(alignment: .bottomLeading) {
             Color(.sRGB, red: fill.red, green: fill.green, blue: fill.blue, opacity: fill.alpha)
             VStack(alignment: .leading, spacing: CardMetrics.footGap) {
-                Text(label)
-                    .scaledFont(
-                        size: metrics.points(CardInk.labelPoints(forLength: label.count)),
-                        weight: .semibold,
-                        maxScale: CardMetrics.maxTextScale
-                    )
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.7)
-                    .foregroundStyle(inkColor)
-                CardFootLineView(item: item, ink: inkColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    if let title {
+                        Text(title)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(inkColor)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    Text(label)
+                        .scaledFont(
+                            size: metrics.points(CardInk.labelPoints(forLength: label.count)),
+                            weight: .semibold,
+                            maxScale: CardMetrics.maxTextScale
+                        )
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.7)
+                        .foregroundStyle(inkColor)
+                }
+                CardFootLineView(item: item, ink: inkColor, showsTitleOnFace: showsTitleOnFace)
             }
             .padding(CardMetrics.inset)
         }

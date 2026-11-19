@@ -72,6 +72,11 @@ struct LibraryGrid: View {
         ))
     }
 
+    private var inCollection: Bool {
+        if case .collection = library.filter.scope { return true }
+        return false
+    }
+
     private func grid(_ ids: [UUID], columns count: Int, cardWidth: CGFloat) -> some View {
         let animatesChange = listing.animates
         let columns = Array(repeating: GridItem(.flexible(), spacing: CardGridLayout.spacing), count: count)
@@ -80,7 +85,7 @@ struct LibraryGrid: View {
                 if let item = store.item(for: id) {
                     ClipCard(
                         item: item, width: cardWidth, collections: collections, isFocused: focusedClip == id,
-                        revision: ClipCard.Revision(item)
+                        inCollection: inCollection, revision: ClipCard.Revision(item)
                     )
                     .focusable()
                     .focused($focusedClip, equals: id)

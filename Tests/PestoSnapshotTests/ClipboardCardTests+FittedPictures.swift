@@ -35,6 +35,13 @@ extension ClipboardCardTests {
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 3))
     }
 
+    func test_gifCard_wideIsShownWholeOverAStillBlurredCopy() throws {
+        defer { ThumbnailCache.shared.clear() }
+        let ctx = try makeContext()
+        let item = pictureItem(in: ctx, aspect: 1.5, animated: true, source: "Safari")
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 2))
+    }
+
     func test_whenPictureCardInLightMode_thenHeaderScrimHarmonizesWithLightThemeSurface() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()

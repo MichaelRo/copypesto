@@ -90,6 +90,12 @@ struct MobileSyncStatus: Equatable {
                 detail: String(localized: "Sync was reset on another device. Enter its new recovery key."),
                 tone: .attention
             )
+        case let .storageFull(isICloud):
+            MobileSyncStatus(
+                title: isICloud ? String(localized: "iCloud Drive is full") : String(localized: "Sync folder is full"),
+                detail: String(localized: "New clips wait on this device until space is free."),
+                tone: .problem
+            )
         case let .refused(reason):
             MobileSyncStatus(title: String(localized: "Refused"), detail: reason, tone: .problem)
         }

@@ -42,6 +42,35 @@ public extension StorageService {
         return changed
     }
 
+    /// Scans stored image OCR previews and `RecognizedTextStore` files for secrets that an older build did not flag.
+    /// Masks any match and deletes its sealed OCR file. Idempotent; returns how many clips were masked.
+    func scanRecognizedTextSecrets() async throws -> Int {
+        let imageRaw = ClipboardType.image.rawValue
+        var masked = 0
+        var idsToDelete: [UUID] = []
+        try await forEachClip(matching: FetchDescriptor<ClipboardItem>(
+            predicate: #Predicate { $0.typeRaw == imageRaw && $0.sensitivityRaw == nil }
+        )) { item in
+            let text = recognizedTexts.exists(for: item.id)
+                ? recognizedTexts.load(for: item.id)
+                : item.displayPreviewText
+            guard let text, !text.isEmpty,
+                  let sensitivity = SensitiveContentDetector.detectAnywhere(in: text) else { return }
+            item.sensitivityRaw = sensitivity.category.rawValue
+            item.sensitivityMaskedPreview = sensitivity.maskedPreview
+            item.previewText = sensitivity.maskedPreview
+            item.previewCiphertext = nil
+            item.previewNonce = nil
+            item.previewAADBound = false
+            idsToDelete.append(item.id)
+            masked += 1
+        }
+        if !idsToDelete.isEmpty {
+            recognizedTexts.delete(ids: idsToDelete)
+        }
+        return masked
+    }
+
     private func removeSampleSnippetsPinboard() throws {
         let snippetsName = FirstRunSamples.collectionName
         let boards = try modelContext.fetch(FetchDescriptor<Pinboard>(

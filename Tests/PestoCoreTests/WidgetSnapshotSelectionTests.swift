@@ -401,4 +401,25 @@ struct WidgetSnapshotSelectionTests {
         let sealed = try SealedFileEnvelope.seal(snapshot, as: .widgetSnapshot, with: SymmetricKey(size: .bits256))
         #expect(sealed.count <= WidgetSnapshotPolicy.maxFileBytes)
     }
+
+    @Test("an image whose OCR preview or sealed file holds a card number is excluded from the widget snapshot")
+    func whenImageOCRHasCardNumber_thenExcludedFromWidget() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-widget-ocr-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let key = SymmetricKey(size: .bits256)
+        let store = RecognizedTextStore(directory: directory, key: { key })
+
+        let clips = try Clips()
+        clips.add("safe note")
+        clips.add("Card: 4111 1111 1111 1111", type: .image)
+        let deepCardImage = clips.add(String(repeating: "receipt ", count: 60), type: .image)
+        try store.save(String(repeating: "receipt ", count: 80) + "\n4111 1111 1111 1111", for: deepCardImage.id)
+
+        let snapshot = try WidgetSnapshotSelection.snapshot(
+            in: clips.context, now: .now, theme: .brand, recognizedTexts: store, source: { _ in nil }
+        )
+
+        #expect(snapshot.clips.map(\.text) == ["safe note"])
+    }
 }

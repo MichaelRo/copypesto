@@ -250,9 +250,11 @@ final class AccessibilityAuditTests: PestoUITestCase {
             )
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         }, reset: {
+            if element(AccessibilityID.cardDetailPopover).exists {
+                overlay.typeKey(.escape, modifierFlags: [])
+                waitForNonExistence(element(AccessibilityID.cardDetailPopover), timeout: 5)
+            }
             parkPointer()
-            overlay.typeKey(.escape, modifierFlags: [])
-            waitForNonExistence(element(AccessibilityID.cardDetailPopover), timeout: 5)
         })
     }
 

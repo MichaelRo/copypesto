@@ -15,6 +15,7 @@ extension AppDelegate {
         let keeper = WidgetSnapshotKeeper(target: target, container: container, inputs: .init(
             gate: {
                 WidgetSnapshotGate.decide(
+                    widgetsEnabled: AppDefaults.store.value(for: Setting.widgetsEnabled),
                     lockEnabled: AppDefaults.store.value(for: Setting.biometricLockEnabled),
                     isCovered: state.isContentCovered(
                         screenSharingPrivacy: AppDefaults.store.value(for: Setting.screenSharingPrivacy)

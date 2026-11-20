@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import LinkPresentation
+import PestoCore
 import UniformTypeIdentifiers
 
 public struct URLPreviewResult: Sendable {

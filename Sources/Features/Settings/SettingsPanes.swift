@@ -11,6 +11,7 @@ struct GeneralPane: View {
             GeneralSettings(part: .shelf)
             GeneralSettings(part: .copyPaste)
             GeneralSettings(part: .floatingWindow)
+            GeneralSettings(part: .widgets)
             AppleIntelligenceSettings()
             CaptureSettings(part: .accessibility)
         }

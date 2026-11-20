@@ -1,59 +1,265 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
 import SwiftUI
+import UIKit
 
-/// One clip on the keyboard, drawn as a small Pesto card: the iOS library's fill, corner and hairline, the text on
-/// top and a foot line with the kind's glyph (and a laptop when it was copied on another device), as the cards on the
-/// Mac and in the app end.
+/// One clip on the keyboard, drawn as a thin face over `QuickInsertEntry` using `MobileShared` card components.
 struct KeyboardClipKey: View {
+    enum Feedback: Equatable {
+        case inserted
+        case copiedImage
+    }
+
     let entry: QuickInsertEntry
-    let isInserted: Bool
+    let cardSize: CGSize
+    let feedback: Feedback?
+    var onInsertRecognizedText: ((String) -> Void)?
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.layoutDirection) private var environmentDirection
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.pestoAccent) private var accent
+    @Environment(\.pestoAccentLabel) private var accentLabel
+    @Environment(\.pestoSurface) private var surface
 
-    private static let cornerRadius: CGFloat = 12
+    @MainActor private static let thumbnailCache: NSCache<NSUUID, UIImage> = {
+        let cache = NSCache<NSUUID, UIImage>()
+        cache.countLimit = 40
+        return cache
+    }()
 
-    var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
-        VStack(alignment: .leading, spacing: 4) {
-            Text(entry.label())
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer(minLength: 0)
-            HStack(spacing: 4) {
-                Image(systemName: isInserted ? "checkmark" : Self.symbol(of: entry))
-                    .foregroundStyle(isInserted ? BrandAccent.color : .secondary)
-                if entry.fromAnotherDevice {
-                    Image(systemName: "laptopcomputer")
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .font(.caption2)
-            .accessibilityHidden(true)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(colorScheme == .dark ? Color.white.opacity(0.10) : .white, in: shape)
-        .overlay { shape.strokeBorder(Color.primary.opacity(contrast == .increased ? 0.45 : 0.14), lineWidth: 0.75) }
-        .contentShape(shape)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(entry.label())
-        .accessibilityValue(Text(Self.accessibilityValue(of: entry)))
-        .accessibilityHint(Text("Inserts this clip"))
-        .accessibilityAddTraits(.isButton)
+    private static func decodedThumbnail(for entry: QuickInsertEntry) -> UIImage? {
+        guard let data = entry.thumbnail else { return nil }
+        let key = entry.id as NSUUID
+        if let cached = thumbnailCache.object(forKey: key) { return cached }
+        guard let image = UIImage(data: data) else { return nil }
+        thumbnailCache.setObject(image, forKey: key)
+        return image
     }
 
-    private static func symbol(of entry: QuickInsertEntry) -> String {
-        entry.expandsOnInsert ? "text.badge.plus" : entry.kind.presentation.symbolName
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
+        let metrics = CardMetrics(width: cardSize.width, height: cardSize.height, typeSize: typeSize)
+        let displayBody = entry.expandsOnInsert ? entry.insertionText() : entry.text
+        let image = Self.decodedThumbnail(for: entry)
+        let aspect = image.map { Double($0.size.width / max($0.size.height, 1)) }
+        let face = CardFace.decide(.init(
+            type: entry.kind,
+            text: displayBody,
+            isConcealed: false,
+            pictureAspect: aspect,
+            isAnimated: entry.isAnimated,
+            isDark: colorScheme == .dark
+        ))
+        let title = CardFace.faceTitle(
+            type: entry.kind, inCollection: true, isConcealed: false,
+            customTitle: entry.customTitle, ogTitle: entry.ogTitle
+        )
+        let cardDirection = Self.layoutDirection(for: entry.label()) ?? environmentDirection
+
+        cardBody(face: face, image: image, displayBody: displayBody, title: title, metrics: metrics)
+            .frame(width: cardSize.width, height: cardSize.height)
+            .environment(\.layoutDirection, cardDirection)
+            .background(colorScheme == .dark ? Color.white.opacity(0.10) : .white)
+            .clipShape(shape)
+            .overlay {
+                shape.strokeBorder(
+                    feedback != nil ? accent : Color.primary.opacity(contrast == .increased ? 0.45 : 0.14),
+                    lineWidth: feedback != nil ? 2 : 0.75
+                )
+            }
+            .overlay(alignment: .center) {
+                if let feedback {
+                    feedbackBadge(feedback)
+                }
+            }
+            .contentShape(shape)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(accessibilityTitle)
+            .accessibilityValue(Text(Self.accessibilityValue(of: entry)))
+            .accessibilityHint(entry.kind == .image ? Text("Copies this picture") : Text("Inserts this clip"))
+            .accessibilityAddTraits(.isButton)
+    }
+
+    @ViewBuilder
+    private func cardBody(
+        face: CardFace, image: UIImage?, displayBody: String, title: String?, metrics: CardMetrics
+    )
+    -> some View {
+        let showsTitleOnFace = CardFace.showsCustomTitleOnFace(
+            inCollection: true, isConcealed: false, customTitle: entry.customTitle
+        )
+        switch face {
+        case let .picture(fills, _):
+            pictureBody(image: image, fills: fills, title: title, showsTitleOnFace: showsTitleOnFace)
+        case let .color(fill, ink):
+            ColorCardFace(text: displayBody, fill: fill, ink: ink, metrics: metrics, title: title) {
+                footLine(
+                    ink: ink == .white ? .white : .black,
+                    showsTitleOnFace: showsTitleOnFace
+                )
+            }
+        case let .largeText(points):
+            framed(title: title, showsTitleOnFace: showsTitleOnFace) {
+                LargeTextBody(text: CardPreviewText.display(displayBody), points: points, metrics: metrics)
+            }
+        case let .link(link):
+            framed(title: title, showsTitleOnFace: showsTitleOnFace) {
+                LinkBody(link: link, metrics: metrics, hasTitle: title != nil)
+            }
+        case .code:
+            framed(title: title, showsTitleOnFace: showsTitleOnFace) {
+                PlainTextBody(text: displayBody, isCode: true, metrics: metrics, hasTitle: title != nil)
+            }
+        case .text, .covered, .shownSecret, .linkPicture, .file:
+            framed(title: title, showsTitleOnFace: showsTitleOnFace) {
+                PlainTextBody(text: displayBody, isCode: false, metrics: metrics, hasTitle: title != nil)
+            }
+        }
+    }
+
+    private func framed(
+        title: String?, showsTitleOnFace: Bool, @ViewBuilder _ content: () -> some View
+    )
+    -> some View {
+        VStack(alignment: .leading, spacing: CardMetrics.footGap) {
+            VStack(alignment: .leading, spacing: CardMetrics.titleGap) {
+                if let title {
+                    Text(title)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.primary.opacity(0.95))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                content()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            footLine(showsTitleOnFace: showsTitleOnFace)
+        }
+        .padding(CardMetrics.inset)
+    }
+
+    private func pictureBody(
+        image: UIImage?, fills: Bool, title: String?, showsTitleOnFace: Bool
+    )
+    -> some View {
+        ZStack(alignment: .bottom) {
+            if let image {
+                if fills {
+                    Color.clear
+                        .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                        .clipped()
+                } else {
+                    ZStack {
+                        Color.clear
+                            .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                            .clipped()
+                            .blur(radius: 14, opaque: true)
+                            .overlay(Color.black.opacity(0.35))
+                        Image(uiImage: image).resizable().scaledToFit()
+                            .padding(.bottom, title == nil ? 28 : 48)
+                    }
+                }
+            } else {
+                Color.secondary.opacity(0.10)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                if let title {
+                    Text(title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(surface.opacity(PictureScrim.pillOpacity), in: .capsule)
+                        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.5))
+                }
+                footLine(onPicture: true, showsTitleOnFace: showsTitleOnFace)
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 6)
+        }
+    }
+
+    private func footLine(
+        onPicture: Bool = false, ink: Color? = nil, showsTitleOnFace: Bool
+    )
+    -> some View {
+        let age = CardAge.text(interval: Date.now.timeIntervalSince(entry.date))
+        let symbol: String? = entry.sourceIsThisDevice
+            ? CardFootLineView.device.symbol
+            : (entry.fromAnotherDevice ? "laptopcomputer" : nil)
+        let cleanTitle = entry.customTitle?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let footTitle = (showsTitleOnFace || cleanTitle?.isEmpty != false) ? nil : cleanTitle
+        let texts = CardMetaLine.candidates(
+            .init(title: footTitle, source: entry.source, age: age, showsTitleOnFace: showsTitleOnFace)
+        )
+        let line = CardFootLine(symbol: symbol, texts: texts)
+        let showsPin = CardMetaLine.showsPin(
+            isPinned: entry.section == .pinned, isSnippet: entry.expandsOnInsert, hasShortcut: false
+        )
+        let trailingSymbol: String? = entry.expandsOnInsert
+            ? "curlybraces"
+            : (entry.hasRecognizedText ? "text.viewfinder" : nil)
+        let tapOCR: (() -> Void)? = if entry.hasRecognizedText, let ocr = entry.recognizedText {
+            { onInsertRecognizedText?(ocr) }
+        } else {
+            nil
+        }
+        return CardFootLineView(
+            line: line,
+            isPinned: showsPin,
+            onPicture: onPicture,
+            ink: ink,
+            showsGIF: entry.isAnimated,
+            trailingSymbol: trailingSymbol,
+            onTrailingSymbolTap: tapOCR
+        )
+    }
+
+    private func feedbackBadge(_ feedback: Feedback) -> some View {
+        let text: LocalizedStringKey = switch feedback {
+        case .inserted: "Inserted \u{2713}"
+        case .copiedImage: "Copied, paste it"
+        }
+        return Text(text)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(accentLabel)
+            .lineLimit(2)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(accent, in: Capsule())
+            .padding(6)
+    }
+
+    private var accessibilityTitle: String {
+        if entry.kind == .image {
+            return entry.customTitle ?? entry.recognizedText ?? String(localized: "Picture")
+        }
+        return entry.label()
     }
 
     private static func accessibilityValue(of entry: QuickInsertEntry) -> String {
         let kind = entry.expandsOnInsert ? String(localized: "Snippet") : entry.kind.presentation.label
         return entry.fromAnotherDevice ? kind + ", " + String(localized: "from another device") : kind
+    }
+
+    static func layoutDirection(for text: String) -> LayoutDirection? {
+        for scalar in text.unicodeScalars {
+            let value = scalar.value
+            if (0x0590...0x08FF).contains(value)
+                || (0xFB1D...0xFDFF).contains(value)
+                || (0xFE70...0xFEFF).contains(value)
+            {
+                return .rightToLeft
+            }
+            if scalar.properties.isAlphabetic {
+                return .leftToRight
+            }
+        }
+        return nil
     }
 }

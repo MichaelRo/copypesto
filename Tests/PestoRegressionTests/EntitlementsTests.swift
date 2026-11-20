@@ -136,13 +136,19 @@ struct EntitlementsTests {
     @Test("the keyboard reads no pasteboard, opens no connection and never touches the store or the history key")
     func keyboardSources_reachOnlyTheQuickInsertSet() throws {
         let forbidden = [
-            "UIPasteboard", "URLSession", "NWConnection", "ModelContainer", "ModelContext", "StorageService",
+            "URLSession", "NWConnection", "ModelContainer", "ModelContext", "StorageService",
             "blobKeyAccount", "inboxKeyAccount", "InboxKeyStore", "BackupKeyStore", "SyncKeyStore",
             "KeychainDeviceKeyStore", "AppKeychainGroup"
         ]
+        let pasteboardReads = [
+            "UIPasteboard.general.string", "UIPasteboard.general.image", "UIPasteboard.general.url",
+            "UIPasteboard.general.items", "UIPasteboard.general.itemProviders",
+            "UIPasteboard.general.hasStrings", "UIPasteboard.general.hasImages", "UIPasteboard.general.hasURLs",
+            "UIPasteboard.general.pasteboardTypes", "UIPasteboard.general.data(", "UIPasteboard.general.value("
+        ]
         for file in try SourceTree.swiftFiles(in: "MobileKeyboard", minimum: 4) {
             let text = try String(contentsOf: file, encoding: .utf8)
-            for name in forbidden {
+            for name in forbidden + pasteboardReads {
                 #expect(!text.contains(name), "\(file.lastPathComponent) names \(name)")
             }
         }

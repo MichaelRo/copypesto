@@ -9,10 +9,24 @@ struct KeyboardSearchPage: View {
     /// iOS's switch key, built by the root: the page holds no input controller, so nothing on it can reach the field.
     let globe: GlobeKey?
     let pick: (QuickInsertEntry, _ longPress: Bool) -> Void
+    var pickRecognizedText: (QuickInsertEntry, String) -> Void = { _, _ in }
     let close: () -> Void
 
     @State private var showsDigits = false
+    @State private var alphabetIndex = 0
     @Environment(\.horizontalSizeClass) private var sizeClass
+
+    private var alphabets: [KeyboardLetters.Alphabet] {
+        KeyboardLetters.resolvedAlphabets()
+    }
+
+    private var activeAlphabet: KeyboardLetters.Alphabet {
+        alphabets[alphabetIndex % alphabets.count]
+    }
+
+    private var searchDirection: LayoutDirection {
+        activeAlphabet.isRTL ? .rightToLeft : .leftToRight
+    }
 
     private var query: KeyboardQuery {
         model.searchQuery ?? KeyboardQuery()
@@ -26,9 +40,11 @@ struct KeyboardSearchPage: View {
     var body: some View {
         VStack(spacing: 6) {
             field
+                .environment(\.layoutDirection, searchDirection)
             resultRow
+                .environment(\.layoutDirection, searchDirection)
                 .frame(height: 58)
-            KeyboardLetters(model: model, layout: showsDigits ? .digits : .letters)
+            KeyboardLetters(model: model, layout: showsDigits ? .digits : .letters(activeAlphabet))
             bottomRow
         }
     }
@@ -75,17 +91,45 @@ struct KeyboardSearchPage: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollView(.horizontal, showsIndicators: false) {
+                let width: CGFloat = sizeClass == .regular ? 180 : 150
+                let cardSize = CGSize(width: width, height: 58)
                 LazyHStack(spacing: 6) {
                     ForEach(results) { entry in
-                        KeyboardClipKey(entry: entry, isInserted: false)
-                            .frame(width: sizeClass == .regular ? 180 : 150)
-                            .onTapGesture { pick(entry, false) }
-                            .onLongPressGesture(minimumDuration: 0.4) { pick(entry, true) }
-                            .accessibilityAction { pick(entry, false) }
-                            .accessibilityAction(
-                                named: model.menu
-                                    .returnsAfterInsert ? Text("Insert and Stay") : Text("Insert and Return")
-                            ) { pick(entry, true) }
+                        let key = KeyboardClipKey(
+                            entry: entry,
+                            cardSize: cardSize,
+                            feedback: nil,
+                            onInsertRecognizedText: entry.hasRecognizedText
+                                ? { text in pickRecognizedText(entry, text) }
+                                : nil
+                        )
+                        if entry.kind == .image {
+                            key
+                                .onTapGesture { pick(entry, false) }
+                                .contextMenu {
+                                    Button("Copy Picture", systemImage: "doc.on.doc") { pick(entry, false) }
+                                    if let ocr = entry.recognizedText, !ocr.isEmpty {
+                                        Button("Insert Text", systemImage: "text.viewfinder") {
+                                            pickRecognizedText(entry, ocr)
+                                        }
+                                    }
+                                }
+                                .accessibilityAction { pick(entry, false) }
+                                .accessibilityAction(named: Text("Insert Text")) {
+                                    if let ocr = entry.recognizedText, !ocr.isEmpty {
+                                        pickRecognizedText(entry, ocr)
+                                    }
+                                }
+                        } else {
+                            key
+                                .onTapGesture { pick(entry, false) }
+                                .onLongPressGesture(minimumDuration: 0.4) { pick(entry, true) }
+                                .accessibilityAction { pick(entry, false) }
+                                .accessibilityAction(
+                                    named: model.menu
+                                        .returnsAfterInsert ? Text("Insert and Stay") : Text("Insert and Return")
+                                ) { pick(entry, true) }
+                        }
                     }
                 }
             }
@@ -100,10 +144,18 @@ struct KeyboardSearchPage: View {
                 globe.frame(width: 44, height: 40)
             }
             Button { showsDigits.toggle() } label: {
-                Text(verbatim: showsDigits ? "ABC" : "123").frame(width: 52, height: 40)
+                Text(verbatim: showsDigits ? activeAlphabet.badge : "123").frame(width: 52, height: 40)
             }
             .buttonStyle(KeyboardKeyStyle(isFunction: true))
             .accessibilityLabel(showsDigits ? Text("Letters") : Text("Numbers"))
+            if alphabets.count > 1, !showsDigits {
+                let next = alphabets[(alphabetIndex + 1) % alphabets.count]
+                Button { alphabetIndex = (alphabetIndex + 1) % alphabets.count } label: {
+                    Text(verbatim: next.badge).frame(width: 44, height: 40)
+                }
+                .buttonStyle(KeyboardKeyStyle(isFunction: true))
+                .accessibilityLabel(Text("Switch Search Keyboard"))
+            }
             Button { model.typeInSearch(" ") } label: {
                 Text("Space").frame(maxWidth: .infinity, minHeight: 40)
             }

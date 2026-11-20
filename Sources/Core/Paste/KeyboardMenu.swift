@@ -28,11 +28,21 @@ public struct KeyboardMenu: Equatable, Sendable {
         public let chip: Chip
         public let title: String
         public let symbolName: String
+        public let color: String
+
+        public init(chip: Chip, title: String, symbolName: String, color: String = "") {
+            self.chip = chip
+            self.title = title
+            self.symbolName = symbolName
+            self.color = color
+        }
     }
 
     public let state: State
     public let chips: [ChipLabel]
     public let returnsAfterInsert: Bool
+    public let accent: WidgetSnapshot.Theme
+    public let keyboardSize: KeyboardSize
     private let entries: [QuickInsertEntry]
     private let collections: [QuickInsertCollection]
 
@@ -41,15 +51,20 @@ public struct KeyboardMenu: Equatable, Sendable {
             state = .restricted
             chips = []
             returnsAfterInsert = true
+            accent = .brand
+            keyboardSize = .medium
             entries = []
             collections = []
             return
         }
         let set = loadSet()
-        entries = set?.entries ?? []
-        collections = set?.collections ?? []
-        returnsAfterInsert = set?.returnsAfterInsert ?? true
-        state = set == nil ? .unavailable : entries.isEmpty ? .empty : .ready
+        let activeSet = (set?.keyboardEnabled == true) ? set : nil
+        entries = activeSet?.entries ?? []
+        collections = activeSet?.collections ?? []
+        returnsAfterInsert = activeSet?.returnsAfterInsert ?? true
+        accent = activeSet?.accent ?? .brand
+        keyboardSize = activeSet?.keyboardSize ?? .medium
+        state = activeSet == nil ? .unavailable : entries.isEmpty ? .empty : .ready
         let sections: [ChipLabel] = [
             ChipLabel(chip: .recent, title: String(localized: "Recent"), symbolName: "clock"),
             ChipLabel(chip: .pinned, title: String(localized: "Pinned"), symbolName: "pin"),
@@ -59,7 +74,7 @@ public struct KeyboardMenu: Equatable, Sendable {
         let carried = Set(found.map(\.id))
         chips = sections.filter { label in found.contains { Self.section(of: label.chip) == $0.section } }
             + collections.filter { $0.entryIDs.contains(where: carried.contains) }
-            .map { ChipLabel(chip: .collection($0.id), title: $0.name, symbolName: $0.symbolName) }
+            .map { ChipLabel(chip: .collection($0.id), title: $0.name, symbolName: $0.symbolName, color: $0.color) }
     }
 
     public func entries(for chip: Chip) -> [QuickInsertEntry] {
@@ -71,13 +86,18 @@ public struct KeyboardMenu: Equatable, Sendable {
     }
 
     /// Every clip the set carries, once, that matches `word`: those whose title starts with it first, then those
-    /// whose title or text holds it, each in the set's order; case and accents are ignored.
+    /// whose title or text holds it, each in the set's order; case, accents, Hebrew niqqud and final forms are ignored.
     public func entries(matching word: String) -> [QuickInsertEntry] {
+        let needle = KeyboardQuery.normalizedForSearch(word)
+        guard !needle.isEmpty else { return [] }
         let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
-        let leading = entries.filter { $0.label().range(of: word, options: options.union(.anchored)) != nil }
+        let leading = entries.filter {
+            KeyboardQuery.normalizedForSearch($0.label()).range(of: needle, options: options.union(.anchored)) != nil
+        }
         let inside = entries.filter { entry in
-            !leading.contains(entry) && [entry.label(), entry.text]
-                .contains { $0.range(of: word, options: options) != nil }
+            !leading.contains(entry) && [entry.label(), entry.text, entry.recognizedText]
+                .compactMap(\.self)
+                .contains { KeyboardQuery.normalizedForSearch($0).range(of: needle, options: options) != nil }
         }
         return leading + inside
     }

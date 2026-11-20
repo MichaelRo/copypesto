@@ -7,12 +7,23 @@ public struct QuickInsertCollection: Codable, Hashable, Identifiable, Sendable {
     public let id: UUID
     public let name: String
     public let symbolName: String
+    public let color: String
     public let entryIDs: [UUID]
 
-    public init(id: UUID, name: String, symbolName: String, entryIDs: [UUID]) {
+    public init(id: UUID, name: String, symbolName: String, color: String = "", entryIDs: [UUID]) {
         self.id = id
         self.name = name
         self.symbolName = symbolName
+        self.color = color
         self.entryIDs = entryIDs
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        symbolName = try container.decode(String.self, forKey: .symbolName)
+        color = try container.decodeIfPresent(String.self, forKey: .color) ?? ""
+        entryIDs = try container.decode([UUID].self, forKey: .entryIDs)
     }
 }

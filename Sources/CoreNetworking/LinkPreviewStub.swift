@@ -3,6 +3,7 @@
 import AppKit
 import CoreGraphics
 import ImageIO
+import PestoCore
 
 /// What a benchmark's link preview answers with instead of a page: a title and a picture drawn in code, after a fixed
 /// wait, so the shelf does the same work each run and no request leaves the Mac.

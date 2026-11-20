@@ -10,10 +10,19 @@ extension MobileAppState {
     private static let quickInsertLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "QuickInsert")
 
     func startQuickInsert(container: ModelContainer) {
+        Self.migrateQuickInsertSettingsIfNeeded()
         quickInsertObserver = ModelSaveObserver.observeChanges(in: container) { [weak self] _ in
             self?.quickInsertHistoryChanged()
         }
         writeQuickInsert()
+    }
+
+    static func migrateQuickInsertSettingsIfNeeded(defaults: UserDefaults = AppDefaults.store) {
+        guard defaults.object(forKey: Setting.keyboardEnabled.name) == nil,
+              defaults.object(forKey: Setting.autoFillEnabled.name) == nil,
+              defaults.value(for: Setting.quickInsertEnabled) else { return }
+        defaults.set(true, for: Setting.keyboardEnabled)
+        defaults.set(true, for: Setting.autoFillEnabled)
     }
 
     func quickInsertHistoryChanged() {
@@ -44,7 +53,11 @@ extension MobileAppState {
         do {
             // A context of its own reads what the store holds now; the main context's copy of a clip the storage
             // actor just edited (made secret, say) is merged only a moment after the save.
-            let set = try QuickInsertSelection.set(in: ModelContext(container), now: clock(), options: target.options())
+            let device = CardFootLineView.device
+            let set = try QuickInsertSelection.set(
+                in: ModelContext(container), now: clock(), options: target.options(),
+                source: { CardFootLine.source(CardFootLine.origin(of: $0), device: device) }
+            )
             try target.file.write(set, with: target.keys.loadOrCreate())
         } catch {
             Self.quickInsertLogger

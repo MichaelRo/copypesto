@@ -54,19 +54,22 @@ struct ClipCardFace: View {
                 animation: playsAnimation ? media.picture?.animation : nil,
                 title: title
             ) {
-                CardFootLineView(
+                ItemFootLineView(
                     item: item, onPicture: true, showsGIF: isAnimated, showsTitleOnFace: showsCustomTitleOnFace
                 )
             }
         case .linkPicture:
             PictureCardFace(image: media.linkPicture, fillsCard: true, title: title) {
-                CardFootLineView(item: item, onPicture: true, showsTitleOnFace: showsCustomTitleOnFace)
+                ItemFootLineView(item: item, onPicture: true, showsTitleOnFace: showsCustomTitleOnFace)
             }
         case let .color(fill, ink):
             ColorCardFace(
-                item: item, fill: fill, ink: ink, metrics: metrics,
-                title: title, showsTitleOnFace: showsCustomTitleOnFace
-            )
+                text: item.gridPreview, fill: fill, ink: ink, metrics: metrics, title: title
+            ) {
+                ItemFootLineView(
+                    item: item, ink: ink == .white ? .white : .black, showsTitleOnFace: showsCustomTitleOnFace
+                )
+            }
         case let .largeText(points):
             framed(title: title) {
                 LargeTextBody(text: CardPreviewText.display(item.gridPreview), points: points, metrics: metrics)
@@ -99,7 +102,7 @@ struct ClipCardFace: View {
                 content()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            CardFootLineView(item: item, showsTitleOnFace: showsCustomTitleOnFace)
+            ItemFootLineView(item: item, showsTitleOnFace: showsCustomTitleOnFace)
         }
         .padding(CardMetrics.inset)
     }

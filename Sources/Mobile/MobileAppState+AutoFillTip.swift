@@ -8,13 +8,15 @@ extension MobileAppState {
     func clipWasKept(defaults: UserDefaults = AppDefaults.store, isLive: Bool = LaunchMode.current == .normal) {
         guard isLive || defaults.value(for: Setting.uitestShowsAutoFillTip) else { return }
         guard !offersAutoFillTip, !historyLock.isEnabled, !defaults.value(for: Setting.autoFillTipShown),
-              !defaults.value(for: Setting.quickInsertEnabled) else { return }
+              !defaults.value(for: Setting.quickInsertEnabled),
+              !defaults.value(for: Setting.autoFillEnabled) else { return }
         defaults.set(true, for: Setting.autoFillTipShown)
         offersAutoFillTip = true
     }
 
     func turnOnAutoFillFromTip(defaults: UserDefaults = AppDefaults.store) async {
         offersAutoFillTip = false
+        defaults.set(true, for: Setting.autoFillEnabled)
         defaults.set(true, for: Setting.quickInsertEnabled)
         quickInsertSettingChanged()
         await opensAutoFillSettings()

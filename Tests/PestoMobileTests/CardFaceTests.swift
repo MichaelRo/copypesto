@@ -156,7 +156,13 @@ struct CardFaceTests {
     }
 
     @MainActor
-    private func renderFace(_ item: ClipboardItem, face: CardFace, media: CardMediaState, inCollection: Bool) -> Data {
+    private func renderFace(
+        _ item: ClipboardItem,
+        face: PestoMobile.CardFace,
+        media: CardMediaState,
+        inCollection: Bool
+    )
+    -> Data {
         let cardSize = CGSize(width: 179, height: CardGridLayout.cardHeight(forWidth: 179))
         let view = ClipCardFace(
             item: item,
@@ -201,7 +207,7 @@ struct CardFaceTests {
         )
         linkItem.ogTitle = "SwiftUI Documentation"
         context.insert(linkItem)
-        let linkFace = CardFace.decide(.init(
+        let linkFace = PestoMobile.CardFace.decide(.init(
             type: .url, text: linkItem.previewText, isConcealed: false, hasLinkPicture: false
         ))
         #expect(
@@ -225,7 +231,7 @@ struct CardFaceTests {
         )
         colorItem.customTitle = "Basil accent"
         context.insert(colorItem)
-        let colorFace = CardFace.decide(.init(type: .color, text: "#2F7A49", isConcealed: false))
+        let colorFace = PestoMobile.CardFace.decide(.init(type: .color, text: "#2F7A49", isConcealed: false))
         #expect(
             renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: false)
                 != renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: true)

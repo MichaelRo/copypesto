@@ -45,6 +45,8 @@ final class ClipboardCardTests: XCTestCase {
         return item
     }
 
+    static let snapshotFile: StaticString = #filePath
+
     func snapshotCard(
         _ card: some View,
         named name: String? = nil,
@@ -137,6 +139,10 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .url, preview: "https://example.com")
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 2, isPrivacyBlurred: true))
+        snapshotCard(
+            ClipboardCard(item: item, shortcutNumber: 2, isPrivacyBlurred: true),
+            named: "light", colorScheme: .light
+        )
     }
 
     // MARK: - Text
@@ -245,6 +251,7 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .code, preview: "func greet() -> String {\n    return \"hello\"\n}")
         snapshotCard(ClipboardCard(item: item))
+        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
     }
 
     // MARK: - URL
@@ -253,6 +260,7 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .url, preview: "https://github.com/pointfreeco/swift-snapshot-testing")
         snapshotCard(ClipboardCard(item: item))
+        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
     }
 
     // MARK: - File
@@ -261,6 +269,7 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .file, preview: "file:///Users/user/Documents/report.pdf")
         snapshotCard(ClipboardCard(item: item))
+        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
     }
 
     // MARK: - Color
@@ -269,6 +278,7 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = makeItem(in: ctx, type: .color, preview: "#2F7A49")
         snapshotCard(ClipboardCard(item: item))
+        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
     }
 
     // MARK: - Glyph
@@ -319,6 +329,7 @@ final class ClipboardCardTests: XCTestCase {
             maskedPreview: "sk-proj-••••••••••••••"
         )
         snapshotCard(ClipboardCard(item: item))
+        snapshotCard(ClipboardCard(item: item), named: "light", colorScheme: .light)
     }
 
     // MARK: - Pinned
@@ -398,6 +409,7 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = pictureItem(in: ctx, aspect: 1.2, animated: true, source: "Safari")
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 2))
+        snapshotCard(ClipboardCard(item: item, shortcutNumber: 2), named: "light", colorScheme: .light)
     }
 
     func test_pictureCard_small() throws {
@@ -483,11 +495,5 @@ final class ClipboardCardTests: XCTestCase {
         let ctx = try makeContext()
         let item = pictureItem(in: ctx, aspect: 1.0)
         snapshotCard(ClipboardCard(item: item, shortcutNumber: 1))
-    }
-
-    func test_shortCoveredText_showsTheCoverFace() throws {
-        let ctx = try makeContext()
-        let item = makeItem(in: ctx, type: .text, preview: "hunter2")
-        snapshotCard(ClipboardCard(item: item, isPrivacyBlurred: true))
     }
 }

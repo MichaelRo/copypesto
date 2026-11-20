@@ -7,6 +7,7 @@ import Testing
 @Suite("The one line of facts at a card's foot")
 struct CardFootLineTests {
     private let phone = CardFootLine.Device(name: "iPhone", symbol: "iphone")
+    private let mobilePhone = PestoMobile.CardFootLine.Device(name: "iPhone", symbol: "iphone")
 
     @Test("a clip from a known app names the app, then its age")
     func whenAppIsKnown_thenItLeads() {
@@ -61,8 +62,12 @@ struct CardFootLineTests {
             timestamp: copied, type: .text, previewText: "", contentHash: "h", byteSize: 1, deviceID: "d",
             sequenceNumber: 1
         )
-        let early = CardFootLineView.line(for: item, now: copied.addingTimeInterval(5), device: phone)
-        let later = CardFootLineView.line(for: item, now: copied.addingTimeInterval(3 * 60 + 5), device: phone)
+        let early = PestoMobile.CardFootLineView.line(for: item, now: copied.addingTimeInterval(5), device: mobilePhone)
+        let later = PestoMobile.CardFootLineView.line(
+            for: item,
+            now: copied.addingTimeInterval(3 * 60 + 5),
+            device: mobilePhone
+        )
         #expect(early.texts.first != later.texts.first)
         #expect(later.texts.first?.contains(CardAge.text(interval: 3 * 60 + 5)) == true)
     }
@@ -131,10 +136,15 @@ struct CardFootLineTests {
         item.customTitle = "Trip Plan"
         let now = copied.addingTimeInterval(120)
 
-        let inAll = CardFootLineView.line(for: item, now: now, device: phone, showsTitleOnFace: false)
+        let inAll = PestoMobile.CardFootLineView.line(for: item, now: now, device: mobilePhone, showsTitleOnFace: false)
         #expect(inAll.texts == ["Trip Plan \u{00B7} 2m ago", "Trip Plan"])
 
-        let inCollection = CardFootLineView.line(for: item, now: now, device: phone, showsTitleOnFace: true)
+        let inCollection = PestoMobile.CardFootLineView.line(
+            for: item,
+            now: now,
+            device: mobilePhone,
+            showsTitleOnFace: true
+        )
         #expect(inCollection.texts == ["Notes \u{00B7} 2m ago", "2m ago"])
     }
 }

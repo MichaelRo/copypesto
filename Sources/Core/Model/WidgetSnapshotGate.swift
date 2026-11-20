@@ -8,16 +8,18 @@ public enum WidgetSnapshotGate: Equatable, Sendable {
     case clips
     case locked
     case hidden
+    case disabled
 
-    public static func decide(lockEnabled: Bool, isCovered: Bool) -> WidgetSnapshotGate {
+    public static func decide(widgetsEnabled: Bool = true, lockEnabled: Bool, isCovered: Bool) -> WidgetSnapshotGate {
+        guard widgetsEnabled else { return .disabled }
         if lockEnabled { return .locked }
         return isCovered ? .hidden : .clips
     }
 
-    /// The snapshot that stands in for the clips, or nil when the clips may be written.
+    /// The snapshot that stands in for the clips, or nil when the clips may be written or widgets are disabled.
     public func placeholder(theme: WidgetSnapshot.Theme, at date: Date) -> WidgetSnapshot? {
         switch self {
-        case .clips: nil
+        case .clips, .disabled: nil
         case .locked: .locked(theme: theme, at: date)
         case .hidden: .hidden(theme: theme, at: date)
         }

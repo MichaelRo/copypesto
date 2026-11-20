@@ -3,20 +3,20 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// The line of facts at a card's foot: where the clip came from and its age, then its pin and collection. On a picture
-/// it sits on a pill of the card's own ground; on a color it is the fill's ink.
+/// The line of facts at a card's foot: where the clip came from and its age, then its pin, collection, or badge.
+/// On a picture it sits on a pill of the card's own ground; on a color it is the fill's ink.
 struct CardFootLineView: View {
-    let item: ClipboardItem
+    let line: CardFootLine
+    var isPinned = false
+    var inCollection = false
     var onPicture = false
     var ink: Color?
     var showsGIF = false
-    var showsTitleOnFace = false
     var trailingMark: String?
-    @Environment(\.clipRevision) private var revision
-    @Environment(\.cardClock) private var clock
+    var trailingSymbol: String?
+    var onTrailingSymbolTap: (() -> Void)?
 
     var body: some View {
-        let line = Self.line(for: item, now: clock ?? .now, device: Self.device, showsTitleOnFace: showsTitleOnFace)
         HStack(spacing: 6) {
             lead(line).modifier(PillGround(isOn: onPicture))
             Spacer(minLength: 4)
@@ -43,16 +43,8 @@ struct CardFootLineView: View {
         }
     }
 
-    private var isPinned: Bool {
-        revision?.isPinned ?? item.isPinned
-    }
-
-    private var inCollection: Bool {
-        (revision.map(\.collectionID) ?? item.collectionID) != nil
-    }
-
     private var hasMarks: Bool {
-        isPinned || inCollection || trailingMark != nil
+        isPinned || inCollection || trailingMark != nil || trailingSymbol != nil
     }
 
     @ViewBuilder
@@ -60,23 +52,24 @@ struct CardFootLineView: View {
         if hasMarks {
             HStack(spacing: 4) {
                 if let trailingMark { Text(trailingMark).font(.caption2.weight(.semibold)) }
+                if let trailingSymbol {
+                    if let onTrailingSymbolTap {
+                        Button(action: onTrailingSymbolTap) {
+                            Image(systemName: trailingSymbol)
+                                .imageScale(.small)
+                                .padding(6)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(-6)
+                    } else {
+                        Image(systemName: trailingSymbol).imageScale(.small)
+                    }
+                }
                 if inCollection { Image(systemName: "folder.fill").imageScale(.small) }
                 if isPinned { Image(systemName: "pin.fill").imageScale(.small) }
             }
         }
-    }
-
-    static func line(
-        for item: ClipboardItem, now: Date, device: CardFootLine.Device, showsTitleOnFace: Bool = false
-    )
-    -> CardFootLine {
-        CardFootLine.make(
-            CardFootLine.origin(of: item),
-            title: item.customTitle,
-            age: CardAge.text(for: item, inCollection: false, now: now),
-            device: device,
-            showsTitleOnFace: showsTitleOnFace
-        )
     }
 
     static let device: CardFootLine.Device = UIDevice.current.userInterfaceIdiom == .pad
@@ -100,11 +93,4 @@ private struct PillGround: ViewModifier {
             content
         }
     }
-}
-
-extension EnvironmentValues {
-    @Entry var clipRevision: ClipCard.Revision?
-    /// The minute the grid last ticked (`LibraryGrid`), so every visible card's age moves together without a timer
-    /// each.
-    @Entry var cardClock: Date?
 }

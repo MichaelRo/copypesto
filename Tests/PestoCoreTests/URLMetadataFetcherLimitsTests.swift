@@ -3,6 +3,7 @@ import Foundation
 import Synchronization
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 private final class FetchCounter: Sendable {
     private let state = Mutex((running: 0, mostAtOnce: 0, started: 0))

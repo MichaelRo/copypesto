@@ -81,6 +81,8 @@ targets:
     dependencies:
       - package: PestoCore
         product: PestoCore
+      - package: PestoCore
+        product: PestoCoreNetworking
       - package: Sparkle
         product: Sparkle
       - target: PestoControls
@@ -116,7 +118,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
     settings:
@@ -144,6 +146,7 @@ targets:
     deploymentTarget: "26.0"
     sources:
       - path: Sources/Mobile
+      - path: Sources/MobileShared
       - path: Sources/Shared
       - path: Sources/Resources/Localizable.xcstrings
       - path: Sources/Resources/InfoPlist.xcstrings
@@ -152,6 +155,8 @@ targets:
     dependencies:
       - package: PestoCore
         product: PestoCore
+      - package: PestoCore
+        product: PestoCoreNetworking
       - target: PestoShare
         embed: true
       - target: PestoAutoFill
@@ -202,7 +207,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.share
@@ -229,7 +234,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
       - sdk: AuthenticationServices.framework
     settings:
       base:
@@ -253,11 +258,16 @@ targets:
     sources:
       - path: Sources/MobileKeyboard
         excludes: ["Info.plist", "*.entitlements"]
+      - path: Sources/MobileShared
+      - path: Sources/Shared/Extensions/AdaptiveMaterial.swift
+      - path: Sources/Shared/Extensions/Color+Hex.swift
+      - path: Sources/Shared/Extensions/PestoAccentEnvironment.swift
+      - path: Sources/Shared/Extensions/ScaledFont.swift
       - path: Sources/MobileShare/BrandAccent.swift
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
       - sdk: SwiftUI.framework
     settings:
       base:
@@ -287,7 +297,7 @@ targets:
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
-        product: PestoCore
+        product: PestoCoreExtension
       - sdk: WidgetKit.framework
       - sdk: SwiftUI.framework
     settings:
@@ -320,11 +330,18 @@ targets:
       # The keyboard's views, compiled again so a test can draw each state.
       - path: Sources/MobileKeyboard
         excludes: ["Info.plist", "*.entitlements", "*.xcprivacy"]
+      - path: Sources/MobileShared
+      - path: Sources/Shared/Extensions/AdaptiveMaterial.swift
+      - path: Sources/Shared/Extensions/Color+Hex.swift
+      - path: Sources/Shared/Extensions/PestoAccentEnvironment.swift
+      - path: Sources/Shared/Extensions/ScaledFont.swift
       - path: Sources/MobileShare/BrandAccent.swift
     dependencies:
       - target: PestoMobile
       - package: PestoCore
         product: PestoCore
+      - package: PestoCore
+        product: PestoCoreNetworking
     settings:
       base:
         BUNDLE_LOADER: $(TEST_HOST)

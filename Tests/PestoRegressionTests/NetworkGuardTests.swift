@@ -18,8 +18,8 @@ struct NetworkGuardTests {
     /// The only files that may open a connection themselves. A new network-capable file needs an edit here and a
     /// reason.
     private static let networkCallSites: Set<String> = [
-        "Sources/Core/Storage/URLMetadataFetcher.swift", // link previews: switchable off, checked inside `fetch`
-        "Sources/Core/Storage/BoundedDownload.swift" // reads the GIF body for `URLMetadataFetcher`; starts nothing
+        "Sources/CoreNetworking/URLMetadataFetcher.swift", // link previews: switchable off, checked inside `fetch`
+        "Sources/CoreNetworking/BoundedDownload.swift" // reads the GIF body for `URLMetadataFetcher`; starts nothing
     ]
 
     /// Sample clipboard text for UI tests, not endpoints.

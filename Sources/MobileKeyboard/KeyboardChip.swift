@@ -1,31 +1,25 @@
 // SPDX-License-Identifier: MIT
 import SwiftUI
 
-/// One chip on the keyboard's top row, drawn like the Mac shelf's chips: a capsule with a glyph and a name, filled
-/// with the accent when chosen.
+/// One chip on the keyboard's top row, drawn with `MobileChipStyle` at 30 pt high.
 struct KeyboardChip: View {
     let title: String
     let symbolName: String
     let isSelected: Bool
     let isDimmed: Bool
+    var tint: Color?
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Label(title, systemImage: symbolName)
-                .font(.subheadline.weight(isSelected ? .semibold : .regular))
-                .lineLimit(1)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                // The accent is dark green in Light and light green in Dark: the ground's color reads on both.
-                .foregroundStyle(isSelected ? Color(uiColor: .systemBackground) : Color.primary)
-                .background(
-                    isSelected ? BrandAccent.color : Color.primary.opacity(0.08),
-                    in: Capsule()
-                )
-                .opacity(isDimmed ? 0.5 : 1)
+            HStack(spacing: 4) {
+                CollectionIcon(symbol: symbolName).accessibilityHidden(true)
+                Text(title).lineLimit(1)
+            }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MobileChipStyle(
+            isActive: isSelected, tint: tint, isDimmed: isDimmed, chipHeight: 30, touchMinimum: nil
+        ))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

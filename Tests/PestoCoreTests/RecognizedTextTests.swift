@@ -165,4 +165,24 @@ struct RecognizedTextTests {
         #expect(coldElapsed < .milliseconds(500), "cold took \(coldElapsed)")
         #expect(warmElapsed < .milliseconds(100), "warm took \(warmElapsed)")
     }
+
+    @Test("a sealed file from an older build that holds a card number is never returned")
+    func whenSealedFileHoldsCardNumber_thenTextIsNil() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let ocr = String(repeating: "receipt item\n", count: 60) + "Card: 4111 1111 1111 1111\nTotal: $42.00"
+        let item = try picture(preview: String(ocr.prefix(CardPreviewText.previewLength)))
+        try store.save(ocr, for: item.id)
+
+        #expect(RecognizedText.text(of: item, store: store) == nil)
+    }
+
+    @Test("a short preview from an older build that holds a card number is never returned")
+    func whenShortPreviewHoldsCardNumber_thenTextIsNil() throws {
+        let (store, directory) = makeStore()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let item = try picture(preview: "Checkout\nCard 4111 1111 1111 1111")
+
+        #expect(RecognizedText.text(of: item, store: store) == nil)
+    }
 }

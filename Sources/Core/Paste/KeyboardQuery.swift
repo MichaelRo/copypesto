@@ -29,4 +29,22 @@ public struct KeyboardQuery: Equatable, Sendable {
     public mutating func clear() {
         text = ""
     }
+
+    /// Strips Hebrew niqqud (`\u{0591}`–`\u{05C7}`) and folds Hebrew final letters (`ךםןףץ` → `כמנפצ`) for matching.
+    public static func normalizedForSearch(_ value: String) -> String {
+        var scalars = String.UnicodeScalarView()
+        scalars.reserveCapacity(value.unicodeScalars.count)
+        for scalar in value.unicodeScalars {
+            if (0x0591...0x05C7).contains(scalar.value) { continue }
+            switch scalar.value {
+            case 0x05DA: scalars.append("כ") // ך → כ
+            case 0x05DD: scalars.append("מ") // ם → מ
+            case 0x05DF: scalars.append("נ") // ן → נ
+            case 0x05E3: scalars.append("פ") // ף → פ
+            case 0x05E5: scalars.append("צ") // ץ → צ
+            default: scalars.append(scalar)
+            }
+        }
+        return String(scalars)
+    }
 }

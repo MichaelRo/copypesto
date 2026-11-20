@@ -3,6 +3,7 @@ import Foundation
 import Synchronization
 import Testing
 @testable import PestoCore
+@testable import PestoCoreNetworking
 
 private final class RecordingProtocol: URLProtocol {
     nonisolated static let requested = Mutex<[URL]>([])

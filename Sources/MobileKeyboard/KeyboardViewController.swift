@@ -10,8 +10,6 @@ import UIKit
 /// no network request.
 final class KeyboardViewController: UIInputViewController {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "Keyboard")
-    private static let compactHeight: CGFloat = 280
-    private static let regularHeight: CGFloat = 300
 
     private let model = KeyboardModel()
     private var heightConstraint: NSLayoutConstraint?
@@ -50,7 +48,10 @@ final class KeyboardViewController: UIInputViewController {
         height.priority = .required - 1
         height.isActive = true
         heightConstraint = height
-        registerForTraitChanges([UITraitHorizontalSizeClass.self]) { (controller: Self, _) in
+        registerForTraitChanges([
+            UITraitHorizontalSizeClass.self,
+            UITraitVerticalSizeClass.self
+        ]) { (controller: Self, _) in
             controller.heightConstraint?.constant = controller.currentHeight
         }
     }
@@ -83,8 +84,12 @@ final class KeyboardViewController: UIInputViewController {
 
     /// The search page adds a row for the query and three rows of letters, so it is taller than the shelf.
     private var currentHeight: CGFloat {
-        let base = traitCollection.horizontalSizeClass == .regular ? Self.regularHeight : Self.compactHeight
-        return model.isSearching ? base + KeyboardModel.searchExtraHeight : base
+        KeyboardLayout.totalHeight(
+            size: model.menu.keyboardSize,
+            isRegular: traitCollection.horizontalSizeClass == .regular,
+            isLandscape: traitCollection.verticalSizeClass == .compact,
+            isSearching: model.isSearching
+        )
     }
 
     /// Opens the set again only when the app has rewritten it since, so moving between text fields does not decrypt
@@ -109,6 +114,7 @@ final class KeyboardViewController: UIInputViewController {
         if openedStamp != .some(stamp) {
             model.menu = KeyboardMenu(hasFullAccess: true) { file.flatMap(Self.open) }
             openedStamp = .some(stamp)
+            heightConstraint?.constant = currentHeight
         }
         // Only to search the clips: the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
         model.word = model.menu.state == .ready

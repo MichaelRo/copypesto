@@ -205,4 +205,44 @@ struct MobileQuickInsertTests {
         #expect(menu.groups(matching: "").map(\.section) == [.snippets])
         #expect(try !#require(set.entries.first).insertionText().contains("{{"))
     }
+
+    @Test("legacy quickInsertEnabled migrates once to keyboardEnabled and autoFillEnabled")
+    func whenLegacyQuickInsertEnabled_thenMigratesToKeyboardAndAutoFill() {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(true, for: Setting.quickInsertEnabled)
+
+        MobileAppState.migrateQuickInsertSettingsIfNeeded(defaults: defaults)
+
+        #expect(defaults.value(for: Setting.keyboardEnabled))
+        #expect(defaults.value(for: Setting.autoFillEnabled))
+        #expect(defaults.value(for: Setting.quickInsertEnabled))
+
+        defaults.set(false, for: Setting.keyboardEnabled)
+        defaults.set(false, for: Setting.autoFillEnabled)
+        defaults.set(false, for: Setting.quickInsertEnabled)
+        MobileAppState.migrateQuickInsertSettingsIfNeeded(defaults: defaults)
+
+        #expect(!defaults.value(for: Setting.keyboardEnabled))
+        #expect(!defaults.value(for: Setting.autoFillEnabled))
+    }
+
+    @Test("when only AutoFill is enabled, the set is written for AutoFill while the keyboard menu stays unavailable")
+    func whenOnlyAutoFillEnabled_thenKeyboardMenuIsUnavailable() async throws {
+        let library = try await MobileTestLibrary()
+        let fixture = try fixture(on: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        var target = fixture.target
+        target.options = {
+            QuickInsertSelection.Options(keyboardEnabled: false)
+        }
+        library.state.quickInsert = target
+        try await library.add("12 Basil Lane")
+
+        library.state.writeQuickInsert()
+
+        let set = try fixture.read()
+        #expect(set.entries.map(\.text) == ["12 Basil Lane"])
+        #expect(!set.keyboardEnabled)
+        #expect(KeyboardMenu(hasFullAccess: true) { set }.state == .unavailable)
+    }
 }

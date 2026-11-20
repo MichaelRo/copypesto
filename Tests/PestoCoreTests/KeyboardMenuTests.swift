@@ -74,4 +74,36 @@ struct KeyboardMenuTests {
         )
         #expect(KeyboardMenu(hasFullAccess: true) { set }.chips.map(\.title) == ["Recent"])
     }
+
+    @Test("Hebrew search ignores niqqud and matches final and non-final letters interchangeably")
+    func whenHebrewSearched_thenNiqqudAndFinalsMatch() {
+        let set = QuickInsertSet(
+            createdAt: .now,
+            entries: [
+                entry("שָׁלוֹם עוֹלָם", .recent),
+                entry("מכתב רשמי", .pinned, title: "מכתבים")
+            ]
+        )
+        let menu = KeyboardMenu(hasFullAccess: true) { set }
+        #expect(menu.entries(matching: "שלומ").map(\.text) == ["שָׁלוֹם עוֹלָם"])
+        #expect(menu.entries(matching: "שלום").map(\.text) == ["שָׁלוֹם עוֹלָם"])
+        #expect(menu.entries(matching: "מכתבימ").map(\.text) == ["מכתב רשמי"])
+    }
+
+    @Test("when keyboardEnabled is false in the set, the menu is unavailable with no chips or entries")
+    func whenKeyboardDisabled_thenUnavailable() {
+        let base = full()
+        let disabled = QuickInsertSet(
+            createdAt: base.createdAt,
+            entries: base.entries,
+            collections: base.collections,
+            returnsAfterInsert: base.returnsAfterInsert,
+            keyboardEnabled: false
+        )
+        let menu = KeyboardMenu(hasFullAccess: true) { disabled }
+        #expect(menu.state == .unavailable)
+        #expect(menu.chips.isEmpty)
+        #expect(menu.entries(for: .recent).isEmpty)
+        #expect(menu.entries(matching: "Basil").isEmpty)
+    }
 }

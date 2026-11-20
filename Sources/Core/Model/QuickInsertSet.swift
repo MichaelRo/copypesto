@@ -10,15 +10,25 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
     /// The person's choice for the keyboard: after a tap inserts a clip, move to their own keyboard (a long press does
     /// the other).
     public let returnsAfterInsert: Bool
+    public let accent: WidgetSnapshot.Theme
+    public let keyboardSize: KeyboardSize
+    public let keyboardEnabled: Bool
+    public let autoFillEnabled: Bool
 
     public init(
         createdAt: Date, entries: [QuickInsertEntry], collections: [QuickInsertCollection] = [],
-        returnsAfterInsert: Bool = true
+        returnsAfterInsert: Bool = true, accent: WidgetSnapshot.Theme = .brand,
+        keyboardSize: KeyboardSize = .medium,
+        keyboardEnabled: Bool = true, autoFillEnabled: Bool = true
     ) {
         self.createdAt = createdAt
         self.entries = entries
         self.collections = collections
         self.returnsAfterInsert = returnsAfterInsert
+        self.accent = accent
+        self.keyboardSize = keyboardSize
+        self.keyboardEnabled = keyboardEnabled
+        self.autoFillEnabled = autoFillEnabled
     }
 
     public init(from decoder: any Decoder) throws {
@@ -27,6 +37,10 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
         entries = try container.decode([QuickInsertEntry].self, forKey: .entries)
         collections = try container.decodeIfPresent([QuickInsertCollection].self, forKey: .collections) ?? []
         returnsAfterInsert = try container.decodeIfPresent(Bool.self, forKey: .returnsAfterInsert) ?? true
+        accent = try container.decodeIfPresent(WidgetSnapshot.Theme.self, forKey: .accent) ?? .brand
+        keyboardSize = try container.decodeIfPresent(KeyboardSize.self, forKey: .keyboardSize) ?? .medium
+        keyboardEnabled = try container.decodeIfPresent(Bool.self, forKey: .keyboardEnabled) ?? true
+        autoFillEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoFillEnabled) ?? true
     }
 
     public static let empty = QuickInsertSet(createdAt: Date(timeIntervalSince1970: 0), entries: [])

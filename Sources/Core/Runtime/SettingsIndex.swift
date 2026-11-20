@@ -75,6 +75,16 @@ public enum SettingsIndex {
             "click"
         ),
         entry(
+            "Recent Clips widget",
+            "General",
+            "Recent Clips widget",
+            "widget",
+            "widgets",
+            "desktop",
+            "notification center",
+            "recent clips"
+        ),
+        entry(
             "Save pictures to",
             "General",
             "Save pictures to",

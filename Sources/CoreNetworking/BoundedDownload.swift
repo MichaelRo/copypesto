@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import PestoCore
 import Synchronization
 
 /// Collects a response body in the chunks the network delivers, and gives up as soon as the status is not 200 or the

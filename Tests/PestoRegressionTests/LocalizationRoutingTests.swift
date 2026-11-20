@@ -57,7 +57,9 @@ struct LocalizationRoutingTests {
         let project = try String(
             contentsOf: SourceTree.repositoryRoot.appendingPathComponent("Pesto.yml"), encoding: .utf8
         )
-        let targets = ["Pesto", "PestoControls", "PestoMobile", "PestoShare", "PestoAutoFill", "PestoWidget"]
+        let targets = [
+            "Pesto", "PestoControls", "PestoMobile", "PestoShare", "PestoAutoFill", "PestoKeyboard", "PestoWidget"
+        ]
         for name in targets {
             let block = try targetBlock(named: name, in: project)
             #expect(
@@ -130,6 +132,42 @@ struct LocalizationRoutingTests {
                 }
             }
         }
+    }
+
+    @Test("every string in MobileKeyboard and mobile keyboard settings is in Localizable.xcstrings")
+    func keyboardStringsExistInLocalizableCatalog() throws {
+        let url = SourceTree.sources.appendingPathComponent("Resources/Localizable.xcstrings")
+        let strings = try parseStringCatalog(at: url)
+        let pattern = try NSRegularExpression(
+            pattern: #"(?:String\(localized:\s*|Text\(|note\()"((?:[^"\\]|\\.)*)""#
+        )
+        let interpolation = try NSRegularExpression(pattern: #"\\\([^)]*\)"#)
+
+        var files = try SourceTree.swiftFiles(in: "MobileKeyboard", minimum: 4)
+        files.append(SourceTree.sources.appendingPathComponent("Mobile/KeyboardCollectionsView.swift"))
+        files.append(SourceTree.sources.appendingPathComponent("Mobile/KeyboardSettingsView.swift"))
+        files.append(SourceTree.sources.appendingPathComponent("Mobile/WidgetSettingsView.swift"))
+
+        var missing: [String] = []
+        for file in files {
+            let content = try String(contentsOf: file, encoding: .utf8)
+            let lines = content.components(separatedBy: "\n")
+            for (index, line) in lines.enumerated() {
+                if line.trimmingCharacters(in: .whitespaces).hasPrefix("//") { continue }
+                let range = NSRange(line.startIndex..., in: line)
+                for match in pattern.matches(in: line, range: range) {
+                    guard let keyRange = Range(match.range(at: 1), in: line) else { continue }
+                    let raw = String(line[keyRange])
+                    let key = interpolation.stringByReplacingMatches(
+                        in: raw, range: NSRange(raw.startIndex..., in: raw), withTemplate: "%@"
+                    )
+                    if strings[key] == nil {
+                        missing.append("\(file.lastPathComponent):\(index + 1) \"\(key)\"")
+                    }
+                }
+            }
+        }
+        #expect(missing.isEmpty, "missing from Localizable.xcstrings: \(missing.joined(separator: ", "))")
     }
 
     private func targetBlock(named name: String, in project: String) throws -> String {

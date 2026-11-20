@@ -7,6 +7,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-11-20
+### Added
+- **Share and import collections**: export any collection as a `.pesto` file (with its pictures) from the shelf or Settings, and import it by opening the file or dropping it onto Pesto.
+- **Card titles and `{{selection}}` snippets**: give clips custom titles shown across card faces, use `{{selection}}` in snippets, and paste any text clip as a file.
+- **More importers**: import images across clipboard managers and import from Maccy 1.x.
+- **App chips in reach**: step through app filter chips from the keyboard with `⌥⌘[` and `⌥⌘]`.
+- **12 new languages**: Spanish, French, German, Japanese, Simplified Chinese, Portuguese (Brazil), Hebrew (RTL), Russian, Ukrainian, Korean, Italian, and Czech.
+
+### Changed
+- **Edit Text on the Mac**: edit a text clip in place in a dedicated editor window, and inspect Settings panes that fit cleanly in a single viewport.
+- **Clearer framing and status**: whole-picture `PictureFit` framing, custom titles on cards, iCloud quota status in sync, and a menu-bar notice when macOS hides Pesto's icon in a crowded menu bar.
+- **Mac widget setting**: a Recent Clips widget toggle in Settings → General (active when signed with the Mac widget profile).
+
+### Fixed
+- Synced history now sends clips a first device had not yet uploaded, OCR secret scanning covers recognized text in pictures, and Undo banners no longer clip behind other shelf banners.
+
 ## [1.7.0] - 2026-11-13
 ### Changed
 - A clip card has no header any more: the clip starts at the top of the card, and one line at the foot shows its ⌘ number, the app it came from (icon and name) and how long ago. The size joins that line on the card you are looking at. Text cards show more lines. ([ADR 0044](decisions/0044-a-card-has-no-header-one-line-of-facts-at-its-foot.md))

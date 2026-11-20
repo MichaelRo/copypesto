@@ -91,8 +91,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto
         PRODUCT_NAME: Pesto
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.8.0"
+        CURRENT_PROJECT_VERSION: "10"
         INFOPLIST_FILE: Sources/Resources/Info.plist
         PESTO_ENTITLEMENTS: Sources/Resources/Pesto.entitlements
         PESTO_PROFILE: ""
@@ -125,8 +125,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.controls
         PRODUCT_NAME: PestoControls
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.8.0"
+        CURRENT_PROJECT_VERSION: "10"
         PESTO_CONTROLS_MIN_MACOS: "26.0"
         MACOSX_DEPLOYMENT_TARGET: $(PESTO_CONTROLS_MIN_MACOS)
         INFOPLIST_FILE: Sources/Controls/Info.plist
@@ -174,8 +174,8 @@ targets:
         # item it writes stays there, then the quick-insert group it shares with PestoAutoFill and PestoKeyboard
         # alone (ADRs 0051, 0061), then the widget group it shares with PestoWidget alone (ADR 0052).
         CODE_SIGN_ENTITLEMENTS: Sources/Resources/PestoMobile.entitlements
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.8.0"
+        CURRENT_PROJECT_VERSION: "10"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         GENERATE_INFOPLIST_FILE: "YES"
@@ -212,8 +212,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.share
         PRODUCT_NAME: PestoShare
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.8.0"
+        CURRENT_PROJECT_VERSION: "10"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileShare/Info.plist
@@ -240,8 +240,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.autofill
         PRODUCT_NAME: PestoAutoFill
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.8.0"
+        CURRENT_PROJECT_VERSION: "10"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileAutoFill/Info.plist
@@ -273,8 +273,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.keyboard
         PRODUCT_NAME: PestoKeyboard
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.8.0"
+        CURRENT_PROJECT_VERSION: "10"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileKeyboard/Info.plist
@@ -304,8 +304,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.widget
         PRODUCT_NAME: PestoWidget
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.8.0"
+        CURRENT_PROJECT_VERSION: "10"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileWidget/Info.plist

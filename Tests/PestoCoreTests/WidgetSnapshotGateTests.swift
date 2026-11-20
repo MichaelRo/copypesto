@@ -13,11 +13,14 @@ struct WidgetSnapshotGateTests {
         #expect(WidgetSnapshotGate.decide(lockEnabled: true, isCovered: false) == .locked)
         #expect(WidgetSnapshotGate.decide(lockEnabled: false, isCovered: true) == .hidden)
         #expect(WidgetSnapshotGate.decide(lockEnabled: true, isCovered: true) == .locked)
+        #expect(WidgetSnapshotGate.decide(widgetsEnabled: false, lockEnabled: false, isCovered: false) == .disabled)
+        #expect(WidgetSnapshotGate.decide(widgetsEnabled: false, lockEnabled: true, isCovered: true) == .disabled)
     }
 
-    @Test("a placeholder holds no clip and says why; the clips have none")
+    @Test("a placeholder holds no clip and says why; the clips and disabled have none")
     func whenAPlaceholderIsMade_thenItCarriesNoClip() throws {
         #expect(WidgetSnapshotGate.clips.placeholder(theme: .brand, at: now) == nil)
+        #expect(WidgetSnapshotGate.disabled.placeholder(theme: .brand, at: now) == nil)
         let locked = try #require(WidgetSnapshotGate.locked.placeholder(theme: .brand, at: now))
         let hidden = try #require(WidgetSnapshotGate.hidden.placeholder(theme: .brand, at: now))
         #expect(locked.isLocked && !locked.isHidden && locked.clips.isEmpty && locked.pinned.isEmpty)

@@ -41,22 +41,28 @@ public enum QuickInsertSelection {
         public var returnsAfterInsert: Bool
         public var keyboardSize: KeyboardSize
         public var accent: WidgetSnapshot.Theme
+        public var keyboardEnabled: Bool
+        public var autoFillEnabled: Bool
 
         public init(
             collectionIDs: [UUID] = [], returnsAfterInsert: Bool = true,
-            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand
+            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand,
+            keyboardEnabled: Bool = true, autoFillEnabled: Bool = true
         ) {
             self.collectionIDs = collectionIDs
             self.returnsAfterInsert = returnsAfterInsert
             self.keyboardSize = keyboardSize
             self.accent = accent
+            self.keyboardEnabled = keyboardEnabled
+            self.autoFillEnabled = autoFillEnabled
         }
 
         /// As the settings hold them: `Setting.keyboardCollections` is ids joined by commas; one that does not read
         /// as an id, or a repeat, is dropped.
         public init(
             storedCollections: String, returnsAfterInsert: Bool,
-            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand
+            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand,
+            keyboardEnabled: Bool = true, autoFillEnabled: Bool = true
         ) {
             var seen: Set<UUID> = []
             collectionIDs = storedCollections.split(separator: ",").compactMap { UUID(uuidString: String($0)) }
@@ -64,6 +70,8 @@ public enum QuickInsertSelection {
             self.returnsAfterInsert = returnsAfterInsert
             self.keyboardSize = keyboardSize
             self.accent = accent
+            self.keyboardEnabled = keyboardEnabled
+            self.autoFillEnabled = autoFillEnabled
         }
 
         public static func stored(_ ids: [UUID]) -> String {
@@ -118,7 +126,8 @@ public enum QuickInsertSelection {
         return QuickInsertSet(
             createdAt: now, entries: lists.entries, collections: lists.collections,
             returnsAfterInsert: options.returnsAfterInsert,
-            accent: options.accent, keyboardSize: options.keyboardSize
+            accent: options.accent, keyboardSize: options.keyboardSize,
+            keyboardEnabled: options.keyboardEnabled, autoFillEnabled: options.autoFillEnabled
         )
     }
 

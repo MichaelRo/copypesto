@@ -112,7 +112,7 @@ public final class WidgetSnapshotKeeper {
     }
 
     public func historyChanged() {
-        guard isInstalled else { return }
+        guard isInstalled, inputs.gate() != .disabled else { return }
         rewrite?.cancel()
         rewrite = Task { [weak self, rewriteDelay] in
             try? await Task.sleep(for: rewriteDelay)
@@ -123,7 +123,15 @@ public final class WidgetSnapshotKeeper {
 
     /// The lock, the cover or the theme may have moved: a snapshot that no longer matches them is written again now.
     public func stateMayHaveChanged() async {
-        guard isInstalled, lastWritten != Written(gate: inputs.gate(), theme: inputs.theme()) else { return }
+        guard isInstalled else { return }
+        let gate = inputs.gate()
+        if gate == .disabled {
+            if target.file.exists || lastWritten != nil {
+                dropFile()
+            }
+            return
+        }
+        guard lastWritten != Written(gate: gate, theme: inputs.theme()) else { return }
         await write()
     }
 
@@ -153,8 +161,9 @@ public final class WidgetSnapshotKeeper {
     private func performWrite() async {
         guard isInstalled else { return }
         guard inputs.canRead() else { return dropFile() }
-        let theme = inputs.theme()
         let gate = inputs.gate()
+        guard gate != .disabled else { return dropFile() }
+        let theme = inputs.theme()
         if let placeholder = gate.placeholder(theme: theme, at: inputs.now()) {
             return store(placeholder, as: Written(gate: gate, theme: theme))
         }

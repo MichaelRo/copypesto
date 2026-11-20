@@ -12,6 +12,7 @@ struct WidgetTarget {
     let keys: SharedFileKeyStore
     let isInstalled: @MainActor () async -> Bool
     let reload: @MainActor () -> Void
+    var isEnabled: @MainActor () -> Bool = { AppDefaults.store.value(for: Setting.widgetsEnabled) }
 
     static var current: WidgetTarget? {
         guard LaunchMode.current == .normal, let file = SealedGroupFile.current(.widgetSnapshot) else { return nil }

@@ -58,12 +58,13 @@ public struct KeyboardMenu: Equatable, Sendable {
             return
         }
         let set = loadSet()
-        entries = set?.entries ?? []
-        collections = set?.collections ?? []
-        returnsAfterInsert = set?.returnsAfterInsert ?? true
-        accent = set?.accent ?? .brand
-        keyboardSize = set?.keyboardSize ?? .medium
-        state = set == nil ? .unavailable : entries.isEmpty ? .empty : .ready
+        let activeSet = (set?.keyboardEnabled == true) ? set : nil
+        entries = activeSet?.entries ?? []
+        collections = activeSet?.collections ?? []
+        returnsAfterInsert = activeSet?.returnsAfterInsert ?? true
+        accent = activeSet?.accent ?? .brand
+        keyboardSize = activeSet?.keyboardSize ?? .medium
+        state = activeSet == nil ? .unavailable : entries.isEmpty ? .empty : .ready
         let sections: [ChipLabel] = [
             ChipLabel(chip: .recent, title: String(localized: "Recent"), symbolName: "clock"),
             ChipLabel(chip: .pinned, title: String(localized: "Pinned"), symbolName: "pin"),

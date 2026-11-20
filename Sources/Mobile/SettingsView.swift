@@ -11,11 +11,12 @@ struct SettingsView: View {
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
-    @AppStorage(Setting.keyboardReturnsAfterInsert) private var keyboardReturns: Bool
-    @AppStorage(Setting.keyboardSize) private var keyboardSize: String
+    @AppStorage(Setting.keyboardEnabled) private var keyboardEnabled: Bool
+    @AppStorage(Setting.autoFillEnabled) private var autoFillEnabled: Bool
+    @AppStorage(Setting.widgetsEnabled) private var widgetsEnabled: Bool
+    @AppStorage(Setting.syncEnabled) private var syncEnabled: Bool
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
-    @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
     @AppStorage(Setting.retentionDays) private var retentionDays: Int
     @AppStorage(Setting.retentionMaxItems) private var retentionMaxItems: Int
@@ -50,33 +51,6 @@ struct SettingsView: View {
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
                     .accessibilityIdentifier(MobileAccessibilityID.addsCopiesToggle)
-                Toggle("Insert from Pesto in other apps", isOn: $quickInsertEnabled)
-                    .accessibilityIdentifier(MobileAccessibilityID.quickInsertToggle)
-                    .onChange(of: quickInsertEnabled) { appState.quickInsertSettingChanged() }
-                if quickInsertEnabled {
-                    NavigationLink("Keyboard collections") { KeyboardCollectionsView() }
-                    Picker("Keyboard size", selection: $keyboardSize) {
-                        Text("Small").tag(KeyboardSize.small.rawValue)
-                        Text("Medium").tag(KeyboardSize.medium.rawValue)
-                        Text("Large").tag(KeyboardSize.large.rawValue)
-                    }
-                    .onChange(of: keyboardSize) { appState.writeQuickInsert() }
-                    Picker("After inserting a clip", selection: $keyboardReturns) {
-                        Text("Return to my keyboard").tag(true)
-                        Text("Stay in Pesto").tag(false)
-                    }
-                    .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
-                }
-            } header: {
-                Text("Clipboard, AutoFill & keyboard")
-            } footer: {
-                Text(
-                    "AutoFill and Pesto's keyboard use a sealed set of non-secret text clips. Turn on Pesto in " +
-                        "Settings > General > AutoFill & Passwords, or add it in Settings > General > Keyboard > " +
-                        "Keyboards and allow Full Access."
-                )
-            }
-            Section {
                 Picker("Keep clips for", selection: retentionDaysChoice) {
                     ForEach(RetentionChoices.ageDays, id: \.self) { Text(RetentionChoices.ageLabel($0)).tag($0) }
                     if !RetentionChoices.isPresetAge(retentionDays) {
@@ -91,7 +65,7 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("History")
+                Text("History & Capture")
             } footer: {
                 Text("Pinned clips are always kept.")
             }
@@ -99,15 +73,6 @@ struct SettingsView: View {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
                     .accessibilityIdentifier(MobileAccessibilityID.historyLockToggle)
-                // Only the lock empties widgets, AutoFill and the keyboard, so this exception exists only while the
-                // lock is on; greyed out without it, it read as a feature this device could not have.
-                if lockEnabled {
-                    Toggle(
-                        "Show clips in widgets, AutoFill and the keyboard while locked", isOn: $showsClipsOutside
-                    )
-                    .onChange(of: showsClipsOutside) { appState.showsClipsOutsideSettingChanged() }
-                    .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
-                }
                 Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
                     ForEach(AuthenticationGrace.choices, id: \.self) { minutes in
                         Text(Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes])))
@@ -147,7 +112,30 @@ struct SettingsView: View {
             }
             AppleIntelligenceSection()
             Section {
-                NavigationLink("Sync") { SyncSettingsView() }
+                NavigationLink {
+                    KeyboardSettingsView()
+                } label: {
+                    LabeledContent(
+                        "Keyboard & AutoFill",
+                        value: isQuickInsertOn ? String(localized: "On") : String(localized: "Off")
+                    )
+                }
+                NavigationLink {
+                    WidgetSettingsView()
+                } label: {
+                    LabeledContent(
+                        "Widgets",
+                        value: widgetsEnabled ? String(localized: "On") : String(localized: "Off")
+                    )
+                }
+                NavigationLink {
+                    SyncSettingsView()
+                } label: {
+                    LabeledContent(
+                        "Sync",
+                        value: syncEnabled ? String(localized: "On") : String(localized: "Off")
+                    )
+                }
             }
             Section {
                 Button("Clear History", role: .destructive) { Task { await askToClear() } }
@@ -169,6 +157,9 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .onAppear {
+            MobileAppState.migrateQuickInsertSettingsIfNeeded()
+        }
         .confirmationDialog(
             String(localized: "Clear \(clearCount) clips?"), isPresented: $isConfirmingClear, titleVisibility: .visible
         ) {
@@ -184,6 +175,10 @@ struct SettingsView: View {
         } message: { _ in
             Text("Clips past the new limit are deleted now. Pinned clips stay. It can\u{2019}t be undone.")
         }
+    }
+
+    private var isQuickInsertOn: Bool {
+        keyboardEnabled || autoFillEnabled || quickInsertEnabled
     }
 
     private var retentionDaysChoice: Binding<Int> {

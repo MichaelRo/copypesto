@@ -245,4 +245,27 @@ final class WidgetSnapshotKeeperTests {
         #expect(keeper.isInstalled)
         keeper.stop()
     }
+
+    @Test("disabling widgets clears the sealed snapshot immediately and re-enabling restores it")
+    func whenWidgetsAreDisabled_thenTheSnapshotIsClearedImmediately() async throws {
+        try add("lunch at noon")
+        let keeper = makeKeeper()
+        await keeper.start()
+        #expect(file.exists)
+        let reloadsBeforeDisable = reloads
+
+        gate = .disabled
+        await keeper.stateMayHaveChanged()
+
+        #expect(!file.exists)
+        #expect(reloads == reloadsBeforeDisable + 1)
+
+        await keeper.write()
+        #expect(!file.exists)
+
+        gate = .clips
+        await keeper.stateMayHaveChanged()
+        #expect(try written().clips.map(\.text) == ["lunch at noon"])
+        keeper.stop()
+    }
 }

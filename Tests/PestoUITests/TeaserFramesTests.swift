@@ -153,10 +153,18 @@ final class TeaserFramesTests: PestoUITestCase {
         attachPaste("gate")
     }
 
+    private func clearSearchIfNeeded() {
+        if element(AccessibilityID.searchField).exists {
+            overlay.typeKey(.escape, modifierFlags: [])
+            settle(0.4)
+        }
+    }
+
     /// The tracking number is copied from its own card, which brings it to the front, and the snippet that reads the
     /// clipboard is found by its name: a frame after every step, so the film shows the row moving each time.
     private func snippetScene() {
         showOverlay()
+        clearSearchIfNeeded()
         settleGlass()
         frame("snippet", 0)
         overlay.typeKey(.rightArrow, modifierFlags: [])
@@ -177,6 +185,7 @@ final class TeaserFramesTests: PestoUITestCase {
     /// The card number is copied while the shelf is open, so the film has the row before and after it lands.
     private func secretScene() {
         showOverlay()
+        clearSearchIfNeeded()
         settleGlass()
         frame("secret", 0)
         copyFrom("com.apple.MobileSMS", "5555 5555 5555 4444")

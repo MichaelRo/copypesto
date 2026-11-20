@@ -23,7 +23,7 @@ final class ShelfPositionUITests: PestoUITestCase {
         XCTAssertTrue(top.exists, "no Top tile")
         XCTAssertTrue(bottom.isSelected, "Bottom should be the default")
         XCTAssertEqual(bottom.frame.width, top.frame.width, accuracy: 1)
-        XCTAssertGreaterThanOrEqual(bottom.frame.height, 92, "the tile is the same 112 x 92 picture as Light and Dark")
+        XCTAssertGreaterThanOrEqual(bottom.frame.height, 64, "the tile matches the 78 x 48 picture plus label")
         capture("settings-shelf-position-bottom", of: settingsWindow)
 
         top.click()

@@ -62,7 +62,7 @@ final class LayoutSwapUITests: MobileUITestCase {
         capture("ipad-after-swap-compact")
 
         let hideKeyboard = app.keyboards.buttons["Hide keyboard"]
-        if hideKeyboard.exists { hideKeyboard.tap() }
+        if hideKeyboard.exists, hideKeyboard.isHittable { hideKeyboard.tap() }
         swap(app, to: "regular")
         let padEditor = element(MobileAccessibilityID.textEditor, in: app)
         XCTAssertTrue(padEditor.waitForExistence(timeout: timeout), "the editor is open again in the pad layout")

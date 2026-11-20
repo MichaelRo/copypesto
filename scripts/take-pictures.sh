@@ -111,7 +111,11 @@ PY
 
 rm -rf .build/app-store
 mkdir -p .build/app-store
-store_pictures "iPhone 17 Pro Max" iphone || status=$?
+iphone_sim="iPhone 18 Pro Max"
+if ! xcrun simctl list devices available | grep -qF "$iphone_sim ("; then
+  iphone_sim="iPhone 17 Pro Max"
+fi
+store_pictures "$iphone_sim" iphone || status=$?
 store_pictures "iPad Pro 13-inch (M5)" ipad || status=$?
 echo "App Store pictures in .build/app-store"
 

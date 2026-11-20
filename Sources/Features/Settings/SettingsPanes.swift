@@ -50,9 +50,11 @@ struct ShortcutsPane: View {
 }
 
 struct PrivacyPane: View {
+    var initialStats: PrivacyStats?
+
     var body: some View {
         Form {
-            PrivacySettings()
+            PrivacySettings(initialStats: initialStats)
             CaptureSettings(part: .lock)
             ExclusionSettings()
             CaptureSettings(part: .sensitiveContent)

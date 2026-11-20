@@ -30,21 +30,22 @@ struct ClipDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
             .clipResultSheets(.detail(isSheet: isSheet))
-            #if DEBUG
-                .overlay(alignment: .top) {
-                    UITestLayout.swapControl(
-                        library: library, actual: sizeClass, identifier: UITestLayout.detailSwapIdentifier
-                    )
-                    .padding(.top, 90)
-                }
-            #endif
-                .sheet(item: fillBinding) { request in
-                        SnippetFillSheet(request: request).presentationDetents([.medium, .large])
-                    }
-                    .sheet(item: snippetEditorBinding) { target in
-                        MobileSnippetEditorView(target: target)
-                    }
+            .sheet(item: fillBinding) { request in
+                SnippetFillSheet(request: request).presentationDetents([.medium, .large])
+            }
+            .sheet(item: snippetEditorBinding) { target in
+                MobileSnippetEditorView(target: target)
+            }
         }
+        #if DEBUG
+        .overlay(alignment: .topTrailing) {
+                UITestLayout.swapControl(
+                    library: library, actual: sizeClass, identifier: UITestLayout.detailSwapIdentifier
+                )
+                .padding(.top, 56)
+                .padding(.trailing, 16)
+            }
+        #endif
     }
 
     private var fillBinding: Binding<SnippetFillRequest?> {

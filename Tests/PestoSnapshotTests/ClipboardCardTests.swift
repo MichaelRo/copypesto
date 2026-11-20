@@ -54,7 +54,7 @@ final class ClipboardCardTests: XCTestCase {
         layoutDirection: LayoutDirection = .leftToRight,
         cardSize: CGSize = CGSize(width: 200, height: 180),
         solidShelfGround: String? = nil,
-        file: StaticString = snapshotFile,
+        file: StaticString = #filePath,
         testName: String = #function,
         line: UInt = #line
     ) {

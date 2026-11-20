@@ -51421,88 +51421,6 @@
         }
       }
     },
-    "Secrets and explicit clips never appear in widgets. Long-press a widget on your Home Screen and tap Edit Widget to pick a collection or choose what tapping a clip does.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Secrets and explicit clips never appear in widgets. Long-press a widget on your Home Screen and tap Edit Widget to pick a collection or choose what tapping a clip does."
-          }
-        },
-        "cs": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tajné a explicitní výstřižky se ve widgetech nikdy nezobrazují. Podržením widgetu na ploše a klepnutím na Upravit widget vyberte sbírku nebo akci při klepnutí."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geheime und explizite Clips erscheinen nie in Widgets. Halten Sie ein Widget auf dem Home-Bildschirm gedrückt und tippen Sie auf „Widget bearbeiten“, um eine Sammlung oder die Tipp-Aktion zu wählen."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los secretos y los recortes explícitos nunca aparecen en los widgets. Mantén pulsado un widget en la pantalla de inicio y toca Editar widget para elegir una colección o qué hace al tocar un recorte."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les secrets et les extraits explicites n’apparaissent jamais dans les widgets. Appuyez longuement sur un widget sur l’écran d’accueil et touchez Modifier le widget pour choisir une collection ou l’action au toucher."
-          }
-        },
-        "he": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "סודות וקטעים בוטים לעולם אינם מופיעים בווידג׳טים. לחיצה ארוכה על וידג׳ט במסך הבית והקשה על עריכת וידג׳ט מאפשרת לבחור אוסף או פעולה בלחיצה."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "I segreti e i ritagli espliciti non appaiono mai nei widget. Tieni premuto un widget sulla schermata Home e tocca Modifica widget per scegliere una raccolta o cosa succede toccando un ritaglio."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "シークレットや露骨なクリップはウィジェットに表示されません。ホーム画面でウィジェットを長押しし、「ウィジェットを編集」をタップしてコレクションやタップ時の動作を選択できます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "비밀 및 노골적인 클립은 위젯에 표시되지 않습니다. 홈 화면에서 위젯을 길게 누르고 위젯 편집을 탭하여 컬렉션이나 탭 동작을 선택하세요."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Segredos e recortes explícitos nunca aparecem nos widgets. Mantenha pressionado um widget na Tela de Início e toque em Editar Widget para escolher uma coleção ou a ação ao tocar."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Секреты и откровенные фрагменты никогда не появляются в виджетах. Удерживайте виджет на экране «Домой» и нажмите «Изменить виджет», чтобы выбрать коллекцию или действие при нажатии."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Секрети та відверті фрагменти ніколи не з’являються у віджетах. Утримуйте віджет на початковому екрані та натисніть «Змінити віджет», щоб вибрати колекцію або дію при дотику."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "机密和露骨剪辑绝不会出现在小组件中。在主屏幕上长按小组件并轻点“编辑小组件”，即可选择收藏集或轻点剪辑时的操作。"
-          }
-        }
-      }
-    },
     "Turn on Pesto Keyboard in Pesto's Settings.": {
       "localizations": {
         "en": {
@@ -51581,6 +51499,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "请在 Pesto 设置中打开 Pesto 键盘。"
+          }
+        }
+      }
+    },
+    "Secrets and explicit clips never appear in widgets. Long-press a widget on your Home Screen and choose Edit Widget to pick a collection or choose what opening a clip does.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secrets and explicit clips never appear in widgets. Long-press a widget on your Home Screen and choose Edit Widget to pick a collection or choose what opening a clip does."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tajné a explicitní výstřižky se ve widgetech nikdy nezobrazují. Podržením widgetu na ploše a klepnutím na Upravit widget vyberte sbírku nebo akci při klepnutí."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geheime und explizite Clips erscheinen nie in Widgets. Halten Sie ein Widget auf dem Home-Bildschirm gedrückt und tippen Sie auf „Widget bearbeiten“, um eine Sammlung oder die Tipp-Aktion zu wählen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los secretos y los recortes explícitos nunca aparecen en los widgets. Mantén pulsado un widget en la pantalla de inicio y toca Editar widget para elegir una colección o qué hace al tocar un recorte."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les secrets et les extraits explicites n’apparaissent jamais dans les widgets. Appuyez longuement sur un widget sur l’écran d’accueil et touchez Modifier le widget pour choisir une collection ou l’action au toucher."
+          }
+        },
+        "he": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "סודות וקטעים בוטים לעולם אינם מופיעים בווידג׳טים. לחיצה ארוכה על וידג׳ט במסך הבית והקשה על עריכת וידג׳ט מאפשרת לבחור אוסף או פעולה בלחיצה."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I segreti e i ritagli espliciti non appaiono mai nei widget. Tieni premuto un widget sulla schermata Home e tocca Modifica widget per scegliere una raccolta o cosa succede toccando un ritaglio."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シークレットや露骨なクリップはウィジェットに表示されません。ホーム画面でウィジェットを長押しし、「ウィジェットを編集」をタップしてコレクションやタップ時の動作を選択できます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "비밀 및 노골적인 클립은 위젯에 표시되지 않습니다. 홈 화면에서 위젯을 길게 누르고 위젯 편집을 탭하여 컬렉션이나 탭 동작을 선택하세요."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segredos e recortes explícitos nunca aparecem nos widgets. Mantenha pressionado um widget na Tela de Início e toque em Editar Widget para escolher uma coleção ou a ação ao tocar."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Секреты и откровенные фрагменты никогда не появляются в виджетах. Удерживайте виджет на экране «Домой» и нажмите «Изменить виджет», чтобы выбрать коллекцию или действие при нажатии."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Секрети та відверті фрагменти ніколи не з’являються у віджетах. Утримуйте віджет на початковому екрані та натисніть «Змінити віджет», щоб вибрати колекцію або дію при дотику."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "机密和露骨剪辑绝不会出现在小组件中。在主屏幕上长按小组件并轻点“编辑小组件”，即可选择收藏集或轻点剪辑时的操作。"
           }
         }
       }

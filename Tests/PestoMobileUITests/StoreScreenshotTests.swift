@@ -157,7 +157,12 @@ final class StoreScreenshotTests: XCTestCase {
     }
 
     private func captureSnippetFill(in app: XCUIApplication) {
-        element(MobileAccessibilityID.newNoteButton, in: app).tap()
+        let addMenu = element(MobileAccessibilityID.addClipMenuButton, in: app)
+        XCTAssertTrue(addMenu.waitForExistence(timeout: timeout), "add menu button should be reachable")
+        addMenu.tap()
+        let newNote = app.buttons["New Note"].firstMatch
+        XCTAssertTrue(newNote.waitForExistence(timeout: timeout), "new note button should be reachable")
+        newNote.tap()
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: timeout))
         editor.tap()

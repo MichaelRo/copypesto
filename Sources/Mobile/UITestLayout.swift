@@ -35,7 +35,7 @@ enum UITestLayout {
             Button {
                 library.forcedSizeClass = current == .compact ? .regular : .compact
             } label: {
-                Color.clear.frame(width: 28, height: 28).contentShape(.rect)
+                Color.primary.opacity(0.001).frame(width: 28, height: 28).contentShape(.rect)
             }
             .accessibilityIdentifier(identifier)
             .accessibilityLabel(Text(verbatim: current == .compact ? "compact" : "regular"))

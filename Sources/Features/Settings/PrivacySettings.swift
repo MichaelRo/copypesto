@@ -8,8 +8,14 @@ struct PrivacySettings: View {
     @Environment(\.pestoAccent) private var accent
     @AppStorage(AutoBackupSettings.enabledKey) private var autoBackup = false
     @State private var snapshot: PrivacySnapshot?
-    @State private var stats = PrivacyStatsStore().stats
+    @State private var stats: PrivacyStats
     @State private var showingDetails = false
+    private let statsOverride: PrivacyStats?
+
+    init(initialStats: PrivacyStats? = nil) {
+        statsOverride = initialStats
+        _stats = State(initialValue: initialStats ?? PrivacyStatsStore().stats)
+    }
 
     private var encryptionSummary: String {
         (BlobEncryption.isKeyAvailable ? "" : "No key yet. ")
@@ -122,7 +128,7 @@ struct PrivacySettings: View {
 
     private func refresh() async {
         snapshot = await appState.privacySnapshot?()
-        stats = PrivacyStatsStore().stats
+        if statsOverride == nil { stats = PrivacyStatsStore().stats }
     }
 }
 

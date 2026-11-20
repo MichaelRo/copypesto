@@ -97,7 +97,7 @@ final class LargeTextSizeSnapshotTests: XCTestCase {
         let panes: [(String, AnyView)] = [
             ("general", AnyView(GeneralPane())),
             ("appearance", AnyView(AppearanceSettings())),
-            ("privacy", AnyView(PrivacyPane())),
+            ("privacy", AnyView(PrivacyPane(initialStats: PrivacyStats()))),
             ("shortcuts", AnyView(ShortcutsPane())),
             ("collections", AnyView(CollectionsSettings())),
             ("snippets", AnyView(SnippetsSettings())),

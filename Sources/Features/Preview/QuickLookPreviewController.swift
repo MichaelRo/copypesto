@@ -26,12 +26,17 @@ final class QuickLookPreviewController: NSObject, QLPreviewPanelDataSource, QLPr
     }
 
     func show(item: ClipboardItem) {
-        guard prepareFile(for: item) != nil else { return }
+        let wasOpen = isOpen
+        isOpen = true
+        if !wasOpen { onStateChanged?(true) }
+        guard prepareFile(for: item) != nil else {
+            isOpen = wasOpen
+            if !wasOpen { onStateChanged?(false) }
+            return
+        }
 
         let panel = QLPreviewPanel.shared()
         self.panel = panel
-        isOpen = true
-        onStateChanged?(true)
         panel?.dataSource = self
         panel?.delegate = self
         panel?.reloadData()

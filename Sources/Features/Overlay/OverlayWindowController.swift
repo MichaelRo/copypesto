@@ -51,7 +51,7 @@ final class OverlayWindowController {
 
         appState.onRestoreKeyFocus = { [weak self] in
             guard let self, self.appState.isOverlayVisible, !self.isHiding else { return }
-            self.panel.makeKey()
+            self.panel.makeKeyAndOrderFront(nil)
         }
         panel.onEscapeKey = { [weak appState] in
             Task { @MainActor in appState?.close() }
@@ -294,6 +294,59 @@ final class OverlayWindowController {
         installAppActivateObserver()
     }
 
+    func shouldDismissForClick(at screenPoint: NSPoint) -> Bool {
+        if panel.frame.contains(screenPoint) { return false }
+        if panel.childWindows?.contains(where: { $0.isVisible && $0.frame.contains(screenPoint) }) == true {
+            return false
+        }
+        if appState.keepsShelfOpenForModal { return false }
+        if QLPreviewPanel.sharedPreviewPanelExists(),
+           let ql = QLPreviewPanel.shared(),
+           ql.isVisible,
+           ql.dataSource != nil,
+           ql.frame.contains(screenPoint)
+        {
+            return false
+        }
+        if NSApp.windows.contains(where: {
+            ($0 is AIResultPanel || $0.identifier?.rawValue == AccessibilityID.textEditWindow)
+                && $0.isVisible
+                && $0.frame.contains(screenPoint)
+        }) {
+            return false
+        }
+        return true
+    }
+
+    func shouldDismissOnResignKey(keyWindow: NSWindow? = NSApp.keyWindow) -> Bool {
+        guard appState.isOverlayVisible, !isHiding, !appState.isDragging else { return false }
+        if appState.keepsShelfOpenForModal { return false }
+        if let key = keyWindow {
+            if panel.childWindows?.contains(key) == true
+                || key is QLPreviewPanel
+                || key is AIResultPanel
+                || key.identifier?.rawValue == AccessibilityID.textEditWindow
+            {
+                return false
+            }
+        }
+        if QLPreviewPanel.sharedPreviewPanelExists(),
+           let ql = QLPreviewPanel.shared(),
+           ql.isVisible,
+           ql.dataSource != nil
+        {
+            return false
+        }
+        return true
+    }
+
+    func shouldDismissOnExternalAppActivation(bundleID: String?) -> Bool {
+        guard appState.isOverlayVisible, !isHiding, !appState.isDragging else { return false }
+        if appState.keepsShelfOpenForModal { return false }
+        guard let bundleID, bundleID != Bundle.main.bundleIdentifier else { return false }
+        return true
+    }
+
     private func installClickMonitor() {
         guard clickMonitor == nil else { return }
         clickMonitor = NSEvent.addGlobalMonitorForEvents(
@@ -301,16 +354,7 @@ final class OverlayWindowController {
         ) { [weak self] _ in
             guard let self else { return }
             let mouse = NSEvent.mouseLocation
-            guard !self.panel.frame.contains(mouse), !self.appState.keepsShelfOpenForAuthentication else { return }
-            if self.appState.isQuickLookOpen {
-                if QLPreviewPanel.sharedPreviewPanelExists(),
-                   let ql = QLPreviewPanel.shared(),
-                   ql.isVisible,
-                   ql.frame.contains(mouse)
-                {
-                    return
-                }
-            }
+            guard self.shouldDismissForClick(at: mouse) else { return }
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.appState.isDragging = false // clear stale drag state if any
@@ -341,17 +385,7 @@ final class OverlayWindowController {
             queue: .main
         ) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, self.appState.isOverlayVisible, !self.isHiding,
-                      !self.appState.isDragging else { return }
-                if self.appState.isQuickLookOpen || self.appState.keepsShelfOpenForAuthentication { return }
-                if let key = NSApp.keyWindow {
-                    if self.panel.childWindows?.contains(key) == true || key is QLPreviewPanel {
-                        return
-                    }
-                }
-                if QLPreviewPanel.sharedPreviewPanelExists(), QLPreviewPanel.shared()?.isVisible == true {
-                    return
-                }
+                guard let self, self.shouldDismissOnResignKey() else { return }
                 self.onClickOutside?()
             }
         }
@@ -367,12 +401,8 @@ final class OverlayWindowController {
             let activatedBundleID = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?
                 .bundleIdentifier
             MainActor.assumeIsolated {
-                guard let self, self.appState.isOverlayVisible, !self.isHiding,
-                      !self.appState.isDragging else { return }
-                if self.appState.isQuickLookOpen || self.appState.keepsShelfOpenForAuthentication { return }
-                if let activatedBundleID, activatedBundleID != Bundle.main.bundleIdentifier {
-                    self.onClickOutside?()
-                }
+                guard let self, self.shouldDismissOnExternalAppActivation(bundleID: activatedBundleID) else { return }
+                self.onClickOutside?()
             }
         }
     }

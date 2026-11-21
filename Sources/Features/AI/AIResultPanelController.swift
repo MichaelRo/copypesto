@@ -29,7 +29,7 @@ final class AIResultPanel: NSPanel {
             defer: false
         )
         isFloatingPanel = true
-        level = .floating
+        level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         isOpaque = false
         backgroundColor = .clear
         hasShadow = true
@@ -49,16 +49,61 @@ final class AIResultPanel: NSPanel {
     override func sendEvent(_ event: NSEvent) {
         if event.type == .leftMouseDown,
            let contentView,
-           contentView.bounds.height > 80,
-           event.locationInWindow.y >= contentView.bounds.height - 44,
-           !(contentView.hitTest(event.locationInWindow) is NSControl)
+           contentView.bounds.height > 80
         {
-            NSCursor.closedHand.push()
-            performDrag(with: event)
-            NSCursor.pop()
-            return
+            let point = contentView.convert(event.locationInWindow, from: nil)
+            if point.y >= contentView.bounds.height - 44,
+               !Self.isInCloseButtonZone(point, in: contentView),
+               !(contentView.hitTest(event.locationInWindow) is NSControl)
+            {
+                NSCursor.closedHand.push()
+                performDrag(with: event)
+                NSCursor.pop()
+                return
+            }
         }
         super.sendEvent(event)
+    }
+
+    static func isInCloseButtonZone(_ point: NSPoint, in contentView: NSView) -> Bool {
+        guard point.y >= contentView.bounds.height - 44 else { return false }
+        if contentView.userInterfaceLayoutDirection == .rightToLeft {
+            return point.x <= 56
+        }
+        return point.x >= contentView.bounds.width - 56
+    }
+}
+
+extension AppState {
+    var keepsShelfOpenForModal: Bool {
+        keepsShelfOpenForAuthentication || isTextEditorOpen || isQuickLookOpen || isAIResultOpen
+    }
+
+    func handleAIResultChange() {
+        if let aiResult {
+            isAIResultOpen = true
+            onAIResult?(aiResult)
+        } else {
+            // The panel closed, or the history locked: what was left of a long text is dropped with it.
+            aiRun = nil
+            aiPartTask?.cancel()
+            aiPartTask = nil
+            onAIResultCleared?()
+            if !aiIsLoading, isAIResultOpen {
+                isAIResultOpen = false
+                onRestoreKeyFocus?()
+            }
+        }
+    }
+
+    func handleAILoadingChange() {
+        if aiIsLoading {
+            isAIResultOpen = true
+            onAILoading?()
+        } else if aiResult == nil, isAIResultOpen {
+            isAIResultOpen = false
+            onRestoreKeyFocus?()
+        }
     }
 }
 
@@ -255,7 +300,10 @@ private struct AILoadingView: View {
 /// Manages a floating panel that shows the AI action result (or a loading spinner).
 @MainActor
 final class AIResultPanelController {
-    private var panel: NSPanel?
+    private(set) var panel: NSPanel?
+    private(set) var isOpen = false
+    var onStateChanged: (@MainActor (Bool) -> Void)?
+    var onClose: (@MainActor () -> Void)?
 
     func showLoading() {
         show(content: SafeHostingView(pesto: AILoadingView()), size: NSSize(width: 340, height: 60))
@@ -284,20 +332,31 @@ final class AIResultPanelController {
         let visible = (TargetScreen.current() ?? NSScreen.main)?.visibleFrame.height ?? 900
         let cap = AIResultLayout.panelCap(visibleHeight: visible, readsInParts: result.progress != nil)
         let height = min(max(needed, 170), cap)
-        show(content: hosting, size: NSSize(width: width, height: height))
+        show(content: hosting, size: NSSize(width: width, height: height), onEscape: onClose)
     }
 
     func hide() {
-        panel?.orderOut(nil)
-        panel = nil
+        let wasOpen = isOpen
+        isOpen = false
+        tearDownPanel()
+        if wasOpen {
+            onStateChanged?(false)
+            onClose?()
+        }
     }
 
     // MARK: - Private
 
-    private func show(content: NSView, size: NSSize) {
+    private func tearDownPanel() {
+        panel?.orderOut(nil)
+        panel = nil
+    }
+
+    private func show(content: NSView, size: NSSize, onEscape: (() -> Void)? = nil) {
         // A part that came in replaces the panel in the same place, so a panel the person moved does not jump back.
         let previousFrame = panel?.frame
-        hide()
+        let wasOpen = isOpen
+        tearDownPanel()
 
         content.frame = NSRect(origin: .zero, size: size)
         content.wantsLayer = true
@@ -305,7 +364,13 @@ final class AIResultPanelController {
         content.layer?.cornerCurve = .continuous
         content.layer?.masksToBounds = true
 
-        let newPanel = AIResultPanel(size: size) { [weak self] in self?.hide() }
+        let newPanel = AIResultPanel(size: size) { [weak self] in
+            if let onEscape {
+                onEscape()
+            } else {
+                self?.hide()
+            }
+        }
         newPanel.contentView = content
 
         if let previousFrame {
@@ -329,6 +394,8 @@ final class AIResultPanelController {
                 display: false
             )
         }
+        isOpen = true
+        if !wasOpen { onStateChanged?(true) }
         newPanel.makeKeyAndOrderFront(nil)
         newPanel.invalidateShadow()
         panel = newPanel

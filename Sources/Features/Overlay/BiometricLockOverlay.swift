@@ -119,12 +119,19 @@ struct BiometricLockOverlay<Content: View>: View {
             .controlSize(.small)
     }
 
+    static func shelfPromptSymbolName(usesEmbeddedPrompt: Bool, lockMethod: LockMethod) -> String {
+        usesEmbeddedPrompt && lockMethod.symbolName == "touchid" ? "lock.fill" : lockMethod.symbolName
+    }
+
     /// Touch ID for an action inside the shelf (showing a hidden clip), asked here so the shelf stays open.
     private func shelfPrompt(_ request: ShelfAuthenticationRequest) -> some View {
         VStack(spacing: 10) {
-            Image(systemName: "touchid")
-                .font(.system(size: 26, weight: .medium))
-                .pestoQuiet()
+            Image(systemName: Self.shelfPromptSymbolName(
+                usesEmbeddedPrompt: usesEmbeddedPrompt,
+                lockMethod: lockMethod
+            ))
+            .font(.system(size: 26, weight: .medium))
+            .pestoQuiet()
             Text(request.reason)
                 .scaledFont(size: 13, weight: .semibold)
                 .multilineTextAlignment(.center)

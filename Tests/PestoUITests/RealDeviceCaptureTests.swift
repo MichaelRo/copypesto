@@ -14,6 +14,15 @@ final class RealDeviceCaptureTests: PestoUITestCase {
         try await super.setUp()
     }
 
+    private func waitForEmbeddedBiometricPrompt(containerIdentifier: String) {
+        XCTAssertTrue(element(containerIdentifier).waitUntilExists(timeout: 10), "lock/auth overlay should show")
+        XCTAssertTrue(
+            element(AccessibilityID.unlockButton).waitUntilExists(timeout: 5),
+            "embedded Touch ID prompt should mount"
+        )
+        RunLoop.current.run(until: Date().addingTimeInterval(1.5))
+    }
+
     func test_lockScreenWithTheSystemTouchIDView() {
         launch(
             seed: "marketing",
@@ -22,10 +31,27 @@ final class RealDeviceCaptureTests: PestoUITestCase {
         )
 
         showOverlay(expectingCards: false)
-
-        XCTAssertTrue(element(AccessibilityID.lockOverlay).waitUntilExists(timeout: 10), "the lock screen should show")
-        RunLoop.current.run(until: Date().addingTimeInterval(1.5))
+        waitForEmbeddedBiometricPrompt(containerIdentifier: AccessibilityID.lockOverlay)
         capture("real-history-locked")
+    }
+
+    func test_shelfAuthenticationPromptWithTheSystemTouchIDView() {
+        launch(
+            seed: "basic",
+            defaults: ["hasOnboarded": "true", "appearanceMode": "dark"],
+            backdrop: "plain", realDevice: true
+        )
+
+        showOverlay()
+        let maskedCard = card(containing: "4242")
+        XCTAssertTrue(maskedCard.waitUntilExists(timeout: 10), "masked card missing")
+        maskedCard.rightClick()
+        let showItem = app.menuItems["Show"]
+        XCTAssertTrue(showItem.waitUntilExists(timeout: 5), "Show menu item missing")
+        showItem.click()
+
+        waitForEmbeddedBiometricPrompt(containerIdentifier: AccessibilityID.shelfAuthenticationPrompt)
+        capture("real-shelf-auth-prompt")
     }
 
     func test_askAnsweredByTheOnDeviceModel() {

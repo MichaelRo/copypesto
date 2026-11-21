@@ -105,10 +105,13 @@ extension GridView {
                 editor.edit(item, refreshesRow: false, changesFilter: false) { $0.expiresAt = date }
             },
             quickLook: { item in
+                if item.sensitivityRaw == nil {
+                    quickLookController.toggle(item: item)
+                    return
+                }
                 Task {
-                    let permitted = item.sensitivityRaw == nil
-                        ? true
-                        : await appState.authenticateInShelf(reason: "Show a clip that is hidden on the shelf")
+                    let permitted = await appState
+                        .authenticateInShelf(reason: "Show a clip that is hidden on the shelf")
                     if permitted { quickLookController.toggle(item: item) }
                 }
             },

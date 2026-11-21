@@ -55,6 +55,8 @@ final class AppState {
 
     /// `true` while the system Quick Look panel is open over the shelf.
     var isQuickLookOpen = false
+    var isTextEditorOpen = false
+    var isAIResultOpen = false
 
     /// `true` when biometric lock is active — grid is blurred until Touch ID succeeds.
     var isHistoryLocked = false
@@ -354,7 +356,7 @@ final class AppState {
     /// Floats a notice that does not need the shelf (set by the delegate).
     @ObservationIgnored var showToast: (@MainActor (StatusToast) -> Void)?
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?
-    /// Opens the Edit Text window for a clip, closing the shelf first (ADR 0050). Set by the delegate.
+    /// Opens the Edit Text window for a clip above the shelf. Set by the delegate.
     @ObservationIgnored var openTextEditor: (@MainActor (ClipboardItem) -> Void)?
     /// Closes the Edit Text window and drops its draft: the History Lock calls it. Set by the delegate.
     @ObservationIgnored var closeTextEditor: (@MainActor () -> Void)?
@@ -389,17 +391,7 @@ final class AppState {
 
     @ObservationIgnored var aiCoordinator = AIActionCoordinator()
     var aiResult: AIResult? {
-        didSet {
-            if let aiResult {
-                onAIResult?(aiResult)
-            } else {
-                // The panel closed, or the history locked: what was left of a long text is dropped with it.
-                aiRun = nil
-                aiPartTask?.cancel()
-                aiPartTask = nil
-                onAIResultCleared?()
-            }
-        }
+        didSet { handleAIResultChange() }
     }
 
     /// The long text being summarized a part at a time (`AppState+AIParts`); in memory only while the panel is open.
@@ -408,7 +400,7 @@ final class AppState {
     @ObservationIgnored var onAIResultCleared: (() -> Void)?
 
     var aiIsLoading = false {
-        didSet { if aiIsLoading { onAILoading?() } }
+        didSet { handleAILoadingChange() }
     }
 
     @ObservationIgnored var onAIResult: ((AIResult) -> Void)?

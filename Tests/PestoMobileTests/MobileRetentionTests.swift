@@ -116,4 +116,27 @@ struct MobileRetentionTests {
         #expect(RetentionChoices.ageLabel(30) == "1 month")
         #expect(RetentionChoices.ageLabel(RetentionChoices.foreverDays) == "Forever")
     }
+
+    @Test("a sweep and Clear History protect clips belonging to a collection even when not pinned")
+    func whenInCollection_thenProtectedFromRetentionAndClearHistory() async throws {
+        let time = TimeBox()
+        let library = try await MobileTestLibrary(clock: { time.now })
+        library.state.retentionPolicy = { RetentionPolicy.chosen(days: 30, maxItems: 5000) }
+        let board = try #require(library.state.addCollection(named: "Work", existing: []))
+        let loose = try await library.add("loose old clip")
+        let kept = try await library.add("collection clip")
+        library.state.moveToCollection(kept, collectionID: board.id)
+        try await library.refreshed()
+
+        time.advance(by: 40 * 86_400)
+        await library.state.pruneHistory(force: true)
+        try await library.refreshed()
+
+        #expect(library.store.item(for: loose.id) == nil)
+        #expect(library.store.item(for: kept.id) != nil)
+
+        await library.state.clearHistory()
+        try await library.refreshed()
+        #expect(library.store.item(for: kept.id) != nil)
+    }
 }

@@ -33,6 +33,7 @@ struct PictureCardFace<Foot: View>: View {
             .padding(.horizontal, 8)
             .padding(.bottom, 8)
         }
+        .contentShape(.rect)
     }
 
     @ViewBuilder
@@ -45,11 +46,13 @@ struct PictureCardFace<Foot: View>: View {
                     Color.clear
                         .overlay { Image(uiImage: image).resizable().scaledToFill() }
                         .clipped()
+                        .contentShape(.rect)
                         .blur(radius: 14, opaque: true)
                         .overlay(Color.black.opacity(0.35))
                     still(image, fills: false)
                         .padding(.bottom, title == nil ? 30 : 54)
                 }
+                .contentShape(.rect)
             }
         } else {
             Color.secondary.opacity(0.10)
@@ -60,6 +63,7 @@ struct PictureCardFace<Foot: View>: View {
         Color.clear
             .overlay { still(image, fills: true) }
             .clipped()
+            .contentShape(.rect)
     }
 
     @ViewBuilder

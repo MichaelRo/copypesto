@@ -65,5 +65,28 @@ extension MobilePasteboardGlobals {
             await library.state.secretReveal.show(item.id, reason: "test")
             #expect(!library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isConcealed)
         }
+
+        @Test("an explicit clip can be revealed on iOS and blurs again on Hide or leaving the foreground")
+        func whenNSFWClipIsShown_thenItUncoversUntilHiddenOrForeground() async throws {
+            let library = try await MobileTestLibrary()
+            let item = try await library.add("explicit pic")
+            item.isNSFW = true
+
+            #expect(library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isConcealed)
+            #expect(library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isNSFWBlurred)
+
+            library.state.secretReveal.showNSFW(item.id)
+            #expect(library.state.secretReveal.isNSFWShown(item.id))
+            #expect(!library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isConcealed)
+
+            library.state.secretReveal.hideNSFW(item.id)
+            #expect(!library.state.secretReveal.isNSFWShown(item.id))
+            #expect(library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isConcealed)
+
+            library.state.secretReveal.showNSFW(item.id)
+            library.state.didLeaveForeground()
+            #expect(!library.state.secretReveal.isNSFWShown(item.id))
+            #expect(library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isConcealed)
+        }
     }
 }

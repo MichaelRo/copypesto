@@ -44,7 +44,7 @@ struct LibrarySidebar: View {
                 .foregroundStyle(Color(hex: board.colorHex) ?? .secondary)
         }
         .tag(LibraryScope.collection(board.id))
-        .contextMenu { CollectionMenu(board: board) }
+        .contextMenu { CollectionMenu(board: board, collections: collections, allowsHideOnPhone: false) }
         .onDrop(of: [ClipDrag.clipIDType], isTargeted: nil) { providers in
             guard !board.isSmart else { return false }
             Task { await file(providers, into: board.id) }
@@ -62,11 +62,54 @@ struct LibrarySidebar: View {
 
 struct CollectionMenu: View {
     let board: Pinboard
+    var collections: [Pinboard] = []
+    var allowsHideOnPhone = false
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
+    @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
+
+    private var index: Int? {
+        collections.firstIndex(where: { $0.id == board.id })
+    }
 
     var body: some View {
         Button("Edit Collection", systemImage: "pencil") { library.editingCollection = board }
+        if !board.isSmart {
+            Button("Export Collection\u{2026}", systemImage: "square.and.arrow.up") {
+                Task {
+                    if let url = await appState.exportCollection(board) {
+                        library.sharing = ClipShare(file: url)
+                    }
+                }
+            }
+        }
+        if let index, collections.count > 1 {
+            if index > 0 {
+                Button(
+                    allowsHideOnPhone ? "Move Left" : "Move Up",
+                    systemImage: allowsHideOnPhone ? "arrow.left" : "arrow.up"
+                ) {
+                    appState.moveCollection(board, direction: -1, among: collections)
+                }
+            }
+            if index + 1 < collections.count {
+                Button(
+                    allowsHideOnPhone ? "Move Right" : "Move Down",
+                    systemImage: allowsHideOnPhone ? "arrow.right" : "arrow.down"
+                ) {
+                    appState.moveCollection(board, direction: 1, among: collections)
+                }
+            }
+        }
+        if allowsHideOnPhone {
+            Button("Hide Collection", systemImage: "eye.slash") {
+                hiddenStored = HiddenCollections.toggle(board.id, in: hiddenStored)
+                if library.filter.scope == .collection(board.id) {
+                    library.filter.scope = .all
+                }
+            }
+        }
+        Divider()
         Button("Delete Collection", systemImage: "trash", role: .destructive) {
             let id = board.id
             Task { await appState.deleteCollection(id) }

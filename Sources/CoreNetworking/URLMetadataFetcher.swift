@@ -172,7 +172,7 @@ public final class URLMetadataFetcher {
             return directGIF
         }
 
-        if Self.isDirectGIFLink(url) {
+        if Self.isDirectGIFLink(url), await !Self.servesHTMLPage(at: url, session: session) {
             let negative = URLPreviewResult(title: nil, ogImageData: nil, faviconData: nil, siteName: nil)
             cachePreview(negative, originalURL: originalURL, unwrapped: url, isNegative: true)
             throw URLError(.cannotDecodeContentData)
@@ -227,7 +227,7 @@ public final class URLMetadataFetcher {
     }
 
     public nonisolated static func pageNamesAGIF(_ url: URL) -> Bool {
-        !isDirectGIFLink(url) && url.path.lowercased().contains("gif")
+        url.path.lowercased().contains("gif")
     }
 
     /// LinkPresentation returns no picture for a link straight to a GIF, and re-encodes page pictures as still images.
@@ -248,17 +248,46 @@ public final class URLMetadataFetcher {
         return url.pathExtension.lowercased() == "gif" || path.hasSuffix(".gif") || path.contains(".gif/")
     }
 
-    /// The GIF at `url`, or nil for an error status, a body that is not a GIF, or one over `maxDownloadBytes`.
+    private nonisolated static func servesHTMLPage(at url: URL, session: URLSession) async -> Bool {
+        var request = URLRequest(url: url, timeoutInterval: 10)
+        request.setValue(defaultUserAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
+        let owned = URLSession(configuration: session.configuration)
+        defer { owned.finishTasksAndInvalidate() }
+        guard let (data, response) = try? await owned.data(for: request),
+              let http = response as? HTTPURLResponse,
+              (200...299).contains(http.statusCode) else
+        {
+            return false
+        }
+        let mime = (http.mimeType ?? "").lowercased()
+        if mime.contains("html") { return true }
+        guard let text = String(data: data.prefix(64), encoding: .utf8) else { return false }
+        let prefix = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return prefix.hasPrefix("<!doctype") || prefix.hasPrefix("<html") || prefix.hasPrefix("<meta")
+    }
+
+    /// The GIF at `url` (transcoding animated WebP/APNG when needed), or nil for an error status, non-animated body,
+    /// or one over `maxDownloadBytes`.
     public nonisolated static func downloadGIF(from url: URL, session: URLSession = .shared) async -> Data? {
-        await downloadPicture(from: url, session: session).flatMap { $0.isGIF ? $0 : nil }
+        guard let data = await downloadPicture(
+            from: url, accept: "image/gif,image/webp,image/*;q=0.8", session: session
+        ) else {
+            return nil
+        }
+        if data.isGIF { return data }
+        return ImageDownsampler.animatedGIF(from: data, maxPixel: 480, maxFrames: 60)
     }
 
     /// What is at `url` as a picture request gets it (a GIF, an animated WebP), or nil for an error status or a body
     /// over `maxDownloadBytes`. The caller decides whether it is the animation it wanted.
-    public nonisolated static func downloadPicture(from url: URL, session: URLSession = .shared) async -> Data? {
+    public nonisolated static func downloadPicture(
+        from url: URL, accept: String = "image/gif,image/webp,image/*;q=0.8", session: URLSession = .shared
+    ) async
+    -> Data? {
         var request = URLRequest(url: url, timeoutInterval: 15)
         request.setValue(defaultUserAgent, forHTTPHeaderField: "User-Agent")
-        request.setValue("image/gif,image/webp,image/*;q=0.8", forHTTPHeaderField: "Accept")
+        request.setValue(accept, forHTTPHeaderField: "Accept")
         let download = BoundedDownload(limit: maxDownloadBytes)
         let owned = URLSession(configuration: session.configuration, delegate: download, delegateQueue: nil)
         defer { owned.finishTasksAndInvalidate() }
@@ -445,16 +474,18 @@ public final class URLMetadataFetcher {
         }
         return ScrapedPageHead(title: title, ogImageData: processOGImageData(imgData))
     }
+}
 
+public extension URLMetadataFetcher {
     /// Fetches the head of the page HTML at `url` and attempts to scrape the OpenGraph / Twitter preview image.
-    public nonisolated static func scrapeOGImage(from url: URL, session: URLSession = .shared) async -> Data? {
+    nonisolated static func scrapeOGImage(from url: URL, session: URLSession = .shared) async -> Data? {
         await scrapePageHead(from: url, session: session).ogImageData
     }
 
     /// Decides how raw og:image bytes should be persisted: an animated picture stays animated (as a GIF), anything else
     /// is re-encoded by `thumbnail()`.
     /// Pure function — exposed for unit testing.
-    public nonisolated static func processOGImageData(_ raw: Data) -> Data? {
+    nonisolated static func processOGImageData(_ raw: Data) -> Data? {
         // Scaled and frame-capped, so a card never has to decode a huge animation. A GIF already smaller than its
         // copy is kept as it came; a WebP or PNG animation (what GIPHY sends) is always turned into a GIF.
         if let small = ImageDownsampler.animatedGIF(from: raw, maxPixel: 600, maxFrames: 60),
@@ -468,7 +499,7 @@ public final class URLMetadataFetcher {
 
     /// Scales the image down with ImageIO (thread-safe) and compresses as JPEG. Returns nil
     /// if the image can't be decoded or compressed below `maxBytes` at minimum quality.
-    public nonisolated static func thumbnail(from data: Data, maxBytes: Int) -> Data? {
+    nonisolated static func thumbnail(from data: Data, maxBytes: Int) -> Data? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
 

@@ -47,6 +47,8 @@ final class MobileAppState: ClipboardShortcutHandling {
     @ObservationIgnored var quickInsertObserver: (any NSObjectProtocol)?
     /// The last clip a widget link copied, so the library shows it (`MobileAppState+WidgetLink.swift`).
     var linkedClip: LinkedClip?
+    /// Search query handed off by `SearchPestoIntent`, consumed once the library is unlocked.
+    var shortcutSearchQuery: String?
     /// Hands a link clip's web address to the browser; a test records it instead.
     @ObservationIgnored var openExternally: @MainActor (URL) -> Void = { UIApplication.shared.open($0) }
     /// Where the widget's snapshot is kept (`MobileAppState+Widget.swift`); nil in a hosted test until it names one.

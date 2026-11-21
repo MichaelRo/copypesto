@@ -121,4 +121,36 @@ struct PerceptualDedupeTests {
         #expect(items.count == 1)
         #expect(items[0].timestamp == before, "a restore must not reorder the history")
     }
+
+    @Test("large high-resolution pictures compute a perceptual hash synchronously and dedup across encodings")
+    func ingest_largeCrossFormatDuplicate_deduplicatesSynchronously() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let service = StorageService(
+            modelContainer: container, environment: .testing { $0.textRecognizer = NoTextRecognizer() }
+        )
+        let rep = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 800, pixelsHigh: 800, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .calibratedRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        for x in 0..<800 {
+            for y in 0..<800 {
+                let shade = CGFloat((x + y * 2) % 256) / 255
+                rep.setColor(NSColor(calibratedRed: shade, green: 0.4, blue: 1 - shade, alpha: 1), atX: x, y: y)
+            }
+        }
+        let png = try #require(rep.representation(using: .png, properties: [:]))
+        let jpeg = try #require(rep.representation(using: .jpeg, properties: [.compressionFactor: 0.85]))
+        let clock = Mutex(Date(timeIntervalSince1970: 1000))
+        await service.updateClock { clock.withLock { $0 } }
+
+        try await service.ingest(capture(png, type: "public.png"))
+        let first = try #require(try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>()).first)
+        #expect(first.perceptualHash != nil)
+
+        clock.withLock { $0 = Date(timeIntervalSince1970: 5000) }
+        try await service.ingest(capture(jpeg, type: "public.jpeg"))
+
+        let items = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+        #expect(items.count == 1)
+    }
 }

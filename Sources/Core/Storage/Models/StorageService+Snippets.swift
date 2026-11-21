@@ -136,6 +136,27 @@ public extension StorageService {
         return item.isPinned
     }
 
+    /// Sets `isPinned` across several clips in one undoable batch.
+    func setPinned(ids: [UUID], pinned: Bool) throws {
+        guard !ids.isEmpty else { return }
+        let wanted = Set(ids)
+        let all = try modelContext.fetch(FetchDescriptor<ClipboardItem>())
+        var edits: [(ClipboardItem, ClipFieldState)] = []
+        for item in all where wanted.contains(item.id) && item.isPinned != pinned {
+            edits.append((item, ClipFieldState(item)))
+            item.isPinned = pinned
+            if !pinned { item.setShortcut(nil) }
+        }
+        guard !edits.isEmpty else { return }
+        if !pinned {
+            try pruneEmptySnippetsCollectionIfNeeded()
+        } else {
+            try ensureSnippetsCollection()
+        }
+        try saveOrRollback()
+        recordEdits(edits)
+    }
+
     /// Ensures the smart `Snippets` collection exists when at least one snippet is configured and the user has not
     /// explicitly deleted the `Snippets` collection.
     func ensureSnippetsCollection() throws {

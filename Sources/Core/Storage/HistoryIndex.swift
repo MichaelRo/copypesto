@@ -202,7 +202,7 @@ public struct HistoryIndex: Sendable {
             return false
         }
         if criteria.hidesSensitive, row.isNSFW { return false }
-        if criteria.pinnedOnly, !row.isPinned { return false }
+        if criteria.pinnedOnly, !row.isPinned || row.collectionID != nil { return false }
         let apps = criteria.searchActive ? criteria.appBundleIDs.union(criteria.sources) : criteria.appBundleIDs
         if !apps.isEmpty, !(row.sourceBundleID.map(apps.contains) ?? false) {
             return false

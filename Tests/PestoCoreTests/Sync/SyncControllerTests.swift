@@ -274,6 +274,30 @@ struct SyncControllerTests {
         #expect(group.epoch == 2 && group.key.recoveryKey == second)
     }
 
+    @Test("Reset Sync still recovers when this device has needsKey and lost the old recovery key")
+    func resetWhenNeedsKeyWithoutOldKey() async throws {
+        let a = try SyncMac(name: "mac-a", folder: folder, time: time)
+        await a.controller.turnOn()
+        a.controller.cancelFlow()
+
+        let b = try SyncMac(name: "mac-b", folder: folder, time: time)
+        await b.controller.turnOn()
+        #expect(b.controller.flow == .needsKey)
+
+        await b.controller.reset()
+        guard case let .recoveryKey(newKey) = b.controller.flow else {
+            Issue.record("expected new recovery key after forced reset, got \(b.controller.flow)")
+            return
+        }
+        guard case let .ready(group) = try SyncGroupManager.open(
+            layout: SyncFolderLayout(root: folder), keyStore: b.keyStore
+        ) else {
+            Issue.record("expected group to be ready on epoch 2")
+            return
+        }
+        #expect(group.epoch == 2 && group.key.recoveryKey == newKey)
+    }
+
     @Test("Leave Sync removes this Mac's own files, turns sync off and keeps its clips; the others keep theirs")
     func leave() async throws {
         let a = try SyncMac(name: "mac-a", folder: folder, time: time)

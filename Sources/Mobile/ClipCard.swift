@@ -60,11 +60,22 @@ struct ClipCard: View {
     var body: some View {
         let face = face
         card(face: face, width: width)
+            .contentShape(shape)
             .contentShape(.contextMenuPreview, shape)
             .contentShape(.dragPreview, shape)
-            .onTapGesture { copy() }
+            .onTapGesture {
+                if library.isSelecting {
+                    library.toggleSelection(item.id)
+                } else {
+                    copy()
+                }
+            }
             .onKeyPress(.return) {
-                copy()
+                if library.isSelecting {
+                    library.toggleSelection(item.id)
+                } else {
+                    copy()
+                }
                 return .handled
             }
             .contextMenu {
@@ -78,19 +89,37 @@ struct ClipCard: View {
             }
             .modifier(CardDragSource(card: self))
             .focusedValue(\.clipCommands, isFocused ? commands : nil)
-            .task(id: CardMediaState.Key(id: item.id, isShown: appState.secretReveal.isShown(item.id))) {
+            .task(id: CardMediaState.Key(
+                id: item.id,
+                isShown: appState.secretReveal.isShown(item.id),
+                byteSize: item.byteSize,
+                isAnimatedHint: item.blob?.mimeType.contains("gif") == true
+            )) {
                 await media.load(
                     item, container: appState.historyContainer, isShown: appState.secretReveal.isShown(item.id),
                     fetchPreview: { await appState.loadLinkPreview(for: item) }
                 )
             }
-            .task(id: isOnScreen && !Motion.reduceMotion && !concealment.isConcealed) {
+            .task(id: AnimationKey(
+                plays: isOnScreen && !Motion.reduceMotion && !concealment.isConcealed,
+                isAnimated: media.isAnimated,
+                byteSize: item.byteSize,
+                isLinkAnimated: media.isLinkAnimated
+            )) {
                 guard isOnScreen, !Motion.reduceMotion, !concealment.isConcealed else { return }
                 let id = item.id
+                let byteSize = item.byteSize
                 let container = appState.historyContainer
-                await media.animate {
-                    await CardMedia.gifFrames(itemID: id, container: container, budget: .card)
-                }
+                await media.animate(
+                    decode: {
+                        await CardMedia.gifFrames(
+                            itemID: id, byteSize: byteSize, container: container, budget: .card
+                        )
+                    },
+                    linkDecode: {
+                        await CardMedia.linkGIFFrames(for: id, budget: .card)
+                    }
+                )
             }
             .onAppear { isOnScreen = true }
             .onDisappear {
@@ -117,12 +146,28 @@ struct ClipCard: View {
             }
             .background(cardFill, in: shape)
             .clipShape(shape)
+            .overlay(alignment: .topTrailing) {
+                if library.isSelecting {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(isSelected ? .white : .secondary, isSelected ? accent : .clear)
+                        .background(Circle().fill(isSelected ? Color.clear : Color.black.opacity(0.25)))
+                        .padding(8)
+                        .accessibilityHidden(true)
+                }
+            }
             .overlay { shape.strokeBorder(borderColor, lineWidth: ringed ? 2 : 0.75) }
+            .shadow(color: .black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 4, y: 2)
             .animation(Motion.animation(.pestoQuick), value: ringed)
     }
 
+    private var isSelected: Bool {
+        library.isSelecting && library.selectedClipIDs.contains(item.id)
+    }
+
     private var ringed: Bool {
-        isFocused || library.flashedClipID == item.id
+        isSelected || isFocused || library.flashedClipID == item.id
     }
 
     private var borderColor: Color {
@@ -163,16 +208,30 @@ struct ClipCard: View {
     func show() {
         let id = item.id
         if isCoveredForPrivacy { return appState.secretReveal.showUnderCover(id) }
-        Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
+        if item.sensitivityRaw != nil {
+            Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
+            return
+        }
+        if item.isNSFW {
+            appState.secretReveal.showNSFW(id)
+        }
     }
 
     func hide() {
         appState.secretReveal.hide(item.id)
+        appState.secretReveal.hideNSFW(item.id)
     }
 
     func share() {
         guard !concealment.isConcealed, let content = ClipContent.of(item) else { return }
         library.sharing = ClipShare(content)
+    }
+
+    private struct AnimationKey: Equatable {
+        let plays: Bool
+        let isAnimated: Bool
+        let byteSize: Int
+        let isLinkAnimated: Bool
     }
 
     struct Revision: Equatable {
@@ -181,6 +240,8 @@ struct ClipCard: View {
         let timestamp: Date
         let isCovered: Bool
         let content: String
+        let byteSize: Int
+        let mimeType: String?
         let metadata: Data?
 
         init(_ item: ClipboardItem) {
@@ -189,6 +250,8 @@ struct ClipCard: View {
             timestamp = item.timestamp
             isCovered = item.analysisPending || item.isNSFW
             content = item.contentHash
+            byteSize = item.byteSize
+            mimeType = item.blob?.mimeType
             metadata = item.metadataCiphertext
         }
     }

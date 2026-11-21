@@ -47,6 +47,17 @@ extension MobileAppState {
         }
     }
 
+    func requestShortcutSearch(_ query: String) {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        shortcutSearchQuery = trimmed
+    }
+
+    func takeShortcutSearchQuery() -> String? {
+        defer { shortcutSearchQuery = nil }
+        return shortcutSearchQuery
+    }
+
     func searchForShortcut(_ query: String, limit: Int = 20) throws -> [ShortcutClip] {
         boot()
         guard let context = historyContainer?.mainContext else { throw ShortcutFailure.notReady }

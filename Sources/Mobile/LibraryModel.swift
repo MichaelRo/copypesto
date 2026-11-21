@@ -42,6 +42,8 @@ final class LibraryModel {
     var sharing: ClipShare?
     var flashedClipID: UUID?
     var copyCount = 0
+    var isSelecting = false
+    var selectedClipIDs: Set<UUID> = []
     /// Bumped when the grid should take the history's order again (`GridOrder`).
     private(set) var orderVersion = 0
     @ObservationIgnored let order = GridOrder()
@@ -88,6 +90,36 @@ final class LibraryModel {
         snippetEditor = .edit(id: item.id, title: item.customTitle ?? "", text: text)
     }
 
+    func beginSelection(with initialID: UUID? = nil) {
+        isSelecting = true
+        if let initialID { selectedClipIDs.insert(initialID) }
+    }
+
+    func toggleSelection(_ id: UUID) {
+        if selectedClipIDs.contains(id) {
+            selectedClipIDs.remove(id)
+        } else {
+            selectedClipIDs.insert(id)
+        }
+    }
+
+    func selectAll(_ ids: [UUID]) {
+        isSelecting = true
+        selectedClipIDs = Set(ids)
+    }
+
+    func endSelection() {
+        isSelecting = false
+        selectedClipIDs = []
+    }
+
+    func targetCollectionID(in collections: [Pinboard]) -> UUID? {
+        guard case let .collection(id) = filter.scope,
+              let board = collections.first(where: { $0.id == id }),
+              !board.isSmart else { return nil }
+        return id
+    }
+
     /// The history locked: nothing it had open, typed or was about to delete comes back with the unlock.
     func closeEverything() {
         query = ""
@@ -104,6 +136,7 @@ final class LibraryModel {
         editingCollection = nil
         pendingDelete = nil
         sharing = nil
+        endSelection()
     }
 
     func didCopy(_ id: UUID) {
@@ -130,6 +163,15 @@ final class LibraryModel {
         } else {
             didCopy(id)
         }
+    }
+
+    func openSearch(_ text: String) {
+        filter = LibraryFilter()
+        query = text
+        isSearching = true
+        openClipID = nil
+        endSelection()
+        resort()
     }
 
     func resort() {

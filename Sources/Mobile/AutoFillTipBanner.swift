@@ -29,7 +29,7 @@ struct AutoFillTipBanner: View {
         .padding(.leading, 16)
         .padding(.trailing, 6)
         .padding(.vertical, 10)
-        .background(.regularMaterial, in: .rect(cornerRadius: 22))
+        .mobileGlassChrome(in: .rect(cornerRadius: 22), interactive: true)
         .frame(maxWidth: 560)
         .padding(.horizontal, 16)
         .padding(.bottom, 8)

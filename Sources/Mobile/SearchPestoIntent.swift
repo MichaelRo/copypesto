@@ -9,13 +9,14 @@ struct SearchPestoIntent: AppIntent {
         "Finds clips in your Pesto history whose text contains what you type. Clips with secrets are left out.",
         categoryName: "Clipboard"
     )
-    static let openAppWhenRun = false
+    static let openAppWhenRun = true
 
     @Parameter(title: "Search") var query: String
     @Dependency private var state: MobileAppState
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<[ClipEntity]> {
-        try .result(value: state.searchForShortcut(query).map(ClipEntity.init))
+        state.requestShortcutSearch(query)
+        return try .result(value: state.searchForShortcut(query).map(ClipEntity.init))
     }
 }

@@ -3,6 +3,8 @@ import Foundation
 import os
 import PestoCore
 import Photos
+import UIKit
+import UniformTypeIdentifiers
 
 /// What the Copy As, Copy Recognized Text and Save to Photos entries of a clip's menu do. Every clipboard write goes
 /// through `MobileClipboard`; a clip a lock or a cover hides is never read.
@@ -96,5 +98,34 @@ extension MobileAppState {
             Self.copyActionsLogger.error("Save to Photos failed: \(error.localizedDescription, privacy: .public)")
             tell(String(localized: "Couldn\u{2019}t save to Photos."), isProblem: true)
         }
+    }
+
+    @discardableResult
+    func copyPageTitle(_ item: ClipboardItem) -> Bool {
+        guard !isHistoryLockedNow(), !secretReveal.concealment(for: item).isConcealed,
+              let title = item.ogTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !title.isEmpty else { return false }
+        MobileClipboard.write(.text(title), protected: false)
+        tell(String(localized: "Copied"))
+        return true
+    }
+
+    @discardableResult
+    func copyLinkPreviewImage(_ item: ClipboardItem, store: LinkPreviewImageStore = LinkPreviewImageStore()) -> Bool {
+        guard !isHistoryLockedNow(), !secretReveal.concealment(for: item).isConcealed,
+              let data = store.load(for: item.id) else { return false }
+        if data.isGIF {
+            MobileClipboard.write(.picture(data, typeIdentifier: UTType.gif.identifier), protected: false)
+        } else if data.starts(with: [0xFF, 0xD8, 0xFF]) {
+            MobileClipboard.write(.picture(data, typeIdentifier: UTType.jpeg.identifier), protected: false)
+        } else if data.starts(with: [0x89, 0x50, 0x4E, 0x47]) {
+            MobileClipboard.write(.picture(data, typeIdentifier: UTType.png.identifier), protected: false)
+        } else if let png = UIImage(data: data)?.pngData() {
+            MobileClipboard.write(.picture(png, typeIdentifier: UTType.png.identifier), protected: false)
+        } else {
+            return false
+        }
+        tell(String(localized: "Copied"))
+        return true
     }
 }

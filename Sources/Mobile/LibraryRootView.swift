@@ -47,7 +47,10 @@ struct LibraryRootView: View {
             .overlay(alignment: .bottomLeading) { UITestLayout.swapControl(library: library, actual: sizeClass) }
         #endif
             .background(SceneCaptureReader { appState.secretReveal.isScreenCaptured = $0 || Self.forcesSceneCapture })
-            .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(in: scenePhase)))
+            .background(PrivacyCoverHost(covers: PrivacyCoverHost.covers(
+                in: scenePhase,
+                isLocked: appState.isHistoryLocked
+            )))
             .modifier(WelcomePresentation(onDismiss: startRequestedSync))
             .onChange(of: appState.hasBooted, initial: true) { _, booted in
                 if booted { appState.presentWelcomeOnFirstLaunch() }
@@ -79,6 +82,10 @@ struct LibraryRootView: View {
                 linked.id,
                 opensDetail: linked.opensDetail
             ) } }
+            .onChange(of: appState.shortcutSearchQuery, initial: true) { _, pending in
+                guard pending != nil, let query = appState.takeShortcutSearchQuery() else { return }
+                library.openSearch(query)
+            }
         } else if appState.hasBooted {
             ContentUnavailableView(
                 "History Unavailable",

@@ -78,7 +78,7 @@ extension ClipboardCard {
     }
 
     var fullBleedLinkChromeTitle: String? {
-        nil
+        trimmedCustomTitle
     }
 
     var fullBleedLinkCard: some View {

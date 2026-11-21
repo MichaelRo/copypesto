@@ -7,13 +7,20 @@ struct LibraryChipRow: View {
     @Environment(LibraryModel.self) private var library
     @Environment(MobileAppState.self) private var appState
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
+    @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
     @State private var isAsking = false
+
+    private var visibleCollections: [Pinboard] {
+        let hidden = HiddenCollections.ids(from: hiddenStored)
+        return collections.filter { !hidden.contains($0.id) }
+    }
 
     var body: some View {
         let chips = LibraryChip.row(
             collectionIDs: collections.map(\.id), isSearching: library.isSearching,
             offersAsk: !library.query.trimmingCharacters(in: .whitespaces).isEmpty && !library.filter.hasAsk,
-            hasAsk: library.filter.hasAsk
+            hasAsk: library.filter.hasAsk,
+            hiddenIDs: HiddenCollections.ids(from: hiddenStored)
         )
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
@@ -40,7 +47,9 @@ struct LibraryChipRow: View {
                     chip, label: board.name, symbol: board.symbolName,
                     tint: Color(hex: board.colorHex)
                 )
-                .contextMenu { CollectionMenu(board: board) }
+                .contextMenu {
+                    CollectionMenu(board: board, collections: visibleCollections, allowsHideOnPhone: true)
+                }
             }
         case .newCollection:
             Button("New Collection", systemImage: "plus") { library.isNamingCollection = true }

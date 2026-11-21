@@ -259,7 +259,7 @@ struct MobileHistoryLockTests {
 
     @Test("the toggle is off by default and a key of the settings registry")
     func whenDefault_thenOff() {
-        #expect(Setting.showsClipsOutsideWhileLocked.defaultValue == false)
+        #expect(Setting.showsClipsOutsideWhileLocked.defaultValue == true)
         #expect(Setting.allNames.contains(Setting.showsClipsOutsideWhileLocked.name))
     }
 

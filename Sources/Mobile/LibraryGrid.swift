@@ -34,13 +34,25 @@ struct LibraryGrid: View {
         let cardWidth = CardGridLayout.cardWidth(rowWidth: rowWidth, columns: count)
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                if showsChipRow { LibraryChipRow() }
                 if !appState.storeIsOnDisk { notSavedBanner }
                 grid(ids, columns: count, cardWidth: cardWidth)
                     .environment(\.cardClock, minute)
             }
             .padding(.top, 8)
             .padding(.bottom, 24)
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if showsChipRow {
+                LibraryChipRow()
+                    .padding(.vertical, 6)
+                    .mobileGlassChrome(in: .rect)
+                    .contentShape(.rect)
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if library.isSelecting {
+                MobileSelectionBar(collections: collections, allVisibleIDs: ids)
+            }
         }
         .scrollPosition(id: $position, anchor: .top)
         .onChange(of: position) { _, first in if hasRestoredPosition { library.scrollAnchor = first } }

@@ -39,13 +39,11 @@ extension ClipboardCard {
 
     var faceLinkTitle: String? {
         guard item.type == .url else { return nil }
-        return inCollection ? (trimmedCustomTitle ?? trimmedOgTitle) : (trimmedOgTitle ?? trimmedCustomTitle)
+        return trimmedCustomTitle ?? trimmedOgTitle
     }
 
     var showsTitleOnCardFace: Bool {
-        guard trimmedCustomTitle != nil else { return false }
-        if !inCollection, item.type == .url, trimmedOgTitle != nil { return false }
-        return true
+        trimmedCustomTitle != nil
     }
 
     var showsTopTitleKicker: Bool {

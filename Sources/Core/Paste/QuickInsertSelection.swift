@@ -112,7 +112,8 @@ public enum QuickInsertSelection {
         -> QuickInsertSet
     {
         var pinned = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { $0.isPinned }, sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            predicate: #Predicate { $0.isPinned && $0.collectionID == nil },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         pinned.fetchLimit = QuickInsertPolicy.scanLimit
         var recent = FetchDescriptor<ClipboardItem>(
@@ -228,7 +229,7 @@ public enum QuickInsertSelection {
                 item, body: body, section: isSnippet ? .snippets : section, isSnippet: isSnippet, reader: reader
             )
         }
-        for item in pinned {
+        for item in pinned where item.collectionID == nil {
             guard let made = entry(item, section: .pinned) else { continue }
             if made.section == .snippets { snippets.append(made) } else { pins.append(made) }
         }

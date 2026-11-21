@@ -30,7 +30,7 @@ struct SnippetFillRequest: Identifiable, Equatable {
         ))
     }
 
-    func expanded(fills: SnippetFills, pastedClipboard: String, at date: Date) -> String {
-        plan.expanded(text, fills: fills, pastedClipboard: pastedClipboard, at: date)
+    func expanded(fills: SnippetFills, pastedClipboard: String, selectedText: String = "", at date: Date) -> String {
+        plan.expanded(text, fills: fills, pastedClipboard: pastedClipboard, selectedText: selectedText, at: date)
     }
 }

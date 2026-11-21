@@ -21,6 +21,10 @@ struct ClipShare: Identifiable {
         }
     }
 
+    init(file: URL) {
+        items = [file]
+    }
+
     /// A GIF goes out as a file of its own, because a `UIImage` made from it is its first frame; any other picture
     /// goes as the image.
     static func pictureItems(_ data: Data, typeIdentifier: String) -> [Any] {

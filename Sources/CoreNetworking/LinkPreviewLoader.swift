@@ -43,6 +43,18 @@ public struct LinkPreviewLoader {
         return link
     }
 
+    private static func isTransient(_ error: any Error) -> Bool {
+        if error is CancellationError { return true }
+        guard let urlError = error as? URLError else { return false }
+        switch urlError.code {
+        case .cancelled, .timedOut, .networkConnectionLost, .notConnectedToInternet,
+             .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed:
+            return true
+        default:
+            return false
+        }
+    }
+
     /// Fetches and stores the preview. Returns whether a picture was stored, so a card can load it.
     @discardableResult
     public func load(_ item: ClipboardItem, isHistoryLocked: Bool, editor: ClipEditor) async -> Bool {
@@ -50,11 +62,21 @@ public struct LinkPreviewLoader {
             return false
         }
         let id = item.id
-        let result = try? await fetch(link)
+        let result: URLPreviewResult
+        do {
+            result = try await fetch(link)
+        } catch {
+            if !Task.isCancelled, !Self.isTransient(error) {
+                editor.applyDerived(to: item, changesFilter: false, reportsFailure: false) {
+                    $0.linkPreviewFetched = true
+                }
+            }
+            return false
+        }
         guard !Task.isCancelled, !item.isDeleted, item.type == .url else { return false }
         var explicit = false
         let mode = nsfwMode()
-        if let result, mode.detectsContent, !item.isNSFW {
+        if mode.detectsContent, !item.isNSFW {
             explicit = NSFWURLDetector.isExplicit(
                 urlString: item.displayPreviewText,
                 metadata: .init(title: result.title, description: nil, siteName: result.siteName)
@@ -62,7 +84,7 @@ public struct LinkPreviewLoader {
             if !explicit, let data = result.ogImageData { explicit = await screener.isSensitive(imageData: data) }
         }
         var storedPicture = false
-        if let data = result?.ogImageData {
+        if let data = result.ogImageData {
             do {
                 try images.save(data, for: id)
                 storedPicture = true
@@ -72,10 +94,8 @@ public struct LinkPreviewLoader {
             }
         }
         editor.applyDerived(to: item, changesFilter: explicit, reportsFailure: explicit) {
-            if let result {
-                if $0.ogTitle != result.title { $0.ogTitle = result.title }
-                if $0.ogSiteName != result.siteName { $0.ogSiteName = result.siteName }
-            }
+            if $0.ogTitle != result.title { $0.ogTitle = result.title }
+            if $0.ogSiteName != result.siteName { $0.ogSiteName = result.siteName }
             $0.linkPreviewFetched = true
             if explicit { $0.isNSFW = true }
         }

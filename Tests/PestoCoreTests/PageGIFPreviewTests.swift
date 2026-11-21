@@ -112,4 +112,19 @@ struct PageGIFPreviewTests {
         #expect(result.ogImageData?.isGIF != true)
         #expect(result.ogImageData != nil)
     }
+
+    @Test("a .gif URL that serves HTML falls through to its og:image animated GIF")
+    func whenDirectGIFURLReturnsHTML_thenFallsThroughToOGImage() async throws {
+        PerAddressProtocol.bodies = [
+            "https://giphy.com/gifs/funny-cat.gif": (
+                "text/html",
+                Data("<meta property=\"og:image\" content=\"https://media.giphy.com/media/123/giphy.gif\">".utf8)
+            ),
+            "https://media.giphy.com/media/123/giphy.gif": ("image/gif", animated)
+        ]
+        let result = try await fetcher().fetch(url: #require(URL(string: "https://giphy.com/gifs/funny-cat.gif")))
+
+        #expect(result.ogImageData?.isGIF == true)
+        #expect(frameCount(result.ogImageData) > 1)
+    }
 }

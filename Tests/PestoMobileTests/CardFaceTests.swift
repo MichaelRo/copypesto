@@ -83,8 +83,8 @@ struct CardFaceTests {
         #expect(face(.file, "file:///Users/me/recipe.pdf") == .file)
     }
 
-    @Test("in All, no clip shows a title on the card face")
-    func whenInAll_thenNoFaceTitle() {
+    @Test("in All, every non-concealed clip with a custom title shows it on the card face")
+    func whenInAllWithCustomTitle_thenShownOnFace() {
         for type in [ClipboardType.text, .code, .file, .color, .image, .url] {
             let title = CardFace.faceTitle(
                 type: type,
@@ -93,9 +93,12 @@ struct CardFaceTests {
                 customTitle: "My Title",
                 ogTitle: "Page Title"
             )
-            #expect(title == nil)
-            #expect(!CardFace.showsCustomTitleOnFace(inCollection: false, isConcealed: false, customTitle: "My Title"))
+            #expect(title == "My Title")
+            #expect(CardFace.showsCustomTitleOnFace(inCollection: false, isConcealed: false, customTitle: "My Title"))
         }
+        #expect(CardFace.faceTitle(
+            type: .url, inCollection: false, isConcealed: false, customTitle: nil, ogTitle: "Page Title"
+        ) == nil)
     }
 
     @Test("in a collection, every non-concealed clip with a custom title shows it on the face")
@@ -196,10 +199,11 @@ struct CardFaceTests {
         )
         textItem.customTitle = "Release notes"
         context.insert(textItem)
-        #expect(
-            renderFace(textItem, face: .text, media: CardMediaState(), inCollection: false)
-                != renderFace(textItem, face: .text, media: CardMediaState(), inCollection: true)
-        )
+        let titledTextInAll = renderFace(textItem, face: .text, media: CardMediaState(), inCollection: false)
+        let titledTextInCollection = renderFace(textItem, face: .text, media: CardMediaState(), inCollection: true)
+        #expect(titledTextInAll == titledTextInCollection)
+        textItem.customTitle = nil
+        #expect(titledTextInAll != renderFace(textItem, face: .text, media: CardMediaState(), inCollection: false))
 
         let linkItem = ClipboardItem(
             type: .url, sourceAppName: "Safari", previewText: "https://developer.apple.com/documentation/swiftui",
@@ -232,9 +236,14 @@ struct CardFaceTests {
         colorItem.customTitle = "Basil accent"
         context.insert(colorItem)
         let colorFace = PestoMobile.CardFace.decide(.init(type: .color, text: "#2F7A49", isConcealed: false))
-        #expect(
-            renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: false)
-                != renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: true)
-        )
+        let titledColorInAll = renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: false)
+        #expect(titledColorInAll == renderFace(colorItem, face: colorFace, media: CardMediaState(), inCollection: true))
+        colorItem.customTitle = nil
+        #expect(titledColorInAll != renderFace(
+            colorItem,
+            face: colorFace,
+            media: CardMediaState(),
+            inCollection: false
+        ))
     }
 }

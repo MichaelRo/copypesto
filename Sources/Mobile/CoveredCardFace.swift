@@ -49,6 +49,10 @@ struct CoveredCardFace: View {
                     .accessibilityIdentifier(MobileAccessibilityID.showUnderCoverButton)
             } else if item.isNSFW {
                 Text("Sensitive content").font(.caption)
+                Button("Show") { appState.secretReveal.showNSFW(item.id) }
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(CoverShowStyle())
+                    .accessibilityIdentifier(MobileAccessibilityID.showSensitiveButton)
             }
         }
         .foregroundStyle(.secondary)

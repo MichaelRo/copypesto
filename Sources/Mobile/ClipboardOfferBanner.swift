@@ -24,7 +24,7 @@ struct ClipboardOfferBanner: View {
         .padding(.leading, 16)
         .padding(.trailing, 10)
         .padding(.vertical, 8)
-        .background(.regularMaterial, in: .capsule)
+        .mobileGlassChrome(in: .capsule, interactive: true)
         .frame(maxWidth: 560)
         .padding(.horizontal, 16)
         .padding(.bottom, 8)

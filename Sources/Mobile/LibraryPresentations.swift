@@ -45,8 +45,16 @@ struct LibraryPresentations: ViewModifier {
             .sheet(isPresented: syncFlowBinding) {
                 if let sync = appState.sync { SyncFlowSheet(sync: sync) }
             }
-            .fileImporter(isPresented: $library.picksSyncFolder, allowedContentTypes: [.folder]) { result in
-                if case let .success(url) = result { appState.sync?.useFolder(url) }
+            .sheet(isPresented: $library.picksSyncFolder) {
+                SyncFolderPicker(
+                    initialDirectory: BookmarkedSyncFolder.suggestedPickerDirectory(),
+                    onPicked: { url in
+                        library.picksSyncFolder = false
+                        appState.sync?.useFolder(url)
+                    },
+                    onCancel: { library.picksSyncFolder = false }
+                )
+                .ignoresSafeArea()
             }
             .task(id: appState.sync?.isEnabled ?? false) { await watchForJoinRequests() }
     }

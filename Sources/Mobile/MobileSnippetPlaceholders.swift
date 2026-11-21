@@ -3,10 +3,9 @@ import Foundation
 import PestoCore
 import SwiftUI
 
-/// Built-in fills and preview/insertion helpers for the iOS snippet editor (Mac-only `{{selection}}` and `{{app}}` are
-/// excluded).
+/// Built-in fills and preview/insertion helpers for the iOS snippet editor (Mac-only `{{app}}` is excluded).
 enum MobileSnippetPlaceholders {
-    private static let macOnlyTokens: Set<String> = ["{{selection}}", "{{app}}"]
+    private static let macOnlyTokens: Set<String> = ["{{app}}"]
 
     static let automaticFills: [SnippetPlaceholder] = SnippetDraft.placeholders.filter {
         !macOnlyTokens.contains($0.token)

@@ -68,12 +68,27 @@ public final class BookmarkedSyncFolder: SyncFolderSource {
         !defaults.value(for: Setting.syncFolderBookmark).isEmpty
     }
 
-    public static func syncRoot(forPicked picked: URL) -> URL {
-        if picked.lastPathComponent == folderName { return picked }
-        let layout = SyncFolderLayout(root: picked)
-        let isSyncFolder = FileManager.default.fileExists(atPath: layout.devices.path)
+    private static func isSyncFolder(_ url: URL) -> Bool {
+        let layout = SyncFolderLayout(root: url)
+        return FileManager.default.fileExists(atPath: layout.devices.path)
             || FileManager.default.fileExists(atPath: layout.vault(epoch: 1).path)
-        return isSyncFolder ? picked : picked.appendingPathComponent(folderName, isDirectory: true)
+    }
+
+    public static func syncRoot(forPicked picked: URL) -> URL {
+        if picked.lastPathComponent == folderName || isSyncFolder(picked) { return picked }
+        let direct = picked.appendingPathComponent(folderName, isDirectory: true)
+        if FileManager.default.fileExists(atPath: direct.path) { return direct }
+        let pestoDir = picked.appendingPathComponent("Pesto", isDirectory: true)
+        let nested = pestoDir.appendingPathComponent(folderName, isDirectory: true)
+        if FileManager.default.fileExists(atPath: nested.path) { return nested }
+        if isSyncFolder(pestoDir) { return pestoDir }
+        if FileManager.default.fileExists(atPath: pestoDir.path) { return nested }
+        return direct
+    }
+
+    public static func suggestedPickerDirectory() -> URL? {
+        FileManager.default.url(forUbiquityContainerIdentifier: nil)?.appendingPathComponent("Documents")
+            ?? FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
     }
 
     public func resolve() -> SyncFolderResolution {

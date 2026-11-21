@@ -144,4 +144,17 @@ struct QuickInsertSelectionTests {
 
         #expect(clips.entries().map(\.text) == ["safe snippet"])
     }
+
+    @Test("a pinned clip belonging to a collection stays out of the standalone Pinned section")
+    func whenPinnedInCollection_thenNotInPinnedSection() throws {
+        let clips = try Clips()
+        _ = clips.add("standalone pin", pinned: true)
+        let inCollection = clips.add("collection pin", pinned: true)
+        inCollection.collectionID = UUID()
+
+        let set = try QuickInsertSelection.set(in: clips.context, now: .now, text: { clips.texts[$0.id] })
+        let pinnedTexts = set.entries.filter { $0.section == .pinned }.map(\.text)
+
+        #expect(pinnedTexts == ["standalone pin"])
+    }
 }

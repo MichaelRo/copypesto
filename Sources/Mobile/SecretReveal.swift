@@ -24,6 +24,7 @@ final class SecretReveal {
     }
 
     private(set) var shownUnderCover: Set<UUID> = []
+    private(set) var shownNSFW: Set<UUID> = []
     @ObservationIgnored private let authenticator: any UserAuthenticating
     @ObservationIgnored private let grace: AuthenticationGrace
 
@@ -79,6 +80,18 @@ final class SecretReveal {
         await HiddenClipReveal.permitted(isHidden: true, using: authenticator, reason: reason, grace: grace)
     }
 
+    func isNSFWShown(_ id: UUID) -> Bool {
+        shownNSFW.contains(id)
+    }
+
+    func showNSFW(_ id: UUID) {
+        shownNSFW.insert(id)
+    }
+
+    func hideNSFW(_ id: UUID) {
+        shownNSFW.remove(id)
+    }
+
     func hide(_ id: UUID) {
         shown.remove(id)
     }
@@ -86,13 +99,14 @@ final class SecretReveal {
     func hideAll() {
         if !shown.isEmpty { shown = [] }
         if !shownUnderCover.isEmpty { shownUnderCover = [] }
+        if !shownNSFW.isEmpty { shownNSFW = [] }
     }
 
     /// As the Mac's card decides it: a picture still being judged is drawn (only text waits for its verdict).
     func concealment(for item: ClipboardItem, nsfwMode: NSFWMode = .current()) -> CardConcealment {
         CardConcealment(
             screenShareBlur: isCoveredForPrivacy(item.id),
-            nsfwBlurred: item.isNSFW && nsfwMode != .show,
+            nsfwBlurred: item.isNSFW && nsfwMode != .show && !isNSFWShown(item.id),
             maskedSecret: item.sensitivityRaw != nil,
             secretShown: isShown(item.id),
             pendingAnalysis: item.analysisPending && item.type != .image

@@ -10,6 +10,7 @@ struct SnippetFillSheet: View {
     @Environment(LibraryModel.self) private var library
     @State private var fills: SnippetFills
     @State private var pasted = ""
+    @State private var selectedText = ""
 
     init(request: SnippetFillRequest) {
         self.request = request
@@ -19,9 +20,11 @@ struct SnippetFillSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section {
-                    ForEach(request.plan.fields) { field in
-                        row(field)
+                if !request.plan.fields.isEmpty {
+                    Section {
+                        ForEach(request.plan.fields) { field in
+                            row(field)
+                        }
                     }
                 }
                 if request.plan.usesClipboard {
@@ -39,9 +42,20 @@ struct SnippetFillSheet: View {
                         Text("Paste fills the clipboard placeholder. Without it, that placeholder stays empty.")
                     }
                 }
+                if request.plan.usesSelection {
+                    Section {
+                        TextField("Selected text", text: $selectedText, axis: .vertical)
+                            .lineLimit(1...4)
+                        PasteButton(payloadType: String.self) { strings in
+                            selectedText = strings.first ?? ""
+                        }
+                    } header: {
+                        Text("Selected text")
+                    }
+                }
                 if !request.plan.leftEmpty.isEmpty {
                     Section {
-                        Text("Selected text and the app name are not available on iPhone and iPad, so they stay empty.")
+                        Text("The app name is not available on iPhone and iPad, so it stays empty.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -55,7 +69,9 @@ struct SnippetFillSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Copy") {
-                        if appState.copyFilled(request, fills: fills, pastedClipboard: pasted) {
+                        if appState.copyFilled(
+                            request, fills: fills, pastedClipboard: pasted, selectedText: selectedText
+                        ) {
                             library.didCopy(request.id)
                         }
                     }

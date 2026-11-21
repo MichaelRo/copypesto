@@ -67,8 +67,8 @@ enum CardFace: Equatable {
         }
     }
 
-    /// Inside a collection, every non-concealed clip with a title shows it on its card face (`customTitle`, or for a
-    /// link its page title); All keeps today's faces.
+    /// Every non-concealed clip with a custom title shows it on its card face (`All`, `Pinned`, and collections);
+    /// inside a collection, a link without a custom title also shows its page title.
     static func faceTitle(
         type: ClipboardType,
         inCollection: Bool,
@@ -77,14 +77,14 @@ enum CardFace: Equatable {
         ogTitle: String?
     )
     -> String? {
-        guard inCollection, !isConcealed else { return nil }
+        guard !isConcealed else { return nil }
         if let custom = trimmed(customTitle) { return custom }
-        if type == .url, let page = trimmed(ogTitle) { return page }
+        if inCollection, type == .url, let page = trimmed(ogTitle) { return page }
         return nil
     }
 
-    static func showsCustomTitleOnFace(inCollection: Bool, isConcealed: Bool, customTitle: String?) -> Bool {
-        inCollection && !isConcealed && trimmed(customTitle) != nil
+    static func showsCustomTitleOnFace(inCollection _: Bool, isConcealed: Bool, customTitle: String?) -> Bool {
+        !isConcealed && trimmed(customTitle) != nil
     }
 
     private static func trimmed(_ raw: String?) -> String? {

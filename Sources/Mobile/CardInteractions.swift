@@ -43,11 +43,14 @@ struct CardAccessibility: ViewModifier {
             .modifier(OptionalAction(name: "Share", isOffered: !concealment.isConcealed) { card.share() })
             .modifier(OptionalAction(
                 name: "Show",
-                isOffered: card.isCoveredForPrivacy || item.sensitivityRaw != nil && concealment.isConcealed
+                isOffered: card.isCoveredForPrivacy
+                    || concealment.isNSFWBlurred
+                    || item.sensitivityRaw != nil && concealment.isConcealed
             ) { card.show() })
             .modifier(OptionalAction(
                 name: "Hide",
-                isOffered: item.sensitivityRaw != nil && card.appState.secretReveal.isShown(item.id)
+                isOffered: (item.sensitivityRaw != nil && card.appState.secretReveal.isShown(item.id))
+                    || (item.isNSFW && card.appState.secretReveal.isNSFWShown(item.id))
             ) { card.hide() })
             .accessibilityAction(named: Text("Delete")) { card.delete() }
     }

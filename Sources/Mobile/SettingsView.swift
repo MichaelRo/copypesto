@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
+import SwiftData
 import SwiftUI
 
 /// The few settings the iOS app has. What only a Mac does (shortcuts, the login item, app exclusions) is not here.
 struct SettingsView: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.appTheme) private var theme: String
     @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
-    @AppStorage(Setting.quickInsertEnabled) private var quickInsertEnabled: Bool
-    @AppStorage(Setting.keyboardEnabled) private var keyboardEnabled: Bool
-    @AppStorage(Setting.autoFillEnabled) private var autoFillEnabled: Bool
-    @AppStorage(Setting.widgetsEnabled) private var widgetsEnabled: Bool
+    @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutsideWhileLocked: Bool
     @AppStorage(Setting.syncEnabled) private var syncEnabled: Bool
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
     @AppStorage(Setting.retentionDays) private var retentionDays: Int
     @AppStorage(Setting.retentionMaxItems) private var retentionMaxItems: Int
+    @AppStorage(Setting.hiddenMobileCollections) private var hiddenCollectionsStored: String
     @State private var pendingRetention: PendingRetention?
     @AppStorage(Setting.screenSharingPrivacy) private var coversWhileCaptured: Bool
     @State private var biometry = DeviceAuthenticationWords.biometry()
@@ -73,6 +73,11 @@ struct SettingsView: View {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
                     .accessibilityIdentifier(MobileAccessibilityID.historyLockToggle)
+                if lockEnabled {
+                    Toggle("Allow in Widgets and Keyboard while locked", isOn: $showsClipsOutsideWhileLocked)
+                        .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
+                        .onChange(of: showsClipsOutsideWhileLocked) { appState.showsClipsOutsideSettingChanged() }
+                }
                 Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
                     ForEach(AuthenticationGrace.choices, id: \.self) { minutes in
                         Text(Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes])))
@@ -112,22 +117,7 @@ struct SettingsView: View {
             }
             AppleIntelligenceSection()
             Section {
-                NavigationLink {
-                    KeyboardSettingsView()
-                } label: {
-                    LabeledContent(
-                        "Keyboard & AutoFill",
-                        value: isQuickInsertOn ? String(localized: "On") : String(localized: "Off")
-                    )
-                }
-                NavigationLink {
-                    WidgetSettingsView()
-                } label: {
-                    LabeledContent(
-                        "Widgets",
-                        value: widgetsEnabled ? String(localized: "On") : String(localized: "Off")
-                    )
-                }
+                NavigationLink("Keyboard & AutoFill") { KeyboardSettingsView() }
                 NavigationLink {
                     SyncSettingsView()
                 } label: {
@@ -135,6 +125,22 @@ struct SettingsView: View {
                         "Sync",
                         value: syncEnabled ? String(localized: "On") : String(localized: "Off")
                     )
+                }
+            }
+            let hiddenIDs = HiddenCollections.ids(from: hiddenCollectionsStored)
+            let hiddenBoards = collections.filter { hiddenIDs.contains($0.id) }
+            if !hiddenBoards.isEmpty {
+                Section("Hidden Collections") {
+                    ForEach(hiddenBoards) { board in
+                        Button {
+                            hiddenCollectionsStored = HiddenCollections.toggle(board.id, in: hiddenCollectionsStored)
+                        } label: {
+                            LabeledContent(board.name, value: String(localized: "Show"))
+                        }
+                    }
+                    Button("Show All Collections") {
+                        hiddenCollectionsStored = ""
+                    }
                 }
             }
             Section {
@@ -175,10 +181,6 @@ struct SettingsView: View {
         } message: { _ in
             Text("Clips past the new limit are deleted now. Pinned clips stay. It can\u{2019}t be undone.")
         }
-    }
-
-    private var isQuickInsertOn: Bool {
-        keyboardEnabled || autoFillEnabled || quickInsertEnabled
     }
 
     private var retentionDaysChoice: Binding<Int> {

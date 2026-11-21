@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
+import SwiftData
 import SwiftUI
 
 /// A plain-text note the person writes; it is saved as a clip through ingest like anything copied.
 struct NewNoteView: View {
     @Environment(MobileAppState.self) private var appState
+    @Environment(LibraryModel.self) private var library
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @State private var text = ""
     @State private var isConfirmingDiscard = false
     @FocusState private var isEditing: Bool
@@ -20,6 +23,13 @@ struct NewNoteView: View {
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel", action: cancel)
+                    }
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button("New Snippet\u{2026}", systemImage: "curlybraces") {
+                            dismiss()
+                            library.beginNewSnippet()
+                        }
+                        .accessibilityIdentifier(MobileAccessibilityID.newSnippetButton)
                     }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") { save() }
@@ -50,8 +60,9 @@ struct NewNoteView: View {
 
     private func save() {
         let capture = ClipCapture.text(text)?.with(captureMethod: .note)
+        let destination = library.targetCollectionID(in: collections)
         Task {
-            if await appState.add(capture) { dismiss() }
+            if await appState.add(capture, into: destination) { dismiss() }
         }
     }
 }

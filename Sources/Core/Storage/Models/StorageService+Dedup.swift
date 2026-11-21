@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+import CoreGraphics
 import Foundation
+import ImageIO
 import SwiftData
 
 extension StorageService {
@@ -20,7 +22,8 @@ extension StorageService {
         now: Date,
         bundleID: String?,
         isRemote: Bool? = nil,
-        onlyAdvanceTimestamp: Bool = false
+        onlyAdvanceTimestamp: Bool = false,
+        collectionID: UUID? = nil
     ) async throws
     -> Bool {
         guard let existing = try modelContext.fetch(descriptor).first else { return false }
@@ -28,17 +31,21 @@ extension StorageService {
         if !onlyAdvanceTimestamp || now > existing.timestamp {
             existing.bringToFront(at: now)
         }
+        if let collectionID {
+            existing.collectionID = collectionID
+        }
         lastIngestedHash = (hash, now)
         lastInsertedClip = nil
         if let isRemote {
-            existing.isRemote = isRemote
-            if isRemote {
+            if !isRemote {
+                existing.isRemote = false
+            } else if existing.isRemote {
                 existing.sourceBundleID = nil
                 existing.sourceAppName = PasteboardCapture.remoteSourceName
                 existing.sourceDominantColorHex = nil
             }
         }
-        if let bundleID {
+        if let bundleID, isRemote != true {
             let appRecord = await resolver.resolve(bundleID: bundleID)
             existing.sourceBundleID = bundleID
             existing.sourceAppName = appRecord.displayName
@@ -71,10 +78,70 @@ extension StorageService {
             for: candidateHash, among: dimensionMatched.map { (id: $0.id, hash: $0.perceptualHash) }
         ))
         let nominated = dimensionMatched.filter { nominatedIDs.contains($0.id) }
-        guard !nominated.isEmpty, let digest = PerceptualHasher.pixelDigest(imageData: payload) else { return nil }
+        guard !nominated.isEmpty else { return nil }
+        let digest = PerceptualHasher.pixelDigest(imageData: payload)
         return nominated.first { item in
-            item.blob?.decryptedData().flatMap { PerceptualHasher.pixelDigest(imageData: $0) } == digest
+            guard let existingData = item.blob?.decryptedData() else { return false }
+            if let digest, PerceptualHasher.pixelDigest(imageData: existingData) == digest {
+                return true
+            }
+            guard let width = item.pixelWidth, let height = item.pixelHeight,
+                  width == pixelWidth, height == pixelHeight else { return false }
+            return Self.isCrossFormatNearMatch(payload, existingData)
         }
+    }
+
+    private static func isCrossFormatNearMatch(_ lhs: Data, _ rhs: Data) -> Bool {
+        guard let left = normalizedSmallPixels(lhs),
+              let right = normalizedSmallPixels(rhs),
+              left.count == right.count,
+              !left.isEmpty else
+        {
+            return false
+        }
+        var maxDiff = 0
+        var totalDiff = 0
+        for index in left.indices {
+            let diff = abs(Int(left[index]) - Int(right[index]))
+            if diff > maxDiff { maxDiff = diff }
+            if maxDiff > 40 { return false }
+            totalDiff += diff
+        }
+        return Double(totalDiff) / Double(left.count) <= 12.0
+    }
+
+    private static func normalizedSmallPixels(_ data: Data) -> [UInt8]? {
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCache: false,
+            kCGImageSourceThumbnailMaxPixelSize: 64
+        ]
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData, [kCGImageSourceShouldCache: false] as CFDictionary
+        ),
+            let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else
+        {
+            return nil
+        }
+        let side = 16
+        let bytesPerRow = side * 4
+        var buffer = [UInt8](repeating: 0, count: side * bytesPerRow)
+        let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB()
+        guard let context = CGContext(
+            data: &buffer,
+            width: side,
+            height: side,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: colorSpace,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return nil
+        }
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: side, height: side))
+        return buffer
     }
 
     func storeEmbedding(itemID: UUID, contentHash: String, embeddingData: Data) throws {

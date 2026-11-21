@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import CryptoKit
 import Foundation
 import Testing
 @testable import PestoCore
@@ -68,5 +69,42 @@ struct SyncSourceAppTests {
         await exchange([phone, mac])
 
         #expect(try mac.item("typed on the phone")?.sourceAppName == "Notes")
+    }
+
+    @Test("a Universal Clipboard echo synced back from Mac never relabels the phone's local clip as Another device")
+    func whenMacEchoesRemoteUpdateForLocalPhoneClip_thenPhoneKeepsLocalProvenance() async throws {
+        defer { try? FileManager.default.removeItem(at: layout.root) }
+        let phone = try SyncSite(
+            name: "iphone-a", layout: layout, time: time, environment: .testing { $0.sourceApps = UnknownSourceApps() }
+        )
+        let mac = try SyncSite(
+            name: "mac-b", layout: layout, time: time, environment: .testing { $0.sourceApps = NamedSourceApps() }
+        )
+        let made = try SyncGroupManager.create(
+            layout: layout, identity: phone.identity, keyStore: phone.keyStore, now: time.now
+        )
+        try mac.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
+        try await phone.copy("copied on phone")
+
+        await exchange([phone, mac])
+
+        time.advance()
+        let payload = Data("copied on phone".utf8)
+        let hash = SHA256.hash(data: payload).map { String(format: "%02x", $0) }.joined()
+        try await mac.storage.ingest(PasteboardCapture(
+            typeIdentifier: "public.utf8-plain-text",
+            payload: payload,
+            payloadString: "copied on phone",
+            frontmostBundleID: nil,
+            timestamp: time.now,
+            contentHash: hash,
+            isRemote: true
+        ))
+
+        await exchange([mac, phone])
+
+        let afterEcho = try #require(try phone.item("copied on phone"))
+        #expect(!afterEcho.isRemote)
+        #expect(afterEcho.sourceAppName != PasteboardCapture.remoteSourceName)
     }
 }

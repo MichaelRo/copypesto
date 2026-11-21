@@ -35,8 +35,8 @@ struct ClipboardCardTitlesTests {
         return item
     }
 
-    @Test("in All, a link with ogTitle and customTitle keeps ogTitle on the face and customTitle in the foot line")
-    func whenInAllLinkHasOGAndCustomTitle_thenOGWinsAndCustomStaysInFooter() throws {
+    @Test("in All, a link with ogTitle and customTitle shows customTitle on the face and keeps the app in footer")
+    func whenInAllLinkHasOGAndCustomTitle_thenCustomTitleWins() throws {
         let item = try makeItem(
             type: .url,
             preview: "https://developer.apple.com/documentation/swiftui/view",
@@ -46,10 +46,10 @@ struct ClipboardCardTitlesTests {
         )
         let card = ClipboardCard(item: item, inCollection: false)
 
-        #expect(card.faceLinkTitle == "View | Apple Developer Documentation")
-        #expect(!card.showsTitleOnCardFace)
+        #expect(card.faceLinkTitle == "SwiftUI View Docs")
+        #expect(card.showsTitleOnCardFace)
         let lines = CardMetaLine.candidates(card.metaFacts)
-        #expect(lines.first?.hasPrefix("SwiftUI View Docs") == true)
+        #expect(lines.first?.hasPrefix("Safari") == true)
     }
 
     @Test("in a collection, a link with customTitle and ogTitle shows customTitle on the face and keeps the app")
@@ -100,15 +100,22 @@ struct ClipboardCardTitlesTests {
         #expect(lines.first?.hasPrefix("Safari") == true)
     }
 
-    @Test("a full-bleed link card never passes a duplicate title to contentFirstChrome")
-    func whenFullBleedLinkCard_thenContentFirstChromeTitleIsNil() throws {
-        let item = try makeItem(
+    @Test("a full-bleed link card passes customTitle when present and nil otherwise")
+    func whenFullBleedLinkCard_thenContentFirstChromeTitleFollowsCustomTitle() throws {
+        let titled = try makeItem(
             type: .url,
             preview: "https://developer.apple.com/documentation/swiftui/view",
             customTitle: "SwiftUI View Docs"
         )
-        let card = ClipboardCard(item: item, inCollection: true)
-        #expect(card.fullBleedLinkChromeTitle == nil)
+        #expect(ClipboardCard(item: titled, inCollection: true).fullBleedLinkChromeTitle == "SwiftUI View Docs")
+        #expect(ClipboardCard(item: titled, inCollection: false).fullBleedLinkChromeTitle == "SwiftUI View Docs")
+
+        let untitled = try makeItem(
+            type: .url,
+            preview: "https://developer.apple.com/documentation/swiftui/view",
+            ogTitle: "View | Apple Developer Documentation"
+        )
+        #expect(ClipboardCard(item: untitled, inCollection: false).fullBleedLinkChromeTitle == nil)
     }
 
     @Test("concealed clips hide both customTitle and ogTitle inside a collection")

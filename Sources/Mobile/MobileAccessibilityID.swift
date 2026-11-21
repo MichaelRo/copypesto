@@ -55,6 +55,8 @@ enum MobileAccessibilityID {
     static let lockScreen = "lock-screen"
     static let unlockButton = "unlock-button"
     static let showUnderCoverButton = "show-under-cover"
+    static let showSensitiveButton = "show-sensitive"
+    static let selectClipsButton = "select-clips"
     static let privacyCover = "privacy-cover"
     static let welcomeKeepStep = "welcome-step-keep"
     static let welcomeChoicesStep = "welcome-step-choices"

@@ -27,14 +27,27 @@ struct SnippetCopyPlanTests {
         #expect(!automatic.needsSheet)
     }
 
-    @Test("selection and app are named as left empty")
-    func whenSelectionOrApp_thenTheyAreLeftEmpty() throws {
-        let plan = try #require(SnippetCopyPlan.plan(for: "{{selection}} from {{app}} {{input:Who}}", isSnippet: true))
-        #expect(plan.leftEmpty == ["selection", "app"])
+    @Test("only app is named as left empty on iOS, while selection prompts and bare variables become inputs")
+    func whenSelectionAppOrBareVariable_thenSelectionAndVariablePrompted() throws {
+        let plan = try #require(SnippetCopyPlan.plan(
+            for: "{{selection}} from {{app}} for {{company}} {{input:Who}}",
+            isSnippet: true
+        ))
+        #expect(plan.usesSelection)
+        #expect(plan.needsSheet)
+        #expect(plan.leftEmpty == ["app"])
+        #expect(plan.fields.map(\.label) == ["company", "Who"])
         var fills = SnippetFills()
+        fills.values["company"] = "Acme"
         fills.values["Who"] = "Ana"
-        #expect(plan
-            .expanded("{{selection}} from {{app}} {{input:Who}}", fills: fills, pastedClipboard: "") == " from  Ana")
+        #expect(
+            plan.expanded(
+                "{{selection}} from {{app}} for {{company}} {{input:Who}}",
+                fills: fills,
+                pastedClipboard: "",
+                selectedText: "picked quote"
+            ) == "picked quote from  for Acme Ana"
+        )
     }
 
     @Test("expansion fills the fields, the date and the pasted clipboard, and never reads the live one")

@@ -36,10 +36,18 @@ struct ShareSheetView: View {
         switch model.phase {
         case .reading:
             ProgressView()
-        case let .ready(preview):
-            Text(preview)
-                .lineLimit(1)
-                .font(.body)
+        case let .ready(preview, pictureData):
+            if let pictureData, let image = UIImage(data: pictureData) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else {
+                Text(preview)
+                    .lineLimit(1)
+                    .font(.body)
+            }
         case .saved:
             Label("Saved to Pesto", systemImage: "checkmark.circle.fill")
                 .foregroundStyle(Self.accent)

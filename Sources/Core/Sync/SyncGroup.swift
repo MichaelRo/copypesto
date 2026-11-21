@@ -68,6 +68,18 @@ public enum SyncGroupManager {
         )
     }
 
+    /// Starts a new epoch when this device sees a group vault (`needsKey`) without holding its current key.
+    public static func forceResetWithoutKey(
+        layout: SyncFolderLayout, from vault: SyncVault, identity: SyncIdentity, keyStore: any SyncKeyStoring,
+        now: Date = .now
+    ) throws
+    -> (group: SyncGroup, recoveryKey: String) {
+        try startEpoch(
+            layout: layout, start: (vault.epoch + 1, vault.vaultID), identity: identity, keyStore: keyStore,
+            now: now
+        )
+    }
+
     private static func startEpoch(
         layout: SyncFolderLayout, start: (epoch: UInt32, vaultID: Data?), identity: SyncIdentity,
         keyStore: any SyncKeyStoring,

@@ -21,7 +21,10 @@ final class MobileHistoryLock {
         authenticator: any UserAuthenticating = UserAuthenticator.current,
         grace: AuthenticationGrace = .shared,
         isEnabled: @escaping @MainActor () -> Bool = { AppDefaults.store.value(for: Setting.biometricLockEnabled) },
-        timeoutMinutes: @escaping @MainActor () -> Int = { AuthenticationGrace.minutes() },
+        timeoutMinutes: @escaping @MainActor () -> Int = {
+            AppDefaults.store.object(forKey: Setting.authenticationGraceMinutes.name) != nil
+                ? AuthenticationGrace.minutes() : 0
+        },
         showsClipsOutside: @escaping @MainActor () -> Bool = {
             AppDefaults.store.value(for: Setting.showsClipsOutsideWhileLocked)
         }
@@ -50,12 +53,19 @@ final class MobileHistoryLock {
         if !isLocked { leftForegroundAt = date }
     }
 
-    /// Locks when Pesto has been away for the timeout. True only when this call locked it.
+    /// Locks when Pesto has been away for the timeout (or immediately when timeout is zero/unset on iOS).
+    /// True only when this call locked it.
     @discardableResult
     func lockIfAwayTooLong(at date: Date) -> Bool {
         guard !isLocked, let leftForegroundAt else { return false }
+        let minutes = timeoutMinutes()
+        if minutes <= 0 {
+            guard isEnabled, date >= leftForegroundAt else { return false }
+            lock()
+            return true
+        }
         guard HistoryLockPolicy.isLocked(
-            enabled: isEnabled, timeoutMinutes: timeoutMinutes(), lastUnlock: leftForegroundAt, now: date
+            enabled: isEnabled, timeoutMinutes: minutes, lastUnlock: leftForegroundAt, now: date
         ) else { return false }
         lock()
         return true

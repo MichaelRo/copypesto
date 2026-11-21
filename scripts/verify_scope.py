@@ -5,7 +5,7 @@
     verify_scope.py [--repo <dir>] [--base <ref>] [--files <file> ...]
 
 Prints a JSON object describing which test tiers to run (`run_core`, `core_filter`, `run_hosted`, `only_testing`,
-`run_ui`, `run_snapshots`, `reason`).
+`run_ui`, `run_snapshots`, `run_mobile`, `reason`).
 """
 import argparse
 import json
@@ -42,12 +42,14 @@ def compute_scope(changed_files):
             "only_testing": [],
             "run_ui": False,
             "run_snapshots": False,
+            "run_mobile": False,
             "reason": "no changed files; running Core tests",
         }
 
     touches_core = False
     touches_features = False
     touches_grid = False
+    touches_mobile = False
     touches_build_config = False
     core_test_names = set()
     hosted_suites = set()
@@ -56,6 +58,12 @@ def compute_scope(changed_files):
     for path in changed_files:
         p = pathlib.PurePosixPath(path)
         stem = p.stem
+        parts = p.parts
+        is_mobile_source = len(parts) >= 2 and parts[0] == "Sources" and (
+            parts[1].startswith("Mobile") or parts[1] == "Widget"
+        )
+        is_mobile_test = len(parts) >= 2 and parts[0] == "Tests" and parts[1].startswith("PestoMobile")
+
         if path in ("Package.swift", "Package.resolved", "Pesto.yml", "Makefile") or path.endswith(".entitlements"):
             touches_build_config = True
         elif (
@@ -72,6 +80,8 @@ def compute_scope(changed_files):
                 core_test_names.add(f"{base_stem}Tests")
         elif path.startswith("Sources/Features/") or path.startswith("Sources/Shared/"):
             touches_features = True
+            if path.startswith("Sources/Shared/"):
+                touches_mobile = True
             if "Features/Grid" in path or "Features/Overlay" in path or "ClipboardCard" in path or "Sources/Shared/" in path:
                 touches_grid = True
                 ui_suites.update([
@@ -88,6 +98,8 @@ def compute_scope(changed_files):
                 ui_suites.add("PestoUITests/OnboardingAndStatesTests")
             else:
                 ui_suites.add("PestoUITests/OverlayFlowTests")
+        elif is_mobile_source or is_mobile_test:
+            touches_mobile = True
         elif path.startswith("Tests/PestoTests/"):
             touches_features = True
             if stem.endswith("Tests"):
@@ -115,14 +127,16 @@ def compute_scope(changed_files):
             "only_testing": ["PestoTests", "PestoUITests/OverlayFlowTests"],
             "run_ui": True,
             "run_snapshots": touches_grid,
+            "run_mobile": True,
             "reason": "build configuration changed",
         }
 
-    run_core = touches_core or not touches_features
+    run_core = touches_core or not (touches_features or touches_mobile)
     core_filter = "|".join(sorted(core_test_names)) if (run_core and core_test_names) else None
     run_ui = bool(ui_suites)
     run_snapshots = touches_grid
     run_hosted = touches_features or run_ui or run_snapshots
+    run_mobile = touches_mobile
 
     only_testing = []
     if run_hosted:
@@ -142,6 +156,7 @@ def compute_scope(changed_files):
         "only_testing": only_testing,
         "run_ui": run_ui,
         "run_snapshots": run_snapshots,
+        "run_mobile": run_mobile,
         "reason": f"scoped to {len(changed_files)} changed file(s)",
     }
 

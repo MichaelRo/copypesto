@@ -7,7 +7,7 @@
 #   scripts/verify.sh           everything (UI tests take a few minutes and drive real windows)
 #   scripts/verify.sh --fast    lint + Core tests + build only (no Release build, no hosted or UI tests)
 #   scripts/verify.sh --no-ui   everything except the UI tests (what CI runs; hosted PestoTests still run)
-#   scripts/verify.sh --scoped  changeset-scoped dev/PR run (lint + targeted Core/hosted tests from git diff)
+#   scripts/verify.sh --scoped  changeset-scoped dev/PR run (lint + targeted Core/hosted/iOS tests from git diff)
 #
 # Screenshots of the app's own windows land in .build/ui-screenshots/<run>/<Test>/<step>.png.
 # One-time machine setup for the UI tests: docs/testing.md.
@@ -197,12 +197,14 @@ step_first_open() {
 # The iPhone and iPad app on one simulator after the other (never two at once): unit tests, and the UI tests unless
 # --no-ui. A UI test that belongs to one device skips on the other, so the judge reads both runs together.
 step_mobile() {
+  local mobile_skip_ui=$SKIP_UI
+  [[ "${1:-}" == "--no-ui" ]] && mobile_skip_ui=1
   local scheme="PestoMobile" label="iOS unit + UI tests (iPhone, iPad)" extra=()
   if [[ "${PESTO_SKIP_MOBILE:-0}" == "1" ]]; then
     record "iOS tests" "SKIP" "PESTO_SKIP_MOBILE (nothing the iOS app builds from changed)"
     return
   fi
-  if [[ $SKIP_UI -eq 1 ]]; then
+  if [[ $mobile_skip_ui -eq 1 ]]; then
     scheme="PestoMobileCITests"; label="iOS unit tests (iPhone, iPad)"; extra=(--no-ui)
   fi
   local device name failed=0 missing=()
@@ -225,12 +227,12 @@ step_mobile() {
   fi
   [[ -n "${CI:-}" ]] && echo '{}' >"$LOGS/mobile-pad.json"
   local action="test" target_flags=()
-  if [[ $SKIP_UI -eq 0 && -z "${CI:-}" ]]; then
+  if [[ $mobile_skip_ui -eq 0 && -z "${CI:-}" ]]; then
     extra+=(--pad-ui-only)
   fi
   for device in "${devices[@]}"; do
     name="${device##*:}"
-    if [[ "$name" == "pad" && $SKIP_UI -eq 0 ]]; then
+    if [[ "$name" == "pad" && $mobile_skip_ui -eq 0 ]]; then
       target_flags=(-only-testing:PestoMobileUITests)
       [[ $failed -eq 0 ]] && action="test-without-building"
     else
@@ -401,11 +403,12 @@ PY
 
 step_scoped() {
   python3 scripts/verify_scope.py >"$LOGS/scope-plan.json"
-  local run_core core_filter run_hosted run_ui
+  local run_core core_filter run_hosted run_ui run_mobile
   run_core="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("run_core") else "0")' "$LOGS/scope-plan.json")"
   core_filter="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("core_filter") or "")' "$LOGS/scope-plan.json")"
   run_hosted="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("run_hosted") else "0")' "$LOGS/scope-plan.json")"
   run_ui="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("run_ui") else "0")' "$LOGS/scope-plan.json")"
+  run_mobile="$(python3 -c 'import json,sys; print("1" if json.load(open(sys.argv[1])).get("run_mobile") else "0")' "$LOGS/scope-plan.json")"
   if [[ "$run_core" == "1" ]]; then
     if [[ -n "$core_filter" ]]; then
       if swift test --filter "$core_filter" >"$LOGS/core.log" 2>&1; then
@@ -449,6 +452,10 @@ step_scoped() {
       python3 scripts/verify_failures.py "$LOGS/tests-summary.json" >>"$LOGS/failures.txt" 2>/dev/null
       record "$label" "FAIL" "${only_args[*]}"
     fi
+  fi
+  if [[ "$run_mobile" == "1" ]]; then
+    make generate >>"$LOGS/generate.log" 2>&1
+    step_mobile --no-ui
   fi
 }
 

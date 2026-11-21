@@ -1,41 +1,47 @@
 # Developing Pesto
 
 Everything a contributor needs: how the code is organized, how to build and test it, and the rules it holds itself to.
-The user-facing overview is in the [README](../README.md); the working agreement is [AGENTS.md](../AGENTS.md).
+The user-facing overview is in the [README](../README.md); the system diagrams and module/security overview are in [architecture.md](architecture.md); the working agreement is [AGENTS.md](../AGENTS.md).
 
 ## Architecture
 
+For detailed module dependency graphs, trust boundaries, capture/OCR/storage data flow, and sync/backup protocols, see [architecture.md](architecture.md).
+
 ```
 Sources/
-├── App/          — entry point, AppDelegate, hotkey wiring, onboarding
-├── Core/         — business logic (no SwiftUI)
+├── App/            — macOS entry point, AppDelegate, hotkey wiring, onboarding
+├── Core/           — cross-platform business logic (no SwiftUI; macOS 15+ and iOS 26+)
 │   ├── Model/        — value types everything shares; imports nothing else in Core
-│   ├── Crypto/       — AES-GCM-256 blob encryption, sealed files
+│   ├── Crypto/       — AES-GCM-256 blob encryption, HPKE SharedInbox, QuickInsert/Widget sealed files
 │   ├── Imaging/      — bounded image decoding, SVG thumbnails
 │   ├── Seeding/      — demo, marketing and benchmark histories
-│   ├── Pasteboard/   — watcher, type detection, exclusion rules, sensitivity
-│   ├── Storage/      — SwiftData models, ingest, retention, link previews, capture pipeline
-│   ├── Backup/       — backup file format, key store, automatic-backup policy
-│   ├── Import/       — Paste library reader, first-run samples
+│   ├── Pasteboard/   — watcher, type detection, exclusion rules, sensitivity, OCR
+│   ├── Storage/      — SwiftData models, ingest, retention, SyncFolderService, HistoryStore/Index
+│   ├── Backup/       — chunked .pestobackup format, key store, automatic-backup policy
+│   ├── Import/       — Paste/Alfred/CleanClip library readers, collection import, first-run samples
 │   ├── Runtime/      — launch modes and the seams (defaults, pasteboard, paths) that keep tests off your machine
 │   ├── Security/     — History Lock, authentication
 │   ├── AI/           — on-device model access (Apple Intelligence only)
 │   ├── Intelligence/, Search/ — suggestions and search by meaning
-│   ├── Sync/         — the sync format, keys and pairing, device identity and the sequence counter (sync is off until turned on)
+│   ├── Sync/         — encrypted append-only sync format, keys, 8-word pairing, high-water marks
 │   ├── Paste/        — focus restoration, AX direct-write, CGEvent fallback
-│   └── Predicate/    — smart-pinboard DSL
-├── Features/     — SwiftUI views (may import Core, never the reverse); `Marketing/` draws the documentation pictures
-├── Mobile/       — the iPhone and iPad app (target `PestoMobile`, ADR 0046); never compiled into the Mac app
-├── CLI/          — the `pesto` command-line tool (`make build-cli`)
-├── Controls/     — the Control Center extension
-└── Shared/       — extensions and utilities, compiled into the Mac app and the iOS app
+│   └── Predicate/    — smart-collection DSL
+├── CoreNetworking/ — link previews & GIF fetching (PestoCoreNetworking; linked only by apps, never extensions)
+├── Features/       — macOS SwiftUI views (may import Core, never the reverse); `Marketing/` draws doc pictures
+├── Mobile/         — the iPhone and iPad app (target `PestoMobile`, ADR 0046); never compiled into the Mac app
+├── MobileAutoFill/ — iOS AutoFill extension (`PestoAutoFill`, text insertion from `QuickInsertFile`, ADR 0051)
+├── MobileKeyboard/ — optional iOS keyboard extension (`PestoKeyboard`, ADRs 0061–0064)
+├── MobileShare/    — iOS share extension (`PestoShare`, HPKE-sealed `SharedInbox`, ADR 0047)
+├── MobileShared/   — iOS card & layout views shared across `PestoMobile`, `PestoKeyboard`, and `PestoMobileTests`
+├── MobileWidget/   — iOS WidgetKit extension entry point and `CopyClipIntent` (`PestoWidget`, ADR 0052)
+├── Widget/         — shared Recent Clips widget views and `WidgetSnapshotReader` (`PestoWidget` + `PestoControls`)
+├── CLI/            — the `pesto` command-line tool (`make build-cli`)
+├── Controls/       — the macOS Control Center & WidgetKit extension (`PestoControls`, ADR 0059)
+├── Resources/      — Info.plists, entitlements, asset catalogs, localization catalogs, AppleScript `.sdef`
+└── Shared/         — extensions and utilities, compiled into the Mac app and the iOS targets
 ```
 
-All of `Core/` is the SwiftPM module `PestoCore`, tested without a built app by `make test-core`, the storage layer
-(`Core/Storage/Models` and `Migration`: the SwiftData models, ingest, delete, encrypt, restore) included. SwiftData's
-macros need Xcode's toolchain, which every supported build uses. `PestoCore` builds for macOS 15 and iOS 26 (ADR 0046): what only a Mac can run is inside `#if os(macOS)`, and
-`xcodebuild build -scheme PestoCore -destination 'generic/platform=iOS Simulator'` checks the iOS side. The hosted tests (`PestoTests`) are the ones that need
-the app itself: its state, windows and launch. `AppDelegate`, `ClipboardCard` and `GridView` are split into `+Something.swift` extension files; preferences are typed `Setting` keys (ADR 0012); `AppState` is `@Observable` and the shelf's history is one `HistoryStore` (ADR 0007). The app build uses an `xcodegen`-generated project (`Pesto.yml`).
+SwiftPM (`Package.swift`) exposes `PestoCore` (`Sources/Core`), `PestoCoreExtension` (extension-safe alias of `PestoCore` with zero network symbols), and `PestoCoreNetworking` (`Sources/CoreNetworking`). `PestoCore` is tested without a built app by `make test-core`, including the SwiftData storage layer (`Core/Storage/Models`). SwiftData's macros need Xcode's toolchain, which every supported build uses. `PestoCore` builds for macOS 15 and iOS 26 (ADR 0046): what only a Mac can run is inside `#if os(macOS)`, and `xcodebuild build -scheme PestoCore -destination 'generic/platform=iOS Simulator'` checks the iOS side. `PestoMobile` embeds `PestoShare`, `PestoAutoFill`, `PestoKeyboard`, and `PestoWidget`; `Pesto` embeds `PestoControls` (and compiles `Sources/Widget` when signed with both `SYNC_PROFILE` and `WIDGET_PROFILE`, ADR 0059). The hosted tests (`PestoTests`) are the ones that need the Mac app itself: its state, windows and launch. `AppDelegate`, `ClipboardCard` and `GridView` are split into `+Something.swift` extension files; preferences are typed `Setting` keys (ADR 0012); `AppState` is `@Observable` and the shelf's history is one `HistoryStore` (ADR 0007). The app build uses an `xcodegen`-generated project (`Pesto.yml`).
 
 ## Tech stack
 
@@ -118,5 +124,5 @@ and AI only on the device.
 |---|---|
 | `AGENTS.md` | The working agreement for contributors and coding tools: conventions, pitfalls, security invariants. Subsystem notes live in `CLAUDE.md` files under `Sources/` (plain Markdown any tool can read) |
 | `decisions/` | Architecture decision records |
-| `docs/` | The user guide (`guide/`), testing, release, performance budgets and design notes |
+| `docs/` | [architecture.md](architecture.md), the user guide (`guide/`), testing, release, performance budgets and design notes |
 | `.claude/skills/` | Recipes for adding a pasteboard type or a smart-collection rule, and for keeping the notes true |

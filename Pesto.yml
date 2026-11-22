@@ -175,7 +175,7 @@ targets:
         # alone (ADRs 0051, 0061), then the widget group it shares with PestoWidget alone (ADR 0052).
         CODE_SIGN_ENTITLEMENTS: Sources/Resources/PestoMobile.entitlements
         MARKETING_VERSION: "1.8.0"
-        CURRENT_PROJECT_VERSION: "12"
+        CURRENT_PROJECT_VERSION: "14"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         GENERATE_INFOPLIST_FILE: "YES"
@@ -213,7 +213,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.share
         PRODUCT_NAME: PestoShare
         MARKETING_VERSION: "1.8.0"
-        CURRENT_PROJECT_VERSION: "12"
+        CURRENT_PROJECT_VERSION: "14"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileShare/Info.plist
@@ -230,8 +230,12 @@ targets:
     sources:
       - path: Sources/MobileAutoFill
         excludes: ["Info.plist", "*.entitlements"]
+      - path: Sources/MobileShared
       - path: Sources/MobileShare/BrandAccent.swift
+      - path: Sources/Shared/Extensions/AdaptiveMaterial.swift
       - path: Sources/Shared/Extensions/Color+Hex.swift
+      - path: Sources/Shared/Extensions/PestoAccentEnvironment.swift
+      - path: Sources/Shared/Extensions/ScaledFont.swift
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
@@ -242,7 +246,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.autofill
         PRODUCT_NAME: PestoAutoFill
         MARKETING_VERSION: "1.8.0"
-        CURRENT_PROJECT_VERSION: "12"
+        CURRENT_PROJECT_VERSION: "14"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileAutoFill/Info.plist
@@ -275,7 +279,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.keyboard
         PRODUCT_NAME: PestoKeyboard
         MARKETING_VERSION: "1.8.0"
-        CURRENT_PROJECT_VERSION: "12"
+        CURRENT_PROJECT_VERSION: "14"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileKeyboard/Info.plist
@@ -306,7 +310,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: net.copypesto.pesto.widget
         PRODUCT_NAME: PestoWidget
         MARKETING_VERSION: "1.8.0"
-        CURRENT_PROJECT_VERSION: "12"
+        CURRENT_PROJECT_VERSION: "14"
         TARGETED_DEVICE_FAMILY: "1,2"
         ENABLE_HARDENED_RUNTIME: "NO"
         INFOPLIST_FILE: Sources/MobileWidget/Info.plist

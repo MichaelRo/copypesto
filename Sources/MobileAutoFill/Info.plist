@@ -26,13 +26,13 @@
     <dict>
         <key>NSExtensionAttributes</key>
         <dict>
+            <key>ASCredentialProviderExtensionShowsConfigurationUI</key>
+            <true/>
             <key>ASCredentialProviderExtensionCapabilities</key>
             <dict>
                 <key>ProvidesPasswords</key>
                 <true/>
                 <key>ProvidesTextToInsert</key>
-                <true/>
-                <key>ShowsConfigurationUI</key>
                 <true/>
             </dict>
         </dict>

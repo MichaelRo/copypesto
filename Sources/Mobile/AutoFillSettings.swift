@@ -9,6 +9,11 @@ enum AutoFillSettings {
         if await ASSettingsHelper.requestToTurnOnCredentialProviderExtension() {
             return
         }
+        await openSettings()
+    }
+
+    @MainActor
+    static func openSettings() async {
         do {
             try await ASSettingsHelper.openCredentialProviderAppSettings()
         } catch {

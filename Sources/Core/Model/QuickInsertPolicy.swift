@@ -6,7 +6,7 @@ import Foundation
 public enum QuickInsertPolicy {
     public static let maxPinned = 50
     public static let maxSnippets = 50
-    public static let maxRecent = 30
+    public static let maxRecent = 60
     /// The collections the person may choose for the keyboard and AutoFill, and the clips each carries (ADR 0062).
     public static let maxCollections = 12
     public static let maxCollectionClips = 30

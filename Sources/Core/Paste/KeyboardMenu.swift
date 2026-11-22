@@ -59,7 +59,9 @@ public struct KeyboardMenu: Equatable, Sendable {
         }
         let set = loadSet()
         let activeSet = (set?.keyboardEnabled == true) ? set : nil
-        entries = activeSet?.entries ?? []
+        entries = (activeSet?.entries ?? []).filter {
+            $0.section != .snippets || TemplateExpander.fillsWithoutAsking($0.text)
+        }
         collections = activeSet?.collections ?? []
         returnsAfterInsert = activeSet?.returnsAfterInsert ?? true
         accent = activeSet?.accent ?? .brand

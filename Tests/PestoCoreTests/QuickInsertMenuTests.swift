@@ -108,4 +108,35 @@ struct QuickInsertMenuTests {
         #expect(!custom.keyboardEnabled)
         #expect(!custom.autoFillEnabled)
     }
+
+    @Test("QuickInsertMenu builds filter chips and filters groups by chip")
+    func whenFilteredByChip_thenOnlyMatchingGroupReturns() {
+        let menu = QuickInsertMenu(set: set)
+        #expect(menu.chips.map(\.chip) == [.all, .pinned, .snippets, .recent])
+        #expect(menu.groups(matching: "", chip: .pinned).map(\.section) == [.pinned])
+        #expect(menu.groups(matching: "", chip: .snippets).map(\.section) == [.snippets])
+        #expect(menu.groups(matching: "", chip: .recent).map(\.section) == [.recent])
+        #expect(menu.groups(matching: "", chip: .all).map(\.section) == [.pinned, .snippets, .recent])
+    }
+
+    @Test("Interactive fill-in snippets are kept for AutoFill but filtered out of KeyboardMenu")
+    func whenFillInSnippetPresent_thenAutoFillKeepsItAndKeyboardSkipsIt() {
+        #expect(TemplateExpander.fillsWithoutSystemContext("Hi {{name}}, {{date}}"))
+        #expect(!TemplateExpander.fillsWithoutSystemContext("Paste: {{clipboard}}"))
+        #expect(!TemplateExpander.fillsWithoutSystemContext("App: {{app}}"))
+
+        let fillIn = QuickInsertEntry(
+            id: UUID(), section: .snippets, kind: .text, title: "Greeting", text: "Hi {{name}}",
+            expandsOnInsert: true, date: .now, source: nil, sourceIsThisDevice: true
+        )
+        let plain = QuickInsertEntry(
+            id: UUID(), section: .snippets, kind: .text, title: "Today", text: "On {{date}}",
+            expandsOnInsert: true, date: .now, source: nil, sourceIsThisDevice: true
+        )
+        let combined = QuickInsertSet(createdAt: .now, entries: [fillIn, plain])
+        let autoFill = QuickInsertMenu(set: combined)
+        let keyboard = KeyboardMenu(hasFullAccess: true) { combined }
+        #expect(autoFill.groups(matching: "").first?.entries.map(\.id) == [fillIn.id, plain.id])
+        #expect(keyboard.entries(for: .snippets).map(\.id) == [plain.id])
+    }
 }

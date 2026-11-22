@@ -41,7 +41,15 @@ final class CardMediaState {
     func load(
         _ item: ClipboardItem, container: ModelContainer?, isShown: Bool, fetchPreview: () async -> Bool = { false }
     ) async {
-        revealedText = isShown ? HiddenClipReveal.readableText(from: item.blob?.decryptedData()) : nil
+        if isShown {
+            if let container, let data = await ClipContent.payload(itemID: item.id, container: container) {
+                revealedText = HiddenClipReveal.readableText(from: data)
+            } else {
+                revealedText = HiddenClipReveal.readableText(from: item.blob?.decryptedData())
+            }
+        } else {
+            revealedText = nil
+        }
         switch item.type {
         case .image where item.sensitivityRaw == nil:
             let becameAnimated = picture?.isAnimated == false && item.blob?.mimeType.contains("gif") == true

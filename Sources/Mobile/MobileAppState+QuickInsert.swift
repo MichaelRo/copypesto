@@ -14,7 +14,7 @@ extension MobileAppState {
         quickInsertObserver = ModelSaveObserver.observeChanges(in: container) { [weak self] _ in
             self?.quickInsertHistoryChanged()
         }
-        writeQuickInsert()
+        Task { await writeQuickInsertAsync() }
     }
 
     static func migrateQuickInsertSettingsIfNeeded(defaults: UserDefaults = AppDefaults.store) {
@@ -31,12 +31,56 @@ extension MobileAppState {
         quickInsertRewrite = Task { [weak self] in
             try? await Task.sleep(for: QuickInsertPolicy.rewriteDelay)
             guard !Task.isCancelled else { return }
-            self?.writeQuickInsert()
+            await self?.writeQuickInsertAsync()
         }
     }
 
     func quickInsertSettingChanged() {
         if quickInsert?.isEnabled() == true { writeQuickInsert() } else { removeQuickInsert() }
+    }
+
+    func writeQuickInsertAsync() async {
+        quickInsertRewrite?.cancel()
+        quickInsertRewrite = nil
+        guard let target = quickInsert else { return }
+        if historyLock.holdsOutsideSurfaces, target.isEnabled() { return emptyQuickInsert() }
+        guard target.isEnabled(), let container = historyContainer else {
+            if target.file.exists { removeQuickInsert() }
+            return
+        }
+        let previous = quickInsertWrites
+        let now = clock()
+        let options = target.options()
+        let device = CardFootLineView.device
+        let next = Task { [weak self] in
+            await previous?.value
+            guard let self, let currentTarget = quickInsert, currentTarget.isEnabled(),
+                  !historyLock.holdsOutsideSurfaces else { return }
+            do {
+                let set = try await Self.buildQuickInsertSet(
+                    container: container, now: now, options: options, device: device
+                )
+                try currentTarget.file.write(set, with: currentTarget.keys.loadOrCreate())
+            } catch {
+                Self.quickInsertLogger
+                    .error("The AutoFill set was not written: \(error.localizedDescription, privacy: .public)")
+                currentTarget.file.remove()
+            }
+        }
+        quickInsertWrites = next
+        await next.value
+    }
+
+    @concurrent
+    private static func buildQuickInsertSet(
+        container: ModelContainer, now: Date, options: QuickInsertSelection.Options, device: CardFootLine.Device
+    ) async throws
+        -> QuickInsertSet
+    {
+        try QuickInsertSelection.set(
+            in: ModelContext(container), now: now, options: options,
+            source: { CardFootLine.source(CardFootLine.origin(of: $0), device: device) }
+        )
     }
 
     /// Writes the set now: the current one with the setting on and a history open, otherwise no file and no key. With

@@ -17,7 +17,8 @@ enum CardMedia {
 
     @MainActor private static let animationCache: NSCache<NSString, BoxedAnimation> = {
         let cache = NSCache<NSString, BoxedAnimation>()
-        cache.countLimit = 40
+        cache.countLimit = 12
+        cache.totalCostLimit = 48 * 1024 * 1024
         return cache
     }()
 
@@ -79,7 +80,7 @@ enum CardMedia {
         guard let decoded = await GIFDecodeGate.shared.run({
             await GIFFrames.decode(thumbnail.data, budget: budget)
         }) else { return nil }
-        animationCache.setObject(BoxedAnimation(decoded), forKey: cacheKey)
+        animationCache.setObject(BoxedAnimation(decoded), forKey: cacheKey, cost: decoded.byteCost)
         return decoded
     }
 
@@ -99,7 +100,7 @@ enum CardMedia {
         guard let decoded = await GIFDecodeGate.shared.run({
             await GIFFrames.decode(data, budget: budget)
         }) else { return nil }
-        animationCache.setObject(BoxedAnimation(decoded), forKey: cacheKey)
+        animationCache.setObject(BoxedAnimation(decoded), forKey: cacheKey, cost: decoded.byteCost)
         return decoded
     }
 

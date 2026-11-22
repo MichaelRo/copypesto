@@ -21,7 +21,8 @@ struct AnimatedPicture: UIViewRepresentable {
 
     func updateUIView(_ view: UIImageView, context _: Context) {
         view.contentMode = fills ? .scaleAspectFill : .scaleAspectFit
-        let changed = view.animationImages?.count != animation.frames.count
+        let changed = view.animationImages?.first !== animation.frames.first
+            || view.animationImages?.count != animation.frames.count
             || view.animationDuration != animation.duration
         guard changed else { return }
         view.image = animation.frames.first

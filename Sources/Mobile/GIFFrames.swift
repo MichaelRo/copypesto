@@ -11,6 +11,10 @@ enum GIFFrames {
     struct Animation {
         let frames: [UIImage]
         let duration: TimeInterval
+
+        var byteCost: Int {
+            frames.reduce(0) { $0 + ($1.cgImage.map { $0.bytesPerRow * $0.height } ?? 0) }
+        }
     }
 
     struct Budget: Equatable {
@@ -51,7 +55,8 @@ enum GIFFrames {
         for index in stride(from: 0, to: total, by: plan.step) {
             let frame = index == 0 ? first : CGImageSourceCreateThumbnailAtIndex(source, index, options)
             guard let frame else { continue }
-            frames.append(UIImage(cgImage: frame))
+            let image = UIImage(cgImage: frame)
+            frames.append(image.preparingForDisplay() ?? image)
             duration += (index..<min(index + plan.step, total)).reduce(0) { $0 + delay(source, at: $1) }
         }
         return frames.count > 1 ? Animation(frames: frames, duration: duration) : nil

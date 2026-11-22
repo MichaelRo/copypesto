@@ -6,8 +6,15 @@ import SwiftUI
 struct InsertPickerView: View {
     let menu: QuickInsertMenu
     let insert: (QuickInsertEntry) -> Void
+    var insertText: ((String) -> Void)?
     let cancel: () -> Void
     @State private var query = ""
+    @State private var pendingFill: PendingSnippetFill?
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var resolvedAccent: Color {
+        menu.accent.flatMap { Color(hex: $0.accent(dark: colorScheme == .dark)) } ?? BrandAccent.color
+    }
 
     var body: some View {
         NavigationStack {
@@ -20,7 +27,17 @@ struct InsertPickerView: View {
                     }
                 }
         }
-        .tint(BrandAccent.color)
+        .tint(resolvedAccent)
+        .sheet(item: $pendingFill) { fill in
+            AutoFillSnippetSheet(fill: fill) { expanded in
+                pendingFill = nil
+                if let insertText {
+                    insertText(expanded)
+                } else {
+                    insert(fill.entry)
+                }
+            }
+        }
     }
 
     @ViewBuilder
@@ -61,7 +78,7 @@ struct InsertPickerView: View {
     }
 
     private func row(_ entry: QuickInsertEntry) -> some View {
-        Button { insert(entry) } label: {
+        Button { choose(entry) } label: {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.label())
                     .font(.body)
@@ -92,6 +109,95 @@ struct InsertPickerView: View {
         case .snippets: String(localized: "Snippets")
         case .recent: String(localized: "Recent")
         case .collection: String(localized: "Collections")
+        }
+    }
+
+    private func choose(_ entry: QuickInsertEntry) {
+        if insertText != nil,
+           let plan = SnippetCopyPlan.plan(for: entry.text, isSnippet: entry.section == .snippets),
+           plan.needsSheet
+        {
+            pendingFill = PendingSnippetFill(entry: entry, plan: plan)
+            return
+        }
+        insert(entry)
+    }
+}
+
+private struct PendingSnippetFill: Identifiable {
+    let entry: QuickInsertEntry
+    let plan: SnippetCopyPlan
+    var id: UUID {
+        entry.id
+    }
+}
+
+private struct AutoFillSnippetSheet: View {
+    let fill: PendingSnippetFill
+    let onInsert: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var fills: SnippetFills
+
+    init(fill: PendingSnippetFill, onInsert: @escaping (String) -> Void) {
+        self.fill = fill
+        self.onInsert = onInsert
+        _fills = State(initialValue: SnippetFills.initial(for: fill.plan.fields))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                ForEach(fill.plan.fields) { field in
+                    Section(field.label) {
+                        switch field.kind {
+                        case let .text(multiline):
+                            TextField(
+                                field.defaultValue ?? field.label,
+                                text: Binding(
+                                    get: { fills.values[field.id] ?? "" },
+                                    set: { fills.values[field.id] = $0 }
+                                ),
+                                axis: multiline ? .vertical : .horizontal
+                            )
+                        case let .choice(choices):
+                            Picker(field.label, selection: Binding(
+                                get: { fills.values[field.id] ?? choices.first ?? "" },
+                                set: { fills.values[field.id] = $0 }
+                            )) {
+                                ForEach(choices, id: \.self) { choice in
+                                    Text(choice).tag(choice)
+                                }
+                            }
+                        case .optional:
+                            Toggle(field.label, isOn: Binding(
+                                get: { fills.included.contains(field.id) },
+                                set: { included in
+                                    if included {
+                                        fills.included.insert(field.id)
+                                    } else {
+                                        fills.included.remove(field.id)
+                                    }
+                                }
+                            ))
+                        }
+                    }
+                }
+            }
+            .navigationTitle(fill.entry.label())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Insert") {
+                        let expanded = fill.plan.expanded(
+                            fill.entry.text, fills: fills, pastedClipboard: "", at: .now
+                        )
+                        onInsert(expanded)
+                    }
+                }
+            }
         }
     }
 }

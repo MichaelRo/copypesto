@@ -9,6 +9,7 @@ struct CardMenu: View {
         let item = card.item
         let concealment = card.concealment
         Button("Copy", systemImage: "doc.on.doc") { card.copy() }
+        Button("Edit Details", systemImage: "info.circle") { card.library.open(item.id) }
         if !concealment.isConcealed, item.type == .url,
            case let .openInBrowser(url) = LinkOpenPolicy.action(for: item.displayPreviewText)
         {
@@ -21,28 +22,33 @@ struct CardMenu: View {
                     if card.appState.copyPageTitle(item) { card.library.didCopy(item.id) }
                 }
             }
-            if LinkPreviewImageStore().load(for: item.id) != nil {
+            if card.media.linkPicture != nil {
                 Button("Copy Preview Image", systemImage: "photo") {
                     if card.appState.copyLinkPreviewImage(item) { card.library.didCopy(item.id) }
                 }
             }
         }
         AIActionsMenu(item: item)
-        if card.appState.canEditText(item), let text = ClipContent.of(item)?.plainText {
+        if card.appState.canEditText(item) {
             Button("Edit Text\u{2026}", systemImage: "pencil") {
-                card.library.beginTextEdit(of: item.id, text: text)
-                card.library.open(item.id)
+                Task {
+                    guard let text = await loadPlainText(item) else { return }
+                    card.library.beginTextEdit(of: item.id, text: text)
+                    card.library.open(item.id)
+                }
             }
         }
-        Button("Edit Details", systemImage: "info.circle") { card.library.open(item.id) }
         if !concealment.isConcealed {
             Button("Share", systemImage: "square.and.arrow.up") { card.share() }
         }
         Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") { card.togglePin() }
         AddToCollectionMenu(item: item, collections: card.collections)
-        if card.appState.canEditSnippet(item), let text = ClipContent.of(item)?.plainText {
+        if card.appState.canEditSnippet(item) {
             Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
-                card.library.beginSnippetEdit(of: item, text: text)
+                Task {
+                    guard let text = await loadPlainText(item) else { return }
+                    card.library.beginSnippetEdit(of: item, text: text)
+                }
             }
         }
         if card.appState.canSaveAsSnippet(item) {
@@ -74,6 +80,13 @@ struct CardMenu: View {
         }
         Divider()
         Button("Delete", systemImage: "trash", role: .destructive) { card.delete() }
+    }
+
+    private func loadPlainText(_ item: ClipboardItem) async -> String? {
+        if let container = card.appState.historyContainer {
+            return await ClipContent.load(itemID: item.id, container: container)?.plainText
+        }
+        return ClipContent.of(item)?.plainText
     }
 }
 

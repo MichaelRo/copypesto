@@ -26,7 +26,7 @@ struct LibraryGrid: View {
     @State private var position: CardIdentity?
     @State private var hasRestoredPosition = false
     @State private var ranking = SemanticRanking()
-    @State private var cardFrames: [UUID: CGRect] = [:]
+    @State private var cardFrames = CardFrameStore()
     @State private var dragAnchorID: UUID?
     @State private var dragBaseSelection: Set<UUID> = []
     @State private var dragAddsSelection = true
@@ -100,7 +100,10 @@ struct LibraryGrid: View {
                 if let item = store.item(for: id) {
                     ClipCard(
                         item: item, width: cardWidth, collections: collections, isFocused: focusedClip == id,
-                        inCollection: inCollection, revision: ClipCard.Revision(item)
+                        inCollection: inCollection,
+                        isSelected: library.isSelecting && library.selectedClipIDs.contains(id),
+                        isFlashed: library.flashedClipID == id,
+                        revision: ClipCard.Revision(item)
                     )
                     .focusable()
                     .focused($focusedClip, equals: id)
@@ -108,9 +111,11 @@ struct LibraryGrid: View {
                     .onGeometryChange(for: CGRect.self) { proxy in
                         proxy.frame(in: .named("clipGrid"))
                     } action: { frame in
-                        cardFrames[id] = frame
+                        if library.isSelecting {
+                            cardFrames.frames[id] = frame
+                        }
                     }
-                    .id(CardIdentity(id: id, content: item.contentHash))
+                    .id(CardIdentity(id: id))
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
@@ -118,7 +123,10 @@ struct LibraryGrid: View {
         .coordinateSpace(name: "clipGrid")
         .simultaneousGesture(dragSelectGesture(visibleIDs: ids))
         .onChange(of: library.isSelecting) { _, selecting in
-            if !selecting { dragAnchorID = nil }
+            if !selecting {
+                dragAnchorID = nil
+                cardFrames.frames.removeAll()
+            }
         }
         .sensoryFeedback(.selection, trigger: dragAnchorID == nil ? 0 : library.selectedClipIDs.count)
         .scrollTargetLayout()
@@ -207,7 +215,7 @@ struct LibraryGrid: View {
     }
 
     private func cardID(at point: CGPoint, among ids: [UUID]) -> UUID? {
-        ids.first { id in cardFrames[id]?.contains(point) == true }
+        ids.first { id in cardFrames.frames[id]?.contains(point) == true }
     }
 
     private func dragSelectGesture(visibleIDs: [UUID]) -> some Gesture {
@@ -240,5 +248,9 @@ struct LibraryGrid: View {
 /// A card's identity in the grid: its clip and that clip's content, so an edited card is a new view.
 struct CardIdentity: Hashable {
     let id: UUID
-    let content: String
+    var content = ""
+}
+
+private final class CardFrameStore {
+    var frames: [UUID: CGRect] = [:]
 }

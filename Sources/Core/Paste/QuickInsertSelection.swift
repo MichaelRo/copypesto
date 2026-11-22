@@ -85,7 +85,6 @@ public enum QuickInsertSelection {
         public let items: [ClipboardItem]
     }
 
-    @MainActor
     public static func set(
         in context: ModelContext, now: Date, options: Options = Options(),
         recognizedTexts: RecognizedTextStore = RecognizedTextStore(),
@@ -105,7 +104,6 @@ public enum QuickInsertSelection {
         return try set(in: context, now: now, options: options, reader: reader)
     }
 
-    @MainActor
     public static func set(
         in context: ModelContext, now: Date, options: Options = Options(), reader: Reader
     ) throws

@@ -12,6 +12,8 @@ struct ClipCard: View {
     let collections: [Pinboard]
     var isFocused = false
     var inCollection = false
+    var isSelected = false
+    var isFlashed = false
     /// A change saved by the storage actor (a pin, a sync) reaches this context's objects without telling the card,
     /// so the grid hands the fields the card draws from as a value; a new value redraws it.
     var revision: Revision?
@@ -145,8 +147,11 @@ struct ClipCard: View {
                 )
                 .environment(\.clipRevision, revision ?? Revision(item))
             }
-            .background(cardFill, in: shape)
             .clipShape(shape)
+            .background {
+                shape.fill(cardFill)
+                    .shadow(color: .black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 4, y: 2)
+            }
             .overlay(alignment: .topTrailing) {
                 if library.isSelecting {
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -159,16 +164,11 @@ struct ClipCard: View {
                 }
             }
             .overlay { shape.strokeBorder(borderColor, lineWidth: ringed ? 2 : 0.75) }
-            .shadow(color: .black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 4, y: 2)
             .animation(Motion.animation(.pestoQuick), value: ringed)
     }
 
-    private var isSelected: Bool {
-        library.isSelecting && library.selectedClipIDs.contains(item.id)
-    }
-
     private var ringed: Bool {
-        isSelected || isFocused || library.flashedClipID == item.id
+        isSelected || isFocused || isFlashed
     }
 
     private var borderColor: Color {

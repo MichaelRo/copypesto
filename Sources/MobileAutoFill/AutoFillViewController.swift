@@ -18,6 +18,9 @@ final class AutoFillViewController: ASCredentialProviderViewController {
             insert: { [weak self] entry in
                 self?.extensionContext.completeRequest(withTextToInsert: entry.insertionText(), completionHandler: nil)
             },
+            insertText: { [weak self] text in
+                self?.extensionContext.completeRequest(withTextToInsert: text, completionHandler: nil)
+            },
             cancel: { [weak self] in self?.cancel(.userCanceled) }
         )
         let host = UIHostingController(rootView: picker)

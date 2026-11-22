@@ -231,6 +231,7 @@ targets:
       - path: Sources/MobileAutoFill
         excludes: ["Info.plist", "*.entitlements"]
       - path: Sources/MobileShare/BrandAccent.swift
+      - path: Sources/Shared/Extensions/Color+Hex.swift
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore

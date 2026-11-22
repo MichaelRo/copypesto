@@ -53,6 +53,8 @@ struct CoveredCardFace: View {
                     .font(.caption.weight(.semibold))
                     .buttonStyle(CoverShowStyle())
                     .accessibilityIdentifier(MobileAccessibilityID.showSensitiveButton)
+            } else if item.analysisPending {
+                Text("Checking image\u{2026}").font(.caption)
             }
         }
         .foregroundStyle(.secondary)

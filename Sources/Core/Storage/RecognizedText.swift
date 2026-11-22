@@ -25,7 +25,6 @@ public enum RecognizedText {
 
     /// Whether the picture may hand out its text at all: no secret (even one that is shown), not filtered, not still
     /// being read.
-    @MainActor
     static func isEligible(_ item: ClipboardItem) -> Bool {
         item.type == .image && item.sensitivityRaw == nil && !item.isNSFW && !item.analysisPending
     }
@@ -48,7 +47,6 @@ public enum RecognizedText {
 
     /// The text to write, nil when the picture does not offer it, its file will not open, or the text holds a secret.
     /// A file that will not open is not replaced by the preview.
-    @MainActor
     public static func text(of item: ClipboardItem, store: RecognizedTextStore = RecognizedTextStore()) -> String? {
         guard isEligible(item) else { return nil }
         let text = store.exists(for: item.id) ? store.load(for: item.id) : wholePreview(of: item)
@@ -56,7 +54,6 @@ public enum RecognizedText {
         return text
     }
 
-    @MainActor
     private static func wholePreview(of item: ClipboardItem) -> String? {
         let preview = item.displayPreviewText
         guard preview.count < CardPreviewText.previewLength else { return nil }

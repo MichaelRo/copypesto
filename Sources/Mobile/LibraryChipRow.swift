@@ -34,6 +34,8 @@ struct LibraryChipRow: View {
             .padding(.vertical, 2)
         }
         .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize)
+        .fixedSize(horizontal: false, vertical: true)
         .accessibilityIdentifier(MobileAccessibilityID.chipRow)
     }
 

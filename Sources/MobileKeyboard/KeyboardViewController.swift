@@ -141,9 +141,9 @@ final class KeyboardViewController: UIInputViewController {
             if current.responds(to: selector),
                let method = class_getInstanceMethod(type(of: current), selector)
             {
-                typealias OpenIMP = @convention(c) (AnyObject, Selector, URL, NSDictionary, Any?) -> Void
+                typealias OpenIMP = @convention(c) (AnyObject, Selector, NSURL, NSDictionary, AnyObject?) -> Void
                 let imp = unsafeBitCast(method_getImplementation(method), to: OpenIMP.self)
-                imp(current, selector, url, [:], nil)
+                imp(current, selector, url as NSURL, [:] as NSDictionary, nil)
                 return
             }
             responder = current.next

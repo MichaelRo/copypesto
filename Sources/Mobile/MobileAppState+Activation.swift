@@ -5,12 +5,13 @@ import PestoCore
 /// many times SwiftUI reports the scene as active.
 extension MobileAppState {
     func activate() async {
-        boot()
+        HangDiagnostics.measure("boot") { boot() }
         guard !isActivated else { return }
         isActivated = true
         activationCount += 1
         lockDidBecomeActive()
-        syncDidBecomeActive()
+        await Task.yield()
+        await syncDidBecomeActiveAsync()
         inboxDidBecomeActive()
         await clipboardDidBecomeActive()
         await refreshWidgetPresence()

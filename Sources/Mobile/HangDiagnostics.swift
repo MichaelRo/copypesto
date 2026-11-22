@@ -13,9 +13,14 @@ final class HangDiagnostics: NSObject, @unchecked Sendable {
 
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "Hangs")
     private static let signposter = OSSignposter(logger: logger)
-    private static let slowMainActorThreshold = Duration.milliseconds(100)
+    private static let slowMainActorThreshold = Duration.milliseconds(25)
+    private static let logFileURL: URL? = FileManager.default
+        .urls(for: .cachesDirectory, in: .userDomainMask)
+        .first?
+        .appendingPathComponent("hang-diagnostics.log")
 
     @MainActor private var isStarted = false
+    private var watchdogTask: Task<Void, Never>?
 
     @MainActor
     func start() {
@@ -24,6 +29,24 @@ final class HangDiagnostics: NSObject, @unchecked Sendable {
         #if canImport(MetricKit) && !targetEnvironment(simulator)
         MXMetricManager.shared.add(self)
         #endif
+        startWatchdog()
+    }
+
+    private func startWatchdog() {
+        watchdogTask = Task.detached(priority: .utility) {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(200))
+                let pingStart = ContinuousClock.now
+                await MainActor.run {
+                    let delay = ContinuousClock.now - pingStart
+                    if delay >= .milliseconds(80) {
+                        let ms = Int(delay.components.seconds * 1000)
+                            + Int(delay.components.attoseconds / 1_000_000_000_000_000)
+                        Self.record("Main-thread stall detected: \(ms) ms")
+                    }
+                }
+            }
+        }
     }
 
     @MainActor
@@ -37,10 +60,24 @@ final class HangDiagnostics: NSObject, @unchecked Sendable {
             if elapsed >= slowMainActorThreshold {
                 let ms = Int(elapsed.components.seconds * 1000)
                     + Int(elapsed.components.attoseconds / 1_000_000_000_000_000)
-                logger.warning("Slow main-actor work (\(label, privacy: .public)): \(ms) ms")
+                record("Slow main-actor work (\(label)): \(ms) ms")
             }
         }
         return try operation()
+    }
+
+    private static func record(_ message: String) {
+        logger.warning("\(message, privacy: .public)")
+        guard let url = logFileURL else { return }
+        let line = "\(ISO8601DateFormatter().string(from: .now)) \(message)\n"
+        guard let data = line.data(using: .utf8) else { return }
+        if let handle = try? FileHandle(forWritingTo: url) {
+            defer { try? handle.close() }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+        } else {
+            try? data.write(to: url, options: .atomic)
+        }
     }
 }
 

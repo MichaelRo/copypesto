@@ -163,14 +163,14 @@ public final class SyncFolderService {
 
     private func pass() async {
         if isLocked() { return set(.paused) }
-        guard FileManager.default.fileExists(atPath: layout.root.path) else { return set(.folderMissing) }
+        guard await Self.rootExists(at: layout.root.path) else { return set(.folderMissing) }
         do {
             try Task.checkCancellation()
-            guard let opened = try openGroup() else { return }
+            guard let opened = try await openGroup() else { return }
             try await switchEpochIfNeeded(opened)
             let current = group ?? opened
             try await adoptClipsOfMacsThatLeft()
-            guard try recoverOwnLogIfNeeded(current) else { return set(.waitingForFolder) }
+            guard try await recoverOwnLogIfNeeded(current) else { return set(.waitingForFolder) }
             try Task.checkCancellation()
             try await write(current)
             try Task.checkCancellation()
@@ -190,9 +190,9 @@ public final class SyncFolderService {
         }
     }
 
-    private func openGroup() throws -> SyncGroup? {
+    private func openGroup() async throws -> SyncGroup? {
         let joined = water.vaultFloor.flatMap { Data(hexString: $0.vaultID) }
-        switch try SyncGroupManager.open(layout: layout, keyStore: keyStore, preferring: joined) {
+        switch try await Self.openGroupOffMain(layout: layout, keyStore: keyStore, preferring: joined) {
         case .empty:
             set(.waitingForFolder)
             return nil
@@ -271,31 +271,17 @@ public final class SyncFolderService {
     /// Finds where this Mac's own log ends, so the next segment chains from it. Returns false while the last file
     /// cannot be read yet (iCloud has it as a placeholder): writing now would chain from nothing and every other Mac
     /// would refuse the log. A file that is damaged is a refusal; one from an older epoch starts the new chain.
-    private func recoverOwnLogIfNeeded(_ found: SyncGroup) throws -> Bool {
+    private func recoverOwnLogIfNeeded(_ found: SyncGroup) async throws -> Bool {
         guard !ownLogRecovered else { return true }
-        let names = ((try? FileManager.default.contentsOfDirectory(atPath: layout.log(identity.deviceID).path)) ?? [])
-            .filter { $0.hasSuffix(".pestolog") }.sorted()
-        guard let last = names.last, let range = Self.sequenceRange(of: last) else {
-            ownLogRecovered = true
-            return true
-        }
-        let url = layout.log(identity.deviceID).appendingPathComponent(last)
-        guard isReadable(url), let data = try? Data(contentsOf: url) else { return false }
-        var hash = SyncManifest.zeroHash
-        do {
-            let verified = try SyncSegmentReader.verify(
-                data, syncKey: found.key, trust: found.trust, vaultID: found.vault.vaultID, epoch: found.epoch
-            )
-            hash = try verified.manifest.hash()
-        } catch SyncError.wrongEpoch {
-            hash = SyncManifest.zeroHash
-        }
-        ownLast = (range.last, hash)
+        guard let recovered = try await Self.recoverOwnLogOffMain(
+            layout: layout, deviceID: identity.deviceID, found: found, isReadable: isReadable
+        ) else { return false }
+        if let last = recovered { ownLast = last }
         ownLogRecovered = true
         return true
     }
 
-    static func sequenceRange(of name: String) -> (first: UInt64, last: UInt64)? {
+    nonisolated static func sequenceRange(of name: String) -> (first: UInt64, last: UInt64)? {
         let parts = name.replacingOccurrences(of: ".pestolog", with: "").split(separator: "-")
         guard parts.count == 2, let first = UInt64(parts[0]), let last = UInt64(parts[1]) else { return nil }
         return (first, last)
@@ -314,47 +300,35 @@ public final class SyncFolderService {
                 drained = true
                 break
             }
-            try writeBlobs(outbox.blobs, found)
-            let first = ownLast.sequence + 1
-            let last = first + UInt64(outbox.records.count) - 1
-            let url = layout.segment(identity.deviceID, first: first, last: last)
-            try FileManager.default.createDirectory(
-                at: layout.log(identity.deviceID),
-                withIntermediateDirectories: true
+            let writeContext = WriteContext(
+                found: found, layout: layout, identity: identity, folderProbe: folderProbe, now: now
             )
-            let writer = try SyncSegmentWriter(partialURL: url.appendingPathExtension("partial"), context: .init(
-                syncKey: found.key, vaultID: found.vault.vaultID, epoch: found.epoch, deviceID: identity.deviceID,
-                device: identity.keys, previousManifestHash: ownLast.hash, isSnapshot: snapshot
-            ))
-            do {
-                for (offset, record) in outbox.records.enumerated() {
-                    var numbered = record
-                    numbered.sequence = first + UInt64(offset)
-                    try writer.append(numbered)
-                }
-                try folderProbe.willWrite(url)
-                let manifest = try writer.finish(to: url, now: now())
-                ownLast = try (last, manifest.hash())
-            } catch {
-                writer.abandon()
-                throw error
-            }
+            ownLast = try await Self.writeSegmentOffMain(
+                outbox: outbox,
+                context: writeContext,
+                ownLast: ownLast,
+                snapshot: snapshot
+            )
             try await storage.commitOutbox(outbox)
             wrote = true
         }
-        if wrote { try writeHead(found) }
+        if wrote {
+            let writeContext = WriteContext(
+                found: found, layout: layout, identity: identity, folderProbe: folderProbe, now: now
+            )
+            try await Self.writeHeadOffMain(
+                context: writeContext,
+                ownLast: ownLast,
+                cursors: water.marks.mapValues(\.sequence)
+            )
+        }
         if !drained { again = true }
     }
 
     func writeBlobs(_ blobs: [String: Data], _ found: SyncGroup) throws {
-        guard !blobs.isEmpty else { return }
-        try FileManager.default.createDirectory(at: layout.blobs(identity.deviceID), withIntermediateDirectories: true)
-        for (name, payload) in blobs {
-            let url = layout.blobs(identity.deviceID).appendingPathComponent(SyncBlobFile.fileName(name))
-            guard !FileManager.default.fileExists(atPath: url.path) else { continue }
-            try folderProbe.willWrite(url)
-            try folderProbe.writeData(SyncBlobFile.seal(payload, name: name, syncKey: found.key), url)
-        }
+        try Self.writeBlobsOffMain(
+            blobs, found, layout: layout, deviceID: identity.deviceID, folderProbe: folderProbe
+        )
     }
 
     func writeHead(_ found: SyncGroup) throws {
@@ -400,57 +374,36 @@ public final class SyncFolderService {
     }
 
     private func readDevice(_ device: String, _ found: SyncGroup) async throws -> (applied: Int, waiting: Bool) {
-        let names = ((try? FileManager.default.contentsOfDirectory(atPath: layout.log(device).path)) ?? [])
-            .filter { $0.hasSuffix(".pestolog") }.sorted()
         let done = water.mark(for: device)?.sequence ?? 0
-        let todo = names.filter { (Self.sequenceRange(of: $0)?.last ?? 0) > done }
+        let todo = await Self.pendingSegmentsOffMain(logDirectory: layout.log(device).path, after: done)
         var applied = 0
         for (index, name) in todo.enumerated() {
             try Task.checkCancellation()
             if todo.count > 1 { set(.receiving(done: index, total: todo.count)) }
             let url = layout.log(device).appendingPathComponent(name)
-            guard isReadable(url) else { return (applied, true) }
-            guard let data = try? Data(contentsOf: url) else { return (applied, true) }
-            let verified: VerifiedSyncSegment
-            do {
-                verified = try SyncSegmentReader.verify(
-                    data, syncKey: found.key, trust: found.trust, vaultID: found.vault.vaultID, epoch: found.epoch
-                )
-            } catch SyncError.wrongEpoch {
-                continue // from an older epoch: nothing to read
+            guard let verified = try await Self.verifySegmentOffMain(
+                url: url, found: found, isReadable: isReadable
+            ) else {
+                // Waiting on iCloud placeholder or wrongEpoch? verifySegmentOffMain distinguishes via enum.
+                return (applied, true)
             }
-            guard verified.manifest.deviceID == device else { throw SyncError.badSignature }
-            switch try water.decide(verified.manifest, currentEpoch: found.epoch) {
+            guard let segment = verified else { continue }
+            guard segment.manifest.deviceID == device else { throw SyncError.badSignature }
+            switch try water.decide(segment.manifest, currentEpoch: found.epoch) {
             case .duplicate: continue
             case .gap: return (applied, true)
             case .apply: break
             }
-            let records = try verified.records()
-            guard let blobs = try blobPayloads(for: records, device: device, found) else { return (applied, true) }
+            guard let (records, blobs) = try await Self.loadSegmentPayloadsOffMain(
+                verified: segment, layout: layout, device: device, found: found, isReadable: isReadable
+            ) else { return (applied, true) }
             let summary = try await storage.applySync(records, blob: { blobs[$0] })
             applied += summary.added + summary.updated + summary.removed
             if summary.clockRefused > 0 { throw SyncError.clockFarAhead }
-            try water.record(verified.manifest)
+            try water.record(segment.manifest)
             saveWater()
         }
         return (applied, false)
-    }
-
-    /// The payload files the segment points to, opened; nil when one has not arrived yet.
-    private func blobPayloads(
-        for records: [SyncRecord],
-        device: String,
-        _ found: SyncGroup
-    ) throws
-    -> [String: Data]? {
-        var out: [String: Data] = [:]
-        for record in records where record.kind == .item {
-            guard let name = try record.decodeMetadata(SyncItemRecord.self).blobName else { continue }
-            let url = layout.blobs(device).appendingPathComponent(SyncBlobFile.fileName(name))
-            guard isReadable(url), let data = try? Data(contentsOf: url) else { return nil }
-            out[name] = try SyncBlobFile.open(data, name: name, syncKey: found.key)
-        }
-        return out
     }
 
     static func reason(_ error: SyncError) -> String {

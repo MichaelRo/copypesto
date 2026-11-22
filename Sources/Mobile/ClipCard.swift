@@ -45,7 +45,7 @@ struct ClipCard: View {
             isConcealed: concealment.isConcealed,
             isSecret: item.sensitivityRaw != nil && !isCoveredForPrivacy,
             pictureAspect: pictureAspect,
-            isAnimated: media.picture?.isAnimated ?? (item.mimeType?.contains("gif") == true),
+            isAnimated: media.picture?.isAnimated ?? false,
             hasLinkPicture: media.linkPicture != nil,
             isDark: colorScheme == .dark
         ))
@@ -95,7 +95,7 @@ struct ClipCard: View {
                 id: item.id,
                 isShown: appState.secretReveal.isShown(item.id),
                 byteSize: item.byteSize,
-                isAnimatedHint: item.blob?.mimeType.contains("gif") == true,
+                isAnimatedHint: media.isAnimated,
                 isConcealed: concealment.isConcealed
             )) {
                 await media.load(
@@ -110,6 +110,8 @@ struct ClipCard: View {
                 isLinkAnimated: media.isLinkAnimated
             )) {
                 guard isOnScreen, !Motion.reduceMotion, !concealment.isConcealed else { return }
+                try? await Task.sleep(for: .milliseconds(120))
+                guard !Task.isCancelled, isOnScreen else { return }
                 let id = item.id
                 let byteSize = item.byteSize
                 let container = appState.historyContainer
@@ -244,7 +246,6 @@ struct ClipCard: View {
         let isCovered: Bool
         let content: String
         let byteSize: Int
-        let mimeType: String?
         let metadata: Data?
 
         init(_ item: ClipboardItem) {
@@ -254,7 +255,6 @@ struct ClipCard: View {
             isCovered = item.analysisPending || item.isNSFW
             content = item.contentHash
             byteSize = item.byteSize
-            mimeType = item.blob?.mimeType
             metadata = item.metadataCiphertext
         }
     }

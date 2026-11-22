@@ -51,11 +51,23 @@ extension StorageService {
     /// so
     /// it runs off this actor while the clip is already on the shelf.
     nonisolated static func analyze(
-        _ input: IngestAnalysisInput, recognizer: any TextRecognizing, screener: any ImageSensitivityScreening
+        _ input: IngestAnalysisInput,
+        recognizer: any TextRecognizing,
+        screener: any ImageSensitivityScreening,
+        precomputedNSFW: Bool? = nil
     ) async
     -> IngestAnalysis {
         var analysis = IngestAnalysis()
         if input.clipType == .image, let image = input.image {
+            if let precomputedNSFW {
+                analysis.isNSFW = precomputedNSFW
+            } else if input.screensContent {
+                if let source = input.sourceURL, NSFWURLDetector.isExplicit(urlString: source.absoluteString) {
+                    analysis.isNSFW = true
+                } else {
+                    analysis.isNSFW = await screener.isSensitive(imageData: image)
+                }
+            }
             if input.needsPerceptualHash {
                 analysis.perceptualHash = PerceptualHasher.hash(imageData: image)
             }
@@ -66,14 +78,10 @@ extension StorageService {
                     analysis.ocrText = String(whole.prefix(CardPreviewText.previewLength))
                 }
             }
-            if input.screensContent {
-                if let source = input.sourceURL, NSFWURLDetector.isExplicit(urlString: source.absoluteString) {
-                    analysis.isNSFW = true
-                } else if let ocr = analysis.recognizedText, NSFWURLDetector.keywordScore(in: ocr) >= 0.85 {
-                    analysis.isNSFW = true
-                } else {
-                    analysis.isNSFW = await screener.isSensitive(imageData: image)
-                }
+            if !analysis.isNSFW, input.screensContent,
+               let ocr = analysis.recognizedText, NSFWURLDetector.keywordScore(in: ocr) >= 0.85
+            {
+                analysis.isNSFW = true
             }
         } else if input.clipType == .url, input.screensContent, let link = input.link {
             analysis.isNSFW = NSFWURLDetector.isExplicit(urlString: link)
@@ -123,10 +131,22 @@ extension StorageService {
             }
         }
         let task = Task.detached(priority: .utility) { [self] in
+            var precomputedNSFW: Bool?
+            if input.clipType == .image, input.screensContent, let imageData = input.image {
+                let explicitSource = input.sourceURL
+                    .map { NSFWURLDetector.isExplicit(urlString: $0.absoluteString) } ?? false
+                let sensitive = explicitSource ? true : await screener.isSensitive(imageData: imageData)
+                precomputedNSFW = sensitive
+                if !Task.isCancelled {
+                    await finishNSFWCheck(of: itemID, isNSFW: sensitive)
+                }
+            }
             await acquireAnalysisSlot()
             if !Task.isCancelled {
                 let judging = PerfSignposts.copy.begin("analysis")
-                let analysis = await Self.analyze(input, recognizer: recognizer, screener: screener)
+                let analysis = await Self.analyze(
+                    input, recognizer: recognizer, screener: screener, precomputedNSFW: precomputedNSFW
+                )
                 if !Task.isCancelled {
                     await finishAnalysis(of: itemID, input: input, analysis: analysis)
                 }
@@ -161,11 +181,22 @@ extension StorageService {
         untrackBackgroundTask(id, for: itemID)
     }
 
+    /// Uncovers an image as soon as its NSFW check finishes so OCR and hashing do not keep the card covered.
+    func finishNSFWCheck(of itemID: UUID, isNSFW: Bool) {
+        var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID })
+        descriptor.fetchLimit = 1
+        guard let item = try? modelContext.fetch(descriptor).first, item.analysisPending else { return }
+        item.isNSFW = isNSFW
+        item.analysisPending = false
+        try? saveOrRollback()
+    }
+
     /// Stores the verdict on the clip and uncovers it. A clip deleted meanwhile stays deleted.
     func finishAnalysis(of itemID: UUID, input: IngestAnalysisInput, analysis: IngestAnalysis) {
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == itemID })
         descriptor.fetchLimit = 1
-        guard let item = try? modelContext.fetch(descriptor).first, item.analysisPending else { return }
+        guard let item = try? modelContext.fetch(descriptor).first,
+              item.analysisPending || input.clipType == .image else { return }
         // A copy a password manager marked concealed already carries its own hidden preview; the scan adds nothing to
         // it.
         if item.sensitivityRaw == nil {

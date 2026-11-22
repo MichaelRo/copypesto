@@ -11,6 +11,7 @@ struct QuickInsertSetupSheet: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var isAutoFillEnabled = false
     @State private var isKeyboardAdded = false
+    @State private var autoFillStatusNote: String?
 
     var body: some View {
         NavigationStack {
@@ -27,9 +28,23 @@ struct QuickInsertSetupSheet: View {
                         AppDefaults.store.set(true, for: Setting.autoFillEnabled)
                         AppDefaults.store.set(true, for: Setting.quickInsertEnabled)
                         Task {
-                            await AutoFillSettings.open()
+                            let granted = await ASSettingsHelper.requestToTurnOnCredentialProviderExtension()
+                            autoFillStatusNote = granted
+                                ? String(localized: "AutoFill is enabled.")
+                                : String(
+                                    localized:
+                                    "Opened Settings. If Pesto is missing from AutoFill & Passwords, restart iPhone."
+                                )
+                            if !granted {
+                                await AutoFillSettings.open()
+                            }
                             await refreshStatus()
                         }
+                    }
+                    if let autoFillStatusNote {
+                        Text(autoFillStatusNote)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
                 }
 

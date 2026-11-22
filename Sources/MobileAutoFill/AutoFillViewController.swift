@@ -59,7 +59,7 @@ final class AutoFillViewController: ASCredentialProviderViewController {
     }
 
     override func prepareInterfaceForExtensionConfiguration() {
-        cancel(.failed)
+        extensionContext.completeExtensionConfigurationRequest()
     }
 
     private func cancel(_ code: ASExtensionError.Code) {

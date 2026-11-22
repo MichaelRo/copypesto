@@ -17,7 +17,7 @@ final class LibraryModel {
     /// does not lose what was typed. Memory only, never scene storage: it holds a clip's plaintext.
     var textEdit: TextEditSession?
     /// The first card showing in the grid, restored when the grid is drawn again by the other layout.
-    var scrollAnchor: CardIdentity?
+    @ObservationIgnored var scrollAnchor: CardIdentity?
     #if DEBUG
     /// `UITestLayout`: the width class a UI test forces, nil for the real one.
     var forcedSizeClass: UserInterfaceSizeClass? = UITestLayout.initialSizeClass

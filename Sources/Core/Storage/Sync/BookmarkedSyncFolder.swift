@@ -45,7 +45,7 @@ public struct SystemBookmarks: SecurityScopedBookmarks {
 /// folder is used as it is, which is what a Mac's Change… makes.
 @MainActor
 public final class BookmarkedSyncFolder: SyncFolderSource {
-    public static let folderName = "Pesto Sync"
+    public nonisolated static let folderName = "Pesto Sync"
 
     private let defaults: UserDefaults
     private let bookmarks: any SecurityScopedBookmarks
@@ -68,13 +68,13 @@ public final class BookmarkedSyncFolder: SyncFolderSource {
         !defaults.value(for: Setting.syncFolderBookmark).isEmpty
     }
 
-    private static func isSyncFolder(_ url: URL) -> Bool {
+    private nonisolated static func isSyncFolder(_ url: URL) -> Bool {
         let layout = SyncFolderLayout(root: url)
         return FileManager.default.fileExists(atPath: layout.devices.path)
             || FileManager.default.fileExists(atPath: layout.vault(epoch: 1).path)
     }
 
-    public static func syncRoot(forPicked picked: URL) -> URL {
+    public nonisolated static func syncRoot(forPicked picked: URL) -> URL {
         if picked.lastPathComponent == folderName || isSyncFolder(picked) { return picked }
         let direct = picked.appendingPathComponent(folderName, isDirectory: true)
         if FileManager.default.fileExists(atPath: direct.path) { return direct }
@@ -118,6 +118,61 @@ public final class BookmarkedSyncFolder: SyncFolderSource {
             }
         }
         return .ready(root)
+    }
+
+    public func resolveAsync() async -> SyncFolderResolution {
+        if let open { return .ready(open.root) }
+        let stored: String = defaults.value(for: Setting.syncFolderBookmark)
+        guard !stored.isEmpty else { return .notChosen }
+        guard let data = Data(base64Encoded: stored) else { return .needsRepair(.unresolvable) }
+        let result = await Self.resolveOffMainActor(data, bookmarks: bookmarks)
+        switch result {
+        case let .ready(picked, root, scoped, renewedBookmark):
+            if let renewedBookmark {
+                defaults.set(renewedBookmark.base64EncodedString(), for: Setting.syncFolderBookmark)
+            }
+            open = OpenFolder(picked: picked, root: root, scoped: scoped)
+            return .ready(root)
+        case let .needsRepair(problem):
+            return .needsRepair(problem)
+        }
+    }
+
+    private enum OffMainResolution {
+        case ready(picked: URL, root: URL, scoped: Bool, renewedBookmark: Data?)
+        case needsRepair(SyncFolderProblem)
+    }
+
+    @concurrent
+    private static func resolveOffMainActor(
+        _ data: Data, bookmarks: any SecurityScopedBookmarks
+    ) async
+        -> OffMainResolution
+    {
+        let resolved: (url: URL, isStale: Bool)
+        do {
+            resolved = try bookmarks.resolve(data)
+        } catch {
+            logger.error("The sync folder's bookmark did not resolve: \(error.localizedDescription, privacy: .public)")
+            return .needsRepair(.unresolvable)
+        }
+        let scoped = bookmarks.startAccessing(resolved.url)
+        guard bookmarks.isReachableFolder(resolved.url) else {
+            if scoped { bookmarks.stopAccessing(resolved.url) }
+            return .needsRepair(resolved.isStale ? .stale : .unreachable)
+        }
+        let root = syncRoot(forPicked: resolved.url)
+        var renewedBookmark: Data?
+        if resolved.isStale {
+            do {
+                renewedBookmark = try bookmarks.bookmark(for: resolved.url)
+            } catch {
+                logger.error("The stale sync bookmark was not renewed: \(error.localizedDescription, privacy: .public)")
+                if scoped { bookmarks.stopAccessing(resolved.url) }
+                return .needsRepair(.stale)
+            }
+        }
+        return .ready(picked: resolved.url, root: root, scoped: scoped, renewedBookmark: renewedBookmark)
     }
 
     public func choose(_ picked: URL) throws -> URL {

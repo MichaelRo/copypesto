@@ -52,8 +52,7 @@ final class CardMediaState {
         }
         switch item.type {
         case .image where item.sensitivityRaw == nil:
-            let becameAnimated = picture?.isAnimated == false && item.blob?.mimeType.contains("gif") == true
-            guard picture == nil || loadedByteSize != item.byteSize || becameAnimated else { return }
+            guard picture == nil || loadedByteSize != item.byteSize else { return }
             picture = await CardMedia.picture(
                 itemID: item.id, byteSize: item.byteSize, container: container, maxPixel: CardMedia.cardPixel
             )

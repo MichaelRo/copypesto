@@ -121,7 +121,7 @@ struct LibraryGrid: View {
             }
         }
         .coordinateSpace(name: "clipGrid")
-        .simultaneousGesture(dragSelectGesture(visibleIDs: ids))
+        .simultaneousGesture(dragSelectGesture(visibleIDs: ids), including: library.isSelecting ? .all : .none)
         .onChange(of: library.isSelecting) { _, selecting in
             if !selecting {
                 dragAnchorID = nil
@@ -163,7 +163,9 @@ struct LibraryGrid: View {
     }
 
     private func relist(_ key: LibraryListing.Key) {
-        listing = LibraryListing.list(key, in: store, order: library.order, smartRule: smartRule)
+        listing = HangDiagnostics.measure("libraryRelist") {
+            LibraryListing.list(key, in: store, order: library.order, smartRule: smartRule)
+        }
         hasListed = true
         guard !hasRestoredPosition else { return }
         hasRestoredPosition = true

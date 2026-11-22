@@ -25,13 +25,7 @@ struct KeyboardSettingsView: View {
                     Text("Stay in Pesto").tag(false)
                 }
                 .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
-                Button("Turn On AutoFill\u{2026}") {
-                    AppDefaults.store.set(true, for: Setting.autoFillEnabled)
-                    AppDefaults.store.set(true, for: Setting.quickInsertEnabled)
-                    appState.writeQuickInsert()
-                    Task { await AutoFillSettings.open() }
-                }
-                Button("Quick Insert Setup Guide\u{2026}") {
+                Button("Set Up Quick Insert\u{2026}") {
                     showsSetupGuide = true
                 }
             } header: {

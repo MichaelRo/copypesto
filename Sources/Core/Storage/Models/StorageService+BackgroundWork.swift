@@ -15,7 +15,35 @@ public extension StorageService {
         }
     }
 
-    internal func finishEmbedding(_ id: UUID) {
+    internal func trackBackgroundTask(
+        _ taskID: UUID,
+        for itemID: UUID,
+        in pool: inout [UUID: Task<Void, Never>],
+        task: Task<Void, Never>
+    ) {
+        pool[taskID] = task
+        pendingItemTasks[itemID, default: []].insert(taskID)
+    }
+
+    internal func untrackBackgroundTask(_ taskID: UUID, for itemID: UUID) {
+        pendingItemTasks[itemID]?.remove(taskID)
+        if pendingItemTasks[itemID]?.isEmpty == true {
+            pendingItemTasks[itemID] = nil
+        }
+    }
+
+    internal func cancelBackgroundTasks(for deletedIDs: [UUID]) {
+        for itemID in deletedIDs {
+            guard let taskIDs = pendingItemTasks.removeValue(forKey: itemID) else { continue }
+            for taskID in taskIDs {
+                pendingAnalyses[taskID]?.cancel()
+                pendingEmbeddings[taskID]?.cancel()
+            }
+        }
+    }
+
+    internal func finishEmbedding(_ id: UUID, for itemID: UUID) {
         pendingEmbeddings[id] = nil
+        untrackBackgroundTask(id, for: itemID)
     }
 }

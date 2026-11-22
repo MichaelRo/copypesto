@@ -25,6 +25,7 @@ struct KeyboardKeyStyle: ButtonStyle {
                         radius: 0, x: 0, y: 1
                     )
             }
+            .scaleEffect(!isFunction && !isAccent && configuration.isPressed ? 1.06 : 1.0)
             .contentShape(.rect(cornerRadius: radius))
     }
 

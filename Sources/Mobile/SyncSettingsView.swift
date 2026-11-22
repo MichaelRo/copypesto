@@ -46,8 +46,16 @@ private struct SyncSettingsForm: View {
             }
             if sync.isEnabled { enabledSections } else { offSections }
         }
-        .fileImporter(isPresented: $picksFolder, allowedContentTypes: [.folder]) { result in
-            if case let .success(url) = result { sync.useFolder(url) }
+        .sheet(isPresented: $picksFolder) {
+            SyncFolderPicker(
+                initialDirectory: BookmarkedSyncFolder.suggestedPickerDirectory(),
+                onPicked: { url in
+                    picksFolder = false
+                    sync.useFolder(url)
+                },
+                onCancel: { picksFolder = false }
+            )
+            .ignoresSafeArea()
         }
         .sheet(isPresented: Binding(get: { sync.flow != .idle }, set: { if !$0 { sync.cancelFlow() } })) {
             SyncFlowSheet(sync: sync)

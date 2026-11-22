@@ -47,8 +47,8 @@ struct RemoteCopyTests {
         #expect(try onlyItem().sourceBundleID == "com.apple.finder")
     }
 
-    @Test("copying a clip again from another device marks the existing clip as remote")
-    func ingest_remoteRecopyOfALocalClip_marksItRemote() async throws {
+    @Test("copying a clip again from another device preserves local provenance on this device")
+    func ingest_remoteRecopyOfALocalClip_preservesLocalProvenance() async throws {
         let hash = UUID().uuidString
         await service.updateClock { Date(timeIntervalSince1970: 1_800_000_000) }
         try await service.ingest(capture(isRemote: false, hash: hash))
@@ -57,9 +57,9 @@ struct RemoteCopyTests {
         try await service.ingest(capture(isRemote: true, hash: hash))
 
         let item = try onlyItem()
-        #expect(item.isRemote)
-        #expect(item.sourceBundleID == nil)
-        #expect(item.sourceAppName == "Another device")
+        #expect(!item.isRemote)
+        #expect(item.sourceBundleID == "com.apple.finder")
+        #expect(item.sourceAppName != PasteboardCapture.remoteSourceName)
     }
 
     @Test("copying a remote clip again on this Mac attributes it to the app in front and clears the remote mark")

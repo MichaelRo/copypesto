@@ -237,4 +237,16 @@ struct SyncFolderBookmarkTests {
         )
         source.relinquish()
     }
+
+    @Test("a picked folder containing a nested Pesto/Pesto Sync folder resolves directly to it")
+    func whenNestedUnderPestoFolder_thenSyncRootTracesPestoSubfolder() throws {
+        defer { try? FileManager.default.removeItem(at: picked) }
+        let nested = picked
+            .appendingPathComponent("Pesto", isDirectory: true)
+            .appendingPathComponent(BookmarkedSyncFolder.folderName, isDirectory: true)
+        try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
+
+        let resolved = BookmarkedSyncFolder.syncRoot(forPicked: picked)
+        #expect(resolved.resolvingSymlinksInPath().path == nested.resolvingSymlinksInPath().path)
+    }
 }

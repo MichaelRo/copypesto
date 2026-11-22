@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
+import SwiftData
 import SwiftUI
+import UIKit
 
 struct LibraryToolbar: ToolbarContent {
     let showsSettings: Bool
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
+    @Environment(\.scenePhase) private var scenePhase
+    @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
+    @State private var hasClipboardContent = Self.clipboardHasContent()
+
+    private var targetCollectionID: UUID? {
+        library.targetCollectionID(in: collections)
+    }
 
     var body: some ToolbarContent {
         if showsSettings {
@@ -14,26 +23,50 @@ struct LibraryToolbar: ToolbarContent {
                     .accessibilityIdentifier(MobileAccessibilityID.settingsButton)
             }
         }
-        ToolbarItem(placement: .primaryAction) {
-            Menu {
-                Button("New Note", systemImage: "square.and.pencil") { library.isComposing = true }
+        if library.isSelecting {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Done") { library.endSelection() }
+                    .bold()
+            }
+        } else {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Select Clips", systemImage: "checklist.checked") {
+                    library.beginSelection()
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.selectClipsButton)
+            }
+            ToolbarSpacer(.fixed, placement: .primaryAction)
+            ToolbarItem(placement: .primaryAction) {
+                Button("New Clip", systemImage: "plus") { library.isComposing = true }
                     .accessibilityIdentifier(MobileAccessibilityID.newNoteButton)
-                Button("New Snippet\u{2026}", systemImage: "curlybraces") { library.beginNewSnippet() }
-                    .accessibilityIdentifier(MobileAccessibilityID.newSnippetButton)
-            } label: {
-                Label("New", systemImage: "plus")
+                    .onAppear { hasClipboardContent = Self.clipboardHasContent() }
+                    .onChange(of: scenePhase) { _, phase in
+                        if phase == .active { hasClipboardContent = Self.clipboardHasContent() }
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+                        hasClipboardContent = Self.clipboardHasContent()
+                    }
+                    .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.removedNotification)) { _ in
+                        hasClipboardContent = Self.clipboardHasContent()
+                    }
             }
-            .accessibilityIdentifier(MobileAccessibilityID.addClipMenuButton)
-        }
-        ToolbarSpacer(.fixed, placement: .primaryAction)
-        ToolbarItem(placement: .primaryAction) {
-            PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
-                Task { await appState.add(from: providers, method: .paste) }
+            if hasClipboardContent {
+                ToolbarSpacer(.fixed, placement: .primaryAction)
+                ToolbarItem(placement: .primaryAction) {
+                    PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
+                        let destination = targetCollectionID
+                        Task { await appState.add(from: providers, method: .paste, into: destination) }
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonBorderShape(.circle)
+                }
             }
-            .labelStyle(.iconOnly)
-            .buttonBorderShape(.circle)
         }
-        .sharedBackgroundVisibility(.hidden)
+    }
+
+    private static func clipboardHasContent() -> Bool {
+        let board = AppPasteboard.general
+        return board.hasStrings || board.hasURLs || board.hasImages
     }
 }
 

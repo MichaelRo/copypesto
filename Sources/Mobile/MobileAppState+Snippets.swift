@@ -11,10 +11,15 @@ extension MobileAppState {
     /// Copies a snippet the sheet filled in, remembers the values (unless the person turned that off) and moves the
     /// clip to the front.
     @discardableResult
-    func copyFilled(_ request: SnippetFillRequest, fills: SnippetFills, pastedClipboard: String) -> Bool {
+    func copyFilled(
+        _ request: SnippetFillRequest, fills: SnippetFills, pastedClipboard: String, selectedText: String = ""
+    )
+    -> Bool {
         pendingFill = nil
         guard let item = historyStore?.item(for: request.id) else { return false }
-        let text = request.expanded(fills: fills, pastedClipboard: pastedClipboard, at: clock())
+        let text = request.expanded(
+            fills: fills, pastedClipboard: pastedClipboard, selectedText: selectedText, at: clock()
+        )
         if AppDefaults.store.value(for: Setting.rememberFillIns) {
             let memory = FillInMemory.remembered(from: fills, fields: request.plan.fields)
             let id = request.id
@@ -64,10 +69,11 @@ extension MobileAppState {
             tell(String(localized: "A snippet can\u{2019}t be empty."), isProblem: true)
             return false
         }
+        let prepared = FillInParser.convertingAllVariables(in: text)
         let cleanTitle = Self.cleanedTitle(title)
         let mark = service.undoHistory.recordedCount
         do {
-            guard let id = try await service.addSnippet(text, title: cleanTitle) else {
+            guard let id = try await service.addSnippet(prepared, title: cleanTitle) else {
                 tell(String(localized: "Couldn\u{2019}t save the snippet."), isProblem: true)
                 return false
             }
@@ -97,13 +103,14 @@ extension MobileAppState {
         {
             return false
         }
+        let prepared = FillInParser.convertingAllVariables(in: text)
         let oldHash = existingItem.contentHash
         let oldTitle = existingItem.customTitle
-        let textChanged = ClipContent.of(existingItem)?.plainText != text
+        let textChanged = ClipContent.of(existingItem)?.plainText != prepared
         let cleanTitle = Self.cleanedTitle(title)
         let mark = service.undoHistory.recordedCount
         do {
-            guard try await service.updateSnippet(id: id, title: cleanTitle, text: text) else {
+            guard try await service.updateSnippet(id: id, title: cleanTitle, text: prepared) else {
                 tell(String(localized: "Couldn\u{2019}t save the snippet."), isProblem: true)
                 return false
             }

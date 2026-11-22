@@ -9,7 +9,7 @@ public extension SyncFolderService {
         public var isICloud: @Sendable (URL) -> Bool
 
         public init(
-            writeData: @escaping @Sendable (Data, URL) throws -> Void = { try $0.write(to: $1, options: .atomic) },
+            writeData: @escaping @Sendable (Data, URL) throws -> Void = SyncFolderService.defaultWriteData,
             willWrite: @escaping @Sendable (URL) throws -> Void = { _ in },
             uploadingError: @escaping @Sendable (URL) -> (any Error)? = SyncFolderService.defaultUploadingError,
             isICloud: @escaping @Sendable (URL) -> Bool = SyncFolderService.defaultIsICloud
@@ -19,6 +19,28 @@ public extension SyncFolderService {
             self.uploadingError = uploadingError
             self.isICloud = isICloud
         }
+    }
+
+    nonisolated static func defaultWriteData(_ data: Data, to url: URL) throws {
+        #if os(macOS)
+        try data.write(to: url, options: .atomic)
+        #else
+        var coordError: NSError?
+        var writeError: (any Error)?
+        NSFileCoordinator(filePresenter: nil).coordinate(
+            writingItemAt: url,
+            options: .forReplacing,
+            error: &coordError
+        ) { coordinatedURL in
+            do {
+                try data.write(to: coordinatedURL, options: .atomic)
+            } catch {
+                writeError = error
+            }
+        }
+        if let coordError { throw coordError }
+        if let writeError { throw writeError }
+        #endif
     }
 
     nonisolated static func defaultIsICloud(_ url: URL) -> Bool {

@@ -12,12 +12,15 @@ extension StorageService {
     func startGIFUpgrade(of itemID: UUID, from address: URL) {
         guard let fetcher = remoteGIFFetcher else { return }
         let taskID = UUID()
-        pendingAnalyses[taskID] = Task.detached(priority: .utility) { [self] in
+        let task = Task.detached(priority: .utility) { [self] in
             let fetching = PerfSignposts.copy.begin("gifUpgrade")
-            if let data = await fetcher(address) { await upgrade(itemID, toGIF: data) }
+            if !Task.isCancelled, let data = await fetcher(address), !Task.isCancelled {
+                await upgrade(itemID, toGIF: data)
+            }
             fetching.end()
-            await endAnalysis(taskID)
+            await endAnalysis(taskID, for: itemID)
         }
+        trackBackgroundTask(taskID, for: itemID, in: &pendingAnalyses, task: task)
     }
 
     /// Stores the GIF as the clip's data, so the card plays it and a paste carries it. Anything that is not a GIF, or
@@ -43,6 +46,10 @@ extension StorageService {
             blob.mimeType = "com.compuserve.gif"
             blob.aadBound = true
             item.byteSize = data.count
+            if let dimensions = ImageDownsampler.pixelDimensions(of: data) {
+                item.pixelWidth = dimensions.width
+                item.pixelHeight = dimensions.height
+            }
             try saveOrRollback()
             ThumbnailService.invalidate(id: itemID)
         } catch {

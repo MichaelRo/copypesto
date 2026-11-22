@@ -10,7 +10,7 @@ import PestoCore
 final class ShareModel {
     enum Phase: Equatable {
         case reading
-        case ready(preview: String)
+        case ready(preview: String, pictureData: Data? = nil)
         case saved
         case refused(String)
     }
@@ -36,7 +36,7 @@ final class ShareModel {
                 return refuse(.unsupported)
             }
             item = read
-            phase = .ready(preview: Self.preview(of: read))
+            phase = .ready(preview: Self.preview(of: read), pictureData: read.text == nil ? read.payload : nil)
         } catch let error as InboxError {
             Self.logger.error("A share was refused: \(String(describing: error), privacy: .public)")
             refuse(error)

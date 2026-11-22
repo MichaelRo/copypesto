@@ -23,7 +23,9 @@ extension MobileAppState {
         guard let target = widget else { return }
         guard target.isEnabled() else {
             widgetIsInstalled = false
-            if target.file.exists { removeWidget() }
+            await enqueueWidgetWrite { state in
+                if state.widget?.file.exists == true { state.removeWidget() }
+            }
             return
         }
         widgetIsInstalled = await target.isInstalled()
@@ -50,7 +52,9 @@ extension MobileAppState {
         widgetRewrite?.cancel()
         widgetRewrite = nil
         if let target = widget, !target.isEnabled() {
-            if target.file.exists { removeWidget() }
+            await enqueueWidgetWrite { state in
+                if state.widget?.file.exists == true { state.removeWidget() }
+            }
             return
         }
         await enqueueWidgetWrite { state in await state.performWidgetWrite() }
@@ -100,6 +104,7 @@ extension MobileAppState {
                 device: CardFootLineView.device
             )
             guard !historyLock.holdsOutsideSurfaces else { return performWidgetEmpty() }
+            guard target.isEnabled() else { return }
             try target.file.write(snapshot, with: target.keys.loadOrCreate())
             lastWidgetSnapshot = snapshot
             target.reload()

@@ -54,14 +54,14 @@ extension MobileAppState {
 
     /// Adds what the person handed Pesto. A copy over the size limit is refused by ingest, and the refusal is shown.
     @discardableResult
-    func add(_ capture: PasteboardCapture?) async -> Bool {
+    func add(_ capture: PasteboardCapture?, into collectionID: UUID? = nil) async -> Bool {
         guard let service = storageService else { return false }
         guard let capture else {
             tell(String(localized: "There was nothing Pesto can keep."), isProblem: true)
             return false
         }
         do {
-            try await service.ingest(capture)
+            try await service.ingest(capture, collectionID: collectionID)
             return true
         } catch let refusal as ClipSizePolicy.TooLarge {
             tell(refusal.message, isProblem: true)
@@ -73,12 +73,16 @@ extension MobileAppState {
     }
 
     /// What the Paste button or a drop delivered.
-    func add(from providers: [NSItemProvider], method: CaptureMethod, pasteboardTypes: [String] = []) async {
+    func add(
+        from providers: [NSItemProvider], method: CaptureMethod, pasteboardTypes: [String] = [],
+        into collectionID: UUID? = nil
+    ) async {
         guard !ItemProviderCapture.isConcealed(providers, pasteboardTypes: pasteboardTypes) else { return }
         do {
             try await add(
                 ItemProviderCapture.capture(from: providers, pasteboardTypes: pasteboardTypes)?
-                    .with(captureMethod: method)
+                    .with(captureMethod: method),
+                into: collectionID
             )
         } catch {
             Self.logger.error("Reading a paste or drop failed: \(error.localizedDescription, privacy: .public)")
@@ -96,6 +100,9 @@ extension MobileAppState {
             // A deleted clip leaves the widget and AutoFill at once, not after the rewrite's pause.
             writeQuickInsert()
             await writeWidget()
+            if let sync, sync.isEnabled {
+                Task { await sync.syncNow() }
+            }
         }
     }
 
@@ -130,6 +137,16 @@ extension MobileAppState {
         var pinned = false
         await reportAsync("Couldn\u{2019}t save the change.") {
             pinned = try await service.togglePinned(id: id) == true
+        }
+        if pinned { clipWasKept() }
+    }
+
+    func setPinned(_ ids: [UUID], pinned: Bool) async {
+        guard let service = storageService, !ids.isEmpty else { return }
+        let mark = service.undoHistory.recordedCount
+        await reportAsync("Couldn\u{2019}t save the change.") {
+            try await service.setPinned(ids: ids, pinned: pinned)
+            offerUndo(since: mark)
         }
         if pinned { clipWasKept() }
     }
@@ -172,6 +189,49 @@ extension MobileAppState {
     func moveToCollection(_ item: ClipboardItem, collectionID: UUID?) {
         guard let context = item.modelContext else { return }
         clipEditor(context: context).edit(item) { $0.collectionID = collectionID }
+    }
+
+    func moveToCollection(_ items: [ClipboardItem], collectionID: UUID?) {
+        guard let context = items.first?.modelContext, !items.isEmpty else { return }
+        clipEditor(context: context).edit(items) { $0.collectionID = collectionID }
+    }
+
+    func toggleSensitive(_ item: ClipboardItem) {
+        guard let context = item.modelContext else { return }
+        clipEditor(context: context).edit(item) { $0.isNSFW.toggle() }
+    }
+
+    func moveCollection(_ board: Pinboard, direction: Int, among collections: [Pinboard]) {
+        guard let context = board.modelContext,
+              let currentIndex = collections.firstIndex(where: { $0.id == board.id }) else { return }
+        let targetIndex = currentIndex + direction
+        guard collections.indices.contains(targetIndex) else { return }
+        let order = CollectionReorder.order(collections.map(\.id), moving: board.id, toIndex: targetIndex)
+        let byID = Dictionary(collections.map { ($0.id, $0) }) { first, _ in first }
+        report("Couldn\u{2019}t reorder collections.") {
+            try collectionStore(context: context).edit(.reorder, collections) {
+                for (offset, id) in order.enumerated() {
+                    byID[id]?.sortOrder = offset
+                }
+            }
+        }
+    }
+
+    func exportCollection(_ board: Pinboard) async -> URL? {
+        guard let container = historyContainer else { return nil }
+        let boardID = board.id
+        let boardName = board.name
+        var exportedURL: URL?
+        await reportAsync("Couldn\u{2019}t export the collection.") {
+            let exporter = HistoryExporter(modelContainer: container)
+            let file = try await exporter.exportCollectionFile(id: boardID)
+            let name = CollectionFilePolicy.sanitizedName(boardName)
+            exportedURL = try ShareFile.write(
+                file.data, fileName: name.isEmpty ? CollectionFilePolicy.defaultName : name,
+                fileExtension: CollectionFileType.fileExtension
+            )
+        }
+        return exportedURL
     }
 
     func addCollection(named name: String, existing: [Pinboard]) -> Pinboard? {
@@ -256,6 +316,7 @@ extension MobileAppState {
             lastWidgetSnapshot = nil
             await emptyWidget()
             ThumbnailCache.shared.clear()
+            CardMedia.clearAnimationCache()
             tell(String(localized: "Cleared \(ids.count) clips."))
         }
     }

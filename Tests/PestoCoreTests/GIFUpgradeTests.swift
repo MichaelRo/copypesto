@@ -102,6 +102,8 @@ struct GIFUpgradeTests {
         #expect(item.blob?.mimeType == "com.compuserve.gif")
         #expect(item.blob?.decryptedData() == gif)
         #expect(item.byteSize == gif.count)
+        #expect(item.pixelWidth == 32)
+        #expect(item.pixelHeight == 32)
     }
 
     @Test("an animation that arrives as another format is stored as a GIF with all its frames")

@@ -42,7 +42,7 @@ struct KeyboardSearchPage: View {
             field
                 .environment(\.layoutDirection, searchDirection)
             resultRow
-                .environment(\.layoutDirection, searchDirection)
+                .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
                 .frame(height: 58)
             KeyboardLetters(model: model, layout: showsDigits ? .digits : .letters(activeAlphabet))
             bottomRow

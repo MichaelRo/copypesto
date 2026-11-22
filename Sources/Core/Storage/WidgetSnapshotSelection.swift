@@ -88,7 +88,8 @@ public enum WidgetSnapshotSelection {
         var newest = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
         newest.fetchLimit = WidgetSnapshotPolicy.scanLimit
         var pinned = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { $0.isPinned }, sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            predicate: #Predicate { $0.isPinned && $0.collectionID == nil },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         pinned.fetchLimit = WidgetSnapshotPolicy.scanLimit
         let lists = try lists(
@@ -145,10 +146,14 @@ public enum WidgetSnapshotSelection {
         let clips = choose(from: newest, limit: WidgetSnapshotPolicy.maxClips, reader: reader, budget: &budget)
         var chosen = Dictionary(clips.map { ($0.id, $0) }) { first, _ in first }
         var pins: [WidgetClip] = []
-        for item in pinned where pins.count < WidgetSnapshotPolicy.maxPinned && item.isPinned && mayInclude(
-            item,
-            reader: reader
-        ) {
+        for item in pinned where pins.count < WidgetSnapshotPolicy.maxPinned
+            && item.isPinned
+            && item.collectionID == nil
+            && mayInclude(
+                item,
+                reader: reader
+            )
+        {
             if let known = chosen[item.id] {
                 pins.append(known)
             } else {

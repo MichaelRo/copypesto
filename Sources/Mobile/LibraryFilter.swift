@@ -19,10 +19,12 @@ enum LibraryChip: Hashable {
 
     /// `offersAsk` is true while the search field holds words and no Ask is applied; `hasAsk` while one is.
     static func row(
-        collectionIDs: [UUID], isSearching: Bool, offersAsk: Bool = false, hasAsk: Bool = false
+        collectionIDs: [UUID], isSearching: Bool, offersAsk: Bool = false, hasAsk: Bool = false,
+        hiddenIDs: Set<UUID> = []
     )
     -> [LibraryChip] {
-        let scopes: [LibraryChip] = [.all, .pinned] + collectionIDs.map(LibraryChip.collection)
+        let visibleCollections = collectionIDs.filter { !hiddenIDs.contains($0) }
+        let scopes: [LibraryChip] = [.all, .pinned] + visibleCollections.map(LibraryChip.collection)
         guard isSearching else { return scopes + [.newCollection] }
         let asking: [LibraryChip] = hasAsk ? [.asked] : offersAsk ? [.ask] : []
         return scopes + [.divider] + asking + LibraryScope.filteredKinds.map(LibraryChip.kind) + [.divider]

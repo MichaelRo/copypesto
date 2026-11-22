@@ -30,6 +30,9 @@ struct ClipBodyView: View {
             if privacy {
                 Spacer()
                 Button("Show") { appState.secretReveal.showUnderCover(item.id) }
+            } else if concealment.isNSFWBlurred {
+                Spacer()
+                Button("Show") { appState.secretReveal.showNSFW(item.id) }
             }
         }
     }

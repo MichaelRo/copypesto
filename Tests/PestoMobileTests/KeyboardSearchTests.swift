@@ -96,4 +96,11 @@ struct KeyboardSearchTests {
         #expect(KeyboardClipKey.layoutDirection(for: "Γεια σου") == .leftToRight)
         #expect(KeyboardClipKey.layoutDirection(for: "12345") == nil)
     }
+
+    @Test("keyboard interface direction follows preferred UI language, not active RTL input mode")
+    func whenPreferredLanguageIsEnglish_thenInterfaceRemainsLTR() {
+        #expect(!KeyboardLetters.isInterfaceRTL(preferredLocalizations: ["en"], preferredLanguages: ["en-US"]))
+        #expect(KeyboardLetters.isInterfaceRTL(preferredLocalizations: ["he"], preferredLanguages: ["he-IL"]))
+        #expect(!KeyboardLetters.isInterfaceRTL(preferredLocalizations: [], preferredLanguages: ["en-US"]))
+    }
 }

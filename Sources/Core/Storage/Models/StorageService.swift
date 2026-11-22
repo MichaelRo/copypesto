@@ -94,6 +94,7 @@ public actor StorageService: ModelActor {
     var similarity = SimilarityIndex()
     var pendingEmbeddings: [UUID: Task<Void, Never>] = [:]
     var pendingAnalyses: [UUID: Task<Void, Never>] = [:]
+    var pendingItemTasks: [UUID: Set<UUID>] = [:]
     let remoteGIFFetcher: (@Sendable (URL) async -> Data?)?
     var runningAnalyses = 0
     var analysisQueue: [CheckedContinuation<Void, Never>] = []
@@ -119,7 +120,8 @@ public actor StorageService: ModelActor {
         rewritesText: Bool = true,
         popsLookalikePicture: Bool = true,
         bumpsExistingDuplicate: Bool = true,
-        keepsSameText: Bool = false
+        keepsSameText: Bool = false,
+        collectionID: UUID? = nil
     ) async throws {
         if ClipSizePolicy.isTooLarge(byteCount: capture.payload.count, typeIdentifier: capture.typeIdentifier) {
             throw ClipSizePolicy.TooLarge(message: ClipSizePolicy.message(
@@ -158,7 +160,8 @@ public actor StorageService: ModelActor {
             now: bumpsExistingDuplicate ? now : capture.timestamp,
             bundleID: capture.sourceBundleID,
             isRemote: capture.isRemote,
-            onlyAdvanceTimestamp: !bumpsExistingDuplicate
+            onlyAdvanceTimestamp: !bumpsExistingDuplicate,
+            collectionID: collectionID
         ) {
             return
         }
@@ -189,10 +192,7 @@ public actor StorageService: ModelActor {
                 pixelWidth = props[kCGImagePropertyPixelWidth] as? Int
                 pixelHeight = props[kCGImagePropertyPixelHeight] as? Int
             }
-            let isLargeImage = capture.payload.count > 250_000 || (pixelWidth ?? 0) * (pixelHeight ?? 0) > 500_000
-            if !isLargeImage {
-                perceptualHash = PerceptualHasher.hash(imageSource: source)
-            }
+            perceptualHash = PerceptualHasher.hash(imageSource: source)
         }
         if let pHash = perceptualHash,
            let similar = perceptualDuplicate(
@@ -258,7 +258,9 @@ public actor StorageService: ModelActor {
 
         // The awaits above (reading the picture, resolving the app) let another ingest of the same copy run to the
         // end, so the duplicate check is made again now that nothing suspends before the insert.
-        if !keepsSameText, try await popExistingDuplicate(matching: descriptor, hash: hash, now: now, bundleID: nil) {
+        if !keepsSameText, try await popExistingDuplicate(
+            matching: descriptor, hash: hash, now: now, bundleID: nil, collectionID: collectionID
+        ) {
             return
         }
 
@@ -324,6 +326,7 @@ public actor StorageService: ModelActor {
         item.textLength = clipType == .text || clipType == .code ? payloadString.count : 0
         item.isNSFW = detectedNSFW
         item.analysisPending = judgedLater
+        item.collectionID = collectionID
         item.takeOrigin(of: capture)
         if capture.isConcealed {
             item.expiresAt = Self.concealedExpiry(timestamp: capture.timestamp, allowanceEnd: capture.concealedUntil)
@@ -359,12 +362,13 @@ public actor StorageService: ModelActor {
         let textToEmbed = SemanticIndexer.embeddingInput(for: payloadString)
         let taskID = UUID()
         let embedder = embedder
-        pendingEmbeddings[taskID] = Task.detached(priority: .utility) { [self] in
-            if let data = await embedder.embed(text: textToEmbed) {
+        let task = Task.detached(priority: .utility) { [self] in
+            if !Task.isCancelled, let data = await embedder.embed(text: textToEmbed), !Task.isCancelled {
                 try? await self.storeEmbedding(itemID: idToEmbed, contentHash: hashToEmbed, embeddingData: data)
             }
-            await self.finishEmbedding(taskID)
+            await self.finishEmbedding(taskID, for: idToEmbed)
         }
+        trackBackgroundTask(taskID, for: idToEmbed, in: &pendingEmbeddings, task: task)
     }
 
     /// The last-item file is readable without the lock, so it is not written while the lock is on.
@@ -444,6 +448,8 @@ public actor StorageService: ModelActor {
         try saveOrRollback()
         if let undoable { undoHistory.record(UndoEntry(.clipsDeleted(undoable))) }
         let deletedIDs = doomed.map(\.id)
+        cancelBackgroundTasks(for: deletedIDs)
+        deletedIDs.forEach { ThumbnailService.invalidate(id: $0) }
         deletedIDs.forEach { similarity.remove($0) }
         linkPreviews.delete(ids: deletedIDs)
         recognizedTexts.delete(ids: deletedIDs)
@@ -463,9 +469,9 @@ public actor StorageService: ModelActor {
     /// Non-pinned items the range covers: everything from its start until now (all of it for `.all`).
     private func nonPinnedItems(in range: ClearRange, now: Date) throws -> [ClipboardItem] {
         let descriptor: FetchDescriptor<ClipboardItem> = if let start = range.start(now: now) {
-            FetchDescriptor(predicate: #Predicate { !$0.isPinned && $0.timestamp >= start })
+            FetchDescriptor(predicate: #Predicate { !$0.isPinned && $0.collectionID == nil && $0.timestamp >= start })
         } else {
-            FetchDescriptor(predicate: #Predicate { !$0.isPinned })
+            FetchDescriptor(predicate: #Predicate { !$0.isPinned && $0.collectionID == nil })
         }
         return try modelContext.fetch(descriptor)
     }

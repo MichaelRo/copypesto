@@ -53,7 +53,7 @@ public enum CollectionFilePolicy {
     // MARK: A collection's own fields, from a file
 
     /// A name from a file: no control or format (bidi) characters, trimmed, at most `maxNameLength` characters.
-    static func sanitizedName(_ name: String) -> String {
+    public static func sanitizedName(_ name: String) -> String {
         let kept = String(String.UnicodeScalarView(name.unicodeScalars.filter {
             $0.properties.generalCategory != .control && $0.properties.generalCategory != .format
         }))
@@ -61,7 +61,7 @@ public enum CollectionFilePolicy {
         return trimmed.trimmingCharacters(in: .whitespaces)
     }
 
-    static let defaultName = "Imported collection"
+    public static let defaultName = "Imported collection"
     static let defaultSymbol = "tray.full"
 
     /// An icon from the list Pesto offers, or one emoji; anything else is the default.

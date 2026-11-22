@@ -134,8 +134,28 @@ public final class SyncSegmentWriter {
         try handle.write(contentsOf: sealed.chunk)
         try handle.synchronize()
         try handle.close()
+        #if os(macOS)
         try? FileManager.default.removeItem(at: finalURL)
         try FileManager.default.moveItem(at: partialURL, to: finalURL)
+        #else
+        var coordError: NSError?
+        var moveError: (any Error)?
+        let sourceURL = partialURL
+        NSFileCoordinator(filePresenter: nil).coordinate(
+            writingItemAt: finalURL,
+            options: .forReplacing,
+            error: &coordError
+        ) { coordinatedURL in
+            do {
+                try? FileManager.default.removeItem(at: coordinatedURL)
+                try FileManager.default.moveItem(at: sourceURL, to: coordinatedURL)
+            } catch {
+                moveError = error
+            }
+        }
+        if let coordError { throw coordError }
+        if let moveError { throw moveError }
+        #endif
         return manifest
     }
 

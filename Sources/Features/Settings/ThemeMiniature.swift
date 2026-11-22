@@ -6,9 +6,68 @@ import SwiftUI
 /// accent. The theme cards, the light and dark tiles and the preview all draw it, so what a card shows is what the
 /// shelf will look like.
 struct ThemeShelfMiniature: View {
+    struct Metrics {
+        let horizontalPadding: CGFloat
+        let topPadding: CGFloat
+        let bottomPadding: CGFloat
+        let cardSpacing: CGFloat
+        let cardCornerRadius: CGFloat
+        let topInset: CGFloat
+        let lineSpacing: CGFloat
+        let primaryLineWidth: CGFloat
+        let secondaryLineWidth: CGFloat
+        let lineHeight: CGFloat
+        let bottomInset: CGFloat
+        let footSpacing: CGFloat
+        let dotSize: CGFloat
+        let footLineWidth: CGFloat
+        let focusLineWidth: CGFloat
+    }
+
+    static func metrics(compact: Bool) -> Metrics {
+        if compact {
+            Metrics(
+                horizontalPadding: 5,
+                topPadding: 6,
+                bottomPadding: 5,
+                cardSpacing: 3,
+                cardCornerRadius: 3,
+                topInset: 2.5,
+                lineSpacing: 1.5,
+                primaryLineWidth: 9,
+                secondaryLineWidth: 6,
+                lineHeight: 1.5,
+                bottomInset: 2.5,
+                footSpacing: 1.5,
+                dotSize: 3,
+                footLineWidth: 6,
+                focusLineWidth: 1
+            )
+        } else {
+            Metrics(
+                horizontalPadding: 12,
+                topPadding: 14,
+                bottomPadding: 8,
+                cardSpacing: 5,
+                cardCornerRadius: 5,
+                topInset: 5,
+                lineSpacing: 2.5,
+                primaryLineWidth: 22,
+                secondaryLineWidth: 15,
+                lineHeight: 2.5,
+                bottomInset: 4,
+                footSpacing: 3,
+                dotSize: 5,
+                footLineWidth: 12,
+                focusLineWidth: 1.5
+            )
+        }
+    }
+
     let theme: AppTheme
     let dark: Bool
     var accentOverride: Color?
+    var compact = false
 
     private var accent: Color {
         accentOverride ?? Color(hex: theme.accentHex(dark: dark)) ?? .clear
@@ -20,43 +79,45 @@ struct ThemeShelfMiniature: View {
 
     var body: some View {
         let tint = theme.tint(dark: dark)
+        let metrics = Self.metrics(compact: compact)
+        let cardShape = RoundedRectangle(cornerRadius: metrics.cardCornerRadius, style: .continuous)
         ZStack {
             Color(hex: dark ? BrandPalette.darkSurface : BrandPalette.garlic) ?? .clear
             if let tint, let wash = Color(hex: tint.hex) { wash.opacity(tint.opacity) }
-            HStack(spacing: 5) {
+            HStack(spacing: metrics.cardSpacing) {
                 ForEach(0..<3, id: \.self) { index in
-                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    cardShape
                         .fill(dark ? Color.white.opacity(0.13) : Color.black.opacity(0.07))
-                        .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                         // A card has no header band: its clip drawn as text lines at the top, and at the foot the app's
                         // mark and a line of text.
                         .overlay(alignment: .topLeading) {
-                            VStack(alignment: .leading, spacing: 2.5) {
-                                Capsule().fill(Self.ink(dark, 0.55)).frame(width: 22, height: 2.5)
-                                Capsule().fill(Self.ink(dark, 0.4)).frame(width: 15, height: 2.5)
+                            VStack(alignment: .leading, spacing: metrics.lineSpacing) {
+                                Capsule().fill(Self.ink(dark, 0.55))
+                                    .frame(width: metrics.primaryLineWidth, height: metrics.lineHeight)
+                                Capsule().fill(Self.ink(dark, 0.4))
+                                    .frame(width: metrics.secondaryLineWidth, height: metrics.lineHeight)
                             }
-                            .padding(5)
+                            .padding(metrics.topInset)
                         }
                         .overlay(alignment: .bottomLeading) {
-                            HStack(spacing: 3) {
-                                Circle().fill(accent).frame(width: 5, height: 5)
-                                Capsule().fill(Self.ink(dark, 0.4)).frame(width: 12, height: 2.5)
+                            HStack(spacing: metrics.footSpacing) {
+                                Circle().fill(accent).frame(width: metrics.dotSize, height: metrics.dotSize)
+                                Capsule().fill(Self.ink(dark, 0.4))
+                                    .frame(width: metrics.footLineWidth, height: metrics.lineHeight)
                             }
-                            .padding(4)
+                            .padding(metrics.bottomInset)
                         }
+                        .clipShape(cardShape)
                         .overlay {
                             if index == 1 {
-                                RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(
-                                    accent,
-                                    lineWidth: 1.5
-                                )
+                                cardShape.strokeBorder(accent, lineWidth: metrics.focusLineWidth)
                             }
                         }
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 14)
-            .padding(.bottom, 8)
+            .padding(.horizontal, metrics.horizontalPadding)
+            .padding(.top, metrics.topPadding)
+            .padding(.bottom, metrics.bottomPadding)
         }
         .accessibilityHidden(true)
     }

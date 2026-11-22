@@ -14,28 +14,37 @@ struct LockScreenView: View {
     @State private var biometry = DeviceAuthenticationWords.biometry()
 
     var body: some View {
-        VStack(spacing: 18) {
-            Image(systemName: DeviceAuthenticationWords.symbol(for: biometry))
-                .font(.system(.largeTitle))
-                .foregroundStyle(accent)
-                .accessibilityHidden(true)
-            Text("Your history is locked")
-                .font(.title2.weight(.semibold))
-            if appState.historyLock.canAuthenticate {
-                Button(DeviceAuthenticationWords.unlockTitle(for: biometry)) { Task { await appState.unlockHistory() } }
+        ZStack {
+            ground.ignoresSafeArea()
+            VStack(spacing: 18) {
+                Image(systemName: DeviceAuthenticationWords.symbol(for: biometry))
+                    .font(.system(.largeTitle))
+                    .foregroundStyle(accent)
+                    .accessibilityHidden(true)
+                Text("Your history is locked")
+                    .font(.title2.weight(.semibold))
+                if appState.historyLock.canAuthenticate {
+                    Button(DeviceAuthenticationWords.unlockTitle(for: biometry)) {
+                        Task { await appState.unlockHistory() }
+                    }
                     .buttonStyle(.pestoProminent)
                     .accessibilityIdentifier(MobileAccessibilityID.unlockButton)
-            } else {
-                Text("This device has no passcode, so Pesto can\u{2019}t ask who you are.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Button("Turn Off History Lock") { Task { await appState.turnOffHistoryLock() } }
+                } else {
+                    Text("This device has no passcode, so Pesto can\u{2019}t ask who you are.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Turn Off History Lock") { Task { await appState.turnOffHistoryLock() } }
+                }
             }
+            .padding(32)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(.separator.opacity(0.35), lineWidth: 0.5)
+            )
+            .padding(24)
         }
-        .padding(32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(ground.ignoresSafeArea())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(MobileAccessibilityID.lockScreen)
         .task(id: scenePhase) { await askIfShown() }

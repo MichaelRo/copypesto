@@ -23,6 +23,7 @@ extension MobileAppState {
     }
 
     func lockHistory() {
+        CardMedia.clearAnimationCache()
         guard historyLock.isEnabled else { return }
         historyLock.lock()
         forgetUnlockedState()
@@ -72,6 +73,7 @@ extension MobileAppState {
         clipboardOfferCount = nil
         pendingFill = nil
         linkedClip = nil
+        shortcutSearchQuery = nil
         historyStore?.setVisible(false)
         historyStore?.dropSearchText()
         PreviewTextCache.shared.clear()
@@ -82,6 +84,7 @@ extension MobileAppState {
         historyStore?.setVisible(true)
         syncDidBecomeActive()
         inboxDidBecomeActive()
+        writeOutsideSurfaces()
         Task { await clipboardDidBecomeActive() }
         if let link = heldLink {
             heldLink = nil

@@ -137,7 +137,9 @@ public enum ShelfSuggestionPolicy {
             return $0.id.uuidString < $1.id.uuidString
         }
 
-        guard let best = candidates.first else { return nil }
+        guard let best = (context.focusedClipID.flatMap { focused in
+            candidates.first { $0.id == focused }
+        }) ?? candidates.first else { return nil }
         return .shortcutOffer(clip: best.id, slot: slot, pasteCount: best.pasteCount, isPinned: best.isPinned)
     }
 

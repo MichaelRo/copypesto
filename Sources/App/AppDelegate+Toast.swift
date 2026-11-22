@@ -39,11 +39,12 @@ extension AppDelegate {
         }
     }
 
+    static func shouldDismissShelfOnExternalAppActivation(for appState: AppState) -> Bool {
+        appState.isOverlayVisible && !appState.isDragging && !appState.keepsShelfOpenForModal
+    }
+
     func dismissShelfOnExternalAppActivationIfNeeded() {
-        guard appState.isOverlayVisible,
-              !appState.isDragging,
-              !appState.keepsShelfOpenForAuthentication,
-              !appState.isQuickLookOpen else { return }
+        guard Self.shouldDismissShelfOnExternalAppActivation(for: appState) else { return }
         hideOverlay()
     }
 

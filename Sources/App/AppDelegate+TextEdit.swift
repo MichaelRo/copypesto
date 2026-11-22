@@ -4,7 +4,7 @@ import PestoCore
 
 @MainActor
 extension AppDelegate {
-    /// Settings and Edit Text open from the shelf after it has closed.
+    /// Settings opens from the shelf after it has closed; Edit Text opens above the shelf.
     func wireWindowsOpenedFromShelf() {
         appState.openSettingsFromOverlay = { [weak self] in
             guard let self else { return }
@@ -19,30 +19,35 @@ extension AppDelegate {
         TextEditWindowController(
             appState: appState,
             present: { [weak self] in self?.presentTextEditor($0) },
-            didClose: { [weak self] in self?.updateActivationPolicy() }
+            didClose: { [weak self] in
+                guard let self else { return }
+                self.appState.isTextEditorOpen = false
+                self.updateActivationPolicy()
+                self.appState.onRestoreKeyFocus?()
+            }
         )
     }
 
-    /// The text is read before the shelf closes, while the card that offered Edit Text is still what the person saw
-    /// (a secret only while its Show runs). The shelf closes first, as it does for Settings (ADR 0050).
+    /// The text is read while the card that offered Edit Text is still what the person saw (a secret only while its
+    /// Show runs). Edit Text opens above the shelf without closing it.
     func requestTextEdit(of item: ClipboardItem) {
         guard !appState.isHistoryLockedNow(),
               TextEditOutcome.isEditable(type: item.type, analysisPending: item.analysisPending),
               item.byteSize <= TextEditPolicy.maxEditableBytes,
               let text = item.blob?.decryptedText() else { return }
-        let id = item.id
-        let isMonospaced = item.type == .code || item.type == .color
-        guard appState.isOverlayVisible else {
-            textEditController.open(clipID: id, text: text, isMonospaced: isMonospaced)
-            return
-        }
-        appState.close(.afterHide { [weak self] in
-            self?.textEditController.open(clipID: id, text: text, isMonospaced: isMonospaced)
-        })
+        appState.isTextEditorOpen = true
+        textEditController.open(
+            clipID: item.id,
+            text: text,
+            isMonospaced: item.type == .code || item.type == .color
+        )
     }
 
     func presentTextEditor(_ window: NSWindow) {
-        NSApp.setActivationPolicy(.regular)
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+        if !appState.isOverlayVisible {
+            NSApp.setActivationPolicy(.regular)
+        }
         bringToFront(window)
     }
 }

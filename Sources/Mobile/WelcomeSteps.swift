@@ -117,15 +117,27 @@ private struct WelcomeChoiceText: View {
 
 struct WelcomeSyncStep: View {
     let isActive: Bool
+    @Environment(MobileAppState.self) private var appState
+
+    private var isSyncOn: Bool {
+        appState.sync?.isEnabled == true
+    }
 
     var body: some View {
         WelcomePage(
             stepNumber: WelcomeStep.sync.rawValue, isActive: isActive,
-            title: String(localized: "Your clips on every device"),
-            line: String(localized: """
-            Sync your iPhone, iPad and Mac through a folder you choose, such as iCloud Drive. \
-            No server: clips are sealed so only your devices can open them.
-            """)
+            title: isSyncOn
+                ? String(localized: "Sync is on")
+                : String(localized: "Your clips on every device"),
+            line: isSyncOn
+                ? String(localized: """
+                Your clips stay in step through your chosen sync folder. \
+                No server: clips are sealed so only your devices can open them.
+                """)
+                : String(localized: """
+                Sync your iPhone, iPad and Mac through a folder you choose, such as iCloud Drive. \
+                No server: clips are sealed so only your devices can open them.
+                """)
         ) {
             WelcomeSyncArt(isActive: isActive)
         } content: {

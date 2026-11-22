@@ -7,6 +7,8 @@ struct SyncFlowSheet: View {
     let sync: MobileSync
     @AppStorage(Setting.syncIncludesSecrets) private var includesSecrets: Bool
     @State private var recoveryKey = ""
+    @State private var copiedRecoveryKey = false
+    @State private var confirmsReset = false
 
     private var device: SyncDeviceKind {
         sync.deviceKind
@@ -24,6 +26,11 @@ struct SyncFlowSheet: View {
                 .toolbar { toolbar }
         }
         .interactiveDismissDisabled(sync.flow.isRecoveryKey)
+        .confirmationDialog("Reset Sync?", isPresented: $confirmsReset, titleVisibility: .visible) {
+            Button("Reset Sync", role: .destructive) { Task { await sync.reset() } }
+        } message: {
+            Text(verbatim: SyncCopy.resetMessage(mode, device: device))
+        }
     }
 
     private var title: String {
@@ -60,6 +67,11 @@ struct SyncFlowSheet: View {
             } footer: {
                 Text("Another device shows a request, and you check that the words on both screens match.")
             }
+            Section {
+                Button("Reset Sync\u{2026}", role: .destructive) {
+                    Task { if await sync.permitsProtectedAction() { confirmsReset = true } }
+                }
+            }
         case let .pairing(words, approver):
             Section {
                 Text("\(approver) shows a request from this \(device.name). Confirm both screens show the same words.")
@@ -81,6 +93,11 @@ struct SyncFlowSheet: View {
             } footer: {
                 Text("The key shown when sync was turned on, or after Reset Sync.")
             }
+            Section {
+                Button("Reset Sync\u{2026}", role: .destructive) {
+                    Task { if await sync.permitsProtectedAction() { confirmsReset = true } }
+                }
+            }
         case let .recoveryKey(key):
             Section {
                 Text(verbatim: SyncCopy.recoveryKeyLead(mode, device: device))
@@ -90,7 +107,19 @@ struct SyncFlowSheet: View {
                     .font(.body.monospaced())
                     .textSelection(.enabled)
                     .accessibilityIdentifier(MobileAccessibilityID.syncRecoveryKey)
-                Button("Copy") { MobileClipboard.write(.text(key), protected: true) }
+                Button {
+                    MobileClipboard.write(.text(key), protected: true)
+                    copiedRecoveryKey = true
+                    Task {
+                        try? await Task.sleep(for: .seconds(2))
+                        copiedRecoveryKey = false
+                    }
+                } label: {
+                    Label(
+                        copiedRecoveryKey ? "Copied" : "Copy",
+                        systemImage: copiedRecoveryKey ? "checkmark" : "doc.on.doc"
+                    )
+                }
             } footer: {
                 Text("A copy stays on this device and leaves the clipboard after two minutes.")
             }

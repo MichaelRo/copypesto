@@ -70,10 +70,10 @@ struct MobileAutoFillTipTests {
         #expect(!state.offersAutoFillTip)
     }
 
-    @Test("a person who already turned AutoFill on is not told about it")
-    func whenAutoFillIsOn_thenNoTip() {
+    @Test("a person who already saw the tip is not told about it again")
+    func whenTipAlreadyShown_thenNoTip() {
         let defaults = ThrowawayDefaults.make()
-        defaults.set(true, for: Setting.quickInsertEnabled)
+        defaults.set(true, for: Setting.autoFillTipShown)
         let state = state(defaults)
 
         state.clipWasKept(defaults: defaults, isLive: true)
@@ -96,7 +96,7 @@ struct MobileAutoFillTipTests {
         #expect(!state.offersAutoFillTip)
     }
 
-    @Test("Not Now closes the tip and leaves AutoFill off")
+    @Test("Not Now closes the tip without clearing any settings")
     func whenDismissed_thenNothingChanges() {
         let defaults = ThrowawayDefaults.make()
         let state = state(defaults)
@@ -105,6 +105,6 @@ struct MobileAutoFillTipTests {
         state.dismissAutoFillTip()
 
         #expect(!state.offersAutoFillTip)
-        #expect(!defaults.value(for: Setting.quickInsertEnabled))
+        #expect(defaults.value(for: Setting.autoFillTipShown))
     }
 }

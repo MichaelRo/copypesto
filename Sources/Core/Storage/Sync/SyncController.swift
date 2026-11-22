@@ -389,10 +389,19 @@ public final class SyncController {
         do {
             let me = try loadIdentity()
             let layout = SyncFolderLayout(root: env.folder)
-            guard case let .ready(group) = try openGroup() else { return }
-            let next = try SyncGroupManager.reset(
-                layout: layout, from: group, identity: me, keyStore: env.keyStore, now: env.now()
-            )
+            let next: (group: SyncGroup, recoveryKey: String)
+            switch try openGroup() {
+            case let .ready(group):
+                next = try SyncGroupManager.reset(
+                    layout: layout, from: group, identity: me, keyStore: env.keyStore, now: env.now()
+                )
+            case let .needsKey(vault):
+                next = try SyncGroupManager.forceResetWithoutKey(
+                    layout: layout, from: vault, identity: me, keyStore: env.keyStore, now: env.now()
+                )
+            case .empty:
+                return
+            }
             flow = .recoveryKey(next.recoveryKey)
             await syncNow()
         } catch {

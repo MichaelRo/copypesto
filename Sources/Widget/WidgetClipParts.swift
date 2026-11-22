@@ -48,11 +48,13 @@ struct WidgetPicture: View {
                 Color.clear
                     .overlay { Self.image(image).resizable().scaledToFill() }
                     .clipped()
+                    .contentShape(.rect)
             } else {
                 Color.black
                     .overlay { Self.image(image).resizable().scaledToFill().blur(radius: 14).opacity(0.7) }
                     .overlay { Self.image(image).resizable().scaledToFit() }
                     .clipped()
+                    .contentShape(.rect)
             }
         } else {
             Image(systemName: "photo")

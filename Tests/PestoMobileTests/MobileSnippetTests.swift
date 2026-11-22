@@ -158,15 +158,15 @@ extension MobilePasteboardGlobals {
             #expect(ClipContent.of(undone)?.plainText == "Hi {{input:Name}}")
         }
 
-        @Test("iOS automatic fills exclude Mac-only selection and app placeholders")
-        func whenAutomaticFillsListed_thenMacOnlyTokensExcluded() {
+        @Test("iOS automatic fills include selection and exclude Mac-only app placeholder")
+        func whenAutomaticFillsListed_thenSelectionIncludedAndAppExcluded() {
             let tokens = MobileSnippetPlaceholders.automaticFills.map(\.token)
 
             #expect(tokens == [
                 "{{date}}", "{{time}}", "{{datetime}}", "{{isodate}}", "{{weekday}}",
-                "{{date+1d}}", "{{clipboard}}", "{{uuid}}", "{{cursor}}"
+                "{{date+1d}}", "{{clipboard}}", "{{selection}}", "{{uuid}}", "{{cursor}}"
             ])
-            #expect(!tokens.contains("{{selection}}"))
+            #expect(tokens.contains("{{selection}}"))
             #expect(!tokens.contains("{{app}}"))
         }
 

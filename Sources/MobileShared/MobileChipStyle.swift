@@ -9,23 +9,52 @@ struct MobileChipStyle: ButtonStyle {
     var isDimmed = false
     var chipHeight: CGFloat = 34
     var touchMinimum: CGFloat? = TouchTarget.minimum
+    var usesGlass = false
     @Environment(\.pestoAccent) private var accent
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var systemReduceTransparency
+    @Environment(\.reduceTransparencyOverride) private var reduceTransparencyOverride
+
+    private var reduceTransparency: Bool {
+        reduceTransparencyOverride ?? systemReduceTransparency
+    }
 
     func makeBody(configuration: Configuration) -> some View {
         let color = tint ?? accent
         let fill = isActive ? 0.25 : configuration.isPressed ? 0.18 : 0.10
-        return configuration.label
+        let label = configuration.label
             .font(.subheadline.weight(.medium))
             .padding(.horizontal, 12)
             .frame(minHeight: chipHeight)
-            .background(Capsule().fill(color.opacity(fill)))
-            .overlay(Capsule().strokeBorder(
-                color.opacity(isActive ? 0.5 : contrast == .increased ? 0.45 : 0), lineWidth: 0.5
-            ))
-            .foregroundStyle(isActive || contrast == .increased ? Color.primary : Color.primary.opacity(0.8))
-            .opacity(isDimmed ? 0.5 : 1)
-            .frame(minWidth: touchMinimum, minHeight: touchMinimum)
-            .contentShape(.rect)
+        return Group {
+            if usesGlass, !reduceTransparency {
+                label
+                    .background(
+                        isActive ? AnyShapeStyle(color.opacity(0.24)) : AnyShapeStyle(.clear),
+                        in: .capsule
+                    )
+                    .overlay(Capsule().strokeBorder(
+                        color.opacity(isActive ? 0.55 : contrast == .increased ? 0.45 : 0),
+                        lineWidth: 0.75
+                    ))
+                    .glassEffect(.regular.interactive(), in: .capsule)
+            } else {
+                label
+                    .background {
+                        if usesGlass {
+                            Capsule().fill(Color.opaqueSurface)
+                        }
+                    }
+                    .background(Capsule().fill(color.opacity(fill)))
+                    .overlay(Capsule().strokeBorder(
+                        color.opacity(isActive ? 0.5 : contrast == .increased ? 0.45 : 0),
+                        lineWidth: 0.5
+                    ))
+            }
+        }
+        .foregroundStyle(isActive || contrast == .increased ? Color.primary : Color.primary.opacity(0.8))
+        .opacity(isDimmed ? 0.5 : 1)
+        .frame(minWidth: touchMinimum, minHeight: touchMinimum)
+        .contentShape(.rect)
     }
 }

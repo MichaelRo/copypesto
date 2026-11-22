@@ -85,8 +85,8 @@ struct QuickInsertMenuTests {
 
     @Test("Setting keys for keyboard, autoFill, and widgets have expected defaults and are registered")
     func whenSettingsChecked_thenDefaultsAndAllNamesMatch() {
-        #expect(Setting.keyboardEnabled.defaultValue == false)
-        #expect(Setting.autoFillEnabled.defaultValue == false)
+        #expect(Setting.keyboardEnabled.defaultValue == true)
+        #expect(Setting.autoFillEnabled.defaultValue == true)
         #expect(Setting.widgetsEnabled.defaultValue == true)
         #expect(Setting.allNames.contains(Setting.keyboardEnabled.name))
         #expect(Setting.allNames.contains(Setting.autoFillEnabled.name))

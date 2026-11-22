@@ -221,4 +221,46 @@ struct QuickInsertBatch4ATests {
 
         #expect(set.collections.first?.color == "#D94F70")
     }
+
+    private struct FixedOCRRecognizer: TextRecognizing {
+        let text: String?
+        func recognize(imageData _: Data) async -> String? {
+            text
+        }
+    }
+
+    @Test("image items with short OCR stored only in sealed preview still expose recognizedText to Keyboard search")
+    func whenImageHasShortOCRInPreview_thenDefaultSetIncludesRecognizedText() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pesto-qi-ocr-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let emptyStore = RecognizedTextStore(directory: root)
+
+        let service = StorageService(modelContainer: container, environment: .testing {
+            $0.nsfwMode = { .show }
+            $0.textRecognizer = FixedOCRRecognizer(text: "Flight LX 182 Gate B7")
+            $0.recognizedTexts = emptyStore
+        })
+        let png = try makePNG()
+        try await service.ingest(PasteboardCapture(
+            typeIdentifier: UTType.png.identifier,
+            payload: png,
+            contentHash: "short-ocr-\(UUID().uuidString)"
+        ))
+        await service.waitForBackgroundWork()
+
+        let set = try QuickInsertSelection.set(
+            in: container.mainContext,
+            now: .now,
+            options: .init(),
+            recognizedTexts: emptyStore
+        )
+        let entry = try #require(set.entries.first)
+        #expect(entry.kind == .image)
+        #expect(entry.recognizedText == "Flight LX 182 Gate B7")
+
+        let menu = KeyboardMenu(hasFullAccess: true) { set }
+        #expect(menu.entries(matching: "Gate").map(\.id) == [entry.id])
+    }
 }

@@ -7,23 +7,35 @@ struct LibraryChipRow: View {
     @Environment(LibraryModel.self) private var library
     @Environment(MobileAppState.self) private var appState
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
+    @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
     @State private var isAsking = false
+
+    private var visibleCollections: [Pinboard] {
+        let hidden = HiddenCollections.ids(from: hiddenStored)
+        return collections.filter { !hidden.contains($0.id) }
+    }
 
     var body: some View {
         let chips = LibraryChip.row(
             collectionIDs: collections.map(\.id), isSearching: library.isSearching,
             offersAsk: !library.query.trimmingCharacters(in: .whitespaces).isEmpty && !library.filter.hasAsk,
-            hasAsk: library.filter.hasAsk
+            hasAsk: library.filter.hasAsk,
+            hiddenIDs: HiddenCollections.ids(from: hiddenStored)
         )
         ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(chips, id: \.self) { chip in
-                    view(for: chip)
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(chips, id: \.self) { chip in
+                        view(for: chip)
+                    }
                 }
             }
             .padding(.horizontal, CardGridLayout.margin)
+            .padding(.vertical, 2)
         }
         .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize)
+        .fixedSize(horizontal: false, vertical: true)
         .accessibilityIdentifier(MobileAccessibilityID.chipRow)
     }
 
@@ -40,12 +52,14 @@ struct LibraryChipRow: View {
                     chip, label: board.name, symbol: board.symbolName,
                     tint: Color(hex: board.colorHex)
                 )
-                .contextMenu { CollectionMenu(board: board) }
+                .contextMenu {
+                    CollectionMenu(board: board, collections: visibleCollections, allowsHideOnPhone: true)
+                }
             }
         case .newCollection:
             Button("New Collection", systemImage: "plus") { library.isNamingCollection = true }
                 .labelStyle(.iconOnly)
-                .buttonStyle(MobileChipStyle(isActive: false, tint: nil))
+                .buttonStyle(MobileChipStyle(isActive: false, tint: nil, usesGlass: true))
         case .divider:
             Divider().frame(height: 20)
         case let .kind(type):
@@ -71,7 +85,7 @@ struct LibraryChipRow: View {
                     Text("Ask")
                 }
             }
-            .buttonStyle(MobileChipStyle(isActive: false, tint: nil))
+            .buttonStyle(MobileChipStyle(isActive: false, tint: nil, usesGlass: true))
             .disabled(isAsking)
             .accessibilityLabel(String(localized: "Ask Pesto"))
             .accessibilityInputLabels([Text("Ask"), Text("Ask Pesto")])
@@ -107,7 +121,7 @@ struct LibraryChipRow: View {
                 Text(label).lineLimit(1)
             }
         }
-        .buttonStyle(MobileChipStyle(isActive: active, tint: tint))
+        .buttonStyle(MobileChipStyle(isActive: active, tint: tint, usesGlass: true))
         .accessibilityLabel(label)
         .accessibilityAddTraits(active ? .isSelected : [])
     }

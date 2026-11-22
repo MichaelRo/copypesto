@@ -122,15 +122,20 @@ extension StorageService {
                 ThumbnailService.prewarm(id: itemID, imageData: imageData, maxPixel: 480)
             }
         }
-        pendingAnalyses[taskID] = Task.detached(priority: .utility) { [self] in
+        let task = Task.detached(priority: .utility) { [self] in
             await acquireAnalysisSlot()
-            let judging = PerfSignposts.copy.begin("analysis")
-            let analysis = await Self.analyze(input, recognizer: recognizer, screener: screener)
-            await finishAnalysis(of: itemID, input: input, analysis: analysis)
-            judging.end()
+            if !Task.isCancelled {
+                let judging = PerfSignposts.copy.begin("analysis")
+                let analysis = await Self.analyze(input, recognizer: recognizer, screener: screener)
+                if !Task.isCancelled {
+                    await finishAnalysis(of: itemID, input: input, analysis: analysis)
+                }
+                judging.end()
+            }
             await releaseAnalysisSlot()
-            await endAnalysis(taskID)
+            await endAnalysis(taskID, for: itemID)
         }
+        trackBackgroundTask(taskID, for: itemID, in: &pendingAnalyses, task: task)
     }
 
     /// Two clips are judged at a time: restoring a backup of a thousand pictures must not start a thousand readings
@@ -151,8 +156,9 @@ extension StorageService {
         }
     }
 
-    func endAnalysis(_ id: UUID) {
+    func endAnalysis(_ id: UUID, for itemID: UUID) {
         pendingAnalyses[id] = nil
+        untrackBackgroundTask(id, for: itemID)
     }
 
     /// Stores the verdict on the clip and uncovers it. A clip deleted meanwhile stays deleted.
@@ -188,13 +194,13 @@ extension StorageService {
         }
         item.isNSFW = analysis.isNSFW
         item.analysisPending = false
+        keepRecognizedText(analysis.recognizedText, for: item)
         do {
             try saveOrRollback()
         } catch {
             Self.analysisLogger.error("Analysis not saved: \(error.localizedDescription, privacy: .public)")
             return
         }
-        keepRecognizedText(analysis.recognizedText, for: item)
         mirrorToLastItemFile(item)
         startEmbedding(for: item, text: input.text)
     }

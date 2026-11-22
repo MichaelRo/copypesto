@@ -154,7 +154,6 @@ public actor PasteMigrator {
         }
         if let boardID {
             item.collectionID = boardID
-            item.isPinned = true
         } else if record.title == FirstRunSamples.snippetTitle {
             item.isPinned = true
         }

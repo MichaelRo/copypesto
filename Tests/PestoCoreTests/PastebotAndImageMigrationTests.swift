@@ -225,7 +225,7 @@ struct ClipboardAppImageMigrationTests {
         let items = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
         #expect(items.count == 3)
         #expect(items.allSatisfy { $0.type == .image && $0.pixelWidth == 8 && $0.pixelHeight == 8 })
-        #expect(items.contains { $0.isPinned && $0.customTitle == nil })
+        #expect(items.contains { $0.collectionID != nil && !$0.isPinned && $0.customTitle == nil })
         #expect(items.contains { $0.customTitle == "Design Mock" })
     }
 

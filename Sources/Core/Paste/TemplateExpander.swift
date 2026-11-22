@@ -68,7 +68,7 @@ public enum TemplateExpander {
         let ns = text as NSString
         return regex.matches(in: text, range: NSRange(location: 0, length: ns.length)).allSatisfy { match in
             let token = ns.substring(with: match.range(at: 1))
-            return isFill(token) && !["clipboard", "app"].contains(token)
+            return isFill(token) && !["clipboard", "app", "selection"].contains(token)
         }
     }
 

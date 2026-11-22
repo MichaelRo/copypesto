@@ -13,7 +13,7 @@ enum ShareFile {
     }
 
     static func write(
-        _ data: Data, fileExtension: String, in root: URL = directory, now: Date = .now
+        _ data: Data, fileName: String = "Pesto", fileExtension: String, in root: URL = directory, now: Date = .now
     ) throws
     -> URL {
         let manager = FileManager.default
@@ -21,7 +21,11 @@ enum ShareFile {
         sweep(in: root, now: now)
         let folder = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try manager.createDirectory(at: folder, withIntermediateDirectories: true)
-        let file = folder.appendingPathComponent("Pesto.\(fileExtension)")
+        let cleanName = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: "-")
+        let stem = cleanName.isEmpty ? "Pesto" : cleanName
+        let file = folder.appendingPathComponent("\(stem).\(fileExtension)")
         try data.write(to: file, options: .completeFileProtection)
         return file
     }

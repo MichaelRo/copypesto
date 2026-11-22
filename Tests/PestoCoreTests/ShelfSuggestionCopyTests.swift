@@ -47,4 +47,18 @@ struct ShelfSuggestionCopyTests {
         let pinned = ShelfSuggestionCopy.shortcutOfferTitle(pasteCount: 6, keyString: "⌃3", isPinned: true)
         #expect(!pinned.contains("Pin it"))
     }
+
+    @Test("when a clip title is provided, the banner quotes that title")
+    func whenClipTitleProvided_thenQuotedInBanner() {
+        let titled = ShelfSuggestionCopy.shortcutOfferTitle(
+            pasteCount: 4, keyString: "⌃1", isPinned: false, clipTitle: "Meeting link"
+        )
+        #expect(titled.contains("Meeting link"))
+        #expect(!titled.contains("this clip"))
+
+        let reminded = ShelfSuggestionCopy.reminderTitle(
+            shelfPastes: 5, keyString: "⌃2", clipTitle: "Deploy command"
+        )
+        #expect(reminded.contains("Deploy command"))
+    }
 }

@@ -30,8 +30,8 @@ struct PasteMigratorTests {
         try ModelContext(container).fetch(FetchDescriptor<Pinboard>())
     }
 
-    @Test("imports a text record, pins it, and creates the target collection")
-    func migrate_textRecord_pinsAndCreatesCollection() async throws {
+    @Test("imports a text record into its target collection without marking it standalone pinned")
+    func migrate_textRecord_placesInCollectionWithoutPinning() async throws {
         let container = try ModelContainerSetup.makeInMemory()
         let migrator = PasteMigrator(modelContainer: container)
 
@@ -43,7 +43,7 @@ struct PasteMigratorTests {
         let stored = try items(in: container)
         #expect(stored.count == 1)
         let item = try #require(stored.first)
-        #expect(item.isPinned)
+        #expect(!item.isPinned)
         #expect(item.displayPreviewText == "alembic upgrade head")
 
         let commands = try #require(boards(in: container).first { $0.name == "Commands" })

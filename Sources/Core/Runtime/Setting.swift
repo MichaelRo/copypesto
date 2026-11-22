@@ -54,13 +54,15 @@ public enum Setting {
     /// iOS: the clipboard's change count last offered, added or written by Pesto, so one copy is offered once.
     public static let lastSeenPasteboardChange = SettingKey("lastSeenPasteboardChange", default: -1)
     /// iOS: keep a small sealed set of pinned and recent text ready for AutoFill's text insertion (ADR 0051).
-    public static let quickInsertEnabled = SettingKey("quickInsertEnabled", default: false)
-    public static let keyboardEnabled = SettingKey("keyboardEnabled", default: false)
-    public static let autoFillEnabled = SettingKey("autoFillEnabled", default: false)
+    public static let quickInsertEnabled = SettingKey("quickInsertEnabled", default: true)
+    public static let keyboardEnabled = SettingKey("keyboardEnabled", default: true)
+    public static let autoFillEnabled = SettingKey("autoFillEnabled", default: true)
     public static let widgetsEnabled = SettingKey("widgetsEnabled", default: true)
-    public static let showsClipsOutsideWhileLocked = SettingKey("showsClipsOutsideWhileLocked", default: false)
+    public static let showsClipsOutsideWhileLocked = SettingKey("showsClipsOutsideWhileLocked", default: true)
     /// iOS: the collections the keyboard and AutoFill carry, in the person's order, as comma-separated ids (ADR 0062).
     public static let keyboardCollections = SettingKey("keyboardCollections", default: "")
+    /// iOS: collections hidden from the iPhone chip bar on this device only, as comma-separated UUID strings.
+    public static let hiddenMobileCollections = SettingKey("hiddenMobileCollections", default: "")
     /// iOS: after a tap inserts a clip, the keyboard moves to the person's own keyboard (ADR 0062).
     public static let keyboardReturnsAfterInsert = SettingKey("keyboardReturnsAfterInsert", default: true)
     /// iOS: how large the keyboard's clip cards are (Small, Medium, Large).
@@ -168,7 +170,7 @@ public enum Setting {
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
         syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
         quickInsertEnabled.name, keyboardEnabled.name, autoFillEnabled.name, widgetsEnabled.name,
-        showsClipsOutsideWhileLocked.name, keyboardCollections.name,
+        showsClipsOutsideWhileLocked.name, keyboardCollections.name, hiddenMobileCollections.name,
         keyboardReturnsAfterInsert.name, keyboardSize.name, widgetLastCopy.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,

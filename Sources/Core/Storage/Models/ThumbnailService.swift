@@ -42,6 +42,9 @@ public actor ThumbnailService {
             let cacheKey: NSString = "\(id.uuidString):\(maxPixel)" as NSString
             stillPreviews.removeObject(forKey: cacheKey)
         }
+        Task { @MainActor in
+            ThumbnailCache.shared.remove(for: id)
+        }
     }
 
     public func thumbnail(for itemID: UUID, maxPixel: Int) async -> Thumbnail? {

@@ -8,6 +8,24 @@ import UIKit
 /// `ThumbnailService` and decoded off it too. Card-sized pictures are kept in `ThumbnailCache`, so scrolling back to a
 /// card does not open the picture again; the detail view's larger one is not.
 enum CardMedia {
+    private final class BoxedAnimation {
+        let animation: GIFFrames.Animation
+        init(_ animation: GIFFrames.Animation) {
+            self.animation = animation
+        }
+    }
+
+    @MainActor private static let animationCache: NSCache<NSString, BoxedAnimation> = {
+        let cache = NSCache<NSString, BoxedAnimation>()
+        cache.countLimit = 40
+        return cache
+    }()
+
+    @MainActor
+    static func clearAnimationCache() {
+        animationCache.removeAllObjects()
+    }
+
     static let cardPixel = 480
 
     struct Picture {
@@ -45,14 +63,44 @@ enum CardMedia {
 
     /// The frames of a card's GIF, decoded behind `GIFDecodeGate` so a fast scroll decodes only a few at a time.
     @MainActor
-    static func gifFrames(itemID: UUID, container: ModelContainer?, budget: GIFFrames.Budget) async -> GIFFrames
-    .Animation? {
+    static func gifFrames(
+        itemID: UUID, byteSize: Int = 0, container: ModelContainer?, budget: GIFFrames.Budget
+    ) async
+    -> GIFFrames.Animation? {
+        let cacheKey = "\(itemID.uuidString):\(byteSize):\(budget.maxPixel)" as NSString
+        if let cached = animationCache.object(forKey: cacheKey) {
+            return cached.animation
+        }
         guard let container else { return nil }
         let service = await ThumbnailServices.shared.service(for: container)
         guard let thumbnail = await service.thumbnail(for: itemID, maxPixel: cardPixel), thumbnail.isAnimated else {
             return nil
         }
-        return await GIFDecodeGate.shared.run { await GIFFrames.decode(thumbnail.data, budget: budget) }
+        guard let decoded = await GIFDecodeGate.shared.run({
+            await GIFFrames.decode(thumbnail.data, budget: budget)
+        }) else { return nil }
+        animationCache.setObject(BoxedAnimation(decoded), forKey: cacheKey)
+        return decoded
+    }
+
+    @concurrent
+    static func linkMedia(for itemID: UUID) async -> (image: UIImage?, isAnimated: Bool) {
+        guard let data = LinkPreviewImageStore().load(for: itemID) else { return (nil, false) }
+        return await (decode(data), data.isGIF)
+    }
+
+    @MainActor
+    static func linkGIFFrames(for itemID: UUID, budget: GIFFrames.Budget) async -> GIFFrames.Animation? {
+        let cacheKey = "link:\(itemID.uuidString):\(budget.maxPixel)" as NSString
+        if let cached = animationCache.object(forKey: cacheKey) {
+            return cached.animation
+        }
+        guard let data = LinkPreviewImageStore().load(for: itemID), data.isGIF else { return nil }
+        guard let decoded = await GIFDecodeGate.shared.run({
+            await GIFFrames.decode(data, budget: budget)
+        }) else { return nil }
+        animationCache.setObject(BoxedAnimation(decoded), forKey: cacheKey)
+        return decoded
     }
 
     @concurrent
@@ -90,7 +138,7 @@ struct ClipThumbnail: View {
             }
         }
         .modifier(PictureAccessibility(text: accessibilityText))
-        .task(id: itemID) {
+        .task(id: "\(itemID.uuidString):\(byteSize)") {
             picture = await CardMedia.picture(
                 itemID: itemID, byteSize: byteSize, container: appState.historyContainer, maxPixel: maxPixel,
                 frames: Motion.reduceMotion ? nil : .detail

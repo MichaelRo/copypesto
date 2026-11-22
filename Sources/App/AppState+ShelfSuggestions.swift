@@ -113,8 +113,58 @@ extension AppState {
 
         AppDefaults.store.set(Int(Date.now.timeIntervalSince1970), for: Setting.shelfSuggestionsLastShownAt)
 
-        shelfSuggestion = ShelfSuggestionPresentation(suggestion: suggestion)
+        shelfSuggestion = ShelfSuggestionPresentation(
+            suggestion: suggestion,
+            clipTitle: suggestionClipTitle(for: suggestion.clipID)
+        )
         announceSuggestion(suggestion)
+    }
+
+    func focusedClipChanged(_ id: UUID?) {
+        focusedClipID = id
+        guard id != nil,
+              isOverlayVisible,
+              !isHistoryLocked,
+              !isContentCovered(screenSharingPrivacy: AppDefaults.store.value(for: Setting.screenSharingPrivacy)),
+              !isSearching,
+              !otherBannerVisible,
+              shelfSuggestion == nil,
+              shelfSuggestionDwellTask == nil else { return }
+
+        shelfSuggestionDwellTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(450))
+            guard !Task.isCancelled, let self else { return }
+            if self.shelfSuggestionFacts == nil {
+                await self.refreshShelfSuggestionFacts()
+            }
+            guard !Task.isCancelled else { return }
+            self.shelfSuggestionDwellTask = nil
+            self.evaluateShelfSuggestion()
+        }
+    }
+
+    private func suggestionClipTitle(for clipID: UUID) -> String? {
+        guard let item = historyStore?.item(for: clipID), item.sensitivityRaw == nil else { return nil }
+        let raw: String? = if let custom = item.customTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+                              !custom.isEmpty
+        {
+            custom
+        } else if item.type == .url,
+                  let page = item.ogTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !page.isEmpty
+        {
+            page
+        } else {
+            CardPreviewText.display(item.displayPreviewText)
+                .split(whereSeparator: \.isNewline)
+                .lazy
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .first { !$0.isEmpty }
+        }
+        guard let raw else { return nil }
+        let limit = 28
+        guard raw.count > limit else { return raw }
+        return String(raw.prefix(limit - 1)).trimmingCharacters(in: .whitespaces) + "\u{2026}"
     }
 
     private func makeShelfSuggestionContext() -> ShelfSuggestionContext {
@@ -138,7 +188,8 @@ extension AppState {
                 .value(for: Setting.screenSharingPrivacy)),
             isStackActive: activeStack != nil,
             isSearching: isSearching,
-            otherBannerVisible: otherBannerVisible
+            otherBannerVisible: otherBannerVisible,
+            focusedClipID: focusedClipID
         )
     }
 

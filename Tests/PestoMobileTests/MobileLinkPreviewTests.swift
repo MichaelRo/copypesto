@@ -89,23 +89,51 @@ struct MobileLinkPreviewTests {
         #expect(fixture.calls.urls.isEmpty)
     }
 
-    @Test("a failed fetch is marked and not retried")
-    func whenTheFetchFails_thenItIsMarkedAndNotRetried() async throws {
+    @Test("a permanent failed fetch is marked and not retried")
+    func whenTheFetchFailsPermanently_thenItIsMarkedAndNotRetried() async throws {
         let library = try await MobileTestLibrary()
         let calls = Calls()
         library.state.linkPreviewLoader = LinkPreviewLoader(
             fetch: { url in
                 calls.urls.append(url)
-                throw URLError(.notConnectedToInternet)
+                throw URLError(.badURL)
             },
             isEnabled: { true }, nsfwMode: { .show }
         )
-        let item = try await library.add("https://www.example.com/offline")
+        let item = try await library.add("https://www.example.com/missing")
 
         _ = await library.state.loadLinkPreview(for: item)
         _ = await library.state.loadLinkPreview(for: item)
 
         #expect(calls.urls.count == 1)
         #expect(item.linkPreviewFetched)
+    }
+
+    @Test("a transient failure leaves the clip unfetched so it retries later")
+    func whenTransientFetchFails_thenItRetriesNextTime() async throws {
+        let library = try await MobileTestLibrary()
+        let calls = Calls()
+        var fail = true
+        let recovered = URLPreviewResult(
+            title: "Recovered", ogImageData: Data([1, 2, 3]), faviconData: nil, siteName: "Example"
+        )
+        library.state.linkPreviewLoader = LinkPreviewLoader(
+            fetch: { url in
+                calls.urls.append(url)
+                if fail { throw URLError(.notConnectedToInternet) }
+                return recovered
+            },
+            isEnabled: { true }, nsfwMode: { .show }
+        )
+        let item = try await library.add("https://www.example.com/retry")
+
+        _ = await library.state.loadLinkPreview(for: item)
+        #expect(!item.linkPreviewFetched)
+
+        fail = false
+        _ = await library.state.loadLinkPreview(for: item)
+        #expect(calls.urls.count == 2)
+        #expect(item.linkPreviewFetched)
+        #expect(item.ogTitle == "Recovered")
     }
 }

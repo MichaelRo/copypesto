@@ -80,8 +80,11 @@ struct ClipDetailView: View {
                     ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
                         .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
                 }
-                if item.sensitivityRaw != nil,
-                   !appState.secretReveal.isCoveredForPrivacy(item.id) { revealControl(item) }
+                if item.sensitivityRaw != nil || (item.isNSFW && NSFWMode.current() != .show),
+                   !appState.secretReveal.isCoveredForPrivacy(item.id)
+                {
+                    revealControl(item, concealment: concealment)
+                }
                 ClipDetailFields(item: item).id(item.id)
                 AddToCollectionMenu(item: item, collections: collections)
                     .buttonStyle(MobileChipStyle(isActive: item.collectionID != nil, tint: nil))
@@ -139,18 +142,26 @@ struct ClipDetailView: View {
     }
 
     @ViewBuilder
-    private func revealControl(_ item: ClipboardItem) -> some View {
-        if appState.secretReveal.isShown(item.id) {
-            Button("Hide", systemImage: "eye.slash") { appState.secretReveal.hide(item.id) }
-        } else if appState.secretReveal.canAuthenticate {
-            Button("Show", systemImage: "eye") {
-                let id = item.id
-                Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
+    private func revealControl(_ item: ClipboardItem, concealment: CardConcealment) -> some View {
+        if item.sensitivityRaw != nil {
+            if appState.secretReveal.isShown(item.id) {
+                Button("Hide", systemImage: "eye.slash") { appState.secretReveal.hide(item.id) }
+            } else if appState.secretReveal.canAuthenticate {
+                Button("Show", systemImage: "eye") {
+                    let id = item.id
+                    Task { await appState.secretReveal.show(id, reason: String(localized: "Show the hidden clip")) }
+                }
+            } else {
+                Text("Set a passcode on this device to show hidden clips. Copy still works.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
-        } else {
-            Text("Set a passcode on this device to show hidden clips. Copy still works.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+        } else if item.isNSFW, NSFWMode.current() != .show {
+            if !concealment.isNSFWBlurred, appState.secretReveal.isNSFWShown(item.id) {
+                Button("Hide", systemImage: "eye.slash") { appState.secretReveal.hideNSFW(item.id) }
+            } else {
+                Button("Show", systemImage: "eye") { appState.secretReveal.showNSFW(item.id) }
+            }
         }
     }
 
@@ -184,12 +195,26 @@ struct ClipDetailView: View {
             .accessibilityIdentifier(MobileAccessibilityID.copyButton)
             share(item, concealment: concealment)
             Menu("More", systemImage: "ellipsis") {
+                if !concealment.isConcealed, item.type == .url,
+                   case let .openInBrowser(url) = LinkOpenPolicy.action(for: item.displayPreviewText)
+                {
+                    Button("Open Link", systemImage: "safari") { appState.openExternally(url) }
+                }
                 Button(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin") {
                     let id = item.id
                     Task { await appState.togglePin(id) }
                 }
                 CopyActionsMenu(item: item)
                 AIActionsMenu(item: item)
+                if !concealment.isConcealed, item.sensitivityRaw == nil, item.type == .image || item.type == .url {
+                    Button(
+                        item.isNSFW ? "Mark as Not Sensitive" : "Mark as Sensitive",
+                        systemImage: item.isNSFW ? "eye" : "eye.slash"
+                    ) {
+                        appState.secretReveal.hideNSFW(item.id)
+                        appState.toggleSensitive(item)
+                    }
+                }
                 if appState.canEditSnippet(item), let text = content?.plainText {
                     Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
                         library.beginSnippetEdit(of: item, text: text)

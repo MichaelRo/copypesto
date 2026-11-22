@@ -365,6 +365,7 @@ struct VerifyReceiptTests {
         )
         #expect(corePlan["run_core"] as? Bool == true)
         #expect(corePlan["run_ui"] as? Bool == false)
+        #expect(corePlan["run_mobile"] as? Bool == false)
         #expect((corePlan["core_filter"] as? String)?.contains("HistoryIndexTests") == true)
 
         // 2. Grid feature change runs hosted, snapshot, and targeted UI suites
@@ -379,8 +380,30 @@ struct VerifyReceiptTests {
         )
         #expect(gridPlan["run_hosted"] as? Bool == true)
         #expect(gridPlan["run_ui"] as? Bool == true)
+        #expect(gridPlan["run_mobile"] as? Bool == false)
         let onlyTesting = gridPlan["only_testing"] as? [String] ?? []
         #expect(onlyTesting.contains("PestoUITests/OverlayFlowTests"))
         #expect(onlyTesting.contains("PestoUITests/KeyboardNavigationTests"))
+
+        // 3. Mobile-only change runs iOS mobile tests and skips Core/Mac UI
+        let mobileChange = try run(
+            "/usr/bin/python3",
+            [
+                Self.scopeScriptURL.path,
+                "--files",
+                "Sources/Mobile/PhoneLibraryView.swift",
+                "Sources/Widget/RecentClipsView.swift",
+                "Tests/PestoMobileTests/CardFaceTests.swift"
+            ],
+            in: FileManager.default.temporaryDirectory
+        )
+        #expect(mobileChange.status == 0, "\(mobileChange.output)")
+        let mobilePlan = try #require(
+            JSONSerialization.jsonObject(with: Data(mobileChange.output.utf8)) as? [String: Any]
+        )
+        #expect(mobilePlan["run_mobile"] as? Bool == true)
+        #expect(mobilePlan["run_core"] as? Bool == false)
+        #expect(mobilePlan["run_hosted"] as? Bool == false)
+        #expect(mobilePlan["run_ui"] as? Bool == false)
     }
 }

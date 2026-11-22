@@ -5,12 +5,14 @@ public struct ShelfSuggestionPresentation: Equatable, Sendable {
     public let suggestion: ShelfSuggestion?
     public let targetClipID: UUID?
     public let targetSlot: Int?
+    public let clipTitle: String?
     public let isNotice: Bool
 
     public init(
         suggestion: ShelfSuggestion?,
         targetClipID: UUID? = nil,
         targetSlot: Int? = nil,
+        clipTitle: String? = nil,
         isNotice: Bool = false
     ) {
         self.suggestion = suggestion
@@ -20,6 +22,7 @@ public struct ShelfSuggestionPresentation: Equatable, Sendable {
         } else {
             self.targetSlot = targetSlot
         }
+        self.clipTitle = clipTitle
         self.isNotice = isNotice
     }
 

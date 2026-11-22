@@ -422,4 +422,18 @@ struct WidgetSnapshotSelectionTests {
 
         #expect(snapshot.clips.map(\.text) == ["safe note"])
     }
+
+    @Test("a pinned clip belonging to a collection stays out of the standalone Pinned widget list")
+    func whenPinnedInCollection_thenNotInPinnedWidgetList() throws {
+        let clips = try Clips()
+        let board = try clips.collection("Work", order: 0)
+        clips.add("standalone pin", pinned: true)
+        let collectionClip = clips.add("collection pin", type: .text, in: board)
+        collectionClip.isPinned = true
+
+        let snapshot = try clips.snapshot()
+
+        #expect(snapshot.pinned.map(\.text) == ["standalone pin"])
+        #expect(snapshot.clips(inCollection: board.id).map(\.text) == ["collection pin"])
+    }
 }

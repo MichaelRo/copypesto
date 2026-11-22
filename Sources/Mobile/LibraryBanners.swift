@@ -50,7 +50,7 @@ struct LibraryBanners: View {
             .font(.subheadline)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(.regularMaterial, in: .capsule)
+            .mobileGlassChrome(in: .capsule, interactive: true)
             .frame(maxWidth: 560)
             .padding(.horizontal, 16)
             .padding(.bottom, 8)

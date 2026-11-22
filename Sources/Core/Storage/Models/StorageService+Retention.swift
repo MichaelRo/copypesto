@@ -5,7 +5,7 @@ import SwiftData
 extension StorageService {
     func retentionSnapshot(expiringBefore: Date) throws -> RetentionSnapshot {
         let descriptor = FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { !$0.isPinned },
+            predicate: #Predicate { !$0.isPinned && $0.collectionID == nil },
             sortBy: [SortDescriptor(\.timestamp, order: .forward)]
         )
         let items = try modelContext.fetch(descriptor)

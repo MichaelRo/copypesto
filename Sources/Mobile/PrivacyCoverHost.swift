@@ -2,14 +2,14 @@
 import SwiftUI
 import UIKit
 
-/// The App Switcher keeps a picture of the app as it left (ADR 0054): while the scene is not active, a window of
-/// its own above every sheet and alert covers it with a plain ground, so no card, detail or editor is in that
-/// picture.
+/// The App Switcher keeps a picture of the app as it left (ADR 0054): when the scene enters the background while
+/// unlocked, a window above sheets covers it calmly so no card, detail or editor appears in the snapshot, while
+/// `.inactive` system prompts such as Face ID are never obscured.
 struct PrivacyCoverHost: UIViewRepresentable {
     let covers: Bool
 
-    static func covers(in phase: ScenePhase) -> Bool {
-        phase != .active
+    static func covers(in phase: ScenePhase, isLocked: Bool = false) -> Bool {
+        phase == .background && !isLocked
     }
 
     func makeUIView(context _: Context) -> PrivacyCoverAnchor {
@@ -68,13 +68,24 @@ final class PrivacyCoverAnchor: UIView {
 }
 
 struct PrivacyCoverView: View {
+    @Environment(\.pestoAccent) private var accent
+
     var body: some View {
-        Image(systemName: "eye.slash")
-            .font(.largeTitle)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(uiColor: .systemBackground))
-            .accessibilityIdentifier(MobileAccessibilityID.privacyCover)
-            .accessibilityLabel(Text("Pesto"))
+        ZStack {
+            Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
+            VStack(spacing: 12) {
+                Image(systemName: "lock.fill")
+                    .font(.largeTitle)
+                    .foregroundStyle(accent)
+                    .accessibilityHidden(true)
+                Text("Pesto")
+                    .font(.headline)
+            }
+            .padding(28)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(MobileAccessibilityID.privacyCover)
+        .accessibilityLabel(Text("Pesto"))
     }
 }

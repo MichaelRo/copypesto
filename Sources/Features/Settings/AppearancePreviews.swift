@@ -13,14 +13,14 @@ struct AppearanceModePreview: View {
         let dark = AppTheme.resolve(light: themeRaw, dark: darkThemeRaw, isDark: true)
         ZStack {
             switch mode {
-            case .light: ThemeShelfMiniature(theme: light, dark: false)
-            case .dark: ThemeShelfMiniature(theme: dark, dark: true)
+            case .light: ThemeShelfMiniature(theme: light, dark: false, compact: true)
+            case .dark: ThemeShelfMiniature(theme: dark, dark: true, compact: true)
             case .system:
-                ThemeShelfMiniature(theme: light, dark: false)
-                ThemeShelfMiniature(theme: dark, dark: true).clipShape(RightHalf())
+                ThemeShelfMiniature(theme: light, dark: false, compact: true)
+                ThemeShelfMiniature(theme: dark, dark: true, compact: true).clipShape(RightHalf())
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .padding(5)
     }
 }

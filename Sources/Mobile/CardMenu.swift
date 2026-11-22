@@ -9,8 +9,31 @@ struct CardMenu: View {
         let item = card.item
         let concealment = card.concealment
         Button("Copy", systemImage: "doc.on.doc") { card.copy() }
+        if !concealment.isConcealed, item.type == .url,
+           case let .openInBrowser(url) = LinkOpenPolicy.action(for: item.displayPreviewText)
+        {
+            Button("Open Link", systemImage: "safari") { card.appState.openExternally(url) }
+        }
         CopyActionsMenu(item: item)
+        if !concealment.isConcealed, item.type == .url, item.sensitivityRaw == nil {
+            if let pageTitle = item.ogTitle?.trimmingCharacters(in: .whitespacesAndNewlines), !pageTitle.isEmpty {
+                Button("Copy Page Title", systemImage: "text.quote") {
+                    if card.appState.copyPageTitle(item) { card.library.didCopy(item.id) }
+                }
+            }
+            if LinkPreviewImageStore().load(for: item.id) != nil {
+                Button("Copy Preview Image", systemImage: "photo") {
+                    if card.appState.copyLinkPreviewImage(item) { card.library.didCopy(item.id) }
+                }
+            }
+        }
         AIActionsMenu(item: item)
+        if card.appState.canEditText(item), let text = ClipContent.of(item)?.plainText {
+            Button("Edit Text\u{2026}", systemImage: "pencil") {
+                card.library.beginTextEdit(of: item.id, text: text)
+                card.library.open(item.id)
+            }
+        }
         Button("Edit Details", systemImage: "info.circle") { card.library.open(item.id) }
         if !concealment.isConcealed {
             Button("Share", systemImage: "square.and.arrow.up") { card.share() }
@@ -28,9 +51,26 @@ struct CardMenu: View {
             }
         }
         if card.isCoveredForPrivacy
+            || (concealment.isNSFWBlurred && !card.isCoveredForPrivacy)
             || item.sensitivityRaw != nil && concealment.isConcealed && card.appState.secretReveal.canAuthenticate
         {
             Button("Show", systemImage: "eye") { card.show() }
+        } else if (item.sensitivityRaw != nil && card.appState.secretReveal.isShown(item.id))
+            || (item.isNSFW && card.appState.secretReveal.isNSFWShown(item.id))
+        {
+            Button("Hide", systemImage: "eye.slash") { card.hide() }
+        }
+        if !concealment.isConcealed, item.sensitivityRaw == nil, item.type == .image || item.type == .url {
+            Button(
+                item.isNSFW ? "Mark as Not Sensitive" : "Mark as Sensitive",
+                systemImage: item.isNSFW ? "eye" : "eye.slash"
+            ) {
+                card.appState.secretReveal.hideNSFW(item.id)
+                card.appState.toggleSensitive(item)
+            }
+        }
+        Button("Select Clips", systemImage: "checkmark.circle") {
+            card.library.beginSelection(with: item.id)
         }
         Divider()
         Button("Delete", systemImage: "trash", role: .destructive) { card.delete() }

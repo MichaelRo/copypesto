@@ -48,6 +48,7 @@ struct GridView: View {
     @State var flashedID: UUID?
     @State var selection = GridSelection()
     @State var quickLookController = QuickLookPreviewController()
+    @State var contextMenuKeyBridge = ContextMenuKeyBridge()
     @AppStorage(Setting.screenSharingPrivacy) var screenSharingPrivacy: Bool
     @AppStorage(Setting.cardSize) var cardSizeRaw: String
     @AppStorage(Setting.cardWidth) var cardWidth: Int
@@ -283,9 +284,10 @@ struct GridView: View {
                         if DetailPopoverPolicy
                             .pointerMoved(from: origin, to: point) { scrollState.pointerHasMoved = true }
                     }
-                    .onReceive(NotificationCenter.default.publisher(for: NSMenu.didBeginTrackingNotification)) { _ in
-                        scrollState.menuOpened()
-                    }
+                    .bridgeContextMenuKeys(
+                        contextMenuKeyBridge,
+                        isVisible: isPinnedHost ? appState.isPinnedWindowVisible : appState.isOverlayVisible
+                    ) { scrollState.menuOpened() }
                     .onReceive(Publishers.MergeMany(AnimatedImageSettings.changes
                             .map { NotificationCenter.default.publisher(for: $0) }))
                     { _ in
@@ -367,6 +369,9 @@ struct GridView: View {
                         in: cachedFilteredIDs
                     )
                 }
+                let initialFocused = cachedFilteredIDs.indices.contains(focusedIndex)
+                    ? cachedFilteredIDs[focusedIndex] : nil
+                appState.focusedClipID = initialFocused
                 isPasting = false
                 appState.isDragging = false
                 appState.draggingItemID = nil
@@ -423,6 +428,9 @@ struct GridView: View {
             guard idx < displayedItems.count else { return }
             let item = displayedItems[idx]
             focusedID = item.id
+            if !isPinnedHost {
+                appState.focusedClipChanged(item.id)
+            }
             let color = item.sourceDominantColorHex.flatMap { Color(hex: $0) } ?? .clear
             onFocusChanged?(color, CGFloat(idx) / max(1, CGFloat(displayedItems.count - 1)))
             quickLookController.reconcileWithPanel()

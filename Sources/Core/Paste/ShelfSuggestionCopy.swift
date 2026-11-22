@@ -2,15 +2,35 @@
 import Foundation
 
 public enum ShelfSuggestionCopy {
-    public static func shortcutOfferTitle(pasteCount: Int, keyString: String, isPinned: Bool) -> String {
-        if isPinned {
-            String(localized: "You have pasted this clip \(pasteCount) times. Paste it from any app with \(keyString)?")
-        } else {
-            String(
+    public static func shortcutOfferTitle(
+        pasteCount: Int,
+        keyString: String,
+        isPinned: Bool,
+        clipTitle: String? = nil
+    )
+    -> String {
+        let subject = quotedSubject(clipTitle)
+        if let subject {
+            if isPinned {
+                return String(
+                    localized:
+                    "You have pasted \(subject) \(pasteCount) times. Paste it from any app with \(keyString)?"
+                )
+            }
+            return String(
                 localized:
-                "You have pasted this clip \(pasteCount) times. Pin it and paste it from any app with \(keyString)?"
+                "You have pasted \(subject) \(pasteCount) times. Pin it and paste it from any app with \(keyString)?"
             )
         }
+        if isPinned {
+            return String(
+                localized: "You have pasted this clip \(pasteCount) times. Paste it from any app with \(keyString)?"
+            )
+        }
+        return String(
+            localized:
+            "You have pasted this clip \(pasteCount) times. Pin it and paste it from any app with \(keyString)?"
+        )
     }
 
     public static func dormantTitle(keyString: String, weeks: Int) -> String {
@@ -19,10 +39,22 @@ public enum ShelfSuggestionCopy {
         )
     }
 
-    public static func reminderTitle(shelfPastes: Int, keyString: String) -> String {
-        String(
+    public static func reminderTitle(shelfPastes: Int, keyString: String, clipTitle: String? = nil) -> String {
+        if let subject = quotedSubject(clipTitle) {
+            return String(
+                localized:
+                "You pasted \(subject) from the shelf \(shelfPastes) times. \(keyString) pastes it from any app."
+            )
+        }
+        return String(
             localized: "You pasted this clip from the shelf \(shelfPastes) times. \(keyString) pastes it from any app."
         )
+    }
+
+    private static func quotedSubject(_ clipTitle: String?) -> String? {
+        guard let trimmed = clipTitle?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty else { return nil }
+        return "\u{201C}\(trimmed)\u{201D}"
     }
 
     public static func snippetTitle() -> String {

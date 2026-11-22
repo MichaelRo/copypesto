@@ -14,12 +14,15 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
     public let keyboardSize: KeyboardSize
     public let keyboardEnabled: Bool
     public let autoFillEnabled: Bool
+    public let isLocked: Bool
+    public let expiresAt: Date?
 
     public init(
         createdAt: Date, entries: [QuickInsertEntry], collections: [QuickInsertCollection] = [],
         returnsAfterInsert: Bool = true, accent: WidgetSnapshot.Theme = .brand,
         keyboardSize: KeyboardSize = .medium,
-        keyboardEnabled: Bool = true, autoFillEnabled: Bool = true
+        keyboardEnabled: Bool = true, autoFillEnabled: Bool = true,
+        isLocked: Bool = false, expiresAt: Date? = nil
     ) {
         self.createdAt = createdAt
         self.entries = entries
@@ -29,6 +32,8 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
         self.keyboardSize = keyboardSize
         self.keyboardEnabled = keyboardEnabled
         self.autoFillEnabled = autoFillEnabled
+        self.isLocked = isLocked
+        self.expiresAt = expiresAt
     }
 
     public init(from decoder: any Decoder) throws {
@@ -41,7 +46,36 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
         keyboardSize = try container.decodeIfPresent(KeyboardSize.self, forKey: .keyboardSize) ?? .medium
         keyboardEnabled = try container.decodeIfPresent(Bool.self, forKey: .keyboardEnabled) ?? true
         autoFillEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoFillEnabled) ?? true
+        isLocked = try container.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
+        expiresAt = try container.decodeIfPresent(Date.self, forKey: .expiresAt)
+    }
+
+    public func withExpiresAt(_ expiresAt: Date?) -> QuickInsertSet {
+        QuickInsertSet(
+            createdAt: createdAt, entries: entries, collections: collections,
+            returnsAfterInsert: returnsAfterInsert, accent: accent, keyboardSize: keyboardSize,
+            keyboardEnabled: keyboardEnabled, autoFillEnabled: autoFillEnabled,
+            isLocked: isLocked, expiresAt: expiresAt
+        )
     }
 
     public static let empty = QuickInsertSet(createdAt: Date(timeIntervalSince1970: 0), entries: [])
+
+    public static func locked(
+        accent: WidgetSnapshot.Theme = .brand,
+        keyboardSize: KeyboardSize = .medium,
+        keyboardEnabled: Bool = true,
+        autoFillEnabled: Bool = true
+    )
+    -> QuickInsertSet {
+        QuickInsertSet(
+            createdAt: Date(timeIntervalSince1970: 0),
+            entries: [],
+            accent: accent,
+            keyboardSize: keyboardSize,
+            keyboardEnabled: keyboardEnabled,
+            autoFillEnabled: autoFillEnabled,
+            isLocked: true
+        )
+    }
 }

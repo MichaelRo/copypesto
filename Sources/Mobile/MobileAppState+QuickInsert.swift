@@ -50,6 +50,7 @@ extension MobileAppState {
         }
         let previous = quickInsertWrites
         let now = clock()
+        let expiresAt = historyLock.outsideExpiresAt(at: now)
         let options = target.options()
         let device = CardFootLineView.device
         let next = Task { [weak self] in
@@ -60,6 +61,7 @@ extension MobileAppState {
                 let set = try await Self.buildQuickInsertSet(
                     container: container, now: now, options: options, device: device
                 )
+                .withExpiresAt(expiresAt)
                 try currentTarget.file.write(set, with: currentTarget.keys.loadOrCreate())
             } catch {
                 Self.quickInsertLogger
@@ -97,11 +99,13 @@ extension MobileAppState {
         do {
             // A context of its own reads what the store holds now; the main context's copy of a clip the storage
             // actor just edited (made secret, say) is merged only a moment after the save.
+            let now = clock()
             let device = CardFootLineView.device
             let set = try QuickInsertSelection.set(
-                in: ModelContext(container), now: clock(), options: target.options(),
+                in: ModelContext(container), now: now, options: target.options(),
                 source: { CardFootLine.source(CardFootLine.origin(of: $0), device: device) }
             )
+            .withExpiresAt(historyLock.outsideExpiresAt(at: now))
             try target.file.write(set, with: target.keys.loadOrCreate())
         } catch {
             Self.quickInsertLogger
@@ -112,12 +116,17 @@ extension MobileAppState {
     }
 
     /// Clear History: nothing it removed may stay insertable, so the set is emptied before anything is chosen again.
+    /// When locked, writes a locked set so the keyboard and AutoFill show "Locked" instead of "No clips".
     func emptyQuickInsert() {
         quickInsertRewrite?.cancel()
         quickInsertRewrite = nil
         guard let target = quickInsert, target.isEnabled() else { return }
         do {
-            try target.file.write(.empty, with: target.keys.loadOrCreate())
+            let options = target.options()
+            let replacement: QuickInsertSet = historyLock.holdsOutsideSurfaces
+                ? .locked(accent: options.accent, keyboardSize: options.keyboardSize)
+                : .empty
+            try target.file.write(replacement, with: target.keys.loadOrCreate())
         } catch {
             Self.quickInsertLogger
                 .error("The AutoFill set was not emptied: \(error.localizedDescription, privacy: .public)")

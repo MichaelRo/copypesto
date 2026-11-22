@@ -93,6 +93,8 @@ struct LibraryRootView: View {
                     library.showsSettings = true
                 case .quickInsertSetup:
                     library.showsQuickInsertSetup = true
+                case .unlock:
+                    break
                 }
                 appState.linkedSettings = nil
             }

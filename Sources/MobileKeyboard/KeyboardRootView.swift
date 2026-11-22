@@ -130,6 +130,24 @@ struct KeyboardRootView: View {
                 }
                 KeyboardPad(insert: keys.insert)
             }
+        case .locked:
+            VStack(spacing: 8) {
+                Label("Pesto is Locked", systemImage: "lock.fill")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                if let openURL = keys.openURL {
+                    Button {
+                        openURL(AppLink.url(for: .unlock))
+                    } label: {
+                        Label("Unlock in Pesto", systemImage: "lock.open")
+                            .font(.caption.weight(.medium))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial, in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
         case .empty:
             VStack(spacing: 8) {
                 note("No text clips yet. Clips with secrets never appear here.")

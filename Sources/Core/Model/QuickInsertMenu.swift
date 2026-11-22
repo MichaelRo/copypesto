@@ -6,6 +6,7 @@ public struct QuickInsertMenu: Equatable, Sendable {
     public enum State: Equatable, Sendable {
         /// No set, or one that would not open: the feature is off, or Pesto has not written it yet.
         case unavailable
+        case locked
         case empty
         case ready
     }
@@ -59,13 +60,27 @@ public struct QuickInsertMenu: Equatable, Sendable {
     private let collections: [QuickInsertCollection]
 
     public init(set: QuickInsertSet?) {
+        self.init(set: set, now: .now)
+    }
+
+    public init(set: QuickInsertSet?, now: Date) {
         let activeSet = (set?.autoFillEnabled == true) ? set : nil
+        let isExpired = activeSet?.expiresAt.map { now >= $0 } ?? false
+        let isLocked = activeSet?.isLocked == true || isExpired
         accent = set?.accent
-        let loadedEntries = (activeSet?.entries ?? []).filter { $0.kind != .image }
-        let loadedCollections = activeSet?.collections ?? []
+        let loadedEntries = isLocked ? [] : (activeSet?.entries ?? []).filter { $0.kind != .image }
+        let loadedCollections = isLocked ? [] : (activeSet?.collections ?? [])
         entries = loadedEntries
         collections = loadedCollections
-        state = activeSet == nil ? .unavailable : loadedEntries.isEmpty ? .empty : .ready
+        if activeSet == nil {
+            state = .unavailable
+        } else if isLocked {
+            state = .locked
+        } else if loadedEntries.isEmpty {
+            state = .empty
+        } else {
+            state = .ready
+        }
         let sectionChips: [ChipLabel] = [
             ChipLabel(chip: .pinned, title: String(localized: "Pinned"), symbolName: "pin"),
             ChipLabel(chip: .snippets, title: String(localized: "Snippets"), symbolName: "text.badge.plus")

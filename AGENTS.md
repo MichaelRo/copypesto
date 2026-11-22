@@ -221,3 +221,5 @@ build with warnings as errors, the hosted and UI tests, the iOS app's tests on a
 works, how to write a UI test and the manual checklist for what cannot be automated are in `docs/testing.md`.
 
 Pre-commit checks run automatically via `.githooks/pre-commit`. If `xcode-select -p` points to CommandLineTools rather than Xcode, prefix commands with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
+
+**Never stack a PR on a non-`main` base without triggering `verify` manually (or rebasing onto `main` first).** `.github/workflows/ci.yml`'s `verify` job skips pull requests where `github.base_ref != default_branch`, so every PR must run the full `verify` gate via `workflow_dispatch` or by targeting `main`.

@@ -65,6 +65,14 @@ struct InsertPickerView: View {
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(ground.ignoresSafeArea())
+        case .locked:
+            ContentUnavailableView(
+                "Pesto is Locked",
+                systemImage: "lock.fill",
+                description: Text("Open Pesto and unlock to insert clips.")
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(ground.ignoresSafeArea())
         case .empty:
             ContentUnavailableView(
                 "No Text Clips",

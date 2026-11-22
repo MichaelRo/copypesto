@@ -29,13 +29,7 @@ extension MobileAppState {
     @discardableResult
     func open(_ url: URL) -> LinkOutcome {
         if let appLink = AppLink.target(in: url) {
-            boot()
-            if isHistoryLockedNow() {
-                heldLink = url
-                return .ignored
-            }
-            linkedSettings = LinkedSettings(target: appLink, serial: (linkedSettings?.serial ?? 0) + 1)
-            return .shown
+            return openAppLink(appLink, url: url)
         }
         guard let target = WidgetLink.target(in: url) else { return .ignored }
         boot()
@@ -66,6 +60,22 @@ extension MobileAppState {
             show(id, opensDetail: true)
             return .shown
         }
+    }
+
+    private func openAppLink(_ appLink: AppLink, url: URL) -> LinkOutcome {
+        boot()
+        if appLink == .unlock {
+            if isHistoryLockedNow() {
+                Task { await unlockHistory() }
+            }
+            return .shown
+        }
+        if isHistoryLockedNow() {
+            heldLink = url
+            return .ignored
+        }
+        linkedSettings = LinkedSettings(target: appLink, serial: (linkedSettings?.serial ?? 0) + 1)
+        return .shown
     }
 
     private func show(_ id: UUID, opensDetail: Bool) {

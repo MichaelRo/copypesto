@@ -9,6 +9,7 @@ public struct KeyboardMenu: Equatable, Sendable {
         case restricted
         /// No set, or one that would not open: Insert from Pesto is off, or Pesto has not written it yet.
         case unavailable
+        case locked
         case empty
         case ready
     }
@@ -47,6 +48,10 @@ public struct KeyboardMenu: Equatable, Sendable {
     private let collections: [QuickInsertCollection]
 
     public init(hasFullAccess: Bool, loadSet: () -> QuickInsertSet?) {
+        self.init(hasFullAccess: hasFullAccess, now: .now, loadSet: loadSet)
+    }
+
+    public init(hasFullAccess: Bool, now: Date, loadSet: () -> QuickInsertSet?) {
         guard hasFullAccess else {
             state = .restricted
             chips = []
@@ -59,14 +64,24 @@ public struct KeyboardMenu: Equatable, Sendable {
         }
         let set = loadSet()
         let activeSet = (set?.keyboardEnabled == true) ? set : nil
-        entries = (activeSet?.entries ?? []).filter {
+        let isExpired = activeSet?.expiresAt.map { now >= $0 } ?? false
+        let isLocked = activeSet?.isLocked == true || isExpired
+        entries = isLocked ? [] : (activeSet?.entries ?? []).filter {
             $0.section != .snippets || TemplateExpander.fillsWithoutAsking($0.text)
         }
-        collections = activeSet?.collections ?? []
+        collections = isLocked ? [] : (activeSet?.collections ?? [])
         returnsAfterInsert = activeSet?.returnsAfterInsert ?? true
         accent = activeSet?.accent ?? .brand
         keyboardSize = activeSet?.keyboardSize ?? .medium
-        state = activeSet == nil ? .unavailable : entries.isEmpty ? .empty : .ready
+        if activeSet == nil {
+            state = .unavailable
+        } else if isLocked {
+            state = .locked
+        } else if entries.isEmpty {
+            state = .empty
+        } else {
+            state = .ready
+        }
         let sections: [ChipLabel] = [
             ChipLabel(chip: .pinned, title: String(localized: "Pinned"), symbolName: "pin"),
             ChipLabel(chip: .snippets, title: String(localized: "Snippets"), symbolName: "text.badge.plus")

@@ -24,6 +24,10 @@ struct QuickInsertMenuTests {
     @Test("no set, or one that would not open, is unavailable; an empty set is empty; otherwise ready")
     func whenLoaded_thenTheStateSaysWhatThereIs() {
         #expect(QuickInsertMenu(set: nil).state == .unavailable)
+        #expect(QuickInsertMenu(set: .locked()).state == .locked)
+        let expiring = set.withExpiresAt(Date(timeIntervalSince1970: 1000))
+        #expect(QuickInsertMenu(set: expiring, now: Date(timeIntervalSince1970: 999)).state == .ready)
+        #expect(QuickInsertMenu(set: expiring, now: Date(timeIntervalSince1970: 1000)).state == .locked)
         #expect(QuickInsertMenu(set: .empty).state == .empty)
         #expect(QuickInsertMenu(set: set).state == .ready)
     }

@@ -88,11 +88,12 @@ struct MobileContentCoverTests {
         #expect(reveal.concealment(for: first).isConcealed, "leaving the foreground covers it again")
     }
 
-    @Test("the App Switcher's picture is covered whenever the scene is not active")
+    @Test("the App Switcher cover skips .inactive for Face ID and covers unlocked .background")
     func whenNotActive_thenTheSceneIsCovered() {
         #expect(!PrivacyCoverHost.covers(in: .active))
-        #expect(PrivacyCoverHost.covers(in: .inactive))
+        #expect(!PrivacyCoverHost.covers(in: .inactive))
         #expect(PrivacyCoverHost.covers(in: .background))
+        #expect(!PrivacyCoverHost.covers(in: .background, isLocked: true))
     }
 
     @Test("SceneCaptureReader delivers trait changes when a hosting window flips sceneCaptureState")

@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import SwiftData
+import UniformTypeIdentifiers
 
 extension StorageService {
     /// The clips that hold this content, the one used most recently first (ADR 0053): an edit can give two clips one
@@ -86,9 +87,23 @@ extension StorageService {
                 return true
             }
             guard let width = item.pixelWidth, let height = item.pixelHeight,
-                  width == pixelWidth, height == pixelHeight else { return false }
+                  width == pixelWidth, height == pixelHeight,
+                  Self.hasLossyEncoding(payload) || Self.hasLossyEncoding(existingData) else { return false }
             return Self.isCrossFormatNearMatch(payload, existingData)
         }
+    }
+
+    private static func hasLossyEncoding(_ data: Data) -> Bool {
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            [kCGImageSourceShouldCache: false] as CFDictionary
+        ),
+            let identifier = CGImageSourceGetType(source) as String?,
+            let utType = UTType(identifier) else
+        {
+            return false
+        }
+        return utType == .jpeg || utType == .heic || utType == .heif || utType == .webP
     }
 
     private static func isCrossFormatNearMatch(_ lhs: Data, _ rhs: Data) -> Bool {
@@ -100,14 +115,23 @@ extension StorageService {
             return false
         }
         var maxDiff = 0
-        var totalDiff = 0
+        var totalRGBDiff = 0
+        var totalAlphaDiff = 0
+        let pixelCount = left.count / 4
+        guard pixelCount > 0 else { return false }
         for index in left.indices {
             let diff = abs(Int(left[index]) - Int(right[index]))
             if diff > maxDiff { maxDiff = diff }
-            if maxDiff > 40 { return false }
-            totalDiff += diff
+            if maxDiff > 36 { return false }
+            if index % 4 == 3 {
+                totalAlphaDiff += diff
+            } else {
+                totalRGBDiff += diff
+            }
         }
-        return Double(totalDiff) / Double(left.count) <= 12.0
+        let meanRGBDiff = Double(totalRGBDiff) / Double(pixelCount * 3)
+        let meanAlphaDiff = Double(totalAlphaDiff) / Double(pixelCount)
+        return meanRGBDiff <= 6.0 && meanAlphaDiff <= 6.0
     }
 
     private static func normalizedSmallPixels(_ data: Data) -> [UInt8]? {

@@ -60,8 +60,8 @@ struct PasteImportStreamingTests {
         #expect(summary.imported + summary.skipped + plan.leftByLimits + plan.unusable == plan.libraryClips)
         let stored = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
         #expect(stored.count == 10)
-        #expect(stored.filter(\.isPinned).count == 3)
-        let previews = Set(stored.filter { !$0.isPinned }.map(\.displayPreviewText))
+        #expect(stored.count(where: { $0.collectionID != nil && !$0.isPinned }) == 3)
+        let previews = Set(stored.filter { $0.collectionID == nil }.map(\.displayPreviewText))
         #expect(previews == Set((23...29).map { "history \($0)" }))
         #expect(progress.last == [10, 10])
     }

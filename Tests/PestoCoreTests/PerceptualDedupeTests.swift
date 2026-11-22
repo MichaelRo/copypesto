@@ -153,4 +153,49 @@ struct PerceptualDedupeTests {
         let items = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
         #expect(items.count == 1)
     }
+
+    @Test("distinct lossless solid-color thumbnails of the same size are both kept")
+    func whenDistinctSolidTiffImagesIngested_thenBothAreStored() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let service = StorageService(
+            modelContainer: container, environment: .testing { $0.textRecognizer = NoTextRecognizer() }
+        )
+        let first = try #require(solidRep(green: 0.55)?.tiffRepresentation)
+        let second = try #require(solidRep(green: 0.65)?.tiffRepresentation)
+
+        try await service.ingest(capture(first, type: "public.tiff"))
+        try await service.ingest(capture(second, type: "public.tiff"))
+
+        let items = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+        #expect(items.count == 2)
+    }
+
+    @Test("distinct small solid TIFF and JPEG swatches do not cross-format collapse")
+    func whenDistinctSolidTiffAndJpegIngested_thenBothAreStored() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let service = StorageService(
+            modelContainer: container, environment: .testing { $0.textRecognizer = NoTextRecognizer() }
+        )
+        let first = try #require(solidRep(green: 0.55)?.tiffRepresentation)
+        let second = try #require(solidRep(green: 0.65)?.representation(using: .jpeg, properties: [:]))
+
+        try await service.ingest(capture(first, type: "public.tiff"))
+        try await service.ingest(capture(second, type: "public.jpeg"))
+
+        let items = try ModelContext(container).fetch(FetchDescriptor<ClipboardItem>())
+        #expect(items.count == 2)
+    }
+
+    private func solidRep(green: CGFloat) -> NSBitmapImageRep? {
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: 8, pixelsHigh: 8, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .calibratedRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) else { return nil }
+        for x in 0..<8 {
+            for y in 0..<8 {
+                rep.setColor(NSColor(calibratedRed: 0.2, green: green, blue: 0.8, alpha: 1), atX: x, y: y)
+            }
+        }
+        return rep
+    }
 }

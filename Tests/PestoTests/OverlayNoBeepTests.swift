@@ -25,17 +25,23 @@ private enum NoBeepSpy {
 
 private extension NSResponder {
     @objc
-    func pesto_spy_responderNoResponder(for event: NSEvent) {
-        MainActor.assumeIsolated { NoBeepSpy.responderNoResponderCount += 1 }
-        pesto_spy_responderNoResponder(for: event)
+    func pesto_spy_responderNoResponder(for selector: Selector) {
+        // AppKit invokes noResponder(for:) for tracking events like mouseEntered:; only keyDown(with:) triggers
+        // NSBeep().
+        if selector == #selector(NSResponder.keyDown(with:)) {
+            MainActor.assumeIsolated { NoBeepSpy.responderNoResponderCount += 1 }
+        }
+        pesto_spy_responderNoResponder(for: selector)
     }
 }
 
 private extension NSWindow {
     @objc
-    func pesto_spy_windowNoResponder(for event: NSEvent) {
-        MainActor.assumeIsolated { NoBeepSpy.windowNoResponderCount += 1 }
-        pesto_spy_windowNoResponder(for: event)
+    func pesto_spy_windowNoResponder(for selector: Selector) {
+        if selector == #selector(NSResponder.keyDown(with:)) {
+            MainActor.assumeIsolated { NoBeepSpy.windowNoResponderCount += 1 }
+        }
+        pesto_spy_windowNoResponder(for: selector)
     }
 }
 

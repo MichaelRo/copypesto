@@ -108,6 +108,29 @@ final class LibraryModel {
         selectedClipIDs = Set(ids)
     }
 
+    func applyDragSelection(
+        from anchorID: UUID,
+        to currentID: UUID,
+        in visibleIDs: [UUID],
+        baseSelection: Set<UUID>,
+        selecting: Bool
+    ) {
+        guard let start = visibleIDs.firstIndex(of: anchorID),
+              let end = visibleIDs.firstIndex(of: currentID) else { return }
+        let range = min(start, end)...max(start, end)
+        var updated = baseSelection
+        for index in range {
+            if selecting {
+                updated.insert(visibleIDs[index])
+            } else {
+                updated.remove(visibleIDs[index])
+            }
+        }
+        if selectedClipIDs != updated {
+            selectedClipIDs = updated
+        }
+    }
+
     func endSelection() {
         isSelecting = false
         selectedClipIDs = []

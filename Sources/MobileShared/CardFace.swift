@@ -44,8 +44,11 @@ enum CardFace: Equatable {
         ))
         switch treatment {
         case let .fullBleedPicture(fit, isAnimated):
-            let near = input.pictureAspect.map(fillRange.contains) ?? false
-            return .picture(fillsCard: fit == .fill && near, isAnimated: isAnimated)
+            if isAnimated, let aspect = input.pictureAspect {
+                let gifFit = PictureFit.decide(aspectRatio: aspect, isAnimated: true)
+                return .picture(fillsCard: gifFit == .fill, isAnimated: true)
+            }
+            return .picture(fillsCard: fit == .fill, isAnimated: isAnimated)
         case let .fullBleedColor(ink):
             return colorFill.map { .color($0, ink: ink) } ?? .text
         case let .largeText(points):
@@ -68,10 +71,10 @@ enum CardFace: Equatable {
     }
 
     /// Every non-concealed clip with a custom title shows it on its card face (`All`, `Pinned`, and collections);
-    /// inside a collection, a link without a custom title also shows its page title.
+    /// a link without a custom title also shows its page title.
     static func faceTitle(
         type: ClipboardType,
-        inCollection: Bool,
+        inCollection _: Bool,
         isConcealed: Bool,
         customTitle: String?,
         ogTitle: String?
@@ -79,7 +82,7 @@ enum CardFace: Equatable {
     -> String? {
         guard !isConcealed else { return nil }
         if let custom = trimmed(customTitle) { return custom }
-        if inCollection, type == .url, let page = trimmed(ogTitle) { return page }
+        if type == .url, let page = trimmed(ogTitle) { return page }
         return nil
     }
 

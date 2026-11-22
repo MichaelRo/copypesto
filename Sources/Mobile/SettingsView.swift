@@ -51,6 +51,19 @@ struct SettingsView: View {
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
                     .accessibilityIdentifier(MobileAccessibilityID.addsCopiesToggle)
+                    .onChange(of: addsCopiesOnOpen) { _, on in
+                        if on {
+                            Task { await appState.clipboardDidBecomeActive() }
+                        }
+                    }
+                if addsCopiesOnOpen {
+                    Button("Allow Paste Without Asking\u{2026}") {
+                        _ = AppPasteboard.general.hasStrings
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    }
+                }
                 Picker("Keep clips for", selection: retentionDaysChoice) {
                     ForEach(RetentionChoices.ageDays, id: \.self) { Text(RetentionChoices.ageLabel($0)).tag($0) }
                     if !RetentionChoices.isPresetAge(retentionDays) {
@@ -67,7 +80,10 @@ struct SettingsView: View {
             } header: {
                 Text("History & Capture")
             } footer: {
-                Text("Pinned clips are always kept.")
+                Text(
+                    "Pinned clips are always kept. To skip the iOS paste prompt when Pesto opens, set Paste from " +
+                        "Other Apps to Allow in iOS Settings."
+                )
             }
             Section {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)

@@ -6,6 +6,7 @@ import Testing
 @testable import Pesto
 
 @Suite("BiometricLockOverlay shelf prompt icon")
+@MainActor
 struct BiometricLockOverlayPromptTests {
     @Test("uses lock.fill instead of a duplicate touchid SF Symbol when embedded Touch ID prompt is shown")
     func whenEmbeddedPromptAndTouchID_thenUsesLockFill() {

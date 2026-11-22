@@ -98,7 +98,7 @@ public enum QuickInsertSelection {
             text: text,
             thumbnail: { $0.quickInsertThumbnailData() },
             recognizedText: { item in
-                item.type == .image && recognizedTexts.exists(for: item.id) ? recognizedTexts.load(for: item.id) : nil
+                RecognizedText.text(of: item, store: recognizedTexts)
             },
             source: source ?? { defaultSource(for: $0) }
         )

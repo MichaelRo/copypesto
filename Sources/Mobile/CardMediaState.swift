@@ -35,6 +35,7 @@ final class CardMediaState {
         let isShown: Bool
         var byteSize: Int = 0
         var isAnimatedHint: Bool = false
+        var isConcealed: Bool = false
     }
 
     func load(
@@ -43,7 +44,8 @@ final class CardMediaState {
         revealedText = isShown ? HiddenClipReveal.readableText(from: item.blob?.decryptedData()) : nil
         switch item.type {
         case .image where item.sensitivityRaw == nil:
-            guard picture == nil || loadedByteSize != item.byteSize else { return }
+            let becameAnimated = picture?.isAnimated == false && item.blob?.mimeType.contains("gif") == true
+            guard picture == nil || loadedByteSize != item.byteSize || becameAnimated else { return }
             picture = await CardMedia.picture(
                 itemID: item.id, byteSize: item.byteSize, container: container, maxPixel: CardMedia.cardPixel
             )

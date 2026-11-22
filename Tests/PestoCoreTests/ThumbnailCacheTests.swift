@@ -70,4 +70,18 @@ struct ThumbnailCacheTests {
         #expect(kept * 480 * 300 * 4 <= 50 * 1024 * 1024, "kept \(kept) thumbnails")
         #expect(kept > 20, "the cache must still hold more than a screen of cards")
     }
+
+    @Test("removing one clip forgets only that clip")
+    func removeForgetsOnlyTarget() {
+        let cache = ThumbnailCache()
+        let first = UUID()
+        let second = UUID()
+        cache.store(.init(image: image(side: 10), isAnimated: false, byteSize: 7), for: first)
+        cache.store(.init(image: image(side: 10), isAnimated: false, byteSize: 7), for: second)
+
+        cache.remove(for: first)
+
+        #expect(cache.entry(for: first, byteSize: 7) == nil)
+        #expect(cache.entry(for: second, byteSize: 7) != nil)
+    }
 }

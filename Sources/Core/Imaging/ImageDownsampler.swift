@@ -4,6 +4,20 @@ import ImageIO
 import UniformTypeIdentifiers
 
 public enum ImageDownsampler {
+    public static func pixelDimensions(of data: Data) -> (width: Int, height: Int)? {
+        guard let source = CGImageSourceCreateWithData(
+            data as CFData,
+            [kCGImageSourceShouldCache: false] as CFDictionary
+        ),
+            let properties = CGImageSourceCopyPropertiesAtIndex(
+                source, 0, [kCGImageSourceShouldCache: false] as CFDictionary
+            ) as? [CFString: Any],
+            let width = properties[kCGImagePropertyPixelWidth] as? Int,
+            let height = properties[kCGImagePropertyPixelHeight] as? Int,
+            width > 0, height > 0 else { return nil }
+        return (width, height)
+    }
+
     /// The most pixels anything decodes at full size: a full 6K screen (6016 x 3384). A decoded picture costs 4 bytes
     /// a pixel and the readers on top of it (text recognition, the duplicate check) roughly 8 more, which holds one
     /// decode near 300 MB; a flat 400-megapixel PNG is 7 MB on disk and took 3.9 GB. See ADR 0006.

@@ -94,6 +94,7 @@ public actor StorageService: ModelActor {
     var similarity = SimilarityIndex()
     var pendingEmbeddings: [UUID: Task<Void, Never>] = [:]
     var pendingAnalyses: [UUID: Task<Void, Never>] = [:]
+    var pendingItemTasks: [UUID: Set<UUID>] = [:]
     let remoteGIFFetcher: (@Sendable (URL) async -> Data?)?
     var runningAnalyses = 0
     var analysisQueue: [CheckedContinuation<Void, Never>] = []
@@ -361,12 +362,13 @@ public actor StorageService: ModelActor {
         let textToEmbed = SemanticIndexer.embeddingInput(for: payloadString)
         let taskID = UUID()
         let embedder = embedder
-        pendingEmbeddings[taskID] = Task.detached(priority: .utility) { [self] in
-            if let data = await embedder.embed(text: textToEmbed) {
+        let task = Task.detached(priority: .utility) { [self] in
+            if !Task.isCancelled, let data = await embedder.embed(text: textToEmbed), !Task.isCancelled {
                 try? await self.storeEmbedding(itemID: idToEmbed, contentHash: hashToEmbed, embeddingData: data)
             }
-            await self.finishEmbedding(taskID)
+            await self.finishEmbedding(taskID, for: idToEmbed)
         }
+        trackBackgroundTask(taskID, for: idToEmbed, in: &pendingEmbeddings, task: task)
     }
 
     /// The last-item file is readable without the lock, so it is not written while the lock is on.
@@ -446,6 +448,8 @@ public actor StorageService: ModelActor {
         try saveOrRollback()
         if let undoable { undoHistory.record(UndoEntry(.clipsDeleted(undoable))) }
         let deletedIDs = doomed.map(\.id)
+        cancelBackgroundTasks(for: deletedIDs)
+        deletedIDs.forEach { ThumbnailService.invalidate(id: $0) }
         deletedIDs.forEach { similarity.remove($0) }
         linkPreviews.delete(ids: deletedIDs)
         recognizedTexts.delete(ids: deletedIDs)

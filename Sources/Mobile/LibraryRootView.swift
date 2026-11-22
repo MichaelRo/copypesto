@@ -101,7 +101,7 @@ struct LibraryRootView: View {
 extension LibraryRootView {
     /// Turn On Sync in the welcome: the library opens the sync flow once the welcome has gone.
     private func startRequestedSync() {
-        guard appState.takeSyncSetUpRequest(), let sync = appState.sync else { return }
+        guard appState.takeSyncSetUpRequest(), let sync = appState.sync, !sync.isEnabled else { return }
         if sync.canBeginSetUp { sync.beginSetUp() } else { library.picksSyncFolder = true }
     }
 

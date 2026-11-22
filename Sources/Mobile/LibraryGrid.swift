@@ -26,6 +26,10 @@ struct LibraryGrid: View {
     @State private var position: CardIdentity?
     @State private var hasRestoredPosition = false
     @State private var ranking = SemanticRanking()
+    @State private var cardFrames: [UUID: CGRect] = [:]
+    @State private var dragAnchorID: UUID?
+    @State private var dragBaseSelection: Set<UUID> = []
+    @State private var dragAddsSelection = true
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
 
     var body: some View {
@@ -45,8 +49,6 @@ struct LibraryGrid: View {
             if showsChipRow {
                 LibraryChipRow()
                     .padding(.vertical, 6)
-                    .mobileGlassChrome(in: .rect)
-                    .contentShape(.rect)
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -103,11 +105,22 @@ struct LibraryGrid: View {
                     .focusable()
                     .focused($focusedClip, equals: id)
                     .focusEffectDisabled()
+                    .onGeometryChange(for: CGRect.self) { proxy in
+                        proxy.frame(in: .named("clipGrid"))
+                    } action: { frame in
+                        cardFrames[id] = frame
+                    }
                     .id(CardIdentity(id: id, content: item.contentHash))
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
         }
+        .coordinateSpace(name: "clipGrid")
+        .simultaneousGesture(dragSelectGesture(visibleIDs: ids))
+        .onChange(of: library.isSelecting) { _, selecting in
+            if !selecting { dragAnchorID = nil }
+        }
+        .sensoryFeedback(.selection, trigger: dragAnchorID == nil ? 0 : library.selectedClipIDs.count)
         .scrollTargetLayout()
         // A hardware keyboard's arrows move the focused card; Return copies it (`ClipCard`). At an edge the key is
         // left to the system.
@@ -191,6 +204,36 @@ struct LibraryGrid: View {
             .font(.footnote)
             .foregroundStyle(.secondary)
             .padding(.horizontal, CardGridLayout.margin)
+    }
+
+    private func cardID(at point: CGPoint, among ids: [UUID]) -> UUID? {
+        ids.first { id in cardFrames[id]?.contains(point) == true }
+    }
+
+    private func dragSelectGesture(visibleIDs: [UUID]) -> some Gesture {
+        DragGesture(minimumDistance: 14, coordinateSpace: .named("clipGrid"))
+            .onChanged { value in
+                guard library.isSelecting else { return }
+                if dragAnchorID == nil {
+                    guard abs(value.translation.width) >= abs(value.translation.height) * 0.75,
+                          let startID = cardID(at: value.startLocation, among: visibleIDs) else { return }
+                    dragAnchorID = startID
+                    dragBaseSelection = library.selectedClipIDs
+                    dragAddsSelection = !dragBaseSelection.contains(startID)
+                }
+                guard let anchorID = dragAnchorID,
+                      let currentID = cardID(at: value.location, among: visibleIDs) else { return }
+                library.applyDragSelection(
+                    from: anchorID,
+                    to: currentID,
+                    in: visibleIDs,
+                    baseSelection: dragBaseSelection,
+                    selecting: dragAddsSelection
+                )
+            }
+            .onEnded { _ in
+                dragAnchorID = nil
+            }
     }
 }
 

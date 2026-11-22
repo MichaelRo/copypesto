@@ -24,22 +24,33 @@ struct KeyboardSettingsView: View {
                     Text("Stay in Pesto").tag(false)
                 }
                 .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
+                Button("Turn On AutoFill\u{2026}") {
+                    AppDefaults.store.set(true, for: Setting.autoFillEnabled)
+                    AppDefaults.store.set(true, for: Setting.quickInsertEnabled)
+                    appState.writeQuickInsert()
+                    Task { await AutoFillSettings.open() }
+                }
             } header: {
-                Text("Keyboard")
+                Text("Keyboard & AutoFill")
             } footer: {
                 Text(
-                    "AutoFill and Pesto\u{2019}s keyboard use a sealed set of non-secret text clips. Turn on " +
-                        "Pesto in Settings > General > AutoFill & Passwords, or add it in Settings > General > " +
-                        "Keyboard > Keyboards and allow Full Access."
+                    "In any text field, choose AutoFill in the edit menu and pick Pesto, or add Pesto\u{2019}s " +
+                        "keyboard in Settings > General > Keyboard > Keyboards and allow Full Access."
                 )
             }
 
             Section {
                 Button("Open iOS Settings") {
+                    _ = AppPasteboard.general.hasStrings
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         openURL(url)
                     }
                 }
+            } footer: {
+                Text(
+                    "To skip the iOS paste prompt when pasting into Pesto, set Paste from Other Apps to " +
+                        "Allow in iOS Settings."
+                )
             }
         }
         .navigationTitle("Keyboard & AutoFill")

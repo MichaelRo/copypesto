@@ -251,6 +251,7 @@ final class AppState {
     @ObservationIgnored var shelfPasteTally: [UUID: Int] = [:]
     @ObservationIgnored var shelfFactsProvider: (@Sendable () async -> ShelfSuggestionFacts?)?
     @ObservationIgnored var shelfSuggestionDwellTask: Task<Void, Never>?
+    @ObservationIgnored var focusedClipID: UUID?
     @ObservationIgnored var clipboardAppDetector: any ClipboardAppDetecting = ClipboardAppDetection.forThisLaunch()
     /// Reads and sets whether Sparkle checks for updates by itself. Set when the updater runs (a normal launch), so
     /// Settings offers the switch only where it does something.

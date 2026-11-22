@@ -20,7 +20,8 @@ struct ShelfSuggestionPolicyTests {
         isStackActive: Bool = false,
         isSearching: Bool = false,
         otherBannerVisible: Bool = false,
-        fastSuggestions: Bool = false
+        fastSuggestions: Bool = false,
+        focusedClipID: UUID? = nil
     )
     -> ShelfSuggestionContext {
         let armedAt = calendar.date(byAdding: .day, value: -armedDaysAgo, to: now)
@@ -38,7 +39,8 @@ struct ShelfSuggestionPolicyTests {
             isStackActive: isStackActive,
             isSearching: isSearching,
             otherBannerVisible: otherBannerVisible,
-            fastSuggestions: fastSuggestions
+            fastSuggestions: fastSuggestions,
+            focusedClipID: focusedClipID
         )
     }
 
@@ -371,5 +373,24 @@ struct ShelfSuggestionPolicyTests {
 
         #expect(offer(pastes: 13)?.kind != .shortcutOffer)
         #expect(offer(pastes: 14)?.kind == .shortcutOffer)
+    }
+
+    @Test("when focused clip is eligible for a shortcut offer, it beats a higher-paste unfocused clip")
+    func whenFocusedClipEligible_thenPrioritizedForOffer() {
+        let higherUnfocused = makeClip(pasteCount: 20, shelfPastesThisRun: 1)
+        let focusedEligible = makeClip(pasteCount: 4, shelfPastesThisRun: 1)
+        let facts = ShelfSuggestionFacts(
+            clips: [higherUnfocused, focusedEligible],
+            assignedSlots: [],
+            unavailableSlots: []
+        )
+
+        let res = ShelfSuggestionPolicy.next(
+            context: context(focusedClipID: focusedEligible.id),
+            facts: facts,
+            ledger: SuggestionLedger(serialized: "")
+        )
+
+        #expect(res == .shortcutOffer(clip: focusedEligible.id, slot: 1, pasteCount: 4, isPinned: false))
     }
 }

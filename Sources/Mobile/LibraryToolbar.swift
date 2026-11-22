@@ -30,7 +30,7 @@ struct LibraryToolbar: ToolbarContent {
             }
         } else {
             ToolbarItem(placement: .primaryAction) {
-                Button("Select Clips", systemImage: "checkmark.circle") {
+                Button("Select Clips", systemImage: "checklist.checked") {
                     library.beginSelection()
                 }
                 .accessibilityIdentifier(MobileAccessibilityID.selectClipsButton)
@@ -39,16 +39,6 @@ struct LibraryToolbar: ToolbarContent {
             ToolbarItem(placement: .primaryAction) {
                 Button("New Clip", systemImage: "plus") { library.isComposing = true }
                     .accessibilityIdentifier(MobileAccessibilityID.newNoteButton)
-            }
-            if hasClipboardContent {
-                ToolbarSpacer(.fixed, placement: .primaryAction)
-                ToolbarItem(placement: .primaryAction) {
-                    PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
-                        let destination = targetCollectionID
-                        Task { await appState.add(from: providers, method: .paste, into: destination) }
-                    }
-                    .labelStyle(.iconOnly)
-                    .buttonBorderShape(.circle)
                     .onAppear { hasClipboardContent = Self.clipboardHasContent() }
                     .onChange(of: scenePhase) { _, phase in
                         if phase == .active { hasClipboardContent = Self.clipboardHasContent() }
@@ -59,17 +49,16 @@ struct LibraryToolbar: ToolbarContent {
                     .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.removedNotification)) { _ in
                         hasClipboardContent = Self.clipboardHasContent()
                     }
-                }
-            } else {
-                ToolbarItem(placement: .status) {
-                    Color.clear.frame(width: 0, height: 0)
-                        .onAppear { hasClipboardContent = Self.clipboardHasContent() }
-                        .onChange(of: scenePhase) { _, phase in
-                            if phase == .active { hasClipboardContent = Self.clipboardHasContent() }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
-                            hasClipboardContent = Self.clipboardHasContent()
-                        }
+            }
+            if hasClipboardContent {
+                ToolbarSpacer(.fixed, placement: .primaryAction)
+                ToolbarItem(placement: .primaryAction) {
+                    PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
+                        let destination = targetCollectionID
+                        Task { await appState.add(from: providers, method: .paste, into: destination) }
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonBorderShape(.circle)
                 }
             }
         }

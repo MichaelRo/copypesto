@@ -42,10 +42,12 @@ struct CardFaceTests {
         #expect(face(.image, aspect: aspect) == .picture(fillsCard: false, isAnimated: false))
     }
 
-    @Test("a GIF keeps its badge on either path")
+    @Test("a GIF fills the card across portrait and 16:9 shapes and keeps its badge; extreme panoramas fit whole")
     func whenAnimated_thenTheFaceSaysSo() {
         #expect(face(.image, aspect: 1, animated: true) == .picture(fillsCard: true, isAnimated: true))
-        #expect(face(.image, aspect: 2, animated: true) == .picture(fillsCard: false, isAnimated: true))
+        #expect(face(.image, aspect: 1.78, animated: true) == .picture(fillsCard: true, isAnimated: true))
+        #expect(face(.image, aspect: 0.5625, animated: true) == .picture(fillsCard: true, isAnimated: true))
+        #expect(face(.image, aspect: 3, animated: true) == .picture(fillsCard: false, isAnimated: true))
     }
 
     @Test("a color fills its card, with the ink Core picks for contrast")
@@ -98,7 +100,7 @@ struct CardFaceTests {
         }
         #expect(CardFace.faceTitle(
             type: .url, inCollection: false, isConcealed: false, customTitle: nil, ogTitle: "Page Title"
-        ) == nil)
+        ) == "Page Title")
     }
 
     @Test("in a collection, every non-concealed clip with a custom title shows it on the face")
@@ -216,7 +218,7 @@ struct CardFaceTests {
         ))
         #expect(
             renderFace(linkItem, face: linkFace, media: CardMediaState(), inCollection: false)
-                != renderFace(linkItem, face: linkFace, media: CardMediaState(), inCollection: true)
+                == renderFace(linkItem, face: linkFace, media: CardMediaState(), inCollection: true)
         )
 
         let samplePicture = UIGraphicsImageRenderer(size: CGSize(width: 240, height: 160)).image { ctx in
@@ -226,8 +228,15 @@ struct CardFaceTests {
         let linkMedia = CardMediaState(linkPicture: samplePicture)
         #expect(
             renderFace(linkItem, face: .linkPicture, media: linkMedia, inCollection: false)
-                != renderFace(linkItem, face: .linkPicture, media: linkMedia, inCollection: true)
+                == renderFace(linkItem, face: .linkPicture, media: linkMedia, inCollection: true)
         )
+        let untitledItem = ClipboardItem(
+            type: .url, sourceAppName: "Safari", previewText: "https://developer.apple.com/documentation/swiftui",
+            contentHash: "h2b", byteSize: 50, deviceID: "d", sequenceNumber: 4
+        )
+        context.insert(untitledItem)
+        let untitledLink = renderFace(untitledItem, face: .linkPicture, media: linkMedia, inCollection: false)
+        #expect(renderFace(linkItem, face: .linkPicture, media: linkMedia, inCollection: false) != untitledLink)
 
         let colorItem = ClipboardItem(
             type: .color, sourceAppName: "Photos", previewText: "#2F7A49",

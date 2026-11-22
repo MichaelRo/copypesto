@@ -23,12 +23,15 @@ struct LibraryChipRow: View {
             hiddenIDs: HiddenCollections.ids(from: hiddenStored)
         )
         ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(chips, id: \.self) { chip in
-                    view(for: chip)
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(chips, id: \.self) { chip in
+                        view(for: chip)
+                    }
                 }
             }
             .padding(.horizontal, CardGridLayout.margin)
+            .padding(.vertical, 2)
         }
         .scrollIndicators(.hidden)
         .accessibilityIdentifier(MobileAccessibilityID.chipRow)
@@ -54,7 +57,7 @@ struct LibraryChipRow: View {
         case .newCollection:
             Button("New Collection", systemImage: "plus") { library.isNamingCollection = true }
                 .labelStyle(.iconOnly)
-                .buttonStyle(MobileChipStyle(isActive: false, tint: nil))
+                .buttonStyle(MobileChipStyle(isActive: false, tint: nil, usesGlass: true))
         case .divider:
             Divider().frame(height: 20)
         case let .kind(type):
@@ -80,7 +83,7 @@ struct LibraryChipRow: View {
                     Text("Ask")
                 }
             }
-            .buttonStyle(MobileChipStyle(isActive: false, tint: nil))
+            .buttonStyle(MobileChipStyle(isActive: false, tint: nil, usesGlass: true))
             .disabled(isAsking)
             .accessibilityLabel(String(localized: "Ask Pesto"))
             .accessibilityInputLabels([Text("Ask"), Text("Ask Pesto")])
@@ -116,7 +119,7 @@ struct LibraryChipRow: View {
                 Text(label).lineLimit(1)
             }
         }
-        .buttonStyle(MobileChipStyle(isActive: active, tint: tint))
+        .buttonStyle(MobileChipStyle(isActive: active, tint: tint, usesGlass: true))
         .accessibilityLabel(label)
         .accessibilityAddTraits(active ? .isSelected : [])
     }

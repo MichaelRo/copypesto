@@ -46,6 +46,23 @@ extension MobilePasteboardGlobals {
             #expect(model.selectedClipIDs.isEmpty)
         }
 
+        @Test("drag-selection selects and deselects contiguous ranges across visible cards")
+        func whenDragSelected_thenRangeUpdates() {
+            let model = LibraryModel()
+            let ids = (0..<5).map { _ in UUID() }
+            model.beginSelection()
+
+            model.applyDragSelection(
+                from: ids[1], to: ids[3], in: ids, baseSelection: [], selecting: true
+            )
+            #expect(model.selectedClipIDs == Set([ids[1], ids[2], ids[3]]))
+
+            model.applyDragSelection(
+                from: ids[3], to: ids[2], in: ids, baseSelection: Set([ids[1], ids[2], ids[3]]), selecting: false
+            )
+            #expect(model.selectedClipIDs == Set([ids[1]]))
+        }
+
         @Test("hidden mobile collections filter the iPhone chip row without removing the collections")
         func whenCollectionIsHidden_thenChipRowOmitsIt() {
             let first = UUID()

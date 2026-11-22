@@ -46,6 +46,10 @@ public final class ThumbnailCache {
         storage.setObject(Box(entry), forKey: id as NSUUID, cost: cost)
     }
 
+    public func remove(for id: UUID) {
+        storage.removeObject(forKey: id as NSUUID)
+    }
+
     public func clear() {
         storage.removeAllObjects()
     }

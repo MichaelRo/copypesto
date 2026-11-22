@@ -97,20 +97,20 @@ struct KeyboardLetters: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 7) {
             ForEach(rows, id: \.self) { row in
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     ForEach(row, id: \.self) { key in
                         Button { model.typeInSearch(key) } label: {
                             Text(verbatim: key)
                                 .font(.title3)
                                 .minimumScaleFactor(0.6)
-                                .frame(maxWidth: .infinity, minHeight: 28, maxHeight: 40)
+                                .frame(maxWidth: .infinity, minHeight: 34, maxHeight: 42)
                         }
                         .buttonStyle(KeyboardKeyStyle())
                     }
                 }
-                .padding(.horizontal, row.count < 10 ? CGFloat(10 - row.count) * 12 : 0)
+                .padding(.horizontal, row.count < 10 ? CGFloat(10 - row.count) * 14 : 0)
             }
         }
         // Keycap rows follow physical keyboard order even when the interface direction is RTL.
@@ -128,10 +128,18 @@ struct KeyboardLetters: View {
         return fromLocales.isEmpty ? [.qwerty] : fromLocales
     }
 
-    static var isActiveLocaleRTL: Bool {
-        if resolvedAlphabets().first?.isRTL == true { return true }
-        guard let first = Locale.preferredLanguages.first else { return false }
+    static func isInterfaceRTL(
+        preferredLocalizations: [String] = Bundle.main.preferredLocalizations,
+        preferredLanguages: [String] = Locale.preferredLanguages
+    )
+    -> Bool {
+        let first = preferredLocalizations.first ?? preferredLanguages.first
+        guard let first else { return false }
         return Locale.Language(identifier: first).characterDirection == .rightToLeft
+    }
+
+    static var isActiveLocaleRTL: Bool {
+        isInterfaceRTL()
     }
 
     private static func deduplicatedAlphabets(from codes: [String]) -> [Alphabet] {

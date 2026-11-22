@@ -8,8 +8,10 @@ public enum PictureFit: Equatable, Sendable {
     case fit
 
     public static let fillRange: ClosedRange<Double> = 0.8...1.35
+    public static let animatedFillRange: ClosedRange<Double> = 0.55...1.85
 
-    public static func decide(aspectRatio: Double) -> PictureFit {
-        aspectRatio.isFinite && fillRange.contains(aspectRatio) ? .fill : .fit
+    public static func decide(aspectRatio: Double, isAnimated: Bool = false) -> PictureFit {
+        let range = isAnimated ? animatedFillRange : fillRange
+        return aspectRatio.isFinite && range.contains(aspectRatio) ? .fill : .fit
     }
 }

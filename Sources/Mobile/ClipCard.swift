@@ -93,7 +93,8 @@ struct ClipCard: View {
                 id: item.id,
                 isShown: appState.secretReveal.isShown(item.id),
                 byteSize: item.byteSize,
-                isAnimatedHint: item.blob?.mimeType.contains("gif") == true
+                isAnimatedHint: item.blob?.mimeType.contains("gif") == true,
+                isConcealed: concealment.isConcealed
             )) {
                 await media.load(
                     item, container: appState.historyContainer, isShown: appState.secretReveal.isShown(item.id),

@@ -100,6 +100,9 @@ extension MobileAppState {
             // A deleted clip leaves the widget and AutoFill at once, not after the rewrite's pause.
             writeQuickInsert()
             await writeWidget()
+            if let sync, sync.isEnabled {
+                Task { await sync.syncNow() }
+            }
         }
     }
 

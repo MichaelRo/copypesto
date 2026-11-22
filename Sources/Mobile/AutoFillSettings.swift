@@ -6,6 +6,9 @@ import UIKit
 enum AutoFillSettings {
     @MainActor
     static func open() async {
+        if await ASSettingsHelper.requestToTurnOnCredentialProviderExtension() {
+            return
+        }
         do {
             try await ASSettingsHelper.openCredentialProviderAppSettings()
         } catch {

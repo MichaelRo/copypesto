@@ -23,10 +23,15 @@ struct SuggestionBanner: View {
             return ShelfSuggestionCopy.shortcutOfferTitle(
                 pasteCount: pasteCount,
                 keyString: "⌃\(slot)",
-                isPinned: isPinned
+                isPinned: isPinned,
+                clipTitle: presentation.clipTitle
             )
         case let .shortcutReminder(_, slot):
-            return ShelfSuggestionCopy.reminderTitle(shelfPastes: 5, keyString: "⌃\(slot)")
+            return ShelfSuggestionCopy.reminderTitle(
+                shelfPastes: 5,
+                keyString: "⌃\(slot)",
+                clipTitle: presentation.clipTitle
+            )
         case let .shortcutRelease(_, slot, weeks):
             return ShelfSuggestionCopy.dormantTitle(keyString: "⌃\(slot)", weeks: weeks)
         case .snippet:

@@ -59,11 +59,14 @@ struct ClipCardFace: View {
                 )
             }
         case .linkPicture:
+            let linkText = CardPreviewText.display(item.gridPreview).trimmingCharacters(in: .whitespacesAndNewlines)
+            let linkSubtitle = LinkDisplay.parse(item.gridPreview)?.host ?? (linkText.isEmpty ? nil : linkText)
             PictureCardFace(
                 image: media.linkPicture,
                 fillsCard: true,
                 animation: playsAnimation ? media.linkAnimation : nil,
-                title: title
+                title: title,
+                subtitle: linkSubtitle
             ) {
                 ItemFootLineView(
                     item: item,

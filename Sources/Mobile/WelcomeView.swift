@@ -80,14 +80,21 @@ struct WelcomeView: View {
             if !typeSize.isAccessibilitySize { dots }
             VStack(spacing: 12) {
                 if model.step == .sync {
-                    Button { appState.closeWelcome(startingSync: true) } label: { buttonLabel("Turn On Sync") }
-                        .buttonStyle(.pestoProminent)
-                        .keyboardShortcut(.defaultAction)
-                        .accessibilityIdentifier(MobileAccessibilityID.welcomeTurnOnSync)
-                    Button { appState.closeWelcome() } label: { buttonLabel("Not Now") }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.roundedRectangle(radius: 9))
-                        .accessibilityIdentifier(MobileAccessibilityID.welcomeNotNow)
+                    if appState.sync?.isEnabled == true {
+                        Button { appState.closeWelcome() } label: { buttonLabel("Done") }
+                            .buttonStyle(.pestoProminent)
+                            .keyboardShortcut(.defaultAction)
+                            .accessibilityIdentifier(MobileAccessibilityID.welcomeNotNow)
+                    } else {
+                        Button { appState.closeWelcome(startingSync: true) } label: { buttonLabel("Turn On Sync") }
+                            .buttonStyle(.pestoProminent)
+                            .keyboardShortcut(.defaultAction)
+                            .accessibilityIdentifier(MobileAccessibilityID.welcomeTurnOnSync)
+                        Button { appState.closeWelcome() } label: { buttonLabel("Not Now") }
+                            .buttonStyle(.bordered)
+                            .buttonBorderShape(.roundedRectangle(radius: 9))
+                            .accessibilityIdentifier(MobileAccessibilityID.welcomeNotNow)
+                    }
                 } else {
                     Button { advance() } label: { buttonLabel("Continue") }
                         .buttonStyle(.pestoProminent)

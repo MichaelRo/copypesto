@@ -369,6 +369,9 @@ struct GridView: View {
                         in: cachedFilteredIDs
                     )
                 }
+                let initialFocused = cachedFilteredIDs.indices.contains(focusedIndex)
+                    ? cachedFilteredIDs[focusedIndex] : nil
+                appState.focusedClipID = initialFocused
                 isPasting = false
                 appState.isDragging = false
                 appState.draggingItemID = nil
@@ -425,6 +428,9 @@ struct GridView: View {
             guard idx < displayedItems.count else { return }
             let item = displayedItems[idx]
             focusedID = item.id
+            if !isPinnedHost {
+                appState.focusedClipChanged(item.id)
+            }
             let color = item.sourceDominantColorHex.flatMap { Color(hex: $0) } ?? .clear
             onFocusChanged?(color, CGFloat(idx) / max(1, CGFloat(displayedItems.count - 1)))
             quickLookController.reconcileWithPanel()

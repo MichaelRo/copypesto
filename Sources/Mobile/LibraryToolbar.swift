@@ -10,7 +10,8 @@ struct LibraryToolbar: ToolbarContent {
     @Environment(LibraryModel.self) private var library
     @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
-    @State private var hasClipboardContent = Self.clipboardHasContent()
+    @State private var hasClipboardContent = false
+    @State private var lastPasteboardChangeCount: Int?
 
     private var targetCollectionID: UUID? {
         library.targetCollectionID(in: collections)
@@ -29,6 +30,17 @@ struct LibraryToolbar: ToolbarContent {
                     .bold()
             }
         } else {
+            if hasClipboardContent {
+                ToolbarItem(placement: .primaryAction) {
+                    PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
+                        let destination = targetCollectionID
+                        Task { await appState.add(from: providers, method: .paste, into: destination) }
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonBorderShape(.circle)
+                }
+                ToolbarSpacer(.fixed, placement: .primaryAction)
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button("Select Clips", systemImage: "checklist.checked") {
                     library.beginSelection()
@@ -39,34 +51,26 @@ struct LibraryToolbar: ToolbarContent {
             ToolbarItem(placement: .primaryAction) {
                 Button("New Clip", systemImage: "plus") { library.isComposing = true }
                     .accessibilityIdentifier(MobileAccessibilityID.newNoteButton)
-                    .onAppear { hasClipboardContent = Self.clipboardHasContent() }
+                    .onAppear { refreshClipboardStatus() }
                     .onChange(of: scenePhase) { _, phase in
-                        if phase == .active { hasClipboardContent = Self.clipboardHasContent() }
+                        if phase == .active { refreshClipboardStatus() }
                     }
                     .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
-                        hasClipboardContent = Self.clipboardHasContent()
+                        refreshClipboardStatus()
                     }
                     .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.removedNotification)) { _ in
-                        hasClipboardContent = Self.clipboardHasContent()
+                        refreshClipboardStatus()
                     }
-            }
-            if hasClipboardContent {
-                ToolbarSpacer(.fixed, placement: .primaryAction)
-                ToolbarItem(placement: .primaryAction) {
-                    PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
-                        let destination = targetCollectionID
-                        Task { await appState.add(from: providers, method: .paste, into: destination) }
-                    }
-                    .labelStyle(.iconOnly)
-                    .buttonBorderShape(.circle)
-                }
             }
         }
     }
 
-    private static func clipboardHasContent() -> Bool {
+    private func refreshClipboardStatus() {
         let board = AppPasteboard.general
-        return board.hasStrings || board.hasURLs || board.hasImages
+        let changeCount = board.changeCount
+        guard lastPasteboardChangeCount != changeCount else { return }
+        lastPasteboardChangeCount = changeCount
+        hasClipboardContent = board.hasStrings || board.hasURLs || board.hasImages
     }
 }
 

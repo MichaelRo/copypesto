@@ -7,10 +7,14 @@ struct LibraryBanners: View {
     @Environment(MobileAppState.self) private var appState
 
     var body: some View {
-        VStack(spacing: 0) {
-            if appState.clipboardOfferCount != nil, appState.undoOffer == nil { ClipboardOfferBanner() }
-            if appState.offersAutoFillTip, !appState.isHistoryLocked { AutoFillTipBanner() }
-            messages
+        Group {
+            if appState.undoOffer != nil || appState.notice != nil {
+                messages
+            } else if appState.clipboardOfferCount != nil {
+                ClipboardOfferBanner()
+            } else if appState.offersAutoFillTip, !appState.isHistoryLocked {
+                AutoFillTipBanner()
+            }
         }
         .animation(Motion.animation(.pestoMove), value: appState.clipboardOfferCount)
         .animation(Motion.animation(.pestoMove), value: appState.offersAutoFillTip)

@@ -24,7 +24,14 @@ public enum SyncFolderResolution: Equatable, Sendable {
 public protocol SyncFolderSource: AnyObject {
     var hasChosenFolder: Bool { get }
     func resolve() -> SyncFolderResolution
+    func resolveAsync() async -> SyncFolderResolution
     /// Remembers the folder the person picked and opens it. Returns the sync folder inside it.
     func choose(_ picked: URL) throws -> URL
     func relinquish()
+}
+
+public extension SyncFolderSource {
+    func resolveAsync() async -> SyncFolderResolution {
+        resolve()
+    }
 }

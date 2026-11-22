@@ -44,6 +44,7 @@ final class MobileAppState: ClipboardShortcutHandling {
     /// Where the AutoFill set is kept (`MobileAppState+QuickInsert.swift`); nil in a hosted test until it names one.
     @ObservationIgnored var quickInsert: QuickInsertTarget? = .current
     @ObservationIgnored var quickInsertRewrite: Task<Void, Never>?
+    @ObservationIgnored var quickInsertWrites: Task<Void, Never>?
     @ObservationIgnored var quickInsertObserver: (any NSObjectProtocol)?
     /// The last clip a widget link copied, so the library shows it (`MobileAppState+WidgetLink.swift`).
     var linkedClip: LinkedClip?
@@ -147,7 +148,10 @@ final class MobileAppState: ClipboardShortcutHandling {
             )
         )
         storageService = service
-        if LaunchMode.current != .hostedTests { ShareFile.removeAll() }
+        if LaunchMode.current != .hostedTests {
+            ShareFile.removeAll()
+            HangDiagnostics.shared.start()
+        }
         startQuickInsert(container: container)
         startWidget(container: container)
         launchWork = Task(priority: .utility) {

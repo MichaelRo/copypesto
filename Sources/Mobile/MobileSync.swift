@@ -74,7 +74,17 @@ final class MobileSync {
 
     func activate(for holder: Holder = .foreground) {
         holders.insert(holder)
-        switch env.folder.resolve() {
+        applyResolution(env.folder.resolve())
+    }
+
+    func activateAsync(for holder: Holder = .foreground) async {
+        holders.insert(holder)
+        let resolution = await env.folder.resolveAsync()
+        applyResolution(resolution)
+    }
+
+    private func applyResolution(_ resolution: SyncFolderResolution) {
+        switch resolution {
         case .notChosen:
             hasFolder = false
             folderProblem = nil

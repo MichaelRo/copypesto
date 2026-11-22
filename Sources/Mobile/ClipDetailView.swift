@@ -190,7 +190,9 @@ struct ClipDetailView: View {
         }
         ToolbarItemGroup(placement: .primaryAction) {
             Button("Copy", systemImage: "doc.on.doc") {
-                if appState.copy(item) { library.didCopy(item.id) }
+                Task {
+                    if await appState.copyAsync(item) { library.didCopy(item.id) }
+                }
             }
             .accessibilityIdentifier(MobileAccessibilityID.copyButton)
             share(item, concealment: concealment)

@@ -116,8 +116,10 @@ struct EntitlementsTests {
         let attributes = try #require(extensionInfo["NSExtensionAttributes"] as? [String: Any])
         #expect(Set(attributes.keys) == ["ASCredentialProviderExtensionCapabilities"])
         let capabilities = try #require(attributes["ASCredentialProviderExtensionCapabilities"] as? [String: Any])
-        #expect(Set(capabilities.keys) == ["ProvidesTextToInsert"])
+        #expect(Set(capabilities.keys) == ["ProvidesPasswords", "ProvidesTextToInsert", "ShowsConfigurationUI"])
+        #expect(capabilities["ProvidesPasswords"] as? Bool == true)
         #expect(capabilities["ProvidesTextToInsert"] as? Bool == true)
+        #expect(capabilities["ShowsConfigurationUI"] as? Bool == true)
     }
 
     @Test("the keyboard is a keyboard extension that asks for Full Access and can be switched away from")

@@ -11,6 +11,10 @@ extension MobileAppState {
         madeSync()?.activate()
     }
 
+    func syncDidBecomeActiveAsync() async {
+        await madeSync()?.activateAsync()
+    }
+
     func syncDidEnterBackground() {
         sync?.deactivate()
         scheduleBackgroundRefresh()

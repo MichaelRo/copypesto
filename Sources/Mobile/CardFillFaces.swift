@@ -65,8 +65,9 @@ struct PictureCardFace<Foot: View>: View {
                         .overlay { Image(uiImage: image).resizable().scaledToFill() }
                         .clipped()
                         .contentShape(.rect)
-                        .blur(radius: 14, opaque: true)
+                        .blur(radius: 12, opaque: true)
                         .overlay(Color.black.opacity(0.35))
+                        .drawingGroup(opaque: true)
                     still(image, fills: false)
                         .padding(.bottom, title == nil ? 30 : 54)
                 }

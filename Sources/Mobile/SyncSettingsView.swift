@@ -28,6 +28,7 @@ private struct SyncSettingsForm: View {
     @State private var picksFolder = false
     @State private var confirmsReset = false
     @State private var confirmsLeave = false
+    @State private var isSyncingNow = false
 
     private var device: SyncDeviceKind {
         sync.deviceKind
@@ -37,6 +38,22 @@ private struct SyncSettingsForm: View {
         Form {
             Section {
                 SyncStatusRow(status: sync.status)
+                if sync.isEnabled {
+                    Button {
+                        Task {
+                            isSyncingNow = true
+                            await sync.syncNow()
+                            isSyncingNow = false
+                        }
+                    } label: {
+                        HStack {
+                            Text("Sync Now")
+                            Spacer()
+                            if isSyncingNow { ProgressView().controlSize(.small) }
+                        }
+                    }
+                    .disabled(isSyncingNow)
+                }
                 if sync.status.needsFolder {
                     Button("Choose Folder Again\u{2026}") { picksFolder = true }
                         .accessibilityIdentifier(MobileAccessibilityID.syncChooseFolderButton)

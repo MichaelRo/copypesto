@@ -7,6 +7,7 @@ struct KeyboardSettingsView: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.openURL) private var openURL
     @AppStorage(Setting.keyboardReturnsAfterInsert) private var keyboardReturns: Bool
+    @State private var showsSetupGuide = false
     @AppStorage(Setting.keyboardSize) private var keyboardSize: String
 
     var body: some View {
@@ -24,11 +25,8 @@ struct KeyboardSettingsView: View {
                     Text("Stay in Pesto").tag(false)
                 }
                 .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
-                Button("Turn On AutoFill\u{2026}") {
-                    AppDefaults.store.set(true, for: Setting.autoFillEnabled)
-                    AppDefaults.store.set(true, for: Setting.quickInsertEnabled)
-                    appState.writeQuickInsert()
-                    Task { await AutoFillSettings.open() }
+                Button("Set Up Quick Insert\u{2026}") {
+                    showsSetupGuide = true
                 }
             } header: {
                 Text("Keyboard & AutoFill")
@@ -38,20 +36,9 @@ struct KeyboardSettingsView: View {
                         "keyboard in Settings > General > Keyboard > Keyboards and allow Full Access."
                 )
             }
-
-            Section {
-                Button("Open iOS Settings") {
-                    _ = AppPasteboard.general.hasStrings
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        openURL(url)
-                    }
-                }
-            } footer: {
-                Text(
-                    "To skip the iOS paste prompt when pasting into Pesto, set Paste from Other Apps to " +
-                        "Allow in iOS Settings."
-                )
-            }
+        }
+        .sheet(isPresented: $showsSetupGuide) {
+            QuickInsertSetupSheet()
         }
         .navigationTitle("Keyboard & AutoFill")
         .onAppear {

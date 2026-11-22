@@ -12,6 +12,8 @@ struct ClipCard: View {
     let collections: [Pinboard]
     var isFocused = false
     var inCollection = false
+    var isSelected = false
+    var isFlashed = false
     /// A change saved by the storage actor (a pin, a sync) reaches this context's objects without telling the card,
     /// so the grid hands the fields the card draws from as a value; a new value redraws it.
     var revision: Revision?
@@ -43,7 +45,7 @@ struct ClipCard: View {
             isConcealed: concealment.isConcealed,
             isSecret: item.sensitivityRaw != nil && !isCoveredForPrivacy,
             pictureAspect: pictureAspect,
-            isAnimated: media.picture?.isAnimated ?? (item.mimeType?.contains("gif") == true),
+            isAnimated: media.picture?.isAnimated ?? false,
             hasLinkPicture: media.linkPicture != nil,
             isDark: colorScheme == .dark
         ))
@@ -93,7 +95,7 @@ struct ClipCard: View {
                 id: item.id,
                 isShown: appState.secretReveal.isShown(item.id),
                 byteSize: item.byteSize,
-                isAnimatedHint: item.blob?.mimeType.contains("gif") == true,
+                isAnimatedHint: media.isAnimated,
                 isConcealed: concealment.isConcealed
             )) {
                 await media.load(
@@ -108,6 +110,8 @@ struct ClipCard: View {
                 isLinkAnimated: media.isLinkAnimated
             )) {
                 guard isOnScreen, !Motion.reduceMotion, !concealment.isConcealed else { return }
+                try? await Task.sleep(for: .milliseconds(120))
+                guard !Task.isCancelled, isOnScreen else { return }
                 let id = item.id
                 let byteSize = item.byteSize
                 let container = appState.historyContainer
@@ -145,8 +149,11 @@ struct ClipCard: View {
                 )
                 .environment(\.clipRevision, revision ?? Revision(item))
             }
-            .background(cardFill, in: shape)
             .clipShape(shape)
+            .background {
+                shape.fill(cardFill)
+                    .shadow(color: .black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 4, y: 2)
+            }
             .overlay(alignment: .topTrailing) {
                 if library.isSelecting {
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
@@ -159,16 +166,11 @@ struct ClipCard: View {
                 }
             }
             .overlay { shape.strokeBorder(borderColor, lineWidth: ringed ? 2 : 0.75) }
-            .shadow(color: .black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 4, y: 2)
             .animation(Motion.animation(.pestoQuick), value: ringed)
     }
 
-    private var isSelected: Bool {
-        library.isSelecting && library.selectedClipIDs.contains(item.id)
-    }
-
     private var ringed: Bool {
-        isSelected || isFocused || library.flashedClipID == item.id
+        isSelected || isFocused || isFlashed
     }
 
     private var borderColor: Color {
@@ -191,9 +193,11 @@ struct ClipCard: View {
     }
 
     func copy() {
-        guard appState.copy(item) else { return }
-        library.didCopy(item.id)
-        Announcer.announce(String(localized: "Copied"))
+        Task {
+            guard await appState.copyAsync(item) else { return }
+            library.didCopy(item.id)
+            Announcer.announce(String(localized: "Copied"))
+        }
     }
 
     func togglePin() {
@@ -242,7 +246,6 @@ struct ClipCard: View {
         let isCovered: Bool
         let content: String
         let byteSize: Int
-        let mimeType: String?
         let metadata: Data?
 
         init(_ item: ClipboardItem) {
@@ -252,7 +255,6 @@ struct ClipCard: View {
             isCovered = item.analysisPending || item.isNSFW
             content = item.contentHash
             byteSize = item.byteSize
-            mimeType = item.blob?.mimeType
             metadata = item.metadataCiphertext
         }
     }

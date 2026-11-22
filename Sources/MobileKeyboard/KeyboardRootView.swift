@@ -91,6 +91,7 @@ struct KeyboardRootView: View {
         .environment(\.pestoAccentLabel, resolvedAccentLabel)
         .environment(\.pestoSurface, resolvedSurface)
         .tint(resolvedAccent)
+        .sensoryFeedback(.impact(weight: .light), trigger: feedback?.id)
     }
 
     /// The word the person typed before switching, unless they took it off with its chip.
@@ -122,7 +123,10 @@ struct KeyboardRootView: View {
         case _ where showsPad:
             KeyboardPad(insert: keys.insert)
         case .unavailable:
-            note("Turn on Pesto Keyboard in Pesto's Settings.")
+            VStack(spacing: 8) {
+                note("Turn on Pesto Keyboard in Pesto's Settings.")
+                KeyboardPad(insert: keys.insert)
+            }
         case .empty:
             note("No text clips yet. Clips with secrets never appear here.")
         case .ready:

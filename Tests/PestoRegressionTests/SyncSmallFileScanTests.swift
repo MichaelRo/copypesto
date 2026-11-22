@@ -5,7 +5,8 @@ import Testing
 @Suite("Only segments and payload files are read whole from a sync folder")
 struct SyncSmallFileScanTests {
     private static let allowed: Set<String> = [
-        "SyncFolderService.swift", "SyncFolderService+Compaction.swift", "SyncGroupSurvey.swift", "SyncSmallFile.swift"
+        "SyncFolderService.swift", "SyncFolderService+Compaction.swift", "SyncFolderService+IO.swift",
+        "SyncGroupSurvey.swift", "SyncSmallFile.swift"
     ]
 
     @Test("a vault, device record, grant, join request or identity is read through SyncSmallFile")

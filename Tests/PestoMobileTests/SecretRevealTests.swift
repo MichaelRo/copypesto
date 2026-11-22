@@ -88,5 +88,17 @@ extension MobilePasteboardGlobals {
             #expect(!library.state.secretReveal.isNSFWShown(item.id))
             #expect(library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isConcealed)
         }
+
+        @Test("pending image waits behind checking cover when explicit filtering is on, and shows immediately when off")
+        func whenImageAnalysisPending_thenPendingCoverRespectsNSFWMode() async throws {
+            let library = try await MobileTestLibrary()
+            let item = try await library.add("pending-gif")
+            item.typeRaw = ClipboardType.image.rawValue
+            item.analysisPending = true
+
+            #expect(library.state.secretReveal.concealment(for: item, nsfwMode: .blur).isConcealed)
+            #expect(library.state.secretReveal.concealment(for: item, nsfwMode: .hide).isConcealed)
+            #expect(!library.state.secretReveal.concealment(for: item, nsfwMode: .show).isConcealed)
+        }
     }
 }

@@ -28,11 +28,13 @@ public struct QuickInsertMenu: Equatable, Sendable {
     }
 
     public let state: State
+    public let accent: WidgetSnapshot.Theme?
     private let entries: [QuickInsertEntry]
     private let collections: [QuickInsertCollection]
 
     public init(set: QuickInsertSet?) {
         let activeSet = (set?.autoFillEnabled == true) ? set : nil
+        accent = set?.accent
         entries = (activeSet?.entries ?? []).filter { $0.kind != .image }
         collections = activeSet?.collections ?? []
         state = activeSet == nil ? .unavailable : entries.isEmpty ? .empty : .ready

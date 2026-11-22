@@ -69,6 +69,16 @@ struct KeyboardClipKey: View {
                     lineWidth: feedback != nil ? 2 : 0.75
                 )
             }
+            .overlay(alignment: .topTrailing) {
+                if entry.kind == .image, feedback == nil {
+                    Image(systemName: "doc.on.clipboard")
+                        .font(.caption2.weight(.semibold))
+                        .padding(5)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .padding(6)
+                        .accessibilityHidden(true)
+                }
+            }
             .overlay(alignment: .center) {
                 if let feedback {
                     feedbackBadge(feedback)

@@ -147,7 +147,10 @@ final class MobileAppState: ClipboardShortcutHandling {
             )
         )
         storageService = service
-        if LaunchMode.current != .hostedTests { ShareFile.removeAll() }
+        if LaunchMode.current != .hostedTests {
+            ShareFile.removeAll()
+            HangDiagnostics.shared.start()
+        }
         startQuickInsert(container: container)
         startWidget(container: container)
         launchWork = Task(priority: .utility) {

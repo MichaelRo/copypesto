@@ -154,6 +154,20 @@ extension MobileAppState {
     /// Copies the clip's real content (a secret too, without showing it) and moves the clip to the front, as a copy
     /// from the Mac's shelf does. A secret stays on this device and leaves the clipboard after two minutes.
     @discardableResult
+    func copyAsync(_ item: ClipboardItem) async -> Bool {
+        let content: ClipContent? = if let container = historyContainer, item.type == .image || item.byteSize > 32_768 {
+            await ClipContent.load(itemID: item.id, container: container)
+        } else {
+            HangDiagnostics.measure("clipContentSync") { ClipContent.of(item) }
+        }
+        guard let content else {
+            tell(String(localized: "Couldn\u{2019}t open the clip."), isProblem: true)
+            return false
+        }
+        return await finishCopyAsync(item, content: content)
+    }
+
+    @discardableResult
     func copy(_ item: ClipboardItem) -> Bool {
         guard let content = ClipContent.of(item) else {
             tell(String(localized: "Couldn\u{2019}t open the clip."), isProblem: true)
@@ -172,17 +186,47 @@ extension MobileAppState {
     }
 
     func finishCopy(_ item: ClipboardItem, content: ClipContent) -> Bool {
-        MobileClipboard.write(content, protected: item.sensitivityRaw != nil)
+        HangDiagnostics.measure("clipboardWrite") {
+            MobileClipboard.write(content, protected: item.sensitivityRaw != nil)
+        }
         var saved = true
         if let context = item.modelContext {
             item.bringToFront(at: clock())
             saved = false
             report("Couldn\u{2019}t save the change.") {
-                try saveChanges(context)
+                try HangDiagnostics.measure("copySave") { try saveChanges(context) }
                 saved = true
             }
         }
         if saved { tell(String(localized: "Copied")) }
+        return true
+    }
+
+    private func finishCopyAsync(_ item: ClipboardItem, content: ClipContent) async -> Bool {
+        let resolved: ClipContent
+        if let text = content.plainText, let request = SnippetFillRequest.make(for: item, text: text, at: clock()) {
+            switch request {
+            case let .ask(request):
+                pendingFill = request
+                return false
+            case let .copy(expanded):
+                resolved = .text(expanded)
+            }
+        } else {
+            resolved = content
+        }
+        await Task.yield()
+        HangDiagnostics.measure("clipboardWrite") {
+            MobileClipboard.write(resolved, protected: item.sensitivityRaw != nil)
+        }
+        tell(String(localized: "Copied"))
+        await Task.yield()
+        if let context = item.modelContext {
+            item.bringToFront(at: clock())
+            report("Couldn\u{2019}t save the change.") {
+                try HangDiagnostics.measure("copySave") { try saveChanges(context) }
+            }
+        }
         return true
     }
 

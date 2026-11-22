@@ -102,14 +102,16 @@ final class SecretReveal {
         if !shownNSFW.isEmpty { shownNSFW = [] }
     }
 
-    /// As the Mac's card decides it: a picture still being judged is drawn (only text waits for its verdict).
+    /// Pictures still being judged wait behind the checking cover when explicit filtering is active (`nsfwMode !=
+    /// .show`)
+    /// so an explicit image or GIF never flashes before screening finishes.
     func concealment(for item: ClipboardItem, nsfwMode: NSFWMode = .current()) -> CardConcealment {
         CardConcealment(
             screenShareBlur: isCoveredForPrivacy(item.id),
             nsfwBlurred: item.isNSFW && nsfwMode != .show && !isNSFWShown(item.id),
             maskedSecret: item.sensitivityRaw != nil,
             secretShown: isShown(item.id),
-            pendingAnalysis: item.analysisPending && item.type != .image
+            pendingAnalysis: item.analysisPending && (item.type != .image || nsfwMode != .show)
         )
     }
 }

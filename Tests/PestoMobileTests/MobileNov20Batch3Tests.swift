@@ -63,4 +63,24 @@ struct MobileBatch3Tests {
         #expect(!model.isSearching)
         #expect(model.query.isEmpty)
     }
+
+    @Test("copyAsync loads large or image clips off the main actor and updates notice and lastUsedAt")
+    func whenCopyingClipAsync_thenCopiesAndUpdatesOrder() async throws {
+        let library = try await MobileTestLibrary()
+        let first = try await library.add("alpha")
+        let large = String(repeating: "x", count: 40_000)
+        try await library.service.ingest(#require(ClipCapture.text(large)))
+        let second = try await library.settle()
+        let initialTimestamp = first.timestamp
+
+        #expect(second.byteSize > 32_768)
+        let copied = await library.state.copyAsync(first)
+        #expect(copied)
+        #expect(library.state.notice?.text == "Copied")
+        #expect(first.timestamp >= initialTimestamp)
+
+        let copiedLarge = await library.state.copyAsync(second)
+        #expect(copiedLarge)
+        #expect(library.state.notice?.text == "Copied")
+    }
 }

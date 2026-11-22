@@ -191,9 +191,11 @@ struct ClipCard: View {
     }
 
     func copy() {
-        guard appState.copy(item) else { return }
-        library.didCopy(item.id)
-        Announcer.announce(String(localized: "Copied"))
+        Task {
+            guard await appState.copyAsync(item) else { return }
+            library.didCopy(item.id)
+            Announcer.announce(String(localized: "Copied"))
+        }
     }
 
     func togglePin() {

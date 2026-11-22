@@ -48,4 +48,15 @@ struct WidgetLinkTests {
             )
         }
     }
+
+    @Test("settings deep links round-trip and reject unknown paths or queries")
+    func whenAppLinkBuilt_thenItParsesBack() throws {
+        #expect(AppLink.target(in: AppLink.url(for: .settings)) == .settings)
+        #expect(AppLink.target(in: AppLink.url(for: .keyboardSettings)) == .keyboardSettings)
+        #expect(AppLink.target(in: AppLink.url(for: .quickInsertSetup)) == .quickInsertSetup)
+        let extra = try #require(URL(string: "pesto://settings/unknown"))
+        #expect(AppLink.target(in: extra) == nil)
+        let withQuery = try #require(URL(string: "pesto://settings/keyboard?foo=1"))
+        #expect(AppLink.target(in: withQuery) == nil)
+    }
 }

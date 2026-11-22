@@ -28,18 +28,28 @@ struct QuickInsertMenuTests {
         #expect(QuickInsertMenu(set: set).state == .ready)
     }
 
-    @Test("the sections come Pinned, Snippets, Recent, and an empty one is not shown")
+    @Test("All returns one flat group with Pinned and Snippets first, then remaining newest-first")
     func whenGrouped_thenSectionsAreInOrder() {
-        #expect(QuickInsertMenu(set: set).groups(matching: "").map(\.section) == [.pinned, .snippets, .recent])
+        #expect(QuickInsertMenu(set: set).groups(matching: "").map(\.entries.count) == [4])
+        #expect(QuickInsertMenu(set: set).groups(matching: "").first?.entries.map(\.section) == [
+            .pinned,
+            .snippets,
+            .recent,
+            .recent
+        ])
         let noSnippets = QuickInsertSet(createdAt: .now, entries: set.entries.filter { $0.section != .snippets })
-        #expect(QuickInsertMenu(set: noSnippets).groups(matching: "").map(\.section) == [.pinned, .recent])
+        #expect(QuickInsertMenu(set: noSnippets).groups(matching: "").first?.entries.map(\.section) == [
+            .pinned,
+            .recent,
+            .recent
+        ])
     }
 
-    @Test("a search matches the title or the text, ignoring case and accents, and keeps the sections")
+    @Test("a search matches the title or the text, ignoring case and accents, and returns a flat All group")
     func whenSearched_thenOnlyMatchesRemain() {
         let menu = QuickInsertMenu(set: set)
 
-        #expect(menu.groups(matching: "basil").map(\.section) == [.pinned, .recent])
+        #expect(menu.groups(matching: "basil").flatMap(\.entries).map(\.section) == [.pinned, .recent])
         #expect(menu.groups(matching: "  HOME ").flatMap(\.entries).map(\.text) == ["12 Basil Lane"])
         #expect(menu.groups(matching: "pésto").flatMap(\.entries).map(\.text) == ["Basil pesto recipe"])
         #expect(menu.groups(matching: "nothing like this").isEmpty)
@@ -112,11 +122,15 @@ struct QuickInsertMenuTests {
     @Test("QuickInsertMenu builds filter chips and filters groups by chip")
     func whenFilteredByChip_thenOnlyMatchingGroupReturns() {
         let menu = QuickInsertMenu(set: set)
-        #expect(menu.chips.map(\.chip) == [.all, .pinned, .snippets, .recent])
+        #expect(menu.chips.map(\.chip) == [.all, .pinned, .snippets])
         #expect(menu.groups(matching: "", chip: .pinned).map(\.section) == [.pinned])
         #expect(menu.groups(matching: "", chip: .snippets).map(\.section) == [.snippets])
-        #expect(menu.groups(matching: "", chip: .recent).map(\.section) == [.recent])
-        #expect(menu.groups(matching: "", chip: .all).map(\.section) == [.pinned, .snippets, .recent])
+        #expect(menu.groups(matching: "", chip: .all).flatMap(\.entries).map(\.section) == [
+            .pinned,
+            .snippets,
+            .recent,
+            .recent
+        ])
     }
 
     @Test("Interactive fill-in snippets are kept for AutoFill but filtered out of KeyboardMenu")

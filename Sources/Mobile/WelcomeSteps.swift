@@ -55,6 +55,7 @@ struct WelcomeChoicesStep: View {
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutside: Bool
     @State private var biometry = DeviceAuthenticationWords.biometry()
+    @State private var showsQuickInsertSetup = false
 
     var body: some View {
         WelcomePage(
@@ -90,6 +91,14 @@ struct WelcomeChoicesStep: View {
             .padding(16)
             .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 20))
             .padding(.top, 8)
+            Button("Set up Keyboard & AutoFill\u{2026}") {
+                showsQuickInsertSetup = true
+            }
+            .font(.subheadline.weight(.medium))
+            .padding(.top, 12)
+        }
+        .sheet(isPresented: $showsQuickInsertSetup) {
+            QuickInsertSetupSheet()
         }
         .accessibilityIdentifier(MobileAccessibilityID.welcomeChoicesStep)
     }

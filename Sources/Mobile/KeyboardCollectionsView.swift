@@ -27,26 +27,34 @@ struct KeyboardCollectionsView: View {
     var body: some View {
         List {
             Section {
-                ForEach(chosen) { collection in
-                    label(collection)
-                }
-                .onMove { from, to in
-                    var ids = chosen.map(\.id)
-                    ids.move(fromOffsets: from, toOffset: to)
-                    save(ids)
-                }
-                .onDelete { offsets in
-                    var ids = chosen.map(\.id)
-                    ids.remove(atOffsets: offsets)
-                    save(ids)
+                if chosen.isEmpty {
+                    Text("No extra collections added")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(chosen) { collection in
+                        label(collection)
+                    }
+                    .onMove { from, to in
+                        var ids = chosen.map(\.id)
+                        ids.move(fromOffsets: from, toOffset: to)
+                        save(ids)
+                    }
+                    .onDelete { offsets in
+                        var ids = chosen.map(\.id)
+                        ids.remove(atOffsets: offsets)
+                        save(ids)
+                    }
                 }
             } header: {
-                Text("In the keyboard")
+                Text("Shown in Keyboard & AutoFill")
             } footer: {
-                Text("After Recent, Pinned and Snippets, in this order. Drag to reorder, swipe to remove.")
+                Text(
+                    "After All, Pinned, and Snippets, in this order. Snippets are pinned clips with " +
+                        "placeholders like {{date}}. Drag to reorder, swipe to remove."
+                )
             }
             if !others.isEmpty {
-                Section("Add") {
+                Section {
                     ForEach(others) { collection in
                         Button {
                             save(chosen.map(\.id) + [collection.id])
@@ -55,11 +63,21 @@ struct KeyboardCollectionsView: View {
                         }
                         .disabled(chosen.count >= QuickInsertPolicy.maxCollections)
                     }
+                } header: {
+                    Text("Add")
+                } footer: {
+                    if chosen.count >= QuickInsertPolicy.maxCollections {
+                        Text("Collection limit reached.")
+                    }
                 }
             }
         }
-        .navigationTitle("Keyboard Collections")
-        .toolbar { EditButton() }
+        .navigationTitle("Collections")
+        .toolbar {
+            if !chosen.isEmpty {
+                EditButton()
+            }
+        }
     }
 
     private func label(_ collection: Pinboard) -> some View {

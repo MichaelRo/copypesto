@@ -4,7 +4,7 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// Guided setup checklist for iOS AutoFill, Pesto Keyboard, and Paste permission.
+/// Guided setup checklist for iOS AutoFill and Pesto Keyboard.
 struct QuickInsertSetupSheet: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
@@ -22,8 +22,8 @@ struct QuickInsertSetupSheet: View {
                         title: String(localized: "AutoFill (Text Insertion)"),
                         subtitle: String(
                             localized: """
-                            Insert pinned clips and snippets in any text field \
-                            (listed under Passwords in iOS Settings).
+                            Insert recent, pinned, snippet, and collection clips in any text field \
+                            (listed under AutoFill & Passwords in iOS Settings).
                             """
                         ),
                         isReady: isAutoFillEnabled
@@ -64,32 +64,30 @@ struct QuickInsertSetupSheet: View {
 
                 Section {
                     statusRow(
-                        title: String(localized: "Pesto Keyboard"),
-                        subtitle: String(
-                            localized: "Add Pesto in Settings > General > Keyboard > Keyboards and allow Full Access."
-                        ),
+                        title: isKeyboardAdded
+                            ? String(localized: "Pesto Keyboard (Added)")
+                            : String(localized: "Pesto Keyboard"),
+                        subtitle: isKeyboardAdded
+                            ? String(
+                                localized: """
+                                Added in Keyboards. Make sure Allow Full Access is turned on in iOS Settings \
+                                so Pesto can show your clips.
+                                """
+                            )
+                            : String(
+                                localized: """
+                                Add Pesto in iOS Settings under General, Keyboard, Keyboards, and turn on \
+                                Allow Full Access.
+                                """
+                            ),
                         isReady: isKeyboardAdded
                     )
-                    Button("Open Keyboard Settings") {
-                        openAppSettings()
-                    }
-                }
-
-                Section {
-                    statusRow(
-                        title: String(localized: "Paste Without Asking"),
-                        subtitle: String(
-                            localized: "Set Paste from Other Apps to Allow so Pesto doesn\u{2019}t prompt every time."
-                        ),
-                        isReady: nil
-                    )
-                    Button("Open Pesto Settings") {
-                        _ = AppPasteboard.general.hasStrings
+                    Button("Open iOS Settings") {
                         openAppSettings()
                     }
                 }
             }
-            .navigationTitle("Set Up Quick Insert")
+            .navigationTitle("Set Up Keyboard & AutoFill")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

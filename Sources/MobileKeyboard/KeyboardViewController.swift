@@ -28,7 +28,8 @@ final class KeyboardViewController: UIInputViewController {
             relayout: { [weak self] in
                 guard let self else { return }
                 heightConstraint?.constant = currentHeight
-            }
+            },
+            openURL: { [weak self] url in self?.openHostURL(url) }
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
         host.view.backgroundColor = .clear
@@ -130,6 +131,22 @@ final class KeyboardViewController: UIInputViewController {
         } catch {
             logger.error("The keyboard's set did not open: \(String(describing: error), privacy: .public)")
             return nil
+        }
+    }
+
+    private func openHostURL(_ url: URL) {
+        let selector = NSSelectorFromString("openURL:options:completionHandler:")
+        var responder: UIResponder? = self
+        while let current = responder {
+            if current.responds(to: selector),
+               let method = class_getInstanceMethod(type(of: current), selector)
+            {
+                typealias OpenIMP = @convention(c) (AnyObject, Selector, URL, NSDictionary, Any?) -> Void
+                let imp = unsafeBitCast(method_getImplementation(method), to: OpenIMP.self)
+                imp(current, selector, url, [:], nil)
+                return
+            }
+            responder = current.next
         }
     }
 }

@@ -14,7 +14,7 @@ public struct KeyboardMenu: Equatable, Sendable {
     }
 
     public enum Chip: Hashable, Identifiable, Sendable {
-        case recent
+        case all
         case pinned
         case snippets
         case collection(UUID)
@@ -68,23 +68,40 @@ public struct KeyboardMenu: Equatable, Sendable {
         keyboardSize = activeSet?.keyboardSize ?? .medium
         state = activeSet == nil ? .unavailable : entries.isEmpty ? .empty : .ready
         let sections: [ChipLabel] = [
-            ChipLabel(chip: .recent, title: String(localized: "Recent"), symbolName: "clock"),
             ChipLabel(chip: .pinned, title: String(localized: "Pinned"), symbolName: "pin"),
             ChipLabel(chip: .snippets, title: String(localized: "Snippets"), symbolName: "text.badge.plus")
         ]
         let found = entries
         let carried = Set(found.map(\.id))
-        chips = sections.filter { label in found.contains { Self.section(of: label.chip) == $0.section } }
+        let allChip = found.isEmpty ? [] : [
+            ChipLabel(chip: .all, title: String(localized: "All"), symbolName: "tray.full")
+        ]
+        chips = allChip
+            + sections.filter { label in found.contains { Self.section(of: label.chip) == $0.section } }
             + collections.filter { $0.entryIDs.contains(where: carried.contains) }
             .map { ChipLabel(chip: .collection($0.id), title: $0.name, symbolName: $0.symbolName, color: $0.color) }
     }
 
     public func entries(for chip: Chip) -> [QuickInsertEntry] {
-        if case let .collection(id) = chip {
+        switch chip {
+        case .all:
+            var seen = Set<UUID>()
+            let pinnedFirst = entries.filter {
+                ($0.section == .pinned || $0.section == .snippets) && seen.insert($0.id).inserted
+            }
+            let byID = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }
+            let collectionEntries = collections.flatMap { $0.entryIDs.compactMap { byID[$0] } }
+            let remaining = (entries + collectionEntries)
+                .filter { seen.insert($0.id).inserted }
+                .sorted { $0.date > $1.date }
+            return pinnedFirst + remaining
+        case .pinned, .snippets:
+            guard let section = Self.section(of: chip) else { return [] }
+            return entries.filter { $0.section == section }
+        case let .collection(id):
             let byID = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }
             return collections.first { $0.id == id }?.entryIDs.compactMap { byID[$0] } ?? []
         }
-        return entries.filter { $0.section == Self.section(of: chip) }
     }
 
     /// Every clip the set carries, once, that matches `word`: those whose title starts with it first, then those
@@ -104,12 +121,11 @@ public struct KeyboardMenu: Equatable, Sendable {
         return leading + inside
     }
 
-    private static func section(of chip: Chip) -> QuickInsertEntry.Section {
+    private static func section(of chip: Chip) -> QuickInsertEntry.Section? {
         switch chip {
-        case .recent: .recent
         case .pinned: .pinned
         case .snippets: .snippets
-        case .collection: .collection
+        case .all, .collection: nil
         }
     }
 }

@@ -48,6 +48,8 @@ final class MobileAppState: ClipboardShortcutHandling {
     @ObservationIgnored var quickInsertObserver: (any NSObjectProtocol)?
     /// The last clip a widget link copied, so the library shows it (`MobileAppState+WidgetLink.swift`).
     var linkedClip: LinkedClip?
+    /// Deep-link target into Settings or Quick Insert setup (`MobileAppState+WidgetLink.swift`).
+    var linkedSettings: LinkedSettings?
     /// Search query handed off by `SearchPestoIntent`, consumed once the library is unlocked.
     var shortcutSearchQuery: String?
     /// Hands a link clip's web address to the browser; a test records it instead.

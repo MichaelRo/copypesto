@@ -61,7 +61,7 @@ struct InsertPickerView: View {
             ContentUnavailableView(
                 "Nothing to Insert Yet",
                 systemImage: "text.insert",
-                description: Text("In Pesto, open Settings and turn on Insert from Pesto in other apps.")
+                description: Text("Open Pesto once so your clips are ready here.")
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(ground.ignoresSafeArea())
@@ -92,7 +92,7 @@ struct InsertPickerView: View {
             LazyVStack(alignment: .leading, spacing: 18) {
                 ForEach(groups) { group in
                     VStack(alignment: .leading, spacing: 10) {
-                        if groups.count > 1 || activeChip == .all {
+                        if groups.count > 1 {
                             Text(group.collection?.name ?? Self.title(of: group.section))
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(.secondary)

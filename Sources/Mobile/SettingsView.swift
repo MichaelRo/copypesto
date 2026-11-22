@@ -1,19 +1,25 @@
 // SPDX-License-Identifier: MIT
+import AuthenticationServices
 import PestoCore
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// The few settings the iOS app has. What only a Mac does (shortcuts, the login item, app exclusions) is not here.
 struct SettingsView: View {
     @Environment(MobileAppState.self) private var appState
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.appTheme) private var theme: String
+    @AppStorage(Setting.appThemeDark) private var darkTheme: String
     @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutsideWhileLocked: Bool
     @AppStorage(Setting.syncEnabled) private var syncEnabled: Bool
+    @AppStorage(Setting.widgetsEnabled) private var widgetsEnabled: Bool
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
     @AppStorage(Setting.biometricLockEnabled) private var lockEnabled: Bool
     @AppStorage(Setting.linkPreviews) private var linkPreviews: Bool
@@ -25,6 +31,8 @@ struct SettingsView: View {
     @State private var biometry = DeviceAuthenticationWords.biometry()
     @State private var clearCount = 0
     @State private var isConfirmingClear = false
+    @State private var isAutoFillEnabled = false
+    @State private var isKeyboardAdded = false
 
     private struct PendingRetention: Identifiable {
         let id = UUID()
@@ -36,12 +44,13 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Appearance") {
-                Picker("Theme", selection: $theme) {
+                Picker("Theme", selection: activeThemeBinding) {
                     ForEach(AppTheme.allCases, id: \.rawValue) { choice in
                         Text(choice.displayName).tag(choice.rawValue)
                     }
                 }
                 .onChange(of: theme) { appState.writeQuickInsert() }
+                .onChange(of: darkTheme) { appState.writeQuickInsert() }
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
                         Text(mode.label).tag(mode.rawValue)
@@ -93,11 +102,11 @@ struct SettingsView: View {
                     Toggle("Allow in Widgets and Keyboard while locked", isOn: $showsClipsOutsideWhileLocked)
                         .accessibilityIdentifier(MobileAccessibilityID.showsClipsOutsideToggle)
                         .onChange(of: showsClipsOutsideWhileLocked) { appState.showsClipsOutsideSettingChanged() }
-                }
-                Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
-                    ForEach(AuthenticationGrace.choices, id: \.self) { minutes in
-                        Text(Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes])))
-                            .tag(minutes)
+                    Picker(DeviceAuthenticationWords.graceTitle(for: biometry), selection: $graceMinutes) {
+                        ForEach(AuthenticationGrace.choices, id: \.self) { minutes in
+                            Text(Duration.seconds(minutes * 60).formatted(.units(allowed: [.hours, .minutes])))
+                                .tag(minutes)
+                        }
                     }
                 }
                 Toggle("Load link previews", isOn: $linkPreviews)
@@ -132,8 +141,25 @@ struct SettingsView: View {
                 )
             }
             AppleIntelligenceSection()
-            Section {
-                NavigationLink("Keyboard & AutoFill") { KeyboardSettingsView() }
+            Section("Extensions & Sync") {
+                NavigationLink {
+                    KeyboardSettingsView()
+                } label: {
+                    LabeledContent(
+                        "Keyboard & AutoFill",
+                        value: (isAutoFillEnabled || isKeyboardAdded)
+                            ? String(localized: "On")
+                            : String(localized: "Set Up")
+                    )
+                }
+                NavigationLink {
+                    WidgetSettingsView()
+                } label: {
+                    LabeledContent(
+                        "Widgets",
+                        value: widgetsEnabled ? String(localized: "On") : String(localized: "Off")
+                    )
+                }
                 NavigationLink {
                     SyncSettingsView()
                 } label: {
@@ -165,22 +191,24 @@ struct SettingsView: View {
                 Text("Pinned clips are kept.")
             }
             Section {
-                HStack {
-                    Button("Show Welcome Again") {
-                        appState.requestWelcomeAgain()
-                        dismiss()
-                    }
-                    .accessibilityIdentifier(MobileAccessibilityID.showWelcomeAgain)
-                    Spacer()
-                    Text(AppVersion.displayString())
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                Button("Show Welcome Again") {
+                    appState.requestWelcomeAgain()
+                    dismiss()
                 }
+                .accessibilityIdentifier(MobileAccessibilityID.showWelcomeAgain)
+            } footer: {
+                Text(AppVersion.displayString())
             }
         }
         .navigationTitle("Settings")
         .onAppear {
             MobileAppState.migrateQuickInsertSettingsIfNeeded()
+        }
+        .task { await refreshQuickInsertStatus() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                Task { await refreshQuickInsertStatus() }
+            }
         }
         .confirmationDialog(
             String(localized: "Clear \(clearCount) clips?"), isPresented: $isConfirmingClear, titleVisibility: .visible
@@ -255,20 +283,43 @@ struct SettingsView: View {
         })
     }
 
+    private var activeThemeBinding: Binding<String> {
+        Binding(
+            get: { colorScheme == .dark ? darkTheme : theme },
+            set: { newValue in
+                if colorScheme == .dark {
+                    darkTheme = newValue
+                } else {
+                    theme = newValue
+                }
+            }
+        )
+    }
+
     private var hiddenByHand: Binding<Bool> {
         Binding(
             get: { appState.secretReveal.isHiddenByHand },
             set: { appState.secretReveal.isHiddenByHand = $0 }
         )
     }
+
+    private func refreshQuickInsertStatus() async {
+        let state = await ASCredentialIdentityStore.shared.state()
+        isAutoFillEnabled = state.isEnabled
+        isKeyboardAdded = UITextInputMode.activeInputModes.contains { mode in
+            (mode.value(forKey: "identifier") as? String)?.contains("net.copypesto.pesto") == true
+        }
+    }
 }
 
 struct SettingsSheet: View {
+    @Environment(LibraryModel.self) private var library
     @Environment(\.dismiss) private var dismiss
     @Environment(\.pestoSurface) private var ground
+    @State private var path: [LibraryModel.SettingsDestination] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             SettingsView()
                 .scrollContentBackground(.hidden)
                 .background(ground.ignoresSafeArea())
@@ -278,6 +329,25 @@ struct SettingsSheet: View {
                         Button("Done") { dismiss() }
                     }
                 }
+                .navigationDestination(for: LibraryModel.SettingsDestination.self) { destination in
+                    switch destination {
+                    case .keyboard: KeyboardSettingsView()
+                    case .sync: SyncSettingsView()
+                    }
+                }
+        }
+        .modifier(MobileAccent())
+        .onAppear {
+            if let destination = library.settingsDestination {
+                path = [destination]
+            }
+        }
+        .onChange(of: library.settingsDestination) { _, destination in
+            if let destination {
+                path = [destination]
+            } else {
+                path = []
+            }
         }
     }
 }

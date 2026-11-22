@@ -48,3 +48,39 @@ public enum WidgetLink {
         target(in: url).flatMap { $0.action == .copy ? $0.id : nil }
     }
 }
+
+/// Deep links into Pesto's own iOS screens (from the keyboard extension or shortcuts).
+public enum AppLink: Equatable, Sendable {
+    case settings
+    case keyboardSettings
+    case quickInsertSetup
+
+    public static let host = "settings"
+
+    public static func url(for link: AppLink) -> URL {
+        var components = URLComponents()
+        components.scheme = AppIdentity.urlScheme
+        components.host = host
+        switch link {
+        case .settings: components.path = ""
+        case .keyboardSettings: components.path = "/keyboard"
+        case .quickInsertSetup: components.path = "/setup"
+        }
+        return components.url ?? URL(fileURLWithPath: "/")
+    }
+
+    public static func target(in url: URL) -> AppLink? {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              components.scheme?.lowercased() == AppIdentity.urlScheme,
+              components.host?.lowercased() == host,
+              components.user == nil, components.password == nil, components.port == nil,
+              components.query == nil, components.fragment == nil else { return nil }
+        let parts = components.path.split(separator: "/", omittingEmptySubsequences: true).map { $0.lowercased() }
+        switch parts {
+        case []: return .settings
+        case ["keyboard"]: return .keyboardSettings
+        case ["setup"]: return .quickInsertSetup
+        default: return nil
+        }
+    }
+}

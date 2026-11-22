@@ -202,7 +202,8 @@ struct MobileQuickInsertTests {
         let menu = QuickInsertMenu(set: set)
 
         #expect(menu.state == .ready)
-        #expect(menu.groups(matching: "").map(\.section) == [.snippets])
+        #expect(menu.groups(matching: "").flatMap(\.entries).map(\.section) == [.snippets])
+        #expect(menu.groups(matching: "", chip: .snippets).map(\.section) == [.snippets])
         #expect(try !#require(set.entries.first).insertionText().contains("{{"))
     }
 

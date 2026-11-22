@@ -31,7 +31,6 @@ public struct QuickInsertMenu: Equatable, Sendable {
         case all
         case pinned
         case snippets
-        case recent
         case collection(UUID)
 
         public var id: Self {
@@ -69,8 +68,7 @@ public struct QuickInsertMenu: Equatable, Sendable {
         state = activeSet == nil ? .unavailable : loadedEntries.isEmpty ? .empty : .ready
         let sectionChips: [ChipLabel] = [
             ChipLabel(chip: .pinned, title: String(localized: "Pinned"), symbolName: "pin"),
-            ChipLabel(chip: .snippets, title: String(localized: "Snippets"), symbolName: "text.badge.plus"),
-            ChipLabel(chip: .recent, title: String(localized: "Recent"), symbolName: "clock")
+            ChipLabel(chip: .snippets, title: String(localized: "Snippets"), symbolName: "text.badge.plus")
         ]
         let carried = Set(loadedEntries.map(\.id))
         let availableSections = sectionChips.filter { label in
@@ -87,7 +85,7 @@ public struct QuickInsertMenu: Equatable, Sendable {
             + availableSections + availableCollections
     }
 
-    /// Pinned, Snippets and Recent, then each chosen collection under its name; a group with no match is left out.
+    /// Pinned clips first, then all remaining clips newest-first in a single flat group; or a single chip's group.
     public func groups(matching query: String, chip: Chip = .all) -> [Group] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
         func matches(_ entry: QuickInsertEntry) -> Bool {
@@ -99,15 +97,19 @@ public struct QuickInsertMenu: Equatable, Sendable {
         let byID = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }
         switch chip {
         case .all:
-            let sections: [QuickInsertEntry.Section] = [.pinned, .snippets, .recent]
-            return sections.compactMap { section in
-                let inSection = found.filter { $0.section == section }
-                return inSection.isEmpty ? nil : Group(section: section, entries: inSection)
-            } + collections.compactMap { collection in
-                let members = collection.entryIDs.compactMap { byID[$0] }.filter(matches)
-                return members.isEmpty ? nil : Group(section: .collection, collection: collection, entries: members)
+            var seen = Set<UUID>()
+            let pinnedFirst = found.filter {
+                ($0.section == .pinned || $0.section == .snippets) && seen.insert($0.id).inserted
             }
-        case .pinned, .snippets, .recent:
+            let collectionEntries = collections.flatMap { collection in
+                collection.entryIDs.compactMap { byID[$0] }.filter(matches)
+            }
+            let remaining = (found + collectionEntries)
+                .filter { seen.insert($0.id).inserted }
+                .sorted { $0.date > $1.date }
+            let ordered = pinnedFirst + remaining
+            return ordered.isEmpty ? [] : [Group(section: .pinned, entries: ordered)]
+        case .pinned, .snippets:
             guard let section = Self.section(of: chip) else { return [] }
             let inSection = found.filter { $0.section == section }
             return inSection.isEmpty ? [] : [Group(section: section, entries: inSection)]
@@ -122,7 +124,6 @@ public struct QuickInsertMenu: Equatable, Sendable {
         switch chip {
         case .pinned: .pinned
         case .snippets: .snippets
-        case .recent: .recent
         case .all, .collection: nil
         }
     }

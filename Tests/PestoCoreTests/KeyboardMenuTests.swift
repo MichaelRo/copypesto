@@ -49,11 +49,13 @@ struct KeyboardMenuTests {
         #expect(KeyboardMenu(hasFullAccess: true) { full() }.state == .ready)
     }
 
-    @Test("the chips are Recent, Pinned and Snippets when they have clips, then the chosen collections")
+    @Test("the chips are All, Pinned and Snippets when they have clips, then the chosen collections")
     func whenReady_thenTheChipsFollowTheShelf() {
         let menu = KeyboardMenu(hasFullAccess: true) { full() }
-        #expect(menu.chips.map(\.title) == ["Recent", "Pinned", "Snippets", "Work"])
-        #expect(menu.entries(for: .recent).map(\.text) == ["Basil pesto recipe", "tracking 1Z999"])
+        #expect(menu.chips.map(\.title) == ["All", "Pinned", "Snippets", "Work"])
+        #expect(menu.entries(for: .all).map(\.text) == [
+            "12 Basil Lane", "Thanks, {{date}}", "Basil pesto recipe", "tracking 1Z999", "Standup at 10"
+        ])
         #expect(menu.entries(for: .collection(work)).map(\.text) == ["Standup at 10", "12 Basil Lane"])
         #expect(menu.returnsAfterInsert == false)
     }
@@ -72,7 +74,7 @@ struct KeyboardMenuTests {
             createdAt: .now, entries: [entry("Basil pesto recipe", .recent)],
             collections: [QuickInsertCollection(id: UUID(), name: "Empty", symbolName: "folder", entryIDs: [])]
         )
-        #expect(KeyboardMenu(hasFullAccess: true) { set }.chips.map(\.title) == ["Recent"])
+        #expect(KeyboardMenu(hasFullAccess: true) { set }.chips.map(\.title) == ["All"])
     }
 
     @Test("Hebrew search ignores niqqud and matches final and non-final letters interchangeably")
@@ -103,7 +105,7 @@ struct KeyboardMenuTests {
         let menu = KeyboardMenu(hasFullAccess: true) { disabled }
         #expect(menu.state == .unavailable)
         #expect(menu.chips.isEmpty)
-        #expect(menu.entries(for: .recent).isEmpty)
+        #expect(menu.entries(for: .all).isEmpty)
         #expect(menu.entries(matching: "Basil").isEmpty)
     }
 }

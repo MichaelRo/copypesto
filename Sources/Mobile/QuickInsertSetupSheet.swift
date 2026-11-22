@@ -4,8 +4,9 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// Guided setup checklist for iOS AutoFill, Pesto Keyboard, and Paste permission.
+/// Guided setup checklist for iOS AutoFill and Pesto Keyboard.
 struct QuickInsertSetupSheet: View {
+    @Environment(MobileAppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
@@ -20,25 +21,38 @@ struct QuickInsertSetupSheet: View {
                     statusRow(
                         title: String(localized: "AutoFill (Text Insertion)"),
                         subtitle: String(
-                            localized: "Insert pinned clips and snippets in any text field via AutoFill."
+                            localized: """
+                            Insert recent, pinned, snippet, and collection clips in any text field \
+                            (listed under AutoFill & Passwords in iOS Settings).
+                            """
                         ),
                         isReady: isAutoFillEnabled
                     )
-                    Button("Turn On AutoFill\u{2026}") {
-                        AppDefaults.store.set(true, for: Setting.autoFillEnabled)
-                        AppDefaults.store.set(true, for: Setting.quickInsertEnabled)
-                        Task {
-                            let granted = await ASSettingsHelper.requestToTurnOnCredentialProviderExtension()
-                            autoFillStatusNote = granted
-                                ? String(localized: "AutoFill is enabled.")
-                                : String(
-                                    localized:
-                                    "Opened Settings. If Pesto is missing from AutoFill & Passwords, restart iPhone."
-                                )
-                            if !granted {
-                                await AutoFillSettings.open()
+                    if isAutoFillEnabled {
+                        Button("Open AutoFill Settings") {
+                            Task {
+                                await AutoFillSettings.openSettings()
+                                await refreshStatus()
                             }
-                            await refreshStatus()
+                        }
+                    } else {
+                        Button("Turn On AutoFill\u{2026}") {
+                            AppDefaults.store.set(true, for: Setting.autoFillEnabled)
+                            AppDefaults.store.set(true, for: Setting.quickInsertEnabled)
+                            appState.quickInsertSettingChanged()
+                            Task {
+                                let granted = await ASSettingsHelper.requestToTurnOnCredentialProviderExtension()
+                                autoFillStatusNote = granted
+                                    ? String(localized: "AutoFill is enabled.")
+                                    : String(
+                                        localized:
+                                        "Opened Settings. Turn on Pesto under AutoFill & Passwords."
+                                    )
+                                if !granted {
+                                    await AutoFillSettings.openSettings()
+                                }
+                                await refreshStatus()
+                            }
                         }
                     }
                     if let autoFillStatusNote {
@@ -50,32 +64,30 @@ struct QuickInsertSetupSheet: View {
 
                 Section {
                     statusRow(
-                        title: String(localized: "Pesto Keyboard"),
-                        subtitle: String(
-                            localized: "Add Pesto in Settings > General > Keyboard > Keyboards and allow Full Access."
-                        ),
+                        title: isKeyboardAdded
+                            ? String(localized: "Pesto Keyboard (Added)")
+                            : String(localized: "Pesto Keyboard"),
+                        subtitle: isKeyboardAdded
+                            ? String(
+                                localized: """
+                                Added in Keyboards. Make sure Allow Full Access is turned on in iOS Settings \
+                                so Pesto can show your clips.
+                                """
+                            )
+                            : String(
+                                localized: """
+                                Add Pesto in iOS Settings under General, Keyboard, Keyboards, and turn on \
+                                Allow Full Access.
+                                """
+                            ),
                         isReady: isKeyboardAdded
                     )
-                    Button("Open Keyboard Settings") {
-                        openAppSettings()
-                    }
-                }
-
-                Section {
-                    statusRow(
-                        title: String(localized: "Paste Without Asking"),
-                        subtitle: String(
-                            localized: "Set Paste from Other Apps to Allow so Pesto doesn\u{2019}t prompt every time."
-                        ),
-                        isReady: nil
-                    )
-                    Button("Open Pesto Settings") {
-                        _ = AppPasteboard.general.hasStrings
+                    Button("Open iOS Settings") {
                         openAppSettings()
                     }
                 }
             }
-            .navigationTitle("Set Up Quick Insert")
+            .navigationTitle("Set Up Keyboard & AutoFill")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

@@ -87,26 +87,29 @@ struct QuickInsertSelectionTests {
         #expect(clips.entries().map(\.text) == ["kept"])
     }
 
-    @Test("a snippet that would ask for a value or read the clipboard is left out; one Pesto fills by itself stays")
-    func whenASnippetNeedsThePerson_thenItIsLeftOut() throws {
+    @Test("a snippet that reads clipboard or app stays out; interactive fill-ins and built-in tokens stay for AutoFill")
+    func whenASnippetNeedsThePerson_thenOnlyPrivilegedContextIsLeftOut() throws {
         let clips = try Clips()
         clips.add("Hi {{input:Name}}", pinned: true)
         clips.add("Pasted: {{clipboard}}", pinned: true)
         clips.add("In {{app}}", pinned: true)
         clips.add("Signed {{isodate}} {{uuid}}{{cursor}}", pinned: true)
 
-        #expect(clips.entries().map(\.text) == ["Signed {{isodate}} {{uuid}}{{cursor}}"])
+        #expect(
+            clips.entries().map(\.text)
+                == ["Signed {{isodate}} {{uuid}}{{cursor}}", "Hi {{input:Name}}"]
+        )
     }
 
-    @Test("at most the newest thirty recent clips, and nothing over the total size")
+    @Test("at most the newest recent clips, and nothing over the total size")
     func whenThereIsMoreThanFits_thenTheBoundsHold() throws {
         let clips = try Clips()
-        for index in 0..<45 {
+        for index in 0..<80 {
             clips.add("copy \(index)")
         }
         let recent = clips.entries()
         #expect(recent.count == QuickInsertPolicy.maxRecent)
-        #expect(recent.first?.text == "copy 44")
+        #expect(recent.first?.text == "copy 79")
 
         let big = try Clips()
         let chunk = String(repeating: "a", count: QuickInsertPolicy.maxEntryBytes)

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import AuthenticationServices
 import Foundation
 import PestoCore
 
@@ -10,6 +11,12 @@ extension MobileAppState {
         guard !offersAutoFillTip, !historyLock.isEnabled, !defaults.value(for: Setting.autoFillTipShown) else { return }
         defaults.set(true, for: Setting.autoFillTipShown)
         offersAutoFillTip = true
+        if isLive, ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+            Task {
+                let state = await ASCredentialIdentityStore.shared.state()
+                if state.isEnabled { offersAutoFillTip = false }
+            }
+        }
     }
 
     func turnOnAutoFillFromTip(defaults: UserDefaults = AppDefaults.store) async {

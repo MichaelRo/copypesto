@@ -82,6 +82,20 @@ struct LibraryRootView: View {
                 linked.id,
                 opensDetail: linked.opensDetail
             ) } }
+            .onChange(of: appState.linkedSettings, initial: true) { _, linked in
+                guard let linked else { return }
+                switch linked.target {
+                case .settings:
+                    library.settingsDestination = nil
+                    library.showsSettings = true
+                case .keyboardSettings:
+                    library.settingsDestination = .keyboard
+                    library.showsSettings = true
+                case .quickInsertSetup:
+                    library.showsQuickInsertSetup = true
+                }
+                appState.linkedSettings = nil
+            }
             .onChange(of: appState.shortcutSearchQuery, initial: true) { _, pending in
                 guard pending != nil, let query = appState.takeShortcutSearchQuery() else { return }
                 library.openSearch(query)

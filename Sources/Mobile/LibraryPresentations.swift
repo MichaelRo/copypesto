@@ -22,7 +22,15 @@ struct LibraryPresentations: ViewModifier {
             .sheet(item: snippetEditorBinding) { target in
                 MobileSnippetEditorView(target: target)
             }
-            .sheet(isPresented: $library.showsSettings, onDismiss: showWelcomeIfAsked) { SettingsSheet() }
+            .sheet(
+                isPresented: $library.showsSettings,
+                onDismiss: {
+                    library.settingsDestination = nil
+                    showWelcomeIfAsked()
+                },
+                content: { SettingsSheet() }
+            )
+            .sheet(isPresented: $library.showsQuickInsertSetup) { QuickInsertSetupSheet() }
             .sheet(isPresented: $library.isComposing) { NewNoteView() }
             .sheet(item: $library.sharing) { share in
                 ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])

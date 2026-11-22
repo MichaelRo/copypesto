@@ -124,14 +124,33 @@ struct KeyboardRootView: View {
             KeyboardPad(insert: keys.insert)
         case .unavailable:
             VStack(spacing: 8) {
-                note("Turn on Pesto Keyboard in Pesto's Settings.")
+                note("Open Pesto once so your clips are ready here.")
+                if let openURL = keys.openURL {
+                    settingsPill("Open Pesto Settings") { openURL(AppLink.url(for: .keyboardSettings)) }
+                }
                 KeyboardPad(insert: keys.insert)
             }
         case .empty:
-            note("No text clips yet. Clips with secrets never appear here.")
+            VStack(spacing: 8) {
+                note("No text clips yet. Clips with secrets never appear here.")
+                if let openURL = keys.openURL {
+                    settingsPill("Keyboard Settings") { openURL(AppLink.url(for: .keyboardSettings)) }
+                }
+            }
         case .ready:
             shelf(matches: matches)
         }
+    }
+
+    private func settingsPill(_ title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: "gearshape")
+                .font(.caption.weight(.medium))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: .capsule)
+        }
+        .buttonStyle(.plain)
     }
 
     private func note(_ text: LocalizedStringKey) -> some View {
@@ -163,6 +182,19 @@ struct KeyboardRootView: View {
                         if let word { model.dismissedWord = word }
                         chip = label.chip
                     }
+                }
+                if let openURL = keys.openURL {
+                    Button {
+                        openURL(AppLink.url(for: .keyboardSettings))
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .frame(minWidth: 32, minHeight: 28)
+                            .background(.primary.opacity(0.08), in: .capsule)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Keyboard Settings"))
                 }
             }
         }

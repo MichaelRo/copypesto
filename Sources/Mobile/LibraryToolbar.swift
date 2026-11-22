@@ -22,6 +22,19 @@ struct LibraryToolbar: ToolbarContent {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Settings", systemImage: "gearshape") { library.showsSettings = true }
                     .accessibilityIdentifier(MobileAccessibilityID.settingsButton)
+                    .contextMenu {
+                        Button("Keyboard & AutoFill", systemImage: "keyboard") {
+                            library.settingsDestination = .keyboard
+                            library.showsSettings = true
+                        }
+                        Button("Set Up Keyboard & AutoFill\u{2026}", systemImage: "text.badge.checkmark") {
+                            library.showsQuickInsertSetup = true
+                        }
+                        Button("Sync", systemImage: "arrow.triangle.2.circlepath") {
+                            library.settingsDestination = .sync
+                            library.showsSettings = true
+                        }
+                    }
             }
         }
         if library.isSelecting {

@@ -14,6 +14,11 @@ extension MobileAppState {
         let serial: Int
     }
 
+    struct LinkedSettings: Equatable {
+        let target: AppLink
+        let serial: Int
+    }
+
     enum LinkOutcome: Equatable {
         case ignored
         case copied
@@ -23,6 +28,15 @@ extension MobileAppState {
 
     @discardableResult
     func open(_ url: URL) -> LinkOutcome {
+        if let appLink = AppLink.target(in: url) {
+            boot()
+            if isHistoryLockedNow() {
+                heldLink = url
+                return .ignored
+            }
+            linkedSettings = LinkedSettings(target: appLink, serial: (linkedSettings?.serial ?? 0) + 1)
+            return .shown
+        }
         guard let target = WidgetLink.target(in: url) else { return .ignored }
         boot()
         if isHistoryLockedNow() {

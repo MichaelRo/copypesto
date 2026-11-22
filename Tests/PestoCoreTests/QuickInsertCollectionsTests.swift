@@ -156,12 +156,18 @@ struct QuickInsertCollectionsTests {
         #expect(set.entries.reduce(0) { $0 + $1.text.utf8.count } <= QuickInsertPolicy.maxTotalBytes)
     }
 
-    @Test("AutoFill lists each chosen collection under its name after Recent")
+    @Test(
+        "AutoFill All shows a single flat group with collection clips merged, while the collection chip filters to it"
+    )
     func whenAutoFillGroups_thenCollectionsFollowTheSections() throws {
         let store = try Store()
         let work = try store.collection("Work", order: 0)
         store.add("Standup at 10", in: work)
-        let groups = try QuickInsertMenu(set: store.set([work.id])).groups(matching: "")
-        #expect(groups.map { $0.collection?.name ?? $0.section.rawValue } == ["recent", "Work"])
+        let menu = try QuickInsertMenu(set: store.set([work.id]))
+        let allGroups = menu.groups(matching: "", chip: .all)
+        #expect(allGroups.count == 1)
+        #expect(allGroups.first?.entries.map(\.text).contains("Standup at 10") == true)
+        let workGroups = menu.groups(matching: "", chip: .collection(work.id))
+        #expect(workGroups.map { $0.collection?.name ?? $0.section.rawValue } == ["Work"])
     }
 }

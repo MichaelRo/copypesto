@@ -31,8 +31,15 @@ final class LibraryModel {
         #endif
     }
 
+    enum SettingsDestination: Hashable {
+        case keyboard
+        case sync
+    }
+
     var columns: NavigationSplitViewVisibility = .all
     var showsSettings = false
+    var settingsDestination: SettingsDestination?
+    var showsQuickInsertSetup = false
     var isComposing = false
     var snippetEditor: SnippetEditorTarget?
     var picksSyncFolder = false

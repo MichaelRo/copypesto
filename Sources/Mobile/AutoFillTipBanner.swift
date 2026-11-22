@@ -11,7 +11,7 @@ struct AutoFillTipBanner: View {
         let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 10))
             : AnyLayout(HStackLayout(spacing: 12))
         layout {
-            Text("Insert your clips in any app. Clips only, never passwords. You switch Pesto on in Settings.")
+            Text("Insert your clips in any app. Clips only, never passwords.")
                 .font(.subheadline)
                 .frame(maxWidth: .infinity, alignment: .leading)
             HStack(spacing: 8) {

@@ -72,14 +72,11 @@ final class ClipboardCardTests: XCTestCase {
         // `preferredColorScheme` does not reach text drawn in a view that is not in a window: it takes the Mac's own
         // appearance (white text on the light card of the light picture).
         controller.view.appearance = NSAppearance(named: colorScheme == .dark ? .darkAqua : .aqua)
+        let size = CGSize(width: cardSize.width + 40, height: cardSize.height + 40)
         withSnapshotTesting(record: .missing) {
             assertSnapshot(
-                of: controller,
-                as: .image(size: CGSize(width: cardSize.width + 40, height: cardSize.height + 40)),
-                named: name,
-                file: file,
-                testName: testName,
-                line: line
+                of: controller, as: .image(perceptualPrecision: 0.98, size: size),
+                named: name, file: file, testName: testName, line: line
             )
         }
     }

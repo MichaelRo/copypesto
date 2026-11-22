@@ -68,7 +68,7 @@ struct EntitlementsTests {
         let group = "com.apple.security.application-groups"
         let keychain = "keychain-access-groups"
         let autofill = "com.apple.developer.authentication-services.autofill-credential-provider"
-        #expect(try Set(plist("Sources/Resources/PestoMobile.entitlements").keys) == [group, keychain])
+        #expect(try Set(plist("Sources/Resources/PestoMobile.entitlements").keys) == [group, keychain, autofill])
         #expect(try Set(plist("Sources/MobileShare/PestoShare.entitlements").keys) == [group])
         #expect(try Set(plist("Sources/MobileAutoFill/PestoAutoFill.entitlements").keys) == [group, keychain, autofill])
         #expect(try plist("Sources/MobileAutoFill/PestoAutoFill.entitlements")[autofill] as? Bool == true)
@@ -114,12 +114,15 @@ struct EntitlementsTests {
                 == "com.apple.authentication-services-credential-provider-ui"
         )
         let attributes = try #require(extensionInfo["NSExtensionAttributes"] as? [String: Any])
-        #expect(Set(attributes.keys) == ["ASCredentialProviderExtensionCapabilities"])
+        #expect(
+            Set(attributes.keys)
+                == ["ASCredentialProviderExtensionCapabilities", "ASCredentialProviderExtensionShowsConfigurationUI"]
+        )
+        #expect(attributes["ASCredentialProviderExtensionShowsConfigurationUI"] as? Bool == true)
         let capabilities = try #require(attributes["ASCredentialProviderExtensionCapabilities"] as? [String: Any])
-        #expect(Set(capabilities.keys) == ["ProvidesPasswords", "ProvidesTextToInsert", "ShowsConfigurationUI"])
+        #expect(Set(capabilities.keys) == ["ProvidesPasswords", "ProvidesTextToInsert"])
         #expect(capabilities["ProvidesPasswords"] as? Bool == true)
         #expect(capabilities["ProvidesTextToInsert"] as? Bool == true)
-        #expect(capabilities["ShowsConfigurationUI"] as? Bool == true)
     }
 
     @Test("the keyboard is a keyboard extension that asks for Full Access and can be switched away from")

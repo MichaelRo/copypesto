@@ -117,9 +117,14 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 >
 > - To add clips: copy text in any app, open Pesto and press the Paste button; or share text, a link or a picture to
 >   Pesto from the share sheet; or write a note with the compose button.
-> - AutoFill: Pesto's AutoFill extension provides text insertion only (the "ProvidesTextToInsert" capability). It does
->   not store, offer or fill passwords, passkeys or one-time codes. To try it: Settings → General → AutoFill &
->   Passwords → turn on Pesto, then in any text field long-press → AutoFill → Pesto, and pick a clip.
+> - AutoFill: Pesto's AutoFill extension (`net.copypesto.pesto.autofill`) provides text insertion only
+>   (`ProvidesTextToInsert`). `ProvidesPasswords` is also declared in `Info.plist` solely because iOS requires it to
+>   list an extension in Settings → General → AutoFill & Passwords and for `ASSettingsHelper` to prompt; Pesto
+>   intentionally cancels all password, passkey, and one-time-code requests (`ASExtensionError.failed` /
+>   `.credentialIdentityNotFound`) and never stores or fills credentials. To try it: tap **Set Up Quick Insert… →
+>   Turn On AutoFill…** in Pesto (or Settings → General → AutoFill & Passwords → turn on Pesto), pin a clip in
+>   Pesto, then in a plain text field (such as Notes) long-press → **AutoFill → Pesto** (not a password field) and
+>   tap a clip.
 > - Keyboard: Pesto's keyboard (`net.copypesto.pesto.keyboard`) has no letter keys: it shows the person's own pinned
 >   clips, snippets and recent text, a numbers-and-punctuation pad (typed input, available without Full Access),
 >   Space, Return, Delete and the Next Keyboard key. It requests Full Access only because iOS opens the app group and the shared Keychain group to a

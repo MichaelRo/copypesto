@@ -9,11 +9,24 @@ struct InsertPickerView: View {
     var insertText: ((String) -> Void)?
     let cancel: () -> Void
     @State private var query = ""
+    @State private var activeChip: QuickInsertMenu.Chip = .all
     @State private var pendingFill: PendingSnippetFill?
+    @State private var rowWidth: CGFloat = 360
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var theme: WidgetSnapshot.Theme {
+        menu.accent ?? .brand
+    }
 
     private var resolvedAccent: Color {
-        menu.accent.flatMap { Color(hex: $0.accent(dark: colorScheme == .dark)) } ?? BrandAccent.color
+        Color(hex: theme.accent(dark: colorScheme == .dark)) ?? BrandAccent.color
+    }
+
+    private var ground: Color {
+        Color(hex: theme.ground(dark: colorScheme == .dark))
+            ?? Color(uiColor: .systemGroupedBackground)
     }
 
     var body: some View {
@@ -28,6 +41,7 @@ struct InsertPickerView: View {
                 }
         }
         .tint(resolvedAccent)
+        .environment(\.pestoAccent, resolvedAccent)
         .sheet(item: $pendingFill) { fill in
             AutoFillSnippetSheet(fill: fill) { expanded in
                 pendingFill = nil
@@ -47,54 +61,240 @@ struct InsertPickerView: View {
             ContentUnavailableView(
                 "Nothing to Insert Yet",
                 systemImage: "text.insert",
-                description: Text("In Pesto, open Settings and turn on Insert from Pesto in other apps.")
+                description: Text("Open Pesto once so your clips are ready here.")
             )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(ground.ignoresSafeArea())
         case .empty:
             ContentUnavailableView(
                 "No Text Clips",
                 systemImage: "text.insert",
                 description: Text("Your pinned and recent text clips appear here. Clips with secrets never do.")
             )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(ground.ignoresSafeArea())
         case .ready:
-            list
+            grid
         }
     }
 
-    private var list: some View {
-        let groups = menu.groups(matching: query)
-        return List {
-            ForEach(groups) { group in
-                Section(group.collection?.name ?? Self.title(of: group.section)) {
-                    ForEach(group.entries) { entry in
-                        row(entry)
+    private var grid: some View {
+        let groups = menu.groups(matching: query, chip: activeChip)
+        let columnsCount = CardGridLayout.columnCount(
+            width: rowWidth, isAccessibilitySize: typeSize.isAccessibilitySize
+        )
+        let cardWidth = CardGridLayout.cardWidth(rowWidth: rowWidth, columns: columnsCount)
+        let columns = Array(
+            repeating: GridItem(.flexible(), spacing: CardGridLayout.spacing, alignment: .top),
+            count: columnsCount
+        )
+        return ScrollView {
+            LazyVStack(alignment: .leading, spacing: 18) {
+                ForEach(groups) { group in
+                    VStack(alignment: .leading, spacing: 10) {
+                        if groups.count > 1 {
+                            Text(group.collection?.name ?? Self.title(of: group.section))
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                                .textCase(.uppercase)
+                                .padding(.horizontal, CardGridLayout.margin)
+                        }
+                        LazyVGrid(columns: columns, spacing: CardGridLayout.spacing) {
+                            ForEach(group.entries) { entry in
+                                cardButton(entry, width: cardWidth)
+                            }
+                        }
+                        .padding(.horizontal, CardGridLayout.margin)
                     }
                 }
             }
+            .padding(.top, 8)
+            .padding(.bottom, 20)
         }
+        .onGeometryChange(for: CGFloat.self) { max(0, $0.size.width - CardGridLayout.margin * 2) } action: {
+            rowWidth = $0
+        }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if menu.chips.count > 1 {
+                chipBar
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Text("Clips only, never passwords")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(ground.opacity(0.92))
+        }
+        .background(ground.ignoresSafeArea())
         .overlay {
             if groups.isEmpty { ContentUnavailableView.search(text: query) }
         }
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always))
     }
 
-    private func row(_ entry: QuickInsertEntry) -> some View {
-        Button { choose(entry) } label: {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.label())
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                if let detail = Self.detail(of: entry) {
-                    Text(detail)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+    private var chipBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(menu.chips, id: \.chip) { label in
+                    let isActive = activeChip == label.chip
+                    Button {
+                        activeChip = label.chip
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: label.symbolName)
+                                .font(.caption)
+                            Text(label.title)
+                                .lineLimit(1)
+                        }
+                    }
+                    .buttonStyle(MobileChipStyle(
+                        isActive: isActive,
+                        tint: label.color.isEmpty ? nil : Color(hex: label.color),
+                        chipHeight: 30,
+                        touchMinimum: 36
+                    ))
+                    .accessibilityAddTraits(isActive ? .isSelected : [])
                 }
             }
+            .padding(.horizontal, CardGridLayout.margin)
+            .padding(.vertical, 8)
         }
+        .background(ground.opacity(0.95))
+    }
+
+    private func cardButton(_ entry: QuickInsertEntry, width: CGFloat) -> some View {
+        let face = CardFace.decide(.init(
+            type: entry.kind,
+            text: entry.text,
+            isConcealed: false,
+            isSecret: false,
+            pictureAspect: nil,
+            isAnimated: false,
+            hasLinkPicture: false,
+            isDark: colorScheme == .dark
+        ))
+        let metrics = CardMetrics(width: width, typeSize: typeSize)
+        let title = CardFace.faceTitle(
+            type: entry.kind,
+            inCollection: activeChip != .all && entry.section == .collection,
+            isConcealed: false,
+            customTitle: entry.customTitle,
+            ogTitle: entry.ogTitle
+        )
+        let isFillIn = needsFillIn(entry)
+        let shape = RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
+        let cardFill = colorScheme == .dark ? Color.white.opacity(0.10) : Color.white
+
+        return Button { choose(entry) } label: {
+            Color.clear
+                .aspectRatio(CardGridLayout.aspectRatio, contentMode: .fit)
+                .overlay {
+                    cardFace(entry, face: face, title: title, metrics: metrics, isFillIn: isFillIn)
+                }
+                .clipShape(shape)
+                .background {
+                    shape.fill(cardFill)
+                        .shadow(color: .black.opacity(colorScheme == .dark ? 0.22 : 0.07), radius: 3, y: 1)
+                }
+                .overlay {
+                    shape.strokeBorder(
+                        Color.primary.opacity(contrast == .increased ? 0.45 : 0.14),
+                        lineWidth: 0.75
+                    )
+                }
+        }
+        .buttonStyle(.plain)
         .accessibilityLabel(entry.label())
         .accessibilityValue(Self.detail(of: entry) ?? "")
-        .accessibilityHint("Inserts this clip")
+        .accessibilityHint(isFillIn ? "Opens snippet fill-in" : "Inserts this clip")
+    }
+
+    @ViewBuilder
+    private func cardFace(
+        _ entry: QuickInsertEntry,
+        face: CardFace,
+        title: String?,
+        metrics: CardMetrics,
+        isFillIn: Bool
+    )
+    -> some View {
+        switch face {
+        case let .color(fill, ink):
+            ColorCardFace(text: entry.text, fill: fill, ink: ink, metrics: metrics, title: title) {
+                cardFooter(entry, ink: ink == .white ? .white : .black, isFillIn: isFillIn)
+            }
+        case let .largeText(points):
+            framed(entry, title: title, isFillIn: isFillIn) {
+                LargeTextBody(text: CardPreviewText.display(entry.text), points: points, metrics: metrics)
+            }
+        case let .link(link):
+            framed(entry, title: title, isFillIn: isFillIn) {
+                LinkBody(link: link, metrics: metrics, hasTitle: title != nil)
+            }
+        case .code:
+            framed(entry, title: title, isFillIn: isFillIn) {
+                PlainTextBody(text: entry.text, isCode: true, metrics: metrics, hasTitle: title != nil)
+            }
+        default:
+            framed(entry, title: title, isFillIn: isFillIn) {
+                PlainTextBody(text: entry.text, isCode: false, metrics: metrics, hasTitle: title != nil)
+            }
+        }
+    }
+
+    private func framed<Body: View>(
+        _ entry: QuickInsertEntry,
+        title: String?,
+        isFillIn: Bool,
+        @ViewBuilder body: () -> Body
+    )
+    -> some View {
+        VStack(alignment: .leading, spacing: CardMetrics.footGap) {
+            VStack(alignment: .leading, spacing: 3) {
+                if let title {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+                body()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            cardFooter(entry, ink: .secondary, isFillIn: isFillIn)
+        }
+        .padding(CardMetrics.inset)
+    }
+
+    private func cardFooter(_ entry: QuickInsertEntry, ink: Color, isFillIn: Bool) -> some View {
+        HStack(spacing: 4) {
+            if entry.section == .pinned {
+                Image(systemName: "pin.fill")
+                    .font(.caption2)
+            } else if entry.section == .snippets {
+                Image(systemName: isFillIn ? "curlybraces" : "text.badge.plus")
+                    .font(.caption2)
+            }
+            if let source = entry.source, !source.isEmpty {
+                Text(source)
+                    .lineLimit(1)
+            } else if isFillIn {
+                Text("Fill-in")
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 2)
+            Text(entry.date, style: .relative)
+                .lineLimit(1)
+        }
+        .font(.caption2)
+        .foregroundStyle(ink)
+    }
+
+    private func needsFillIn(_ entry: QuickInsertEntry) -> Bool {
+        insertText != nil
+            && entry.section == .snippets
+            && !TemplateExpander.fillsWithoutAsking(entry.text)
     }
 
     private static func detail(of entry: QuickInsertEntry) -> String? {

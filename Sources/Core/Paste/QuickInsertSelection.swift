@@ -220,7 +220,7 @@ public enum QuickInsertSelection {
             case .recent: latest.count >= QuickInsertPolicy.maxRecent
             case .snippets, .collection: false
             }
-            guard !isFull, !isSnippet || TemplateExpander.fillsWithoutAsking(body) else { return nil }
+            guard !isFull, !isSnippet || TemplateExpander.fillsWithoutSystemContext(body) else { return nil }
             budget -= body.utf8.count
             chosen.insert(item.id)
             return makeTextEntry(

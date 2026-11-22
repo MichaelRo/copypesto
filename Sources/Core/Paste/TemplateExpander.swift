@@ -72,6 +72,16 @@ public enum TemplateExpander {
         }
     }
 
+    /// True when the template needs no pasteboard, frontmost-app or selection context (safe for AutoFill fill-in).
+    public static func fillsWithoutSystemContext(_ text: String) -> Bool {
+        guard let regex = tokenRegex else { return false }
+        let ns = text as NSString
+        return regex.matches(in: text, range: NSRange(location: 0, length: ns.length)).allSatisfy { match in
+            let token = ns.substring(with: match.range(at: 1))
+            return !["clipboard", "app", "selection"].contains(token)
+        }
+    }
+
     private static let optionalOpen: NSRegularExpression? = try? NSRegularExpression(
         pattern: #"\{\{optional:([^\n}]+)\}\}"#
     )

@@ -27,21 +27,66 @@ public struct QuickInsertMenu: Equatable, Sendable {
         }
     }
 
+    public enum Chip: Hashable, Identifiable, Sendable {
+        case all
+        case pinned
+        case snippets
+        case collection(UUID)
+
+        public var id: Self {
+            self
+        }
+    }
+
+    public struct ChipLabel: Equatable, Sendable {
+        public let chip: Chip
+        public let title: String
+        public let symbolName: String
+        public let color: String
+
+        public init(chip: Chip, title: String, symbolName: String, color: String = "") {
+            self.chip = chip
+            self.title = title
+            self.symbolName = symbolName
+            self.color = color
+        }
+    }
+
     public let state: State
     public let accent: WidgetSnapshot.Theme?
+    public let chips: [ChipLabel]
     private let entries: [QuickInsertEntry]
     private let collections: [QuickInsertCollection]
 
     public init(set: QuickInsertSet?) {
         let activeSet = (set?.autoFillEnabled == true) ? set : nil
         accent = set?.accent
-        entries = (activeSet?.entries ?? []).filter { $0.kind != .image }
-        collections = activeSet?.collections ?? []
-        state = activeSet == nil ? .unavailable : entries.isEmpty ? .empty : .ready
+        let loadedEntries = (activeSet?.entries ?? []).filter { $0.kind != .image }
+        let loadedCollections = activeSet?.collections ?? []
+        entries = loadedEntries
+        collections = loadedCollections
+        state = activeSet == nil ? .unavailable : loadedEntries.isEmpty ? .empty : .ready
+        let sectionChips: [ChipLabel] = [
+            ChipLabel(chip: .pinned, title: String(localized: "Pinned"), symbolName: "pin"),
+            ChipLabel(chip: .snippets, title: String(localized: "Snippets"), symbolName: "text.badge.plus")
+        ]
+        let carried = Set(loadedEntries.map(\.id))
+        let availableSections = sectionChips.filter { label in
+            loadedEntries.contains { Self.section(of: label.chip) == $0.section }
+        }
+        let availableCollections = loadedCollections
+            .filter { $0.entryIDs.contains(where: carried.contains) }
+            .map { ChipLabel(chip: .collection($0.id), title: $0.name, symbolName: $0.symbolName, color: $0.color) }
+        chips = (loadedEntries.isEmpty ? [] : [ChipLabel(
+            chip: .all,
+            title: String(localized: "All"),
+            symbolName: "square.grid.2x2"
+        )])
+            + availableSections + availableCollections
     }
 
-    /// Pinned, Snippets and Recent, then each chosen collection under its name; a group with no match is left out.
-    public func groups(matching query: String) -> [Group] {
+    /// Pinned clips first, then all remaining clips newest-first in a single flat group; or a single chip's group.
+    public func groups(matching query: String, chip: Chip = .all) -> [Group] {
         let needle = query.trimmingCharacters(in: .whitespacesAndNewlines)
         func matches(_ entry: QuickInsertEntry) -> Bool {
             needle.isEmpty || [entry.title, entry.text].contains {
@@ -49,14 +94,37 @@ public struct QuickInsertMenu: Equatable, Sendable {
             }
         }
         let found = entries.filter(matches)
-        let sections: [QuickInsertEntry.Section] = [.pinned, .snippets, .recent]
         let byID = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }
-        return sections.compactMap { section in
+        switch chip {
+        case .all:
+            var seen = Set<UUID>()
+            let pinnedFirst = found.filter {
+                ($0.section == .pinned || $0.section == .snippets) && seen.insert($0.id).inserted
+            }
+            let collectionEntries = collections.flatMap { collection in
+                collection.entryIDs.compactMap { byID[$0] }.filter(matches)
+            }
+            let remaining = (found + collectionEntries)
+                .filter { seen.insert($0.id).inserted }
+                .sorted { $0.date > $1.date }
+            let ordered = pinnedFirst + remaining
+            return ordered.isEmpty ? [] : [Group(section: .pinned, entries: ordered)]
+        case .pinned, .snippets:
+            guard let section = Self.section(of: chip) else { return [] }
             let inSection = found.filter { $0.section == section }
-            return inSection.isEmpty ? nil : Group(section: section, entries: inSection)
-        } + collections.compactMap { collection in
+            return inSection.isEmpty ? [] : [Group(section: section, entries: inSection)]
+        case let .collection(id):
+            guard let collection = collections.first(where: { $0.id == id }) else { return [] }
             let members = collection.entryIDs.compactMap { byID[$0] }.filter(matches)
-            return members.isEmpty ? nil : Group(section: .collection, collection: collection, entries: members)
+            return members.isEmpty ? [] : [Group(section: .collection, collection: collection, entries: members)]
+        }
+    }
+
+    private static func section(of chip: Chip) -> QuickInsertEntry.Section? {
+        switch chip {
+        case .pinned: .pinned
+        case .snippets: .snippets
+        case .all, .collection: nil
         }
     }
 }

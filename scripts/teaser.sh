@@ -25,12 +25,15 @@ if [ -z "$website" ]; then
   done
 fi
 [ -d "$website/video/teaser" ] || { echo "teaser.sh: the website checkout is not found. Pass --website DIR or set PESTO_WEBSITE." >&2; exit 2; }
-if pgrep -x Pesto >/dev/null; then
-  echo "teaser.sh: Pesto is running. Quit it and run this again." >&2
+if [ "$frames_only" = 0 ] && [ -z "$music" ]; then
+  music="$website/video/audio-in/morning_in_the_piazza.mp4"
+fi
+if [ "$frames_only" = 0 ] && [ ! -f "$music" ]; then
+  echo "teaser.sh: the film needs the music track (--music FILE, PESTO_TEASER_MUSIC, or $music), or use --frames-only." >&2
   exit 2
 fi
-if [ "$frames_only" = 0 ] && [ -z "$music" ]; then
-  echo "teaser.sh: the film needs the music track (--music FILE or PESTO_TEASER_MUSIC), or use --frames-only." >&2
+if pgrep -x Pesto >/dev/null; then
+  echo "teaser.sh: Pesto is running. Quit it and run this again." >&2
   exit 2
 fi
 
@@ -75,7 +78,7 @@ printf '%s\n' "$commit" >"$website/video/teaser/FRAMES-SOURCE"
 echo "frames and pictures are in $website/video/teaser (app commit $commit)."
 
 if [ "$frames_only" = 1 ]; then
-  echo "Next: (cd $website/video/teaser && npm run film -- --music <track>) renders the films."
+  echo "Next: (cd $website/video/teaser && npm run film) renders the films."
   exit 0
 fi
 (cd "$website/video/teaser" && ./scripts/make_film.sh --music "$music")

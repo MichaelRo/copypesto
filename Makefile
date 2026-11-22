@@ -168,8 +168,8 @@ teaser-frames: generate ## [Maintenance] Retake the website film's shelf frames 
 	scripts/teaser.sh --frames-only
 
 .PHONY: teaser
-teaser: generate ## [Maintenance] Retake the film's frames, then render, mix and finish both films in the website checkout; needs TEASER_MUSIC=<track> (docs/teaser.md)
-	scripts/teaser.sh --music "$(TEASER_MUSIC)"
+teaser: generate ## [Maintenance] Retake the film's frames, then render, mix and finish both films in the website checkout (uses tracked track or TEASER_MUSIC=<file>)
+	scripts/teaser.sh $(if $(TEASER_MUSIC),--music "$(TEASER_MUSIC)",)
 
 .PHONY: marketing-loops
 marketing-loops: generate ## [Maintenance] Take the frames of the website's scenes into .build/marketing/loops/ and make the MP4, WebM and GIF for the README and launch posts in .build/marketing/video/ (needs ffmpeg and gifski); quit other apps first

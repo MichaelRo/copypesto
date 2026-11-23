@@ -45,6 +45,7 @@ struct KeyboardMenuTests {
     @Test("with Full Access: no set is unavailable, an empty set is empty, otherwise ready")
     func whenFullAccess_thenTheStateSaysWhatThereIs() {
         #expect(KeyboardMenu(hasFullAccess: true) { nil }.state == .unavailable)
+        #expect(KeyboardMenu(hasFullAccess: true) { .locked() }.state == .locked)
         #expect(KeyboardMenu(hasFullAccess: true) { .empty }.state == .empty)
         #expect(KeyboardMenu(hasFullAccess: true) { full() }.state == .ready)
     }

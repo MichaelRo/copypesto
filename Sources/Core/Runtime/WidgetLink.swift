@@ -54,6 +54,7 @@ public enum AppLink: Equatable, Sendable {
     case settings
     case keyboardSettings
     case quickInsertSetup
+    case unlock
 
     public static let host = "settings"
 
@@ -65,6 +66,7 @@ public enum AppLink: Equatable, Sendable {
         case .settings: components.path = ""
         case .keyboardSettings: components.path = "/keyboard"
         case .quickInsertSetup: components.path = "/setup"
+        case .unlock: components.path = "/unlock"
         }
         return components.url ?? URL(fileURLWithPath: "/")
     }
@@ -80,6 +82,7 @@ public enum AppLink: Equatable, Sendable {
         case []: return .settings
         case ["keyboard"]: return .keyboardSettings
         case ["setup"]: return .quickInsertSetup
+        case ["unlock"]: return .unlock
         default: return nil
         }
     }

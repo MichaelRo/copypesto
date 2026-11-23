@@ -45,7 +45,7 @@ struct RecentClipsView: View {
                     symbol: "lock", title: "Locked", detail: "Open Pesto to see your clips.",
                     compact: resolvedSize == .small
                 )
-                .opensShelfOnTheMac()
+                .opensUnlockOnPhone()
             case .hidden:
                 WidgetMessage(
                     symbol: "eye.slash", title: "Clip contents hidden",

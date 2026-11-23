@@ -42,4 +42,13 @@ extension View {
         self
         #endif
     }
+
+    @ViewBuilder
+    func opensUnlockOnPhone() -> some View {
+        #if !os(macOS)
+        widgetURL(AppLink.url(for: .unlock))
+        #else
+        opensShelfOnTheMac()
+        #endif
+    }
 }

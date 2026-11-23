@@ -1,0 +1,181 @@
+name: Release
+
+# Builds, signs (Developer ID), notarizes, staples, and publishes the macOS release DMG on a protected
+# `release` GitHub Environment (Required Reviewer = MichaelRo, `main` / tags only).
+on:
+  workflow_dispatch:
+    inputs:
+      skip_verify:
+        description: "Skip verify.sh --no-ui (only when main already passed verify)"
+        type: boolean
+        default: false
+      sync_profile:
+        description: "Provisioning profile name for iCloud Keychain sync (optional)"
+        type: string
+        default: ""
+      widget_profile:
+        description: "Provisioning profile name for Mac widget (optional; requires sync_profile)"
+        type: string
+        default: ""
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: xcode-27
+    environment: release
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      KEYCHAIN_PATH: ${{ runner.temp }}/pesto-release.keychain-db
+      ASC_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+      SPARKLE_KEY_PATH: ${{ runner.temp }}/sparkle.key
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Select the newest Xcode
+        run: scripts/select-xcode.sh
+
+      - name: Install pinned tools (SwiftFormat, SwiftLint, XcodeGen; checksummed)
+        run: |
+          tools="$(scripts/install-tools.sh)"
+          echo "$tools" >> "$GITHUB_PATH"
+
+      - name: Verify before release (unless explicitly skipped)
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_verify != true }}
+        env:
+          PESTO_DISABLE_TEXT_RECOGNITION: "1"
+          PESTO_SKIP_RELEASE_BUILD: "1"
+        run: scripts/verify.sh --no-ui
+
+      - name: Import Developer ID certificate and provisioning profiles
+        env:
+          P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12 }}
+          P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_PASSWORD }}
+          SYNC_PROFILE_BASE64: ${{ secrets.APPLE_SYNC_PROFILE_B64 }}
+          WIDGET_PROFILE_BASE64: ${{ secrets.APPLE_WIDGET_PROFILE_B64 }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PASS="$(openssl rand -hex 24)"
+
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+
+          P12_FILE="${{ runner.temp }}/dev-id.p12"
+          echo "$P12_BASE64" | base64 --decode > "$P12_FILE"
+          security import "$P12_FILE" -k "$KEYCHAIN_PATH" -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productsign
+          rm -f "$P12_FILE"
+
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          if [[ -n "${SYNC_PROFILE_BASE64:-}" ]]; then
+            echo "$SYNC_PROFILE_BASE64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/pesto-sync.mobileprovision"
+          fi
+          if [[ -n "${WIDGET_PROFILE_BASE64:-}" ]]; then
+            echo "$WIDGET_PROFILE_BASE64" | base64 --decode > "$HOME/Library/MobileDevice/Provisioning Profiles/pesto-widget.mobileprovision"
+          fi
+
+      - name: Configure notarytool credentials
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          echo "$ASC_PRIVATE_KEY" | base64 --decode > "$ASC_KEY_PATH"
+          xcrun notarytool store-credentials pesto-notarytool \
+            --keychain "$KEYCHAIN_PATH" \
+            --key "$ASC_KEY_PATH" \
+            --key-id "$ASC_KEY_ID" \
+            --issuer "$ASC_ISSUER_ID"
+
+      - name: Build, sign, notarize, and package DMG
+        env:
+          PESTO_SKIP_VERIFY_RECEIPT: ${{ (github.event_name == 'workflow_dispatch' && inputs.skip_verify == true) && '1' || '0' }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          SYNC_PROFILE: ${{ inputs.sync_profile }}
+          WIDGET_PROFILE: ${{ inputs.widget_profile }}
+        run: |
+          set -euo pipefail
+          args=()
+          [[ -n "${APPLE_TEAM_ID:-}" ]] && args+=("APPLE_TEAM_ID=$APPLE_TEAM_ID")
+          [[ -n "${SYNC_PROFILE:-}" ]] && args+=("SYNC_PROFILE=$SYNC_PROFILE")
+          [[ -n "${WIDGET_PROFILE:-}" ]] && args+=("WIDGET_PROFILE=$WIDGET_PROFILE")
+          make release "${args[@]}"
+
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' .build/xcode/export/Pesto.app/Contents/Info.plist)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "DMG=.build/xcode/export/Pesto-${VERSION}.dmg" >> "$GITHUB_ENV"
+          echo "SHA=.build/xcode/export/Pesto-${VERSION}.dmg.sha256" >> "$GITHUB_ENV"
+
+      - name: Sign DMG with Sparkle EdDSA key
+        if: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          SIGN_UPDATE=".build/xcode/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update"
+          if [[ ! -x "$SIGN_UPDATE" ]]; then
+            SIGN_UPDATE="$(find .build -name sign_update -type f -perm +111 | head -n 1)"
+          fi
+          echo "$SPARKLE_PRIVATE_KEY" > "$SPARKLE_KEY_PATH"
+          SPARKLE_SIG="$("$SIGN_UPDATE" --ed-key-file "$SPARKLE_KEY_PATH" "$DMG")"
+          echo "SPARKLE_SIG=$SPARKLE_SIG" >> "$GITHUB_ENV"
+          echo "$SPARKLE_SIG"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v${VERSION}"
+          SHA_VAL="$(awk '{print $1}' "$SHA")"
+          NOTES=$(cat <<EOF
+          Pesto ${VERSION}
+
+          SHA-256: \`${SHA_VAL}\`
+          ${SPARKLE_SIG:+Sparkle: \`${SPARKLE_SIG}\`}
+          EOF
+          )
+          gh release create "$TAG" "$DMG" "$SHA" \
+            --title "Pesto ${VERSION}" \
+            --notes "$NOTES" \
+            --target "${{ github.sha }}"
+
+      - name: Trigger downstream website & Homebrew tap updates (optional)
+        if: ${{ secrets.RELEASE_DISPATCH_TOKEN != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
+        run: |
+          gh api repos/MichaelRo/copypesto-website/dispatches -f event_type=app-docs-updated || true
+          gh workflow run bump.yml -R MichaelRo/homebrew-copypesto -f version="$VERSION" || true
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Pesto-${{ env.VERSION }}-dmg
+          path: |
+            ${{ env.DMG }}
+            ${{ env.SHA }}
+
+      - name: Clean up ephemeral credentials
+        if: always()
+        run: |
+          security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          rm -f "$ASC_KEY_PATH" "$SPARKLE_KEY_PATH" "${{ runner.temp }}/dev-id.p12"
+          rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/pesto-sync.mobileprovision" \
+                "$HOME/Library/MobileDevice/Provisioning Profiles/pesto-widget.mobileprovision"

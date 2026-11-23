@@ -315,4 +315,27 @@ struct MobileHistoryLockTests {
         #expect(!HistoryLockPolicy.shouldPromptAutomatically(isLocked: true, isVisible: false))
         #expect(!HistoryLockPolicy.shouldPromptAutomatically(isLocked: false, isVisible: true))
     }
+
+    @Test("a locked QuickInsert set reports locked while locked, and unlocks when Pesto unlocks")
+    func whenLocked_thenQuickInsertReportsLockedUntilUnlocked() async throws {
+        let setting = LockSetting(true)
+        setting.showsOutside = false
+        let library = try await library(setting)
+        let root = try temporaryFolder("lock-quick-insert-state")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let surfaces = surfaces(library, root: root)
+        await library.state.unlockHistory()
+        _ = try await library.add("quick clip")
+        library.state.writeQuickInsert()
+        #expect(try surfaces.quickCount() == 1)
+
+        library.state.lockHistory()
+        let lockedSet = try surfaces.quick.file.read(with: #require(try surfaces.quick.keys.key()))
+        #expect(lockedSet.isLocked)
+        #expect(QuickInsertMenu(set: lockedSet).state == .locked)
+        #expect(KeyboardMenu(hasFullAccess: true) { lockedSet }.state == .locked)
+
+        await library.state.unlockHistory()
+        #expect(try surfaces.quickCount() == 1)
+    }
 }

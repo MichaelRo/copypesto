@@ -4,8 +4,8 @@ import PestoCore
 
 /// What the History Lock does to the app (ADR 0054), as the Mac's `AppState.lockHistory` does: nothing decrypted
 /// stays in memory, Undo forgets, Shortcuts find nothing, sync pauses, and what was shared or tapped on a widget
-/// waits for the unlock. With the lock on, the widget and the AutoFill set hold nothing at all, because iOS gives
-/// Pesto no moment to empty them when the timeout passes while it is away.
+/// waits for the unlock. With the lock on and `showsClipsOutsideWhileLocked` off, outside surfaces lock with the
+/// app and expire after the grace window.
 extension MobileAppState {
     var isHistoryLocked: Bool {
         historyLock.isLocked
@@ -52,6 +52,7 @@ extension MobileAppState {
         if historyLock.isEnabled {
             HistoryLockPolicy.lockWasSwitchedOn()
             offersAutoFillTip = false
+            historyLock.lock()
             if historyLock.holdsOutsideSurfaces { emptyOutsideSurfaces() }
         } else {
             let wasLocked = historyLock.isLocked

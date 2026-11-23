@@ -27,11 +27,22 @@ struct WorkflowSafetyTests {
         #expect(offenders.isEmpty, "pin to a commit SHA: \(offenders)")
     }
 
-    @Test("no workflow imports a signing certificate or runs on a version tag")
+    @Test("only the protected release environment workflow may import a signing certificate or run on a version tag")
     func noSigningInCI() throws {
         for (name, text) in try Self.workflows() {
-            #expect(!text.contains("security import"), "\(name) imports a certificate")
-            #expect(!text.contains("tags:"), "\(name) runs on tags: releases are built locally")
+            let hasSigning = text.contains("security import")
+            let hasTagTrigger = text.contains("tags:")
+            if name == "release.yml" {
+                if hasSigning || hasTagTrigger {
+                    #expect(
+                        text.contains("environment: release"),
+                        "\(name) uses signing or tag triggers without `environment: release`"
+                    )
+                }
+            } else {
+                #expect(!hasSigning, "\(name) imports a certificate")
+                #expect(!hasTagTrigger, "\(name) runs on tags: releases belong only in release.yml")
+            }
         }
     }
 

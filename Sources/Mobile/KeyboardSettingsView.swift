@@ -46,17 +46,21 @@ struct KeyboardSettingsView: View {
                         appState.quickInsertSettingChanged()
                         Task {
                             let granted = await ASSettingsHelper.requestToTurnOnCredentialProviderExtension()
-                            autoFillStatusNote = granted
-                                ? String(localized: "AutoFill is enabled.")
-                                : String(localized: "Opened Settings. Turn on Pesto under AutoFill & Passwords.")
-                            if !granted {
+                            if granted {
+                                isAutoFillEnabled = true
+                                autoFillStatusNote = nil
+                                try? await Task.sleep(for: .milliseconds(250))
+                            } else {
+                                autoFillStatusNote = String(
+                                    localized: "Opened Settings. Turn on Pesto under AutoFill & Passwords."
+                                )
                                 await AutoFillSettings.openSettings()
                             }
-                            await refreshStatus()
+                            await refreshStatus(keepGranted: granted)
                         }
                     }
                 }
-                if let autoFillStatusNote {
+                if let autoFillStatusNote, !isAutoFillEnabled {
                     Text(autoFillStatusNote)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -109,6 +113,9 @@ struct KeyboardSettingsView: View {
         .sheet(isPresented: $showsSetupGuide) {
             QuickInsertSetupSheet()
         }
+        .onChange(of: showsSetupGuide) { _, shown in
+            if !shown { Task { await refreshStatus() } }
+        }
         .navigationTitle("Keyboard & AutoFill")
         .onAppear {
             MobileAppState.migrateQuickInsertSettingsIfNeeded()
@@ -121,9 +128,10 @@ struct KeyboardSettingsView: View {
         }
     }
 
-    private func refreshStatus() async {
+    private func refreshStatus(keepGranted: Bool = false) async {
         let state = await ASCredentialIdentityStore.shared.state()
-        isAutoFillEnabled = state.isEnabled
+        isAutoFillEnabled = state.isEnabled || keepGranted
+        if isAutoFillEnabled { autoFillStatusNote = nil }
         isKeyboardAdded = UITextInputMode.activeInputModes.contains { mode in
             (mode.value(forKey: "identifier") as? String)?.contains("net.copypesto.pesto") == true
         }

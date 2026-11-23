@@ -7,6 +7,7 @@ struct InsertPickerView: View {
     let menu: QuickInsertMenu
     let insert: (QuickInsertEntry) -> Void
     var insertText: ((String) -> Void)?
+    var openSettings: (() -> Void)?
     let cancel: () -> Void
     @State private var query = ""
     @State private var activeChip: QuickInsertMenu.Chip = .all
@@ -37,6 +38,14 @@ struct InsertPickerView: View {
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel", action: cancel)
+                    }
+                    if let openSettings {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button(action: openSettings) {
+                                Image(systemName: "gearshape")
+                            }
+                            .accessibilityLabel(Text("Settings"))
+                        }
                     }
                 }
         }

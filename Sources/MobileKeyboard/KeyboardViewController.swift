@@ -138,15 +138,25 @@ final class KeyboardViewController: UIInputViewController {
         let selector = NSSelectorFromString("openURL:options:completionHandler:")
         var responder: UIResponder? = self
         while let current = responder {
-            if current.responds(to: selector),
+            if current is UIApplication,
+               current.responds(to: selector),
                let method = class_getInstanceMethod(type(of: current), selector)
             {
-                typealias OpenIMP = @convention(c) (AnyObject, Selector, NSURL, NSDictionary, AnyObject?) -> Void
+                typealias OpenIMP = @convention(c) (
+                    AnyObject, Selector, NSURL, NSDictionary, (@convention(block) (Bool) -> Void)?
+                )
+                    -> Void
                 let imp = unsafeBitCast(method_getImplementation(method), to: OpenIMP.self)
-                imp(current, selector, url as NSURL, [:] as NSDictionary, nil)
+                imp(current, selector, url as NSURL, [:] as NSDictionary) { [weak self] opened in
+                    guard !opened else { return }
+                    let target = url.absoluteString
+                    Self.logger.warning("UIApplication.open returned false for \(target, privacy: .public)")
+                    self?.extensionContext?.open(url, completionHandler: nil)
+                }
                 return
             }
             responder = current.next
         }
+        extensionContext?.open(url, completionHandler: nil)
     }
 }

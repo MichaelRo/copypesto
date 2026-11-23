@@ -181,43 +181,46 @@ struct KeyboardRootView: View {
     }
 
     private func chipRow(matches: [QuickInsertEntry]) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                if let word {
-                    KeyboardChip(
-                        title: "\u{201C}\(word)\u{201D}", symbolName: "xmark", isSelected: !matches.isEmpty,
-                        isDimmed: matches.isEmpty
-                    ) { model.dismissedWord = word }
-                        .accessibilityLabel(Text("Matching \(word)"))
-                        .accessibilityHint(Text("Shows all clips again"))
-                }
-                ForEach(model.menu.chips, id: \.chip) { label in
-                    KeyboardChip(
-                        title: label.title, symbolName: label.symbolName,
-                        isSelected: matches.isEmpty && label.chip == selectedChip, isDimmed: false,
-                        tint: label.color.isEmpty ? nil : Color(hex: label.color)
-                    ) {
-                        if let word { model.dismissedWord = word }
-                        chip = label.chip
+        HStack(spacing: 6) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    if let word {
+                        KeyboardChip(
+                            title: "\u{201C}\(word)\u{201D}", symbolName: "xmark", isSelected: !matches.isEmpty,
+                            isDimmed: matches.isEmpty
+                        ) { model.dismissedWord = word }
+                            .accessibilityLabel(Text("Matching \(word)"))
+                            .accessibilityHint(Text("Shows all clips again"))
                     }
-                }
-                if let openURL = keys.openURL {
-                    Button {
-                        openURL(AppLink.url(for: .keyboardSettings))
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(.secondary)
-                            .frame(minWidth: 32, minHeight: 28)
-                            .background(.primary.opacity(0.08), in: .capsule)
+                    ForEach(model.menu.chips, id: \.chip) { label in
+                        KeyboardChip(
+                            title: label.title, symbolName: label.symbolName,
+                            isSelected: matches.isEmpty && label.chip == selectedChip, isDimmed: false,
+                            tint: label.color.isEmpty ? nil : Color(hex: label.color)
+                        ) {
+                            if let word { model.dismissedWord = word }
+                            chip = label.chip
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("Keyboard Settings"))
                 }
             }
+            .scrollEdgeEffectHidden(true, for: .all)
+            .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
+
+            if let openURL = keys.openURL {
+                Button {
+                    openURL(AppLink.url(for: .keyboardSettings))
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 32, minHeight: 28)
+                        .background(.primary.opacity(0.08), in: .capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("Keyboard Settings"))
+            }
         }
-        .scrollEdgeEffectHidden(true, for: .all)
-        .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
         .fixedSize(horizontal: false, vertical: true)
     }
 

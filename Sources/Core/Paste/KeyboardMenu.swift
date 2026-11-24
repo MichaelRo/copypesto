@@ -44,6 +44,7 @@ public struct KeyboardMenu: Equatable, Sendable {
     public let returnsAfterInsert: Bool
     public let accent: WidgetSnapshot.Theme
     public let keyboardSize: KeyboardSize
+    public let setCreatedAt: Date?
     private let entries: [QuickInsertEntry]
     private let collections: [QuickInsertCollection]
 
@@ -58,6 +59,7 @@ public struct KeyboardMenu: Equatable, Sendable {
             returnsAfterInsert = true
             accent = .brand
             keyboardSize = .medium
+            setCreatedAt = nil
             entries = []
             collections = []
             return
@@ -73,6 +75,7 @@ public struct KeyboardMenu: Equatable, Sendable {
         returnsAfterInsert = activeSet?.returnsAfterInsert ?? true
         accent = activeSet?.accent ?? .brand
         keyboardSize = activeSet?.keyboardSize ?? .medium
+        setCreatedAt = activeSet?.createdAt
         if activeSet == nil {
             state = .unavailable
         } else if isLocked {

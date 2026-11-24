@@ -4,16 +4,20 @@ import PestoCore
 import SwiftData
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 /// The few settings the iOS app has. What only a Mac does (shortcuts, the login item, app exclusions) is not here.
 struct SettingsView: View {
+    var onClose: (() -> Void)?
     @Environment(MobileAppState.self) private var appState
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.pestoAccent) private var accent
     @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.appTheme) private var theme: String
     @AppStorage(Setting.appThemeDark) private var darkTheme: String
+    @AppStorage(Setting.accentColorHex) private var accentColorHex: String
     @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
@@ -33,6 +37,14 @@ struct SettingsView: View {
     @State private var isConfirmingClear = false
     @State private var isAutoFillEnabled = false
     @State private var isKeyboardAdded = false
+    @State private var exportedShare: ClipShare?
+    @State private var isExportingHistory = false
+    @State private var activeImport: ImportKind?
+
+    private enum ImportKind {
+        case collection
+        case history
+    }
 
     private struct PendingRetention: Identifiable {
         let id = UUID()
@@ -49,13 +61,28 @@ struct SettingsView: View {
                         Text(choice.displayName).tag(choice.rawValue)
                     }
                 }
-                .onChange(of: theme) { appState.writeQuickInsert() }
-                .onChange(of: darkTheme) { appState.writeQuickInsert() }
+                .tint(accent)
+                .id(resolvedAccentHex)
+                .onChange(of: theme) {
+                    appState.writeQuickInsert()
+                    Task { await appState.writeWidget() }
+                }
+                .onChange(of: darkTheme) {
+                    appState.writeQuickInsert()
+                    Task { await appState.writeWidget() }
+                }
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
                         Text(mode.label).tag(mode.rawValue)
                     }
                 }
+                .tint(accent)
+                .id(resolvedAccentHex)
+                MobileAccentPicker(selection: $accentColorHex, theme: theme, darkTheme: darkTheme)
+                    .onChange(of: accentColorHex) {
+                        appState.writeQuickInsert()
+                        Task { await appState.writeWidget() }
+                    }
             }
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
@@ -67,7 +94,6 @@ struct SettingsView: View {
                     }
                 if addsCopiesOnOpen {
                     Button("Allow Paste Without Asking\u{2026}") {
-                        _ = AppPasteboard.general.hasStrings
                         if let url = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(url)
                         }
@@ -79,6 +105,8 @@ struct SettingsView: View {
                         Text(String(localized: "Custom (\(retentionDays) days)")).tag(retentionDays)
                     }
                 }
+                .tint(accent)
+                .id(resolvedAccentHex)
                 .accessibilityIdentifier(MobileAccessibilityID.retentionAgePicker)
                 Picker("Keep at most", selection: retentionMaxItemsChoice) {
                     ForEach(RetentionChoices.itemCounts, id: \.self) { Text("\($0.formatted()) clips").tag($0) }
@@ -86,6 +114,8 @@ struct SettingsView: View {
                         Text(String(localized: "Custom (\(retentionMaxItems) clips)")).tag(retentionMaxItems)
                     }
                 }
+                .tint(accent)
+                .id(resolvedAccentHex)
             } header: {
                 Text("History & Capture")
             } footer: {
@@ -108,6 +138,8 @@ struct SettingsView: View {
                                 .tag(minutes)
                         }
                     }
+                    .tint(accent)
+                    .id(resolvedAccentHex)
                 }
                 Toggle("Load link previews", isOn: $linkPreviews)
                     .accessibilityIdentifier(MobileAccessibilityID.linkPreviewsToggle)
@@ -116,6 +148,8 @@ struct SettingsView: View {
                     Text("Hide").tag(NSFWMode.hide.rawValue)
                     Text("Show").tag(NSFWMode.show.rawValue)
                 }
+                .tint(accent)
+                .id(resolvedAccentHex)
                 .onChange(of: nsfwModeRaw) { _, newValue in
                     Task {
                         if NSFWMode(rawValue: newValue)?.detectsContent == true,
@@ -186,6 +220,32 @@ struct SettingsView: View {
                 }
             }
             Section {
+                Button("Import Collection (.pesto)\u{2026}") {
+                    activeImport = .collection
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.importCollectionButton)
+                Button("Export History (JSON)\u{2026}") {
+                    guard !isExportingHistory else { return }
+                    isExportingHistory = true
+                    Task {
+                        defer { isExportingHistory = false }
+                        if let url = await appState.exportHistoryJSON() {
+                            exportedShare = ClipShare(file: url)
+                        }
+                    }
+                }
+                .disabled(isExportingHistory)
+                .accessibilityIdentifier(MobileAccessibilityID.exportHistoryButton)
+                Button("Import History (JSON)\u{2026}") {
+                    activeImport = .history
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.importHistoryButton)
+            } header: {
+                Text("Data")
+            } footer: {
+                Text("Collections share as .pesto files with their clips. History exports save text clips as JSON.")
+            }
+            Section {
                 Button("Clear History", role: .destructive) { Task { await askToClear() } }
             } footer: {
                 Text("Pinned clips are kept.")
@@ -193,13 +253,18 @@ struct SettingsView: View {
             Section {
                 Button("Show Welcome Again") {
                     appState.requestWelcomeAgain()
-                    dismiss()
+                    if let onClose {
+                        onClose()
+                    } else {
+                        dismiss()
+                    }
                 }
                 .accessibilityIdentifier(MobileAccessibilityID.showWelcomeAgain)
             } footer: {
                 Text(AppVersion.displayString())
             }
         }
+        .tint(accent)
         .navigationTitle("Settings")
         .onAppear {
             MobileAppState.migrateQuickInsertSettingsIfNeeded()
@@ -225,6 +290,38 @@ struct SettingsView: View {
         } message: { _ in
             Text("Clips past the new limit are deleted now. Pinned clips stay. It can\u{2019}t be undone.")
         }
+        .sheet(item: $exportedShare) { share in
+            ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])
+        }
+        .onDisappear {
+            exportedShare?.files.forEach(ShareFile.remove)
+        }
+        .fileImporter(
+            isPresented: isImportingFile,
+            allowedContentTypes: activeImport == .history ? [.json] : CollectionFileType.importableTypes
+        ) { result in
+            let kind = activeImport
+            activeImport = nil
+            guard case let .success(url) = result else { return }
+            switch kind {
+            case .collection:
+                _ = appState.openCollectionFile(url)
+            case .history:
+                Task { await appState.importHistoryJSON(from: url) }
+            case nil:
+                break
+            }
+        }
+        .collectionImportConfirmation(active: canConfirmCollectionImport)
+    }
+
+    private var isImportingFile: Binding<Bool> {
+        Binding(get: { activeImport != nil }, set: { if !$0 { activeImport = nil } })
+    }
+
+    private var canConfirmCollectionImport: Bool {
+        exportedShare == nil && !isConfirmingClear && pendingRetention == nil && activeImport == nil
+            && (appState.sync?.flow ?? .idle) == .idle && appState.sync?.pendingJoin == nil
     }
 
     private var retentionDaysChoice: Binding<Int> {
@@ -283,9 +380,15 @@ struct SettingsView: View {
         })
     }
 
+    private var resolvedAccentHex: String {
+        MobileTheme.resolve(
+            accent: accentColorHex, theme: theme, darkTheme: darkTheme, isDark: colorScheme == .dark
+        ).accentHex
+    }
+
     private var activeThemeBinding: Binding<String> {
         Binding(
-            get: { colorScheme == .dark ? darkTheme : theme },
+            get: { AppTheme.resolve(light: theme, dark: darkTheme, isDark: colorScheme == .dark).rawValue },
             set: { newValue in
                 if colorScheme == .dark {
                     darkTheme = newValue
@@ -313,6 +416,7 @@ struct SettingsView: View {
 }
 
 struct SettingsSheet: View {
+    var onClose: (() -> Void)?
     @Environment(LibraryModel.self) private var library
     @Environment(\.dismiss) private var dismiss
     @Environment(\.pestoSurface) private var ground
@@ -320,13 +424,19 @@ struct SettingsSheet: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            SettingsView()
+            SettingsView(onClose: onClose)
                 .scrollContentBackground(.hidden)
                 .background(ground.ignoresSafeArea())
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { dismiss() }
+                        Button("Done") {
+                            if let onClose {
+                                onClose()
+                            } else {
+                                dismiss()
+                            }
+                        }
                     }
                 }
                 .navigationDestination(for: LibraryModel.SettingsDestination.self) { destination in
@@ -336,6 +446,7 @@ struct SettingsSheet: View {
                     }
                 }
         }
+        .overlay(alignment: .bottom) { LibraryBanners(messagesOnly: true) }
         .modifier(MobileAccent())
         .onAppear {
             if let destination = library.settingsDestination {

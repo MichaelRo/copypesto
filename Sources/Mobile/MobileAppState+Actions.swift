@@ -261,23 +261,6 @@ extension MobileAppState {
         }
     }
 
-    func exportCollection(_ board: Pinboard) async -> URL? {
-        guard let container = historyContainer else { return nil }
-        let boardID = board.id
-        let boardName = board.name
-        var exportedURL: URL?
-        await reportAsync("Couldn\u{2019}t export the collection.") {
-            let exporter = HistoryExporter(modelContainer: container)
-            let file = try await exporter.exportCollectionFile(id: boardID)
-            let name = CollectionFilePolicy.sanitizedName(boardName)
-            exportedURL = try ShareFile.write(
-                file.data, fileName: name.isEmpty ? CollectionFilePolicy.defaultName : name,
-                fileExtension: CollectionFileType.fileExtension
-            )
-        }
-        return exportedURL
-    }
-
     func addCollection(named name: String, existing: [Pinboard]) -> Pinboard? {
         var draft = CollectionDraft.new(existing: existing)
         draft.name = name
@@ -351,6 +334,7 @@ extension MobileAppState {
         guard let service = storageService else { return }
         dismissUndoOffer()
         ShareFile.removeAll()
+        Self.clearImportStaging()
         secretReveal.hideAll()
         decodedJWT = nil
         closeAI()
@@ -369,6 +353,7 @@ extension MobileAppState {
     /// snapshot are brought up to date before iOS may suspend the app (ADR 0051, ADR 0052).
     func didLeaveForeground() {
         isActivated = false
+        cancelPendingCollectionImport()
         historyLock.didLeaveForeground(at: clock())
         closeAI()
         secretReveal.hideAll()

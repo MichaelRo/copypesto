@@ -44,6 +44,7 @@ final class LibraryModel {
     var snippetEditor: SnippetEditorTarget?
     var picksSyncFolder = false
     var isNamingCollection = false
+    var isImportingCollection = false
     var editingCollection: Pinboard?
     var pendingDelete: UUID?
     var sharing: ClipShare?
@@ -163,6 +164,7 @@ final class LibraryModel {
         isComposing = false
         picksSyncFolder = false
         isNamingCollection = false
+        isImportingCollection = false
         editingCollection = nil
         pendingDelete = nil
         sharing = nil

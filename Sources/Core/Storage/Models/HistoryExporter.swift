@@ -99,7 +99,7 @@ public actor HistoryExporter {
     }
 
     /// Reads an import file: a regular file only, refused over `maxImportBytes` before any of it is loaded.
-    static func boundedContents(of url: URL) throws -> Data {
+    public static func boundedContents(of url: URL) throws -> Data {
         try CollectionFileReader.read(url, maxBytes: maxImportBytes)
     }
 

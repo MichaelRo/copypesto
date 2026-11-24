@@ -19,6 +19,7 @@ struct SyncSettingsView: View {
             }
         }
         .navigationTitle("Sync")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

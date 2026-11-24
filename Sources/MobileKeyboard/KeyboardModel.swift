@@ -9,6 +9,7 @@ import PestoCore
 @Observable
 final class KeyboardModel {
     var menu = KeyboardMenu(hasFullAccess: false) { nil }
+    var keyboardSize: KeyboardSize = .medium
     var showsGlobeKey = true
     var word: String?
     /// A word the person took off with its chip, or one already replaced, so it does not search again.

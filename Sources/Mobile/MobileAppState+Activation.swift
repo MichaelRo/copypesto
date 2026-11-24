@@ -10,6 +10,7 @@ extension MobileAppState {
         isActivated = true
         activationCount += 1
         lockDidBecomeActive()
+        reconcileKeyboardSize()
         await Task.yield()
         await syncDidBecomeActiveAsync()
         inboxDidBecomeActive()

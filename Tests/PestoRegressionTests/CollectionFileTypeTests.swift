@@ -5,10 +5,10 @@ import Testing
 
 @Suite("The .pesto collection file type")
 struct CollectionFileTypeTests {
-    private func info() throws -> [String: Any] {
+    private func info(at relativePath: String = "Sources/Resources/Info.plist") throws -> [String: Any] {
         let root = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let data = try Data(contentsOf: root.appendingPathComponent("Sources/Resources/Info.plist"))
+        let data = try Data(contentsOf: root.appendingPathComponent(relativePath))
         return try #require(try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
     }
 
@@ -17,9 +17,12 @@ struct CollectionFileTypeTests {
         #expect(CollectionFileType.identifier == "\(AppIdentity.bundleID).collection")
     }
 
-    @Test("Info.plist exports the type as JSON with the pesto extension")
-    func infoPlist_exportsTheType() throws {
-        let declarations = try #require(info()["UTExportedTypeDeclarations"] as? [[String: Any]])
+    @Test("Info.plist exports the type as JSON with the pesto extension", arguments: [
+        "Sources/Resources/Info.plist",
+        "Sources/Resources/PestoMobile-Info.plist"
+    ])
+    func infoPlist_exportsTheType(plistPath: String) throws {
+        let declarations = try #require(info(at: plistPath)["UTExportedTypeDeclarations"] as? [[String: Any]])
         let declaration = try #require(declarations.first {
             $0["UTTypeIdentifier"] as? String == CollectionFileType.identifier
         })
@@ -29,9 +32,12 @@ struct CollectionFileTypeTests {
         #expect(tags["public.filename-extension"] as? [String] == [CollectionFileType.fileExtension])
     }
 
-    @Test("Info.plist makes Pesto the owner of the type as a viewer")
-    func infoPlist_declaresTheDocumentType() throws {
-        let documents = try #require(info()["CFBundleDocumentTypes"] as? [[String: Any]])
+    @Test("Info.plist makes Pesto the owner of the type as a viewer", arguments: [
+        "Sources/Resources/Info.plist",
+        "Sources/Resources/PestoMobile-Info.plist"
+    ])
+    func infoPlist_declaresTheDocumentType(plistPath: String) throws {
+        let documents = try #require(info(at: plistPath)["CFBundleDocumentTypes"] as? [[String: Any]])
         let document = try #require(documents.first {
             ($0["LSItemContentTypes"] as? [String])?.contains(CollectionFileType.identifier) == true
         })

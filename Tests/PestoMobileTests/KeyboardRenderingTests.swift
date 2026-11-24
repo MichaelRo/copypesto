@@ -149,11 +149,30 @@ struct KeyboardRenderingTests {
         #expect(KeyboardLayout.rows(size: .large, isRegular: false, isLandscape: true) == 1)
         #expect(KeyboardLayout.rows(size: .large, isRegular: true, isLandscape: false) == 1)
 
+        #expect(KeyboardLayout.cardSize(size: .small, isRegular: false) == CGSize(width: 140, height: 78))
         #expect(KeyboardLayout.cardSize(size: .medium, isRegular: false) == CGSize(width: 150, height: 88))
         #expect(KeyboardLayout.cardSize(size: .large, isRegular: false) == CGSize(width: 180, height: 110))
         #expect(KeyboardLayout.cardSize(size: .small, isRegular: true).width == 180)
         #expect(KeyboardLayout.cardSize(size: .medium, isRegular: true).width == 228)
         #expect(KeyboardLayout.cardSize(size: .large, isRegular: true).width == 260)
+
+        let model = KeyboardModel()
+        #expect(model.keyboardSize == .medium)
+        let smallHeight = KeyboardLayout.totalHeight(
+            size: .small, isRegular: false, isLandscape: false, isSearching: false
+        )
+        let mediumHeight = KeyboardLayout.totalHeight(
+            size: model.keyboardSize, isRegular: false, isLandscape: false, isSearching: false
+        )
+        let largeHeight = KeyboardLayout.totalHeight(
+            size: model.keyboardSize.next, isRegular: false, isLandscape: false, isSearching: false
+        )
+        let searchHeight = KeyboardLayout.totalHeight(
+            size: .small, isRegular: false, isLandscape: false, isSearching: true
+        )
+        #expect(smallHeight < mediumHeight)
+        #expect(mediumHeight < largeHeight)
+        #expect(searchHeight >= 284)
     }
 
     private func sampleThumbnail() throws -> Data {

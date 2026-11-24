@@ -28,6 +28,9 @@ extension MobileAppState {
 
     @discardableResult
     func open(_ url: URL) -> LinkOutcome {
+        if url.isFileURL {
+            return openCollectionFile(url) ? .shown : .ignored
+        }
         if let appLink = AppLink.target(in: url) {
             return openAppLink(appLink, url: url)
         }

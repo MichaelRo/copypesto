@@ -28,8 +28,12 @@ struct ClipDetailView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .overlay(alignment: .bottom) { if isSheet { LibraryBanners() } }
+            .overlay(alignment: .bottom) { if isSheet { LibraryBanners(messagesOnly: true) } }
             .clipResultSheets(.detail(isSheet: isSheet))
+            .collectionImportConfirmation(
+                active: isSheet && !library.showsSettings && appState.pendingFill == nil
+                    && library.snippetEditor == nil && appState.decodedJWT == nil && !appState.showsAI
+            )
             .sheet(item: fillBinding) { request in
                 SnippetFillSheet(request: request).presentationDetents([.medium, .large])
             }
@@ -63,18 +67,17 @@ struct ClipDetailView: View {
                 if isEditingText(item), content?.plainText != nil {
                     ClipTextEditor(item: item, onClose: { library.endTextEdit() }, draft: draftBinding)
                 } else {
-                    if appState.canEditText(item), let text = content?.plainText {
-                        HStack(spacing: 16) {
+                    if let text = content?.plainText {
+                        if appState.canEditSnippet(item) {
+                            Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
+                                library.beginSnippetEdit(of: item, text: text)
+                            }
+                            .accessibilityIdentifier(MobileAccessibilityID.editSnippetButton)
+                        } else if appState.canEditText(item) {
                             Button("Edit Text", systemImage: "pencil") {
                                 library.beginTextEdit(of: item.id, text: text)
                             }
                             .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
-                            if appState.canEditSnippet(item) {
-                                Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
-                                    library.beginSnippetEdit(of: item, text: text)
-                                }
-                                .accessibilityIdentifier(MobileAccessibilityID.editSnippetButton)
-                            }
                         }
                     }
                     ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)

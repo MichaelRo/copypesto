@@ -65,6 +65,7 @@ extension MobileAppState {
         showsWelcome = false
         syncSetUpRequested = false
         ShareFile.removeAll()
+        Self.clearImportStaging()
         secretReveal.hideAll()
         decodedJWT = nil
         closeAI()
@@ -73,6 +74,7 @@ extension MobileAppState {
         undoOffer = nil
         clipboardOfferCount = nil
         pendingFill = nil
+        cancelPendingCollectionImport()
         linkedClip = nil
         shortcutSearchQuery = nil
         historyStore?.setVisible(false)
@@ -85,11 +87,15 @@ extension MobileAppState {
         historyStore?.setVisible(true)
         syncDidBecomeActive()
         inboxDidBecomeActive()
+        reconcileKeyboardSize()
         writeOutsideSurfaces()
         Task { await clipboardDidBecomeActive() }
         if let link = heldLink {
             heldLink = nil
+            let priorScoped = heldSecurityScopedURL
+            heldSecurityScopedURL = nil
             open(link)
+            priorScoped?.stopAccessingSecurityScopedResource()
         }
     }
 

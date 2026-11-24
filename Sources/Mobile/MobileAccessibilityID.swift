@@ -90,4 +90,13 @@ enum MobileAccessibilityID {
     static let askedChip = "asked-chip"
     static let decodeJWTSheet = "decode-jwt-sheet"
     static let decodeJWTCopyPayload = "decode-jwt-copy-payload"
+    static let accentPicker = "accent-picker"
+    static let autoFillTipSetUp = "autofill-tip-set-up"
+    static let importCollectionButton = "import-collection"
+    static let exportHistoryButton = "export-history-json"
+    static let importHistoryButton = "import-history-json"
+
+    static func accentChoice(_ id: String) -> String {
+        "accent-\(id)"
+    }
 }

@@ -17,6 +17,9 @@ struct LibrarySidebar: View {
                     collectionRow(board)
                 }
                 Button("New Collection", systemImage: "plus") { library.isNamingCollection = true }
+                Button("Import Collection\u{2026}", systemImage: "square.and.arrow.down") {
+                    library.isImportingCollection = true
+                }
             }
         }
         .accessibilityIdentifier(MobileAccessibilityID.sidebar)
@@ -80,6 +83,7 @@ struct CollectionMenu: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
     @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
+    @State private var isExporting = false
 
     private var index: Int? {
         collections.firstIndex(where: { $0.id == board.id })
@@ -89,12 +93,16 @@ struct CollectionMenu: View {
         Button("Edit Collection", systemImage: "pencil") { library.editingCollection = board }
         if !board.isSmart {
             Button("Export Collection\u{2026}", systemImage: "square.and.arrow.up") {
+                guard !isExporting else { return }
+                isExporting = true
                 Task {
+                    defer { isExporting = false }
                     if let url = await appState.exportCollection(board) {
                         library.sharing = ClipShare(file: url)
                     }
                 }
             }
+            .disabled(isExporting)
         }
         if let index, collections.count > 1 {
             if index > 0 {

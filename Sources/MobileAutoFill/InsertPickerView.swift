@@ -25,6 +25,11 @@ struct InsertPickerView: View {
         Color(hex: theme.accent(dark: colorScheme == .dark)) ?? BrandAccent.color
     }
 
+    private var resolvedAccentLabel: Color {
+        let hex = theme.accent(dark: colorScheme == .dark)
+        return Color(hex: ContrastRatio.labelHex(onFill: hex)) ?? .white
+    }
+
     private var ground: Color {
         Color(hex: theme.ground(dark: colorScheme == .dark))
             ?? Color(uiColor: .systemGroupedBackground)
@@ -51,6 +56,8 @@ struct InsertPickerView: View {
         }
         .tint(resolvedAccent)
         .environment(\.pestoAccent, resolvedAccent)
+        .environment(\.pestoAccentLabel, resolvedAccentLabel)
+        .environment(\.pestoSurface, ground)
         .sheet(item: $pendingFill) { fill in
             AutoFillSnippetSheet(fill: fill) { expanded in
                 pendingFill = nil

@@ -73,6 +73,7 @@ struct KeyboardCollectionsView: View {
             }
         }
         .navigationTitle("Collections")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !chosen.isEmpty {
                 EditButton()

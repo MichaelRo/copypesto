@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 /// Everything the library page presents over itself, once for both layouts: Settings, a new note, a new or edited
 /// collection, the delete confirmation from the keyboard, and the share sheet a card's menu opens.
 struct LibraryPresentations: ViewModifier {
+    var presentsSettingsSheet = true
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -14,37 +15,53 @@ struct LibraryPresentations: ViewModifier {
 
     func body(content: Content) -> some View {
         @Bindable var library = library
-        content
-            .sheet(item: fillBinding) { request in
-                SnippetFillSheet(request: request).presentationDetents([.medium, .large])
-            }
-            .clipResultSheets(.library)
-            .sheet(item: snippetEditorBinding) { target in
-                MobileSnippetEditorView(target: target)
-            }
-            .sheet(
-                isPresented: $library.showsSettings,
-                onDismiss: {
-                    library.settingsDestination = nil
-                    showWelcomeIfAsked()
-                },
-                content: { SettingsSheet() }
-            )
-            .sheet(isPresented: $library.showsQuickInsertSetup) { QuickInsertSetupSheet() }
-            .sheet(isPresented: $library.isComposing) { NewNoteView() }
-            .sheet(item: $library.sharing) { share in
-                ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])
-            }
-            .sheet(isPresented: $library.isNamingCollection) {
-                CollectionEditorView(board: nil).presentationDetents([.medium, .large])
-            }
-            .sheet(item: $library.editingCollection) { board in
-                CollectionEditorView(board: board).presentationDetents([.medium, .large])
-            }
-            .confirmationDialog("Delete this clip?", isPresented: deleteBinding, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) { deletePending() }
-            }
-            .onChange(of: collections.map(\.id)) { _, ids in library.filter.forget(collections: ids) }
+        withSyncPresentations(
+            content
+                .sheet(item: fillBinding) { request in
+                    SnippetFillSheet(request: request).presentationDetents([.medium, .large])
+                }
+                .clipResultSheets(.library)
+                .sheet(item: snippetEditorBinding) { target in
+                    MobileSnippetEditorView(target: target)
+                }
+                .sheet(
+                    isPresented: settingsSheetBinding,
+                    onDismiss: {
+                        library.settingsDestination = nil
+                        showWelcomeIfAsked()
+                    },
+                    content: { SettingsSheet() }
+                )
+                .sheet(isPresented: $library.showsQuickInsertSetup) { QuickInsertSetupSheet() }
+                .sheet(isPresented: $library.isComposing) { NewNoteView() }
+                .sheet(item: $library.sharing) { share in
+                    ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])
+                }
+                .sheet(isPresented: $library.isNamingCollection) {
+                    CollectionEditorView(board: nil).presentationDetents([.medium, .large])
+                }
+                .sheet(item: $library.editingCollection) { board in
+                    CollectionEditorView(board: board).presentationDetents([.medium, .large])
+                }
+                .confirmationDialog("Delete this clip?", isPresented: deleteBinding, titleVisibility: .visible) {
+                    Button("Delete", role: .destructive) { deletePending() }
+                }
+                .collectionImportConfirmation(active: canConfirmCollectionImport)
+                .fileImporter(
+                    isPresented: $library.isImportingCollection,
+                    allowedContentTypes: CollectionFileType.importableTypes
+                ) { result in
+                    if case let .success(url) = result {
+                        _ = appState.openCollectionFile(url)
+                    }
+                }
+                .onChange(of: collections.map(\.id)) { _, ids in library.filter.forget(collections: ids) }
+        )
+    }
+
+    private func withSyncPresentations(_ view: some View) -> some View {
+        @Bindable var library = library
+        return view
             .sheet(isPresented: approvalBinding) {
                 if let sync = appState.sync, let pending = sync.pendingJoin {
                     SyncApproveView(sync: sync, pending: pending)
@@ -65,6 +82,13 @@ struct LibraryPresentations: ViewModifier {
                 .ignoresSafeArea()
             }
             .task(id: appState.sync?.isEnabled ?? false) { await watchForJoinRequests() }
+    }
+
+    private var settingsSheetBinding: Binding<Bool> {
+        Binding(
+            get: { presentsSettingsSheet && library.showsSettings },
+            set: { library.showsSettings = $0 }
+        )
     }
 
     private func showWelcomeIfAsked() {
@@ -88,6 +112,15 @@ struct LibraryPresentations: ViewModifier {
             if !library.showsSettings { sync.refresh() }
             try? await Task.sleep(for: SyncApprovalPresentation.pollInterval)
         }
+    }
+
+    private var canConfirmCollectionImport: Bool {
+        !anotherSheetIsUp
+            && !library.showsQuickInsertSetup
+            && !library.isImportingCollection
+            && !library.picksSyncFolder
+            && (appState.sync?.flow ?? .idle) == .idle
+            && appState.sync?.pendingJoin == nil
     }
 
     private var anotherSheetIsUp: Bool {
@@ -137,7 +170,45 @@ struct LibraryPresentations: ViewModifier {
 }
 
 extension View {
-    func libraryPresentations() -> some View {
-        modifier(LibraryPresentations())
+    func libraryPresentations(presentsSettingsSheet: Bool = true) -> some View {
+        modifier(LibraryPresentations(presentsSettingsSheet: presentsSettingsSheet))
+    }
+
+    func collectionImportConfirmation(active: Bool) -> some View {
+        modifier(CollectionImportConfirmation(active: active))
+    }
+}
+
+private struct CollectionImportConfirmation: ViewModifier {
+    let active: Bool
+    @Environment(MobileAppState.self) private var appState
+
+    private var presentedImport: MobileAppState.PendingCollectionImport? {
+        active ? appState.pendingCollectionImport : nil
+    }
+
+    private var isPresented: Binding<Bool> {
+        Binding(
+            get: { presentedImport != nil },
+            set: { shown in
+                if !shown, active {
+                    appState.dismissPendingCollectionImport(presentedImport)
+                }
+            }
+        )
+    }
+
+    func body(content: Content) -> some View {
+        content.confirmationDialog(
+            presentedImport.map { CollectionTransferText.importQuestion(name: $0.preview.name) } ?? "",
+            isPresented: isPresented,
+            titleVisibility: .visible,
+            presenting: presentedImport
+        ) { pending in
+            Button("Import") { appState.acceptPendingCollectionImport(pending) }
+            Button("Cancel", role: .cancel) { appState.cancelPendingCollectionImport() }
+        } message: { pending in
+            Text(CollectionTransferText.importDetail(pending.preview))
+        }
     }
 }

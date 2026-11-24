@@ -29,6 +29,17 @@ final class KeyboardViewController: UIInputViewController {
                 guard let self else { return }
                 heightConstraint?.constant = currentHeight
             },
+            setKeyboardSize: { [weak self] size in
+                guard let self else { return }
+                model.keyboardSize = size
+                heightConstraint?.constant = currentHeight
+                guard hasFullAccess else { return }
+                do {
+                    try KeyboardSizeStore.current?.save(size)
+                } catch {
+                    Self.logger.error("Saving keyboard size failed: \(error.localizedDescription, privacy: .public)")
+                }
+            },
             openURL: { [weak self] url in self?.openHostURL(url) }
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
@@ -67,6 +78,7 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidDisappear(animated)
         // A keyboard process can stay warm in the background: keep no opened clips in it.
         model.menu = KeyboardMenu(hasFullAccess: false) { nil }
+        model.keyboardSize = .medium
         model.word = nil
         model.dismissedWord = nil
         model.closeSearch()
@@ -86,7 +98,7 @@ final class KeyboardViewController: UIInputViewController {
     /// The search page adds a row for the query and three rows of letters, so it is taller than the shelf.
     private var currentHeight: CGFloat {
         KeyboardLayout.totalHeight(
-            size: model.menu.keyboardSize,
+            size: model.keyboardSize,
             isRegular: traitCollection.horizontalSizeClass == .regular,
             isLandscape: traitCollection.verticalSizeClass == .compact,
             isSearching: model.isSearching
@@ -106,8 +118,10 @@ final class KeyboardViewController: UIInputViewController {
         }
         guard hasFullAccess else {
             model.menu = KeyboardMenu(hasFullAccess: false) { nil }
+            model.keyboardSize = .medium
             model.word = nil
             openedStamp = nil
+            heightConstraint?.constant = currentHeight
             return
         }
         let file = QuickInsertFile.current
@@ -115,8 +129,18 @@ final class KeyboardViewController: UIInputViewController {
         if openedStamp != .some(stamp) {
             model.menu = KeyboardMenu(hasFullAccess: true) { file.flatMap(Self.open) }
             openedStamp = .some(stamp)
-            heightConstraint?.constant = currentHeight
         }
+        let resolvedSize: KeyboardSize = if let record = KeyboardSizeStore.current?.load(),
+                                            model.menu.setCreatedAt.map({ record.updatedAt >= $0 }) ?? true
+        {
+            record.size
+        } else {
+            model.menu.keyboardSize
+        }
+        if model.keyboardSize != resolvedSize {
+            model.keyboardSize = resolvedSize
+        }
+        heightConstraint?.constant = currentHeight
         // Only to search the clips: the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
         model.word = model.menu.state == .ready
             ? KeyboardWord.before(

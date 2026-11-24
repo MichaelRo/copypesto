@@ -26,6 +26,7 @@ struct LockScreenClipsView: View {
             snapshot: entry.snapshot,
             showsClipsOnLockScreen: entry.showsClipsOnLockScreen,
             source: entry.source,
+            action: entry.action,
             now: entry.date
         )
     }

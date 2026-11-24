@@ -311,4 +311,34 @@ struct WidgetRenderingTests {
             ).clipSource == .collection(work.id)
         )
     }
+
+    @Test("Lock Screen When Chosen configuration sets tap action on timeline entries and renders cleanly")
+    func whenLockScreenActionConfigured_thenTimelineAndViewRender() throws {
+        let full = try snapshot()
+        let config = LockScreenClipsConfiguration(
+            showsClipsOnLockScreen: true,
+            tapAction: .openPesto,
+            source: .recent
+        )
+        #expect(config.clipAction == .openPesto)
+        #expect(LockScreenClipsConfiguration().clipAction == .copy)
+
+        let actionTimeline = LockScreenClipsProvider.timeline(
+            snapshot: full, now: now, showsClipsOnLockScreen: true, action: .openClip
+        )
+        #expect(actionTimeline.entries.allSatisfy { $0.action == .openClip })
+
+        for action in LockScreenWidgetContent.Action.allCases {
+            let entry = LockScreenClipsEntry(
+                date: now, snapshot: full, showsClipsOnLockScreen: true, action: action
+            )
+            let view = LockScreenClipsView(entry: entry, familyOverride: .accessoryRectangular)
+                .frame(width: 172, height: 72)
+                .background(Color.black)
+                .environment(\.colorScheme, .dark)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 2
+            _ = try #require(renderer.uiImage, "lockscreen-action-\(action.rawValue)")
+        }
+    }
 }

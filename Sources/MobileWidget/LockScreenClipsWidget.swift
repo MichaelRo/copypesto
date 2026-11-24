@@ -9,6 +9,7 @@ struct LockScreenClipsEntry: TimelineEntry {
     let snapshot: WidgetSnapshot?
     var showsClipsOnLockScreen = false
     var source: WidgetClipSource = .recent
+    var action: LockScreenWidgetContent.Action = .copy
 }
 
 struct LockScreenClipsProvider: AppIntentTimelineProvider {
@@ -24,7 +25,8 @@ struct LockScreenClipsProvider: AppIntentTimelineProvider {
             date: .now,
             snapshot: snapshot,
             showsClipsOnLockScreen: configuration.showsClipsOnLockScreen,
-            source: configuration.clipSource
+            source: configuration.clipSource,
+            action: configuration.clipAction
         )
     }
 
@@ -38,7 +40,8 @@ struct LockScreenClipsProvider: AppIntentTimelineProvider {
             snapshot: configuration.showsClipsOnLockScreen ? WidgetSnapshotReader.read() : nil,
             now: .now,
             showsClipsOnLockScreen: configuration.showsClipsOnLockScreen,
-            source: configuration.clipSource
+            source: configuration.clipSource,
+            action: configuration.clipAction
         )
     }
 
@@ -46,12 +49,17 @@ struct LockScreenClipsProvider: AppIntentTimelineProvider {
         snapshot: WidgetSnapshot?,
         now: Date,
         showsClipsOnLockScreen: Bool = false,
-        source: WidgetClipSource = .recent
+        source: WidgetClipSource = .recent,
+        action: LockScreenWidgetContent.Action = .copy
     )
         -> Timeline<LockScreenClipsEntry>
     {
         let content = LockScreenWidgetContent(
-            snapshot: snapshot, showsClipsOnLockScreen: showsClipsOnLockScreen, source: source, now: now
+            snapshot: snapshot,
+            showsClipsOnLockScreen: showsClipsOnLockScreen,
+            source: source,
+            action: action,
+            now: now
         )
         var moments: [Date] = if case let .clip(clip) = content.state {
             WidgetContent.refreshDates(for: [clip], after: now)
@@ -63,7 +71,11 @@ struct LockScreenClipsProvider: AppIntentTimelineProvider {
         }
         func entry(_ date: Date) -> LockScreenClipsEntry {
             LockScreenClipsEntry(
-                date: date, snapshot: snapshot, showsClipsOnLockScreen: showsClipsOnLockScreen, source: source
+                date: date,
+                snapshot: snapshot,
+                showsClipsOnLockScreen: showsClipsOnLockScreen,
+                source: source,
+                action: action
             )
         }
         return Timeline(entries: [entry(now)] + moments.map(entry), policy: moments.isEmpty ? .never : .atEnd)

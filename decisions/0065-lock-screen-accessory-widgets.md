@@ -15,8 +15,8 @@ Adding accessory families directly to `RecentClipsWidget` (`Sources/Widget/`, sh
    - `RecentClipsWidget` and macOS `PestoControls` remain untouched and keep `.systemSmall`, `.systemMedium`, and `.systemLarge`.
    - `WidgetTarget` checks and reloads both `AppIdentity.widgetKind` and `AppIdentity.lockScreenWidgetKind`.
 
-2. **Off-by-default per-widget opt-in (`showsClipsOnLockScreen = false`).**
-   - `LockScreenClipsConfiguration` exposes `Show Clips on Lock Screen` (default `false`), `Show` (`Recent`, `Pinned`, `Collection`), and conditional `Collection`.
+2. **Off-by-default per-widget opt-in (`showsClipsOnLockScreen = false`) and configurable action.**
+   - `LockScreenClipsConfiguration` exposes `Show Clips on Lock Screen` (default `false`), `When Chosen` (`Copy Clip` default, `Open Pesto`, `Open Clip`), `Show` (`Recent`, `Pinned`, `Collection`), and conditional `Collection`.
    - When `showsClipsOnLockScreen` is `false`, `LockScreenWidgetContent` always resolves to `.optInRequired` and renders no clip text, preview, host, color, or thumbnail (nor even History Lock status), showing only a non-leaking prompt to edit the widget.
    - When `showsClipsOnLockScreen` is `true`, clip views also apply `.privacySensitive()` so iOS's system-wide Lock Screen privacy redaction remains effective as defense-in-depth.
 
@@ -25,7 +25,7 @@ Adding accessory families directly to `RecentClipsWidget` (`Sources/Widget/`, sh
    - While History Lock is active and `Setting.showsClipsOutsideWhileLocked` is off, `MobileAppState` writes `WidgetSnapshot.locked`; `LockScreenWidgetContent` renders `.locked` with `AppLink.url(for: .unlock)`.
 
 4. **Navigation uses `.widgetURL` only.**
-   - Choosing a clip routes through `WidgetLink.url(for: clip.id, action: .show)`, letting iOS prompt Face ID or passcode before opening Pesto to that clip's detail view instead of overwriting the clipboard from a locked screen or failing against `.completeFileProtection`.
+   - Choosing a clip routes only through `.widgetURL` (`WidgetLink.url(for: clip.id)` for **Copy Clip**, `nil` for **Open Pesto**, or `WidgetLink.url(for: clip.id, action: .show)` for **Open Clip**), letting iOS prompt Face ID or passcode before launching Pesto rather than overwriting the clipboard silently from a locked screen or failing against `.completeFileProtection`.
 
 ## Consequences
 - No clip content can appear on the Lock Screen unless the user explicitly edits that Lock Screen widget and turns on **Show Clips on Lock Screen**.

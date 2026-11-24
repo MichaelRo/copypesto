@@ -44,7 +44,8 @@ struct LockScreenWidgetContentTests {
 
         let ready = LockScreenWidgetContent(snapshot: full, showsClipsOnLockScreen: true, source: .recent)
         #expect(ready.state == .clip(clip))
-        #expect(ready.tapURL == WidgetLink.url(for: clip.id, action: .show))
+        #expect(ready.action == .copy)
+        #expect(ready.tapURL == WidgetLink.url(for: clip.id))
 
         let locked = LockScreenWidgetContent(
             snapshot: .locked(theme: .brand, at: now), showsClipsOnLockScreen: true, source: .recent
@@ -118,5 +119,37 @@ struct LockScreenWidgetContentTests {
         #expect(atExpiry.state == .locked)
         #expect(atExpiry.tapURL == AppLink.url(for: .unlock))
         #expect(WidgetContent(snapshot: expiring, size: .small, now: expiresAt).state == .locked)
+    }
+
+    @Test("When Chosen action maps Copy Clip, Open Pesto, and Open Clip tap URLs while Locked always unlocks")
+    func whenActionConfigured_thenTapURLFollowsAction() {
+        let base = sampleSnapshot
+        let clip = base.clips[0]
+
+        let copyContent = LockScreenWidgetContent(
+            snapshot: base, showsClipsOnLockScreen: true, source: .recent, action: .copy, now: now
+        )
+        #expect(copyContent.tapURL == WidgetLink.url(for: clip.id))
+
+        let openPestoContent = LockScreenWidgetContent(
+            snapshot: base, showsClipsOnLockScreen: true, source: .recent, action: .openPesto, now: now
+        )
+        #expect(openPestoContent.tapURL == nil)
+
+        let openClipContent = LockScreenWidgetContent(
+            snapshot: base, showsClipsOnLockScreen: true, source: .recent, action: .openClip, now: now
+        )
+        #expect(openClipContent.tapURL == WidgetLink.url(for: clip.id, action: .show))
+
+        for action in LockScreenWidgetContent.Action.allCases {
+            let locked = LockScreenWidgetContent(
+                snapshot: .locked(theme: .brand, at: now),
+                showsClipsOnLockScreen: true,
+                source: .recent,
+                action: action,
+                now: now
+            )
+            #expect(locked.tapURL == AppLink.url(for: .unlock))
+        }
     }
 }

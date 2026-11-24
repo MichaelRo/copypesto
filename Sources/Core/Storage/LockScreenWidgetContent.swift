@@ -15,15 +15,23 @@ public struct LockScreenWidgetContent: Equatable, Sendable {
         case clip(WidgetClip)
     }
 
+    public enum Action: String, CaseIterable, Codable, Equatable, Sendable {
+        case copy
+        case openPesto
+        case openClip
+    }
+
     public let state: State
+    public let action: Action
     public let source: WidgetClipSource
     public let collection: WidgetCollection?
     public let tapURL: URL?
 
     public init(
         snapshot: WidgetSnapshot?, showsClipsOnLockScreen: Bool, source: WidgetClipSource = .recent,
-        now: Date = .now
+        action: Action = .copy, now: Date = .now
     ) {
+        self.action = action
         self.source = source
         guard showsClipsOnLockScreen else {
             state = .optInRequired
@@ -52,7 +60,11 @@ public struct LockScreenWidgetContent: Equatable, Sendable {
         case .clips:
             if let first = widget.clips.first {
                 state = .clip(first)
-                tapURL = WidgetLink.url(for: first.id, action: .show)
+                tapURL = switch action {
+                case .copy: WidgetLink.url(for: first.id)
+                case .openPesto: nil
+                case .openClip: WidgetLink.url(for: first.id, action: .show)
+                }
             } else {
                 state = .empty
                 tapURL = nil

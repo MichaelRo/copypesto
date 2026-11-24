@@ -17,6 +17,8 @@ struct LockScreenClipsConfiguration: WidgetConfigurationIntent {
         default: false
     ) var showsClipsOnLockScreen: Bool
 
+    @Parameter(title: "When Chosen", default: .copy) var tapAction: LockScreenTapChoice
+
     @Parameter(title: "Show", default: .recent) var source: WidgetSourceChoice
 
     @Parameter(title: "Collection") var collection: WidgetCollectionEntity?
@@ -25,12 +27,14 @@ struct LockScreenClipsConfiguration: WidgetConfigurationIntent {
         When(\.$source, .equalTo, WidgetSourceChoice.collection) {
             Summary {
                 \.$showsClipsOnLockScreen
+                \.$tapAction
                 \.$source
                 \.$collection
             }
         } otherwise: {
             Summary {
                 \.$showsClipsOnLockScreen
+                \.$tapAction
                 \.$source
             }
         }
@@ -40,12 +44,18 @@ struct LockScreenClipsConfiguration: WidgetConfigurationIntent {
 
     init(
         showsClipsOnLockScreen: Bool = false,
+        tapAction: LockScreenTapChoice = .copy,
         source: WidgetSourceChoice = .recent,
         collection: WidgetCollectionEntity? = nil
     ) {
         self.showsClipsOnLockScreen = showsClipsOnLockScreen
+        self.tapAction = tapAction
         self.source = source
         self.collection = collection
+    }
+
+    var clipAction: LockScreenWidgetContent.Action {
+        tapAction.action
     }
 
     var clipSource: WidgetClipSource {
@@ -53,6 +63,27 @@ struct LockScreenClipsConfiguration: WidgetConfigurationIntent {
         case .recent: .recent
         case .pinned: .pinned
         case .collection: .collection(collection?.id)
+        }
+    }
+}
+
+enum LockScreenTapChoice: String, AppEnum {
+    case copy
+    case openPesto
+    case openClip
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Action"
+    static let caseDisplayRepresentations: [LockScreenTapChoice: DisplayRepresentation] = [
+        .copy: "Copy Clip",
+        .openPesto: "Open Pesto",
+        .openClip: "Open Clip"
+    ]
+
+    var action: LockScreenWidgetContent.Action {
+        switch self {
+        case .copy: .copy
+        case .openPesto: .openPesto
+        case .openClip: .openClip
         }
     }
 }

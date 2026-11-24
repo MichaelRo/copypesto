@@ -128,8 +128,9 @@ which collection, from those the snapshot carries (ADR 0060): "No clips in this 
 **Lock Screen widgets (ADR 0065):** `LockScreenClipsWidget` (`AppIdentity.lockScreenWidgetKind`) offers circular,
 rectangular, and inline accessory families on iPhone and iPad. By default, **Show Clips on Lock Screen** is off so no
 clip content appears on a locked phone until the person turns it on in that widget's settings; secrets never enter the
-snapshot, History Lock still hides clips unless allowed while locked, and opening a clip asks iOS to unlock and shows it
-in Pesto (`WidgetLink.Action.show`).
+snapshot, History Lock still hides clips unless allowed while locked, and **When Chosen** lets that widget copy the
+clip (`Copy Clip`, default via `WidgetLink.url(for: clip.id)`), open Pesto (`Open Pesto`), or open the clip detail
+(`Open Clip`), always unlocking iOS first via `.widgetURL`.
 
 ## The keyboard (ADR 0061)
 Optional, added in iOS Settings. No letter keys. A small shelf (ADR 0062): chips like the Mac shelf's (Recent, Pinned,

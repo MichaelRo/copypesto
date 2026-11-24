@@ -25,6 +25,8 @@ final class TeaserMobileFramesTests: XCTestCase {
         app.launchEnvironment["PESTO_UITEST_DEFAULT_appearanceMode"] = appearanceMode
         app.launchEnvironment["PESTO_UITEST_PICTURE_TEXT"] = "1"
         app.launchEnvironment["PESTO_UITEST_READ_PICTURES"] = "1"
+        app.launchEnvironment["PESTO_UITEST_REAL_QUICKINSERT"] = "1"
+        app.launchEnvironment["PESTO_UITEST_DEFAULT_keyboardEnabled"] = "1"
         app.launch()
         return app
     }
@@ -82,17 +84,28 @@ final class TeaserMobileFramesTests: XCTestCase {
         waitForLibrary(in: app)
         store("mobile-iphone-library")
 
-        let field = app.searchFields.firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: timeout))
-        field.tap()
-        field.typeText("Gate")
-        let deadline = Date.now.addingTimeInterval(timeout)
-        while cards(in: app).count < 2, Date.now < deadline {
-            _ = cards(in: app).firstMatch.waitForExistence(timeout: 0.5)
+        let messages = XCUIApplication(bundleIdentifier: "com.apple.MobileSMS")
+        messages.launch()
+        for label in ["Continue", "Not Now", "OK"] where messages.buttons[label].waitForExistence(timeout: 2) {
+            messages.buttons[label].tap()
         }
-        let searchKey = app.keyboards.buttons["Search"]
-        if searchKey.exists { searchKey.tap() }
-        sleep(2)
+        let compose = messages.buttons["Compose"].firstMatch
+        if compose.waitForExistence(timeout: 4) {
+            compose.tap()
+        } else if messages.cells.firstMatch.waitForExistence(timeout: 3) {
+            messages.cells.firstMatch.tap()
+        }
+        let body = messages.textViews.firstMatch.exists ? messages.textViews.firstMatch : messages.textFields.firstMatch
+        if body.waitForExistence(timeout: 4) {
+            body.tap()
+        } else {
+            messages.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)).tap()
+        }
+        let nextKeyboard = messages.buttons["Next Keyboard"].firstMatch
+        if nextKeyboard.waitForExistence(timeout: 4) {
+            nextKeyboard.tap()
+            sleep(2)
+        }
         store("mobile-iphone-search")
     }
 
@@ -106,5 +119,11 @@ final class TeaserMobileFramesTests: XCTestCase {
         XCTAssertTrue(sidebar.waitForExistence(timeout: timeout))
         sleep(2)
         store("mobile-ipad-library")
+        let trip = sidebar.staticTexts["Trip"].firstMatch
+        if trip.waitForExistence(timeout: 4) {
+            trip.tap()
+            sleep(2)
+            store("mobile-ipad-collection")
+        }
     }
 }

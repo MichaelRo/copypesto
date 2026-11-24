@@ -126,6 +126,9 @@ public struct RuntimeConfiguration: Equatable, Sendable {
     /// Reads the text in a picture on ingest, which a UI-test launch skips; the App Store pictures need a search that
     /// finds words inside a picture (`PESTO_UITEST_READ_PICTURES=1`). UI-test mode only.
     public var readsPictureText: Bool
+    /// Writes the quick-insert set to the real app group and shared keychain (`PESTO_UITEST_REAL_QUICKINSERT=1`) so
+    /// PestoKeyboard can render seeded clips during showcase frame capture. UI-test mode only.
+    public var usesRealQuickInsert: Bool
 
     static let defaultOverridePrefix = "PESTO_UITEST_DEFAULT_"
 
@@ -152,7 +155,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         menuBarIsFull: Bool = false,
         pasteboardAccess: PasteboardAccessStub? = nil,
         embeddedBiometrics: Bool = false,
-        readsPictureText: Bool = false
+        readsPictureText: Bool = false,
+        usesRealQuickInsert: Bool = false
     ) {
         self.mode = mode
         self.session = session
@@ -175,6 +179,7 @@ public struct RuntimeConfiguration: Equatable, Sendable {
         self.pasteboardAccess = pasteboardAccess
         self.embeddedBiometrics = embeddedBiometrics
         self.readsPictureText = readsPictureText
+        self.usesRealQuickInsert = usesRealQuickInsert
     }
 
     public static let current = parse(
@@ -217,7 +222,8 @@ public struct RuntimeConfiguration: Equatable, Sendable {
             pasteboardAccess: environment["PESTO_UITEST_PASTEBOARD_ACCESS"]
                 .flatMap(PasteboardAccessStub.init(rawValue:)),
             embeddedBiometrics: environment["PESTO_UITEST_EMBEDDED_BIOMETRICS"] == "1",
-            readsPictureText: environment["PESTO_UITEST_READ_PICTURES"] == "1"
+            readsPictureText: environment["PESTO_UITEST_READ_PICTURES"] == "1",
+            usesRealQuickInsert: environment["PESTO_UITEST_REAL_QUICKINSERT"] == "1"
         )
     }
 

@@ -30,7 +30,7 @@ public enum AppPaths {
     /// other Mac build gets nil without asking for the container, which macOS 15 would answer with a prompt.
     public static var sharedGroupDirectory: URL? {
         let configuration = RuntimeConfiguration.current
-        guard configuration.mode == .normal else {
+        guard configuration.mode == .normal || configuration.usesRealQuickInsert else {
             return sharedGroupDirectory(
                 for: configuration, groupContainer: nil,
                 applicationSupport: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0],

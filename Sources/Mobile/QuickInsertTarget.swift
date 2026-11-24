@@ -26,9 +26,10 @@ struct QuickInsertTarget {
     static var current: QuickInsertTarget? {
         let mode = LaunchMode.current
         guard mode != .hostedTests, let file = QuickInsertFile.current else { return nil }
-        let secrets: any SecretStoring = mode == .uiTest
-            ? uiTestSecrets
-            : SharedKeychainSecretStore(accessGroup: AppIdentity.quickInsertKeychainGroup(in: .main))
+        let useShared = mode != .uiTest || RuntimeConfiguration.current.usesRealQuickInsert
+        let secrets: any SecretStoring = useShared
+            ? SharedKeychainSecretStore(accessGroup: AppIdentity.quickInsertKeychainGroup(in: .main))
+            : uiTestSecrets
         return QuickInsertTarget(
             file: file, keys: QuickInsertKeyStore(secrets: secrets),
             isEnabled: {

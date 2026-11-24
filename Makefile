@@ -171,6 +171,10 @@ teaser-frames: generate ## [Maintenance] Retake the website film's shelf frames 
 teaser: generate ## [Maintenance] Retake the film's frames, then render, mix and finish both films in the website checkout (uses tracked track or TEASER_MUSIC=<file>)
 	scripts/teaser.sh $(if $(TEASER_MUSIC),--music "$(TEASER_MUSIC)",)
 
+.PHONY: showcase-frames
+showcase-frames: generate ## [Maintenance] Capture iPhone and iPad frames (light and dark) into the website checkout for the showcase video
+	scripts/teaser-mobile.sh
+
 .PHONY: marketing-loops
 marketing-loops: generate ## [Maintenance] Take the frames of the website's scenes into .build/marketing/loops/ and make the MP4, WebM and GIF for the README and launch posts in .build/marketing/video/ (needs ffmpeg and gifski); quit other apps first
 	@status=0; \

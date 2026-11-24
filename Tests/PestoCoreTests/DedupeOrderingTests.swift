@@ -95,6 +95,95 @@ struct DedupeOrderingTests {
         #expect(try newestFirst().map(\.displayPreviewText) == ["A", "C", "B"])
     }
 
+    @Test("assignCollectionOnlyIfUnfiled files new and unfiled duplicates without moving already-filed clips")
+    func whenDefaultPasteCollectionApplied_thenExistingCollectionPreserved() async throws {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        let clock = TestClock(start)
+        await service.updateClock { clock.now }
+
+        let context = ModelContext(container)
+        let defaultBoard = Pinboard(name: "Pasted", symbolName: "doc.on.clipboard", colorHex: "#2F8B4C", sortOrder: 0)
+        let workBoard = Pinboard(name: "Work", symbolName: "briefcase", colorHex: "#2F8B4C", sortOrder: 1)
+        context.insert(defaultBoard)
+        context.insert(workBoard)
+        try context.save()
+
+        try await service.ingest(text("Unfiled", at: clock.now))
+        clock.set(start.addingTimeInterval(10))
+        try await service.ingest(text("Filed", at: clock.now), collectionID: workBoard.id)
+
+        clock.set(start.addingTimeInterval(20))
+        try await service.ingest(
+            text("Fresh", at: clock.now), collectionID: defaultBoard.id, assignCollectionOnlyIfUnfiled: true
+        )
+        clock.set(start.addingTimeInterval(30))
+        try await service.ingest(
+            text("Unfiled", at: clock.now), collectionID: defaultBoard.id, assignCollectionOnlyIfUnfiled: true
+        )
+        clock.set(start.addingTimeInterval(40))
+        try await service.ingest(
+            text("Filed", at: clock.now), collectionID: defaultBoard.id, assignCollectionOnlyIfUnfiled: true
+        )
+
+        let byPreview = try Dictionary(uniqueKeysWithValues: newestFirst()
+            .map { ($0.displayPreviewText, $0.collectionID) })
+        #expect(byPreview["Fresh"] == defaultBoard.id)
+        #expect(byPreview["Unfiled"] == defaultBoard.id)
+        #expect(byPreview["Filed"] == workBoard.id)
+    }
+
+    @Test("ingest drops deleted or smart collectionIDs and assigns unfiled perceptual image duplicates")
+    func whenCollectionDeletedOrSmart_thenIngestFallsBackAndLookalikeRespectsUnfiled() async throws {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        let clock = TestClock(start)
+        await service.updateClock { clock.now }
+
+        let context = ModelContext(container)
+        let defaultBoard = Pinboard(name: "Pasted", symbolName: "doc.on.clipboard", colorHex: "#2F8B4C", sortOrder: 0)
+        let workBoard = Pinboard(name: "Work", symbolName: "briefcase", colorHex: "#2F8B4C", sortOrder: 1)
+        let smartData = try SmartCollectionPredicate.encodeRuleSet(PredicateRuleSet.snippets)
+        let smartBoard = Pinboard(
+            name: "Snippets", symbolName: "curlybraces", colorHex: "#2F8B4C", sortOrder: 2,
+            isSmart: true, smartPredicateData: smartData
+        )
+        context.insert(defaultBoard)
+        context.insert(workBoard)
+        context.insert(smartBoard)
+        try context.save()
+
+        try await service.ingest(text("BadTarget", at: clock.now), collectionID: UUID())
+        clock.set(start.addingTimeInterval(10))
+        try await service.ingest(text("SmartTarget", at: clock.now), collectionID: smartBoard.id)
+
+        let unfiledImg = try png(0.2)
+        let filedImg = try png(0.8)
+        clock.set(start.addingTimeInterval(20))
+        try await service.ingest(image(unfiledImg, at: clock.now))
+        clock.set(start.addingTimeInterval(30))
+        try await service.ingest(image(filedImg, at: clock.now), collectionID: workBoard.id)
+
+        // Re-ingest perceptual matches after 2s echo window with assignCollectionOnlyIfUnfiled = true
+        clock.set(start.addingTimeInterval(40))
+        try await service.ingest(
+            image(unfiledImg, at: clock.now), collectionID: defaultBoard.id, assignCollectionOnlyIfUnfiled: true
+        )
+        clock.set(start.addingTimeInterval(50))
+        try await service.ingest(
+            image(filedImg, at: clock.now), collectionID: defaultBoard.id, assignCollectionOnlyIfUnfiled: true
+        )
+
+        let items = try newestFirst()
+        let bad = try #require(items.first { $0.displayPreviewText == "BadTarget" })
+        let smartItem = try #require(items.first { $0.displayPreviewText == "SmartTarget" })
+        #expect(bad.collectionID == nil)
+        #expect(smartItem.collectionID == nil)
+
+        let imageItems = items.filter { $0.type == .image }
+        #expect(imageItems.count == 2)
+        let imageCollections = Set(imageItems.compactMap(\.collectionID))
+        #expect(imageCollections == Set([defaultBoard.id, workBoard.id]))
+    }
+
     @Test("an identical image copy moves the existing clip to the front")
     func whenSameImageCopiedAgain_thenFront() async throws {
         let start = Date(timeIntervalSince1970: 1_800_000_000)

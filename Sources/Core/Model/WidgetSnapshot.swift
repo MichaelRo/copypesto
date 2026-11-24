@@ -45,11 +45,15 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
     /// The Mac is covering clip contents (Hide Clip Contents, or a screen share it detected): the widget says so and
     /// holds no clip (ADR 0059). iOS never writes it.
     public let isHidden: Bool
+    /// When History Lock grace expires on iOS (if `showsClipsOutsideWhileLocked` is off): once reached, the widget
+    /// switches to Locked even while Pesto is suspended in the background.
+    public let expiresAt: Date?
 
     public init(
         createdAt: Date, theme: Theme, clips: [WidgetClip], pinned: [WidgetClip] = [],
         collections: [WidgetCollection] = [], collectionClipIDs: [UUID: [UUID]] = [:],
-        collectionClips: [WidgetClip] = [], isLocked: Bool = false, isHidden: Bool = false
+        collectionClips: [WidgetClip] = [], isLocked: Bool = false, isHidden: Bool = false,
+        expiresAt: Date? = nil
     ) {
         self.createdAt = createdAt
         self.theme = theme
@@ -60,6 +64,7 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
         self.collectionClips = collectionClips
         self.isLocked = isLocked
         self.isHidden = isHidden
+        self.expiresAt = expiresAt
     }
 
     public init(from decoder: any Decoder) throws {
@@ -73,6 +78,20 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
         collectionClips = try values.decodeIfPresent([WidgetClip].self, forKey: .collectionClips) ?? []
         isLocked = try values.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
         isHidden = try values.decodeIfPresent(Bool.self, forKey: .isHidden) ?? false
+        expiresAt = try values.decodeIfPresent(Date.self, forKey: .expiresAt)
+    }
+
+    public func isLockedAt(_ now: Date) -> Bool {
+        isLocked || (expiresAt.map { now >= $0 } ?? false)
+    }
+
+    public func withExpiresAt(_ date: Date?) -> WidgetSnapshot {
+        WidgetSnapshot(
+            createdAt: createdAt, theme: theme, clips: clips, pinned: pinned,
+            collections: collections, collectionClipIDs: collectionClipIDs,
+            collectionClips: collectionClips, isLocked: isLocked, isHidden: isHidden,
+            expiresAt: date
+        )
     }
 
     public func clips(from source: WidgetClipSource) -> [WidgetClip] {

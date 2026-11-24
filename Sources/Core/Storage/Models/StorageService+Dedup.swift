@@ -24,7 +24,8 @@ extension StorageService {
         bundleID: String?,
         isRemote: Bool? = nil,
         onlyAdvanceTimestamp: Bool = false,
-        collectionID: UUID? = nil
+        collectionID: UUID? = nil,
+        assignCollectionOnlyIfUnfiled: Bool = false
     ) async throws
     -> Bool {
         guard let existing = try modelContext.fetch(descriptor).first else { return false }
@@ -32,7 +33,7 @@ extension StorageService {
         if !onlyAdvanceTimestamp || now > existing.timestamp {
             existing.bringToFront(at: now)
         }
-        if let collectionID {
+        if let collectionID, try !assignCollectionOnlyIfUnfiled || isUnfiled(existing.collectionID) {
             existing.collectionID = collectionID
         }
         lastIngestedHash = (hash, now)
@@ -54,6 +55,16 @@ extension StorageService {
         }
         try saveOrRollback()
         return true
+    }
+
+    func validatedManualCollectionID(_ id: UUID?) throws -> UUID? {
+        guard let id, let board = try pinboard(id: id), !board.isSmart else { return nil }
+        return board.id
+    }
+
+    func isUnfiled(_ existingID: UUID?) throws -> Bool {
+        guard let existingID else { return true }
+        return try pinboard(id: existingID) == nil
     }
 
     func perceptualDuplicate(

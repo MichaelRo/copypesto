@@ -33,8 +33,8 @@ struct WidgetSettingsView: View {
                 }
             } footer: {
                 Text(
-                    "Secrets and explicit clips never appear in widgets. Long-press a widget on your Home Screen and " +
-                        "choose Edit Widget to pick a collection or choose what opening a clip does."
+                    "Secrets and explicit clips never appear in widgets. Edit a Home Screen or Lock Screen widget " +
+                        "to pick a collection or choose whether clips show while locked."
                 )
             }
         }

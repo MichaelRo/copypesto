@@ -44,6 +44,9 @@ public enum AppIdentity {
     public static let widgetBundleID = "\(bundleID).widget"
     /// The kind of the iOS Recent Clips widget, which the app names when it reloads its timelines.
     public static let widgetKind = "\(bundleID).recent-clips"
+    /// The kind of the iOS Lock Screen accessory widget (ADR 0065).
+    public static let lockScreenWidgetKind = "\(bundleID).lock-screen-clips"
+    public static let widgetKinds = [widgetKind, lockScreenWidgetKind]
     public static let widgetKeyAccount = "\(bundleID).widgetKey"
     public static let widgetSnapshotFileName = "widget-snapshot.pestowidget"
     /// The Keychain group the iOS app and its widget share (ADR 0052), after the team prefix.

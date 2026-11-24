@@ -4,24 +4,36 @@ import SwiftData
 import SwiftUI
 
 /// Which collections the keyboard shows as chips and AutoFill lists, in the person's order (ADR 0062). Recent, Pinned
-/// and Snippets are always there; this adds collections after them.
+/// and Snippets are always there; this configures collections shown after them.
 struct KeyboardCollectionsView: View {
     @Environment(MobileAppState.self) private var appState
+    @Environment(\.editMode) private var editMode
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.keyboardCollections) private var stored: String
+    @AppStorage(Setting.hiddenMobileCollections) private var hiddenCollections: String
 
-    private var chosenIDs: [UUID] {
-        QuickInsertSelection.Options(storedCollections: stored, returnsAfterInsert: true).collectionIDs
+    private var parsedOptions: QuickInsertSelection.Options {
+        QuickInsertSelection.Options(
+            storedCollections: stored,
+            hiddenCollectionIDs: HiddenCollections.ids(from: hiddenCollections),
+            returnsAfterInsert: true
+        )
+    }
+
+    private var isAllMode: Bool {
+        parsedOptions.collectionMode == .all
     }
 
     private var chosen: [Pinboard] {
-        let byID = Dictionary(collections.map { ($0.id, $0) }) { first, _ in first }
-        return chosenIDs.compactMap { byID[$0] }
+        parsedOptions.resolvedCollections(from: collections)
     }
 
     private var others: [Pinboard] {
-        let picked = Set(chosenIDs)
-        return collections.filter { !picked.contains($0.id) }
+        let picked = Set(chosen.map(\.id))
+        let hidden = parsedOptions.hiddenCollectionIDs
+        return collections.filter {
+            !picked.contains($0.id) && !$0.isSnippetsSmartCollection && !hidden.contains($0.id)
+        }
     }
 
     var body: some View {
@@ -53,7 +65,7 @@ struct KeyboardCollectionsView: View {
                         "placeholders like {{date}}. Drag to reorder, swipe to remove."
                 )
             }
-            if !others.isEmpty {
+            if !isAllMode, !others.isEmpty {
                 Section {
                     ForEach(others) { collection in
                         Button {
@@ -71,9 +83,23 @@ struct KeyboardCollectionsView: View {
                     }
                 }
             }
+            if !isAllMode {
+                Section {
+                    Button("Reset to All Collections") {
+                        editMode?.wrappedValue = .inactive
+                        stored = QuickInsertPolicy.allCollectionsToken
+                        appState.writeQuickInsert()
+                    }
+                } footer: {
+                    Text("New collections appear automatically until you customize this list.")
+                }
+            }
         }
         .navigationTitle("Collections")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: chosen.isEmpty) { _, empty in
+            if empty { editMode?.wrappedValue = .inactive }
+        }
         .toolbar {
             if !chosen.isEmpty {
                 EditButton()

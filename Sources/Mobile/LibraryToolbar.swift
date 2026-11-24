@@ -46,8 +46,14 @@ struct LibraryToolbar: ToolbarContent {
             if hasClipboardContent {
                 ToolbarItem(placement: .primaryAction) {
                     PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
-                        let destination = targetCollectionID
-                        Task { await appState.add(from: providers, method: .paste, into: destination) }
+                        let viewed = targetCollectionID
+                        let destination = viewed ?? appState.resolvedDefaultPasteCollectionID()
+                        Task {
+                            await appState.add(
+                                from: providers, method: .paste, into: destination,
+                                assignCollectionOnlyIfUnfiled: viewed == nil
+                            )
+                        }
                     }
                     .labelStyle(.iconOnly)
                     .buttonBorderShape(.circle)

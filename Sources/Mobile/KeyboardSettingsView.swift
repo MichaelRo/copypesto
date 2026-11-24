@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import AuthenticationServices
 import PestoCore
+import SwiftData
 import SwiftUI
 import UIKit
 
@@ -8,22 +9,41 @@ struct KeyboardSettingsView: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(\.pestoAccent) private var accent
     @Environment(\.scenePhase) private var scenePhase
+    @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.keyboardCollections) private var storedCollections: String
+    @AppStorage(Setting.hiddenMobileCollections) private var hiddenCollections: String
     @AppStorage(Setting.keyboardReturnsAfterInsert) private var keyboardReturns: Bool
     @AppStorage(Setting.keyboardSize) private var keyboardSize: String
     @State private var showsSetupGuide = false
     @State private var isAutoFillEnabled = false
     @State private var isKeyboardAdded = false
-    @State private var autoFillStatusNote: String?
 
-    private var chosenCollectionsCount: Int {
-        QuickInsertSelection.Options(storedCollections: storedCollections, returnsAfterInsert: true).collectionIDs.count
+    private var parsedOptions: QuickInsertSelection.Options {
+        QuickInsertSelection.Options(
+            storedCollections: storedCollections,
+            hiddenCollectionIDs: HiddenCollections.ids(from: hiddenCollections),
+            returnsAfterInsert: true
+        )
     }
 
     private var collectionsSummary: String {
-        chosenCollectionsCount == 0
-            ? String(localized: "Built-in only")
-            : String(localized: "\(chosenCollectionsCount) added")
+        let count = parsedOptions.resolvedCollections(from: collections).count
+        switch parsedOptions.collectionMode {
+        case .all:
+            return count == 0
+                ? String(localized: "Built-in only")
+                : String(localized: "All collections")
+        case .custom:
+            return count == 0
+                ? String(localized: "Built-in only")
+                : String(localized: "\(count) added")
+        }
+    }
+
+    private var setupButtonTitle: LocalizedStringKey {
+        (isAutoFillEnabled && isKeyboardAdded)
+            ? "Manage Keyboard & AutoFill\u{2026}"
+            : "Set Up Keyboard & AutoFill\u{2026}"
     }
 
     var body: some View {
@@ -33,44 +53,11 @@ struct KeyboardSettingsView: View {
                     Text(isAutoFillEnabled ? "On" : "Off")
                         .foregroundStyle(isAutoFillEnabled ? Color.statusGood : .secondary)
                 }
-                if isAutoFillEnabled {
-                    Button("Open AutoFill Settings") {
-                        Task {
-                            await AutoFillSettings.openSettings()
-                            await refreshStatus()
-                        }
-                    }
-                } else {
-                    Button("Turn On AutoFill\u{2026}") {
-                        AppDefaults.store.set(true, for: Setting.autoFillEnabled)
-                        AppDefaults.store.set(true, for: Setting.quickInsertEnabled)
-                        appState.quickInsertSettingChanged()
-                        Task {
-                            let granted = await ASSettingsHelper.requestToTurnOnCredentialProviderExtension()
-                            if granted {
-                                isAutoFillEnabled = true
-                                autoFillStatusNote = nil
-                                try? await Task.sleep(for: .milliseconds(250))
-                            } else {
-                                autoFillStatusNote = String(
-                                    localized: "Opened Settings. Turn on Pesto under AutoFill & Passwords."
-                                )
-                                await AutoFillSettings.openSettings()
-                            }
-                            await refreshStatus(keepGranted: granted)
-                        }
-                    }
-                }
-                if let autoFillStatusNote, !isAutoFillEnabled {
-                    Text(autoFillStatusNote)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
                 LabeledContent("Pesto Keyboard") {
                     Text(isKeyboardAdded ? "Added" : "Not Added")
                         .foregroundStyle(isKeyboardAdded ? Color.statusGood : .secondary)
                 }
-                Button("Set Up Keyboard & AutoFill\u{2026}") {
+                Button(setupButtonTitle) {
                     showsSetupGuide = true
                 }
             } header: {
@@ -89,11 +76,11 @@ struct KeyboardSettingsView: View {
                     LabeledContent("Collections", value: collectionsSummary)
                 }
             } header: {
-                Text("Shared")
+                Text("Shown in Keyboard & AutoFill")
             } footer: {
                 Text(
                     "All, Pinned, and Snippets (pinned clips with placeholders like {{date}}) appear " +
-                        "automatically when available. Add collections to show after them."
+                        "first, followed by your collections."
                 )
             }
 
@@ -139,10 +126,9 @@ struct KeyboardSettingsView: View {
         }
     }
 
-    private func refreshStatus(keepGranted: Bool = false) async {
+    private func refreshStatus() async {
         let state = await ASCredentialIdentityStore.shared.state()
-        isAutoFillEnabled = state.isEnabled || keepGranted
-        if isAutoFillEnabled { autoFillStatusNote = nil }
+        isAutoFillEnabled = state.isEnabled
         isKeyboardAdded = UITextInputMode.activeInputModes.contains { mode in
             (mode.value(forKey: "identifier") as? String)?.contains("net.copypesto.pesto") == true
         }

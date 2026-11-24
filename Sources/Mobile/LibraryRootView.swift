@@ -78,10 +78,11 @@ struct LibraryRootView: View {
             .modelContainer(container)
             .transition(.asymmetric(insertion: .opacity, removal: .identity))
             .onChange(of: scenePhase) { _, phase in if phase == .active { library.resort() } }
-            .onChange(of: appState.linkedClip) { _, linked in if let linked { library.show(
-                linked.id,
-                opensDetail: linked.opensDetail
-            ) } }
+            .onChange(of: appState.linkedClip, initial: true) { _, linked in
+                guard let linked else { return }
+                library.show(linked.id, opensDetail: linked.opensDetail)
+                appState.linkedClip = nil
+            }
             .onChange(of: appState.linkedSettings, initial: true) { _, linked in
                 guard let linked else { return }
                 switch linked.target {

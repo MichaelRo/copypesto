@@ -25,7 +25,8 @@ public struct WidgetContent: Equatable, Sendable {
     public let collection: WidgetCollection?
 
     public init(
-        snapshot: WidgetSnapshot?, size: WidgetSize, source: WidgetClipSource = .recent, accessibilityText: Bool = false
+        snapshot: WidgetSnapshot?, size: WidgetSize, source: WidgetClipSource = .recent,
+        accessibilityText: Bool = false, now: Date = .now
     ) {
         self.source = source
         theme = snapshot?.theme ?? .brand
@@ -36,16 +37,16 @@ public struct WidgetContent: Equatable, Sendable {
         }
         let all = snapshot?.clips(from: source) ?? []
         clips = Array(all.prefix(size.clipCount(accessibilityText: accessibilityText)))
-        state = Self.state(of: snapshot, source: source, collection: collection, showing: clips)
+        state = Self.state(of: snapshot, source: source, collection: collection, showing: clips, now: now)
     }
 
     private static func state(
         of snapshot: WidgetSnapshot?, source: WidgetClipSource, collection: WidgetCollection?,
-        showing clips: [WidgetClip]
+        showing clips: [WidgetClip], now: Date
     )
     -> State {
         guard let snapshot else { return .unavailable }
-        if snapshot.isLocked { return .locked }
+        if snapshot.isLockedAt(now) { return .locked }
         if snapshot.isHidden { return .hidden }
         if case .collection = source, collection == nil { return .noCollection }
         return clips.isEmpty ? .empty : .clips

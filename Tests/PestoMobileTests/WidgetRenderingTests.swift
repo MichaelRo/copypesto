@@ -245,4 +245,100 @@ struct WidgetRenderingTests {
         #expect(WidgetClipSpeech.label(clips[4], now: now).hasSuffix("Pinned"))
         #expect(WidgetClipSpeech.foot(clips[0], now: now) == "Notes \u{00B7} just now")
     }
+
+    @Test("Lock Screen accessory families render opt-in-off, locked, empty, and clip states")
+    func whenLockScreenDrawn_thenAllAccessoryFamiliesRender() throws {
+        struct FamilyCase {
+            let family: WidgetFamily
+            let size: CGSize
+            let label: String
+        }
+
+        let full = try snapshot()
+        let families = [
+            FamilyCase(family: .accessoryCircular, size: CGSize(width: 60, height: 60), label: "circular"),
+            FamilyCase(family: .accessoryRectangular, size: CGSize(width: 172, height: 72), label: "rectangular"),
+            FamilyCase(family: .accessoryInline, size: CGSize(width: 240, height: 28), label: "inline")
+        ]
+        let entries: [(String, LockScreenClipsEntry)] = [
+            ("optout", LockScreenClipsEntry(date: now, snapshot: full, showsClipsOnLockScreen: false)),
+            ("clip", LockScreenClipsEntry(date: now, snapshot: full, showsClipsOnLockScreen: true)),
+            ("locked", LockScreenClipsEntry(
+                date: now, snapshot: .locked(theme: .brand, at: now), showsClipsOnLockScreen: true
+            )),
+            ("empty", LockScreenClipsEntry(
+                date: now, snapshot: .empty(theme: .brand, at: now), showsClipsOnLockScreen: true
+            )),
+            ("unavailable", LockScreenClipsEntry(date: now, snapshot: nil, showsClipsOnLockScreen: true)),
+            ("hidden", LockScreenClipsEntry(
+                date: now, snapshot: .hidden(theme: .brand, at: now), showsClipsOnLockScreen: true
+            )),
+            ("nocollection", LockScreenClipsEntry(
+                date: now, snapshot: full, showsClipsOnLockScreen: true, source: .collection(nil)
+            ))
+        ]
+        #expect(!LockScreenClipsConfiguration().showsClipsOnLockScreen)
+        for (state, entry) in entries {
+            for item in families {
+                let view = LockScreenClipsView(entry: entry, familyOverride: item.family)
+                    .frame(width: item.size.width, height: item.size.height)
+                    .background(Color.black)
+                    .environment(\.colorScheme, .dark)
+                let renderer = ImageRenderer(content: view)
+                renderer.scale = 2
+                let image = try #require(renderer.uiImage, "lockscreen-\(item.label)-\(state)")
+                #expect(image.size.width == item.size.width)
+                #expect(image.size.height == item.size.height)
+            }
+        }
+
+        let expiry = now + 120
+        let expiring = full.withExpiresAt(expiry)
+        let timeline = LockScreenClipsProvider.timeline(
+            snapshot: expiring, now: now, showsClipsOnLockScreen: true
+        )
+        #expect(timeline.entries.contains { $0.date == expiry })
+        let optOutTimeline = LockScreenClipsProvider.timeline(
+            snapshot: full, now: now, showsClipsOnLockScreen: false
+        )
+        #expect(optOutTimeline.entries.count == 1)
+
+        let work = WidgetCollection(id: UUID(), name: "Work", symbolName: "briefcase", colorHex: "#2F8B4C")
+        let entity = WidgetCollectionEntity(work)
+        #expect(
+            LockScreenClipsConfiguration(
+                showsClipsOnLockScreen: true, source: .collection, collection: entity
+            ).clipSource == .collection(work.id)
+        )
+    }
+
+    @Test("Lock Screen When Chosen configuration sets tap action on timeline entries and renders cleanly")
+    func whenLockScreenActionConfigured_thenTimelineAndViewRender() throws {
+        let full = try snapshot()
+        let config = LockScreenClipsConfiguration(
+            showsClipsOnLockScreen: true,
+            tapAction: .openPesto,
+            source: .recent
+        )
+        #expect(config.clipAction == .openPesto)
+        #expect(LockScreenClipsConfiguration().clipAction == .copy)
+
+        let actionTimeline = LockScreenClipsProvider.timeline(
+            snapshot: full, now: now, showsClipsOnLockScreen: true, action: .openClip
+        )
+        #expect(actionTimeline.entries.allSatisfy { $0.action == .openClip })
+
+        for action in LockScreenWidgetContent.Action.allCases {
+            let entry = LockScreenClipsEntry(
+                date: now, snapshot: full, showsClipsOnLockScreen: true, action: action
+            )
+            let view = LockScreenClipsView(entry: entry, familyOverride: .accessoryRectangular)
+                .frame(width: 172, height: 72)
+                .background(Color.black)
+                .environment(\.colorScheme, .dark)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 2
+            _ = try #require(renderer.uiImage, "lockscreen-action-\(action.rawValue)")
+        }
+    }
 }

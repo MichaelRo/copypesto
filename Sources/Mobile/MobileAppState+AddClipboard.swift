@@ -33,7 +33,11 @@ extension MobileAppState {
         }
         guard let capture else { throw ShortcutFailure.emptyClipboard }
         do {
-            try await service.ingest(capture.with(captureMethod: .shortcut))
+            try await service.ingest(
+                capture.with(captureMethod: .shortcut),
+                collectionID: resolvedDefaultPasteCollectionID(defaults: defaults),
+                assignCollectionOnlyIfUnfiled: true
+            )
         } catch let refusal as ClipSizePolicy.TooLarge {
             throw ShortcutFailure.refused(refusal.message)
         } catch {

@@ -33,7 +33,11 @@ struct LibraryPresentations: ViewModifier {
                     content: { SettingsSheet() }
                 )
                 .sheet(isPresented: $library.showsQuickInsertSetup) { QuickInsertSetupSheet() }
-                .sheet(isPresented: $library.isComposing) { NewNoteView() }
+                .sheet(
+                    isPresented: $library.isComposing,
+                    onDismiss: { library.presentPendingSnippetIfNeeded() },
+                    content: { NewNoteView() }
+                )
                 .sheet(item: $library.sharing) { share in
                     ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])
                 }

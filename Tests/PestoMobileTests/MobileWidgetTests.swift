@@ -405,4 +405,11 @@ struct MobileWidgetTests {
         #expect(!fixture.file.exists)
         #expect(try target.keys.key() == nil)
     }
+
+    @Test("WidgetTarget matches both Home Screen and Lock Screen widget kinds")
+    func whenWidgetKindsChecked_thenIncludesLockScreenWidget() {
+        #expect(WidgetTarget.matchesInstalledKind(AppIdentity.widgetKind))
+        #expect(WidgetTarget.matchesInstalledKind(AppIdentity.lockScreenWidgetKind))
+        #expect(!WidgetTarget.matchesInstalledKind("other.widget"))
+    }
 }

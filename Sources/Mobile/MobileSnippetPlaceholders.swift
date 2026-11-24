@@ -15,6 +15,10 @@ enum MobileSnippetPlaceholders {
         SnippetDraft.evaluate(text) == .ready || !FillInParser.detectedVariables(in: text).isEmpty
     }
 
+    static func suggestsSnippet(for text: String) -> Bool {
+        text.contains("{{") || !FillInParser.detectedVariables(in: text).isEmpty
+    }
+
     static func preparedTextForSave(_ text: String) -> String? {
         let prepared = if SnippetDraft.evaluate(text) != .ready, !FillInParser.detectedVariables(in: text).isEmpty {
             FillInParser.convertingAllVariables(in: text)

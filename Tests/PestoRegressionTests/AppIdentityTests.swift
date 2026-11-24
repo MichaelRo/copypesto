@@ -57,6 +57,8 @@ struct AppIdentityTests {
         #expect(AppIdentity.quickInsertFileName != AppIdentity.inboxPublicKeyFileName)
         #expect(AppIdentity.widgetBundleID == "net.copypesto.pesto.widget")
         #expect(AppIdentity.widgetKind == "net.copypesto.pesto.recent-clips")
+        #expect(AppIdentity.lockScreenWidgetKind == "net.copypesto.pesto.lock-screen-clips")
+        #expect(AppIdentity.widgetKinds == [AppIdentity.widgetKind, AppIdentity.lockScreenWidgetKind])
         #expect(AppIdentity.widgetKeyAccount == "net.copypesto.pesto.widgetKey")
         #expect(AppIdentity.widgetKeychainGroupName == "net.copypesto.pesto.widget")
         #expect(AppIdentity.widgetKeychainGroup(prefix: "ABCDE12345.") == "ABCDE12345.net.copypesto.pesto.widget")

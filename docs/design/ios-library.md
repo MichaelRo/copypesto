@@ -125,6 +125,13 @@ Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Rec
 which collection, from those the snapshot carries (ADR 0060): "No clips in this collection yet" when it is empty,
 "Choose a collection" when none is chosen or it is gone. With the History Lock on it says "Locked" and "Open Pesto to see your clips." unless "Show clips in widgets, AutoFill and the keyboard while locked" is on (ADR 0055).
 
+**Lock Screen widgets (ADR 0065):** `LockScreenClipsWidget` (`AppIdentity.lockScreenWidgetKind`) offers circular,
+rectangular, and inline accessory families on iPhone and iPad. By default, **Show Clips on Lock Screen** is off so no
+clip content appears on a locked phone until the person turns it on in that widget's settings; secrets never enter the
+snapshot, History Lock still hides clips unless allowed while locked, and **When Chosen** lets that widget copy the
+clip (`Copy Clip`, default via `WidgetLink.url(for: clip.id)`), open Pesto (`Open Pesto`), or open the clip detail
+(`Open Clip`), always unlocking iOS first via `.widgetURL`.
+
 ## The keyboard (ADR 0061)
 Optional, added in iOS Settings. No letter keys. A small shelf (ADR 0062): chips like the Mac shelf's (Recent, Pinned,
 Snippets, then the collections chosen in Settings → AutoFill and keyboard → Collections), and the clips as small Pesto

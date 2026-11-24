@@ -64,5 +64,29 @@ extension MobilePasteboardGlobals {
             #expect(library.store.items
                 .contains { $0.displayPreviewText == "added on open" && $0.captureMethod == .paste })
         }
+
+        @Test("auto-add and taking the clipboard offer use the default paste collection when configured")
+        func whenDefaultPasteCollectionConfigured_thenAutoAddAndOfferUseIt() async throws {
+            let library = try await MobileTestLibrary()
+            let inbox = try #require(library.state.addCollection(named: "Inbox", existing: []))
+            let board = pasteboard()
+            let defaults = ThrowawayDefaults.make()
+            defaults.set(true, for: Setting.addsCopiesOnOpen)
+            defaults.set(inbox.id.uuidString, for: Setting.defaultPasteCollectionID)
+            board.string = "auto added into inbox"
+
+            await library.state.clipboardDidBecomeActive(pasteboard: board, defaults: defaults)
+            try await library.refreshed()
+
+            let autoItem = try #require(library.store.items.first { $0.displayPreviewText == "auto added into inbox" })
+            #expect(autoItem.collectionID == inbox.id)
+
+            let provider = NSItemProvider(object: "offered into inbox" as NSString)
+            await library.state.takeClipboardOffer([provider], defaults: defaults)
+            try await library.refreshed()
+
+            let offeredItem = try #require(library.store.items.first { $0.displayPreviewText == "offered into inbox" })
+            #expect(offeredItem.collectionID == inbox.id)
+        }
     }
 }

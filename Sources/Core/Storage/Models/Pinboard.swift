@@ -63,3 +63,11 @@ public final class Pinboard {
 /// User-facing alias. New code may refer to a collection as `ClipCollection` — the
 /// canonical `Pinboard` name is retained only for SwiftData entity-name continuity.
 public typealias ClipCollection = Pinboard
+
+public extension Pinboard {
+    var isSnippetsSmartCollection: Bool {
+        guard isSmart, let data = smartPredicateData,
+              let ruleSet = try? SmartCollectionPredicate.decodeRuleSet(data) else { return false }
+        return ruleSet == PredicateRuleSet.snippets
+    }
+}

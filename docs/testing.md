@@ -429,6 +429,7 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
 - **No paste prompt**: in all of the above, iOS never asks to allow a paste from Pesto.
 - **Memory**: run `PestoKeyboard` from Xcode attached to Notes and watch the memory gauge while the full set shows and
   the pad opens and closes: it stays well under the keyboard extension limit, and drops after the keyboard is hidden.
+- **Lock Screen widgets** (ADR 0065): add circular, rectangular, and inline Pesto widgets on the Lock Screen; verify they show "Hidden on Lock Screen" by default with zero clip data exposed, turn on **Show Clips on Lock Screen** in Edit Widget to show the latest non-secret clip (secrets never appear), verify History Lock hides clips unless allowed, and verify opening prompts Face ID/passcode and opens the clip in Pesto.
 - **iPad**: the cards in three columns, and the same states with a hardware keyboard attached.
 
 ## Lessons from the test suite

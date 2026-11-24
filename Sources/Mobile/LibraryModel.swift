@@ -42,6 +42,7 @@ final class LibraryModel {
     var showsQuickInsertSetup = false
     var isComposing = false
     var snippetEditor: SnippetEditorTarget?
+    var pendingSnippetAfterComposing: SnippetEditorTarget?
     var picksSyncFolder = false
     var isNamingCollection = false
     var isImportingCollection = false
@@ -57,7 +58,7 @@ final class LibraryModel {
     @ObservationIgnored let order = GridOrder()
 
     enum SnippetEditorTarget: Equatable, Identifiable {
-        case new
+        case new(initialText: String = "")
         case edit(id: UUID, title: String, text: String)
 
         var id: String {
@@ -90,8 +91,19 @@ final class LibraryModel {
         textEdit?.clipID == id
     }
 
-    func beginNewSnippet() {
-        snippetEditor = .new
+    func beginNewSnippet(initialText: String = "") {
+        snippetEditor = .new(initialText: initialText)
+    }
+
+    func switchFromComposeToSnippet(initialText: String = "") {
+        pendingSnippetAfterComposing = .new(initialText: initialText)
+        isComposing = false
+    }
+
+    func presentPendingSnippetIfNeeded() {
+        guard let pending = pendingSnippetAfterComposing else { return }
+        pendingSnippetAfterComposing = nil
+        snippetEditor = pending
     }
 
     func beginSnippetEdit(of item: ClipboardItem, text: String) {
@@ -162,6 +174,7 @@ final class LibraryModel {
         scrollAnchor = nil
         showsSettings = false
         isComposing = false
+        pendingSnippetAfterComposing = nil
         picksSyncFolder = false
         isNamingCollection = false
         isImportingCollection = false

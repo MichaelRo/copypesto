@@ -98,11 +98,14 @@ extension MobileAppState {
             return
         }
         let previous = lastWidgetSnapshot
+        let now = clock()
+        let expiresAt = historyLock.outsideExpiresAt(at: now)
         do {
             let snapshot = try await Self.widgetSnapshot(
-                container: container, now: clock(), theme: Self.widgetTheme(), previous: previous,
+                container: container, now: now, theme: Self.widgetTheme(), previous: previous,
                 device: CardFootLineView.device
             )
+            .withExpiresAt(expiresAt)
             guard !historyLock.holdsOutsideSurfaces else { return performWidgetEmpty() }
             guard target.isEnabled() else { return }
             try target.file.write(snapshot, with: target.keys.loadOrCreate())

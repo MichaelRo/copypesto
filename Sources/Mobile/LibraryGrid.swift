@@ -31,6 +31,7 @@ struct LibraryGrid: View {
     @State private var dragBaseSelection: Set<UUID> = []
     @State private var dragAddsSelection = true
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
+    @AppStorage(Setting.dismissedSnippetHint) private var dismissedSnippetHint: Bool
 
     var body: some View {
         let ids = listing.ids
@@ -39,6 +40,7 @@ struct LibraryGrid: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 if !appState.storeIsOnDisk { notSavedBanner }
+                if showsSnippetPlaceholderHint, !ids.isEmpty { snippetPlaceholderHint }
                 grid(ids, columns: count, cardWidth: cardWidth)
                     .environment(\.cardClock, minute)
             }
@@ -207,6 +209,36 @@ struct LibraryGrid: View {
         } else if let focusedClip {
             library.open(focusedClip)
         }
+    }
+
+    private var showsSnippetPlaceholderHint: Bool {
+        !dismissedSnippetHint && !library.isSearching && smartBoard?.isSnippetsSmartCollection == true
+    }
+
+    private var snippetPlaceholderHint: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "curlybraces")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            Text("Snippets fill in placeholders like {{date}} or {{name}} when copied.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 4)
+            Button {
+                withAnimation(Motion.animation(.pestoQuick)) {
+                    dismissedSnippetHint = true
+                }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss hint")
+        }
+        .padding(.horizontal, CardGridLayout.margin)
     }
 
     private var notSavedBanner: some View {

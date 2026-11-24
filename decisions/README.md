@@ -73,6 +73,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0062](0062-the-keyboard-is-a-small-shelf-with-chips-and-a-word-search.md) | The keyboard is a small shelf: collection chips the person chooses, a row that scrolls sideways, a search by the word typed before switching (replaced on insert), and a choice to return or stay after inserting; the quick-insert set carries the chosen collections. Amends 0051 and 0061 |
 | [0063](0063-the-keyboard-searches-in-its-own-field.md) | The keyboard has a search page: letters and numbers that type only into Pesto's own search field, never into the app, above the matching clips; the word-before-the-caret search stays. Amends 0061 and 0062 |
 | [0064](0064-keyboard-pictures-and-default-paste.md) | The iOS keyboard copies pictures on tap (`localOnly`, 120s expiry, Full Access) with `"Copied, paste it"`, inserts secret-scanned recognized text via long-press + `text.viewfinder` badge, excludes `.file`/NSFW/secrets, and covers during screen capture (proposed) |
+| [0065](0065-lock-screen-accessory-widgets.md) | iOS Lock Screen accessory widgets (`accessoryCircular`, `accessoryRectangular`, `accessoryInline`) live in `LockScreenClipsWidget` with an off-by-default per-widget opt-in (`showsClipsOnLockScreen`), use `.widgetURL` only, and never show secrets; amends 0052 |
 
 ## Template
 

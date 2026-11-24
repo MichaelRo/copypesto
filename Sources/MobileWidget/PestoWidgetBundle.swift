@@ -6,6 +6,7 @@ import WidgetKit
 struct PestoWidgetBundle: WidgetBundle {
     var body: some Widget {
         RecentClipsWidget()
+        LockScreenClipsWidget()
         OpenPestoControl()
         AddClipboardControl()
     }

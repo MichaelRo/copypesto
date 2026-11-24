@@ -27,7 +27,10 @@ struct CopyClipIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
-        guard let id = UUID(uuidString: clipID), let clip = WidgetSnapshotReader.read()?.clip(id: id),
+        guard let id = UUID(uuidString: clipID),
+              let snapshot = WidgetSnapshotReader.read(),
+              !snapshot.isLockedAt(.now),
+              let clip = snapshot.clip(id: id),
               let text = clip.fullText else
         {
             Self.logger.error("A widget copy found no clip it may copy")

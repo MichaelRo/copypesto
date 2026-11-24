@@ -1,7 +1,7 @@
 # 0061. An optional keyboard inserts from the quick-insert set; it has no typing keys and never holds the history key
 
 Status: Accepted (owner request, 2026-11-19); its layout and its promise about text typed elsewhere are amended by ADR
-0062 (a small shelf with chips, and a search by the last word before the caret)
+0062 (a small shelf with chips, and a search by the last word before the caret) and ADR 0063 (a search page into Pesto's own field)
 
 Amends ADR 0046 where it says "No keyboard extension". Extends ADR 0051 (the quick-insert set, which the keyboard reads
 as AutoFill does) and ADR 0055 (the set while the History Lock is on). Everything else they decide stands.

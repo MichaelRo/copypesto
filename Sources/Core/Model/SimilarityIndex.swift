@@ -43,6 +43,23 @@ public struct SimilarityIndex: Sendable {
         }
     }
 
+    /// Loads a batch in O(N log N) by appending band keys and sorting each bucket once.
+    public mutating func insertBatch(_ entries: [(id: UUID, signature: TextSignature)]) {
+        for (id, signature) in entries {
+            if slots[id] != nil { remove(id) }
+            let slot = UInt32(ids.count)
+            ids.append(id)
+            slots[id] = slot
+            signatures[id] = signature
+            for band in 0..<Self.bands {
+                buckets[band].append(Self.key(of: signature, band: band, slot: slot))
+            }
+        }
+        for band in 0..<Self.bands {
+            buckets[band].sort()
+        }
+    }
+
     public mutating func remove(_ id: UUID) {
         guard let slot = slots.removeValue(forKey: id),
               let signature = signatures.removeValue(forKey: id) else { return }

@@ -23,7 +23,9 @@ enum BottomShelfPositioning {
     /// hanging from the menu bar, whichever the person chose.
     @MainActor
     static func frame(for screen: NSScreen? = nil, banners: CGFloat = 0) -> NSRect {
-        let targetScreen = screen ?? TargetScreen.current() ?? NSScreen.main ?? NSScreen.screens[0]
+        guard let targetScreen = screen ?? TargetScreen.current() ?? NSScreen.main ?? NSScreen.screens.first else {
+            return .zero
+        }
         return position.frame(
             on: ShelfPosition.Screen(
                 frame: targetScreen.frame,

@@ -2,41 +2,39 @@
 
 Status: Proposed
 
-Amends ADR 0046 (which left out a keyboard extension) and extends the sealed-snapshot and screen-capture rules of ADR 0052, ADR 0054, and ADR 0034.
+Amends ADR 0046 (which left out a keyboard extension) and extends the quick-insert set and screen-capture rules of ADR 0051, ADR 0054, ADR 0061, and ADR 0034.
 
 ## Context
-A custom iOS keyboard extension lets a person reach their recent clips from any text field without leaving the current app. When picture clips are included in the keyboard's sealed snapshot, tapping a picture card needs a predictable default action:
+A custom iOS keyboard extension (`PestoKeyboard`) reads from `QuickInsertFile` (`QuickInsertSet` / `QuickInsertSelection`) with **Allow Full Access** (ADRs 0061–0063) and never accesses the main history store or widget snapshots. When picture clips are supported on the keyboard, tapping a picture card needs a predictable default action:
 
 - `UITextDocumentProxy.insertText(_:)` can only insert plain text, not image data.
 - A picture may have no recognized text (OCR), or the person may want the image itself in a messaging or notes field rather than its extracted text.
-- Writing an image to `UIPasteboard` from a keyboard extension requires **Allow Full Access** (`hasFullAccess == true`). When a picture is placed on the system pasteboard, it must not linger indefinitely or sync to other devices via Universal Clipboard.
-- At the same time, pictures that do have secret-scanned recognized text benefit from a direct text-insertion path without replacing the image copy default.
-- The keyboard strip must uphold Pesto's existing privacy guarantees: files (`.file`), adult content (`item.isNSFW`), and secrets (including secrets detected in recognized text via `SensitiveContentDetector`) must never enter the keyboard snapshot, and active screen capture or recording must cover the strip just as the main iOS app does (ADR 0054).
+- Opening `QuickInsertFile` and writing an image to `UIPasteboard` from the keyboard extension both require **Allow Full Access** (`hasFullAccess == true`). When Full Access is off, the keyboard offers only its built-in numbers-and-punctuation pad (ADR 0061). When a picture is placed on the system pasteboard, it must not linger indefinitely or sync via Universal Clipboard.
+- Pictures that hold secret-scanned recognized text benefit from a secondary text-insertion path without replacing the image copy default.
+- The keyboard strip must uphold Pesto's existing privacy guarantees: files (`.file`), adult content (`item.isNSFW`), expiring/pending clips, and secrets (including secrets detected in recognized text via `SensitiveContentDetector`) must never enter `QuickInsertSet`, and active screen capture or recording must cover the keyboard strip (ADR 0054).
 
 ## Decision
-1. **Default tap on a picture card copies the picture.**
-   - Tapping a picture card in the keyboard writes the picture to `UIPasteboard.general` with `localOnly: true` and an expiration date of 120 seconds (`Date().addingTimeInterval(120)`).
-   - This applies to every picture card in the keyboard snapshot, including pictures without recognized text.
-   - Writing to `UIPasteboard` requires Full Access (`hasFullAccess`); when Full Access is off, the keyboard surfaces the Full Access requirement instead of silently failing.
+1. **Pictures join `QuickInsertSet` (`QuickInsertSelection` / `QuickInsertFile`) under strict bounds, never `WidgetSnapshot`.**
+   - `PestoKeyboard` reads only `QuickInsertFile` (under the shared quick-insert Keychain group) with Full Access enabled (`hasFullAccess == true`).
+   - Thumbnail/image payloads carried for keyboard display stay bounded within the quick-insert set's budget and exclude `.file`, `item.isNSFW`, expiring, pending-analysis, and secret clips (including OCR text matching `SensitiveContentDetector`).
+
+2. **Default tap on a picture card copies the picture thumbnail (requires Full Access).**
+   - Tapping a picture card writes its bounded JPEG thumbnail (`entry.thumbnail`, capped in `QuickInsertSelection`) to `UIPasteboard.general` with `localOnly: true` and a 120-second expiration (`Date().addingTimeInterval(120)`).
    - After copying, the keyboard shows `"Copied, paste it"` feedback so the person knows the image is ready to paste into the target field.
 
-2. **Secondary action inserts secret-scanned recognized text.**
-   - When a picture has recognized text (scanned for secrets under ADR 0034 before entering the snapshot), the card displays a `text.viewfinder` badge.
-   - A long-press `.contextMenu` on the picture card (and a VoiceOver `.accessibilityAction`) offers **Insert Text**, which inserts the scanned text directly at the cursor via `textDocumentProxy.insertText(_:)`.
-
-3. **Snapshot exclusions remain strict.**
-   - File clips (`.file`), adult clips (`item.isNSFW`), expiring clips, pending-analysis clips, and secrets (including pictures whose recognized text matches `SensitiveContentDetector`) are excluded from the keyboard snapshot (`ShortcutClipSearch.isOfferedOutsidePesto` and `WidgetSnapshotSelection`).
+3. **Secondary action inserts secret-scanned recognized text.**
+   - When a picture has recognized text scanned clean for secrets (ADR 0034), the card shows a `text.viewfinder` badge.
+   - Tapping the `text.viewfinder` badge directly, choosing **Insert Text** in the picture card's long-press `.contextMenu`, or invoking the VoiceOver `.accessibilityAction` inserts the scanned text via `textDocumentProxy.insertText(_:)`.
 
 4. **Screen capture covers the keyboard strip.**
-   - When `traitCollection.sceneCaptureState == .active`, the keyboard covers/blurs its strip so clips are not exposed in screenshots, screen recordings, or AirPlay, matching ADR 0054.
+   - When `traitCollection.sceneCaptureState == .active`, the keyboard blurs all states and displays cover copy when the menu is ready so clips are not exposed in screenshots, screen recordings, or AirPlay (ADR 0054).
 
 ## Consequences
-- Picture clips become usable from the iOS keyboard even when they contain no text, without changing `insertText` semantics for text, link, or color clips.
-- Users without Full Access enabled can still browse and insert text clips via `textDocumentProxy.insertText(_:)`, while copying a picture requires Full Access and prompts accordingly.
-- Because copied pictures use `localOnly: true` and a 120-second expiration, they stay off Universal Clipboard and expire automatically from the system pasteboard.
-- Excluding `.file`, `item.isNSFW`, and secret-bearing OCR text keeps the sealed keyboard snapshot aligned with the widget and AutoFill privacy boundaries.
+- Picture clips become usable from the iOS keyboard while keeping the keyboard strictly isolated to `QuickInsertFile` and Full Access (no widget key/file coupling).
+- Copied pictures stay local to the device (`localOnly: true`) and expire automatically after 120 seconds.
+- Users without Full Access see only the numbers-and-punctuation pad and never trigger broken image copies or pasteboard prompts.
 
 ## Docs affected
 - `decisions/README.md` (index entry)
-- `docs/design/ios-library.md` (when the keyboard is documented)
-- `docs/guide/privacy-and-security.md` (keyboard Full Access, 120s local-only pasteboard, and screen-capture cover notes, once accepted and shipped)
+- `docs/design/ios-keyboard.md` (when implemented)
+- `docs/guide/privacy-and-security.md` (Full Access, 120s local-only pasteboard, and screen-capture cover notes, once accepted and shipped)

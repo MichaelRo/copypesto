@@ -10,10 +10,12 @@ extension StorageService {
     func forEachClip(
         matching descriptor: FetchDescriptor<ClipboardItem> = FetchDescriptor<ClipboardItem>(),
         pageSize: Int = 50,
+        saves: Bool = true,
         _ visit: (ClipboardItem) throws -> Void
     ) async throws {
         let ids = try modelContext.fetchIdentifiers(descriptor)
         for start in stride(from: 0, to: ids.count, by: pageSize) {
+            try Task.checkCancellation()
             let page = Array(ids[start..<min(start + pageSize, ids.count)])
             let items = try modelContext.fetch(FetchDescriptor<ClipboardItem>(
                 predicate: #Predicate { page.contains($0.persistentModelID) }
@@ -23,10 +25,10 @@ extension StorageService {
                     try visit(item)
                 }
             } catch {
-                modelContext.rollback()
+                if saves { modelContext.rollback() }
                 throw error
             }
-            try saveOrRollback()
+            if saves { try saveOrRollback() }
             await Task.yield()
         }
     }

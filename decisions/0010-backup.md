@@ -1,6 +1,6 @@
 # 0010. The backup is one encrypted, chunk-authenticated file per Mac, kept current automatically and guarded against shrinking; sync is designed, not built
 
-Status: Accepted
+Status: Accepted; sync is superseded by ADR 0018, Settings wording by ADR 0019 and ADR 0022, and passphrase strength extended by ADR 0040
 
 ## Context
 History is sensitive and its on-disk key is per install and this-device-only (ADR 0002), so it cannot leave the Mac by

@@ -157,4 +157,28 @@ struct QuickInsertMenuTests {
         #expect(autoFill.groups(matching: "").first?.entries.map(\.id) == [fillIn.id, plain.id])
         #expect(keyboard.entries(for: .snippets).map(\.id) == [plain.id])
     }
+
+    @Test("QuickInsertEntry carries optional fieldMemory backward-compatibly")
+    func whenFieldMemoryEncodedOrAbsent_thenDecodesCleanly() throws {
+        let withMemory = QuickInsertEntry(
+            id: UUID(), section: .snippets, kind: .text, title: "Greeting", text: "Hi {{Name}}",
+            expandsOnInsert: true, fieldMemory: ["Name": "Michael"]
+        )
+        let encoded = try JSONEncoder().encode(withMemory)
+        let decoded = try JSONDecoder().decode(QuickInsertEntry.self, from: encoded)
+        #expect(decoded.fieldMemory == ["Name": "Michael"])
+
+        let legacyJSON = """
+        {
+            "id": "\(UUID().uuidString)",
+            "section": "snippets",
+            "kind": "text",
+            "title": "Greeting",
+            "text": "Hi {{Name}}",
+            "expandsOnInsert": true
+        }
+        """
+        let legacyDecoded = try JSONDecoder().decode(QuickInsertEntry.self, from: Data(legacyJSON.utf8))
+        #expect(legacyDecoded.fieldMemory == nil)
+    }
 }

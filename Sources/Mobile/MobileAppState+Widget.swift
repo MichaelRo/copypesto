@@ -100,12 +100,14 @@ extension MobileAppState {
         let previous = lastWidgetSnapshot
         let now = clock()
         let expiresAt = historyLock.outsideExpiresAt(at: now)
+        let peers = peerDeviceNames
         do {
-            let snapshot = try await Self.widgetSnapshot(
-                container: container, now: now, theme: Self.widgetTheme(), previous: previous,
-                device: CardFootLineView.device
+            let options = WidgetSnapshotRequest(
+                now: now, theme: Self.widgetTheme(), previous: previous,
+                device: CardFootLineView.device, peerDeviceNames: peers
             )
-            .withExpiresAt(expiresAt)
+            let snapshot = try await Self.widgetSnapshot(container: container, request: options)
+                .withExpiresAt(expiresAt)
             guard !historyLock.holdsOutsideSurfaces else { return performWidgetEmpty() }
             guard target.isEnabled() else { return }
             try target.file.write(snapshot, with: target.keys.loadOrCreate())
@@ -145,14 +147,25 @@ extension MobileAppState {
 
     /// Off the main actor, with a context of its own: it reads what the store holds now (a clip the storage actor just
     /// made secret, say), and decoding a new picture's thumbnail does not hold up the library.
+    private struct WidgetSnapshotRequest {
+        let now: Date
+        let theme: WidgetSnapshot.Theme
+        let previous: WidgetSnapshot?
+        let device: CardFootLine.Device
+        let peerDeviceNames: [String: String]
+    }
+
     @concurrent
     private static func widgetSnapshot(
-        container: ModelContainer, now: Date, theme: WidgetSnapshot.Theme, previous: WidgetSnapshot?,
-        device: CardFootLine.Device
+        container: ModelContainer, request: WidgetSnapshotRequest
     ) async throws
     -> WidgetSnapshot {
-        try WidgetSnapshotSelection.snapshot(in: ModelContext(container), now: now, theme: theme, previous: previous) {
-            CardFootLine.source(CardFootLine.origin(of: $0), device: device).name
+        try WidgetSnapshotSelection.snapshot(
+            in: ModelContext(container), now: request.now, theme: request.theme, previous: request.previous
+        ) {
+            CardFootLine.source(
+                CardFootLine.origin(of: $0, peerDeviceNames: request.peerDeviceNames), device: request.device
+            ).name
         }
     }
 

@@ -26,8 +26,51 @@ enum ClipFacts {
         ))
     }
 
+    @MainActor
+    static func line(
+        for item: ClipboardItem,
+        collectionName: String?,
+        isShown: Bool,
+        peerDeviceNames: [String: String] = [:],
+        locale: Locale = .current
+    )
+    -> String {
+        factStrings(
+            for: item, collectionName: collectionName, isShown: isShown,
+            peerDeviceNames: peerDeviceNames, locale: locale
+        )
+        .joined(separator: " \u{00B7} ")
+    }
+
+    @MainActor
+    static func factStrings(
+        for item: ClipboardItem,
+        collectionName: String?,
+        isShown: Bool,
+        peerDeviceNames: [String: String] = [:],
+        locale: Locale = .current
+    )
+    -> [String] {
+        var parts = facts(for: item, collectionName: collectionName, isShown: isShown)
+            .map { text(for: $0, locale: locale) }
+            .filter { !$0.isEmpty }
+        if let origin = originName(for: item, peerDeviceNames: peerDeviceNames) {
+            parts.insert(origin, at: 0)
+        }
+        return parts
+    }
+
+    @MainActor
+    static func originName(for item: ClipboardItem, peerDeviceNames: [String: String] = [:]) -> String? {
+        guard !item.isRemote else { return nil }
+        if let appName = item.knownSourceAppName { return appName }
+        guard let origin = item.syncOrigin, let peer = peerDeviceNames[origin] else { return nil }
+        let trimmed = peer.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
     static func rgb(of text: String) -> DetailPopoverContent.RGB? {
-        guard let color = ColorLiteralParser.firstColor(in: text) else { return nil }
+        guard let color = ColorLiteralParser.color(fromWholeString: text) else { return nil }
         func channel(_ value: Double) -> Int {
             Int((min(max(value, 0), 1) * 255).rounded())
         }

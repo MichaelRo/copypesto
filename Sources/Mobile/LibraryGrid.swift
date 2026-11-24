@@ -8,6 +8,7 @@ import SwiftUI
 struct LibraryGrid: View {
     let store: HistoryStore
     let showsChipRow: Bool
+    var showsScopeChips = true
 
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
@@ -43,13 +44,14 @@ struct LibraryGrid: View {
                 if showsSnippetPlaceholderHint, !ids.isEmpty { snippetPlaceholderHint }
                 grid(ids, columns: count, cardWidth: cardWidth)
                     .environment(\.cardClock, minute)
+                    .environment(\.peerDeviceNames, appState.peerDeviceNames)
             }
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             if showsChipRow {
-                LibraryChipRow()
+                LibraryChipRow(showsScopes: showsScopeChips)
                     .padding(.vertical, 6)
             }
         }
@@ -85,8 +87,35 @@ struct LibraryGrid: View {
         .focusedSceneValue(\.listCommands, ListCommandActions(
             newNote: { library.isComposing = true },
             search: { library.isSearching = true },
-            toggleDetail: toggleDetail
+            toggleDetail: toggleDetail,
+            askPesto: library.isSearching && !library.query.trimmingCharacters(in: .whitespaces).isEmpty
+                ? {
+                    library.startAsk(
+                        using: { await appState.askPesto($0) },
+                        isLocked: { appState.isHistoryLockedNow() }
+                    )
+                }
+                : nil,
+            copySelected: copySelectedCommand(ids: ids)
         ))
+    }
+
+    private func copySelectedCommand(ids: [UUID]) -> (() -> Void)? {
+        guard library.isSelecting,
+              !library.isSearching,
+              library.openClipID == nil,
+              library.textEdit == nil,
+              library.snippetEditor == nil else { return nil }
+        let textual: [ClipboardItem] = ids.compactMap { id in
+            guard library.selectedClipIDs.contains(id),
+                  let item = store.item(for: id),
+                  item.type == .text || item.type == .code else { return nil }
+            return item
+        }
+        guard textual.count >= 2 else { return nil }
+        return {
+            if appState.copyJoined(textual) { library.endSelection() }
+        }
     }
 
     private var inCollection: Bool {
@@ -157,10 +186,12 @@ struct LibraryGrid: View {
     }
 
     private var listingKey: LibraryListing.Key {
-        LibraryListing.Key(
+        let hideNSFW = NSFWMode(rawValue: nsfwModeRaw) == .hide
+            && !(library.isSearching && library.filter.sensitiveOnly)
+        return LibraryListing.Key(
             revision: store.revision, query: library.query, filter: library.filter, isSearching: library.isSearching,
             orderVersion: library.orderVersion, textEdits: appState.textEdits, byMeaning: byMeaning,
-            hidesSensitive: NSFWMode(rawValue: nsfwModeRaw) == .hide, smartRule: smartBoard?.smartPredicateData
+            hidesSensitive: hideNSFW, smartRule: smartBoard?.smartPredicateData
         )
     }
 
@@ -168,6 +199,7 @@ struct LibraryGrid: View {
         listing = HangDiagnostics.measure("libraryRelist") {
             LibraryListing.list(key, in: store, order: library.order, smartRule: smartRule)
         }
+        library.visibleResultCount = listing.ids.count
         hasListed = true
         guard !hasRestoredPosition else { return }
         hasRestoredPosition = true

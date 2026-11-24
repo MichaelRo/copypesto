@@ -79,7 +79,14 @@ final class AppState {
     var searchText = ""
     /// `true` when the search field is visible and active in the CommandBar.
     /// Written by the keyboard monitor (type-to-search) and by the CommandBar itself.
-    var isSearchActive = false
+    var isSearchActive = false {
+        didSet {
+            if !isSearchActive {
+                showsCustomDateRange = false
+            }
+        }
+    }
+
     var selectedCollectionID: UUID?
     var hasAccessibilityPermission = false
     /// How far the block above the row (the banners, then the command bar) passes its budget
@@ -151,6 +158,8 @@ final class AppState {
     var searchTypeFilter: Set<String> = []
     /// Date range selected in the filter bar. `.all` = no date constraint.
     var searchDateFilter: SearchDateFilter = .all
+    /// Whether the inline custom date range picker row is visible beneath the filter bar.
+    var showsCustomDateRange = false
     /// Source app bundle IDs selected in the filter bar. Empty = all sources shown.
     var searchSourceFilter: Set<String> = []
     /// Per-session opt-in to surface NSFW-flagged items in search results. Reset on
@@ -164,47 +173,13 @@ final class AppState {
     var filterChipCursor: Int?
     /// The chips on screen, in order, as the keyboard can act on them. Set by the command bar.
     @ObservationIgnored var filterChipActions: [FilterChipAction] = []
+    @ObservationIgnored var askTask: Task<Void, Never>?
+    @ObservationIgnored var askGeneration = 0
 
     /// When the shelf last closed; `ShelfContextPolicy` decides from it whether the next open starts from All.
     @ObservationIgnored var shelfClosedAt: Date?
     /// Whether the most recent open crossed `ShelfContextPolicy.memory` and reset context.
     @ObservationIgnored var shelfContextWasStale = false
-
-    /// A link or script chose what the shelf shows (a collection, a search): a long absence must not undo it.
-    func noteContextRequested() {
-        shelfClosedAt = nil
-        shelfContextWasStale = false
-    }
-
-    /// Called as the shelf opens. After `ShelfContextPolicy.memory` closed the shelf forgets its collection and
-    /// filters; `restingCollectionID` is the frontmost app's own collection, if it has one.
-    func resetShelfContextIfStale(now: Date = .now, restingCollectionID: UUID?) {
-        let stale = !isPinnedWindowVisible && ShelfContextPolicy.shouldReset(closedAt: shelfClosedAt, now: now)
-        shelfContextWasStale = stale
-        guard stale else { return }
-        searchText = ""
-        isSearchActive = false
-        filterChipCursor = nil
-        clearSearchFilters()
-        appChipFilter = []
-        selectedCollectionID = restingCollectionID
-    }
-
-    /// A key typed on the shelf with no search open opens the search with that key. Keys that arrive before the field
-    /// has focus (it takes a moment) join what was typed, in order.
-    func typeIntoSearch(_ characters: String) {
-        searchText = isSearchActive ? searchText + characters : characters
-        isSearchActive = true
-    }
-
-    func clearSearchFilters() {
-        searchTypeFilter = []
-        searchDateFilter = .all
-        searchSourceFilter = []
-        showHiddenNSFW = false
-        searchSensitiveOnly = false
-        searchRemoteOnly = false
-    }
 
     let hotkeyController = HotkeyController()
     let pasteCoordinator = PasteCoordinator()
@@ -337,6 +312,7 @@ final class AppState {
     /// would clear an exit that was about to be used.
     func close(_ exit: ShelfExit = .dismissed) {
         guard isOverlayVisible || exit.actsWhenAlreadyClosed else { return }
+        cancelAsk()
         shelfDidClose()
         pendingExit = exit
         isOverlayVisible = false
@@ -476,6 +452,7 @@ final class AppState {
         )
         // Decrypted previews must not outlive the lock, and neither may what could be undone.
         if isHistoryLocked {
+            cancelAsk()
             if closesTextEditor { closeTextEditor?() }
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
@@ -517,6 +494,7 @@ final class AppState {
     /// Immediately locks history and purges decrypted previews from memory.
     func lockHistory() {
         guard AppDefaults.store.value(for: Setting.biometricLockEnabled) else { return }
+        cancelAsk()
         lastBiometricUnlock = nil
         isHistoryLocked = true
         closeTextEditor?()

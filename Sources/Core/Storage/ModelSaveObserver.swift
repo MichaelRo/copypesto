@@ -19,11 +19,13 @@ public enum ModelSaveObserver {
         _ handler: @escaping @MainActor @Sendable (HistorySaveChange?) -> Void
     )
     -> any NSObjectProtocol {
-        let own = ObjectIdentifier(container)
-        return NotificationCenter.default.addObserver(forName: ModelContext.didSave, object: nil, queue: nil) { note in
-            if let saved = note.object as? ModelContext, ObjectIdentifier(saved.container) != own { return }
-            let change = HistorySaveChange(userInfo: note.userInfo)
-            Task { @MainActor in handler(change) }
-        }
+        NotificationCenter.default
+            .addObserver(forName: ModelContext.didSave, object: nil, queue: nil) { [weak container] note in
+                guard let container,
+                      let saved = note.object as? ModelContext,
+                      saved.container === container else { return }
+                let change = HistorySaveChange(userInfo: note.userInfo)
+                Task { @MainActor in handler(change) }
+            }
     }
 }

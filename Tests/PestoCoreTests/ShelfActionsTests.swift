@@ -128,6 +128,11 @@ struct ShelfActionsTests {
         #expect(joined.text == "one\n\ntwo\n\nthree")
         #expect(joined.isProtected)
         #expect(try ClipJoin.join([clip("a"), clip("b")])?.isProtected == false)
+
+        let pending = try clip("unjudged")
+        pending.analysisPending = true
+        let pendingJoined = try #require(try ClipJoin.join([clip("ok"), pending]))
+        #expect(pendingJoined.isProtected)
     }
 
     @Test("Paste All stops at the size limit and does not read the clips it leaves out (P-07)")

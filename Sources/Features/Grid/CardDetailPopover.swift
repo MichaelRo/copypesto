@@ -345,7 +345,7 @@ struct CardDetailPopover: View {
     private var colorBody: some View {
         VStack(alignment: .leading, spacing: 8) {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(ColorStringDetector.detect(in: item.gridPreview) ?? .purple.opacity(0.5))
+                .fill(ColorStringDetector.detectWholeColor(in: item.gridPreview) ?? .purple.opacity(0.5))
                 .frame(height: 56)
                 .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(.primary.opacity(0.14)))
             Text(item.gridPreview).scaledFont(size: 13, weight: .semibold, design: .monospaced)

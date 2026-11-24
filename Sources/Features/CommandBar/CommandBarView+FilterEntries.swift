@@ -47,8 +47,139 @@ extension CommandBarView {
         return [
             choice("Any Time", .all), choice("Last 7 Days", .week), choice("Last 30 Days", .month), .divider,
             choice("Last Hour", .last(3600)), choice("Last 3 Hours", .last(3 * 3600)),
-            choice("Last 12 Hours", .last(12 * 3600)), .divider, .submenu("On a Day", days)
+            choice("Last 12 Hours", .last(12 * 3600)), .divider, .submenu("On a Day", days),
+            .divider, .action("Custom Date Range\u{2026}") { openCustomDateRangePicker() }
         ]
+    }
+
+    private func openCustomDateRangePicker() {
+        if let interval = appState.searchDateFilter.interval(now: .now) {
+            let lastDay = max(interval.start, min(Date.now, interval.end.addingTimeInterval(-1)))
+            customStartDate = interval.start
+            customEndDate = lastDay
+            customRangeSingleDay = Calendar.current.isDate(interval.start, inSameDayAs: lastDay)
+        } else {
+            customStartDate = .now
+            customEndDate = .now
+            customRangeSingleDay = false
+        }
+        appState.showsCustomDateRange = true
+    }
+
+    var customDateRangeRow: some View {
+        HStack(spacing: 8) {
+            Toggle("Single day", isOn: $customRangeSingleDay)
+                .toggleStyle(.checkbox)
+                .controlSize(.small)
+                .font(.caption)
+
+            DatePicker(
+                customRangeSingleDay ? "Date" : "From",
+                selection: $customStartDate,
+                in: ...Date.now,
+                displayedComponents: .date
+            )
+            .datePickerStyle(.compact)
+            .controlSize(.small)
+            .labelsHidden()
+            .accessibilityLabel(customRangeSingleDay ? "Date" : "Start date")
+            .onChange(of: customStartDate) { _, start in
+                if customEndDate < start {
+                    customEndDate = start
+                }
+            }
+
+            if !customRangeSingleDay {
+                Text("to")
+                    .font(.caption)
+                    .pestoQuiet()
+                DatePicker(
+                    "To",
+                    selection: $customEndDate,
+                    in: customStartDate...Date.now,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                .controlSize(.small)
+                .labelsHidden()
+                .accessibilityLabel("End date")
+            }
+
+            Spacer(minLength: 0)
+
+            Button("Clear") {
+                appState.searchDateFilter = .all
+                appState.showsCustomDateRange = false
+            }
+            .buttonStyle(.plain)
+            .font(.caption)
+            .pestoQuiet()
+            .accessibilityIdentifier(AccessibilityID.customDateClearButton)
+
+            Button("Apply") {
+                let end = customRangeSingleDay ? customStartDate : customEndDate
+                appState.searchDateFilter = SearchDateFilter.customRange(from: customStartDate, to: end)
+                appState.showsCustomDateRange = false
+            }
+            .buttonStyle(.pestoProminent)
+            .controlSize(.small)
+            .tint(accent)
+            .accessibilityIdentifier(AccessibilityID.customDateApplyButton)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(AccessibilityID.customDateRangeRow)
+    }
+
+    func duplicatePinboard(_ source: Pinboard) {
+        let next = (pinboards.map(\.sortOrder).max() ?? -1) + 1
+        let copy = Pinboard(
+            name: CollectionNaming.copyName(of: source.name, existing: pinboards.map(\.name)),
+            symbolName: source.symbolName,
+            colorHex: source.colorHex,
+            sortOrder: next,
+            isSmart: source.isSmart,
+            smartPredicateData: source.smartPredicateData,
+            triggerBundleID: nil
+        )
+        appState.attempt("Couldn\u{2019}t duplicate the collection") {
+            try appState.collectionStore(context: modelContext).insert(.duplicate, [copy])
+        }
+    }
+
+    func deletePinboard(_ pinboard: Pinboard) {
+        appState.deleteCollection(id: pinboard.id, fromShelf: true)
+    }
+
+    func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
+        let ids = pinboards.map(\.id)
+        guard order != ids else { return }
+        let reordered = order.compactMap { id in pinboards.first { $0.id == id } }
+        appState.attempt("Couldn\u{2019}t save the collection order") {
+            try appState.collectionStore(context: modelContext).edit(.reorder, reordered) {
+                for (i, p) in reordered.enumerated() {
+                    p.sortOrder = i
+                }
+            }
+        }
+        if let id,
+           let position = order.firstIndex(of: id),
+           let name = pinboards.first(where: { $0.id == id })?.name
+        {
+            Announcer.announce("\(name), position \(position + 1) of \(order.count)")
+        } else {
+            Announcer.announce("Moved")
+        }
+    }
+
+    func movePinboard(_ id: UUID, by offset: Int) {
+        let ids = pinboards.map(\.id)
+        guard let from = ids.firstIndex(of: id), ids.indices.contains(from + offset) else { return }
+        var order = ids
+        order.swapAt(from, from + offset)
+        withAnimation(Motion.animation(.pestoMove)) { persistPinboardOrder(order, moved: id) }
     }
 
     static let fromID = "from"
@@ -93,17 +224,27 @@ extension CommandBarView {
         let current = named.first { $0.tag == tag }
         var items: [PopUpMenuItem] = []
         if current != nil {
-            items += [.action("Any Format") { appState.searchText = "" }, .divider]
+            items.append(.action("Any Format") {
+                appState.cancelAsk()
+                appState.searchText = ""
+            })
+            items.append(.divider)
         }
         for (name, title) in [("markdown", "Markdown"), ("json", "JSON")] {
-            items.append(.choice(title, isOn: tag == name) { appState.searchText = tag == name ? "" : "@\(name)" })
+            items.append(.choice(title, isOn: tag == name) {
+                appState.cancelAsk()
+                appState.searchText = tag == name ? "" : "@\(name)"
+            })
         }
         if !languages.isEmpty {
             items.append(.divider)
             items += languages.map { language in
                 .choice(
                     "\(language.displayName) \u{00B7} \(language.count)", isOn: tag == language.name
-                ) { appState.searchText = tag == language.name ? "" : "@\(language.name)" }
+                ) {
+                    appState.cancelAsk()
+                    appState.searchText = tag == language.name ? "" : "@\(language.name)"
+                }
             }
         }
         return FilterEntry(

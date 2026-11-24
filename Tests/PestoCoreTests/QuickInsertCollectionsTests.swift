@@ -213,15 +213,31 @@ struct QuickInsertCollectionsTests {
         #expect(set.entries.count(where: { $0.section == .pinned }) == QuickInsertPolicy.maxPinned)
     }
 
-    @Test("a pinned snippet that asks for a value stays out, even when its collection is chosen")
-    func whenASnippetNeedsThePerson_thenNoCollectionCarriesIt() throws {
+    @Test(
+        "a pinned snippet in a collection keeps expandsOnInsert and fieldMemory while Keyboard skips fill-ins"
+    )
+    func whenASnippetIsInACollection_thenAutoFillKeepsFillInAndKeyboardSkipsIt() throws {
         let store = try Store()
         let work = try store.collection("Work", order: 0)
-        store.add("Hi {{input:Name}}", pinned: true, in: work)
+        let fillIn = store.add("Hi {{input:Name}}", pinned: true, in: work)
+        fillIn.updateMetadata { $0.fieldMemory = ["Name": "Stephanie"] }
+        store.add("On {{date}}", pinned: true, in: work)
+        store.add("Paste {{clipboard}}", pinned: true, in: work)
         store.add("Plain note", in: work)
         let set = try store.set([work.id])
-        #expect(!set.entries.contains { $0.text.contains("{{input") })
-        #expect(set.collections.first?.entryIDs.count == 1)
+        let entry = try #require(set.entries.first { $0.id == fillIn.id })
+        #expect(entry.expandsOnInsert)
+        #expect(entry.fieldMemory == ["Name": "Stephanie"])
+        #expect(!set.entries.contains { $0.text.contains("{{clipboard}}") })
+
+        let autoFill = QuickInsertMenu(set: set)
+        #expect(autoFill.groups(matching: "", chip: .collection(work.id)).first?.entries
+            .contains { $0.id == fillIn.id } == true)
+
+        let keyboard = KeyboardMenu(hasFullAccess: true) { set }
+        let keyboardTexts = keyboard.entries(for: .collection(work.id)).map(\.text)
+        #expect(keyboardTexts.contains("On {{date}}"))
+        #expect(!keyboardTexts.contains("Hi {{input:Name}}"))
     }
 
     @Test("collection-only clips share the set's size budget")

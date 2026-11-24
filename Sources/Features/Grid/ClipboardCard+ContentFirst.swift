@@ -53,7 +53,7 @@ extension ClipboardCard {
             picture: picture,
             linkPictureShown: urlOGImage != nil,
             hasLinkMetadata: trimmedOgTitle != nil || item.ogSiteName != nil || urlFavicon != nil,
-            colorFill: item.type == .color ? ColorStringDetector.components(in: item.gridPreview) : nil,
+            colorFill: item.type == .color ? ColorStringDetector.wholeComponents(in: item.gridPreview) : nil,
             backdropIsDark: colorScheme == .dark
         ))
     }

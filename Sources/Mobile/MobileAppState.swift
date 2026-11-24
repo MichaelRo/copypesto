@@ -31,6 +31,10 @@ final class MobileAppState: ClipboardShortcutHandling {
     var textEdits = 0
     /// Sync with the person's other devices, once the history is open (`MobileAppState+Sync.swift`).
     var sync: MobileSync?
+    var peerDeviceNames: [String: String] {
+        isHistoryLocked ? [:] : (sync?.peerDeviceNames ?? [:])
+    }
+
     let secretReveal: SecretReveal
     let historyLock: MobileHistoryLock
     /// A widget link that arrived while the history was locked, opened once it is unlocked.
@@ -45,6 +49,7 @@ final class MobileAppState: ClipboardShortcutHandling {
     @ObservationIgnored var quickInsert: QuickInsertTarget? = .current
     @ObservationIgnored var quickInsertRewrite: Task<Void, Never>?
     @ObservationIgnored var quickInsertWrites: Task<Void, Never>?
+    @ObservationIgnored var quickInsertGeneration: UInt64 = 0
     @ObservationIgnored var quickInsertObserver: (any NSObjectProtocol)?
     /// The last clip a widget link copied, so the library shows it (`MobileAppState+WidgetLink.swift`).
     var linkedClip: LinkedClip?
@@ -77,6 +82,7 @@ final class MobileAppState: ClipboardShortcutHandling {
     @ObservationIgnored var aiAvailability: @Sendable () -> AIAvailability = MobileAppState.makeAIAvailability()
     @ObservationIgnored var aiSupportsVision: @Sendable () -> Bool = { AppleIntelligenceClient.supportsVision }
     @ObservationIgnored var aiTask: Task<Void, Never>?
+    @ObservationIgnored var similarityTask: Task<Void, Never>?
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?
     /// A `.pesto` collection file waiting for confirmation before importing (`MobileAppState+Transfer.swift`).

@@ -1,6 +1,6 @@
 # 0012. Settings are seven panes with search that goes to the row, typed keys with one default, and one list of global shortcuts
 
-Status: Accepted
+Status: Accepted; Settings → Data backup/sync layout is superseded by ADR 0019 and ADR 0022
 
 ## Context
 Settings grew from tabs to a sidebar through several regroupings. The failures were consistent: panes that mixed

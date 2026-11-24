@@ -25,6 +25,17 @@ struct PhoneLibraryView: View {
                     .toolbar { LibraryToolbar(showsSettings: true) }
             }
             .searchable(text: $library.query, isPresented: $library.isSearching, prompt: Text("Search clips"))
+            .onSubmit(of: .search) {
+                if AskHeuristic.returnAsks(text: library.query, resultCount: library.visibleResultCount) {
+                    library.startAsk(
+                        using: { await appState.askPesto($0) },
+                        isLocked: { appState.isHistoryLockedNow() }
+                    )
+                }
+            }
+            .onChange(of: library.query) { _, newValue in
+                if library.isAsking, newValue != library.activeAskSentence { library.cancelAsk() }
+            }
             .onChange(of: library.isSearching) { _, searching in if !searching { library.endSearch() } }
             .accessibilityHidden(library.showsSettings)
 

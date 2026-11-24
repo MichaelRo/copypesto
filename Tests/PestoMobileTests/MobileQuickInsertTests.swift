@@ -319,4 +319,36 @@ struct MobileQuickInsertTests {
         #expect(set.entries.contains { $0.text == "Standup" })
         #expect(!set.entries.contains { $0.text == "Hidden clip" && $0.section == .collection })
     }
+
+    @Test("collection-pinned snippets keep expandsOnInsert and remembered field memory for AutoFill")
+    func whenCollectionSnippetHasFillIns_thenExpandsOnInsertAndCarriesMemory() async throws {
+        let library = try await MobileTestLibrary()
+        let fixture = try fixture(on: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        let work = try #require(library.state.addCollection(named: "Work", existing: []))
+        try await library.service.ingest(#require(ClipCapture.text("Hi {{input:name}}?")), collectionID: work.id)
+        try await library.refreshed()
+        let snippet = try #require(library.store.items.first)
+        await library.state.togglePin(snippet.id)
+        try await library.refreshed()
+        let context = try #require(library.state.historyContainer?.mainContext)
+        snippet.customTitle = "Greeting"
+        snippet.updateMetadata { $0.fieldMemory = ["name": "Michael"] }
+        try context.saveOrRollback()
+
+        let options = QuickInsertSelection.Options(
+            storedCollections: Setting.keyboardCollections.defaultValue,
+            returnsAfterInsert: true,
+            rememberFillIns: true
+        )
+        let set = try QuickInsertSelection.set(in: context, now: .now, options: options) {
+            PestoMobile.CardFootLine.source(
+                PestoMobile.CardFootLine.origin(of: $0),
+                device: PestoMobile.CardFootLineView.device
+            )
+        }
+        let collectionEntry = try #require(set.entries.first { $0.section == .collection })
+        #expect(collectionEntry.expandsOnInsert)
+        #expect(collectionEntry.fieldMemory?["name"] == "Michael")
+    }
 }

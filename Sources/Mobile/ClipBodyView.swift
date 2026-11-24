@@ -85,7 +85,7 @@ struct ClipBodyView: View {
 
     private var color: some View {
         let text = item.gridPreview
-        let parsed = ColorLiteralParser.firstColor(in: text)
+        let parsed = ColorLiteralParser.color(fromWholeString: text)
         return VStack(alignment: .leading, spacing: 10) {
             if let parsed {
                 RoundedRectangle(cornerRadius: 12)

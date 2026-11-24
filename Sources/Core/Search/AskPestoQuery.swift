@@ -23,10 +23,10 @@ public struct AskPestoQuery: Sendable, Equatable {
         if !types.isEmpty { parts.append(types.map(Self.plural).joined(separator: ", ")) }
         switch range {
         case .all: break
-        case .today: parts.append("today")
-        case .yesterday: parts.append("yesterday")
-        case .week: parts.append("past 7 days")
-        case .month: parts.append("past 30 days")
+        case .today: parts.append(String(localized: "today"))
+        case .yesterday: parts.append(String(localized: "yesterday"))
+        case .week: parts.append(String(localized: "past 7 days"))
+        case .month: parts.append(String(localized: "past 30 days"))
         case .custom, .last: parts.append(range.label())
         }
         if !keywords.isEmpty { parts.append("\u{201C}\(keywords)\u{201D}") }
@@ -35,12 +35,12 @@ public struct AskPestoQuery: Sendable, Equatable {
 
     private static func plural(_ type: ClipboardType) -> String {
         switch type {
-        case .text: "Text"
-        case .url: "Links"
-        case .image: "Images"
-        case .file: "Files"
-        case .color: "Colors"
-        case .code: "Code"
+        case .text: String(localized: "Text")
+        case .url: String(localized: "Links")
+        case .image: String(localized: "Images")
+        case .file: String(localized: "Files")
+        case .color: String(localized: "Colors")
+        case .code: String(localized: "Code")
         }
     }
 }

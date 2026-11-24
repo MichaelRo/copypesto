@@ -1,6 +1,6 @@
 # 0053. An edit may give a clip the text another clip holds; both stay, on every device
 
-Status: Accepted (owner request, 2026-11-18: "we need to enable the user edit whatever he likes")
+Status: Accepted (owner request, 2026-11-18: "we need to enable the user edit whatever he likes"); corrected for undo and older builds by ADR 0056
 
 Supersedes the refusal in ADR 0048 ("a text another clip already holds", `sameAsAnother`) and the "Another clip already
 has this text." message of ADR 0050. Everything else they decide stands. Extends ADR 0008 (undo), ADR 0010 (backup) and

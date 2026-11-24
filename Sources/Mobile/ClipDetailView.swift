@@ -17,6 +17,8 @@ struct ClipDetailView: View {
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @State private var content: ClipContent?
     @State private var revealedText: String?
+    @State private var similarIDs: [UUID] = []
+    @State private var familyProposal: String?
 
     var body: some View {
         NavigationStack {
@@ -62,26 +64,42 @@ struct ClipDetailView: View {
 
     private func detail(_ item: ClipboardItem) -> some View {
         let concealment = appState.secretReveal.concealment(for: item)
-        return ScrollView {
+        return detailScroll(item, concealment: concealment)
+            .background(ground.ignoresSafeArea())
+            .accessibilityIdentifier(MobileAccessibilityID.clipDetail)
+            .navigationTitle(item.type.presentation.label)
+            .toolbar { toolbar(item, concealment: concealment) }
+            .task(id: TaskKey(id: item.id, covered: concealment.isConcealed, content: item.contentHash)) {
+                await reloadDetail(for: item, concealment: concealment)
+            }
+            .onChange(of: appState.secretReveal.isShown(item.id)) { _, shown in
+                if !shown { library.endTextEdit() }
+                guard let container = appState.historyContainer else { return }
+                let id = item.id
+                Task {
+                    let loaded = await revealed(id, isShown: shown, container: container)
+                    guard !Task.isCancelled, self.itemID == id, appState.secretReveal.isShown(id) == shown else {
+                        return
+                    }
+                    revealedText = loaded
+                }
+            }
+            .onChange(of: appState.isHistoryLocked) { _, locked in
+                if locked { clearSensitiveDetailState() }
+            }
+            .onChange(of: itemID) { _, id in
+                if !library.isEditingText(of: id) { library.endTextEdit() }
+                clearSensitiveDetailState()
+            }
+    }
+
+    private func detailScroll(_ item: ClipboardItem, concealment: CardConcealment) -> some View {
+        ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if isEditingText(item), content?.plainText != nil {
                     ClipTextEditor(item: item, onClose: { library.endTextEdit() }, draft: draftBinding)
                 } else {
-                    if let text = content?.plainText {
-                        if appState.canEditSnippet(item) {
-                            Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
-                                library.beginSnippetEdit(of: item, text: text)
-                            }
-                            .accessibilityIdentifier(MobileAccessibilityID.editSnippetButton)
-                        } else if appState.canEditText(item) {
-                            Button("Edit Text", systemImage: "pencil") {
-                                library.beginTextEdit(of: item.id, text: text)
-                            }
-                            .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
-                        }
-                    }
-                    ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
-                        .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
+                    detailBodySection(item, concealment: concealment)
                 }
                 if item.sensitivityRaw != nil || (item.isNSFW && NSFWMode.current() != .show),
                    !appState.secretReveal.isCoveredForPrivacy(item.id)
@@ -92,29 +110,54 @@ struct ClipDetailView: View {
                 AddToCollectionMenu(item: item, collections: collections)
                     .buttonStyle(MobileChipStyle(isActive: item.collectionID != nil, tint: nil))
                 factsLine(item, concealment: concealment)
+                similarClipsSection(for: item, concealment: concealment)
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .environment(\.peerDeviceNames, appState.peerDeviceNames)
             .animation(Motion.animation(.pestoQuick), value: isEditingText(item))
         }
-        .background(ground.ignoresSafeArea())
-        .accessibilityIdentifier(MobileAccessibilityID.clipDetail)
-        .navigationTitle(item.type.presentation.label)
-        .toolbar { toolbar(item, concealment: concealment) }
-        .task(id: TaskKey(id: item.id, covered: concealment.isConcealed, content: item.contentHash)) {
-            let id = item.id
-            guard let container = appState.historyContainer else { return }
-            content = concealment.isConcealed || item.type == .image
-                ? nil : await ClipContent.load(itemID: id, container: container)
-            revealedText = await revealed(id, isShown: appState.secretReveal.isShown(id), container: container)
+    }
+
+    @ViewBuilder
+    private func detailBodySection(_ item: ClipboardItem, concealment: CardConcealment) -> some View {
+        if let text = content?.plainText {
+            if appState.canEditSnippet(item) {
+                Button("Edit Snippet\u{2026}", systemImage: "curlybraces") {
+                    library.beginSnippetEdit(of: item, text: text)
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.editSnippetButton)
+            } else if appState.canEditText(item) {
+                Button("Edit Text", systemImage: "pencil") {
+                    library.beginTextEdit(of: item.id, text: text)
+                }
+                .accessibilityIdentifier(MobileAccessibilityID.editTextButton)
+            }
         }
-        .onChange(of: appState.secretReveal.isShown(item.id)) { _, shown in
-            if !shown { library.endTextEdit() }
-            guard let container = appState.historyContainer else { return }
-            let id = item.id
-            Task { revealedText = await revealed(id, isShown: shown, container: container) }
+        ClipBodyView(item: item, content: content, concealment: concealment, revealedText: revealedText)
+            .accessibilityIdentifier(MobileAccessibilityID.clipDetailBody)
+    }
+
+    private func clearSensitiveDetailState() {
+        library.endTextEdit()
+        similarIDs = []
+        familyProposal = nil
+        content = nil
+        revealedText = nil
+    }
+
+    private func reloadDetail(for item: ClipboardItem, concealment: CardConcealment) async {
+        clearSensitiveDetailState()
+        let id = item.id
+        guard !concealment.isConcealed, !appState.isHistoryLockedNow(),
+              let container = appState.historyContainer else
+        {
+            clearSensitiveDetailState()
+            return
         }
-        .onChange(of: itemID) { _, id in if !library.isEditingText(of: id) { library.endTextEdit() } }
+        content = item.type == .image ? nil : await ClipContent.load(itemID: id, container: container)
+        revealedText = await revealed(id, isShown: appState.secretReveal.isShown(id), container: container)
+        await loadSimilarClips(for: item)
     }
 
     private func isEditingText(_ item: ClipboardItem) -> Bool {
@@ -138,10 +181,136 @@ struct ClipDetailView: View {
 
     private func factsLine(_ item: ClipboardItem, concealment: CardConcealment) -> some View {
         let name = item.collectionID.flatMap { id in collections.first { $0.id == id }?.name }
-        let facts = ClipFacts.facts(for: item, collectionName: name, isShown: !concealment.isConcealed)
-        return Text(facts.map { ClipFacts.text(for: $0) }.filter { !$0.isEmpty }.joined(separator: " \u{00B7} "))
+        let line = ClipFacts.line(
+            for: item, collectionName: name, isShown: !concealment.isConcealed,
+            peerDeviceNames: appState.peerDeviceNames
+        )
+        return Text(line)
             .font(.footnote)
             .foregroundStyle(.secondary)
+    }
+
+    @ViewBuilder
+    private func similarClipsSection(for item: ClipboardItem, concealment: CardConcealment) -> some View {
+        let candidates = safeSimilarItems()
+        if !concealment.isConcealed, !appState.isHistoryLocked, isSimilarAnchorEligible(item), !candidates.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                ViewThatFits(in: .horizontal) {
+                    HStack {
+                        Text("Similar Clips")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer()
+                        saveAsSnippetButton
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Similar Clips")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .accessibilityAddTraits(.isHeader)
+                        saveAsSnippetButton
+                    }
+                }
+                ForEach(candidates, id: \.id) { match in
+                    let matchConcealment = appState.secretReveal.concealment(for: match)
+                    let summary = ClipSummary.make(match, concealment: matchConcealment)
+                    Button {
+                        library.open(match.id)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: match.type.presentation.symbolName)
+                                .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(summary.title)
+                                    .font(.callout)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                if let detail = summary.detail {
+                                    Text(detail)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .accessibilityHidden(true)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(
+                            .quaternary.opacity(0.4),
+                            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .accessibilityIdentifier(MobileAccessibilityID.similarClipsSection)
+        }
+    }
+
+    private func safeSimilarItems() -> [ClipboardItem] {
+        similarIDs.compactMap { id in
+            guard let candidate = store.item(for: id),
+                  !candidate.analysisPending,
+                  candidate.sensitivityRaw == nil,
+                  !candidate.isNSFW,
+                  !appState.secretReveal.concealment(for: candidate).isConcealed else { return nil }
+            return candidate
+        }
+    }
+
+    @ViewBuilder
+    private var saveAsSnippetButton: some View {
+        if let proposal = familyProposal {
+            Button("Save as Snippet\u{2026}", systemImage: "curlybraces") {
+                library.beginNewSnippet(initialText: proposal)
+            }
+            .font(.footnote)
+        }
+    }
+
+    private func isSimilarAnchorEligible(_ item: ClipboardItem) -> Bool {
+        !item.analysisPending && item.sensitivityRaw == nil && !item.isNSFW
+            && (item.type == .text || item.type == .code)
+    }
+
+    private func loadSimilarClips(for item: ClipboardItem) async {
+        guard !appState.isHistoryLockedNow(),
+              isSimilarAnchorEligible(item),
+              !appState.secretReveal.concealment(for: item).isConcealed,
+              let service = appState.storageService else
+        {
+            similarIDs = []
+            familyProposal = nil
+            return
+        }
+        let matches = await service.lookalikes(of: item.id)
+        guard !Task.isCancelled,
+              !appState.isHistoryLockedNow(),
+              isSimilarAnchorEligible(item),
+              !appState.secretReveal.concealment(for: item).isConcealed else
+        {
+            similarIDs = []
+            familyProposal = nil
+            return
+        }
+        let safeMatches: [ClipboardItem] = matches.compactMap { match in
+            guard let candidate = store.item(for: match.id),
+                  !candidate.analysisPending,
+                  candidate.sensitivityRaw == nil,
+                  !candidate.isNSFW,
+                  !appState.secretReveal.concealment(for: candidate).isConcealed else { return nil }
+            return candidate
+        }
+        similarIDs = Array(safeMatches.prefix(5).map(\.id))
+        let texts = [item.displayPreviewText] + safeMatches.prefix(8).map(\.displayPreviewText)
+        familyProposal = texts.count >= 2 ? TemplateInferrer.propose(from: texts)?.template : nil
     }
 
     @ViewBuilder

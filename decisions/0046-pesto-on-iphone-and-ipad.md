@@ -1,6 +1,6 @@
 # 0046. Pesto runs on iPhone and iPad as one more sync device; Core is shared, not copied
 
-Status: Accepted (owner request, 2026-11-14); its "No keyboard extension" is amended by ADR 0061, which adds an optional keyboard with no typing keys that reads only the quick-insert set
+Status: Accepted (owner request, 2026-11-14); its "No keyboard extension" is amended by ADR 0061, which adds an optional keyboard with no typing keys that reads only the quick-insert set, and by ADR 0063, which adds on-device search
 
 Extends ADR 0002 (sealed at rest), ADR 0007 (Core is a one-way graph of directories) and ADR 0018 (sync through per-device logs in a folder). Nothing they decide is reversed.
 

@@ -10,7 +10,9 @@ enum LibraryChip: Hashable {
     case newCollection
     case divider
     case kind(ClipboardType)
-    case date(LibraryDateChip)
+    case when
+    case from
+    case sensitive
     case otherDevices
     /// Ask Pesto: turns the typed sentence into filters (`MobileAppState+Ask.swift`).
     case ask
@@ -19,16 +21,26 @@ enum LibraryChip: Hashable {
 
     /// `offersAsk` is true while the search field holds words and no Ask is applied; `hasAsk` while one is.
     static func row(
-        collectionIDs: [UUID], isSearching: Bool, offersAsk: Bool = false, hasAsk: Bool = false,
-        hiddenIDs: Set<UUID> = []
+        collectionIDs: [UUID],
+        isSearching: Bool,
+        offersAsk: Bool = false,
+        hasAsk: Bool = false,
+        hiddenIDs: Set<UUID> = [],
+        showsScopes: Bool = true,
+        showsFrom: Bool = false
     )
     -> [LibraryChip] {
         let visibleCollections = collectionIDs.filter { !hiddenIDs.contains($0) }
-        let scopes: [LibraryChip] = [.all, .pinned] + visibleCollections.map(LibraryChip.collection)
+        let scopes: [LibraryChip] = showsScopes
+            ? [.all, .pinned] + visibleCollections.map(LibraryChip.collection)
+            : []
         guard isSearching else { return scopes + [.newCollection] }
         let asking: [LibraryChip] = hasAsk ? [.asked] : offersAsk ? [.ask] : []
-        return scopes + [.divider] + asking + LibraryScope.filteredKinds.map(LibraryChip.kind) + [.divider]
-            + LibraryDateChip.allCases.map(LibraryChip.date) + [.otherDevices]
+        var filters: [LibraryChip] = [.when]
+        if showsFrom { filters.append(.from) }
+        filters.append(contentsOf: [.sensitive, .otherDevices])
+        let leading = scopes.isEmpty ? asking : scopes + [.divider] + asking
+        return leading + LibraryScope.filteredKinds.map(LibraryChip.kind) + [.divider] + filters
     }
 
     var scope: LibraryScope? {
@@ -36,21 +48,7 @@ enum LibraryChip: Hashable {
         case .all: .all
         case .pinned: .pinned
         case let .collection(id): .collection(id)
-        case .newCollection, .divider, .kind, .date, .otherDevices, .ask, .asked: nil
-        }
-    }
-}
-
-/// The date chips of a search, with the Mac's meaning (`ShelfFilter.dateCutoff`): Today from the start of the day,
-/// This Week the last seven days.
-enum LibraryDateChip: CaseIterable, Hashable {
-    case today
-    case week
-
-    var searchDate: SearchDateFilter {
-        switch self {
-        case .today: .today
-        case .week: .week
+        case .newCollection, .divider, .kind, .when, .from, .sensitive, .otherDevices, .ask, .asked: nil
         }
     }
 }
@@ -58,7 +56,9 @@ enum LibraryDateChip: CaseIterable, Hashable {
 struct LibraryFilter: Equatable {
     var scope: LibraryScope = .all
     var kind: ClipboardType?
-    var date: LibraryDateChip?
+    var dateFilter: SearchDateFilter = .all
+    var sourceBundleID: String?
+    var sensitiveOnly = false
     var otherDevicesOnly = false
     /// What Ask Pesto found in a sentence (`apply`): kinds and a date range beside the words, which go to the search
     /// field. A kind or date chip chosen afterwards takes over from its half.
@@ -74,6 +74,15 @@ struct LibraryFilter: Equatable {
         kind.map { [$0] } ?? askedKinds
     }
 
+    /// The date filter in force: the explicit When menu choice, else Ask Pesto's range.
+    var effectiveDateFilter: SearchDateFilter {
+        dateFilter != .all ? dateFilter : askedRange
+    }
+
+    var hasAnySearchFilter: Bool {
+        kind != nil || dateFilter != .all || sourceBundleID != nil || sensitiveOnly || otherDevicesOnly || hasAsk
+    }
+
     /// What the Ask chip says: its kinds and range, never the words (they are in the field).
     var askedSummary: String {
         AskPestoQuery(
@@ -86,7 +95,9 @@ struct LibraryFilter: Equatable {
         case .asked: hasAsk
         case .ask: false
         case let .kind(type): kind == type
-        case let .date(chosen): date == chosen
+        case .when: dateFilter != .all
+        case .from: sourceBundleID != nil
+        case .sensitive: sensitiveOnly
         case .otherDevices: otherDevicesOnly
         default: chip.scope == scope
         }
@@ -97,28 +108,49 @@ struct LibraryFilter: Equatable {
         case let .kind(type):
             kind = kind == type ? nil : type
             askedKinds = []
-        case let .date(chosen):
-            date = date == chosen ? nil : chosen
-            askedRange = .all
-        case .otherDevices: otherDevicesOnly.toggle()
-        case .asked: clearAsk()
-        case .ask: break
+        case .sensitive:
+            sensitiveOnly.toggle()
+        case .otherDevices:
+            otherDevicesOnly.toggle()
+        case .asked:
+            clearAsk()
+        case .when, .from, .ask:
+            break
         default:
             if let chosen = chip.scope { scope = chosen }
         }
     }
 
-    mutating func endSearch() {
+    mutating func chooseDate(_ chosen: SearchDateFilter) {
+        dateFilter = chosen
+        askedRange = .all
+    }
+
+    mutating func chooseSource(_ bundleID: String?) {
+        guard let bundleID else {
+            sourceBundleID = nil
+            return
+        }
+        sourceBundleID = sourceBundleID == bundleID ? nil : bundleID
+    }
+
+    mutating func clearSearchFilters() {
         kind = nil
-        date = nil
+        dateFilter = .all
+        sourceBundleID = nil
+        sensitiveOnly = false
         otherDevicesOnly = false
         clearAsk()
+    }
+
+    mutating func endSearch() {
+        clearSearchFilters()
     }
 
     /// Ask Pesto's answer replaces the kind and date chips with what it found.
     mutating func apply(_ query: AskPestoQuery) {
         kind = nil
-        date = nil
+        dateFilter = .all
         askedKinds = Set(query.types)
         askedRange = query.range
     }
@@ -128,12 +160,11 @@ struct LibraryFilter: Equatable {
         askedRange = .all
     }
 
-    /// The date range a search is narrowed to: the chosen chip, else the one Ask found, with the Mac's rules for it.
+    /// The date range a search is narrowed to: the chosen filter, else the one Ask found, with the Mac's rules for it.
     func dateWindow(now: Date = .now) -> (cutoff: Date?, before: Date?) {
-        let range = date?.searchDate ?? askedRange
         let shelf = ShelfFilter(
-            hidesSensitive: false, searchActive: true, types: [], sources: [], date: range, sensitiveOnly: false,
-            now: now
+            hidesSensitive: false, searchActive: true, types: [], sources: [], date: effectiveDateFilter,
+            sensitiveOnly: false, now: now
         )
         return (shelf.dateCutoff, shelf.dateBefore)
     }
@@ -145,6 +176,16 @@ struct LibraryFilter: Equatable {
 
     mutating func forget(collections existing: [UUID]) {
         if case let .collection(id) = scope, !existing.contains(id) { scope = .all }
+    }
+
+    @MainActor
+    static func availableApps(in items: [ClipboardItem]) -> [SourceApp] {
+        guard !items.isEmpty else { return [] }
+        var tally = SuggestionTally()
+        for item in items {
+            tally.add(tags: [], bundleID: item.sourceBundleID, appName: item.knownSourceAppName)
+        }
+        return tally.suggestions(tagLimit: 0, appLimit: 0).allApps
     }
 }
 
@@ -158,7 +199,10 @@ enum LibraryChrome {
         width < sidebarMinimumWidth ? .detailOnly : .all
     }
 
-    static func showsChipRow(isRegular: Bool, columns: NavigationSplitViewVisibility) -> Bool {
-        !isRegular || columns == .detailOnly
+    static func showsChipRow(
+        isRegular: Bool, columns: NavigationSplitViewVisibility, isSearching: Bool = false
+    )
+    -> Bool {
+        !isRegular || columns == .detailOnly || isSearching
     }
 }

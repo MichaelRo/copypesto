@@ -32,4 +32,16 @@ struct ShelfHeightTests {
         let band = ShelfHeight.liftRoom / 2 + ShelfHeight.bottomSlot
         #expect(band >= 30 + 2 * 8)
     }
+
+    @Test("search chrome matches the rest chrome so opening search never jumps the shelf")
+    func searchChromeMatchesChromeBudget() {
+        let searchTotal = Double(ShelfHeight.searchCommandBlock)
+            + Double(ShelfHeight.searchLiftRoom)
+            + Double(ShelfHeight.searchBottomSlot)
+        #expect(searchTotal == Double(ShelfHeight.chrome))
+        #expect(ShelfHeight.topOverflow(measuredHeight: 46, isSearchActive: false) == 0)
+        #expect(ShelfHeight.topOverflow(measuredHeight: 62, isSearchActive: true) == 0)
+        #expect(ShelfHeight.topOverflow(measuredHeight: 78, isSearchActive: false) == 32)
+        #expect(ShelfHeight.topOverflow(measuredHeight: 96, isSearchActive: true) == 32)
+    }
 }

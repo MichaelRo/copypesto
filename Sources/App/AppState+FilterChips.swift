@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import Foundation
 import PestoCore
 
 /// One search filter chip as the keyboard sees it.
@@ -17,11 +18,10 @@ extension AppState {
         filterChipCursor = FilterChipCursor.moved(from: filterChipCursor, by: delta, count: filterChipActions.count)
         if let cursor = filterChipCursor {
             let chip = filterChipActions[cursor]
-            Announcer
-                .announce(chip.confirmation == nil ? "\(chip.spokenName), \(chip.isActive() ? "on" : "off")" : chip
-                    .spokenName)
+            let stateLabel = chip.isActive() ? String(localized: "on") : String(localized: "off")
+            Announcer.announce(chip.confirmation == nil ? "\(chip.spokenName), \(stateLabel)" : chip.spokenName)
         } else {
-            Announcer.announce("Search field")
+            Announcer.announce(String(localized: "Search field"))
         }
         return true
     }
@@ -32,7 +32,8 @@ extension AppState {
         guard let cursor = FilterChipCursor.kept(filterChipCursor, count: filterChipActions.count) else { return false }
         let chip = filterChipActions[cursor]
         chip.toggle()
-        Announcer.announce(chip.confirmation ?? "\(chip.spokenName), \(chip.isActive() ? "on" : "off")")
+        let stateLabel = chip.isActive() ? String(localized: "on") : String(localized: "off")
+        Announcer.announce(chip.confirmation ?? "\(chip.spokenName), \(stateLabel)")
         return true
     }
 
@@ -52,10 +53,51 @@ extension AppState {
     }
 
     func clearForNoResults(_ action: NoResultsAdvice.Action) {
+        cancelAsk()
         switch action {
         case .clearFilters: clearSearchFilters()
         case .clearSearch: searchText = ""
         }
+    }
+
+    /// A link or script chose what the shelf shows (a collection, a search): a long absence must not undo it.
+    func noteContextRequested() {
+        shelfClosedAt = nil
+        shelfContextWasStale = false
+    }
+
+    /// Called as the shelf opens. After `ShelfContextPolicy.memory` closed the shelf forgets its collection and
+    /// filters; `restingCollectionID` is the frontmost app's own collection, if it has one.
+    func resetShelfContextIfStale(now: Date = .now, restingCollectionID: UUID?) {
+        let stale = !isPinnedWindowVisible && ShelfContextPolicy.shouldReset(closedAt: shelfClosedAt, now: now)
+        shelfContextWasStale = stale
+        guard stale else { return }
+        cancelAsk()
+        searchText = ""
+        isSearchActive = false
+        showsCustomDateRange = false
+        filterChipCursor = nil
+        clearSearchFilters()
+        appChipFilter = []
+        selectedCollectionID = restingCollectionID
+    }
+
+    /// A key typed on the shelf with no search open opens the search with that key. Keys that arrive before the field
+    /// has focus (it takes a moment) join what was typed, in order.
+    func typeIntoSearch(_ characters: String) {
+        cancelAsk()
+        searchText = isSearchActive ? searchText + characters : characters
+        isSearchActive = true
+    }
+
+    func clearSearchFilters() {
+        searchTypeFilter = []
+        searchDateFilter = .all
+        showsCustomDateRange = false
+        searchSourceFilter = []
+        showHiddenNSFW = false
+        searchSensitiveOnly = false
+        searchRemoteOnly = false
     }
 
     func noResultsChipAction() -> FilterChipAction? {
@@ -64,7 +106,9 @@ extension AppState {
             spokenName: advice.buttonTitle,
             isActive: { false },
             toggle: { [weak self] in self?.clearForNoResults(advice.action) },
-            confirmation: advice.action == .clearFilters ? "Filters cleared" : "Search cleared"
+            confirmation: advice.action == .clearFilters
+                ? String(localized: "Filters cleared")
+                : String(localized: "Search cleared")
         )
     }
 }

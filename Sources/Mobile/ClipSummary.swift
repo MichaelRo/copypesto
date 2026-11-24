@@ -20,12 +20,18 @@ struct ClipSummary: Equatable {
 
     @MainActor
     static func make(
-        _ item: ClipboardItem, concealment: CardConcealment, coveredForPrivacy: Bool = false
+        _ item: ClipboardItem,
+        concealment: CardConcealment,
+        coveredForPrivacy: Bool = false,
+        peerDeviceNames: [String: String] = [:]
     )
     -> ClipSummary {
         let covered = concealment.isConcealed
         let type = item.type
-        let source = item.isRemote ? String(localized: "Another device") : item.knownSourceAppName
+        let origin = CardFootLine.origin(of: item, peerDeviceNames: peerDeviceNames)
+        let source = item.isRemote
+            ? (origin.deviceName ?? String(localized: "Another device"))
+            : (item.knownSourceAppName ?? origin.deviceName)
         if covered {
             let masked = item.sensitivityRaw != nil && !coveredForPrivacy
             let title = masked ? item.gridPreview : coveredTitle(for: type, item: item)
@@ -55,7 +61,7 @@ struct ClipSummary: Equatable {
                 isPinned: item.isPinned, isCovered: false
             )
         case .color:
-            let visual: Visual = ColorLiteralParser.firstColor(in: preview).map(Visual.swatch)
+            let visual: Visual = ColorLiteralParser.color(fromWholeString: preview).map(Visual.swatch)
                 ?? .symbol(type.presentation.symbolName)
             return ClipSummary(
                 title: custom ?? preview, detail: nil, source: source, visual: visual, isPinned: item.isPinned,

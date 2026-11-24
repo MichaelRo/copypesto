@@ -15,86 +15,50 @@ struct MobileSelectionBar: View {
         library.selectedClipIDs.count
     }
 
-    private var selectedItems: [ClipboardItem] {
-        guard let store = appState.historyStore else { return [] }
-        return library.selectedClipIDs.compactMap { store.item(for: $0) }
-    }
-
-    private var anyUnpinned: Bool {
-        selectedItems.contains { !$0.isPinned }
+    private func orderedSelectedItems(in store: HistoryStore?) -> [ClipboardItem] {
+        guard let store else { return [] }
+        return allVisibleIDs.compactMap { library.selectedClipIDs.contains($0) ? store.item(for: $0) : nil }
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Button(library.selectedClipIDs.count == allVisibleIDs.count && !allVisibleIDs
-                .isEmpty ? "Deselect" : "Select All")
-            {
-                if library.selectedClipIDs.count == allVisibleIDs.count {
-                    library.selectedClipIDs = []
-                } else {
-                    library.selectAll(allVisibleIDs)
+        let selected = orderedSelectedItems(in: appState.historyStore)
+        let textual = selected.filter { $0.type == .text || $0.type == .code }
+        let anyUnpinned = selected.contains { !$0.isPinned }
+        let selectAllButton = Button(
+            library.selectedClipIDs.count == allVisibleIDs.count && !allVisibleIDs.isEmpty
+                ? "Deselect" : "Select All"
+        ) {
+            if library.selectedClipIDs.count == allVisibleIDs.count {
+                library.selectedClipIDs = []
+            } else {
+                library.selectAll(allVisibleIDs)
+            }
+        }
+        .font(.subheadline)
+        .disabled(allVisibleIDs.isEmpty)
+
+        let countText = Text("\(count) clips selected")
+            .font(.subheadline.weight(.semibold))
+            .monospacedDigit()
+            .lineLimit(1)
+
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                selectAllButton
+                countText
+                Spacer(minLength: 4)
+                actionButtons(selected: selected, textual: textual, anyUnpinned: anyUnpinned)
+            }
+            VStack(spacing: 6) {
+                HStack(spacing: 8) {
+                    selectAllButton
+                    Spacer(minLength: 4)
+                    countText
+                }
+                HStack(spacing: 12) {
+                    actionButtons(selected: selected, textual: textual, anyUnpinned: anyUnpinned)
                 }
             }
-            .font(.subheadline)
-            .disabled(allVisibleIDs.isEmpty)
-
-            Text("\(count) clips selected")
-                .font(.subheadline.weight(.semibold))
-                .monospacedDigit()
-                .lineLimit(1)
-
-            Spacer(minLength: 4)
-
-            let plainCollections = collections.filter { !$0.isSmart }
-            if !plainCollections.isEmpty {
-                Menu {
-                    ForEach(plainCollections, id: \.id) { board in
-                        Button {
-                            appState.moveToCollection(selectedItems, collectionID: board.id)
-                            library.endSelection()
-                        } label: {
-                            Label(board.name, systemImage: board.symbolName)
-                        }
-                    }
-                    Divider()
-                    Button("Remove from Collection") {
-                        appState.moveToCollection(selectedItems, collectionID: nil)
-                        library.endSelection()
-                    }
-                } label: {
-                    Image(systemName: "folder.badge.plus")
-                        .frame(minWidth: 36, minHeight: 36)
-                }
-                .disabled(library.selectedClipIDs.isEmpty)
-                .accessibilityLabel(String(localized: "Move to Collection"))
-            }
-
-            Button {
-                let ids = Array(library.selectedClipIDs)
-                let pin = anyUnpinned
-                Task {
-                    await appState.setPinned(ids, pinned: pin)
-                    library.endSelection()
-                }
-            } label: {
-                Image(systemName: anyUnpinned ? "pin" : "pin.slash")
-                    .frame(minWidth: 36, minHeight: 36)
-            }
-            .disabled(library.selectedClipIDs.isEmpty)
-            .accessibilityLabel(String(localized: anyUnpinned ? "Pin" : "Unpin"))
-
-            Button(role: .destructive) {
-                if count > 1 {
-                    isConfirmingBulkDelete = true
-                } else {
-                    deleteSelected()
-                }
-            } label: {
-                Image(systemName: "trash")
-                    .frame(minWidth: 36, minHeight: 36)
-            }
-            .disabled(library.selectedClipIDs.isEmpty)
-            .accessibilityLabel(String(localized: "Delete"))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -110,6 +74,76 @@ struct MobileSelectionBar: View {
         ) {
             Button("Delete", role: .destructive) { deleteSelected() }
         }
+    }
+
+    @ViewBuilder
+    private func actionButtons(
+        selected: [ClipboardItem], textual: [ClipboardItem], anyUnpinned: Bool
+    )
+    -> some View {
+        if textual.count >= 2 {
+            Button {
+                if appState.copyJoined(textual) {
+                    library.endSelection()
+                }
+            } label: {
+                Image(systemName: "doc.on.doc")
+                    .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+            }
+            .accessibilityLabel(String(localized: "Copy All"))
+            .accessibilityIdentifier(MobileAccessibilityID.copyAllButton)
+        }
+
+        let plainCollections = collections.filter { !$0.isSmart }
+        if !plainCollections.isEmpty {
+            Menu {
+                ForEach(plainCollections, id: \.id) { board in
+                    Button {
+                        appState.moveToCollection(selected, collectionID: board.id)
+                        library.endSelection()
+                    } label: {
+                        Label(board.name, systemImage: board.symbolName)
+                    }
+                }
+                Divider()
+                Button("Remove from Collection") {
+                    appState.moveToCollection(selected, collectionID: nil)
+                    library.endSelection()
+                }
+            } label: {
+                Image(systemName: "folder.badge.plus")
+                    .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+            }
+            .disabled(library.selectedClipIDs.isEmpty)
+            .accessibilityLabel(String(localized: "Move to Collection"))
+        }
+
+        Button {
+            let ids = selected.map(\.id)
+            let pin = anyUnpinned
+            Task {
+                await appState.setPinned(ids, pinned: pin)
+                library.endSelection()
+            }
+        } label: {
+            Image(systemName: anyUnpinned ? "pin" : "pin.slash")
+                .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+        }
+        .disabled(library.selectedClipIDs.isEmpty)
+        .accessibilityLabel(String(localized: anyUnpinned ? "Pin" : "Unpin"))
+
+        Button(role: .destructive) {
+            if count > 1 {
+                isConfirmingBulkDelete = true
+            } else {
+                deleteSelected()
+            }
+        } label: {
+            Image(systemName: "trash")
+                .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+        }
+        .disabled(library.selectedClipIDs.isEmpty)
+        .accessibilityLabel(String(localized: "Delete"))
     }
 
     private func deleteSelected() {

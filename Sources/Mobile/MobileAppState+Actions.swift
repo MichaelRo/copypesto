@@ -187,6 +187,28 @@ extension MobileAppState {
     }
 
     @discardableResult
+    func copyJoined(_ items: [ClipboardItem]) -> Bool {
+        guard !isHistoryLockedNow() else { return false }
+        let textual = items.filter { $0.type == .text || $0.type == .code }
+        guard let joined = HangDiagnostics.measure("copyJoined", operation: { ClipJoin.join(textual) }) else {
+            return false
+        }
+        HangDiagnostics.measure("clipboardWrite") {
+            MobileClipboard.write(.text(joined.text), protected: joined.isProtected)
+        }
+        if joined.leftOut > 0 {
+            let notice = String(localized: "Copy takes up to 10 MB of text. The first clips you selected were copied.")
+            tell(notice)
+            Announcer.announce(notice)
+        } else {
+            let copied = String(localized: "Copied")
+            tell(copied)
+            Announcer.announce(copied)
+        }
+        return true
+    }
+
+    @discardableResult
     func copy(_ item: ClipboardItem) -> Bool {
         guard let content = ClipContent.of(item) else {
             tell(String(localized: "Couldn\u{2019}t open the clip."), isProblem: true)
@@ -210,7 +232,7 @@ extension MobileAppState {
         }
         var saved = true
         if let context = item.modelContext {
-            item.bringToFront(at: clock())
+            item.notePasted(at: clock())
             saved = false
             report("Couldn\u{2019}t save the change.") {
                 try HangDiagnostics.measure("copySave") { try saveChanges(context) }
@@ -241,7 +263,7 @@ extension MobileAppState {
         tell(String(localized: "Copied"))
         await Task.yield()
         if let context = item.modelContext {
-            item.bringToFront(at: clock())
+            item.notePasted(at: clock())
             report("Couldn\u{2019}t save the change.") {
                 try HangDiagnostics.measure("copySave") { try saveChanges(context) }
             }
@@ -357,8 +379,10 @@ extension MobileAppState {
         secretReveal.hideAll()
         decodedJWT = nil
         closeAI()
+        stopSimilarityWork()
         await reportAsync("Couldn\u{2019}t clear the history.") {
             let ids = try await service.clearNonPinned(in: .all)
+            await service.dropSimilarityIndex()
             emptyQuickInsert()
             lastWidgetSnapshot = nil
             await emptyWidget()
@@ -366,6 +390,7 @@ extension MobileAppState {
             CardMedia.clearAnimationCache()
             tell(String(localized: "Cleared \(ids.count) clips."))
         }
+        startSimilarityWork()
     }
 
     /// Pesto left the foreground: whatever was shown hides again (ADR 0003), and the AutoFill set and the widget's
@@ -375,6 +400,7 @@ extension MobileAppState {
         cancelPendingCollectionImport()
         historyLock.didLeaveForeground(at: clock())
         closeAI()
+        stopSimilarityWork()
         secretReveal.hideAll()
         decodedJWT = nil
         writeQuickInsert()

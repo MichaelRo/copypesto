@@ -198,10 +198,9 @@ struct OverlayRootView: View {
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.height
                 } action: { height in
-                    // Search draws the bar 12 points shorter (6 + 2 instead of 12 + 8): its budget shrinks with it, so
-                    // opening search never resizes the panel.
-                    let budget = ShelfHeight.commandBlock - (appState.isSearchActive ? 12 : 0)
-                    appState.shelfTopOverflow = max(0, height - budget)
+                    appState.shelfTopOverflow = ShelfHeight.topOverflow(
+                        measuredHeight: height, isSearchActive: appState.isSearchActive
+                    )
                 }
 
                 BiometricLockOverlay {
@@ -215,9 +214,10 @@ struct OverlayRootView: View {
                 // (storage, Accessibility, an import offer) keep their place in the layout above. The Undo offer is a
                 // capsule under the cards and covers none of them.
                 .overlay(alignment: .bottom) {
+                    let inset = ShelfHeight.bottomCapsuleInset(isSearchActive: appState.isSearchActive)
                     if let label = appState.undoOffer {
                         undoBanner(label)
-                            .padding(.bottom, SelectionActionBar.bottomInset)
+                            .padding(.bottom, inset)
                             .transition(.opacity.combined(with: .offset(y: 8)))
                     } else if let presentation = appState.shelfSuggestion,
                               appState.importOffer.isEmpty,
@@ -227,10 +227,10 @@ struct OverlayRootView: View {
                     {
                         SuggestionBanner(presentation: presentation)
                             .padding(.horizontal, 16)
-                            .padding(.bottom, SelectionActionBar.bottomInset)
+                            .padding(.bottom, inset)
                     } else if appState.isClickHintVisible {
                         clickHint
-                            .padding(.bottom, SelectionActionBar.bottomInset)
+                            .padding(.bottom, inset)
                             .transition(.opacity)
                     }
                 }
@@ -239,9 +239,9 @@ struct OverlayRootView: View {
                     VStack(spacing: 0) {
                         if let message = appState.lastUserError { userErrorBanner(message) }
                     }
-                    // Up into the 8 points the toolbar leaves under its chips, so a 28 point banner ends above the
-                    // cards' headers instead of over them.
-                    .offset(y: -8)
+                    // Up into the padding the toolbar leaves under its chips, so a 28 point banner stays below the
+                    // command bar without crowding cards.
+                    .offset(y: appState.isSearchActive ? -2 : -8)
                 }
             }
             .background(ShelfBackground(glow: glow))

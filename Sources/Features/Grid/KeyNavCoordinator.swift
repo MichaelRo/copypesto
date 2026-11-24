@@ -82,6 +82,10 @@ final class KeyNavCoordinator {
     var onFilterChipToggle: (() -> Bool)?
     /// Esc while the keyboard is on a chip: back to the search field. False when it is already there.
     var onFilterChipRelease: (() -> Bool)?
+    /// Whether the inline custom date range picker row is visible beneath the search bar.
+    var isCustomDateRangeOpen: (() -> Bool)?
+    /// Dismisses the open custom date range row on Esc without clearing search.
+    var onCustomDateRangeDismiss: (() -> Bool)?
 
     private var monitor: Any?
     private(set) var isCurrentEventRepeat = false
@@ -308,7 +312,17 @@ final class KeyNavCoordinator {
         return true
     }
 
+    private func isEditingCustomDateControl(_ event: NSEvent) -> Bool {
+        guard isCustomDateRangeOpen?() == true else { return false }
+        nonisolated(unsafe) let unsafeEvent = event
+        return MainActor.assumeIsolated {
+            guard let focus = unsafeEvent.window?.firstResponder else { return false }
+            return focus is NSDatePicker || focus is NSButton
+        }
+    }
+
     private func handleSearchMode(_ event: NSEvent) -> NSEvent? {
+        if event.keyCode != 53, isEditingCustomDateControl(event) { return event }
         switch event.keyCode {
         case 48: // Tab, Shift-Tab: through the filter chips
             let backwards = event.modifierFlags.contains(.shift)
@@ -316,21 +330,13 @@ final class KeyNavCoordinator {
         case 49 where onFilterChipToggle?() == true: // Space on a chip
             return nil
         case 53:
-            if onFilterChipRelease?() == true { return nil }
-            onEscapeFromSearch?()
-            return nil
+            return handleSearchEscape()
         case 123, 124, 125, 126: // ← → ↓ ↑
             return searchArrowMoves(event) ? nil : event
         case 116, 121: // Page Up, Page Down: a one-line field has no page, and AppKit beeps
             return nil
         case 36:
-            if onFilterChipToggle?() == true { return nil }
-            if event.modifierFlags.contains(.shift) {
-                onReturnPlainFromSearch?()
-            } else {
-                onReturnFromSearch?()
-            }
-            return event
+            return handleSearchReturn(event)
         case 29 where event.modifierFlags.contains(.command): // ⌘0 owns nothing
             return nil
         default:
@@ -338,11 +344,29 @@ final class KeyNavCoordinator {
         }
     }
 
+    private func handleSearchEscape() -> NSEvent? {
+        if onFilterChipRelease?() == true { return nil }
+        if onCustomDateRangeDismiss?() == true { return nil }
+        onEscapeFromSearch?()
+        return nil
+    }
+
+    private func handleSearchReturn(_ event: NSEvent) -> NSEvent? {
+        if onFilterChipToggle?() == true { return nil }
+        if event.modifierFlags.contains(.shift) {
+            onReturnPlainFromSearch?()
+        } else {
+            onReturnFromSearch?()
+        }
+        return event
+    }
+
     private func handleTypedKeyInSearch(_ event: NSEvent) -> NSEvent? {
         // Search is open but its field has no focus yet (it takes a moment): a typed key joins the query instead
-        // of reaching a window with nowhere to put it.
+        // of reaching a window with nowhere to put it. Never steal keystrokes from date pickers or buttons.
         nonisolated(unsafe) let unsafeEvent = event
         let focus = MainActor.assumeIsolated { unsafeEvent.window?.firstResponder }
+        if focus is NSDatePicker || focus is NSButton { return event }
         if !(focus is NSText), let typed = plainCharacters(of: event) {
             onCharacterTyped?(typed)
             return nil

@@ -79,7 +79,9 @@ final class PinnedWindowController: NSObject {
     }
 
     private func defaultFrame() -> NSRect {
-        let screen = TargetScreen.current() ?? NSScreen.main ?? NSScreen.screens[0]
+        guard let screen = TargetScreen.current() ?? NSScreen.main ?? NSScreen.screens.first else {
+            return NSRect(x: 0, y: 0, width: 900, height: 320)
+        }
         let width: CGFloat = 900
         let height: CGFloat = 320
         let x = (screen.frame.width - width) / 2 + screen.frame.minX
@@ -91,13 +93,15 @@ final class PinnedWindowController: NSObject {
         guard let panel else { return }
         let str = AppDefaults.store.value(for: Setting.pinnedWindowFrame)
         let rect = NSRectFromString(str)
-        if !str.isEmpty, !rect.isEmpty, NSScreen.screens.contains(where: { $0.visibleFrame.intersects(rect) }) {
-            let target = (TargetScreen.current() ?? NSScreen.main ?? NSScreen.screens[0]).visibleFrame
+        if !str.isEmpty, !rect.isEmpty,
+           NSScreen.screens.contains(where: { $0.visibleFrame.intersects(rect) }),
+           let fallback = TargetScreen.current() ?? NSScreen.main ?? NSScreen.screens.first
+        {
             panel.setFrame(
                 FloatingWindowPlacement.frame(
                     saved: rect,
                     displays: NSScreen.screens.map(\.visibleFrame),
-                    target: target
+                    target: fallback.visibleFrame
                 ),
                 display: false
             )

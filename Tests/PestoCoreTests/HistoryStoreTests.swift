@@ -234,4 +234,46 @@ struct HistoryStoreTests {
         let index = try #require(store.searchIndex())
         #expect(index.matching(HistoryCriteria(query: "quarterly")) == [item.id])
     }
+
+    @Test("dropping the caller's container reference does not orphan the store's context")
+    func whenCallerDropsContainer_thenStoreStaysValid() throws {
+        let store: HistoryStore
+        do {
+            let scoped = try ModelContainerSetup.makeInMemory()
+            scoped.mainContext.insert(ClipboardItem(
+                type: .text, previewText: "kept", contentHash: "h-kept", byteSize: 4,
+                deviceID: "d", sequenceNumber: 1
+            ))
+            try scoped.mainContext.save()
+            store = HistoryStore(container: scoped)
+        }
+        store.setVisible(true)
+        store.refresh()
+        #expect(store.items.map(\.displayPreviewText) == ["kept"])
+    }
+
+    @Test("a save notification without a ModelContext never feeds foreign IDs into apply")
+    func whenSaveNotificationHasNoModelContext_thenStoreIgnoresIt() async throws {
+        try await ingest("mine", at: 1000)
+        let store = HistoryStore(container: container)
+        store.setVisible(true)
+        let foreignContainer = try ModelContainerSetup.makeInMemory()
+        let foreignItem = ClipboardItem(
+            type: .text, previewText: "foreign", contentHash: "h-foreign", byteSize: 7,
+            deviceID: "d", sequenceNumber: 1
+        )
+        foreignContainer.mainContext.insert(foreignItem)
+        try foreignContainer.mainContext.save()
+        let fetches = store.fetchCount
+
+        NotificationCenter.default.post(
+            name: ModelContext.didSave,
+            object: nil,
+            userInfo: [ModelContext.NotificationKey.insertedIdentifiers.rawValue: [foreignItem.persistentModelID]]
+        )
+        try await Task.sleep(for: .milliseconds(150))
+
+        #expect(store.fetchCount == fetches)
+        #expect(store.items.map(\.displayPreviewText) == ["mine"])
+    }
 }

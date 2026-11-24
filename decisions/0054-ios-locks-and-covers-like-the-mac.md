@@ -1,6 +1,6 @@
 # 0054. iPhone and iPad lock the history and cover cards as the Mac does
 
-Status: Accepted (owner request, 2026-11-18)
+Status: Accepted (owner request, 2026-11-18); the Locked widget and outside-surfaces setting are amended by ADR 0055
 
 Extends ADR 0003 (secrets, one authentication window, the screen-share cover), ADR 0008 (undo), ADR 0046 (Pesto on
 iPhone and iPad), ADR 0047 (the inbox), ADR 0051 (the AutoFill set) and ADR 0052 (the widget). Supersedes ADR 0052's

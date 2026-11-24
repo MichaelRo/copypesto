@@ -1,6 +1,6 @@
 # 0009. Paste waits for the target's keyboard, a click focuses and a double click pastes, and the hover card is a window of its own
 
-Status: Accepted
+Status: Accepted; search key handling is superseded by ADR 0016, and the hover card's pointer rule is amended by ADR 0034
 
 ## Context
 Choosing a clip should land it in the previously frontmost app without a manual ⌘V, and nothing should land by accident.

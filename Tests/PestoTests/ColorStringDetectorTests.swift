@@ -22,4 +22,16 @@ struct ColorStringDetectorTests {
             #expect(ColorStringDetector.detect(in: without) == nil)
         }
     }
+
+    @Test("whole-string detection covers bare hex, oklch, oklab, hwb, color(...), and cmyk without breaking prose")
+    func wholeColorDetection_coversModernSchemasAndBareHex() {
+        #expect(ColorStringDetector.detectWholeColor(in: "FF8800") != nil)
+        #expect(ColorStringDetector.detectWholeColor(in: "oklch(0.628 0.258 29.2)") != nil)
+        #expect(ColorStringDetector.detectWholeColor(in: "oklab(0.6 -0.1 0.1)") != nil)
+        #expect(ColorStringDetector.detectWholeColor(in: "hwb(120 0% 0%)") != nil)
+        #expect(ColorStringDetector.detectWholeColor(in: "color(display-p3 0.2 0.5 0.3)") != nil)
+        #expect(ColorStringDetector.detectWholeColor(in: "cmyk(61%, 0%, 40%, 52%)") != nil)
+        #expect(ColorStringDetector.detectWholeColor(in: "decade") == nil)
+        #expect(ColorStringDetector.detectWholeColor(in: "order FF8800") == nil)
+    }
 }

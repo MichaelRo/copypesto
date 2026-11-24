@@ -157,16 +157,23 @@ struct OnDiskEncryptionTests {
         let service = StorageService(modelContainer: container)
         let first = "password=hunter2-\(UUID().uuidString)"
         let second = "AKIAIOSFODNN7EXAMPLE secret \(UUID().uuidString)"
+        let third = "token-oklch-\(UUID().uuidString)"
+        let fourth = "secret-p3-\(UUID().uuidString)"
         let colour = "rgb(12, 34, 56)"
 
         try await service.ingest(textCapture("rgb(\(first))"))
         try await service.ingest(textCapture("hsl(\(second))"))
+        try await service.ingest(textCapture("oklch(\(third))"))
+        try await service.ingest(textCapture("color(display-p3 \(fourth))"))
+        try await service.ingest(textCapture("cmyk(1, 2, 3, 4) \(first)"))
         try await service.ingest(textCapture(colour))
         let files = try allBytes(under: directory)
 
         #expect(contains(colour, in: files), "control: a real colour is the one preview kept in the clear")
         #expect(!contains(first, in: files), "a wrapped password is on disk in plaintext")
         #expect(!contains(second, in: files), "a wrapped key is on disk in plaintext")
+        #expect(!contains(third, in: files), "an oklch-wrapped token is on disk in plaintext")
+        #expect(!contains(fourth, in: files), "a color()-wrapped secret is on disk in plaintext")
     }
 
     @MainActor

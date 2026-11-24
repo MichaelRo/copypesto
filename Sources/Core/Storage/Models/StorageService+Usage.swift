@@ -11,19 +11,8 @@ public extension StorageService {
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
         guard let item = try modelContext.fetch(descriptor).first else { return false }
-        item.pasteCount += 1
-        item.bringToFront(at: date)
-        noteDayOfPaste(on: item, at: date)
+        item.notePasted(at: date)
         try saveOrRollback()
         return true
-    }
-
-    /// A paste on a new day is remembered with the clip, sealed, so a habit can be told from a burst (ADR 0017).
-    private func noteDayOfPaste(on item: ClipboardItem, at date: Date) {
-        let today = ItemMetadata.dayNumber(of: date)
-        let days = item.metadata.pasteDays ?? []
-        guard !days.contains(today), !item.metadataIsUnreadable else { return }
-        let kept = (days + [today]).filter { $0 > today - ItemMetadata.pasteDayWindow }
-        item.updateMetadata { $0.pasteDays = kept }
     }
 }

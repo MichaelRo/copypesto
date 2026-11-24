@@ -17,7 +17,8 @@ extension MobileAppState {
         return CardCopyActions.Facts(
             type: item.type, isSecret: item.sensitivityRaw != nil, isCovered: concealment.isConcealed,
             isFiltered: item.isNSFW, isPending: item.analysisPending,
-            hasColor: item.type == .color && ColorLiteralParser.firstColor(in: item.displayPreviewText) != nil,
+            hasColor: item.type == .color
+                && ColorLiteralParser.color(fromWholeString: item.displayPreviewText) != nil,
             offersRecognizedText: item.type == .image && !isLocked && RecognizedText.isOffered(for: item),
             isJWT: item.sensitivity == .jwt && !isLocked, allowsDecode: concealment.allowsDecode,
             canAuthenticate: secretReveal.canAuthenticate,
@@ -66,7 +67,7 @@ extension MobileAppState {
     @discardableResult
     func copyColor(_ item: ClipboardItem, as format: ColorCopyFormat) -> Bool {
         guard !isHistoryLockedNow(), copyOffer(for: item).colorFormats.contains(format),
-              let color = ColorLiteralParser.firstColor(in: item.displayPreviewText) else { return false }
+              let color = ColorLiteralParser.color(fromWholeString: item.displayPreviewText) else { return false }
         return finishCopy(item, content: .text(format.string(for: color)))
     }
 

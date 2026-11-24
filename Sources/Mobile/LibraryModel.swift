@@ -34,6 +34,7 @@ final class LibraryModel {
     enum SettingsDestination: Hashable {
         case keyboard
         case sync
+        case insights
     }
 
     var columns: NavigationSplitViewVisibility = .all
@@ -53,6 +54,13 @@ final class LibraryModel {
     var copyCount = 0
     var isSelecting = false
     var selectedClipIDs: Set<UUID> = []
+    var isAsking = false
+    private(set) var activeAskSentence: String?
+    private(set) var askGeneration = 0
+    @ObservationIgnored var visibleResultCount = 0
+    @ObservationIgnored private var askTask: Task<Void, Never>?
+    @ObservationIgnored private var cachedAppsRevision = -1
+    @ObservationIgnored private var cachedAppsList: [SourceApp] = []
     /// Bumped when the grid should take the history's order again (`GridOrder`).
     private(set) var orderVersion = 0
     @ObservationIgnored let order = GridOrder()
@@ -181,6 +189,7 @@ final class LibraryModel {
         editingCollection = nil
         pendingDelete = nil
         sharing = nil
+        cancelAsk()
         endSelection()
     }
 
@@ -198,6 +207,7 @@ final class LibraryModel {
     /// A clip from the widget: the library goes back to All, out of any search, and takes the history's order (a copy
     /// moved the clip to the front). A copied clip's card flashes; a clip opened from the widget opens in its detail.
     func show(_ id: UUID, opensDetail: Bool) {
+        cancelAsk()
         filter = LibraryFilter()
         query = ""
         isSearching = false
@@ -210,7 +220,32 @@ final class LibraryModel {
         }
     }
 
+    func availableApps(in store: HistoryStore?) -> [SourceApp] {
+        guard isSearching, let store else {
+            if store == nil {
+                cachedAppsRevision = -1
+                cachedAppsList = []
+            }
+            return []
+        }
+        if store.revision != cachedAppsRevision {
+            cachedAppsList = LibraryFilter.availableApps(in: store.items)
+            cachedAppsRevision = store.revision
+        }
+        return cachedAppsList
+    }
+
+    func appName(for bundleID: String, in store: HistoryStore?) -> String? {
+        if let hit = cachedAppsList.first(where: { $0.bundleID == bundleID }) {
+            return hit.name
+        }
+        guard let items = store?.items else { return nil }
+        return items.first { $0.sourceBundleID == bundleID && $0.knownSourceAppName != nil }?.knownSourceAppName
+            ?? LibraryFilter.availableApps(in: items).first { $0.bundleID == bundleID }?.name
+    }
+
     func openSearch(_ text: String) {
+        cancelAsk()
         filter = LibraryFilter()
         query = text
         isSearching = true
@@ -225,7 +260,39 @@ final class LibraryModel {
     }
 
     func endSearch() {
+        cancelAsk()
         filter.endSearch()
+    }
+
+    func startAsk(
+        using runAsk: @escaping @MainActor (String) async -> AskPestoQuery,
+        isLocked: @escaping @MainActor () -> Bool
+    ) {
+        let sentence = query
+        guard !sentence.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        cancelAsk()
+        askGeneration &+= 1
+        let expectedGeneration = askGeneration
+        activeAskSentence = sentence
+        isAsking = true
+        askTask = Task { @MainActor [weak self] in
+            let answer = await runAsk(sentence)
+            guard let self, !Task.isCancelled, askGeneration == expectedGeneration else { return }
+            isAsking = false
+            activeAskSentence = nil
+            askTask = nil
+            withAnimation(Motion.animation(.pestoQuick)) {
+                _ = applyAnswer(answer, to: sentence, isLocked: isLocked())
+            }
+        }
+    }
+
+    func cancelAsk() {
+        askTask?.cancel()
+        askTask = nil
+        askGeneration &+= 1
+        activeAskSentence = nil
+        isAsking = false
     }
 
     /// Ask Pesto's answer: its words go to the search field and its kinds and range to the filter.

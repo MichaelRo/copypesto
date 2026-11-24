@@ -25,6 +25,80 @@ extension GridView {
         )
     }
 
+    // MARK: - Delete
+
+    /// The Delete key: the selection, or the focused clip.
+    func requestDeleteForKey() {
+        let focused = displayedItems.indices.contains(focusedIndex) ? displayedItems[focusedIndex].id : nil
+        let targets = ShelfDeletion.targets(
+            selection: selection.ordered(in: cachedFilteredIDs), focused: focused
+        )
+        if !targets.isEmpty { pendingDelete = targets }
+    }
+
+    /// A card's own Delete: the selection when the card is part of one, otherwise that card.
+    func requestDelete(ofCard id: UUID) {
+        pendingDelete = ShelfDeletion.targets(
+            selection: selection.ordered(in: cachedFilteredIDs), requestedFor: id
+        )
+    }
+
+    /// How many of these clips ⌘Z can bring back: excludes large, expiring, credential, or pending items.
+    func undoableDeletionCount(_ ids: [UUID]) -> Int {
+        let wanted = Set(ids)
+        return UndoPolicy.holdable(cachedFilteredItems.filter { wanted.contains($0.id) }).count
+    }
+
+    func confirmDelete() {
+        guard let ids = pendingDelete else { return }
+        pendingDelete = nil
+        deleteSelected(ids)
+    }
+
+    func deleteSelected(_ ids: [UUID]) {
+        guard !appState.isHistoryLockedNow() else { return }
+        let mark = appState.undoHistory?.recordedCount ?? 0
+        Task {
+            await appState.attempt("Couldn’t delete the selected clips") {
+                if let count = try await appState.storageService?.deleteItems(ids: ids, reason: .user) {
+                    AutoBackupSettings().lowerBaseline(by: count)
+                    appState.offerUndo(since: mark)
+                }
+            }
+        }
+        selection.clear()
+    }
+
+    // MARK: - Paste One by One
+
+    func pasteSelectedOneByOne() {
+        let (chosen, leftOut) = PasteStack.limited(selectedItems, byteSize: \.byteSize)
+        if leftOut > 0 {
+            appState.showUserMessage(
+                "Paste One by One takes \(CountText.clips(PasteStack.maxItems)) or 50 MB. The first ones are in it."
+            )
+        }
+        let stackItems = chosen.map { PasteStack.Item(clip: $0) }
+
+        guard stackItems.count > 1 else { return }
+
+        let sources = chosen.map {
+            StackSnippetSource(id: $0.id, isSnippet: $0.isTemplate, remembered: $0.metadata.fieldMemory ?? [:])
+        }
+        Task {
+            if !appState.isOverlayVisible {
+                appState.pasteCoordinator.focusRestoration.capture()
+            }
+            guard let ready = await appState.expandedStackItems(stackItems, sources: sources) else { return }
+            let stack = PasteStack(items: ready)
+            selection.clear()
+
+            // Activate the stack — AppDelegate's overlay-hidden handler will paste item 1.
+            appState.activeStack = stack
+            appState.close(.startStack)
+        }
+    }
+
     // MARK: - Pinboard cycling (⌘[ / ⌘])
 
     /// A press switches at once. Presses that follow within `ShelfMotion.cycleCoalesce` (a held key repeats every 30

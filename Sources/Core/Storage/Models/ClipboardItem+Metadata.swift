@@ -152,6 +152,18 @@ public extension ClipboardItem {
         timestamp = date
     }
 
+    /// Records a paste or mobile copy: increments `pasteCount`, brings the clip to the front, and remembers the day so
+    /// a habit can be told from a burst (ADR 0017).
+    func notePasted(at date: Date) {
+        pasteCount += 1
+        bringToFront(at: date)
+        let today = ItemMetadata.dayNumber(of: date)
+        let days = metadata.pasteDays ?? []
+        guard !days.contains(today), !metadataIsUnreadable else { return }
+        let kept = (days + [today]).filter { $0 > today - ItemMetadata.pasteDayWindow }
+        updateMetadata { $0.pasteDays = kept }
+    }
+
     /// Takes an earlier first-copy time that arrives from another Mac or a backup. The earliest across Macs is the
     /// first copy, so merging is the same in any order. Nothing is sealed when it is not earlier than what the clip
     /// already reads as its first copy, which is its own `timestamp` until a use has moved that on.

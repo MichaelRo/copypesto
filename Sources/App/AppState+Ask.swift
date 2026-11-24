@@ -12,10 +12,32 @@ extension AppState {
             : "No filters found in that. Showing everything.")
     }
 
+    /// Cancels any in-flight Ask Pesto interpretation and prevents stale results from applying.
+    func cancelAsk() {
+        askGeneration &+= 1
+        askTask?.cancel()
+        askTask = nil
+    }
+
     /// Turns the search text into filters (the Ask button, ⌘Return, and Return when a sentence finds nothing).
     func askPesto() async {
-        let query = await Self.askInterpreter().interpret(searchText)
-        apply(query)
+        await askPesto(using: Self.askInterpreter())
+    }
+
+    func askPesto(using interpreter: FallbackQueryInterpreter) async {
+        cancelAsk()
+        let generation = askGeneration
+        let rawQuery = searchText
+        let task = Task<Void, Never> { [weak self] in
+            let query = await interpreter.interpret(rawQuery)
+            guard let self, !Task.isCancelled, self.askGeneration == generation, !self.isHistoryLocked else { return }
+            self.apply(query)
+        }
+        askTask = task
+        await task.value
+        if askGeneration == generation {
+            askTask = nil
+        }
     }
 
     static func askInterpreter() -> FallbackQueryInterpreter {

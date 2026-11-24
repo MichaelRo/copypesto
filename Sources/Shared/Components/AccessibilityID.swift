@@ -130,6 +130,9 @@ enum AccessibilityID {
     static let askButton = "search-ask"
     static let aiUnavailableNotice = "ai-unavailable-notice"
     static let searchCancelButton = "search-cancel"
+    static let customDateRangeRow = "custom-date-range-row"
+    static let customDateApplyButton = "custom-date-range-apply"
+    static let customDateClearButton = "custom-date-range-clear"
     static let collectionNameField = "collection-name-field"
     static let collectionOtherColor = "collection-other-color"
 

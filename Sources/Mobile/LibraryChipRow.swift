@@ -60,6 +60,12 @@ struct LibraryChipRow: View {
             Button("New Collection", systemImage: "plus") { library.isNamingCollection = true }
                 .labelStyle(.iconOnly)
                 .buttonStyle(MobileChipStyle(isActive: false, tint: nil, usesGlass: true))
+                .contextMenu {
+                    Button("New Collection", systemImage: "plus") { library.isNamingCollection = true }
+                    Button("Import Collection\u{2026}", systemImage: "square.and.arrow.down") {
+                        library.isImportingCollection = true
+                    }
+                }
         case .divider:
             Divider().frame(height: 20)
         case let .kind(type):

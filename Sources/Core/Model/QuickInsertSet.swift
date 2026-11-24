@@ -59,7 +59,20 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
         )
     }
 
-    public static let empty = QuickInsertSet(createdAt: Date(timeIntervalSince1970: 0), entries: [])
+    public static let empty = empty()
+
+    public static func empty(
+        accent: WidgetSnapshot.Theme = .brand,
+        keyboardSize: KeyboardSize = .medium
+    )
+    -> QuickInsertSet {
+        QuickInsertSet(
+            createdAt: Date(timeIntervalSince1970: 0),
+            entries: [],
+            accent: accent,
+            keyboardSize: keyboardSize
+        )
+    }
 
     public static func locked(
         accent: WidgetSnapshot.Theme = .brand,

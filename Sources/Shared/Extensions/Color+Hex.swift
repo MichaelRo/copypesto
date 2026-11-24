@@ -37,6 +37,15 @@ extension Color {
         let g = Int((cgColor.greenComponent * 255).rounded())
         let b = Int((cgColor.blueComponent * 255).rounded())
         #else
+        if let sRGB = CGColorSpace(name: CGColorSpace.sRGB),
+           let converted = UIColor(self).cgColor.converted(to: sRGB, intent: .defaultIntent, options: nil),
+           let components = converted.components, components.count >= 3
+        {
+            let r = Int((min(max(components[0], 0), 1) * 255).rounded())
+            let g = Int((min(max(components[1], 0), 1) * 255).rounded())
+            let b = Int((min(max(components[2], 0), 1) * 255).rounded())
+            return String(format: "%02X%02X%02X", r, g, b)
+        }
         var red: CGFloat = 0
         var green: CGFloat = 0
         var blue: CGFloat = 0

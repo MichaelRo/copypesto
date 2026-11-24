@@ -173,4 +173,52 @@ final class Pass3UITests: MobileUITestCase {
         element(MobileAccessibilityID.aiDone, in: app).tap()
         XCTAssertTrue(element(MobileAccessibilityID.aiSheet, in: app).waitForNonExistence(timeout: timeout))
     }
+
+    func test_onIPhone_leadingEdgePullOpensSettingsAndAccentUpdatesSheet() throws {
+        try XCTSkipUnless(UIDevice.current.userInterfaceIdiom == .phone, "the iPhone pass")
+        let app = launch(environment: ["PESTO_UITEST_DEFAULT_appearanceMode": "dark"])
+        waitForSeededClips(in: app)
+
+        let window = app.windows.firstMatch
+        let start = window.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5))
+        let end = window.coordinate(withNormalizedOffset: CGVector(dx: 0.45, dy: 0.5))
+        start.press(forDuration: 0.02, thenDragTo: end)
+
+        let picker = element(MobileAccessibilityID.accentPicker, in: app)
+        XCTAssertTrue(picker.waitForExistence(timeout: timeout), "leading-edge swipe opens Settings")
+
+        let brand = element(MobileAccessibilityID.accentChoice("brand"), in: app)
+        let graphite = element(MobileAccessibilityID.accentChoice("graphite"), in: app)
+        let custom = element(MobileAccessibilityID.accentChoice("custom"), in: app)
+        XCTAssertTrue(brand.exists && graphite.exists && custom.exists)
+        XCTAssertLessThan(abs(graphite.frame.midY - brand.frame.midY), 10, "swatches stay on one row")
+        XCTAssertLessThan(abs(custom.frame.midY - brand.frame.midY), 10, "custom color picker stays on the same row")
+        XCTAssertTrue(
+            app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Basil")).firstMatch.exists
+                || app.staticTexts["Basil"].exists,
+            "dark mode displays Basil when darkTheme is unset"
+        )
+
+        element(MobileAccessibilityID.accentChoice("purple"), in: app).tap()
+        capture("iphone-settings-purple-dark")
+
+        let keyboardButton = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Keyboard & AutoFill"))
+            .firstMatch
+        var swipes = 0
+        while !keyboardButton.isHittable, swipes < 4 {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(keyboardButton.waitForExistence(timeout: timeout))
+        capture("iphone-settings-purple-bottom")
+        keyboardButton.tap()
+        XCTAssertTrue(app.navigationBars["Keyboard & AutoFill"].waitForExistence(timeout: timeout))
+        capture("iphone-keyboard-settings-purple")
+
+        app.navigationBars["Keyboard & AutoFill"].buttons.firstMatch.tap()
+        let done = app.buttons["Done"].firstMatch
+        XCTAssertTrue(done.waitForExistence(timeout: timeout))
+        done.tap()
+        XCTAssertTrue(element(MobileAccessibilityID.clipCard, in: app).waitForExistence(timeout: timeout))
+    }
 }

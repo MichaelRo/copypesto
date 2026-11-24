@@ -79,6 +79,11 @@ final class MobileAppState: ClipboardShortcutHandling {
     @ObservationIgnored var aiTask: Task<Void, Never>?
     /// A snippet that asks for values before it is copied (`MobileAppState+Snippets.swift`).
     var pendingFill: SnippetFillRequest?
+    /// A `.pesto` collection file waiting for confirmation before importing (`MobileAppState+Transfer.swift`).
+    var pendingCollectionImport: PendingCollectionImport?
+    @ObservationIgnored var collectionImportPreparationTask: Task<Void, Never>?
+    @ObservationIgnored var collectionImportTask: Task<Void, Never>?
+    @ObservationIgnored var heldSecurityScopedURL: URL?
     @ObservationIgnored var retentionPolicy: @Sendable () -> RetentionPolicy = {
         RetentionPolicy.fromDefaults(AppDefaults.store)
     }
@@ -118,6 +123,7 @@ final class MobileAppState: ClipboardShortcutHandling {
     isolated deinit {
         if let quickInsertObserver { NotificationCenter.default.removeObserver(quickInsertObserver) }
         if let widgetObserver { NotificationCenter.default.removeObserver(widgetObserver) }
+        heldSecurityScopedURL?.stopAccessingSecurityScopedResource()
     }
 
     static var standardOpeners: StorageBoot.Openers {
@@ -152,6 +158,7 @@ final class MobileAppState: ClipboardShortcutHandling {
         storageService = service
         if LaunchMode.current != .hostedTests {
             ShareFile.removeAll()
+            Self.clearImportStaging()
             HangDiagnostics.shared.start()
         }
         startQuickInsert(container: container)

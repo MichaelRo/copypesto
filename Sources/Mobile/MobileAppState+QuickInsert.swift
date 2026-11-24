@@ -25,6 +25,20 @@ extension MobileAppState {
         defaults.set(true, for: Setting.autoFillEnabled)
     }
 
+    func reconcileKeyboardSize(
+        defaults: UserDefaults = AppDefaults.store,
+        store: KeyboardSizeStore? = .current
+    ) {
+        guard !isHistoryLockedNow(),
+              let record = store?.load(),
+              record.size.rawValue != defaults.value(for: Setting.keyboardSize) else { return }
+        if let setStamp = quickInsert?.file.modificationDate, record.updatedAt < setStamp {
+            return
+        }
+        defaults.set(record.size.rawValue, for: Setting.keyboardSize)
+        writeQuickInsert()
+    }
+
     func quickInsertHistoryChanged() {
         guard quickInsert?.isEnabled() == true else { return }
         quickInsertRewrite?.cancel()
@@ -125,7 +139,7 @@ extension MobileAppState {
             let options = target.options()
             let replacement: QuickInsertSet = historyLock.holdsOutsideSurfaces
                 ? .locked(accent: options.accent, keyboardSize: options.keyboardSize)
-                : .empty
+                : .empty(accent: options.accent, keyboardSize: options.keyboardSize)
             try target.file.write(replacement, with: target.keys.loadOrCreate())
         } catch {
             Self.quickInsertLogger

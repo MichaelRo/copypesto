@@ -39,6 +39,7 @@ struct WidgetSettingsView: View {
             }
         }
         .navigationTitle("Widgets")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var statusLabel: LocalizedStringKey {

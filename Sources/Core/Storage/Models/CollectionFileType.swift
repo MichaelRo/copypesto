@@ -29,7 +29,7 @@ public enum CollectionFileType {
         guard url.isFileURL, importableExtensions.contains(url.pathExtension.lowercased()) else {
             return .notACollectionFile
         }
-        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+        let attributes = try? FileManager.default.attributesOfItem(atPath: url.resolvingSymlinksInPath().path)
         guard attributes?[.type] as? FileAttributeType == .typeRegular else { return .notACollectionFile }
         let size = attributes?[.size] as? Int ?? 0
         return size > HistoryExporter.maxImportBytes ? .tooLarge : .accept

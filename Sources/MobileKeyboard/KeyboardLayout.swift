@@ -19,7 +19,8 @@ enum KeyboardLayout {
             return CGSize(width: width, height: (width / CardGridLayout.aspectRatio).rounded())
         }
         return switch size {
-        case .small, .medium: CGSize(width: 150, height: 88)
+        case .small: CGSize(width: 140, height: 78)
+        case .medium: CGSize(width: 150, height: 88)
         case .large: CGSize(width: 180, height: 110)
         }
     }
@@ -34,6 +35,6 @@ enum KeyboardLayout {
     static func totalHeight(size: KeyboardSize, isRegular: Bool, isLandscape: Bool, isSearching: Bool) -> CGFloat {
         let chrome: CGFloat = 94
         let base = chrome + shelfHeight(size: size, isRegular: isRegular, isLandscape: isLandscape)
-        return isSearching ? max(260, base + KeyboardModel.searchExtraHeight) : base
+        return isSearching ? max(284, base + KeyboardModel.searchExtraHeight) : base
     }
 }

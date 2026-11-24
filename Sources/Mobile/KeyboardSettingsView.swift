@@ -6,6 +6,7 @@ import UIKit
 
 struct KeyboardSettingsView: View {
     @Environment(MobileAppState.self) private var appState
+    @Environment(\.pestoAccent) private var accent
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(Setting.keyboardCollections) private var storedCollections: String
     @AppStorage(Setting.keyboardReturnsAfterInsert) private var keyboardReturns: Bool
@@ -102,7 +103,13 @@ struct KeyboardSettingsView: View {
                     Text("Medium").tag(KeyboardSize.medium.rawValue)
                     Text("Large").tag(KeyboardSize.large.rawValue)
                 }
-                .onChange(of: keyboardSize) { appState.writeQuickInsert() }
+                .onChange(of: keyboardSize) { _, newValue in
+                    guard let size = KeyboardSize(rawValue: newValue) else { return }
+                    if KeyboardSizeStore.current?.load()?.size != size {
+                        try? KeyboardSizeStore.current?.save(size)
+                        appState.writeQuickInsert()
+                    }
+                }
                 Picker("After inserting a clip", selection: $keyboardReturns) {
                     Text("Return to my keyboard").tag(true)
                     Text("Stay in Pesto").tag(false)
@@ -110,6 +117,7 @@ struct KeyboardSettingsView: View {
                 .onChange(of: keyboardReturns) { appState.writeQuickInsert() }
             }
         }
+        .tint(accent)
         .sheet(isPresented: $showsSetupGuide) {
             QuickInsertSetupSheet()
         }
@@ -117,12 +125,15 @@ struct KeyboardSettingsView: View {
             if !shown { Task { await refreshStatus() } }
         }
         .navigationTitle("Keyboard & AutoFill")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             MobileAppState.migrateQuickInsertSettingsIfNeeded()
+            appState.reconcileKeyboardSize()
         }
         .task { await refreshStatus() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
+                appState.reconcileKeyboardSize()
                 Task { await refreshStatus() }
             }
         }

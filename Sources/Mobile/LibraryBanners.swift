@@ -4,15 +4,16 @@ import SwiftUI
 
 /// The banner under the content: Undo after a delete, otherwise the last thing done or refused.
 struct LibraryBanners: View {
+    var messagesOnly = false
     @Environment(MobileAppState.self) private var appState
 
     var body: some View {
         Group {
             if appState.undoOffer != nil || appState.notice != nil {
                 messages
-            } else if appState.clipboardOfferCount != nil {
+            } else if !messagesOnly, appState.clipboardOfferCount != nil {
                 ClipboardOfferBanner()
-            } else if appState.offersAutoFillTip, !appState.isHistoryLocked {
+            } else if !messagesOnly, appState.offersAutoFillTip, !appState.isHistoryLocked {
                 AutoFillTipBanner()
             }
         }
@@ -40,7 +41,8 @@ struct LibraryBanners: View {
                     Text(notice.text)
                     if notice.isProblem { Spacer(minLength: 0) }
                 }
-                .fixedSize(horizontal: !notice.isProblem, vertical: false)
+                .fixedSize(horizontal: !notice.isProblem && notice.text.count < 36, vertical: false)
+                .multilineTextAlignment(.leading)
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier(MobileAccessibilityID.noticeBanner)
             }

@@ -205,7 +205,8 @@ struct KeyboardRootView: View {
                 }
             }
             .scrollEdgeEffectHidden(true, for: .all)
-            .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
+
+            sizePill
 
             if let openURL = keys.openURL {
                 Button {
@@ -214,25 +215,52 @@ struct KeyboardRootView: View {
                     Image(systemName: "gearshape")
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.secondary)
-                        .frame(minWidth: 32, minHeight: 28)
+                        .frame(minWidth: 32, minHeight: 30)
                         .background(.primary.opacity(0.08), in: .capsule)
+                        .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("Keyboard Settings"))
             }
         }
+        .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var sizePill: some View {
+        Button {
+            let next = model.keyboardSize.next
+            if let setKeyboardSize = keys.setKeyboardSize {
+                setKeyboardSize(next)
+            } else {
+                model.keyboardSize = next
+                keys.relayout()
+            }
+        } label: {
+            Text(verbatim: model.keyboardSize.shortLabel)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .padding(.horizontal, 8)
+                .frame(minWidth: 32, minHeight: 30)
+                .background(.primary.opacity(0.08), in: .capsule)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Keyboard size"))
+        .accessibilityValue(Text(model.keyboardSize.displayName))
+        .accessibilityHint(Text("Changes how large the clip cards are"))
     }
 
     private func shelf(matches: [QuickInsertEntry]) -> some View {
         let isRegular = sizeClass == .regular
         let isLandscape = verticalSizeClass == .compact
         let rowCount = KeyboardLayout.rows(
-            size: model.menu.keyboardSize,
+            size: model.keyboardSize,
             isRegular: isRegular,
             isLandscape: isLandscape
         )
-        let cardSize = KeyboardLayout.cardSize(size: model.menu.keyboardSize, isRegular: isRegular)
+        let cardSize = KeyboardLayout.cardSize(size: model.keyboardSize, isRegular: isRegular)
         let rows = Array(repeating: GridItem(.fixed(cardSize.height), spacing: 6), count: rowCount)
         return ScrollView(.horizontal, showsIndicators: false) {
             LazyHGrid(rows: rows, spacing: 6) {

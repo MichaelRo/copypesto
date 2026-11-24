@@ -29,7 +29,7 @@ struct CardMenu: View {
             }
         }
         AIActionsMenu(item: item)
-        if card.appState.canEditText(item) {
+        if card.appState.canEditText(item), !card.appState.canEditSnippet(item) {
             Button("Edit Text\u{2026}", systemImage: "pencil") {
                 Task {
                     guard let text = await loadPlainText(item) else { return }

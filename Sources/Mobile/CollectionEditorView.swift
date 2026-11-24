@@ -15,6 +15,8 @@ struct CollectionEditorView: View {
     @Environment(\.pestoSurface) private var ground
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @State private var draft: CollectionDraft?
+    @State private var exportedShare: ClipShare?
+    @State private var isExporting = false
     @FocusState private var nameFocused: Bool
 
     var body: some View {
@@ -41,12 +43,29 @@ struct CollectionEditorView: View {
                     rulesSections(draft)
                     Section("Icon") { symbolGrid(draft) }
                     Section("Color") { colorRow(draft) }
+                    if let board, !board.isSmart {
+                        Section {
+                            Button("Export Collection\u{2026}", systemImage: "square.and.arrow.up") {
+                                export(board)
+                            }
+                            .disabled(isExporting)
+                        } footer: {
+                            Text("Saves clips in this collection as a .pesto file you can share or import elsewhere.")
+                        }
+                    }
                 }
             }
             .scrollContentBackground(.hidden)
             .background(ground.ignoresSafeArea())
             .navigationTitle(board == nil ? "New Collection" : "Edit Collection")
             .navigationBarTitleDisplayMode(.inline)
+            .overlay(alignment: .bottom) { LibraryBanners(messagesOnly: true) }
+            .sheet(item: $exportedShare) { share in
+                ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])
+            }
+            .onDisappear {
+                exportedShare?.files.forEach(ShareFile.remove)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -145,5 +164,16 @@ struct CollectionEditorView: View {
             library.filter.choose(.collection(added.id))
         }
         dismiss()
+    }
+
+    private func export(_ board: Pinboard) {
+        guard !isExporting else { return }
+        isExporting = true
+        Task {
+            defer { isExporting = false }
+            if let url = await appState.exportCollection(board) {
+                exportedShare = ClipShare(file: url)
+            }
+        }
     }
 }

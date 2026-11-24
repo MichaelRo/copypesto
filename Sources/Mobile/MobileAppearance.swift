@@ -23,6 +23,15 @@ enum MobileAppearance {
             }
         }
     }
+
+    @MainActor
+    static func applyTint(_ tintColor: UIColor, to scenes: Set<UIScene>) {
+        for case let scene as UIWindowScene in scenes {
+            for window in scene.windows where window.tintColor != tintColor {
+                window.tintColor = tintColor
+            }
+        }
+    }
 }
 
 /// Applies the appearance at the root of each window: when it appears, when the setting changes and when the app

@@ -107,4 +107,19 @@ struct MobileAutoFillTipTests {
         #expect(!state.offersAutoFillTip)
         #expect(defaults.value(for: Setting.autoFillTipShown))
     }
+
+    @Test("Set Up closes the tip and opens Keyboard & AutoFill setup")
+    func whenSetUpChosen_thenTipDismissesAndSetupOpens() {
+        let defaults = ThrowawayDefaults.make()
+        let state = state(defaults)
+        let library = LibraryModel()
+        state.clipWasKept(defaults: defaults, isLive: true)
+
+        state.dismissAutoFillTip()
+        library.showsQuickInsertSetup = true
+
+        #expect(!state.offersAutoFillTip)
+        #expect(library.showsQuickInsertSetup)
+        #expect(defaults.value(for: Setting.autoFillTipShown))
+    }
 }

@@ -246,4 +246,49 @@ struct MobileQuickInsertTests {
         #expect(!set.keyboardEnabled)
         #expect(KeyboardMenu(hasFullAccess: true) { set }.state == .unavailable)
     }
+
+    @Test("reconcileKeyboardSize updates Setting.keyboardSize and rewrites the quick-insert set")
+    func whenKeyboardSizeSavedInGroup_thenAppReconcilesAndRewrites() async throws {
+        let library = try await MobileTestLibrary()
+        let fixture = try fixture(on: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        let defaults = ThrowawayDefaults.make()
+        var target = fixture.target
+        target.options = {
+            QuickInsertSelection.Options(
+                keyboardSize: KeyboardSize(rawValue: defaults.value(for: Setting.keyboardSize)) ?? .medium
+            )
+        }
+        library.state.quickInsert = target
+
+        let store = KeyboardSizeStore(root: fixture.file.root)
+        try store.save(.large)
+
+        library.state.reconcileKeyboardSize(defaults: defaults, store: store)
+
+        #expect(defaults.value(for: Setting.keyboardSize) == KeyboardSize.large.rawValue)
+        #expect(try fixture.read().keyboardSize == .large)
+    }
+
+    @Test("Clear History keeps the user's accent and keyboardSize in the empty QuickInsertSet")
+    func whenCleared_thenQuickInsertRetainsThemeAndSize() async throws {
+        let library = try await MobileTestLibrary()
+        let fixture = try fixture(on: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        var target = fixture.target
+        let theme = WidgetSnapshot.Theme.resolve(accent: "blue", theme: "parmesan", darkTheme: "")
+        target.options = {
+            QuickInsertSelection.Options(keyboardSize: .large, accent: theme)
+        }
+        library.state.quickInsert = target
+        try await library.add("Clear me")
+        library.state.writeQuickInsert()
+
+        await library.state.clearHistory()
+
+        let cleared = try fixture.read()
+        #expect(cleared.entries.isEmpty)
+        #expect(cleared.keyboardSize == .large)
+        #expect(cleared.accent == theme)
+    }
 }

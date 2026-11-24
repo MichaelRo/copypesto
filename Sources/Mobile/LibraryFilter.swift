@@ -8,7 +8,8 @@ enum LibraryChip: Hashable {
     case pinned
     case collection(UUID)
     case newCollection
-    case divider
+    case scopeDivider
+    case filterDivider
     case kind(ClipboardType)
     case when
     case from
@@ -39,8 +40,8 @@ enum LibraryChip: Hashable {
         var filters: [LibraryChip] = [.when]
         if showsFrom { filters.append(.from) }
         filters.append(contentsOf: [.sensitive, .otherDevices])
-        let leading = scopes.isEmpty ? asking : scopes + [.divider] + asking
-        return leading + LibraryScope.filteredKinds.map(LibraryChip.kind) + [.divider] + filters
+        let leading = scopes.isEmpty ? asking : scopes + [.scopeDivider] + asking
+        return leading + LibraryScope.filteredKinds.map(LibraryChip.kind) + [.filterDivider] + filters
     }
 
     var scope: LibraryScope? {
@@ -48,7 +49,9 @@ enum LibraryChip: Hashable {
         case .all: .all
         case .pinned: .pinned
         case let .collection(id): .collection(id)
-        case .newCollection, .divider, .kind, .when, .from, .sensitive, .otherDevices, .ask, .asked: nil
+        case .newCollection, .scopeDivider, .filterDivider, .kind, .when, .from, .sensitive, .otherDevices, .ask,
+             .asked:
+            nil
         }
     }
 }

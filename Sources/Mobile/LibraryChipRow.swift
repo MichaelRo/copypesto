@@ -43,7 +43,7 @@ struct LibraryChipRow: View {
             .padding(.vertical, 2)
         }
         .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.basedOnSize)
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
         .fixedSize(horizontal: false, vertical: true)
         .accessibilityIdentifier(MobileAccessibilityID.chipRow)
         .sheet(isPresented: $showsCustomDateRange) {
@@ -68,7 +68,7 @@ struct LibraryChipRow: View {
     @ViewBuilder
     private func view(for chip: LibraryChip, apps: [SourceApp]) -> some View {
         switch chip {
-        case .all, .pinned, .collection, .newCollection, .divider:
+        case .all, .pinned, .collection, .newCollection, .scopeDivider, .filterDivider:
             scopeChipView(for: chip)
         case .kind, .when, .from, .sensitive, .otherDevices, .ask, .asked:
             filterChipView(for: chip, apps: apps)
@@ -102,7 +102,7 @@ struct LibraryChipRow: View {
                         library.isImportingCollection = true
                     }
                 }
-        case .divider:
+        case .scopeDivider, .filterDivider:
             Divider().frame(height: 20)
         default:
             EmptyView()

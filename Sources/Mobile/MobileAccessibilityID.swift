@@ -106,6 +106,9 @@ enum MobileAccessibilityID {
     static let insightsButton = "settings-insights"
     static let insightsView = "insights-view"
     static let similarClipsSection = "similar-clips"
+    static let announcementBanner = "announcement-banner"
+    static let announcementPrimaryButton = "announcement-primary"
+    static let announcementDismissButton = "announcement-dismiss"
 
     static func accentChoice(_ id: String) -> String {
         "accent-\(id)"

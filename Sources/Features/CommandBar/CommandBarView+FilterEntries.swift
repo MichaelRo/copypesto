@@ -66,69 +66,71 @@ extension CommandBarView {
         appState.showsCustomDateRange = true
     }
 
-    var customDateRangeRow: some View {
-        HStack(spacing: 8) {
+    var customDateRangePopover: some View {
+        VStack(alignment: .leading, spacing: 10) {
             Toggle("Single day", isOn: $customRangeSingleDay)
                 .toggleStyle(.checkbox)
                 .controlSize(.small)
                 .font(.caption)
 
-            DatePicker(
-                customRangeSingleDay ? "Date" : "From",
-                selection: $customStartDate,
-                in: ...Date.now,
-                displayedComponents: .date
-            )
-            .datePickerStyle(.compact)
-            .controlSize(.small)
-            .labelsHidden()
-            .accessibilityLabel(customRangeSingleDay ? "Date" : "Start date")
-            .onChange(of: customStartDate) { _, start in
-                if customEndDate < start {
-                    customEndDate = start
-                }
-            }
-
-            if !customRangeSingleDay {
-                Text("to")
-                    .font(.caption)
-                    .pestoQuiet()
+            HStack(spacing: 8) {
                 DatePicker(
-                    "To",
-                    selection: $customEndDate,
-                    in: customStartDate...Date.now,
+                    customRangeSingleDay ? "Date" : "From",
+                    selection: $customStartDate,
+                    in: ...Date.now,
                     displayedComponents: .date
                 )
                 .datePickerStyle(.compact)
                 .controlSize(.small)
                 .labelsHidden()
-                .accessibilityLabel("End date")
+                .accessibilityLabel(customRangeSingleDay ? "Date" : "Start date")
+                .onChange(of: customStartDate) { _, start in
+                    if customEndDate < start {
+                        customEndDate = start
+                    }
+                }
+
+                if !customRangeSingleDay {
+                    Text("to")
+                        .font(.caption)
+                        .pestoQuiet()
+                    DatePicker(
+                        "To",
+                        selection: $customEndDate,
+                        in: customStartDate...Date.now,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.compact)
+                    .controlSize(.small)
+                    .labelsHidden()
+                    .accessibilityLabel("End date")
+                }
             }
 
-            Spacer(minLength: 0)
+            HStack {
+                Button("Clear") {
+                    appState.searchDateFilter = .all
+                    appState.showsCustomDateRange = false
+                }
+                .buttonStyle(.plain)
+                .font(.caption)
+                .pestoQuiet()
+                .accessibilityIdentifier(AccessibilityID.customDateClearButton)
 
-            Button("Clear") {
-                appState.searchDateFilter = .all
-                appState.showsCustomDateRange = false
-            }
-            .buttonStyle(.plain)
-            .font(.caption)
-            .pestoQuiet()
-            .accessibilityIdentifier(AccessibilityID.customDateClearButton)
+                Spacer(minLength: 12)
 
-            Button("Apply") {
-                let end = customRangeSingleDay ? customStartDate : customEndDate
-                appState.searchDateFilter = SearchDateFilter.customRange(from: customStartDate, to: end)
-                appState.showsCustomDateRange = false
+                Button("Apply") {
+                    let end = customRangeSingleDay ? customStartDate : customEndDate
+                    appState.searchDateFilter = SearchDateFilter.customRange(from: customStartDate, to: end)
+                    appState.showsCustomDateRange = false
+                }
+                .buttonStyle(.pestoProminent)
+                .controlSize(.small)
+                .tint(accent)
+                .accessibilityIdentifier(AccessibilityID.customDateApplyButton)
             }
-            .buttonStyle(.pestoProminent)
-            .controlSize(.small)
-            .tint(accent)
-            .accessibilityIdentifier(AccessibilityID.customDateApplyButton)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .padding(12)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.customDateRangeRow)
     }

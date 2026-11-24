@@ -27,4 +27,39 @@ enum CardGridLayout {
         guard lineHeight > 0, height.isFinite else { return 1 }
         return max(1, Int(height / lineHeight))
     }
+
+    /// Maps a point inside the padded `LazyVGrid` coordinate space to its card index in `O(1)` time.
+    static func cardIndex(
+        at point: CGPoint,
+        itemCount: Int,
+        columns: Int,
+        cardWidth: CGFloat,
+        cardHeight: CGFloat,
+        allowsGutter: Bool = false
+    )
+    -> Int? {
+        guard itemCount > 0, columns >= 1, cardWidth > 0, cardHeight > 0,
+              point.x.isFinite, point.y.isFinite, point.y >= 0 else { return nil }
+        let count = CGFloat(columns)
+        let totalWidth = count * cardWidth + max(0, count - 1) * spacing
+        let resolvedX: CGFloat
+        if allowsGutter {
+            guard point.x >= -margin, point.x <= totalWidth + margin else { return nil }
+            resolvedX = min(max(point.x, 0), totalWidth)
+        } else {
+            guard point.x >= 0, point.x <= totalWidth else { return nil }
+            resolvedX = point.x
+        }
+        let stepX = cardWidth + spacing
+        let stepY = cardHeight + spacing
+        let column = min(columns - 1, max(0, Int(resolvedX / stepX)))
+        let row = max(0, Int(point.y / stepY))
+        if !allowsGutter {
+            let xInCell = resolvedX - CGFloat(column) * stepX
+            let yInCell = point.y - CGFloat(row) * stepY
+            guard xInCell <= cardWidth, yInCell <= cardHeight else { return nil }
+        }
+        let index = row * columns + column
+        return index < itemCount ? index : nil
+    }
 }

@@ -13,8 +13,8 @@ struct AskPestoLibraryTests {
         let plain = LibraryChip.row(collectionIDs: [trip], isSearching: true)
         #expect(!plain.contains(.ask) && !plain.contains(.asked))
         let typed = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true)
-        #expect(typed == [.all, .pinned, .collection(trip), .divider, .ask] + LibraryScope.filteredKinds
-            .map(LibraryChip.kind) + [.divider, .when, .sensitive, .otherDevices])
+        #expect(typed == [.all, .pinned, .collection(trip), .scopeDivider, .ask] + LibraryScope.filteredKinds
+            .map(LibraryChip.kind) + [.filterDivider, .when, .sensitive, .otherDevices])
         let applied = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true, hasAsk: true)
         #expect(applied.contains(.asked) && !applied.contains(.ask))
         #expect(!LibraryChip.row(collectionIDs: [trip], isSearching: false, offersAsk: true).contains(.ask))

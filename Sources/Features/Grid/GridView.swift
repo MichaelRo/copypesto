@@ -297,10 +297,7 @@ struct GridView: View {
                         .accessibilityValue(CountText.clips(cachedFilteredItems.count))
                 }
             )
-            .frame(
-                height: cardDimensions.height
-                    + (appState.isSearchActive ? ShelfHeight.searchLiftRoom : ShelfHeight.liftRoom)
-            )
+            .frame(height: cardDimensions.height + ShelfHeight.liftRoom)
             .onChange(of: noResultsAdvice, initial: true) { _, advice in
                 appState.noResultsAdvice = advice
             }
@@ -322,13 +319,13 @@ struct GridView: View {
                 }
             }
         }
-        .padding(.bottom, appState.isSearchActive ? ShelfHeight.searchBottomSlot : ShelfHeight.bottomSlot)
+        .padding(.bottom, ShelfHeight.bottomSlot)
         .overlay(alignment: .bottomTrailing) {
             if !copyOnly, selection.count > 1 {
                 actionBar
                     .disabled(pendingDelete != nil)
                     .padding(.trailing, 16)
-                    .padding(.bottom, ShelfHeight.bottomCapsuleInset(isSearchActive: appState.isSearchActive))
+                    .padding(.bottom, ShelfHeight.bottomCapsuleInset())
                     .transition(.opacity.combined(with: .offset(y: 8)).combined(with: .scale(
                         scale: 0.96, anchor: .bottomTrailing
                     )))

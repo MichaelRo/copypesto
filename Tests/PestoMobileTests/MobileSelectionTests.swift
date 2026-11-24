@@ -59,4 +59,68 @@ struct MobileSelectionTests {
         #expect(joined.isProtected)
         #expect(joined.leftOut == 1)
     }
+
+    @Test("CardGridLayout.cardIndex maps coordinates to card indices in O(1) and rejects gutters and empty slots")
+    func whenPointInsideGrid_thenCardIndexResolvesOrReturnsNil() {
+        let cardWidth: CGFloat = 170
+        let cardHeight = CardGridLayout.cardHeight(forWidth: cardWidth)
+        let spacing = CardGridLayout.spacing
+
+        #expect(CardGridLayout.cardIndex(
+            at: CGPoint(x: 20, y: 20), itemCount: 5, columns: 2, cardWidth: cardWidth, cardHeight: cardHeight
+        ) == 0)
+        #expect(CardGridLayout.cardIndex(
+            at: CGPoint(x: cardWidth + spacing + 10, y: 20),
+            itemCount: 5, columns: 2, cardWidth: cardWidth, cardHeight: cardHeight
+        ) == 1)
+        // Strict mode rejects the inter-card gutter; allowsGutter treats it as the preceding column.
+        #expect(CardGridLayout.cardIndex(
+            at: CGPoint(x: cardWidth + spacing / 2, y: 20),
+            itemCount: 5, columns: 2, cardWidth: cardWidth, cardHeight: cardHeight, allowsGutter: false
+        ) == nil)
+        #expect(CardGridLayout.cardIndex(
+            at: CGPoint(x: cardWidth + spacing / 2, y: 20),
+            itemCount: 5, columns: 2, cardWidth: cardWidth, cardHeight: cardHeight, allowsGutter: true
+        ) == 0)
+        // Empty slot in partial last row (5 items in 2 columns -> row 2 col 1 is out of bounds).
+        #expect(CardGridLayout.cardIndex(
+            at: CGPoint(x: cardWidth + spacing + 20, y: 2 * (cardHeight + spacing) + 10),
+            itemCount: 5, columns: 2, cardWidth: cardWidth, cardHeight: cardHeight
+        ) == nil)
+        #expect(CardGridLayout.cardIndex(
+            at: CGPoint(x: 10, y: -5),
+            itemCount: 5, columns: 2, cardWidth: cardWidth, cardHeight: cardHeight
+        ) == nil)
+    }
+
+    @Test("index-based drag selection and O(K log K) ordering stay under 50 ms over 2,000 clips")
+    func whenSelectingAndOrderingOver2000Clips_thenStaysFast() {
+        let ids = (0..<2000).map { _ in UUID() }
+        let result = LibraryListing.Result(ids: ids, animates: false)
+        let model = LibraryModel()
+        model.beginSelection(with: ids[0])
+
+        let clock = ContinuousClock()
+        var totalSeconds = 0.0
+        let duration = clock.measure {
+            for offset in stride(from: 1, to: 100, by: 2) {
+                model.applyDragSelection(
+                    fromIndex: 0,
+                    toIndex: offset,
+                    in: result.ids,
+                    baseSelection: [ids[0]],
+                    selecting: true
+                )
+            }
+            let ordered = model.selectedClipIDs.sorted {
+                (result.indexByID[$0] ?? .max) < (result.indexByID[$1] ?? .max)
+            }
+            #expect(ordered.count == 100)
+            #expect(ordered.first == ids[0])
+            #expect(ordered.last == ids[99])
+        }
+        totalSeconds = Double(duration.components.seconds) * 1000
+            + Double(duration.components.attoseconds) / 1_000_000_000_000_000
+        #expect(totalSeconds < 50, "2,000-clip selection batch took \(totalSeconds) ms")
+    }
 }

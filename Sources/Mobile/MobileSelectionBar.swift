@@ -6,9 +6,10 @@ import SwiftUI
 /// Floating bulk-action bar shown while multi-select mode is active in the iOS library.
 struct MobileSelectionBar: View {
     let collections: [Pinboard]
-    let allVisibleIDs: [UUID]
+    let listing: LibraryListing.Result
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var isConfirmingBulkDelete = false
 
     private var count: Int {
@@ -16,46 +17,52 @@ struct MobileSelectionBar: View {
     }
 
     private func orderedSelectedItems(in store: HistoryStore?) -> [ClipboardItem] {
-        guard let store else { return [] }
-        return allVisibleIDs.compactMap { library.selectedClipIDs.contains($0) ? store.item(for: $0) : nil }
+        guard let store, !library.selectedClipIDs.isEmpty else { return [] }
+        let indexByID = listing.indexByID
+        return library.selectedClipIDs
+            .sorted { (indexByID[$0] ?? .max) < (indexByID[$1] ?? .max) }
+            .compactMap { store.item(for: $0) }
     }
 
     var body: some View {
         let selected = orderedSelectedItems(in: appState.historyStore)
         let textual = selected.filter { $0.type == .text || $0.type == .code }
         let anyUnpinned = selected.contains { !$0.isPinned }
+        let allVisibleCount = listing.ids.count
         let selectAllButton = Button(
-            library.selectedClipIDs.count == allVisibleIDs.count && !allVisibleIDs.isEmpty
-                ? "Deselect" : "Select All"
+            count == allVisibleCount && allVisibleCount > 0 ? "Deselect" : "Select All"
         ) {
-            if library.selectedClipIDs.count == allVisibleIDs.count {
+            if count == allVisibleCount {
                 library.selectedClipIDs = []
             } else {
-                library.selectAll(allVisibleIDs)
+                library.selectAll(listing.ids)
             }
         }
         .font(.subheadline)
-        .disabled(allVisibleIDs.isEmpty)
+        .disabled(allVisibleCount == 0)
 
         let countText = Text("\(count) clips selected")
             .font(.subheadline.weight(.semibold))
             .monospacedDigit()
             .lineLimit(1)
 
-        ViewThatFits(in: .horizontal) {
-            HStack(spacing: 12) {
-                selectAllButton
-                countText
-                Spacer(minLength: 4)
-                actionButtons(selected: selected, textual: textual, anyUnpinned: anyUnpinned)
-            }
-            VStack(spacing: 6) {
-                HStack(spacing: 8) {
-                    selectAllButton
-                    Spacer(minLength: 4)
-                    countText
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: 6) {
+                    HStack(spacing: 8) {
+                        selectAllButton
+                        Spacer(minLength: 4)
+                        countText
+                    }
+                    HStack(spacing: 12) {
+                        actionButtons(selected: selected, textual: textual, anyUnpinned: anyUnpinned)
+                    }
                 }
-                HStack(spacing: 12) {
+            } else {
+                HStack(spacing: 10) {
+                    selectAllButton
+                    countText
+                    Spacer(minLength: 4)
                     actionButtons(selected: selected, textual: textual, anyUnpinned: anyUnpinned)
                 }
             }

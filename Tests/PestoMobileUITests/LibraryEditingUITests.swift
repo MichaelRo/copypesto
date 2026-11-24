@@ -122,4 +122,50 @@ final class LibraryEditingUITests: MobileUITestCase {
         banner.buttons["Not Now"].tap()
         XCTAssertFalse(banner.waitForExistence(timeout: 2), "Not Now takes the offer down")
     }
+
+    func test_chipRowStaysFixedVertically_andSelectionModeAllowsScrollAndHorizontalSwipe() {
+        let app = launch()
+        waitForSeededClips(in: app)
+
+        let chips = element(MobileAccessibilityID.chipRow, in: app)
+        XCTAssertTrue(chips.exists)
+        let chipsMinYBefore = chips.frame.minY
+        let firstCardBefore = cards(in: app).element(boundBy: 0).frame.minY
+
+        let chipStart = chips.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let chipDown = chips.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 4.0))
+        chipStart.press(forDuration: 0.05, thenDragTo: chipDown)
+        XCTAssertEqual(chips.frame.minY, chipsMinYBefore, accuracy: 2.0, "chip row must not drag vertically")
+        XCTAssertEqual(
+            cards(in: app).element(boundBy: 0).frame.minY,
+            firstCardBefore,
+            accuracy: 2.0,
+            "dragging chip row down must not trigger grid pull-to-refresh"
+        )
+
+        element(MobileAccessibilityID.selectClipsButton, in: app).tap()
+        XCTAssertTrue(
+            app.staticTexts["0 clips selected"].waitForExistence(timeout: timeout),
+            "selection bar opens"
+        )
+
+        let card0 = cards(in: app).element(boundBy: 0)
+        let card1 = cards(in: app).element(boundBy: 1)
+        let start = card0.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5))
+        let end = card1.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: end)
+        XCTAssertTrue(
+            app.staticTexts["2 clips selected"].waitForExistence(timeout: timeout),
+            "horizontal swipe selects across cards in selection mode"
+        )
+
+        let grid = element(MobileAccessibilityID.clipGrid, in: app)
+        let cardYBeforeScroll = card0.frame.minY
+        grid.swipeUp()
+        XCTAssertLessThan(
+            card0.frame.minY,
+            cardYBeforeScroll - 20,
+            "vertical scroll still moves cards in selection mode"
+        )
+    }
 }

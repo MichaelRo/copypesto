@@ -7,7 +7,6 @@ struct ListCommandActions {
     let newNote: () -> Void
     let search: () -> Void
     let toggleDetail: () -> Void
-    var askPesto: (() -> Void)?
     var copySelected: (() -> Void)?
 }
 
@@ -34,12 +33,15 @@ struct LibraryCommands: Commands {
                 .disabled(list == nil)
         }
         CommandGroup(after: .pasteboard) {
-            Button("Copy Selected") { list?.copySelected?() }
-                .keyboardShortcut("c", modifiers: .command)
-                .disabled(list?.copySelected == nil)
-            Button("Copy Clip") { clip?.copy() }
-                .keyboardShortcut("c", modifiers: [.shift, .command])
-                .disabled(clip == nil)
+            Button(list?.copySelected != nil ? "Copy Selected" : "Copy Clip") {
+                if let copySelected = list?.copySelected {
+                    copySelected()
+                } else {
+                    clip?.copy()
+                }
+            }
+            .keyboardShortcut("c", modifiers: [.shift, .command])
+            .disabled(list?.copySelected == nil && clip == nil)
             Button(clip?.isPinned == true ? "Unpin" : "Pin") { clip?.togglePin() }
                 .keyboardShortcut("p", modifiers: [.shift, .command])
                 .disabled(clip == nil)
@@ -51,9 +53,6 @@ struct LibraryCommands: Commands {
             Button("Search") { list?.search() }
                 .keyboardShortcut("f", modifiers: .command)
                 .disabled(list == nil)
-            Button("Ask Pesto") { list?.askPesto?() }
-                .keyboardShortcut(.return, modifiers: .command)
-                .disabled(list?.askPesto == nil)
         }
         CommandGroup(after: .sidebar) {
             Button("Show Details") { list?.toggleDetail() }

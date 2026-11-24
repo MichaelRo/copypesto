@@ -141,6 +141,8 @@ public enum Setting {
     public static let dismissedCollectionSuggestions = SettingKey("dismissedCollectionSuggestions", default: "")
     /// iOS: whether the inline placeholder hint above a Snippets smart collection has been dismissed.
     public static let dismissedSnippetHint = SettingKey("dismissedSnippetHint", default: false)
+    /// Comma-separated IDs of dismissed offline `AppAnnouncement` banners.
+    public static let dismissedAnnouncementIDs = SettingKey("dismissedAnnouncementIDs", default: "")
     public static let installPromptSuppressed = SettingKey("installLocationPromptSuppressed", default: false)
     public static let previewEncryptionVersion = SettingKey("previewEncryptionVersion", default: 0)
     public static let metadataSealingVersion = SettingKey("metadataSealingVersion", default: 0)
@@ -202,6 +204,7 @@ public enum Setting {
         dismissedSnippetSuggestions.name,
         dismissedCollectionSuggestions.name,
         dismissedSnippetHint.name,
+        dismissedAnnouncementIDs.name,
         installPromptSuppressed.name,
         previewEncryptionVersion.name, metadataSealingVersion.name, embeddingSealingVersion.name,
         ciphertextBindingVersion.name, classifierVersion.name, clipRepairVersion.name, secretMaskVersion.name,

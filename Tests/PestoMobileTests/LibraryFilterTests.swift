@@ -20,13 +20,13 @@ struct LibraryFilterTests {
     func whenSearching_thenKindsAndDatesFollowDividers() {
         let chips = LibraryChip.row(collectionIDs: [trip], isSearching: true)
         let kinds = LibraryScope.filteredKinds.map(LibraryChip.kind)
-        #expect(chips == [.all, .pinned, .collection(trip), .divider] + kinds
-            + [.divider, .when, .sensitive, .otherDevices])
+        #expect(chips == [.all, .pinned, .collection(trip), .scopeDivider] + kinds
+            + [.filterDivider, .when, .sensitive, .otherDevices])
 
         let withFrom = LibraryChip.row(
             collectionIDs: [trip], isSearching: true, showsScopes: false, showsFrom: true
         )
-        #expect(withFrom == kinds + [.divider, .when, .from, .sensitive, .otherDevices])
+        #expect(withFrom == kinds + [.filterDivider, .when, .from, .sensitive, .otherDevices])
     }
 
     @Test("When, Sensitive and Other Devices chips work on top of the scope and end with the search")

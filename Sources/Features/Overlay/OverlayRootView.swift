@@ -12,6 +12,7 @@ struct OverlayRootView: View {
     @AppStorage(Setting.accentColorHex) private var accentColorHex: String
     @AppStorage(Setting.appTheme) private var appThemeRaw: String
     @AppStorage(Setting.appThemeDark) private var appThemeDarkRaw: String
+    @AppStorage(Setting.dismissedAnnouncementIDs) private var dismissedAnnouncementsRaw: String
 
     private var axPermissionBanner: some View {
         Button {
@@ -142,6 +143,28 @@ struct OverlayRootView: View {
         return String(localized: "You have \(CountText.list(parts)). Bring your history into Pesto?")
     }
 
+    private func announcementBanner(_ announcement: AppAnnouncement) -> some View {
+        ShelfBannerCapsule(
+            symbol: announcement.symbol,
+            message: announcement.message,
+            primary: .init(
+                title: LocalizedStringKey(announcement.primaryTitle),
+                identifier: AccessibilityID.announcementPrimaryButton
+            ) {
+                appState.openAnnouncement(announcement)
+            },
+            secondary: .init(
+                title: LocalizedStringKey(announcement.secondaryTitle),
+                identifier: AccessibilityID.announcementDismissButton
+            ) {
+                appState.dismissAnnouncement(announcement)
+            }
+        )
+        .fixedSize()
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(AccessibilityID.announcementBanner)
+    }
+
     private func importOfferBanner(_ sources: [ImportSource]) -> some View {
         ShelfBannerCapsule(
             symbol: "tray.and.arrow.down",
@@ -192,8 +215,8 @@ struct OverlayRootView: View {
                         // (D-01).
                         .blur(radius: appState.isHistoryLocked ? ShelfLockCover.blurRadius : 0)
                         .padding(.horizontal, 16)
-                        .padding(.top, appState.isSearchActive ? 6 : 12)
-                        .padding(.bottom, appState.isSearchActive ? 2 : 8)
+                        .padding(.top, 12)
+                        .padding(.bottom, 8)
                 }
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.height
@@ -214,7 +237,10 @@ struct OverlayRootView: View {
                 // (storage, Accessibility, an import offer) keep their place in the layout above. The Undo offer is a
                 // capsule under the cards and covers none of them.
                 .overlay(alignment: .bottom) {
-                    let inset = ShelfHeight.bottomCapsuleInset(isSearchActive: appState.isSearchActive)
+                    let inset = ShelfHeight.bottomCapsuleInset()
+                    let isCovered = appState.isContentCovered(
+                        screenSharingPrivacy: AppDefaults.store.value(for: Setting.screenSharingPrivacy)
+                    )
                     if let label = appState.undoOffer {
                         undoBanner(label)
                             .padding(.bottom, inset)
@@ -222,12 +248,19 @@ struct OverlayRootView: View {
                     } else if let presentation = appState.shelfSuggestion,
                               appState.importOffer.isEmpty,
                               !appState.isHistoryLocked,
-                              !appState.isContentCovered(screenSharingPrivacy: AppDefaults.store
-                                  .value(for: Setting.screenSharingPrivacy))
+                              !isCovered
                     {
                         SuggestionBanner(presentation: presentation)
                             .padding(.horizontal, 16)
                             .padding(.bottom, inset)
+                    } else if let announcement = appState.activeAnnouncement(dismissedRaw: dismissedAnnouncementsRaw),
+                              appState.importOffer.isEmpty,
+                              !isCovered
+                    {
+                        announcementBanner(announcement)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, inset)
+                            .transition(.opacity)
                     } else if appState.isClickHintVisible {
                         clickHint
                             .padding(.bottom, inset)
@@ -241,7 +274,7 @@ struct OverlayRootView: View {
                     }
                     // Up into the padding the toolbar leaves under its chips, so a 28 point banner stays below the
                     // command bar without crowding cards.
-                    .offset(y: appState.isSearchActive ? -2 : -8)
+                    .offset(y: -8)
                 }
             }
             .background(ShelfBackground(glow: glow))

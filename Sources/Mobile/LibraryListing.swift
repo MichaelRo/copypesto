@@ -21,6 +21,14 @@ enum LibraryListing {
     struct Result: Equatable {
         var ids: [UUID]
         var animates: Bool
+        var indexByID: [UUID: Int]
+
+        init(ids: [UUID], animates: Bool, indexByID: [UUID: Int]? = nil) {
+            self.ids = ids
+            self.animates = animates
+            self.indexByID = indexByID
+                ?? Dictionary(ids.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        }
     }
 
     static func list(

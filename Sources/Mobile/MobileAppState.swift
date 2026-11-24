@@ -179,4 +179,31 @@ final class MobileAppState: ClipboardShortcutHandling {
             #endif
         }
     }
+
+    func activeAnnouncement(dismissedRaw: String) -> AppAnnouncement? {
+        AnnouncementPolicy.activeAnnouncement(
+            dismissedRaw: dismissedRaw,
+            installDate: nil,
+            clipCount: historyStore?.items.count ?? 0,
+            platform: .iOS,
+            isLocked: isHistoryLockedNow(),
+            hasOnboarded: AppDefaults.store.value(for: Setting.welcomeShown),
+            isUITest: LaunchMode.current == .uiTest
+        )
+    }
+
+    func dismissAnnouncement(_ announcement: AppAnnouncement) {
+        let current = AppDefaults.store.value(for: Setting.dismissedAnnouncementIDs)
+        AppDefaults.store.set(
+            AnnouncementPolicy.dismissing(announcement.id, in: current),
+            for: Setting.dismissedAnnouncementIDs
+        )
+    }
+
+    func openAnnouncement(_ announcement: AppAnnouncement) {
+        if let url = AnnouncementPolicy.safeActionURL(for: announcement) {
+            openExternally(url)
+        }
+        dismissAnnouncement(announcement)
+    }
 }

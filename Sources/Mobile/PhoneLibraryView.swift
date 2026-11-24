@@ -33,6 +33,16 @@ struct PhoneLibraryView: View {
                     )
                 }
             }
+            .onKeyPress(.return, phases: .down) { press in
+                guard press.modifiers.contains(.command),
+                      library.isSearching,
+                      !library.query.trimmingCharacters(in: .whitespaces).isEmpty else { return .ignored }
+                library.startAsk(
+                    using: { await appState.askPesto($0) },
+                    isLocked: { appState.isHistoryLockedNow() }
+                )
+                return .handled
+            }
             .onChange(of: library.query) { _, newValue in
                 if library.isAsking, newValue != library.activeAskSentence { library.cancelAsk() }
             }

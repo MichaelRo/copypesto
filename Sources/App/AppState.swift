@@ -256,6 +256,35 @@ final class AppState {
         lastUserError = nil
     }
 
+    func activeAnnouncement(dismissedRaw: String) -> AppAnnouncement? {
+        let armed = AppDefaults.store.value(for: Setting.shelfSuggestionsArmedAt)
+        let installDate = armed > 0 ? Date(timeIntervalSince1970: Double(armed)) : nil
+        return AnnouncementPolicy.activeAnnouncement(
+            dismissedRaw: dismissedRaw,
+            installDate: installDate,
+            clipCount: historyStore?.items.count ?? 0,
+            platform: .macOS,
+            isLocked: isHistoryLocked,
+            hasOnboarded: AppDefaults.store.value(for: Setting.hasOnboarded),
+            isUITest: LaunchMode.current == .uiTest
+        )
+    }
+
+    func dismissAnnouncement(_ announcement: AppAnnouncement) {
+        let current = AppDefaults.store.value(for: Setting.dismissedAnnouncementIDs)
+        AppDefaults.store.set(
+            AnnouncementPolicy.dismissing(announcement.id, in: current),
+            for: Setting.dismissedAnnouncementIDs
+        )
+    }
+
+    func openAnnouncement(_ announcement: AppAnnouncement) {
+        if let url = AnnouncementPolicy.safeActionURL(for: announcement) {
+            NSWorkspace.shared.open(url)
+        }
+        dismissAnnouncement(announcement)
+    }
+
     private func report(_ message: String, error: any Error) {
         Logger(subsystem: AppIdentity.logSubsystem, category: "UserError")
             .error("\(message, privacy: .public): \(error.localizedDescription, privacy: .public)")

@@ -145,6 +145,23 @@ final class LibraryModel {
     ) {
         guard let start = visibleIDs.firstIndex(of: anchorID),
               let end = visibleIDs.firstIndex(of: currentID) else { return }
+        applyDragSelection(
+            fromIndex: start,
+            toIndex: end,
+            in: visibleIDs,
+            baseSelection: baseSelection,
+            selecting: selecting
+        )
+    }
+
+    func applyDragSelection(
+        fromIndex start: Int,
+        toIndex end: Int,
+        in visibleIDs: [UUID],
+        baseSelection: Set<UUID>,
+        selecting: Bool
+    ) {
+        guard visibleIDs.indices.contains(start), visibleIDs.indices.contains(end) else { return }
         let range = min(start, end)...max(start, end)
         var updated = baseSelection
         for index in range {

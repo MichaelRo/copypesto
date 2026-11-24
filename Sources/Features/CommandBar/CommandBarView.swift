@@ -52,30 +52,24 @@ struct CommandBarView: View {
     }
 
     var body: some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 0) {
-                if appState.isSearchActive {
-                    // Opens from the search button's end of the bar. Focus is set the moment search starts, before this
-                    // motion, so a key typed straight away goes into the field.
-                    searchField
-                        .transition(.scale(scale: 0.6, anchor: .trailing).combined(with: .opacity))
-                } else {
-                    chipsRow
-                        .transition(.opacity)
-                }
-            }
-            .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
-
+        HStack(spacing: 8) {
             if appState.isSearchActive {
-                filterBar
-                    .transition(.opacity.animation(Motion.animation(.pestoQuick.delay(0.06))))
-                if appState.showsCustomDateRange {
-                    customDateRangeRow
-                        .transition(.opacity.animation(Motion.animation(.pestoQuick)))
+                // Opens in place of the chip strip inside the exact 46 pt command block so cards never shift.
+                HStack(spacing: 8) {
+                    searchInput
+                        .frame(minWidth: 190, idealWidth: 230, maxWidth: 260)
+                    searchTrailingButtons
+                    filterGroupDivider
+                    filterBar
                 }
+                .frame(minHeight: 26)
+                .transition(.opacity)
+            } else {
+                chipsRow
+                    .transition(.opacity)
             }
         }
-        .animation(Motion.animation(.pestoQuick), value: appState.showsCustomDateRange)
+        .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
         .onChange(of: appState.showsCustomDateRange) { _, shown in
             if !shown, appState.isSearchActive {
                 searchFocused = true
@@ -408,13 +402,23 @@ struct CommandBarView: View {
     }
 
     private func filterChip(_ entry: FilterEntry, hasCursor: Bool) -> some View {
-        PestoChip(
+        let isWhenMore = entry.id == Self.whenMoreID
+        return PestoChip(
             label: entry.label, icon: entry.icon, iconImage: entry.iconImage, isActive: entry.isActive,
             hasKeyboardCursor: hasCursor, helpText: entry.help ?? "",
             menuItems: entry.menu, openRequest: openRequests[entry.id] ?? 0, action: entry.toggle
         )
         .accessibilityLabel(entry.spoken ?? entry.label)
         .accessibilityIdentifier(AccessibilityID.filterChip(entry.identifier ?? entry.label))
+        .popover(
+            isPresented: Binding(
+                get: { isWhenMore && appState.showsCustomDateRange },
+                set: { shown in if !shown { appState.showsCustomDateRange = false } }
+            ),
+            arrowEdge: popoverArrowEdge
+        ) {
+            customDateRangePopover
+        }
     }
 
     private var searchField: some View {
@@ -486,11 +490,10 @@ struct CommandBarView: View {
                 .accessibilityIdentifier(AccessibilityID.searchClearButton)
             }
         }
-        // Keeps empty and non-empty heights identical (24 + 4 = 28 pt -> 64 pt total) so the shelf never jumps on
-        // keystroke 1.
-        .frame(minHeight: 24)
+        // Matches the 26 pt chip strip height (24 + 2 = 26 pt -> 46 pt total command block) so Find causes 0 pt shift.
+        .frame(height: 24)
         .padding(.horizontal, 8)
-        .padding(.vertical, 2)
+        .padding(.vertical, 1)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.searchFieldFrame)

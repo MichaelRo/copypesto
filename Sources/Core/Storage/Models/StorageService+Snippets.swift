@@ -200,9 +200,7 @@ public extension StorageService {
     }
 
     static func isSnippetsSmartCollection(_ board: Pinboard) -> Bool {
-        guard board.isSmart, let data = board.smartPredicateData,
-              let ruleSet = try? SmartCollectionPredicate.decodeRuleSet(data) else { return false }
-        return ruleSet == PredicateRuleSet.snippets
+        board.isSnippetsSmartCollection
     }
 
     /// Gives the clip the shortcut ⌃`slot` (1 to 9), or takes its shortcut away with nil. The shortcut belongs to one

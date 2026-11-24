@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import SwiftData
 import Testing
 import UIKit
 @testable import PestoCore
@@ -61,6 +62,42 @@ extension MobilePasteboardGlobals {
             #expect(library.store.items.contains {
                 $0.displayPreviewText == "via shortcut protocol" && $0.captureMethod == .shortcut
             })
+        }
+
+        @Test(
+            "a configured default paste collection receives shortcut pastes, and deleted or smart ones fall back to nil"
+        )
+        func whenDefaultPasteCollectionSet_thenShortcutUsesItWithSafeFallback() async throws {
+            let library = try await MobileTestLibrary()
+            let manual = try #require(library.state.addCollection(named: "Inbox", existing: []))
+            let context = try #require(library.state.historyContainer?.mainContext)
+            let smartData = try SmartCollectionPredicate.encodeRuleSet(PredicateRuleSet.snippets)
+            let smart = Pinboard(
+                name: "Smart", symbolName: "sparkles", colorHex: "#2F8B4C", sortOrder: 1,
+                isSmart: true, smartPredicateData: smartData
+            )
+            context.insert(smart)
+            try context.save()
+
+            let defaults = ThrowawayDefaults.make()
+            defaults.set(manual.id.uuidString, for: Setting.defaultPasteCollectionID)
+            let board = AppPasteboard.general
+            board.string = "into default collection"
+
+            try await library.state.addClipboardFromShortcut(pasteboard: board, defaults: defaults)
+            try await library.refreshed()
+            let pasted = try #require(library.store.items.first { $0.displayPreviewText == "into default collection" })
+            #expect(pasted.collectionID == manual.id)
+
+            defaults.set(smart.id.uuidString, for: Setting.defaultPasteCollectionID)
+            #expect(library.state.resolvedDefaultPasteCollectionID(defaults: defaults) == nil)
+
+            defaults.set(UUID().uuidString, for: Setting.defaultPasteCollectionID)
+            #expect(library.state.resolvedDefaultPasteCollectionID(defaults: defaults) == nil)
+
+            defaults.set(manual.id.uuidString, for: Setting.defaultPasteCollectionID)
+            await library.state.deleteCollection(manual.id)
+            #expect(library.state.resolvedDefaultPasteCollectionID(defaults: defaults) == nil)
         }
     }
 }

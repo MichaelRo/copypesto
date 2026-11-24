@@ -21,6 +21,7 @@ struct SettingsView: View {
     @AppStorage(Setting.appearanceMode) private var appearance: String
     @AppStorage(Setting.authenticationGraceMinutes) private var graceMinutes: Int
     @AppStorage(Setting.addsCopiesOnOpen) private var addsCopiesOnOpen: Bool
+    @AppStorage(Setting.defaultPasteCollectionID) private var defaultPasteCollectionID: String
     @AppStorage(Setting.showsClipsOutsideWhileLocked) private var showsClipsOutsideWhileLocked: Bool
     @AppStorage(Setting.syncEnabled) private var syncEnabled: Bool
     @AppStorage(Setting.widgetsEnabled) private var widgetsEnabled: Bool
@@ -99,6 +100,16 @@ struct SettingsView: View {
                         }
                     }
                 }
+                if !manualCollections.isEmpty {
+                    Picker("Save pasted clips to", selection: defaultPasteBinding) {
+                        Text("All Clips").tag("")
+                        ForEach(manualCollections) { board in
+                            Text(board.name).tag(board.id.uuidString)
+                        }
+                    }
+                    .tint(accent)
+                    .id(resolvedAccentHex)
+                }
                 Picker("Keep clips for", selection: retentionDaysChoice) {
                     ForEach(RetentionChoices.ageDays, id: \.self) { Text(RetentionChoices.ageLabel($0)).tag($0) }
                     if !RetentionChoices.isPresetAge(retentionDays) {
@@ -119,10 +130,18 @@ struct SettingsView: View {
             } header: {
                 Text("History & Capture")
             } footer: {
-                Text(
-                    "Pinned clips are always kept. To skip the iOS paste prompt when Pesto opens, set Paste from " +
-                        "Other Apps to Allow in iOS Settings."
-                )
+                if manualCollections.isEmpty {
+                    Text(
+                        "Pinned clips are always kept. To skip the iOS paste prompt when Pesto opens, set Paste from " +
+                            "Other Apps to Allow in iOS Settings."
+                    )
+                } else {
+                    Text(
+                        "Pinned clips and clips in a collection are never removed by retention or Clear History. " +
+                            "To skip the iOS paste prompt when Pesto opens, set Paste from Other Apps to Allow in " +
+                            "iOS Settings."
+                    )
+                }
             }
             Section {
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
@@ -203,52 +222,16 @@ struct SettingsView: View {
                     )
                 }
             }
-            let hiddenIDs = HiddenCollections.ids(from: hiddenCollectionsStored)
-            let hiddenBoards = collections.filter { hiddenIDs.contains($0.id) }
-            if !hiddenBoards.isEmpty {
-                Section("Hidden Collections") {
-                    ForEach(hiddenBoards) { board in
-                        Button {
-                            hiddenCollectionsStored = HiddenCollections.toggle(board.id, in: hiddenCollectionsStored)
-                        } label: {
-                            LabeledContent(board.name, value: String(localized: "Show"))
-                        }
-                    }
-                    Button("Show All Collections") {
-                        hiddenCollectionsStored = ""
-                    }
-                }
-            }
-            Section {
-                Button("Import Collection (.pesto)\u{2026}") {
-                    activeImport = .collection
-                }
-                .accessibilityIdentifier(MobileAccessibilityID.importCollectionButton)
-                Button("Export History (JSON)\u{2026}") {
-                    guard !isExportingHistory else { return }
-                    isExportingHistory = true
-                    Task {
-                        defer { isExportingHistory = false }
-                        if let url = await appState.exportHistoryJSON() {
-                            exportedShare = ClipShare(file: url)
-                        }
-                    }
-                }
-                .disabled(isExportingHistory)
-                .accessibilityIdentifier(MobileAccessibilityID.exportHistoryButton)
-                Button("Import History (JSON)\u{2026}") {
-                    activeImport = .history
-                }
-                .accessibilityIdentifier(MobileAccessibilityID.importHistoryButton)
-            } header: {
-                Text("Data")
-            } footer: {
-                Text("Collections share as .pesto files with their clips. History exports save text clips as JSON.")
-            }
+            hiddenCollectionsSection
+            dataSection
             Section {
                 Button("Clear History", role: .destructive) { Task { await askToClear() } }
             } footer: {
-                Text("Pinned clips are kept.")
+                Text(
+                    manualCollections.isEmpty
+                        ? "Pinned clips are kept."
+                        : "Pinned clips and clips in collections are kept."
+                )
             }
             Section {
                 Button("Show Welcome Again") {
@@ -268,6 +251,7 @@ struct SettingsView: View {
         .navigationTitle("Settings")
         .onAppear {
             MobileAppState.migrateQuickInsertSettingsIfNeeded()
+            Task { await refreshQuickInsertStatus() }
         }
         .task { await refreshQuickInsertStatus() }
         .onChange(of: scenePhase) { _, phase in
@@ -280,7 +264,11 @@ struct SettingsView: View {
         ) {
             Button("Clear", role: .destructive) { Task { await appState.clearHistory() } }
         } message: {
-            Text("This deletes every clip that is not pinned. It can\u{2019}t be undone.")
+            Text(
+                manualCollections.isEmpty
+                    ? "This deletes every clip that is not pinned. It can\u{2019}t be undone."
+                    : "This deletes every clip that is not pinned or in a collection. It can\u{2019}t be undone."
+            )
         }
         .confirmationDialog(
             String(localized: "Delete \(pendingRetention?.count ?? 0) clips?"), isPresented: isConfirmingRetention,
@@ -288,7 +276,12 @@ struct SettingsView: View {
         ) { change in
             Button("Delete", role: .destructive) { apply(change) }
         } message: { _ in
-            Text("Clips past the new limit are deleted now. Pinned clips stay. It can\u{2019}t be undone.")
+            Text(
+                manualCollections.isEmpty
+                    ? "Clips past the new limit are deleted now. Pinned clips stay. It can\u{2019}t be undone."
+                    : "Clips past the new limit are deleted now. Pinned clips and clips in collections stay. " +
+                    "It can\u{2019}t be undone."
+            )
         }
         .sheet(item: $exportedShare) { share in
             ShareSheet(items: share.items, files: share.files).presentationDetents([.medium, .large])
@@ -322,6 +315,21 @@ struct SettingsView: View {
     private var canConfirmCollectionImport: Bool {
         exportedShare == nil && !isConfirmingClear && pendingRetention == nil && activeImport == nil
             && (appState.sync?.flow ?? .idle) == .idle && appState.sync?.pendingJoin == nil
+    }
+
+    private var manualCollections: [Pinboard] {
+        collections.filter { !$0.isSmart }
+    }
+
+    private var defaultPasteBinding: Binding<String> {
+        Binding(
+            get: {
+                guard let id = UUID(uuidString: defaultPasteCollectionID),
+                      manualCollections.contains(where: { $0.id == id }) else { return "" }
+                return id.uuidString
+            },
+            set: { defaultPasteCollectionID = $0 }
+        )
     }
 
     private var retentionDaysChoice: Binding<Int> {
@@ -411,6 +419,59 @@ struct SettingsView: View {
         isAutoFillEnabled = state.isEnabled
         isKeyboardAdded = UITextInputMode.activeInputModes.contains { mode in
             (mode.value(forKey: "identifier") as? String)?.contains("net.copypesto.pesto") == true
+        }
+    }
+}
+
+private extension SettingsView {
+    @ViewBuilder
+    var hiddenCollectionsSection: some View {
+        let hiddenIDs = HiddenCollections.ids(from: hiddenCollectionsStored)
+        let hiddenBoards = collections.filter { hiddenIDs.contains($0.id) }
+        if !hiddenBoards.isEmpty {
+            Section("Hidden Collections") {
+                ForEach(hiddenBoards) { board in
+                    Button {
+                        hiddenCollectionsStored = HiddenCollections.toggle(board.id, in: hiddenCollectionsStored)
+                        appState.writeQuickInsert()
+                    } label: {
+                        LabeledContent(board.name, value: String(localized: "Show"))
+                    }
+                }
+                Button("Show All Collections") {
+                    hiddenCollectionsStored = ""
+                    appState.writeQuickInsert()
+                }
+            }
+        }
+    }
+
+    var dataSection: some View {
+        Section {
+            Button("Import Collection (.pesto)\u{2026}") {
+                activeImport = .collection
+            }
+            .accessibilityIdentifier(MobileAccessibilityID.importCollectionButton)
+            Button("Export History (JSON)\u{2026}") {
+                guard !isExportingHistory else { return }
+                isExportingHistory = true
+                Task {
+                    defer { isExportingHistory = false }
+                    if let url = await appState.exportHistoryJSON() {
+                        exportedShare = ClipShare(file: url)
+                    }
+                }
+            }
+            .disabled(isExportingHistory)
+            .accessibilityIdentifier(MobileAccessibilityID.exportHistoryButton)
+            Button("Import History (JSON)\u{2026}") {
+                activeImport = .history
+            }
+            .accessibilityIdentifier(MobileAccessibilityID.importHistoryButton)
+        } header: {
+            Text("Data")
+        } footer: {
+            Text("Collections share as .pesto files with their clips. History exports save text clips as JSON.")
         }
     }
 }

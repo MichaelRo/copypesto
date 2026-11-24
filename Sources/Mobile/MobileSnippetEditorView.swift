@@ -14,6 +14,7 @@ struct MobileSnippetEditorView: View {
     @State private var text: String
     @State private var selection: TextSelection?
     @State private var pendingQuestion: QuestionChoice?
+    @State private var showsPlaceholderReference = false
     @State private var isSaving = false
     @State private var isConfirmingDiscard = false
     @FocusState private var focusedField: Field?
@@ -39,9 +40,9 @@ struct MobileSnippetEditorView: View {
     init(target: LibraryModel.SnippetEditorTarget) {
         self.target = target
         switch target {
-        case .new:
+        case let .new(initialText):
             initialTitle = ""
-            initialText = ""
+            self.initialText = initialText
         case let .edit(_, title, text):
             initialTitle = title
             initialText = text
@@ -56,11 +57,18 @@ struct MobileSnippetEditorView: View {
     }
 
     private var hasChanges: Bool {
-        title != initialTitle || text != initialText
+        if isNew {
+            return !title.isEmpty || !text.isEmpty
+        }
+        return title != initialTitle || text != initialText
     }
 
     private var canSave: Bool {
         !isSaving && MobileSnippetPlaceholders.canSave(text: text)
+    }
+
+    private var isEmptyTemplate: Bool {
+        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var needsPlaceholderHint: Bool {
@@ -85,7 +93,12 @@ struct MobileSnippetEditorView: View {
                 } header: {
                     Text("Template")
                 } footer: {
-                    if needsPlaceholderHint {
+                    if isEmptyTemplate {
+                        Text(
+                            "Type {{date}} for an automatic fill or {{name}} for a fill-in question, " +
+                                "or pick from the menus above."
+                        )
+                    } else if needsPlaceholderHint {
                         Text("Add a question or a fill, like {{date}}, so Pesto can fill it in when you copy.")
                     }
                 }
@@ -145,6 +158,12 @@ struct MobileSnippetEditorView: View {
                 }
                 .presentationDetents([.medium])
             }
+            .sheet(isPresented: $showsPlaceholderReference) {
+                PlaceholderReferenceSheet { token in
+                    insert(token)
+                }
+                .presentationDetents([.medium, .large])
+            }
         }
         .accessibilityIdentifier(MobileAccessibilityID.snippetEditor)
         .interactiveDismissDisabled(hasChanges)
@@ -168,8 +187,11 @@ struct MobileSnippetEditorView: View {
 
                 Menu {
                     ForEach(MobileSnippetPlaceholders.automaticFills, id: \.token) { placeholder in
-                        Button("\(placeholder.token)  \(placeholder.meaning)") {
+                        Button {
                             insert(placeholder.token)
+                        } label: {
+                            let meaning = String(localized: String.LocalizationValue(placeholder.meaning))
+                            Text("\(placeholder.token)  \(meaning)")
                         }
                     }
                 } label: {
@@ -190,6 +212,14 @@ struct MobileSnippetEditorView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                 }
+
+                Button {
+                    showsPlaceholderReference = true
+                } label: {
+                    Label("Placeholders", systemImage: "curlybraces")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
             }
             .padding(.vertical, 2)
         }
@@ -313,6 +343,89 @@ struct MobileSnippetEditorView: View {
                 }
                 .onAppear { focusesName = true }
             }
+        }
+    }
+
+    private struct PlaceholderReferenceSheet: View {
+        let onInsert: (String) -> Void
+
+        @Environment(\.dismiss) private var dismiss
+        @Environment(\.dynamicTypeSize) private var typeSize
+
+        private static let questionExamples: [(token: String, meaning: String)] = [
+            ("{{input:Name}}", "Ask for a short value"),
+            ("{{input:Note multiline}}", "Ask for multi-line text"),
+            ("{{choice:Tone options=\"Hi|Hello\"}}", "Pick from a list"),
+            ("{{optional:Note}}\u{2026}{{/optional}}", "Include an optional section")
+        ]
+
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section {
+                        ForEach(MobileSnippetPlaceholders.automaticFills, id: \.token) { placeholder in
+                            row(token: placeholder.token, meaning: placeholder.meaning, stackVertically: false)
+                        }
+                    } header: {
+                        Text("Automatic fills")
+                    } footer: {
+                        Text("Choose any placeholder to insert it at the cursor.")
+                    }
+
+                    Section {
+                        ForEach(Self.questionExamples, id: \.token) { example in
+                            row(token: example.token, meaning: example.meaning, stackVertically: true)
+                        }
+                    } header: {
+                        Text("Fill-in questions")
+                    } footer: {
+                        Text("You can also write {{Name}} and Pesto turns it into a question when you save.")
+                    }
+                }
+                .navigationTitle("Placeholders")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
+                }
+            }
+        }
+
+        private func row(token: String, meaning: String, stackVertically: Bool) -> some View {
+            let localizedMeaning = String(localized: String.LocalizationValue(meaning))
+            return Button {
+                onInsert(token)
+                dismiss()
+            } label: {
+                if stackVertically || typeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(verbatim: token)
+                            .font(.callout.monospaced())
+                            .foregroundStyle(.primary)
+                            .environment(\.layoutDirection, .leftToRight)
+                        Text(localizedMeaning)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack(spacing: 12) {
+                        Text(verbatim: token)
+                            .font(.callout.monospaced())
+                            .foregroundStyle(.primary)
+                            .environment(\.layoutDirection, .leftToRight)
+                        Spacer(minLength: 8)
+                        Text(localizedMeaning)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(localizedMeaning), \(token)")
+            .accessibilityHint(String(localized: "Inserts this placeholder at the cursor"))
         }
     }
 }

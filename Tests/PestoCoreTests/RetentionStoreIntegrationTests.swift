@@ -66,6 +66,22 @@ struct RetentionStoreIntegrationTests {
         #expect(expired == [loose.id])
     }
 
+    @Test("an unpinned item with a TTL expiry inside a collection still expires")
+    func whenCollectionItemPastTTL_thenExpired() async throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let context = ModelContext(container)
+        let board = Pinboard(name: "Work", symbolName: "briefcase", colorHex: "#2F8B4C", sortOrder: 0)
+        let inCollection = makeItem(pinned: false, expiresAt: .now - 60, sequence: 1)
+        inCollection.collectionID = board.id
+        context.insert(board)
+        context.insert(inCollection)
+        try context.save()
+
+        let snapshot = try await StorageService(modelContainer: container).retentionSnapshot(expiringBefore: .now)
+        #expect(snapshot.expired == [inCollection.id])
+        #expect(snapshot.candidates.isEmpty)
+    }
+
     @Test("deleting an item removes its blob row too")
     func whenItemDeleted_thenBlobCascades() async throws {
         let container = try ModelContainerSetup.makeInMemory()

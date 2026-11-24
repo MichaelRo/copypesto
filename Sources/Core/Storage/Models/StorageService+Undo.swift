@@ -161,7 +161,7 @@ extension StorageService {
         return true
     }
 
-    private func pinboard(id: UUID) throws -> Pinboard? {
+    func pinboard(id: UUID) throws -> Pinboard? {
         var descriptor = FetchDescriptor<Pinboard>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
         return try modelContext.fetch(descriptor).first

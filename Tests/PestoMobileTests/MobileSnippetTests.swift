@@ -195,5 +195,41 @@ extension MobilePasteboardGlobals {
             )
             #expect(!updated)
         }
+
+        @Test("snippets smart collection detection matches predicate rule regardless of name or id")
+        func whenCollectionUsesSnippetsRule_thenDetectedByPredicate() throws {
+            let data = try SmartCollectionPredicate.encodeRuleSet(PredicateRuleSet.snippets)
+            let renamed = Pinboard(
+                id: UUID(),
+                name: "Templates",
+                symbolName: "curlybraces",
+                colorHex: "#2F8B4C",
+                sortOrder: 0,
+                isSmart: true,
+                smartPredicateData: data
+            )
+            let manual = Pinboard(name: "Snippets", symbolName: "folder", colorHex: "#2F8B4C", sortOrder: 1)
+
+            #expect(renamed.isSnippetsSmartCollection)
+            #expect(!manual.isSnippetsSmartCollection)
+        }
+
+        @Test("note drafts with placeholders suggest editing as a snippet and hand off draft text")
+        func whenNoteHasPlaceholder_thenSuggestsSnippetHandoff() {
+            #expect(!MobileSnippetPlaceholders.suggestsSnippet(for: "Buy basil and pine nuts"))
+            #expect(MobileSnippetPlaceholders.suggestsSnippet(for: "Today is {{date}}"))
+            #expect(MobileSnippetPlaceholders.suggestsSnippet(for: "Hi {Name}"))
+
+            let model = LibraryModel()
+            model.beginNewSnippet(initialText: "Hi {{date}}")
+            #expect(model.snippetEditor == .new(initialText: "Hi {{date}}"))
+
+            model.switchFromComposeToSnippet(initialText: "Draft {{name}}")
+            #expect(!model.isComposing)
+            #expect(model.pendingSnippetAfterComposing == .new(initialText: "Draft {{name}}"))
+            model.presentPendingSnippetIfNeeded()
+            #expect(model.pendingSnippetAfterComposing == nil)
+            #expect(model.snippetEditor == .new(initialText: "Draft {{name}}"))
+        }
     }
 }

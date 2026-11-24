@@ -22,14 +22,23 @@ struct LibraryEmptyState: View {
                     Text("Paste what you copied to keep it here, or write a new note.")
                 } actions: {
                     PasteButton(supportedContentTypes: ItemProviderCapture.acceptedTypes) { providers in
-                        Task { await appState.add(from: providers, method: .paste) }
+                        let destination = appState.resolvedDefaultPasteCollectionID()
+                        Task {
+                            await appState.add(
+                                from: providers, method: .paste, into: destination,
+                                assignCollectionOnlyIfUnfiled: true
+                            )
+                        }
                     }
                 }
             } else if isSnippetsScope {
                 ContentUnavailableView {
                     Label("No Snippets Yet", systemImage: "curlybraces")
                 } description: {
-                    Text("Create a snippet with fill-ins, or save a clip as a snippet from its menu.")
+                    Text(
+                        "Use placeholders like {{date}} or fill-in questions, or save any clip as a snippet " +
+                            "from its menu."
+                    )
                 } actions: {
                     Button("New Snippet\u{2026}", systemImage: "curlybraces") {
                         library.beginNewSnippet()
@@ -46,10 +55,7 @@ struct LibraryEmptyState: View {
     private var isSnippetsScope: Bool {
         guard case let .collection(id) = library.filter.scope else { return false }
         if id == PredicateRuleSet.snippetsCollectionID { return true }
-        guard let board = collections.first(where: { $0.id == id }), board.isSmart,
-              let data = board.smartPredicateData,
-              let ruleSet = try? SmartCollectionPredicate.decodeRuleSet(data) else { return false }
-        return ruleSet == PredicateRuleSet.snippets
+        return collections.first(where: { $0.id == id })?.isSnippetsSmartCollection == true
     }
 
     private var scopeText: String {

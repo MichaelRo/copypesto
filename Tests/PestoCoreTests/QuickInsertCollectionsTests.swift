@@ -121,6 +121,86 @@ struct QuickInsertCollectionsTests {
         let messy = stored + ",nonsense," + ids[0].uuidString
         #expect(QuickInsertSelection.Options(storedCollections: messy, returnsAfterInsert: false).collectionIDs == ids)
         #expect(QuickInsertSelection.Options(storedCollections: "", returnsAfterInsert: true).collectionIDs.isEmpty)
+        #expect(QuickInsertSelection.Options(storedCollections: "", returnsAfterInsert: true)
+            .collectionMode == .custom([]))
+        #expect(QuickInsertSelection.Options(storedCollections: "*", returnsAfterInsert: true).collectionMode == .all)
+    }
+
+    @Test(
+        "the default all-collections mode carries eligible collections in sort order, skipping Snippets and hidden ones"
+    )
+    func whenAllModeSelected_thenEligibleCollectionsAreCarried() throws {
+        let store = try Store()
+        let work = try store.collection("Work", order: 0)
+        let hidden = try store.collection("Hidden", order: 1)
+        let travel = try store.collection("Travel", order: 2)
+        let snippets = try Pinboard(
+            id: PredicateRuleSet.snippetsCollectionID,
+            name: "Snippets",
+            symbolName: "curlybraces",
+            colorHex: "#2F8B4C",
+            sortOrder: 3,
+            isSmart: true,
+            smartPredicateData: SmartCollectionPredicate.encodeRuleSet(PredicateRuleSet.snippets)
+        )
+        store.context.insert(snippets)
+        store.add("Standup at 10", in: work)
+        store.add("Private note", in: hidden)
+        store.add("Passport 123", in: travel)
+        store.add("Hi {{date}}", pinned: true)
+
+        let options = QuickInsertSelection.Options(
+            storedCollections: Setting.keyboardCollections.defaultValue,
+            hiddenCollectionIDs: [hidden.id],
+            returnsAfterInsert: true
+        )
+        let set = try QuickInsertSelection.set(
+            in: store.context,
+            now: .now,
+            options: options,
+            text: { store.texts[$0.id] }
+        )
+
+        #expect(Setting.keyboardCollections.defaultValue == QuickInsertPolicy.allCollectionsToken)
+        #expect(set.collections.map(\.name) == ["Work", "Travel"])
+        #expect(set.collections.map(\.id) == [work.id, travel.id])
+    }
+
+    @Test("the default all-collections mode bounds carried collections to maxCollections")
+    func whenAllModeExceedsMaxCollections_thenCapped() throws {
+        let store = try Store()
+        let boards = try (0..<(QuickInsertPolicy.maxCollections + 3)).map { try store.collection("C\($0)", order: $0) }
+        store.add("sample", in: boards.first)
+        let options = QuickInsertSelection.Options(
+            storedCollections: QuickInsertPolicy.allCollectionsToken,
+            returnsAfterInsert: true
+        )
+        let set = try QuickInsertSelection.set(
+            in: store.context, now: .now, options: options, text: { store.texts[$0.id] }
+        )
+        #expect(set.collections.count == QuickInsertPolicy.maxCollections)
+        #expect(set.collections.first?.name == "C0")
+    }
+
+    @Test("custom collection choices exclude hidden collections and reuse shared resolvedCollections")
+    func whenCustomIncludesHidden_thenHiddenExcluded() throws {
+        let store = try Store()
+        let work = try store.collection("Work", order: 0)
+        let hidden = try store.collection("Hidden", order: 1)
+        store.add("Standup at 10", in: work)
+        store.add("Secret note", in: hidden)
+
+        let options = QuickInsertSelection.Options(
+            collectionIDs: [work.id, hidden.id],
+            hiddenCollectionIDs: [hidden.id],
+            returnsAfterInsert: true
+        )
+        #expect(options.resolvedCollections(from: [work, hidden]).map(\.id) == [work.id])
+        let set = try QuickInsertSelection.set(
+            in: store.context, now: .now, options: options, text: { store.texts[$0.id] }
+        )
+        #expect(set.collections.map(\.id) == [work.id])
+        #expect(!set.entries.contains { $0.text == "Secret note" && $0.section == .collection })
     }
 
     @Test("at most fifty pinned clips, however many are pinned")

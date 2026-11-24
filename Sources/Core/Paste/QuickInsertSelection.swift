@@ -35,21 +35,39 @@ public enum QuickInsertSelection {
         }
     }
 
+    /// Which collections the quick-insert set carries (ADR 0062).
+    public enum CollectionMode: Equatable, Sendable {
+        case all
+        case custom([UUID])
+    }
+
     /// What the person chose in iOS Settings for the keyboard and AutoFill (ADR 0062).
     public struct Options: Equatable, Sendable {
-        public var collectionIDs: [UUID]
+        public var collectionMode: CollectionMode
+        public var hiddenCollectionIDs: Set<UUID>
         public var returnsAfterInsert: Bool
         public var keyboardSize: KeyboardSize
         public var accent: WidgetSnapshot.Theme
         public var keyboardEnabled: Bool
         public var autoFillEnabled: Bool
 
+        public var collectionIDs: [UUID] {
+            if case let .custom(ids) = collectionMode { return ids }
+            return []
+        }
+
         public init(
-            collectionIDs: [UUID] = [], returnsAfterInsert: Bool = true,
-            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand,
-            keyboardEnabled: Bool = true, autoFillEnabled: Bool = true
+            collectionIDs: [UUID] = [],
+            collectionMode: CollectionMode? = nil,
+            hiddenCollectionIDs: Set<UUID> = [],
+            returnsAfterInsert: Bool = true,
+            keyboardSize: KeyboardSize = .medium,
+            accent: WidgetSnapshot.Theme = .brand,
+            keyboardEnabled: Bool = true,
+            autoFillEnabled: Bool = true
         ) {
-            self.collectionIDs = collectionIDs
+            self.collectionMode = collectionMode ?? .custom(collectionIDs)
+            self.hiddenCollectionIDs = hiddenCollectionIDs
             self.returnsAfterInsert = returnsAfterInsert
             self.keyboardSize = keyboardSize
             self.accent = accent
@@ -57,16 +75,28 @@ public enum QuickInsertSelection {
             self.autoFillEnabled = autoFillEnabled
         }
 
-        /// As the settings hold them: `Setting.keyboardCollections` is ids joined by commas; one that does not read
-        /// as an id, or a repeat, is dropped.
+        /// As the settings hold them: `Setting.keyboardCollections` is `*` for all eligible collections, or ids
+        /// joined by commas; one that does not read as an id, or a repeat, is dropped.
         public init(
-            storedCollections: String, returnsAfterInsert: Bool,
-            keyboardSize: KeyboardSize = .medium, accent: WidgetSnapshot.Theme = .brand,
-            keyboardEnabled: Bool = true, autoFillEnabled: Bool = true
+            storedCollections: String,
+            hiddenCollectionIDs: Set<UUID> = [],
+            returnsAfterInsert: Bool,
+            keyboardSize: KeyboardSize = .medium,
+            accent: WidgetSnapshot.Theme = .brand,
+            keyboardEnabled: Bool = true,
+            autoFillEnabled: Bool = true
         ) {
-            var seen: Set<UUID> = []
-            collectionIDs = storedCollections.split(separator: ",").compactMap { UUID(uuidString: String($0)) }
-                .filter { seen.insert($0).inserted }
+            let trimmed = storedCollections.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed == QuickInsertPolicy.allCollectionsToken {
+                collectionMode = .all
+            } else {
+                var seen: Set<UUID> = []
+                let ids = trimmed.split(separator: ",").compactMap {
+                    UUID(uuidString: String($0).trimmingCharacters(in: .whitespacesAndNewlines))
+                }.filter { seen.insert($0).inserted }
+                collectionMode = .custom(ids)
+            }
+            self.hiddenCollectionIDs = hiddenCollectionIDs
             self.returnsAfterInsert = returnsAfterInsert
             self.keyboardSize = keyboardSize
             self.accent = accent
@@ -76,6 +106,22 @@ public enum QuickInsertSelection {
 
         public static func stored(_ ids: [UUID]) -> String {
             ids.map(\.uuidString).joined(separator: ",")
+        }
+
+        /// Resolves eligible collections in display order, filtering out the auto-created `Snippets` smart collection,
+        /// mobile-hidden collections, and bounding to `QuickInsertPolicy.maxCollections`.
+        public func resolvedCollections(from boards: [Pinboard]) -> [Pinboard] {
+            let eligible: [Pinboard] = switch collectionMode {
+            case .all:
+                boards
+                    .sorted { $0.sortOrder < $1.sortOrder }
+                    .filter { !$0.isSnippetsSmartCollection && !hiddenCollectionIDs.contains($0.id) }
+            case let .custom(ids):
+                ids.compactMap { id in
+                    boards.first { $0.id == id && !hiddenCollectionIDs.contains($0.id) }
+                }
+            }
+            return Array(eligible.prefix(QuickInsertPolicy.maxCollections))
         }
     }
 
@@ -118,7 +164,7 @@ public enum QuickInsertSelection {
             predicate: #Predicate { !$0.isPinned }, sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         recent.fetchLimit = QuickInsertPolicy.scanLimit
-        let chosen = try members(of: options.collectionIDs, in: context)
+        let chosen = try members(of: options, in: context)
         let lists = try lists(
             pinned: context.fetch(pinned), recent: context.fetch(recent), collections: chosen, reader: reader
         )
@@ -130,15 +176,22 @@ public enum QuickInsertSelection {
         )
     }
 
+    public static func members(of options: Options, in context: ModelContext) throws -> [Members] {
+        let boards = try context.fetch(FetchDescriptor<Pinboard>(sortBy: [SortDescriptor(\.sortOrder)]))
+        return try members(ofBoards: options.resolvedCollections(from: boards), in: context)
+    }
+
     /// The chosen collections that still exist, in the person's order, at most `maxCollections`: a plain one's newest
     /// members as `CollectionOrder` lists them, a smart one's matches among the newest clips.
     public static func members(of ids: [UUID], in context: ModelContext) throws -> [Members] {
+        let boards = try context.fetch(FetchDescriptor<Pinboard>())
+        return try members(ofBoards: Options(collectionIDs: ids).resolvedCollections(from: boards), in: context)
+    }
+
+    private static func members(ofBoards boards: [Pinboard], in context: ModelContext) throws -> [Members] {
         var window: [ClipboardItem]?
         var found: [Members] = []
-        for id in ids where found.count < QuickInsertPolicy.maxCollections {
-            var board = FetchDescriptor<Pinboard>(predicate: #Predicate { $0.id == id })
-            board.fetchLimit = 1
-            guard let collection = try context.fetch(board).first else { continue }
+        for collection in boards.prefix(QuickInsertPolicy.maxCollections) {
             let items: [ClipboardItem]
             if collection.isSmart {
                 if window == nil {
@@ -152,6 +205,7 @@ public enum QuickInsertSelection {
                     of: collection, in: window ?? [], limit: QuickInsertPolicy.maxCollectionClips
                 )
             } else {
+                let id = collection.id
                 var newest = FetchDescriptor<ClipboardItem>(
                     predicate: #Predicate { $0.collectionID == id },
                     sortBy: [SortDescriptor(\.timestamp, order: .reverse)]

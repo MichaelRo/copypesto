@@ -121,7 +121,8 @@ public actor StorageService: ModelActor {
         popsLookalikePicture: Bool = true,
         bumpsExistingDuplicate: Bool = true,
         keepsSameText: Bool = false,
-        collectionID: UUID? = nil
+        collectionID: UUID? = nil,
+        assignCollectionOnlyIfUnfiled: Bool = false
     ) async throws {
         if ClipSizePolicy.isTooLarge(byteCount: capture.payload.count, typeIdentifier: capture.typeIdentifier) {
             throw ClipSizePolicy.TooLarge(message: ClipSizePolicy.message(
@@ -140,6 +141,7 @@ public actor StorageService: ModelActor {
         //    or repeated trigger within 2s). A re-copy of any OTHER item must fall through to
         //    the contentHash branch so its timestamp pops.
         // The watcher hands over a plain SHA-256; only a keyed form is ever stored (see `ContentHash`).
+        let validCollectionID = try validatedManualCollectionID(collectionID)
         let contentKey = try? encryption.loadOrCreateKey()
         let hash = ContentHash.stored(capture.contentHash, key: contentKey)
         let knownForms = ContentHash.candidates(for: capture.contentHash, key: contentKey)
@@ -147,6 +149,12 @@ public actor StorageService: ModelActor {
            last.hash == hash,
            now.timeIntervalSince(last.seenAt) < 2
         {
+            if let validCollectionID, let existing = try modelContext.fetch(Self.holding(knownForms)).first,
+               try !assignCollectionOnlyIfUnfiled || isUnfiled(existing.collectionID)
+            {
+                existing.collectionID = validCollectionID
+                try saveOrRollback()
+            }
             return
         }
 
@@ -161,7 +169,8 @@ public actor StorageService: ModelActor {
             bundleID: capture.sourceBundleID,
             isRemote: capture.isRemote,
             onlyAdvanceTimestamp: !bumpsExistingDuplicate,
-            collectionID: collectionID
+            collectionID: validCollectionID,
+            assignCollectionOnlyIfUnfiled: assignCollectionOnlyIfUnfiled
         ) {
             return
         }
@@ -201,6 +210,11 @@ public actor StorageService: ModelActor {
         {
             if popsLookalikePicture {
                 similar.bringToFront(at: now)
+                if let resolved = try validatedManualCollectionID(collectionID),
+                   try !assignCollectionOnlyIfUnfiled || isUnfiled(similar.collectionID)
+                {
+                    similar.collectionID = resolved
+                }
                 try saveOrRollback()
             }
             return
@@ -258,8 +272,10 @@ public actor StorageService: ModelActor {
 
         // The awaits above (reading the picture, resolving the app) let another ingest of the same copy run to the
         // end, so the duplicate check is made again now that nothing suspends before the insert.
+        let resolvedCollectionID = try validatedManualCollectionID(collectionID)
         if !keepsSameText, try await popExistingDuplicate(
-            matching: descriptor, hash: hash, now: now, bundleID: nil, collectionID: collectionID
+            matching: descriptor, hash: hash, now: now, bundleID: nil, collectionID: resolvedCollectionID,
+            assignCollectionOnlyIfUnfiled: assignCollectionOnlyIfUnfiled
         ) {
             return
         }
@@ -326,7 +342,7 @@ public actor StorageService: ModelActor {
         item.textLength = clipType == .text || clipType == .code ? payloadString.count : 0
         item.isNSFW = detectedNSFW
         item.analysisPending = judgedLater
-        item.collectionID = collectionID
+        item.collectionID = resolvedCollectionID
         item.takeOrigin(of: capture)
         if capture.isConcealed {
             item.expiresAt = Self.concealedExpiry(timestamp: capture.timestamp, allowanceEnd: capture.concealedUntil)
@@ -464,39 +480,6 @@ public actor StorageService: ModelActor {
             predicate: #Predicate { $0.deletedAt < cutoff }
         ))
         expired.forEach { modelContext.delete($0) }
-    }
-
-    /// Non-pinned items the range covers: everything from its start until now (all of it for `.all`).
-    private func nonPinnedItems(in range: ClearRange, now: Date) throws -> [ClipboardItem] {
-        let descriptor: FetchDescriptor<ClipboardItem> = if let start = range.start(now: now) {
-            FetchDescriptor(predicate: #Predicate { !$0.isPinned && $0.collectionID == nil && $0.timestamp >= start })
-        } else {
-            FetchDescriptor(predicate: #Predicate { !$0.isPinned && $0.collectionID == nil })
-        }
-        return try modelContext.fetch(descriptor)
-    }
-
-    public func nonPinnedCount(in range: ClearRange, now: Date = .now) throws -> Int {
-        try nonPinnedItems(in: range, now: now).count
-    }
-
-    @discardableResult
-    public func clearNonPinned(in range: ClearRange, now: Date = .now) throws -> [UUID] {
-        let items = try nonPinnedItems(in: range, now: now)
-        let ids = items.map(\.id)
-        undoHistory.clear()
-        items.forEach { modelContext.delete($0) }
-        try saveOrRollback()
-        ids.forEach { similarity.remove($0) }
-        PreviewTextCache.shared.clear()
-        linkPreviews.delete(ids: ids)
-        recognizedTexts.delete(ids: ids)
-        linkPreviewCache.clear()
-        lastItemStore.clear()
-        if range == .all {
-            wipeSuggestionLedger?()
-        }
-        return ids
     }
 
     /// Deletes a single item by ID. Used for "burn after paste" items whose TTL has elapsed.

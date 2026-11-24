@@ -9,6 +9,8 @@ public enum QuickInsertPolicy {
     public static let maxRecent = 60
     /// The collections the person may choose for the keyboard and AutoFill, and the clips each carries (ADR 0062).
     public static let maxCollections = 12
+    /// Stored in `Setting.keyboardCollections` when all eligible collections should appear until customized.
+    public static let allCollectionsToken = "*"
     public static let maxCollectionClips = 30
     public static let maxCollectionNameCharacters = 40
     /// A longer clip is not offered: inserting a whole document into a text field is not what this is for.

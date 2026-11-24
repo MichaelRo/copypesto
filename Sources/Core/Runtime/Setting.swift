@@ -59,8 +59,14 @@ public enum Setting {
     public static let autoFillEnabled = SettingKey("autoFillEnabled", default: true)
     public static let widgetsEnabled = SettingKey("widgetsEnabled", default: true)
     public static let showsClipsOutsideWhileLocked = SettingKey("showsClipsOutsideWhileLocked", default: true)
-    /// iOS: the collections the keyboard and AutoFill carry, in the person's order, as comma-separated ids (ADR 0062).
-    public static let keyboardCollections = SettingKey("keyboardCollections", default: "")
+    /// iOS: the collections the keyboard and AutoFill carry, in the person's order, as comma-separated ids or `*` for
+    /// all eligible collections (ADR 0062).
+    public static let keyboardCollections = SettingKey(
+        "keyboardCollections",
+        default: QuickInsertPolicy.allCollectionsToken
+    )
+    /// iOS: optional manual collection UUID where clipboard pastes land by default; empty means All Clips.
+    public static let defaultPasteCollectionID = SettingKey("defaultPasteCollectionID", default: "")
     /// iOS: collections hidden from the iPhone chip bar on this device only, as comma-separated UUID strings.
     public static let hiddenMobileCollections = SettingKey("hiddenMobileCollections", default: "")
     /// iOS: after a tap inserts a clip, the keyboard moves to the person's own keyboard (ADR 0062).
@@ -133,6 +139,8 @@ public enum Setting {
     /// Ids of snippet suggestions (a starter's id, or a clip's UUID) the person dismissed, one per line.
     public static let dismissedSnippetSuggestions = SettingKey("dismissedSnippetSuggestions", default: "")
     public static let dismissedCollectionSuggestions = SettingKey("dismissedCollectionSuggestions", default: "")
+    /// iOS: whether the inline placeholder hint above a Snippets smart collection has been dismissed.
+    public static let dismissedSnippetHint = SettingKey("dismissedSnippetHint", default: false)
     public static let installPromptSuppressed = SettingKey("installLocationPromptSuppressed", default: false)
     public static let previewEncryptionVersion = SettingKey("previewEncryptionVersion", default: 0)
     public static let metadataSealingVersion = SettingKey("metadataSealingVersion", default: 0)
@@ -170,7 +178,8 @@ public enum Setting {
         nsfwMode.name, keepsRemoteCopies.name, syncEnabled.name, syncIncludesSecrets.name, syncFolderPath.name,
         syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
         quickInsertEnabled.name, keyboardEnabled.name, autoFillEnabled.name, widgetsEnabled.name,
-        showsClipsOutsideWhileLocked.name, keyboardCollections.name, hiddenMobileCollections.name,
+        showsClipsOutsideWhileLocked.name, keyboardCollections.name, defaultPasteCollectionID.name,
+        hiddenMobileCollections.name,
         keyboardReturnsAfterInsert.name, keyboardSize.name, widgetLastCopy.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
@@ -192,6 +201,7 @@ public enum Setting {
         welcomeShown.name, autoFillTipShown.name,
         dismissedSnippetSuggestions.name,
         dismissedCollectionSuggestions.name,
+        dismissedSnippetHint.name,
         installPromptSuppressed.name,
         previewEncryptionVersion.name, metadataSealingVersion.name, embeddingSealingVersion.name,
         ciphertextBindingVersion.name, classifierVersion.name, clipRepairVersion.name, secretMaskVersion.name,

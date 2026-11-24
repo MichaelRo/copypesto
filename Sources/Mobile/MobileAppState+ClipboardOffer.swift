@@ -27,13 +27,24 @@ extension MobileAppState {
         case .addNow:
             defaults.set(count, for: Setting.lastSeenPasteboardChange)
             clipboardOfferCount = nil
-            await add(from: pasteboard.itemProviders, method: .paste, pasteboardTypes: pasteboard.types)
+            await add(
+                from: pasteboard.itemProviders,
+                method: .paste,
+                pasteboardTypes: pasteboard.types,
+                into: resolvedDefaultPasteCollectionID(defaults: defaults),
+                assignCollectionOnlyIfUnfiled: true
+            )
         }
     }
 
-    func takeClipboardOffer(_ providers: [NSItemProvider]) async {
+    func takeClipboardOffer(_ providers: [NSItemProvider], defaults: UserDefaults = AppDefaults.store) async {
         clipboardOfferCount = nil
-        await add(from: providers, method: .paste)
+        await add(
+            from: providers,
+            method: .paste,
+            into: resolvedDefaultPasteCollectionID(defaults: defaults),
+            assignCollectionOnlyIfUnfiled: true
+        )
     }
 
     func dismissClipboardOffer() {

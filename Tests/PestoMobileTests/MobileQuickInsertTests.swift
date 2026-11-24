@@ -291,4 +291,32 @@ struct MobileQuickInsertTests {
         #expect(cleared.keyboardSize == .large)
         #expect(cleared.accent == theme)
     }
+
+    @Test("default QuickInsert options read all non-hidden collections and skip hidden ones")
+    func whenDefaultAllCollections_thenCarriesNonHiddenInOrder() async throws {
+        let library = try await MobileTestLibrary()
+        let fixture = try fixture(on: true)
+        defer { try? FileManager.default.removeItem(at: fixture.file.root) }
+        let work = try #require(library.state.addCollection(named: "Work", existing: []))
+        let hidden = try #require(library.state.addCollection(named: "Private", existing: [work]))
+        try await library.service.ingest(#require(ClipCapture.text("Standup")), collectionID: work.id)
+        try await library.service.ingest(#require(ClipCapture.text("Hidden clip")), collectionID: hidden.id)
+        try await library.refreshed()
+
+        var target = fixture.target
+        target.options = {
+            QuickInsertSelection.Options(
+                storedCollections: Setting.keyboardCollections.defaultValue,
+                hiddenCollectionIDs: [hidden.id],
+                returnsAfterInsert: true
+            )
+        }
+        library.state.quickInsert = target
+        library.state.writeQuickInsert()
+
+        let set = try fixture.read()
+        #expect(set.collections.map(\.name) == ["Work"])
+        #expect(set.entries.contains { $0.text == "Standup" })
+        #expect(!set.entries.contains { $0.text == "Hidden clip" && $0.section == .collection })
+    }
 }

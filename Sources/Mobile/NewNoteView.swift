@@ -15,39 +15,70 @@ struct NewNoteView: View {
 
     var body: some View {
         NavigationStack {
-            TextEditor(text: $text)
-                .focused($isEditing)
-                .padding(.horizontal, 12)
-                .navigationTitle("New Note")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel", action: cancel)
-                    }
-                    ToolbarItem(placement: .secondaryAction) {
-                        Button("New Snippet\u{2026}", systemImage: "curlybraces") {
-                            dismiss()
-                            library.beginNewSnippet()
+            VStack(spacing: 0) {
+                TextEditor(text: $text)
+                    .focused($isEditing)
+                    .padding(.horizontal, 12)
+                if MobileSnippetPlaceholders.suggestsSnippet(for: text) {
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 12) {
+                            Text("Placeholders like {{date}} only expand in snippets.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            Spacer(minLength: 8)
+                            editAsSnippetButton
                         }
-                        .accessibilityIdentifier(MobileAccessibilityID.newSnippetButton)
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Placeholders like {{date}} only expand in snippets.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            editAsSnippetButton
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") { save() }
-                            .keyboardShortcut("s", modifiers: .command)
-                            .disabled(ClipCapture.text(text) == nil)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(.bar)
+                }
+            }
+            .navigationTitle("New Note")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: cancel)
+                }
+                ToolbarItem(placement: .secondaryAction) {
+                    Button("New Snippet\u{2026}", systemImage: "curlybraces") {
+                        library.switchFromComposeToSnippet()
                     }
+                    .accessibilityIdentifier(MobileAccessibilityID.newSnippetButton)
                 }
-                .onAppear { isEditing = true }
-                .confirmationDialog(
-                    "Discard this note?",
-                    isPresented: $isConfirmingDiscard,
-                    titleVisibility: .visible
-                ) {
-                    Button("Discard", role: .destructive) { dismiss() }
-                    Button("Keep Editing", role: .cancel) {}
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .keyboardShortcut("s", modifiers: .command)
+                        .disabled(ClipCapture.text(text) == nil)
                 }
+            }
+            .onAppear { isEditing = true }
+            .confirmationDialog(
+                "Discard this note?",
+                isPresented: $isConfirmingDiscard,
+                titleVisibility: .visible
+            ) {
+                Button("Discard", role: .destructive) { dismiss() }
+                Button("Keep Editing", role: .cancel) {}
+            }
         }
         .interactiveDismissDisabled(NoteDraft.needsDiscardConfirmation(text))
+    }
+
+    private var editAsSnippetButton: some View {
+        Button("Edit as Snippet\u{2026}") {
+            library.switchFromComposeToSnippet(initialText: text)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.small)
+        .frame(minHeight: TouchTarget.minimum)
     }
 
     private func cancel() {

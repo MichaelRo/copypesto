@@ -14,6 +14,10 @@ struct WidgetTarget {
     let reload: @MainActor () -> Void
     var isEnabled: @MainActor () -> Bool = { AppDefaults.store.value(for: Setting.widgetsEnabled) }
 
+    static func matchesInstalledKind(_ kind: String) -> Bool {
+        AppIdentity.widgetKinds.contains(kind)
+    }
+
     static var current: WidgetTarget? {
         guard LaunchMode.current == .normal, let file = SealedGroupFile.current(.widgetSnapshot) else { return nil }
         let secrets = SharedKeychainSecretStore(accessGroup: AppIdentity.widgetKeychainGroup(in: .main))
@@ -21,9 +25,13 @@ struct WidgetTarget {
             file: file, keys: SharedFileKeyStore(secrets: secrets, account: AppIdentity.widgetKeyAccount),
             isInstalled: {
                 let widgets = try? await WidgetCenter.shared.currentConfigurations()
-                return widgets?.contains { $0.kind == AppIdentity.widgetKind } ?? false
+                return widgets?.contains { matchesInstalledKind($0.kind) } ?? false
             },
-            reload: { WidgetCenter.shared.reloadTimelines(ofKind: AppIdentity.widgetKind) }
+            reload: {
+                for kind in AppIdentity.widgetKinds {
+                    WidgetCenter.shared.reloadTimelines(ofKind: kind)
+                }
+            }
         )
     }
 }

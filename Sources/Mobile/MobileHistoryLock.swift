@@ -11,6 +11,7 @@ import PestoCore
 final class MobileHistoryLock {
     private(set) var isLocked: Bool
     @ObservationIgnored private var leftForegroundAt: Date?
+    @ObservationIgnored private var activeUnlockTask: Task<Bool, Never>?
     @ObservationIgnored let authenticator: any UserAuthenticating
     @ObservationIgnored let grace: AuthenticationGrace
     @ObservationIgnored private let isEnabledNow: @MainActor () -> Bool
@@ -91,9 +92,19 @@ final class MobileHistoryLock {
     @discardableResult
     func unlock() async -> Bool {
         guard isLocked else { return true }
-        guard await HistoryLockPolicy.unlock(using: authenticator, grace: grace) else { return false }
-        isLocked = false
-        return true
+        if let activeUnlockTask {
+            return await activeUnlockTask.value
+        }
+        let task = Task { @MainActor [authenticator, grace] in
+            await HistoryLockPolicy.unlock(using: authenticator, grace: grace)
+        }
+        activeUnlockTask = task
+        let unlocked = await task.value
+        activeUnlockTask = nil
+        if unlocked {
+            isLocked = false
+        }
+        return unlocked
     }
 
     /// The setting was turned off (in Settings, or from the lock screen where nothing can authenticate).

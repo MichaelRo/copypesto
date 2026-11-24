@@ -39,11 +39,16 @@ struct RecentClipsProvider: AppIntentTimelineProvider {
         copied: (id: UUID, date: Date)? = nil
     )
     -> Timeline<RecentClipsEntry> {
-        let shown = Array((snapshot?.clips(from: source) ?? [])
+        let alreadyLocked = snapshot?.isLockedAt(now) ?? false
+        let shown = alreadyLocked ? [] : Array((snapshot?.clips(from: source) ?? [])
             .prefix(WidgetSize.large.clipCount(accessibilityText: false)))
         var moments = WidgetContent.refreshDates(for: shown, after: now)
+        if let expiresAt = snapshot?.expiresAt, expiresAt > now {
+            moments = moments.filter { $0 < expiresAt } + [expiresAt]
+        }
         let copiedUntil = copied.map { $0.date + WidgetSnapshotPolicy.copiedFeedback }
-        if let copiedUntil { moments = Array(Set(moments + [copiedUntil]).sorted()) }
+        if let copiedUntil { moments.append(copiedUntil) }
+        moments = Array(Set(moments).sorted())
         func entry(_ date: Date) -> RecentClipsEntry {
             let showsCopied = copiedUntil.map { date < $0 } ?? false
             return RecentClipsEntry(

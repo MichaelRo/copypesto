@@ -125,6 +125,7 @@ struct CollectionMenu: View {
         if allowsHideOnPhone {
             Button("Hide Collection", systemImage: "eye.slash") {
                 hiddenStored = HiddenCollections.toggle(board.id, in: hiddenStored)
+                appState.writeQuickInsert()
                 if library.filter.scope == .collection(board.id) {
                     library.filter.scope = .all
                 }

@@ -52,16 +52,33 @@ extension MobileAppState {
         }
     }
 
+    func resolvedDefaultPasteCollectionID(defaults: UserDefaults = AppDefaults.store) -> UUID? {
+        let raw = defaults.value(for: Setting.defaultPasteCollectionID)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let id = UUID(uuidString: raw), let context = historyContainer?.mainContext else { return nil }
+        var descriptor = FetchDescriptor<Pinboard>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        guard let board = try? context.fetch(descriptor).first, !board.isSmart else { return nil }
+        return id
+    }
+
     /// Adds what the person handed Pesto. A copy over the size limit is refused by ingest, and the refusal is shown.
     @discardableResult
-    func add(_ capture: PasteboardCapture?, into collectionID: UUID? = nil) async -> Bool {
+    func add(
+        _ capture: PasteboardCapture?,
+        into collectionID: UUID? = nil,
+        assignCollectionOnlyIfUnfiled: Bool = false
+    ) async
+    -> Bool {
         guard let service = storageService else { return false }
         guard let capture else {
             tell(String(localized: "There was nothing Pesto can keep."), isProblem: true)
             return false
         }
         do {
-            try await service.ingest(capture, collectionID: collectionID)
+            try await service.ingest(
+                capture, collectionID: collectionID, assignCollectionOnlyIfUnfiled: assignCollectionOnlyIfUnfiled
+            )
             return true
         } catch let refusal as ClipSizePolicy.TooLarge {
             tell(refusal.message, isProblem: true)
@@ -75,14 +92,16 @@ extension MobileAppState {
     /// What the Paste button or a drop delivered.
     func add(
         from providers: [NSItemProvider], method: CaptureMethod, pasteboardTypes: [String] = [],
-        into collectionID: UUID? = nil
+        into collectionID: UUID? = nil,
+        assignCollectionOnlyIfUnfiled: Bool = false
     ) async {
         guard !ItemProviderCapture.isConcealed(providers, pasteboardTypes: pasteboardTypes) else { return }
         do {
             try await add(
                 ItemProviderCapture.capture(from: providers, pasteboardTypes: pasteboardTypes)?
                     .with(captureMethod: method),
-                into: collectionID
+                into: collectionID,
+                assignCollectionOnlyIfUnfiled: assignCollectionOnlyIfUnfiled
             )
         } catch {
             Self.logger.error("Reading a paste or drop failed: \(error.localizedDescription, privacy: .public)")

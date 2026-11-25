@@ -14,7 +14,10 @@ extension SyncFolderService {
         do {
             let entries = try await storage.syncAppCatalogEntries()
             guard !entries.isEmpty, entries != writtenCatalog || catalogEpoch != found.epoch else {
+                // Nothing to write is an answer for this sequence and epoch too: without the epoch every idle pass
+                // scanned the history again (about 200 ms for 2,000 clips on CI, SyncPerformanceTests).
                 catalogCheckedAt = sequence
+                catalogEpoch = found.epoch
                 return
             }
             let catalog = SyncAppCatalog(

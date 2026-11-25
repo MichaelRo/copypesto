@@ -9,43 +9,13 @@ final class AppIconSettingsTests: PestoUITestCase {
         element(AccessibilityID.settingsSidebar("Appearance")).click()
     }
 
-    func test_appearanceSettings_offerFourAppIcons_withBasilChosen() {
+    /// The icon follows the theme (Match App Icon); there is no second picker of icons.
+    func test_appearanceSettings_offerMatchAppIcon_onByDefault() {
         openAppearance()
-
-        for name in ["basil", "parmesan", "pineNut", "mortar"] {
-            XCTAssertTrue(
-                element(AccessibilityID.settingsChoice("appIcon", name)).waitUntilExists(timeout: 5),
-                "no \(name) icon in Appearance"
-            )
-        }
-        XCTAssertTrue(element(AccessibilityID.settingsChoice("appIcon", "basil")).isSelected)
-    }
-
-    /// Each icon is named after its theme, so the icons run in the order of the themes above them.
-    func test_theIcons_runInTheOrderOfTheThemes() {
-        openAppearance()
-        let themes = ["basil", "parmesan", "pineNut", "mortar"]
-        let icons = themes
-        let themeX = themes.map { element(AccessibilityID.settingsChoice("theme", $0)).frame.minX }
-        let iconX = icons.map { element(AccessibilityID.settingsChoice("appIcon", $0)).frame.minX }
-
-        XCTAssertEqual(themeX, themeX.sorted(), "the themes are not left to right")
-        XCTAssertEqual(iconX, iconX.sorted(), "the icons are not in the order of the themes")
-    }
-
-    func test_choosingAnIcon_selectsIt() {
-        openAppearance()
-        let mortar = element(AccessibilityID.settingsChoice("appIcon", "mortar"))
-        XCTAssertTrue(mortar.waitUntilExists(timeout: 5))
-
-        mortar.click()
-
-        let deadline = Date().addingTimeInterval(5)
-        while !mortar.isSelected, Date() < deadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        XCTAssertTrue(mortar.isSelected)
-        XCTAssertFalse(element(AccessibilityID.settingsChoice("appIcon", "basil")).isSelected)
+        let toggle = element(AccessibilityID.matchAppIconToggle)
+        XCTAssertTrue(toggle.waitUntilExists(timeout: 5))
+        XCTAssertEqual(toggle.value as? Int, 1)
+        XCTAssertFalse(element(AccessibilityID.settingsChoice("appIcon", "basil")).exists)
         capture("settings-app-icon", of: settingsWindow)
     }
 }

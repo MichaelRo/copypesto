@@ -56,36 +56,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Appearance") {
-                Picker("Theme", selection: activeThemeBinding) {
-                    ForEach(AppTheme.allCases, id: \.rawValue) { choice in
-                        Text(choice.displayName).tag(choice.rawValue)
-                    }
-                }
-                .tint(accent)
-                .id(resolvedAccentHex)
-                .onChange(of: theme) {
-                    appState.writeQuickInsert()
-                    Task { await appState.writeWidget() }
-                }
-                .onChange(of: darkTheme) {
-                    appState.writeQuickInsert()
-                    Task { await appState.writeWidget() }
-                }
-                Picker("Appearance", selection: $appearance) {
-                    ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
-                        Text(mode.label).tag(mode.rawValue)
-                    }
-                }
-                .tint(accent)
-                .id(resolvedAccentHex)
-                MobileAccentPicker(selection: $accentColorHex, theme: theme, darkTheme: darkTheme)
-                    .onChange(of: accentColorHex) {
-                        appState.writeQuickInsert()
-                        Task { await appState.writeWidget() }
-                    }
-                MobileAppIconPicker()
-            }
+            appearanceSection
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
                     .accessibilityIdentifier(MobileAccessibilityID.addsCopiesToggle)
@@ -250,6 +221,7 @@ struct SettingsView: View {
         }
         .tint(accent)
         .navigationTitle("Settings")
+        .onDisappear { MobileAppIcon.applyIfMatching() }
         .onAppear {
             MobileAppState.migrateQuickInsertSettingsIfNeeded()
             Task { await refreshQuickInsertStatus() }
@@ -526,6 +498,45 @@ struct SettingsSheet: View {
             } else {
                 path = []
             }
+        }
+    }
+}
+
+extension SettingsView {
+    var appearanceSection: some View {
+        Section {
+            Picker("Theme", selection: activeThemeBinding) {
+                ForEach(AppTheme.allCases, id: \.rawValue) { choice in
+                    Text(choice.displayName).tag(choice.rawValue)
+                }
+            }
+            .tint(accent)
+            .id(resolvedAccentHex)
+            .onChange(of: theme) {
+                appState.writeQuickInsert()
+                Task { await appState.writeWidget() }
+            }
+            .onChange(of: darkTheme) {
+                appState.writeQuickInsert()
+                Task { await appState.writeWidget() }
+            }
+            Picker("Appearance", selection: $appearance) {
+                ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
+                    Text(mode.label).tag(mode.rawValue)
+                }
+            }
+            .tint(accent)
+            .id(resolvedAccentHex)
+            MobileAccentPicker(selection: $accentColorHex, theme: theme, darkTheme: darkTheme)
+                .onChange(of: accentColorHex) {
+                    appState.writeQuickInsert()
+                    Task { await appState.writeWidget() }
+                }
+            MobileAppIconToggle()
+        } header: {
+            Text("Appearance")
+        } footer: {
+            Text("Your Home Screen icon follows the theme when you leave Settings. iOS asks to confirm.")
         }
     }
 }

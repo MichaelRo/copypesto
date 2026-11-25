@@ -16,6 +16,8 @@ public enum Setting {
     /// The theme for dark appearance; empty means the same one as `appTheme`.
     public static let appThemeDark = SettingKey("appThemeDark", default: "")
     public static let appIcon = SettingKey("appIcon", default: AppIconChoice.basil.rawValue)
+    /// The app icon follows the theme (`AppIconMatching`).
+    public static let matchesAppIcon = SettingKey("matchesAppIcon", default: true)
     public static let cardSize = SettingKey("cardSize", default: "large")
     public static let cardWidth = SettingKey("cardWidth", default: 0)
     public static let shelfPosition = SettingKey("shelfPosition", default: ShelfPosition.bottom.rawValue)
@@ -172,7 +174,8 @@ public enum Setting {
 
     /// Every key's name, for the tests that keep the list honest.
     public static let allNames: [String] = [
-        appearanceMode.name, accentColorHex.name, appTheme.name, appThemeDark.name, appIcon.name, cardSize.name,
+        appearanceMode.name, accentColorHex.name, appTheme.name, appThemeDark.name, appIcon.name, matchesAppIcon.name,
+        cardSize.name,
         cardWidth.name, shelfPosition.name, shelfSurface.name,
         retentionDays.name, retentionMaxItems.name, clearOnScreenLock.name, clearOnQuit.name,
         ruleStripTracking.name, ruleTrimWhitespace.name, ruleNormalizeLineEndings.name,

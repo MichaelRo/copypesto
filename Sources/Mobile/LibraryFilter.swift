@@ -36,7 +36,7 @@ enum LibraryChip: Hashable {
             ? [.all, .pinned] + visibleCollections.map(LibraryChip.collection)
             : []
         guard isSearching else { return scopes + [.newCollection] }
-        let asking: [LibraryChip] = hasAsk ? [.asked] : offersAsk ? [.ask] : []
+        let asking: [LibraryChip] = (offersAsk ? [.ask] : []) + (hasAsk ? [.asked] : [])
         var filters: [LibraryChip] = [.when]
         if showsFrom { filters.append(.from) }
         filters.append(contentsOf: [.sensitive, .otherDevices])

@@ -37,7 +37,7 @@ struct LibraryEmptyState: View {
                 }
             } else if !trimmed.isEmpty || (library.isSearching && library.filter.hasAnySearchFilter) {
                 let advice = searchAdvice(query: trimmed)
-                let canAsk = !trimmed.isEmpty && !library.filter.hasAsk
+                let canAsk = library.canOfferAsk
                 let looksLikeQuestion = canAsk && AskHeuristic.looksLikeQuestion(trimmed)
                 ContentUnavailableView {
                     Label("Nothing Matches", systemImage: "magnifyingglass")
@@ -45,7 +45,8 @@ struct LibraryEmptyState: View {
                     Text(
                         looksLikeQuestion
                             ? String(
-                                localized: "Tap Ask Pesto or press Search on the keyboard to turn this into filters."
+                                localized:
+                                "Choose Ask Pesto or press the search key on the keyboard to turn this into filters."
                             )
                             : advice.sentence
                     )

@@ -56,6 +56,7 @@ final class LibraryModel {
     var selectedClipIDs: Set<UUID> = []
     var isAsking = false
     private(set) var activeAskSentence: String?
+    private(set) var lastAppliedAskKeywords: String?
     private(set) var askGeneration = 0
     @ObservationIgnored var visibleResultCount = 0
     @ObservationIgnored private var askTask: Task<Void, Never>?
@@ -278,7 +279,15 @@ final class LibraryModel {
 
     func endSearch() {
         cancelAsk()
+        lastAppliedAskKeywords = nil
         filter.endSearch()
+    }
+
+    var canOfferAsk: Bool {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return false }
+        if !filter.hasAsk { return true }
+        return trimmed != (lastAppliedAskKeywords ?? "")
     }
 
     func startAsk(
@@ -315,6 +324,7 @@ final class LibraryModel {
     /// Ask Pesto's answer: its words go to the search field and its kinds and range to the filter.
     func apply(_ query: AskPestoQuery) {
         self.query = query.keywords
+        lastAppliedAskKeywords = query.keywords.trimmingCharacters(in: .whitespaces)
         isSearching = true
         filter.apply(query)
     }

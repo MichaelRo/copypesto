@@ -67,12 +67,15 @@ extension MobileAppState {
     func add(
         _ capture: PasteboardCapture?,
         into collectionID: UUID? = nil,
-        assignCollectionOnlyIfUnfiled: Bool = false
+        assignCollectionOnlyIfUnfiled: Bool = false,
+        reportEmpty: Bool = true
     ) async
     -> Bool {
         guard let service = storageService else { return false }
         guard let capture else {
-            tell(String(localized: "There was nothing Pesto can keep."), isProblem: true)
+            if reportEmpty {
+                tell(String(localized: "There was nothing Pesto can keep."), isProblem: true)
+            }
             return false
         }
         do {
@@ -93,7 +96,8 @@ extension MobileAppState {
     func add(
         from providers: [NSItemProvider], method: CaptureMethod, pasteboardTypes: [String] = [],
         into collectionID: UUID? = nil,
-        assignCollectionOnlyIfUnfiled: Bool = false
+        assignCollectionOnlyIfUnfiled: Bool = false,
+        reportEmpty: Bool = true
     ) async {
         guard !ItemProviderCapture.isConcealed(providers, pasteboardTypes: pasteboardTypes) else { return }
         do {
@@ -101,11 +105,14 @@ extension MobileAppState {
                 ItemProviderCapture.capture(from: providers, pasteboardTypes: pasteboardTypes)?
                     .with(captureMethod: method),
                 into: collectionID,
-                assignCollectionOnlyIfUnfiled: assignCollectionOnlyIfUnfiled
+                assignCollectionOnlyIfUnfiled: assignCollectionOnlyIfUnfiled,
+                reportEmpty: reportEmpty
             )
         } catch {
             Self.logger.error("Reading a paste or drop failed: \(error.localizedDescription, privacy: .public)")
-            tell(String(localized: "Couldn\u{2019}t read what was pasted."), isProblem: true)
+            if reportEmpty {
+                tell(String(localized: "Couldn\u{2019}t read what was pasted."), isProblem: true)
+            }
         }
     }
 

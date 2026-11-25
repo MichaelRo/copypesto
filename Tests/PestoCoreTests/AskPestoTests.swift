@@ -233,4 +233,13 @@ struct AskPestoTests {
         }
         #expect(range.duration == 23 * 3600)
     }
+
+    @Test("natural capture verbs like took, saved, and grabbed drop out of Ask keywords")
+    func whenNaturalCaptureVerbs_thenFilteredCleanly() {
+        let pictures = rules.interpret("Pictures I took yesterday")
+        #expect(pictures == AskPestoQuery(keywords: "", types: [.image], range: .yesterday))
+
+        let links = rules.interpret("Links I saved today about swift")
+        #expect(links == AskPestoQuery(keywords: "swift", types: [.url], range: .today))
+    }
 }

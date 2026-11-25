@@ -25,6 +25,7 @@ struct PhoneLibraryView: View {
                     .toolbar { LibraryToolbar(showsSettings: true) }
             }
             .searchable(text: $library.query, isPresented: $library.isSearching, prompt: Text("Search or ask"))
+            .autocorrectionDisabled(false)
             .onSubmit(of: .search) {
                 if AskHeuristic.returnAsks(text: library.query, resultCount: library.visibleResultCount) {
                     library.startAsk(

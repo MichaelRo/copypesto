@@ -32,7 +32,8 @@ extension MobileAppState {
                 method: .paste,
                 pasteboardTypes: pasteboard.types,
                 into: resolvedDefaultPasteCollectionID(defaults: defaults),
-                assignCollectionOnlyIfUnfiled: true
+                assignCollectionOnlyIfUnfiled: true,
+                reportEmpty: false
             )
         }
     }

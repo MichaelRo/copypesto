@@ -10,7 +10,10 @@ public struct RuleBasedQueryInterpreter: Sendable {
 
     private static let fillers: Set<String> = [
         "the", "a", "an", "my", "me", "i", "that", "this", "those", "these", "from", "of", "in", "on", "at", "to",
-        "copied", "copy", "find", "show", "get", "search", "for", "about", "with", "and", "or", "was", "were", "had",
+        "copied", "copy", "took", "taken", "take", "saved", "save", "made", "make", "captured", "capture",
+        "snapped", "shot", "grabbed", "pasted", "paste", "clipped", "clip", "sent", "send", "received", "shared",
+        "created", "wrote", "written", "did", "do", "what", "which", "where", "when", "please", "can", "you",
+        "find", "show", "get", "search", "for", "about", "with", "and", "or", "was", "were", "had",
         "have", "just", "some", "any", "all", "recent", "recently", "ago", "last", "past", "earlier"
     ]
 

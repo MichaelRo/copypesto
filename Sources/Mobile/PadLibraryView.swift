@@ -31,6 +31,7 @@ struct PadLibraryView: View {
                     text: $library.query, isPresented: $library.isSearching,
                     placement: .toolbar, prompt: Text("Search or ask")
                 )
+                .autocorrectionDisabled(false)
                 .onSubmit(of: .search) {
                     if AskHeuristic.returnAsks(text: library.query, resultCount: library.visibleResultCount) {
                         library.startAsk(

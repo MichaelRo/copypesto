@@ -15,9 +15,11 @@ struct AskPestoLibraryTests {
         let typed = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true)
         #expect(typed == [.ask, .all, .pinned, .collection(trip), .scopeDivider] + LibraryScope.filteredKinds
             .map(LibraryChip.kind) + [.filterDivider, .when, .sensitive, .otherDevices])
-        let applied = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true, hasAsk: true)
-        #expect(applied.first == .asked)
-        #expect(applied.contains(.asked) && !applied.contains(.ask))
+        let appliedOnly = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: false, hasAsk: true)
+        #expect(appliedOnly.first == .asked)
+        #expect(appliedOnly.contains(.asked) && !appliedOnly.contains(.ask))
+        let refiningAsk = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true, hasAsk: true)
+        #expect(Array(refiningAsk.prefix(2)) == [.ask, .asked])
         #expect(!LibraryChip.row(collectionIDs: [trip], isSearching: false, offersAsk: true).contains(.ask))
     }
 
@@ -156,5 +158,26 @@ struct AskPestoLibraryTests {
         #expect(!model.isAsking)
         try await Task.sleep(for: .milliseconds(80))
         #expect(!model.filter.hasAsk)
+    }
+
+    @MainActor
+    @Test("Ask stays offered while in Ask mode whenever the user types a refined query")
+    func whenAlreadyInAskModeAndTypingNewQuery_thenCanOfferAskIsTrue() {
+        let model = LibraryModel()
+        model.isSearching = true
+        model.query = "Pictures I took yesterday"
+        #expect(model.canOfferAsk)
+
+        model.apply(AskPestoQuery(keywords: "", types: [.image], range: .yesterday))
+        #expect(model.filter.hasAsk)
+        #expect(!model.canOfferAsk)
+
+        model.query = "links from today"
+        #expect(model.canOfferAsk)
+
+        model.apply(AskPestoQuery(keywords: "swift", types: [.url], range: .today))
+        #expect(!model.canOfferAsk)
+        model.query = "swift concurrency"
+        #expect(model.canOfferAsk)
     }
 }

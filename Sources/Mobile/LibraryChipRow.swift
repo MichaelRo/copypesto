@@ -26,7 +26,7 @@ struct LibraryChipRow: View {
         let apps = availableApps
         let chips = LibraryChip.row(
             collectionIDs: collections.map(\.id), isSearching: library.isSearching,
-            offersAsk: !library.query.trimmingCharacters(in: .whitespaces).isEmpty && !library.filter.hasAsk,
+            offersAsk: library.canOfferAsk,
             hasAsk: library.filter.hasAsk,
             hiddenIDs: HiddenCollections.ids(from: hiddenStored),
             showsScopes: showsScopes,

@@ -429,6 +429,14 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
 - **Settings inside the keyboard**: the Pesto chip at the end of the chips opens them; Small, Medium and Large resize
   the keyboard while the cards preview the size; More opens Pesto at Keyboard & AutoFill. The AutoFill picker's gear
   opens the same page (it may do nothing in a credential provider: note what happens).
+
+### Widget pages on a device (ADR 0067)
+- Add a medium and a large Recent Clips widget: medium shows two cards side by side, large two by two, each near the
+  card's shape; on iPad add the extra large one (two by four, no page buttons).
+- Press the chevrons: the page turns within a second, the dots follow, the last page wraps to the first. Press a dozen
+  times in a minute and note whether a press ever stops turning the page (the reload budget).
+- Copy something new on the Mac or in Pesto: the widget goes back to the first page; leave one on page two for ten
+  minutes: it goes back by itself. Tinted and clear Home Screen modes: the controls take the tint and stay legible.
 - **After inserting**: with "Stay in Pesto" chosen, a tap stays and a long press returns; the default is the reverse.
 - **Bottom row**: Space, Return and Delete act in the field, Space and Delete repeat while held, 123 opens the pad and
   its other face brings the clips back. The globe key

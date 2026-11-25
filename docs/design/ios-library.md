@@ -116,8 +116,9 @@ Settings → Appearance has the theme and System, Light or Dark, set on every wi
 Per device: these preferences are not synced. Liquid Glass is only the system's bars, search field, sheets and menus.
 
 ## The Recent Clips widget (ADR 0052)
-Pesto cards at widget scale on the theme's ground carried in the snapshot: one card fills the small widget, three sit
-in a row in the medium one, six in two columns in the large one. A color fills its card, a picture fills it near a
+Pesto cards at widget scale on the theme's ground carried in the snapshot: one card fills the small widget, two sit
+side by side in the medium one, two by two in the large one and two by four in the extra large one on iPad (ADR 0067);
+medium and large page with chevrons and dots, back to the first page after a newer snapshot or ten minutes. A color fills its card, a picture fills it near a
 card's shape, a link leads with its host, short text is large, one foot line gives the source and `CardAge`. The
 widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
 Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent, Pinned or Collection, and then

@@ -257,7 +257,8 @@ extension GridView {
         if route == .copy {
             // Return in the copy-only floating window's search took the shelf's paste route (found mapping every
             // Return, docs/design/search-and-return.md); it copies, as Return on its cards does.
-            appState.writeItem(item)
+            copyToPasteboard(item)
+            flash(item.id)
             return
         }
         isPasting = true

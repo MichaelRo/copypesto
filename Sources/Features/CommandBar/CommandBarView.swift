@@ -493,6 +493,7 @@ struct CommandBarView: View {
                 Button {
                     appState.cancelAsk()
                     appState.searchText = ""
+                    appState.lastAsk = nil
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .pestoQuiet()
@@ -549,7 +550,7 @@ struct CommandBarView: View {
 
     private func deactivateSearch() {
         saveToHistory(appState.searchText)
-        appState.lastAskedKeywords = nil
+        appState.lastAsk = nil
         appState.isSearchActive = false
     }
 

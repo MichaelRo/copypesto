@@ -175,7 +175,7 @@ final class AppState {
     @ObservationIgnored var filterChipActions: [FilterChipAction] = []
     @ObservationIgnored var askTask: Task<Void, Never>?
     var isAsking = false
-    var lastAskedKeywords: String? // Ask is put away while the field still holds it (`AskHeuristic.offersAsk`).
+    var lastAsk: AskPestoQuery? // Ask is put away while what it applied is still in place (`offersAsk`).
     @ObservationIgnored var askGeneration = 0
 
     /// When the shelf last closed; `ShelfContextPolicy` decides from it whether the next open starts from All.

@@ -43,6 +43,22 @@ final class AskApplyTests: XCTestCase {
         XCTAssertEqual(state.searchDateFilter, .all)
     }
 
+    func test_whenAskApplied_thenItIsPutAwayUntilTheTextOrItsFiltersChange() {
+        let state = AppState()
+        state.searchText = "links from slack last week"
+        XCTAssertTrue(state.offersAsk)
+
+        state.apply(AskPestoQuery(keywords: "slack", types: [.url], range: .week))
+        XCTAssertFalse(state.offersAsk, "what Ask applied is still in place")
+
+        state.searchTypeFilter = []
+        XCTAssertTrue(state.offersAsk, "its filters were taken off: Ask again")
+
+        state.apply(AskPestoQuery(keywords: "slack", types: [.url], range: .week))
+        state.searchText = "slack invoices"
+        XCTAssertTrue(state.offersAsk, "new text")
+    }
+
     func test_recentSearches_areOfferedOnAnEmptyFieldButNotOverFilters() {
         let state = AppState()
 

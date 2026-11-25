@@ -137,7 +137,9 @@ extension GridView {
         let hasFilters = !appState.searchTypeFilter.isEmpty || appState.searchDateFilter != .all
             || appState.searchSensitiveOnly || appState.searchRemoteOnly
         // A sentence that finds nothing is a request, not a term: Return asks (⌘Return asks whatever it finds).
-        if AskHeuristic.returnAsks(text: appState.searchText, resultCount: cachedFilteredItems.count) {
+        if appState.offersAsk,
+           AskHeuristic.returnAsks(text: appState.searchText, resultCount: cachedFilteredItems.count)
+        {
             Task { await appState.askPesto() }
             return
         }

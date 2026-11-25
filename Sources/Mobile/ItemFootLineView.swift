@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import CryptoKit
 import PestoCore
 import SwiftUI
 
@@ -37,7 +38,9 @@ extension ItemFootLineView {
     /// An app's icon, decoded once per app and icon.
     @MainActor
     static func icon(_ entry: SyncAppCatalog.Entry) -> UIImage? {
-        let key = "\(entry.bundleID)#\(entry.icon.hashValue)" as NSString
+        // The whole icon's digest: an app's new icon must not hit its old one in the cache.
+        let digest = SHA256.hash(data: entry.icon).prefix(8).map { String(format: "%02x", $0) }.joined()
+        let key = "\(entry.bundleID)#\(digest)" as NSString
         if let cached = icons.object(forKey: key) { return cached }
         guard let image = UIImage(data: entry.icon) else { return nil }
         icons.setObject(image, forKey: key)

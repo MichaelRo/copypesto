@@ -70,7 +70,8 @@ extension MobileAppState {
                 let controller = SyncController(environment)
                 controller.onAppCatalog = { entries in sourceApps.merge(entries) }
                 return controller
-            }
+            },
+            didLeave: { sourceApps.clear() }
         )
     }
 }

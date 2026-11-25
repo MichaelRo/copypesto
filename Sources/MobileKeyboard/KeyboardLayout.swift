@@ -31,10 +31,13 @@ enum KeyboardLayout {
         return CGFloat(count) * card.height + CGFloat(max(count - 1, 0)) * 6
     }
 
-    @MainActor
     static func totalHeight(size: KeyboardSize, isRegular: Bool, isLandscape: Bool, isSearching: Bool) -> CGFloat {
         let chrome: CGFloat = 94
         let base = chrome + shelfHeight(size: size, isRegular: isRegular, isLandscape: isLandscape)
-        return isSearching ? max(284, base + KeyboardModel.searchExtraHeight) : base
+        return isSearching ? KeyboardSearchMetrics.totalHeight(
+            size: size,
+            isRegular: isRegular,
+            isLandscape: isLandscape
+        ) : base
     }
 }

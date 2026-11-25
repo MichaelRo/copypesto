@@ -40,7 +40,10 @@ final class KeyboardViewController: UIInputViewController {
                     Self.logger.error("Saving keyboard size failed: \(error.localizedDescription, privacy: .public)")
                 }
             },
-            openURL: { [weak self] url in self?.openHostURL(url) }
+            openURL: { [weak self] url in
+                guard let self else { return }
+                HostURLOpener.open(url, from: self, context: extensionContext)
+            }
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
         host.view.backgroundColor = .clear
@@ -156,31 +159,5 @@ final class KeyboardViewController: UIInputViewController {
             logger.error("The keyboard's set did not open: \(String(describing: error), privacy: .public)")
             return nil
         }
-    }
-
-    private func openHostURL(_ url: URL) {
-        let selector = NSSelectorFromString("openURL:options:completionHandler:")
-        var responder: UIResponder? = self
-        while let current = responder {
-            if current is UIApplication,
-               current.responds(to: selector),
-               let method = class_getInstanceMethod(type(of: current), selector)
-            {
-                typealias OpenIMP = @convention(c) (
-                    AnyObject, Selector, NSURL, NSDictionary, (@convention(block) (Bool) -> Void)?
-                )
-                    -> Void
-                let imp = unsafeBitCast(method_getImplementation(method), to: OpenIMP.self)
-                imp(current, selector, url as NSURL, [:] as NSDictionary) { [weak self] opened in
-                    guard !opened else { return }
-                    let target = url.absoluteString
-                    Self.logger.warning("UIApplication.open returned false for \(target, privacy: .public)")
-                    self?.extensionContext?.open(url, completionHandler: nil)
-                }
-                return
-            }
-            responder = current.next
-        }
-        extensionContext?.open(url, completionHandler: nil)
     }
 }

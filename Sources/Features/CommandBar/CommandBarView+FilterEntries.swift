@@ -21,7 +21,8 @@ extension CommandBarView {
         let current = appState.searchDateFilter
         let isInMenu = ![SearchDateFilter.all, .today, .yesterday].contains(current)
         return FilterEntry(
-            id: Self.whenMoreID, label: isInMenu ? current.label() : "More", identifier: "More time ranges",
+            id: Self.whenMoreID, label: isInMenu ? current.label() : String(localized: "Date"),
+            identifier: "More time ranges",
             spoken: isInMenu ? "When, \(current.label())" : "More time ranges",
             help: "Last 7 days, the last hours, or a day", isActive: isInMenu, menu: whenMenuItems
         ) {

@@ -367,7 +367,8 @@ struct ClipboardCard: View {
                 isHovered: isPointed,
                 isLifted: isLifted,
                 isSuggested: isSuggested,
-                cornerRadius: Self.cardCornerRadius
+                cornerRadius: Self.cardCornerRadius,
+                glowColorHex: footGlowColorHex, showsGlow: showsFootGlow
             ))
             .overlay(alignment: .topTrailing) {
                 if isSelected {

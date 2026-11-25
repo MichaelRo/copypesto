@@ -245,12 +245,19 @@ extension GridView {
 
     func selectItem(_ item: ClipboardItem) {
         let route = ShelfPaste.route(
-            isLocked: appState.isHistoryLockedNow(), isPasting: isPasting, pinnedWindow: pasteImmediately
+            isLocked: appState.isHistoryLockedNow(), isPasting: isPasting, pinnedWindow: pasteImmediately,
+            copyOnly: copyOnly
         )
         guard route != .ignore else {
             if !appState.isHistoryLockedNow() {
                 Self.pasteLogger.warning("[paste] selectItem blocked — isPasting guard active")
             }
+            return
+        }
+        if route == .copy {
+            // Return in the copy-only floating window's search took the shelf's paste route (found mapping every
+            // Return, docs/design/search-and-return.md); it copies, as Return on its cards does.
+            appState.writeItem(item)
             return
         }
         isPasting = true

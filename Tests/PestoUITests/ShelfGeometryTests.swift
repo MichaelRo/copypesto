@@ -16,6 +16,22 @@ final class ShelfGeometryTests: PestoUITestCase {
         XCTAssertEqual(panel.maxY - card.maxY, 46, accuracy: 1.5, "half the lift room plus the bottom slot")
     }
 
+    /// Find bar 1b: the field opens in the command block's one row, so the panel and every card stay where they were.
+    func test_openingFind_movesNoCard() {
+        launch()
+        showOverlay()
+        let panelBefore = overlay.frame
+        let cardBefore = cards.element(boundBy: 2).frame
+        element(AccessibilityID.searchButton).click()
+        XCTAssertTrue(element(AccessibilityID.searchField).waitUntilExists(timeout: 5))
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        XCTAssertEqual(overlay.frame.height, panelBefore.height, accuracy: 0.5, "the panel grew")
+        XCTAssertEqual(cards.element(boundBy: 2).frame.minY, cardBefore.minY, accuracy: 0.5, "a card moved")
+        let field = element(AccessibilityID.searchFieldFrame).frame
+        XCTAssertGreaterThanOrEqual(field.width, 320, "the Find field is too narrow")
+        XCTAssertEqual(field.midX, panelBefore.midX, accuracy: 120, "the Find field is far from the middle")
+    }
+
     func test_selectionBarRestsInsideTheBandUnderTheCards() {
         launch()
         showOverlay()

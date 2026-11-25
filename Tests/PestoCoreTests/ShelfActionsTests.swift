@@ -113,6 +113,13 @@ struct ShelfActionsTests {
         #expect(ShelfPaste.route(isLocked: false, isPasting: false, pinnedWindow: false) == .closeShelfThenPaste)
     }
 
+    @Test("a floating window set to copy only copies on Return, in search too (docs/design/search-and-return.md)")
+    func whenCopyOnly_thenReturnCopies() {
+        #expect(ShelfPaste.route(isLocked: false, isPasting: false, pinnedWindow: false, copyOnly: true) == .copy)
+        #expect(ShelfPaste.route(isLocked: false, isPasting: false, pinnedWindow: true, copyOnly: true) == .copy)
+        #expect(ShelfPaste.route(isLocked: true, isPasting: false, pinnedWindow: false, copyOnly: true) == .ignore)
+    }
+
     // MARK: Text, Paste All and Paste One by One
 
     @Test("a clip's text is its decrypted blob, or its preview when it has none")

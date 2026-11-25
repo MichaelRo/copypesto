@@ -13,9 +13,7 @@ struct LibraryEmptyState: View {
     var body: some View {
         if isEmpty {
             let trimmed = library.query.trimmingCharacters(in: .whitespaces)
-            if !trimmed.isEmpty {
-                ContentUnavailableView.search(text: trimmed)
-            } else if !hasClips {
+            if !hasClips {
                 ContentUnavailableView {
                     Label("No Clips Yet", systemImage: "doc.on.clipboard")
                 } description: {
@@ -28,6 +26,38 @@ struct LibraryEmptyState: View {
                                 from: providers, method: .paste, into: destination,
                                 assignCollectionOnlyIfUnfiled: true
                             )
+                        }
+                    }
+                }
+            } else if library.isAsking {
+                ContentUnavailableView {
+                    ProgressView()
+                } description: {
+                    Text("Asking Pesto\u{2026}")
+                }
+            } else if !trimmed.isEmpty || (library.isSearching && library.filter.hasAnySearchFilter) {
+                let advice = searchAdvice(query: trimmed)
+                let canAsk = library.canOfferAsk
+                let looksLikeQuestion = canAsk && AskHeuristic.looksLikeQuestion(trimmed)
+                ContentUnavailableView {
+                    Label("Nothing Matches", systemImage: "magnifyingglass")
+                } description: {
+                    Text(
+                        looksLikeQuestion
+                            ? String(
+                                localized:
+                                "Choose Ask Pesto or press the search key on the keyboard to turn this into filters."
+                            )
+                            : advice.sentence
+                    )
+                } actions: {
+                    if looksLikeQuestion {
+                        askEmptyStateButton(prominent: true)
+                        adviceEmptyStateButton(advice, prominent: false)
+                    } else {
+                        adviceEmptyStateButton(advice, prominent: true)
+                        if canAsk {
+                            askEmptyStateButton(prominent: false)
                         }
                     }
                 }
@@ -49,6 +79,63 @@ struct LibraryEmptyState: View {
             } else {
                 ContentUnavailableView("Nothing Here", systemImage: "tray", description: Text(scopeText))
             }
+        }
+    }
+
+    private func searchAdvice(query: String) -> NoResultsAdvice {
+        let appNames: [String] = if let bundleID = library.filter.sourceBundleID,
+                                    let name = library.appName(for: bundleID, in: appState.historyStore)
+        {
+            [name]
+        } else {
+            []
+        }
+        return NoResultsAdvice.make(
+            query: query,
+            kinds: library.filter.kinds,
+            date: library.filter.effectiveDateFilter,
+            appNames: appNames,
+            sensitiveOnly: library.filter.sensitiveOnly,
+            remoteOnly: library.filter.otherDevicesOnly,
+            showsHidden: false
+        )
+    }
+
+    private func apply(_ action: NoResultsAdvice.Action) {
+        switch action {
+        case .clearFilters: library.filter.clearSearchFilters()
+        case .clearSearch: library.query = ""
+        }
+    }
+
+    @ViewBuilder
+    private func askEmptyStateButton(prominent: Bool) -> some View {
+        let button = Button("Ask Pesto", systemImage: "sparkles") {
+            library.startAsk(
+                using: { await appState.askPesto($0) },
+                isLocked: { appState.isHistoryLockedNow() }
+            )
+        }
+        .accessibilityIdentifier(MobileAccessibilityID.emptyStateAskButton)
+        if prominent {
+            button.buttonStyle(.pestoProminent)
+        } else {
+            button.buttonStyle(.bordered)
+        }
+    }
+
+    @ViewBuilder
+    private func adviceEmptyStateButton(_ advice: NoResultsAdvice, prominent: Bool) -> some View {
+        let button = Button(advice.buttonTitle) {
+            withAnimation(Motion.animation(.pestoQuick)) {
+                apply(advice.action)
+            }
+        }
+        .accessibilityIdentifier(MobileAccessibilityID.noResultsAdviceButton)
+        if prominent {
+            button.buttonStyle(.pestoProminent)
+        } else {
+            button.buttonStyle(.bordered)
         }
     }
 

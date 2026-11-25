@@ -388,7 +388,7 @@ extension ClipboardCard {
 
     var detectedColor: Color? {
         guard item.type == .color else { return nil }
-        return ColorStringDetector.detect(in: item.gridPreview)
+        return ColorStringDetector.detectWholeColor(in: item.gridPreview)
     }
 
     func sensitivityBadge(_ category: SensitivityCategory) -> some View {

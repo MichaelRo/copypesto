@@ -28,6 +28,7 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
     public let thumbnail: Data?
     public let recognizedText: String?
     public let isAnimated: Bool
+    public let fieldMemory: [String: String]?
 
     public var hasRecognizedText: Bool {
         recognizedText?.isEmpty == false
@@ -37,7 +38,8 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
         id: UUID, section: Section, kind: ClipboardType, title: String, text: String, expandsOnInsert: Bool,
         fromAnotherDevice: Bool = false, customTitle: String? = nil, ogTitle: String? = nil,
         date: Date = Date(timeIntervalSince1970: 0), source: String? = nil, sourceIsThisDevice: Bool = false,
-        thumbnail: Data? = nil, recognizedText: String? = nil, isAnimated: Bool = false
+        thumbnail: Data? = nil, recognizedText: String? = nil, isAnimated: Bool = false,
+        fieldMemory: [String: String]? = nil
     ) {
         self.id = id
         self.section = section
@@ -54,6 +56,7 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
         self.thumbnail = thumbnail
         self.recognizedText = recognizedText
         self.isAnimated = isAnimated
+        self.fieldMemory = fieldMemory
     }
 
     public init(from decoder: any Decoder) throws {
@@ -73,5 +76,6 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
         thumbnail = try container.decodeIfPresent(Data.self, forKey: .thumbnail)
         recognizedText = try container.decodeIfPresent(String.self, forKey: .recognizedText)
         isAnimated = try container.decodeIfPresent(Bool.self, forKey: .isAnimated) ?? false
+        fieldMemory = try container.decodeIfPresent([String: String].self, forKey: .fieldMemory)
     }
 }

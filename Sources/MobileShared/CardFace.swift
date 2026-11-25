@@ -31,7 +31,7 @@ enum CardFace: Equatable {
     static func decide(_ input: Input) -> CardFace {
         if input.isConcealed { return .covered(isSecret: input.isSecret) }
         if input.isSecret { return .shownSecret }
-        let colorFill = input.type == .color ? ColorLiteralParser.firstColor(in: input.text) : nil
+        let colorFill = input.type == .color ? ColorLiteralParser.color(fromWholeString: input.text) : nil
         let treatment = CardTreatment.decide(CardTreatmentInput(
             type: input.type,
             text: input.text,

@@ -1,6 +1,6 @@
 # 0051. AutoFill inserts a clip from a small sealed set the app keeps ready; text insertion only, never passwords
 
-Status: Accepted (owner request, 2026-11-15)
+Status: Accepted (owner request, 2026-11-15); quick-insert collections and keyboard use amended by ADR 0061 and ADR 0062
 
 Extends ADR 0002 (sealed at rest), ADR 0003 (secrets are masked and shown on request), ADR 0046 (Pesto on iPhone and iPad, no keyboard extension) and ADR 0047 (the share extension's sealed inbox). Nothing they decide is reversed.
 

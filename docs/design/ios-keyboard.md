@@ -1,8 +1,8 @@
 # Optional iOS Keyboard Extension (`PestoKeyboard`) — Research & Design Spec
 
-Status: Proposed specification for implementation (`PestoMobile` on iOS 26+, iPhone and iPad).
+Status: Shipped (`PestoKeyboard` is implemented per accepted ADRs 0061–0063; extensions beyond those are proposed in ADR 0064).
 Builds on ADR 0051 (sealed quick-insert set for AutoFill) and ADR 0055 (History Lock and `showsClipsOutsideWhileLocked`).
-Amends ADR 0046 ("No keyboard extension") if accepted and implemented: the keyboard stays strictly **optional** while AutoFill (`PestoAutoFill`) remains the zero-Full-Access default.
+Amends ADR 0046 ("No keyboard extension"): the keyboard stays strictly **optional** while AutoFill (`PestoAutoFill`) remains the zero-Full-Access default.
 
 ---
 
@@ -27,9 +27,9 @@ Everything required to produce, seal, filter, and clear the insertable clip set 
 |---|---|---|
 | `QuickInsertSet` | `Sources/Core/Model/QuickInsertSet.swift` | Codable payload (`createdAt`, `[QuickInsertEntry]`), plus `.empty`. |
 | `QuickInsertEntry` | `Sources/Core/Model/QuickInsertEntry.swift` | Entry `id`, `section` (`.pinned`, `.snippets`, `.recent`), `kind`, `title`, `text`, `expandsOnInsert`. |
-| `QuickInsertPolicy` | `Sources/Core/Model/QuickInsertPolicy.swift` | Bounds: max 50 pinned, 50 snippets, 30 recent; 32 KB per entry; 256 KB total plaintext; 2 MB file read cap; 120-char title cap; 1 s rewrite debounce. |
+| `QuickInsertPolicy` | `Sources/Core/Model/QuickInsertPolicy.swift` | Bounds: max 50 pinned, 50 snippets, 60 recent; 32 KB per entry; 256 KB total plaintext; 2 MB file read cap; 120-char title cap; 1 s rewrite debounce. |
 | `QuickInsertMenu` | `Sources/Core/Model/QuickInsertMenu.swift` | View-ready model (`State`: `.unavailable`, `.empty`, `.ready`) and `groups(matching:)` grouped by section. |
-| `QuickInsertSelection` | `Sources/Core/Paste/QuickInsertSelection.swift` | Picks eligible `.text`, `.code`, `.url`, `.color` clips allowed by `ShortcutClipSearch.isOfferedOutsidePesto` (excludes secrets, pending analysis, flagged clips, and expiring clips). Snippets are included only when `TemplateExpander.fillsWithoutAsking` holds. |
+| `QuickInsertSelection` | `Sources/Core/Paste/QuickInsertSelection.swift` | Picks eligible `.text`, `.code`, `.url`, `.color`, and bounded `.image` thumbnail clips allowed by `ShortcutClipSearch.isOfferedOutsidePesto` (excludes secrets, pending analysis, flagged clips, and expiring clips). Snippets remain eligible for AutoFill when `TemplateExpander.fillsWithoutSystemContext` holds (`KeyboardMenu` excludes interactive `expandsOnInsert` snippets via `fillsWithoutAsking`). |
 | `QuickInsertEntry.insertionText(at:)` | `Sources/Core/Paste/QuickInsertEntry+Insertion.swift` | Expands dates/times/UUIDs and strips `{{cursor}}` (`clipboardProvider: { "" }`). |
 | `QuickInsertEnvelope` | `Sources/Core/Crypto/QuickInsert/QuickInsertEnvelope.swift` | Seals/opens `QuickInsertSet` with `SealedFileEnvelope` (`PESTOQIS`, version `1`, AAD purpose `"pesto.quick-insert.v1"`). |
 | `QuickInsertFile` | `Sources/Core/Crypto/QuickInsert/QuickInsertFile.swift` | Reads/writes `quick-insert.pestoquick` (`AppIdentity.quickInsertFileName`) in `AppPaths.sharedGroupDirectory` (`group.net.copypesto.pesto`). |
@@ -39,7 +39,7 @@ Everything required to produce, seal, filter, and clear the insertable clip set 
 | `Setting.showsClipsOutsideWhileLocked` | `Sources/Core/Runtime/Setting.swift` | Boolean (`false` by default; ADR 0055). When History Lock is on and this is off, `MobileAppState+QuickInsert` writes `QuickInsertSet.empty`. |
 | `AutoFillViewController` & `InsertPickerView` | `Sources/MobileAutoFill/` | Reference consumer: opens `QuickInsertFile.current` with `QuickInsertKeyStore`, builds `QuickInsertMenu`, handles `.unavailable` / `.empty` / `.ready`, shares `Sources/MobileShare/BrandAccent.swift`. |
 
-Note: `TemplateExpander.fillsWithoutAsking` currently excludes `{{clipboard}}`, `{{app}}`, interactive fill-in fields, and returns `true` for `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}` / `{{date-Nd}}`, `{{uuid}}`, and `{{cursor}}` (plus `{{selection}}` which expands to `""` via default `selectionProvider`). Keeping `QuickInsertSelection` unchanged means zero format migration and identical entries in both AutoFill and the keyboard.
+Note: `TemplateExpander.fillsWithoutAsking` currently excludes `{{clipboard}}`, `{{app}}`, interactive fill-in fields, and returns `true` for `{{date}}`, `{{time}}`, `{{datetime}}`, `{{isodate}}`, `{{weekday}}`, `{{date+Nd}}` / `{{date-Nd}}`, `{{uuid}}`, and `{{cursor}}` (plus `{{selection}}` which expands to `""` via default `selectionProvider`). `QuickInsertSelection` uses `TemplateExpander.fillsWithoutSystemContext` so interactive fill-in snippets (and bounded `fieldMemory`) are preserved for AutoFill while `KeyboardMenu` filters them out.
 
 ---
 

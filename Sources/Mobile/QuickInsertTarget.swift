@@ -19,7 +19,8 @@ struct QuickInsertTarget {
             keyboardSize: KeyboardSize(rawValue: AppDefaults.store.value(for: Setting.keyboardSize)) ?? .medium,
             accent: MobileAppState.widgetTheme(),
             keyboardEnabled: AppDefaults.store.value(for: Setting.keyboardEnabled),
-            autoFillEnabled: AppDefaults.store.value(for: Setting.autoFillEnabled)
+            autoFillEnabled: AppDefaults.store.value(for: Setting.autoFillEnabled),
+            rememberFillIns: AppDefaults.store.value(for: Setting.rememberFillIns)
         )
     }
 

@@ -80,6 +80,8 @@ public extension StorageService {
         }
         try sealText(payload, mimeType: typeIdentifier, into: item)
         try applySnippetText(text, payload: payload, to: item)
+        item.updateMetadata { $0.signature = nil }
+        similarity.remove(id)
         let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
         item.customTitle = trimmedTitle?.isEmpty == false ? trimmedTitle : nil
         PreviewTextCache.shared.clear()

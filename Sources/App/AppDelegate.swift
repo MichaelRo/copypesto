@@ -457,8 +457,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        ensureOverlayController().show()
         appState.resetShelfContextIfStale(restingCollectionID: workspacePinboardID(for: frontmost?.bundleIdentifier))
+        ensureOverlayController().show()
         appState.isOverlayVisible = true
         appState.checkAndApplyBiometricLock()
         appState.shelfDidOpen()

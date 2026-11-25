@@ -47,24 +47,35 @@ public extension StorageService {
 
     /// Loads the signatures already stored into the index, a page at a time. Run at launch and at unlock.
     func loadSimilarityIndex() async throws {
+        similarityEpoch &+= 1
+        let epoch = similarityEpoch
         similarity.removeAll()
-        try await forEachClip(matching: FetchDescriptor<ClipboardItem>(
-            predicate: #Predicate { $0.metadataCiphertext != nil && $0.sensitivityRaw == nil }
-        )) { item in
+        var entries: [(id: UUID, signature: TextSignature)] = []
+        try await forEachClip(
+            matching: FetchDescriptor<ClipboardItem>(
+                predicate: #Predicate { $0.metadataCiphertext != nil && $0.sensitivityRaw == nil && !$0.isNSFW }
+            ),
+            saves: false
+        ) { item in
             guard let values = item.metadata.signature, values.count == TextSignature.width else { return }
-            similarity.insert(TextSignature(values: values), for: item.id)
+            entries.append((item.id, TextSignature(values: values)))
         }
+        guard epoch == similarityEpoch, !Task.isCancelled else {
+            similarity.removeAll()
+            return
+        }
+        similarity.insertBatch(entries)
     }
 
     /// Signs up to `limit` eligible clips that have none, newest first, and returns how many were left to do. The app
     /// calls it in small steps while the Mac is idle, so a long history is indexed without anyone noticing.
-    func signMissingClips(limit: Int, before cursor: Date?) throws -> SigningPass {
-        let batch = limit * 8
+    func signMissingClips(limit: Int, before cursor: Date?, excluding: Set<UUID> = []) throws -> SigningPass {
+        let batch = max(limit * 8, excluding.count + limit * 2)
         let bound = cursor ?? Date.distantFuture
         var descriptor = FetchDescriptor<ClipboardItem>(
             predicate: #Predicate {
-                $0.sensitivityRaw == nil && $0.expiresAt == nil && !$0.analysisPending && $0.byteSize <= 8000
-                    && $0.timestamp < bound
+                $0.sensitivityRaw == nil && !$0.isNSFW && $0.expiresAt == nil && !$0.analysisPending
+                    && $0.byteSize <= 8000 && $0.timestamp <= bound
             },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
@@ -72,8 +83,13 @@ public extension StorageService {
         let items = try modelContext.fetch(descriptor)
         var signed = 0
         var lastExamined: Date?
-        for item in items {
-            lastExamined = item.timestamp
+        var examinedAtLastTimestamp = cursor == nil ? Set<UUID>() : excluding
+        for item in items where !excluding.contains(item.id) {
+            if item.timestamp != lastExamined {
+                lastExamined = item.timestamp
+                examinedAtLastTimestamp = item.timestamp == cursor ? excluding : []
+            }
+            examinedAtLastTimestamp.insert(item.id)
             guard item.metadata.signature == nil, !item.metadataIsUnreadable,
                   let data = item.blob?.decryptedData(), let text = String(data: data, encoding: .utf8),
                   isSignable(item, text: text), let signature = TextSignature.make(from: text) else { continue }
@@ -83,19 +99,26 @@ public extension StorageService {
             if signed == limit { break }
         }
         try saveOrRollback()
-        return SigningPass(nextCursor: lastExamined, isFinished: items.count < batch && signed < limit)
+        let nextCursor = lastExamined ?? cursor
+        let nextSkipping = nextCursor != nil ? examinedAtLastTimestamp : []
+        return SigningPass(
+            nextCursor: nextCursor,
+            skippingIDs: nextSkipping,
+            isFinished: items.count < batch && signed < limit
+        )
     }
 
     /// Where the next idle step of signing starts, and whether every clip has been looked at.
     struct SigningPass: Sendable {
         public let nextCursor: Date?
+        public let skippingIDs: Set<UUID>
         public let isFinished: Bool
     }
 
-    /// Whether `item` may be signed: ordinary text of a message's length that is not a secret, does not expire and is
-    /// not a snippet (a saved snippet looks like the clips it came from and must not join their family).
+    /// Whether `item` may be signed: ordinary text of a message's length that is not a secret, not NSFW, does not
+    /// expire and is not a snippet (a saved snippet looks like the clips it came from and must not join their family).
     private func isSignable(_ item: ClipboardItem, text: String) -> Bool {
-        text.utf8.count <= Self.maxSignedBytes && !text.contains("{{") && TextSignature.isEligible(
+        text.utf8.count <= Self.maxSignedBytes && !text.contains("{{") && !item.isNSFW && TextSignature.isEligible(
             isTextual: item.type == .text || item.type == .code,
             isSensitive: item.sensitivityRaw != nil,
             expires: item.expiresAt != nil,
@@ -105,6 +128,7 @@ public extension StorageService {
 
     /// The history locked: nothing derived from clips stays in memory.
     func dropSimilarityIndex() {
+        similarityEpoch &+= 1
         similarity.removeAll()
     }
 

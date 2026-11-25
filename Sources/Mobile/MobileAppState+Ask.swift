@@ -20,6 +20,7 @@ extension MobileAppState {
 
     func askPesto(_ sentence: String) async -> AskPestoQuery {
         let query = await askInterpreter().interpret(sentence)
+        guard !Task.isCancelled, !isHistoryLockedNow() else { return query }
         UIAccessibility.post(notification: .announcement, argument: Self.askAnnouncement(for: query))
         return query
     }

@@ -1,6 +1,6 @@
 # 0014. Shelf suggestions offer shortcuts, free idle keys and suggest snippets without moving cards
 
-Status: Accepted. The snippet moment (trigger, thresholds, what accepting does) is superseded by [0017](0017-smart-snippets.md).
+Status: Accepted. The snippet moment (trigger, thresholds, what accepting does) is superseded by [0017](0017-smart-snippets.md), and the one-time deferral cadence by [0015](0015-a-declined-suggestion-comes-back-once.md).
 
 ## Context
 People who use Pesto often paste the same clips repeatedly from the shelf without realizing they can pin them to a global

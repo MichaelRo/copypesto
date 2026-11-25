@@ -1,6 +1,6 @@
 # 0013. Four themes share one identity with the icons, a theme owns the shelf's colour, and the shelf opens at the Bottom or the Top
 
-Status: Accepted
+Status: Accepted; shelf glass surface defaults and preferences are superseded by ADR 0035
 
 ## Context
 Pesto's look has to hold across light and dark, a Liquid Glass shelf, the Dock, the menu bar and Reduce Motion. Left to

@@ -22,7 +22,8 @@ public struct OnDeviceQueryInterpreter: QueryInterpreting {
             model: .default,
             instructions: """
             You turn a question about someone's clipboard history into search filters. Put only the words that \
-            should appear in the clip into keywords, and leave out filler and any type or date words.
+            should appear in the clip into keywords, and leave out filler, action verbs (such as copied, took, \
+            saved, or sent), and any type or date words.
             """
         )
         let response = try await session.respond(to: question, generating: ParsedQuestion.self)

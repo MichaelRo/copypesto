@@ -1,6 +1,6 @@
 # 0018. Macs sync through an encrypted, append-only log per Mac in a folder the person picks; the sync key is a separate key that travels in iCloud Keychain once Pesto can use it, and by hand until then
 
-Status: Accepted
+Status: Accepted; folder/trust hardening added by ADR 0038 and ADR 0039, and extended to iOS by ADR 0046, ADR 0053, and ADR 0056
 
 ## Context
 ADR 0010 gives one backup file per Mac. Restoring one adds what is missing; it is a way back, not a way to keep two Macs

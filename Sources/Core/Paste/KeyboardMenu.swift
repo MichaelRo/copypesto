@@ -69,7 +69,7 @@ public struct KeyboardMenu: Equatable, Sendable {
         let isExpired = activeSet?.expiresAt.map { now >= $0 } ?? false
         let isLocked = activeSet?.isLocked == true || isExpired
         entries = isLocked ? [] : (activeSet?.entries ?? []).filter {
-            $0.section != .snippets || TemplateExpander.fillsWithoutAsking($0.text)
+            !$0.expandsOnInsert || TemplateExpander.fillsWithoutAsking($0.text)
         }
         collections = isLocked ? [] : (activeSet?.collections ?? [])
         returnsAfterInsert = activeSet?.returnsAfterInsert ?? true

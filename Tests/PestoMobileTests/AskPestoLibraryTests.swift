@@ -13,10 +13,13 @@ struct AskPestoLibraryTests {
         let plain = LibraryChip.row(collectionIDs: [trip], isSearching: true)
         #expect(!plain.contains(.ask) && !plain.contains(.asked))
         let typed = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true)
-        #expect(typed == [.all, .pinned, .collection(trip), .divider, .ask] + LibraryScope.filteredKinds
-            .map(LibraryChip.kind) + [.divider, .date(.today), .date(.week), .otherDevices])
-        let applied = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true, hasAsk: true)
-        #expect(applied.contains(.asked) && !applied.contains(.ask))
+        #expect(typed == [.ask, .all, .pinned, .collection(trip), .scopeDivider] + LibraryScope.filteredKinds
+            .map(LibraryChip.kind) + [.filterDivider, .when, .sensitive, .otherDevices])
+        let appliedOnly = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: false, hasAsk: true)
+        #expect(appliedOnly.first == .asked)
+        #expect(appliedOnly.contains(.asked) && !appliedOnly.contains(.ask))
+        let refiningAsk = LibraryChip.row(collectionIDs: [trip], isSearching: true, offersAsk: true, hasAsk: true)
+        #expect(Array(refiningAsk.prefix(2)) == [.ask, .asked])
         #expect(!LibraryChip.row(collectionIDs: [trip], isSearching: false, offersAsk: true).contains(.ask))
     }
 
@@ -24,9 +27,9 @@ struct AskPestoLibraryTests {
         "an answer sets kinds and range, a kind or date chip takes over its half, and ending the search clears it"
     )
     func whenAnAnswerIsApplied_thenChipsAndEndTakeOver() {
-        var filter = LibraryFilter(scope: .pinned, kind: .code, date: .week)
+        var filter = LibraryFilter(scope: .pinned, kind: .code, dateFilter: .week)
         filter.apply(AskPestoQuery(keywords: "invoice", types: [.url, .image], range: .yesterday))
-        #expect(filter.kind == nil && filter.date == nil)
+        #expect(filter.kind == nil && filter.dateFilter == .all)
         #expect(filter.kinds == [.url, .image])
         #expect(filter.hasAsk && filter.isSelected(.asked))
         #expect(filter.askedSummary == "Links, Images \u{00B7} yesterday")
@@ -35,7 +38,7 @@ struct AskPestoLibraryTests {
         filter.choose(.kind(.text))
         #expect(filter.kinds == [.text] && filter.askedKinds.isEmpty)
         #expect(filter.askedRange == .yesterday)
-        filter.choose(.date(.today))
+        filter.chooseDate(.today)
         #expect(filter.askedRange == .all && !filter.hasAsk)
 
         filter.apply(AskPestoQuery(keywords: "", types: [.color], range: .month))
@@ -135,5 +138,46 @@ struct AskPestoLibraryTests {
         model.closeEverything()
         #expect(!model.filter.hasAsk && model.filter.kinds.isEmpty)
         #expect(model.query.isEmpty && !model.isSearching)
+    }
+
+    @MainActor
+    @Test("canceling an in-flight Ask invalidates the pending response and clears isAsking")
+    func whenCanceledMidAsk_thenStaleResponseIsIgnored() async throws {
+        let model = LibraryModel()
+        model.isSearching = true
+        model.query = "links today"
+        model.startAsk(
+            using: { _ in
+                try? await Task.sleep(for: .milliseconds(50))
+                return AskPestoQuery(keywords: "links", types: [.url], range: .today)
+            },
+            isLocked: { false }
+        )
+        #expect(model.isAsking)
+        model.cancelAsk()
+        #expect(!model.isAsking)
+        try await Task.sleep(for: .milliseconds(80))
+        #expect(!model.filter.hasAsk)
+    }
+
+    @MainActor
+    @Test("Ask stays offered while in Ask mode whenever the user types a refined query")
+    func whenAlreadyInAskModeAndTypingNewQuery_thenCanOfferAskIsTrue() {
+        let model = LibraryModel()
+        model.isSearching = true
+        model.query = "Pictures I took yesterday"
+        #expect(model.canOfferAsk)
+
+        model.apply(AskPestoQuery(keywords: "", types: [.image], range: .yesterday))
+        #expect(model.filter.hasAsk)
+        #expect(!model.canOfferAsk)
+
+        model.query = "links from today"
+        #expect(model.canOfferAsk)
+
+        model.apply(AskPestoQuery(keywords: "swift", types: [.url], range: .today))
+        #expect(!model.canOfferAsk)
+        model.query = "swift concurrency"
+        #expect(model.canOfferAsk)
     }
 }

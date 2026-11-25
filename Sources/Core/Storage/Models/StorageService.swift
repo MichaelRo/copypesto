@@ -92,6 +92,7 @@ public actor StorageService: ModelActor {
     let embedder: any TextEmbedding
 
     var similarity = SimilarityIndex()
+    var similarityEpoch: UInt64 = 0
     var pendingEmbeddings: [UUID: Task<Void, Never>] = [:]
     var pendingAnalyses: [UUID: Task<Void, Never>] = [:]
     var pendingItemTasks: [UUID: Set<UUID>] = [:]

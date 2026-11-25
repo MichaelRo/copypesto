@@ -35,14 +35,18 @@ jobs:
     timeout-minutes: 90
     permissions:
       contents: write
-    env:
-      KEYCHAIN_PATH: ${{ runner.temp }}/pesto-release.keychain-db
-      ASC_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
-      SPARKLE_KEY_PATH: ${{ runner.temp }}/sparkle.key
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Configure ephemeral credential paths
+        run: |
+          {
+            echo "KEYCHAIN_PATH=${RUNNER_TEMP}/pesto-release.keychain-db"
+            echo "ASC_KEY_PATH=${RUNNER_TEMP}/AuthKey.p8"
+            echo "SPARKLE_KEY_PATH=${RUNNER_TEMP}/sparkle.key"
+          } >> "$GITHUB_ENV"
 
       - name: Select the newest Xcode
         run: scripts/select-xcode.sh
@@ -123,11 +127,14 @@ jobs:
           echo "SHA=.build/xcode/export/Pesto-${VERSION}.dmg.sha256" >> "$GITHUB_ENV"
 
       - name: Sign DMG with Sparkle EdDSA key
-        if: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           set -euo pipefail
+          if [[ -z "${SPARKLE_PRIVATE_KEY:-}" ]]; then
+            echo "SPARKLE_PRIVATE_KEY secret not set; skipping Sparkle EdDSA signature."
+            exit 0
+          fi
           SIGN_UPDATE=".build/xcode/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update"
           if [[ ! -x "$SIGN_UPDATE" ]]; then
             SIGN_UPDATE="$(find .build -name sign_update -type f -perm +111 | head -n 1)"
@@ -157,10 +164,13 @@ jobs:
             --target "${{ github.sha }}"
 
       - name: Trigger downstream website & Homebrew tap updates (optional)
-        if: ${{ secrets.RELEASE_DISPATCH_TOKEN != '' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_DISPATCH_TOKEN }}
         run: |
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "RELEASE_DISPATCH_TOKEN secret not set; skipping downstream dispatch."
+            exit 0
+          fi
           gh api repos/MichaelRo/copypesto-website/dispatches -f event_type=app-docs-updated || true
           gh workflow run bump.yml -R MichaelRo/homebrew-copypesto -f version="$VERSION" || true
 

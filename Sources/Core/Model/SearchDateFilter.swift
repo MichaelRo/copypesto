@@ -34,14 +34,50 @@ public enum SearchDateFilter: Sendable, Hashable {
         [SearchDateFilter.all, .today, .yesterday, .week, .month].first { $0.id == name }
     }
 
+    /// A single calendar day or inclusive range of days, normalized regardless of argument order to half-open
+    /// `[startOfFirstDay, startOfDayAfterLast)` bounds matching `ShelfFilter` and `HistoryIndex`.
+    public static func customRange(from start: Date, to end: Date, calendar: Calendar = .current) -> SearchDateFilter {
+        let low = min(start, end)
+        let high = max(start, end)
+        let startOfLow = calendar.startOfDay(for: low)
+        let startOfHigh = calendar.startOfDay(for: high)
+        let endOfHigh = calendar.date(byAdding: .day, value: 1, to: startOfHigh)
+            ?? startOfHigh.addingTimeInterval(86_400)
+        return .custom(DateInterval(start: startOfLow, end: endOfHigh))
+    }
+
+    /// The half-open bounds covered by this filter at `now`, or nil for `.all`.
+    public func interval(now: Date = .now, calendar: Calendar = .current) -> DateInterval? {
+        switch self {
+        case .all:
+            return nil
+        case .today:
+            let start = calendar.startOfDay(for: now)
+            let end = calendar.date(byAdding: .day, value: 1, to: start) ?? start.addingTimeInterval(86_400)
+            return DateInterval(start: start, end: end)
+        case .yesterday:
+            let end = calendar.startOfDay(for: now)
+            let start = calendar.date(byAdding: .day, value: -1, to: end) ?? end.addingTimeInterval(-86_400)
+            return DateInterval(start: start, end: end)
+        case .week:
+            return DateInterval(start: now.addingTimeInterval(-7 * 86_400), end: now)
+        case .month:
+            return DateInterval(start: now.addingTimeInterval(-30 * 86_400), end: now)
+        case let .custom(range):
+            return range
+        case let .last(seconds):
+            return DateInterval(start: now.addingTimeInterval(-max(0, seconds)), end: now)
+        }
+    }
+
     /// How the filter chip and the spoken summary name the range.
     public func label(now: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
         switch self {
-        case .all: "Any time"
-        case .today: "Today"
-        case .yesterday: "Yesterday"
-        case .week: "Last 7 days"
-        case .month: "Last 30 days"
+        case .all: String(localized: "Any time")
+        case .today: String(localized: "Today")
+        case .yesterday: String(localized: "Yesterday")
+        case .week: String(localized: "Last 7 days")
+        case .month: String(localized: "Last 30 days")
         case let .custom(range): Self.customLabel(range, now: now, calendar: calendar, locale: locale)
         case let .last(seconds): Self.relativeLabel(seconds)
         }

@@ -6,6 +6,7 @@ import SwiftUI
 struct LibraryBanners: View {
     var messagesOnly = false
     @Environment(MobileAppState.self) private var appState
+    @AppStorage(Setting.dismissedAnnouncementIDs) private var dismissedAnnouncementsRaw: String
 
     var body: some View {
         Group {
@@ -15,10 +16,42 @@ struct LibraryBanners: View {
                 ClipboardOfferBanner()
             } else if !messagesOnly, appState.offersAutoFillTip, !appState.isHistoryLocked {
                 AutoFillTipBanner()
+            } else if !messagesOnly,
+                      let announcement = appState.activeAnnouncement(dismissedRaw: dismissedAnnouncementsRaw)
+            {
+                announcementBanner(announcement)
             }
         }
         .animation(Motion.animation(.pestoMove), value: appState.clipboardOfferCount)
         .animation(Motion.animation(.pestoMove), value: appState.offersAutoFillTip)
+    }
+
+    private func announcementBanner(_ announcement: AppAnnouncement) -> some View {
+        banner {
+            Image(systemName: announcement.symbol)
+                .accessibilityHidden(true)
+            Text(announcement.message)
+                .lineLimit(2)
+            Spacer(minLength: 4)
+            Button(announcement.primaryTitle) {
+                appState.openAnnouncement(announcement)
+            }
+            .bold()
+            .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+            .contentShape(.rect)
+            .padding(.vertical, -12)
+            .accessibilityIdentifier(MobileAccessibilityID.announcementPrimaryButton)
+            Button(announcement.secondaryTitle) {
+                appState.dismissAnnouncement(announcement)
+            }
+            .foregroundStyle(.secondary)
+            .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+            .contentShape(.rect)
+            .padding(.vertical, -12)
+            .accessibilityIdentifier(MobileAccessibilityID.announcementDismissButton)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(MobileAccessibilityID.announcementBanner)
     }
 
     private var messages: some View {

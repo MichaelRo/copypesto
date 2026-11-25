@@ -1,6 +1,6 @@
 # 0034. Copy Recognized Text: a picture's whole text is kept in its own sealed file
 
-Status: Accepted
+Status: Accepted; the Copy Text button width is superseded by ADR 0036, and the clip-order move by ADR 0037
 
 Nothing about the network, the backup file format or the sync file format changes. It amends one sentence of ADR 0009 (the hover card "takes the pointer only when its body scrolls").
 

@@ -21,6 +21,14 @@ enum LibraryListing {
     struct Result: Equatable {
         var ids: [UUID]
         var animates: Bool
+        var indexByID: [UUID: Int]
+
+        init(ids: [UUID], animates: Bool, indexByID: [UUID: Int]? = nil) {
+            self.ids = ids
+            self.animates = animates
+            self.indexByID = indexByID
+                ?? Dictionary(ids.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        }
     }
 
     static func list(
@@ -30,16 +38,20 @@ enum LibraryListing {
         guard let index = store.searchIndex() else { return Result(ids: [], animates: false) }
         let kinds = key.isSearching ? key.filter.kinds : []
         let window = key.isSearching ? key.filter.dateWindow(now: now) : (cutoff: nil, before: nil)
+        let sourceBundleID = key.isSearching ? key.filter.sourceBundleID : nil
+        let sensitive = key.isSearching && key.filter.sensitiveOnly
         let remote = key.isSearching && key.filter.otherDevicesOnly
         func ids(query: String) -> [UUID] {
             key.filter.scope.ids(
                 in: index, query: query, kinds: kinds, smartRule: smartRule, hidesSensitive: key.hidesSensitive,
-                dateCutoff: window.cutoff, dateBefore: window.before, otherDevicesOnly: remote, now: now
+                dateCutoff: window.cutoff, dateBefore: window.before, sourceBundleID: sourceBundleID,
+                sensitiveOnly: sensitive, otherDevicesOnly: remote, now: now
             )
         }
         let kindNames = kinds.map(\.rawValue).sorted().joined(separator: ",")
         let bounds = "\(window.cutoff != nil)|\(window.before != nil)"
-        let context = "\(key.filter.scope)|\(key.query)|\(kindNames)|\(bounds)|\(remote)"
+        let context =
+            "\(key.filter.scope)|\(key.query)|\(kindNames)|\(bounds)|\(sourceBundleID ?? "")|\(sensitive)|\(remote)"
         let arranged = order.arrange(ids(query: key.query), context: context)
         var result = arranged
         if !key.byMeaning.isEmpty, SemanticSearch.asksForMeaning(key.query) {

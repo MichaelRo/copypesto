@@ -55,6 +55,10 @@ final class MobileSync {
         controller?.keyMode
     }
 
+    var peerDeviceNames: [String: String] {
+        controller?.peerDeviceNames ?? [:]
+    }
+
     var folderName: String? {
         guard folderProblem == nil, let url = controller?.folderURL else { return nil }
         let parent = FileManager.default.displayName(atPath: url.deletingLastPathComponent().path)

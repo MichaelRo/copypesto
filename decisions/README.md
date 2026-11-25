@@ -26,7 +26,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0015](0015-a-declined-suggestion-comes-back-once.md) | A declined suggestion comes back once, after the clip is used twice as much and thirty days pass |
 | [0016](0016-search-arrows-move-cards.md) | In search, the arrow keys move between result cards and Return pastes; supersedes the key handling of 0009 |
 | [0017](0017-smart-snippets.md) | Snippets ask for fill-in fields at paste time, and Pesto offers them for clips that differ in a few words |
-| [0018](0018-multi-device-sync.md) | Macs sync through an encrypted, append-only log per Mac in a folder the person picks, with a separate sync key (iCloud Keychain once Developer ID exists, by hand until then) and one Reset Sync action (proposed) |
+| [0018](0018-multi-device-sync.md) | Macs sync through an encrypted, append-only log per Mac in a folder the person picks, with a separate sync key (iCloud Keychain once Developer ID exists, by hand until then) and one Reset Sync action |
 | [0019](0019-backup-and-sync-group.md) | Settings → Data shows backup and, later, sync as two switches in one group, with one place for where the copies live; supersedes the Settings wording of 0010 and 0012 |
 | [0020](0020-decode-jwt-is-a-second-way-into-a-hidden-clip.md) | Decode JWT is a second way into a hidden clip: same authentication, read-only, closes with Show |
 | [0021](0021-a-collection-keeps-a-clip-where-it-was.md) | A collection keeps a clip where it was; only the history moves it on use |
@@ -72,7 +72,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0061](0061-an-optional-keyboard-inserts-from-the-quick-insert-set.md) | An optional iOS keyboard with no letter keys inserts from the quick-insert set AutoFill reads, with Full Access only; without it, a numbers-and-punctuation pad; it never holds the history key, reads the clipboard or makes a network request. Amends the "no keyboard extension" of 0046 |
 | [0062](0062-the-keyboard-is-a-small-shelf-with-chips-and-a-word-search.md) | The keyboard is a small shelf: collection chips the person chooses, a row that scrolls sideways, a search by the word typed before switching (replaced on insert), and a choice to return or stay after inserting; the quick-insert set carries the chosen collections. Amends 0051 and 0061 |
 | [0063](0063-the-keyboard-searches-in-its-own-field.md) | The keyboard has a search page: letters and numbers that type only into Pesto's own search field, never into the app, above the matching clips; the word-before-the-caret search stays. Amends 0061 and 0062 |
-| [0064](0064-keyboard-pictures-and-default-paste.md) | The iOS keyboard copies pictures on tap (`localOnly`, 120s expiry, Full Access) with `"Copied, paste it"`, inserts secret-scanned recognized text via long-press + `text.viewfinder` badge, excludes `.file`/NSFW/secrets, and covers during screen capture (proposed) |
+| [0064](0064-keyboard-pictures-and-default-paste.md) | The iOS keyboard reads pictures in `QuickInsertFile` with Full Access, copies pictures on tap (`localOnly`, 120s expiry) with `"Copied, paste it"`, inserts secret-scanned recognized text via long-press + `text.viewfinder` badge, and covers during screen capture (proposed) |
 | [0065](0065-lock-screen-accessory-widgets.md) | iOS Lock Screen accessory widgets (`accessoryCircular`, `accessoryRectangular`, `accessoryInline`) live in `LockScreenClipsWidget` with an off-by-default per-widget opt-in (`showsClipsOnLockScreen`), use `.widgetURL` only, and never show secrets; amends 0052 |
 
 ## Template

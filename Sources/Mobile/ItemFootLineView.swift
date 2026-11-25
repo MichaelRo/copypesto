@@ -11,11 +11,13 @@ struct ItemFootLineView: View {
     var trailingMark: String?
     @Environment(\.clipRevision) private var revision
     @Environment(\.cardClock) private var clock
+    @Environment(\.peerDeviceNames) private var peerDeviceNames
 
     var body: some View {
         CardFootLineView(
             line: CardFootLineView.line(
-                for: item, now: clock ?? .now, device: CardFootLineView.device, showsTitleOnFace: showsTitleOnFace
+                for: item, now: clock ?? .now, device: CardFootLineView.device,
+                showsTitleOnFace: showsTitleOnFace, peerDeviceNames: peerDeviceNames
             ),
             isPinned: revision?.isPinned ?? item.isPinned,
             inCollection: (revision.map(\.collectionID) ?? item.collectionID) != nil,
@@ -29,11 +31,12 @@ struct ItemFootLineView: View {
 
 extension CardFootLineView {
     static func line(
-        for item: ClipboardItem, now: Date, device: CardFootLine.Device, showsTitleOnFace: Bool = false
+        for item: ClipboardItem, now: Date, device: CardFootLine.Device, showsTitleOnFace: Bool = false,
+        peerDeviceNames: [String: String] = [:]
     )
     -> CardFootLine {
         CardFootLine.make(
-            CardFootLine.origin(of: item),
+            CardFootLine.origin(of: item, peerDeviceNames: peerDeviceNames),
             title: item.customTitle,
             age: CardAge.text(for: item, inCollection: false, now: now),
             device: device,
@@ -47,4 +50,5 @@ extension EnvironmentValues {
     /// The minute the grid last ticked (`LibraryGrid`), so every visible card's age moves together without a timer
     /// each.
     @Entry var cardClock: Date?
+    @Entry var peerDeviceNames: [String: String] = [:]
 }

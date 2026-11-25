@@ -1,6 +1,6 @@
 # 0004. Built-in exclusions are permanent, a timed allowance keeps hidden copies, and other devices' copies are opt-in
 
-Status: Accepted
+Status: Accepted; the other-device copies default for new installs is amended by ADR 0042
 
 ## Context
 Pesto never captures from password managers and keychain tools, and drops any copy carrying a concealed or transient

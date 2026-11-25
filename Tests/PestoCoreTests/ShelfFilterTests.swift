@@ -210,4 +210,84 @@ struct ShelfFilterTests {
         #expect(inRange(3600, at: now.addingTimeInterval(3600)))
         #expect(!inRange(3600, at: now.addingTimeInterval(2 * 3600)))
     }
+
+    @Test("customRange normalizes single day, multi-day range, and inverted endpoints to half-open day bounds")
+    func customRangeNormalizationAndLabels() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
+        let nov1Midday = try #require(calendar.date(from: DateComponents(
+            year: 2026,
+            month: 11,
+            day: 1,
+            hour: 14,
+            minute: 30
+        )))
+        let nov5Morning = try #require(calendar.date(from: DateComponents(
+            year: 2026,
+            month: 11,
+            day: 5,
+            hour: 8,
+            minute: 15
+        )))
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 24, hour: 12)))
+
+        let singleDay = SearchDateFilter.customRange(from: nov1Midday, to: nov1Midday, calendar: calendar)
+        guard case let .custom(singleInterval) = singleDay else {
+            Issue.record("expected .custom")
+            return
+        }
+        #expect(singleInterval.start == calendar.startOfDay(for: nov1Midday))
+        #expect(singleInterval.end == calendar.date(byAdding: .day, value: 1, to: singleInterval.start))
+
+        let forward = SearchDateFilter.customRange(from: nov1Midday, to: nov5Morning, calendar: calendar)
+        let inverted = SearchDateFilter.customRange(from: nov5Morning, to: nov1Midday, calendar: calendar)
+        #expect(forward == inverted)
+        guard case let .custom(rangeInterval) = forward else {
+            Issue.record("expected .custom")
+            return
+        }
+        #expect(rangeInterval.start == calendar.startOfDay(for: nov1Midday))
+        #expect(rangeInterval.end == calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: nov5Morning)))
+
+        let locale = Locale(identifier: "en_US")
+        let singleLabel = singleDay.label(now: now, calendar: calendar, locale: locale)
+        #expect(singleLabel.contains("Nov"))
+        #expect(!singleLabel.contains("\u{2013}"))
+        let rangeLabel = forward.label(now: now, calendar: calendar, locale: locale)
+        #expect(rangeLabel.contains("\u{2013}"))
+    }
+
+    @Test("when resolving SearchDateFilter.interval, then presets and custom ranges return expected bounds")
+    func whenResolvingDateFilterInterval_thenReturnsExpectedBounds() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(secondsFromGMT: 0))
+        let now = try #require(calendar.date(from: DateComponents(year: 2026, month: 11, day: 24, hour: 15)))
+        let startOfToday = calendar.startOfDay(for: now)
+        let startOfTomorrow = try #require(calendar.date(byAdding: .day, value: 1, to: startOfToday))
+        let startOfYesterday = try #require(calendar.date(byAdding: .day, value: -1, to: startOfToday))
+
+        #expect(SearchDateFilter.all.interval(now: now, calendar: calendar) == nil)
+        #expect(
+            SearchDateFilter.today.interval(now: now, calendar: calendar)
+                == DateInterval(start: startOfToday, end: startOfTomorrow)
+        )
+        #expect(
+            SearchDateFilter.yesterday.interval(now: now, calendar: calendar)
+                == DateInterval(start: startOfYesterday, end: startOfToday)
+        )
+        #expect(
+            SearchDateFilter.week.interval(now: now, calendar: calendar)
+                == DateInterval(start: now.addingTimeInterval(-7 * 86_400), end: now)
+        )
+        #expect(
+            SearchDateFilter.month.interval(now: now, calendar: calendar)
+                == DateInterval(start: now.addingTimeInterval(-30 * 86_400), end: now)
+        )
+        let custom = DateInterval(start: startOfYesterday, end: startOfTomorrow)
+        #expect(SearchDateFilter.custom(custom).interval(now: now, calendar: calendar) == custom)
+        #expect(
+            SearchDateFilter.last(3600).interval(now: now, calendar: calendar)
+                == DateInterval(start: now.addingTimeInterval(-3600), end: now)
+        )
+    }
 }

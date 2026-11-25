@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MIT
+import Foundation
+
 public struct NoResultsAdvice: Equatable, Sendable {
     public enum Action: Equatable, Sendable {
         case clearFilters
@@ -10,8 +12,8 @@ public struct NoResultsAdvice: Equatable, Sendable {
 
     public var buttonTitle: String {
         switch action {
-        case .clearFilters: "Clear Filters"
-        case .clearSearch: "Clear Search"
+        case .clearFilters: String(localized: "Clear Filters")
+        case .clearSearch: String(localized: "Clear Search")
         }
     }
 
@@ -28,22 +30,25 @@ public struct NoResultsAdvice: Equatable, Sendable {
         var names = ClipboardType.allCases.filter(kinds.contains).map(\.presentation.label)
         if date != .all { names.append(date.label()) }
         names += appNames
-        if sensitiveOnly { names.append("Sensitive") }
-        if remoteOnly { names.append("Other Devices") }
-        if showsHidden { names.append("Hidden") }
+        if sensitiveOnly { names.append(String(localized: "Sensitive")) }
+        if remoteOnly { names.append(String(localized: "Other Devices")) }
+        if showsHidden { names.append(String(localized: "Hidden")) }
 
         guard !names.isEmpty else {
-            return NoResultsAdvice(
-                sentence: "Nothing matches “\(query)”. Search reads the first 500 characters of each clip.",
-                action: .clearSearch
-            )
+            let lead = String(localized: "Nothing matches \u{201C}\(query)\u{201D}.")
+            let hint = String(localized: "Search reads the first 500 characters of each clip.")
+            return NoResultsAdvice(sentence: "\(lead) \(hint)", action: .clearSearch)
         }
-        let subject = query.isEmpty ? "Nothing matches" : "Nothing matches “\(query)”"
-        return NoResultsAdvice(sentence: "\(subject) with \(list(names)) on.", action: .clearFilters)
+        let nameList = list(names)
+        let sentence = query.isEmpty
+            ? String(localized: "Nothing matches with \(nameList) on.")
+            : String(localized: "Nothing matches \u{201C}\(query)\u{201D} with \(nameList) on.")
+        return NoResultsAdvice(sentence: sentence, action: .clearFilters)
     }
 
     private static func list(_ names: [String]) -> String {
         guard let last = names.last, names.count > 1 else { return names.first ?? "" }
-        return names.dropLast().joined(separator: ", ") + " and " + last
+        let head = names.dropLast().joined(separator: String(localized: ", "))
+        return String(localized: "\(head) and \(last)")
     }
 }

@@ -72,6 +72,7 @@ public final class SyncController {
     public private(set) var isEnabled: Bool
     public private(set) var keepsHere = 0
     public private(set) var pendingJoin: SyncPendingJoin?
+    public private(set) var peerDeviceNames: [String: String] = [:]
 
     private var env: Environment
     private let baseDeviceID: String
@@ -230,6 +231,10 @@ public final class SyncController {
             deviceKind: env.deviceKind
         )
         created.onStatusChange = { [weak self] new in self?.status = new }
+        created.onPeerDevicesChange = { [weak self] names in
+            guard let self, peerDeviceNames != names else { return }
+            peerDeviceNames = names
+        }
         service?.stop()
         service = created
         created.start()
@@ -420,6 +425,7 @@ public final class SyncController {
         }
         service?.stop()
         service = nil
+        peerDeviceNames = [:]
         SyncJournal.disable(for: env.container)
         env.highWater.save(SyncHighWater())
         pairingWords.removeAll()
@@ -457,6 +463,7 @@ public final class SyncController {
     public func suspend() {
         service?.stop()
         service = nil
+        peerDeviceNames = [:]
     }
 
     public var deviceKind: SyncDeviceKind {
@@ -467,12 +474,15 @@ public final class SyncController {
     public func pause() {
         service?.stop()
         service = nil
+        peerDeviceNames = [:]
         SyncJournal.disable(for: env.container)
         env.defaults.set(false, for: Setting.syncEnabled)
         isEnabled = false
         status = .off
     }
+}
 
+extension SyncController {
     private func openGroup() throws -> SyncGroupOpening {
         let joined = env.highWater.load().vaultFloor.flatMap { Data(hexString: $0.vaultID) }
         return try SyncGroupManager.open(

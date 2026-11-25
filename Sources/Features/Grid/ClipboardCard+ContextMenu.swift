@@ -115,7 +115,7 @@ extension ClipboardCard {
         }
 
         if offers(.colorCopyFormats), item.type == .color, item.sensitivity == nil, actions.copyText != nil,
-           let color = ColorLiteralParser.firstColor(in: item.displayPreviewText)
+           let color = ColorLiteralParser.color(fromWholeString: item.displayPreviewText)
         {
             Menu {
                 ForEach(ColorCopyFormat.allCases, id: \.self) { format in

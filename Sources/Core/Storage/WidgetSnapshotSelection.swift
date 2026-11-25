@@ -268,7 +268,9 @@ public enum WidgetSnapshotSelection {
     /// A color clip's swatch: its stored preview is the color's text, the one preview kept in the clear (ADR 0002).
     private static func colorHex(of item: ClipboardItem, preview: String) -> String? {
         switch item.type {
-        case .color: ColorLiteralParser.firstColor(in: preview).map(hex)
+        case .color: ColorPreviewPolicy.mayStoreInTheClear(preview)
+            ? ColorLiteralParser.color(fromWholeString: preview).map(hex)
+            : nil
         default: nil
         }
     }

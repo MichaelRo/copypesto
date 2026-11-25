@@ -36,7 +36,7 @@ enum DetailFactsText {
     }
 
     private static func colorComponents(of item: ClipboardItem) -> DetailPopoverContent.RGB? {
-        guard let color = ColorStringDetector.detect(in: item.gridPreview),
+        guard let color = ColorStringDetector.detectWholeColor(in: item.gridPreview),
               let rgb = NSColor(color).usingColorSpace(.sRGB) else { return nil }
         func channel(_ value: CGFloat) -> Int {
             Int((value * 255).rounded())

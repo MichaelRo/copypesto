@@ -5,7 +5,7 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 
 ## The page
 - **Compact width** (an iPhone, an iPad window that is narrow): one `NavigationStack`, no tab bar. Inline title "Pesto"
-  (or Pinned, or the collection's name); Settings (gear, a sheet) on the leading side; New Note in its glass circle and, on its own, the
+  (or Pinned, or the collection's name); Settings (gear, a leading slide-in drawer) on the leading side; New Note in its glass circle and, on its own, the
   system Paste button as a filled accent capsule on the trailing side (in one glass group with New Note its square
   background stuck out; `PasteButton` takes no glass style). Under the bar a chip row, then the grid. Search is `.searchable` on the stack: iOS 26 puts
   it in the bottom toolbar on iPhone (seen in the UI tests' hierarchy: the field sits above the keyboard with a close
@@ -91,15 +91,14 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
   Share and More (Pin, Delete) in the toolbar. A text, code, link or color clip has Edit Text above its content, one press from the editor: an
   editor with Cancel and Save, saved through Core's `updateText` (ADR 0048) with the Undo banner in the sheet; a hidden
   clip only after Show.
-- **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⇧⌘C copy, ⇧⌘P pin (⌘P is Print), ⌘⌫ delete with a
-  confirmation, all in the menu a held ⌘ shows.
-- **VoiceOver**: a card is one element ("Link, copypesto.net, Safari, 4 minutes ago, Pinned"); activating copies;
+- **Keyboard** (iPad): ⌘N new note, ⌘F search, ⌘I details of the focused card, ⌘C copy selected textual clips (outside search/detail/editors), ⇧⌘C copy, ⇧⌘P pin (⌘P is Print), ⌘⌫ delete with a
+  confirmation, ⌘Return Ask Pesto (while searching), all in the menu a held ⌘ shows.
+- **VoiceOver**: a card is one element ("Link, copypesto.net, Safari, 4 minutes ago, Pinned"); activating copies (or toggles selection during multi-select);
   actions Edit Details, Pin, Share, Show (Hide once shown) and Delete. The detail's picture says its kind, its size and the start of any text read in it.
 
 ## Search and filters
 Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and
-order: after the text matches) when the on-device model is available. While searching the chip row also offers Today,
-This Week (the Mac's date rules) and Other Devices (clips that arrived by sync). Link previews are fetched once for a
+order: after the text matches) when the on-device model is available. While searching the chip row also offers `When` (Today, Yesterday, Last 7/30 Days, Last 1/3/12 Hours, or a Custom Date Range sheet), `From` (source apps with clip counts), `Sensitive`, `Other Devices` (clips that arrived by sync), and `Ask` (`PadLibraryView` keeps the filter chips visible while searching even with the sidebar open). `Copy All` in `MobileSelectionBar` joins multiple selected text/code clips (`⌘C` or the action bar button) while preserving secret protection. `ClipDetailView` surfaces look-alike clips (`Similar Clips` + `Save as Snippet…`), peer device names, and source apps, while `Settings → Data → Insights` presents `MobileInsightsView`. Link previews are fetched once for a
 link card on screen (`LinkPreviewLoader`), only with Settings → Privacy → Load link previews on (off until the welcome's step two switches it on, with the switch in view, or the person does; ADR 0057) and never while locked. A GIF copied in Safari arrives as a still and its address,
 and the whole GIF is fetched under the same switch (`RemoteGIFFetcher`). Settings → History has Keep clips for and Keep
 at most with the Mac's choices and defaults, swept at launch and, at most hourly, on return to the foreground.
@@ -171,6 +170,5 @@ Three steps once over the library (iPhone full screen, iPad form sheet; Skip on 
 - **Smart collections**: New Collection → Smart, then rules as grouped Form sections; Edit Collection shows them again.
 
 ## Left out on purpose
-A tab bar, a list or a list/grid toggle, sort menus, counts on chips, swipe actions, a pushed detail screen, a Kinds
-section, a keyboard with typing keys (the optional keyboard has none, ADR 0061), glass on a card, reading a long text for AI a part at a time (the Mac does; the iOS answer says how much was read). Source-app chips: Core's index keeps the bundle id
-private and iOS cannot name an app, so there is no cheap list to show.
+A tab bar, a list or a list/grid toggle, sort menus, swipe actions, a pushed detail screen, a Kinds
+section, a keyboard with typing keys (the optional keyboard has none, ADR 0061), glass on a card, reading a long text for AI a part at a time (the Mac does; the iOS answer says how much was read).

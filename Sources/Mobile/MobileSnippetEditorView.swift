@@ -77,54 +77,15 @@ struct MobileSnippetEditorView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Title") {
-                    TextField("Thank-you reply", text: $title)
-                        .focused($focusedField, equals: .title)
-                        .accessibilityIdentifier(MobileAccessibilityID.snippetTitleField)
-                }
-                Section {
-                    TextEditor(text: $text, selection: $selection)
-                        .font(.body.monospaced())
-                        .frame(minHeight: 140)
-                        .focused($focusedField, equals: .body)
-                        .accessibilityIdentifier(MobileAccessibilityID.snippetBodyEditor)
-                    editorMenus
-                } header: {
-                    Text("Template")
-                } footer: {
-                    if isEmptyTemplate {
-                        Text(
-                            "Type {{date}} for an automatic fill or {{name}} for a fill-in question, " +
-                                "or pick from the menus above."
-                        )
-                    } else if needsPlaceholderHint {
-                        Text("Add a question or a fill, like {{date}}, so Pesto can fill it in when you copy.")
-                    }
-                }
-                Section("Questions") {
-                    MobileSnippetQuestionList(text: $text)
-                }
-                Section {
-                    Text(MobileSnippetPlaceholders.previewString(from: text, accent: accent))
-                        .font(.body)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityIdentifier(MobileAccessibilityID.snippetPreview)
-                } header: {
-                    Text("Copies as")
-                } footer: {
-                    Text(
-                        "Highlighted names are asked for when you copy. A dimmed part is optional. " +
-                            "The {{cursor}} marker is removed when copied."
+            Group {
+                if appState.secretReveal.isContentCovered {
+                    ContentUnavailableView(
+                        "Clip hidden",
+                        systemImage: "eye.slash",
+                        description: Text("Hide contents is on.")
                     )
-                }
-                if let notice = appState.notice, notice.isProblem {
-                    Section {
-                        Label(notice.text, systemImage: "exclamationmark.circle")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
+                } else {
+                    editorForm
                 }
             }
             .navigationTitle(isNew ? "New Snippet" : "Edit Snippet")
@@ -133,136 +94,94 @@ struct MobileSnippetEditorView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", action: cancel)
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .bold()
-                        .keyboardShortcut("s", modifiers: .command)
-                        .disabled(!canSave)
-                        .accessibilityIdentifier(MobileAccessibilityID.snippetSaveButton)
+                if !appState.secretReveal.isContentCovered {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") { save() }
+                            .bold()
+                            .keyboardShortcut("s", modifiers: .command)
+                            .disabled(!canSave)
+                            .accessibilityIdentifier(MobileAccessibilityID.snippetSaveButton)
+                    }
                 }
-            }
-            .onAppear {
-                focusedField = isNew && text.isEmpty ? .title : .body
-            }
-            .confirmationDialog(
-                "Discard changes?",
-                isPresented: $isConfirmingDiscard,
-                titleVisibility: .visible
-            ) {
-                Button("Discard", role: .destructive) { dismiss() }
-                Button("Keep Editing", role: .cancel) {}
-            }
-            .sheet(item: $pendingQuestion) { choice in
-                AddQuestionSheet(choice: choice) { insertion in
-                    insert(insertion)
-                }
-                .presentationDetents([.medium])
-            }
-            .sheet(isPresented: $showsPlaceholderReference) {
-                PlaceholderReferenceSheet { token in
-                    insert(token)
-                }
-                .presentationDetents([.medium, .large])
             }
         }
         .accessibilityIdentifier(MobileAccessibilityID.snippetEditor)
         .interactiveDismissDisabled(hasChanges)
     }
 
-    private var editorMenus: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                Menu {
-                    ForEach(QuestionChoice.allCases) { option in
-                        Button(String(localized: String.LocalizationValue(option.rawValue))) {
-                            pendingQuestion = option
-                        }
-                    }
-                } label: {
-                    Label("Add Question\u{2026}", systemImage: "plus.bubble")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .accessibilityIdentifier(MobileAccessibilityID.snippetAddQuestionMenu)
-
-                Menu {
-                    ForEach(MobileSnippetPlaceholders.automaticFills, id: \.token) { placeholder in
-                        Button {
-                            insert(placeholder.token)
-                        } label: {
-                            let meaning = String(localized: String.LocalizationValue(placeholder.meaning))
-                            Text("\(placeholder.token)  \(meaning)")
-                        }
-                    }
-                } label: {
-                    Label("Automatic Fill\u{2026}", systemImage: "wand.and.stars")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .accessibilityIdentifier(MobileAccessibilityID.snippetAutomaticFillMenu)
-
-                if isNew {
-                    Menu {
-                        ForEach(SnippetStarters.all) { starter in
-                            Button(starter.name) { applyStarter(starter) }
-                        }
-                    } label: {
-                        Label("Starters\u{2026}", systemImage: "sparkles")
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-
-                Button {
-                    showsPlaceholderReference = true
-                } label: {
-                    Label("Placeholders", systemImage: "curlybraces")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+    private var editorForm: some View {
+        Form {
+            Section("Title") {
+                TextField("Thank-you reply", text: $title)
+                    .focused($focusedField, equals: .title)
+                    .accessibilityIdentifier(MobileAccessibilityID.snippetTitleField)
             }
-            .padding(.vertical, 2)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    private func insert(_ token: String) {
-        let step = MobileSnippetPlaceholders.inserting(token, into: text, selection: selection)
-        text = step.text
-        selection = step.selection
-        focusedField = .body
-    }
-
-    private func applyStarter(_ starter: SnippetStarter) {
-        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmed.isEmpty || SnippetStarters.all.contains(where: { $0.name == trimmed }) {
-            title = starter.name
-        }
-        text = starter.text
-        selection = TextSelection(insertionPoint: text.endIndex)
-    }
-
-    private func cancel() {
-        if hasChanges {
-            isConfirmingDiscard = true
-        } else {
-            dismiss()
-        }
-    }
-
-    private func save() {
-        guard let prepared = MobileSnippetPlaceholders.preparedTextForSave(text) else { return }
-        isSaving = true
-        let draftTitle = title
-        Task {
-            let saved: Bool = switch target {
-            case .new:
-                await appState.createSnippet(title: draftTitle, text: prepared)
-            case let .edit(id, _, _):
-                await appState.updateSnippet(id: id, title: draftTitle, text: prepared)
+            Section {
+                TextEditor(text: $text, selection: $selection)
+                    .font(.body.monospaced())
+                    .frame(minHeight: 140)
+                    .focused($focusedField, equals: .body)
+                    .accessibilityIdentifier(MobileAccessibilityID.snippetBodyEditor)
+                editorMenus
+            } header: {
+                Text("Template")
+            } footer: {
+                if isEmptyTemplate {
+                    Text(
+                        "Type {{date}} for an automatic fill or {{name}} for a fill-in question, " +
+                            "or pick from the menus above."
+                    )
+                } else if needsPlaceholderHint {
+                    Text("Add a question or a fill, like {{date}}, so Pesto can fill it in when you copy.")
+                }
             }
-            isSaving = false
-            if saved { dismiss() }
+            Section("Questions") {
+                MobileSnippetQuestionList(text: $text)
+            }
+            Section {
+                Text(MobileSnippetPlaceholders.previewString(from: text, accent: accent))
+                    .font(.body)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier(MobileAccessibilityID.snippetPreview)
+            } header: {
+                Text("Copies as")
+            } footer: {
+                Text(
+                    "Highlighted names are asked for when you copy. A dimmed part is optional. " +
+                        "The {{cursor}} marker is removed when copied."
+                )
+            }
+            if let notice = appState.notice, notice.isProblem {
+                Section {
+                    Label(notice.text, systemImage: "exclamationmark.circle")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .onAppear {
+            focusedField = isNew && text.isEmpty ? .title : .body
+        }
+        .confirmationDialog(
+            "Discard changes?",
+            isPresented: $isConfirmingDiscard,
+            titleVisibility: .visible
+        ) {
+            Button("Discard", role: .destructive) { dismiss() }
+            Button("Keep Editing", role: .cancel) {}
+        }
+        .sheet(item: $pendingQuestion) { choice in
+            AddQuestionSheet(choice: choice) { insertion in
+                insert(insertion)
+            }
+            .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showsPlaceholderReference) {
+            PlaceholderReferenceSheet { token in
+                insert(token)
+            }
+            .presentationDetents([.medium, .large])
         }
     }
 
@@ -426,6 +345,105 @@ struct MobileSnippetEditorView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(localizedMeaning), \(token)")
             .accessibilityHint(String(localized: "Inserts this placeholder at the cursor"))
+        }
+    }
+}
+
+private extension MobileSnippetEditorView {
+    var editorMenus: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                Menu {
+                    ForEach(QuestionChoice.allCases) { option in
+                        Button(String(localized: String.LocalizationValue(option.rawValue))) {
+                            pendingQuestion = option
+                        }
+                    }
+                } label: {
+                    Label("Add Question\u{2026}", systemImage: "plus.bubble")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .accessibilityIdentifier(MobileAccessibilityID.snippetAddQuestionMenu)
+
+                Menu {
+                    ForEach(MobileSnippetPlaceholders.automaticFills, id: \.token) { placeholder in
+                        Button {
+                            insert(placeholder.token)
+                        } label: {
+                            let meaning = String(localized: String.LocalizationValue(placeholder.meaning))
+                            Text("\(placeholder.token)  \(meaning)")
+                        }
+                    }
+                } label: {
+                    Label("Automatic Fill\u{2026}", systemImage: "wand.and.stars")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .accessibilityIdentifier(MobileAccessibilityID.snippetAutomaticFillMenu)
+
+                if isNew {
+                    Menu {
+                        ForEach(SnippetStarters.all) { starter in
+                            Button(starter.name) { applyStarter(starter) }
+                        }
+                    } label: {
+                        Label("Starters\u{2026}", systemImage: "sparkles")
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+
+                Button {
+                    showsPlaceholderReference = true
+                } label: {
+                    Label("Placeholders", systemImage: "curlybraces")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            .padding(.vertical, 2)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    func insert(_ token: String) {
+        let step = MobileSnippetPlaceholders.inserting(token, into: text, selection: selection)
+        text = step.text
+        selection = step.selection
+        focusedField = .body
+    }
+
+    func applyStarter(_ starter: SnippetStarter) {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || SnippetStarters.all.contains(where: { $0.name == trimmed }) {
+            title = starter.name
+        }
+        text = starter.text
+        selection = TextSelection(insertionPoint: text.endIndex)
+    }
+
+    func cancel() {
+        if hasChanges {
+            isConfirmingDiscard = true
+        } else {
+            dismiss()
+        }
+    }
+
+    func save() {
+        guard let prepared = MobileSnippetPlaceholders.preparedTextForSave(text) else { return }
+        isSaving = true
+        let draftTitle = title
+        Task {
+            let saved: Bool = switch target {
+            case .new:
+                await appState.createSnippet(title: draftTitle, text: prepared)
+            case let .edit(id, _, _):
+                await appState.updateSnippet(id: id, title: draftTitle, text: prepared)
+            }
+            isSaving = false
+            if saved { dismiss() }
         }
     }
 }

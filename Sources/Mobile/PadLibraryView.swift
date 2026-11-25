@@ -7,6 +7,7 @@ import SwiftUI
 /// detail in an inspector shown on demand. With the sidebar hidden the grid carries the chip row instead.
 struct PadLibraryView: View {
     let store: HistoryStore
+    @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
 
@@ -18,15 +19,40 @@ struct PadLibraryView: View {
             NavigationStack {
                 LibraryGrid(
                     store: store,
-                    showsChipRow: LibraryChrome.showsChipRow(isRegular: true, columns: library.columns)
+                    showsChipRow: LibraryChrome.showsChipRow(
+                        isRegular: true, columns: library.columns, isSearching: library.isSearching
+                    ),
+                    showsScopeChips: LibraryChrome.showsChipRow(isRegular: true, columns: library.columns)
                 )
                 .navigationTitle(LibraryTitle.text(for: library.filter.scope, collections: collections))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar { LibraryToolbar(showsSettings: library.columns == .detailOnly) }
                 .searchable(
                     text: $library.query, isPresented: $library.isSearching,
-                    placement: .toolbar, prompt: Text("Search clips")
+                    placement: .toolbar, prompt: Text("Search or ask")
                 )
+                .autocorrectionDisabled(false)
+                .onSubmit(of: .search) {
+                    if AskHeuristic.returnAsks(text: library.query, resultCount: library.visibleResultCount) {
+                        library.startAsk(
+                            using: { await appState.askPesto($0) },
+                            isLocked: { appState.isHistoryLockedNow() }
+                        )
+                    }
+                }
+                .onKeyPress(.return, phases: .down) { press in
+                    guard press.modifiers.contains(.command),
+                          library.isSearching,
+                          !library.query.trimmingCharacters(in: .whitespaces).isEmpty else { return .ignored }
+                    library.startAsk(
+                        using: { await appState.askPesto($0) },
+                        isLocked: { appState.isHistoryLockedNow() }
+                    )
+                    return .handled
+                }
+                .onChange(of: library.query) { _, newValue in
+                    if library.isAsking, newValue != library.activeAskSentence { library.cancelAsk() }
+                }
             }
             .inspector(isPresented: inspectorBinding) {
                 if let id = library.openClipID {

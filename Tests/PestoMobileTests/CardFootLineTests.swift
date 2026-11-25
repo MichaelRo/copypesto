@@ -147,4 +147,22 @@ struct CardFootLineTests {
         )
         #expect(inCollection.texts == ["Notes \u{00B7} 2m ago", "2m ago"])
     }
+
+    @Test("a synced clip with no app name shows its peer device name when known")
+    @MainActor
+    func whenSyncedWithPeerName_thenPeerDeviceLeads() {
+        let copied = Date(timeIntervalSince1970: 1_800_000_000)
+        let item = ClipboardItem(
+            timestamp: copied, type: .text, previewText: "body",
+            contentHash: "h", byteSize: 4, deviceID: "d", sequenceNumber: 1
+        )
+        item.syncOrigin = "peer-mac"
+        let now = copied.addingTimeInterval(120)
+
+        let line = PestoMobile.CardFootLineView.line(
+            for: item, now: now, device: mobilePhone, peerDeviceNames: ["peer-mac": "Michael's Mac"]
+        )
+        #expect(line.texts.first == "Michael's Mac \u{00B7} 2m ago")
+        #expect(line.symbol == nil)
+    }
 }

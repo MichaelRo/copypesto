@@ -54,4 +54,32 @@ final class AskApplyTests: XCTestCase {
 
         XCTAssertFalse(state.offersRecentSearches(true, history: ["links"]), "Ask has set filters; leave them visible")
     }
+
+    func test_whenAskCancelledMidFlight_thenStaleQueryIsDropped() async {
+        struct DelayedInterpreter: QueryInterpreting {
+            let onStart: @Sendable () -> Void
+            func interpret(_: String) async throws -> AskPestoQuery {
+                onStart()
+                try? await Task.sleep(for: .milliseconds(50))
+                return AskPestoQuery(keywords: "stale", types: [.url], range: .week)
+            }
+        }
+
+        let state = AppState()
+        state.searchText = "links from last week"
+        state.isSearchActive = true
+        let task = Task {
+            await state.askPesto(using: FallbackQueryInterpreter(primary: DelayedInterpreter {
+                Task { @MainActor in
+                    state.cancelAsk()
+                    state.searchText = "fresh"
+                }
+            }))
+        }
+        await task.value
+
+        XCTAssertEqual(state.searchText, "fresh")
+        XCTAssertTrue(state.searchTypeFilter.isEmpty)
+        XCTAssertEqual(state.searchDateFilter, .all)
+    }
 }

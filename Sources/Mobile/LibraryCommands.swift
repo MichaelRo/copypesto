@@ -7,6 +7,7 @@ struct ListCommandActions {
     let newNote: () -> Void
     let search: () -> Void
     let toggleDetail: () -> Void
+    var copySelected: (() -> Void)?
 }
 
 struct ClipCommandActions {
@@ -32,9 +33,15 @@ struct LibraryCommands: Commands {
                 .disabled(list == nil)
         }
         CommandGroup(after: .pasteboard) {
-            Button("Copy Clip") { clip?.copy() }
-                .keyboardShortcut("c", modifiers: [.shift, .command])
-                .disabled(clip == nil)
+            Button(list?.copySelected != nil ? "Copy Selected" : "Copy Clip") {
+                if let copySelected = list?.copySelected {
+                    copySelected()
+                } else {
+                    clip?.copy()
+                }
+            }
+            .keyboardShortcut("c", modifiers: [.shift, .command])
+            .disabled(list?.copySelected == nil && clip == nil)
             Button(clip?.isPinned == true ? "Unpin" : "Pin") { clip?.togglePin() }
                 .keyboardShortcut("p", modifiers: [.shift, .command])
                 .disabled(clip == nil)

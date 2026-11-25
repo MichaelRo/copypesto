@@ -1,6 +1,6 @@
 # 0023. The When filter keeps Today and Yesterday as chips and puts the rest in one menu, and a range can be any span Ask can read
 
-Status: Accepted
+Status: Accepted; the Format and From rest labels are superseded by ADR 0025
 
 Relates to [0014](0014-shelf-suggestions.md) only through the bar; the search chips and Ask Pesto are older. Nothing about storage, sync or the network changes.
 

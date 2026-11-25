@@ -17,7 +17,7 @@ Compaction and snapshots are built. Still open: `make bench-sync`, the measured 
 - A CloudKit entitlement needs a Team ID and a provisioning profile; `Pesto.entitlements` is empty for that reason.
 
 ## Direction
-Decided in [ADR 0018](../decisions/0018-multi-device-sync.md) (proposed): one encrypted, append-only log per Mac in a
+Decided in [ADR 0018](../decisions/0018-multi-device-sync.md): one encrypted, append-only log per Mac in a
 folder the person picks, merged by content hash, clocks and tombstones; a separate sync key (in iCloud Keychain once Pesto has a
 Team ID and keychain access group, joined by recovery key or approval from another Mac until then); Reset Sync as the only
 management action, no list of Macs; no server of ours and an unchanged `NetworkGuardTests` allowlist.

@@ -88,5 +88,25 @@ extension MobilePasteboardGlobals {
             let offeredItem = try #require(library.store.items.first { $0.displayPreviewText == "offered into inbox" })
             #expect(offeredItem.collectionID == inbox.id)
         }
+
+        @Test("automatic open capture suppresses empty-clipboard problem notices while manual adds report them")
+        func whenAddingNilOrUnreadable_thenOnlyManualReportsEmpty() async throws {
+            let library = try await MobileTestLibrary()
+
+            let silent = await library.state.add(nil, reportEmpty: false)
+            #expect(!silent)
+            #expect(library.state.notice == nil)
+
+            let board = pasteboard()
+            let defaults = ThrowawayDefaults.make()
+            defaults.set(true, for: Setting.addsCopiesOnOpen)
+            board.items = [["com.copypesto.unsupported": Data([0x01, 0x02])]]
+            await library.state.clipboardDidBecomeActive(pasteboard: board, defaults: defaults)
+            #expect(library.state.notice == nil)
+
+            let manual = await library.state.add(nil)
+            #expect(!manual)
+            #expect(library.state.notice?.text == "There was nothing Pesto can keep.")
+        }
     }
 }

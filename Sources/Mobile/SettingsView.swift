@@ -448,6 +448,10 @@ private extension SettingsView {
 
     var dataSection: some View {
         Section {
+            NavigationLink(value: LibraryModel.SettingsDestination.insights) {
+                Label("Insights", systemImage: "chart.bar.xaxis")
+            }
+            .accessibilityIdentifier(MobileAccessibilityID.insightsButton)
             Button("Import Collection (.pesto)\u{2026}") {
                 activeImport = .collection
             }
@@ -504,6 +508,7 @@ struct SettingsSheet: View {
                     switch destination {
                     case .keyboard: KeyboardSettingsView()
                     case .sync: SyncSettingsView()
+                    case .insights: MobileInsightsView()
                     }
                 }
         }

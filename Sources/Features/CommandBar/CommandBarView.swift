@@ -8,9 +8,9 @@ import UniformTypeIdentifiers
 /// Morphing command bar: pinboard chips at rest, transforms to a search field
 /// on ⌘F or when the user starts typing.
 struct CommandBarView: View {
-    @Environment(\.pestoAccent) private var accent
+    @Environment(\.pestoAccent) var accent
     @Environment(AppState.self) var appState: AppState
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.modelContext) var modelContext
     /// The window this bar is in; each publishes its own app chips (`AppState.appChipLists`).
     var host: GridHost = .shelf
     @Query(sort: \Pinboard.sortOrder) var pinboards: [Pinboard]
@@ -32,6 +32,9 @@ struct CommandBarView: View {
     @State var chipFrames: [UUID: CGRect] = [:]
     @State private var isAllDropTarget = false
     @State var chipsContentWidth: CGFloat?
+    @State var customRangeSingleDay = false
+    @State var customStartDate = Date.now
+    @State var customEndDate = Date.now
 
     /// The tag currently selected via `@tag` search syntax, if any.
     var selectedTag: String? {
@@ -49,26 +52,29 @@ struct CommandBarView: View {
     }
 
     var body: some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 0) {
-                if appState.isSearchActive {
-                    // Opens from the search button's end of the bar. Focus is set the moment search starts, before this
-                    // motion, so a key typed straight away goes into the field.
-                    searchField
-                        .transition(.scale(scale: 0.6, anchor: .trailing).combined(with: .opacity))
-                } else {
-                    chipsRow
-                        .transition(.opacity)
-                }
-            }
-            .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
-
+        HStack(spacing: 8) {
             if appState.isSearchActive {
-                filterBar
-                    .transition(.opacity.animation(Motion.animation(.pestoQuick.delay(0.06))))
+                // Opens in place of the chip strip inside the exact 46 pt command block so cards never shift.
+                HStack(spacing: 8) {
+                    searchInput
+                        .frame(minWidth: 190, idealWidth: 230, maxWidth: 260)
+                    searchTrailingButtons
+                    filterGroupDivider
+                    filterBar
+                }
+                .frame(minHeight: 26)
+                .transition(.opacity)
+            } else {
+                chipsRow
+                    .transition(.opacity)
             }
         }
         .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
+        .onChange(of: appState.showsCustomDateRange) { _, shown in
+            if !shown, appState.isSearchActive {
+                searchFocused = true
+            }
+        }
         .onChange(of: appChips, initial: true) { appState.appChipLists[host] = appChips }
         .onAppear { suggestionsModel.start(appState) }
         .onDisappear { suggestionsModel.stop() }
@@ -101,9 +107,16 @@ struct CommandBarView: View {
             } else {
                 searchFocused = false
                 showsRecentSearches = false
+                appState.showsCustomDateRange = false
+                appState.cancelAsk()
                 appState.searchText = ""
                 appState.filterChipCursor = nil
                 appState.clearSearchFilters()
+            }
+        }
+        .onChange(of: appState.searchDateFilter) { _, filter in
+            if case .custom = filter {} else {
+                appState.showsCustomDateRange = false
             }
         }
     }
@@ -262,6 +275,7 @@ struct CommandBarView: View {
             isActive: isSelected,
             helpText: String(localized: "Filter by tag: \(tag)")
         ) {
+            appState.cancelAsk()
             if isSelected {
                 appState.searchText = ""
             } else {
@@ -388,13 +402,23 @@ struct CommandBarView: View {
     }
 
     private func filterChip(_ entry: FilterEntry, hasCursor: Bool) -> some View {
-        PestoChip(
+        let isWhenMore = entry.id == Self.whenMoreID
+        return PestoChip(
             label: entry.label, icon: entry.icon, iconImage: entry.iconImage, isActive: entry.isActive,
             hasKeyboardCursor: hasCursor, helpText: entry.help ?? "",
             menuItems: entry.menu, openRequest: openRequests[entry.id] ?? 0, action: entry.toggle
         )
         .accessibilityLabel(entry.spoken ?? entry.label)
         .accessibilityIdentifier(AccessibilityID.filterChip(entry.identifier ?? entry.label))
+        .popover(
+            isPresented: Binding(
+                get: { isWhenMore && appState.showsCustomDateRange },
+                set: { shown in if !shown { appState.showsCustomDateRange = false } }
+            ),
+            arrowEdge: popoverArrowEdge
+        ) {
+            customDateRangePopover
+        }
     }
 
     private var searchField: some View {
@@ -409,44 +433,52 @@ struct CommandBarView: View {
             Image(systemName: "magnifyingglass")
                 .pestoQuiet()
 
-            TextField("Search clips…", text: Binding(get: { appState.searchText }, set: { appState.searchText = $0 }))
-                .accessibilityIdentifier(AccessibilityID.searchField)
-                .textFieldStyle(.plain)
-                .focused($searchFocused)
-                .task {
-                    // The field is inserted in the same update that flips isSearchActive; focusing in that pass
-                    // finds no field, so wait a beat.
-                    try? await Task.sleep(for: .milliseconds(60))
-                    searchFocused = true
-                    try? await Task.sleep(for: .milliseconds(40))
-                    SearchFieldCaret.placeAtEnd()
-                    try? await Task.sleep(for: .milliseconds(110))
+            TextField("Search clips…", text: Binding(
+                get: { appState.searchText },
+                set: {
+                    appState.cancelAsk()
+                    appState.searchText = $0
+                }
+            ))
+            .accessibilityIdentifier(AccessibilityID.searchField)
+            .textFieldStyle(.plain)
+            .focused($searchFocused)
+            .task {
+                // The field is inserted in the same update that flips isSearchActive; focusing in that pass
+                // finds no field, so wait a beat.
+                try? await Task.sleep(for: .milliseconds(60))
+                searchFocused = true
+                try? await Task.sleep(for: .milliseconds(40))
+                SearchFieldCaret.placeAtEnd()
+                try? await Task.sleep(for: .milliseconds(110))
+                refreshRecentSearches()
+            }
+            .onSubmit { saveToHistory(appState.searchText) }
+            .onChange(of: searchFocused) { _, focused in
+                guard focused else { return refreshRecentSearches() }
+                // A popover asked for before its field is in a window is dropped, and asking again with the same
+                // value does nothing, so it is turned on only once the field has had a moment to attach.
+                Task {
+                    try? await Task.sleep(for: .milliseconds(150))
                     refreshRecentSearches()
                 }
-                .onSubmit { saveToHistory(appState.searchText) }
-                .onChange(of: searchFocused) { _, focused in
-                    guard focused else { return refreshRecentSearches() }
-                    // A popover asked for before its field is in a window is dropped, and asking again with the same
-                    // value does nothing, so it is turned on only once the field has had a moment to attach.
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(150))
-                        refreshRecentSearches()
-                    }
+            }
+            .onChange(of: appState.searchText) { _, _ in refreshRecentSearches() }
+            .onChange(of: searchHistoryRaw) { _, _ in refreshRecentSearches() }
+            .popover(
+                isPresented: Binding(get: { showsRecentSearches }, set: recentSearchesPopoverChanged),
+                arrowEdge: popoverArrowEdge
+            ) {
+                RecentSearchesList(queries: searchHistory) { query in
+                    appState.cancelAsk()
+                    appState.searchText = query
+                    showsRecentSearches = false
                 }
-                .onChange(of: appState.searchText) { _, _ in refreshRecentSearches() }
-                .onChange(of: searchHistoryRaw) { _, _ in refreshRecentSearches() }
-                .popover(
-                    isPresented: Binding(get: { showsRecentSearches }, set: recentSearchesPopoverChanged),
-                    arrowEdge: popoverArrowEdge
-                ) {
-                    RecentSearchesList(queries: searchHistory) { query in
-                        appState.searchText = query
-                        showsRecentSearches = false
-                    }
-                }
+            }
 
             if !appState.searchText.isEmpty {
                 Button {
+                    appState.cancelAsk()
                     appState.searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -458,8 +490,10 @@ struct CommandBarView: View {
                 .accessibilityIdentifier(AccessibilityID.searchClearButton)
             }
         }
+        // Matches the 26 pt chip strip height (24 + 2 = 26 pt -> 46 pt total command block) so Find causes 0 pt shift.
+        .frame(height: 24)
         .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.vertical, 1)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.searchFieldFrame)
@@ -522,58 +556,9 @@ struct CommandBarView: View {
         appState.clipEditor(context: modelContext).edit(item) { $0.collectionID = collectionID }
     }
 
-    private func duplicatePinboard(_ source: Pinboard) {
-        let next = (pinboards.map(\.sortOrder).max() ?? -1) + 1
-        let copy = Pinboard(
-            name: CollectionNaming.copyName(of: source.name, existing: pinboards.map(\.name)),
-            symbolName: source.symbolName,
-            colorHex: source.colorHex,
-            sortOrder: next,
-            isSmart: source.isSmart,
-            smartPredicateData: source.smartPredicateData,
-            triggerBundleID: nil
-        )
-        appState.attempt("Couldn\u{2019}t duplicate the collection") {
-            try appState.collectionStore(context: modelContext).insert(.duplicate, [copy])
-        }
-    }
-
-    private func deletePinboard(_ pinboard: Pinboard) {
-        appState.deleteCollection(id: pinboard.id, fromShelf: true)
-    }
-
     /// Collection chips stay in place while one is dragged; `chipInsertionBar` marks where it will land.
     var shownPinboards: [Pinboard] {
         pinboards
-    }
-
-    func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {
-        let ids = pinboards.map(\.id)
-        guard order != ids else { return }
-        let reordered = order.compactMap { id in pinboards.first { $0.id == id } }
-        appState.attempt("Couldn\u{2019}t save the collection order") {
-            try appState.collectionStore(context: modelContext).edit(.reorder, reordered) {
-                for (i, p) in reordered.enumerated() {
-                    p.sortOrder = i
-                }
-            }
-        }
-        if let id,
-           let position = order.firstIndex(of: id),
-           let name = pinboards.first(where: { $0.id == id })?.name
-        {
-            Announcer.announce("\(name), position \(position + 1) of \(order.count)")
-        } else {
-            Announcer.announce("Moved")
-        }
-    }
-
-    private func movePinboard(_ id: UUID, by offset: Int) {
-        let ids = pinboards.map(\.id)
-        guard let from = ids.firstIndex(of: id), ids.indices.contains(from + offset) else { return }
-        var order = ids
-        order.swapAt(from, from + offset)
-        withAnimation(Motion.animation(.pestoMove)) { persistPinboardOrder(order, moved: id) }
     }
 }
 

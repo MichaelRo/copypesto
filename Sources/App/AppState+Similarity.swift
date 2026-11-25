@@ -13,14 +13,16 @@ extension AppState {
             do {
                 try await service.loadSimilarityIndex()
                 var cursor: Date?
+                var excluding: Set<UUID> = []
                 while !Task.isCancelled {
                     if self?.isSimilarityWorkPaused() ?? true {
                         try await Task.sleep(for: .seconds(30))
                         continue
                     }
-                    let pass = try await service.signMissingClips(limit: 10, before: cursor)
+                    let pass = try await service.signMissingClips(limit: 10, before: cursor, excluding: excluding)
                     if pass.isFinished { return }
                     cursor = pass.nextCursor
+                    excluding = pass.skippingIDs
                     try await Task.sleep(for: .milliseconds(250))
                 }
             } catch is CancellationError {

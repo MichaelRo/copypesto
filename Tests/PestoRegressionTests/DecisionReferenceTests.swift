@@ -114,4 +114,36 @@ struct DecisionReferenceTests {
             "README index and decisions/ differ: \(linked.symmetricDifference(names).sorted())"
         )
     }
+
+    @Test("no accepted record is tagged proposed in the README or docs")
+    func acceptedRecordsAreNotTaggedProposed() throws {
+        let directory = SourceTree.repositoryRoot.appendingPathComponent("decisions")
+        let names = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+            .filter { $0.range(of: #"^\d{4}-.*\.md$"#, options: .regularExpression) != nil }
+        var accepted: Set<String> = []
+        for name in names {
+            let text = try String(contentsOf: directory.appendingPathComponent(name), encoding: .utf8)
+            if let statusLine = text.split(separator: "\n", omittingEmptySubsequences: false)
+                .first(where: { $0.hasPrefix("Status:") }),
+                statusLine.contains("Accepted")
+            {
+                accepted.insert(String(name.prefix(4)))
+            }
+        }
+        let targets = try [SourceTree.repositoryRoot.appendingPathComponent("decisions/README.md")]
+            + (SourceTree.files(in: "docs", extensions: ["md"], minimum: 1, under: SourceTree.repositoryRoot))
+        var stale: [String] = []
+        for file in targets {
+            guard let text = try? String(contentsOf: file, encoding: .utf8) else { continue }
+            for line in text.split(separator: "\n") {
+                let rawLine = String(line)
+                guard rawLine.lowercased().contains("(proposed)") else { continue }
+                let linkedNums = rawLine.matches(of: #/(\d{4})-[a-z0-9-]+\.md/#).map { String($0.output.1) }
+                for number in try Set(citations(in: rawLine) + linkedNums) where accepted.contains(number) {
+                    stale.append("\(SourceTree.relativePath(file)) marks Accepted ADR \(number) as (proposed)")
+                }
+            }
+        }
+        #expect(stale.isEmpty, "\(stale.joined(separator: "\n"))")
+    }
 }

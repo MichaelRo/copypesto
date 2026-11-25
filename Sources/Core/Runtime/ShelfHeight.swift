@@ -14,4 +14,15 @@ public enum ShelfHeight {
     public static func height(forCardHeight cardHeight: CGFloat) -> CGFloat {
         cardHeight + chrome
     }
+
+    public static func topOverflow(measuredHeight: CGFloat, isSearchActive: Bool = false) -> CGFloat {
+        _ = isSearchActive
+        return max(0, measuredHeight - commandBlock)
+    }
+
+    /// Equal breathing room above and below a 30 pt bottom capsule (`SelectionActionBar`, Undo, suggestions, hint).
+    public static func bottomCapsuleInset(isSearchActive: Bool = false) -> CGFloat {
+        _ = isSearchActive
+        return 8
+    }
 }

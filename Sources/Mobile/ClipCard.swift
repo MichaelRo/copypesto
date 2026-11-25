@@ -23,6 +23,7 @@ struct ClipCard: View {
     @Environment(\.pestoAccent) private var accent
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.cardClock) private var cardClock
     @State var media = CardMediaState()
     @State private var isOnScreen = false
 
@@ -88,6 +89,8 @@ struct ClipCard: View {
                 card(face: face, width: 300).frame(width: 300)
                     .environment(appState)
                     .environment(library)
+                    .environment(\.peerDeviceNames, appState.peerDeviceNames)
+                    .environment(\.cardClock, cardClock)
             }
             .modifier(CardDragSource(card: self))
             .focusedValue(\.clipCommands, isFocused ? commands : nil)
@@ -142,7 +145,8 @@ struct ClipCard: View {
                 ClipCardFace(
                     item: item, face: face, media: media, width: width, revision: revision ?? Revision(item),
                     playsAnimation: CardAnimation.plays(
-                        isAnimated: media.picture?.animation != nil, isOnScreen: isOnScreen,
+                        isAnimated: media.picture?.animation != nil || media.linkAnimation != nil,
+                        isOnScreen: isOnScreen,
                         isConcealed: concealment.isConcealed, reduceMotion: Motion.reduceMotion
                     ),
                     inCollection: inCollection

@@ -325,7 +325,7 @@ struct GridView: View {
                 actionBar
                     .disabled(pendingDelete != nil)
                     .padding(.trailing, 16)
-                    .padding(.bottom, SelectionActionBar.bottomInset)
+                    .padding(.bottom, ShelfHeight.bottomCapsuleInset())
                     .transition(.opacity.combined(with: .offset(y: 8)).combined(with: .scale(
                         scale: 0.96, anchor: .bottomTrailing
                     )))
@@ -351,39 +351,7 @@ struct GridView: View {
             if let request { runBench(request) }
         }
         .onChange(of: appState.isOverlayVisible) { _, visible in
-            guard !isPinnedHost else { return }
-            keyboardRevealedID = nil
-            pointerOrigin = nil
-            scrollState.pointerHasMoved = false
-            if visible {
-                if appState.shelfContextWasStale
-                    || focusedID == nil
-                    || cachedFilteredIDs.first != firstIDAtClose
-                {
-                    scrollToStart()
-                    focusedIndex = 0
-                } else {
-                    focusedIndex = ShelfFocus.resolvedIndex(
-                        focusedID: focusedID,
-                        previousIndex: focusedIndex,
-                        in: cachedFilteredIDs
-                    )
-                }
-                let initialFocused = cachedFilteredIDs.indices.contains(focusedIndex)
-                    ? cachedFilteredIDs[focusedIndex] : nil
-                appState.focusedClipID = initialFocused
-                isPasting = false
-                appState.isDragging = false
-                appState.draggingItemID = nil
-                cardInsertionBar = nil
-                displayLimit = 1000
-                ShelfAnnouncement.opened(clipCount: cachedFilteredItems.count, isLocked: appState.isHistoryLocked)
-            } else {
-                firstIDAtClose = cachedFilteredIDs.first
-                appState.filterChipCursor = nil
-                appState.isEditingCollection = false
-                appState.isCreatingCollection = false
-            }
+            handleOverlayVisibilityChange(visible)
         }
         .onChange(of: appState.undoGeneration) { _, _ in filterEditGeneration += 1 }
         .onChange(of: appState.textEditGeneration) { _, _ in filterEditGeneration += 1 }

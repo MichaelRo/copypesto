@@ -25,8 +25,8 @@ struct PinnedWindowRootView: View {
             VStack(spacing: 0) {
                 CommandBarView(host: .pinnedWindow)
                     .padding(.horizontal, 16)
-                    .padding(.top, Self.titlebarClearance)
-                    .padding(.bottom, 8)
+                    .padding(.top, appState.isSearchActive ? 26 : Self.titlebarClearance)
+                    .padding(.bottom, appState.isSearchActive ? 2 : 8)
 
                 BiometricLockOverlay {
                     GridView(

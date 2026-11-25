@@ -53,7 +53,7 @@ extension MobileAppState {
             HistoryLockPolicy.lockWasSwitchedOn()
             offersAutoFillTip = false
             historyLock.lock()
-            if historyLock.holdsOutsideSurfaces { emptyOutsideSurfaces() }
+            forgetUnlockedState()
         } else {
             let wasLocked = historyLock.isLocked
             historyLock.lockWasTurnedOff()
@@ -79,6 +79,7 @@ extension MobileAppState {
         shortcutSearchQuery = nil
         historyStore?.setVisible(false)
         historyStore?.dropSearchText()
+        stopSimilarityWork()
         PreviewTextCache.shared.clear()
         emptyOutsideSurfaces()
     }
@@ -89,6 +90,7 @@ extension MobileAppState {
         inboxDidBecomeActive()
         reconcileKeyboardSize()
         writeOutsideSurfaces()
+        startSimilarityWork()
         Task { await clipboardDidBecomeActive() }
         if let link = heldLink {
             heldLink = nil

@@ -42,7 +42,8 @@ enum LibraryScope: Hashable {
     func ids(
         in index: HistoryIndex, query: String, kind: ClipboardType? = nil, kinds: Set<ClipboardType> = [],
         smartRule: ((UUID) -> Bool)? = nil, hidesSensitive: Bool = false, dateCutoff: Date? = nil,
-        dateBefore: Date? = nil, otherDevicesOnly: Bool = false, now: Date = .now
+        dateBefore: Date? = nil, sourceBundleID: String? = nil, sensitiveOnly: Bool = false,
+        otherDevicesOnly: Bool = false, now: Date = .now
     )
     -> [UUID] {
         var criteria = HistoryCriteria(
@@ -53,10 +54,12 @@ enum LibraryScope: Hashable {
             criteria.searchActive = true
             criteria.types = Set(narrowed.map(\.rawValue))
         }
-        if dateCutoff != nil || dateBefore != nil || otherDevicesOnly {
+        if dateCutoff != nil || dateBefore != nil || sourceBundleID != nil || sensitiveOnly || otherDevicesOnly {
             criteria.searchActive = true
             criteria.dateCutoff = dateCutoff
             criteria.dateBefore = dateBefore
+            if let sourceBundleID { criteria.sources = [sourceBundleID] }
+            criteria.sensitiveOnly = sensitiveOnly
             criteria.remoteOnly = otherDevicesOnly
         }
         switch self {

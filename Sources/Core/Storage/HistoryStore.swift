@@ -28,6 +28,7 @@ public final class HistoryStore {
     /// Changes whenever the history or a row of its index changes, so a view can list again only when it must.
     public private(set) var revision = 0
 
+    @ObservationIgnored private let container: ModelContainer
     @ObservationIgnored private let context: ModelContext
     @ObservationIgnored private var observer: (any NSObjectProtocol)?
     @ObservationIgnored private var isStale = true
@@ -49,6 +50,7 @@ public final class HistoryStore {
     }
 
     public init(container: ModelContainer) {
+        self.container = container
         context = container.mainContext
         observer = ModelSaveObserver.observeChanges(in: container) { [weak self] change in
             self?.historyWasSaved(change)
@@ -175,7 +177,7 @@ public final class HistoryStore {
             }
             current.apply(removing: gone)
         }
-        let changed = Set(change.inserted + change.updated)
+        let changed = Array(Set(change.inserted + change.updated))
         if !changed.isEmpty {
             let descriptor = FetchDescriptor<ClipboardItem>(
                 predicate: #Predicate { changed.contains($0.persistentModelID) }

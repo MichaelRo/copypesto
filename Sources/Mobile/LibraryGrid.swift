@@ -2,12 +2,14 @@
 import PestoCore
 import SwiftData
 import SwiftUI
+import UIKit
 
 /// The clips of the chosen scope as Pesto cards on the theme's ground, filtered in place by the search text on the
 /// history index. Only the cards on screen are built, so only their sealed previews are opened.
 struct LibraryGrid: View {
     let store: HistoryStore
     let showsChipRow: Bool
+    var showsScopeChips = true
 
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
@@ -26,10 +28,6 @@ struct LibraryGrid: View {
     @State private var position: CardIdentity?
     @State private var hasRestoredPosition = false
     @State private var ranking = SemanticRanking()
-    @State private var cardFrames = CardFrameStore()
-    @State private var dragAnchorID: UUID?
-    @State private var dragBaseSelection: Set<UUID> = []
-    @State private var dragAddsSelection = true
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
     @AppStorage(Setting.dismissedSnippetHint) private var dismissedSnippetHint: Bool
 
@@ -37,36 +35,39 @@ struct LibraryGrid: View {
         let ids = listing.ids
         let count = CardGridLayout.columnCount(width: rowWidth, isAccessibilitySize: typeSize.isAccessibilitySize)
         let cardWidth = CardGridLayout.cardWidth(rowWidth: rowWidth, columns: count)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                if !appState.storeIsOnDisk { notSavedBanner }
-                if showsSnippetPlaceholderHint, !ids.isEmpty { snippetPlaceholderHint }
-                grid(ids, columns: count, cardWidth: cardWidth)
-                    .environment(\.cardClock, minute)
-            }
-            .padding(.top, 8)
-            .padding(.bottom, 24)
-        }
-        .safeAreaInset(edge: .top, spacing: 0) {
+        VStack(spacing: 0) {
             if showsChipRow {
-                LibraryChipRow()
+                LibraryChipRow(showsScopes: showsScopeChips)
                     .padding(.vertical, 6)
+                    .background(ground)
+                    .contentShape(.rect)
             }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    if !appState.storeIsOnDisk { notSavedBanner }
+                    if showsSnippetPlaceholderHint, !ids.isEmpty { snippetPlaceholderHint }
+                    grid(ids, columns: count, cardWidth: cardWidth)
+                        .environment(\.cardClock, minute)
+                        .environment(\.peerDeviceNames, appState.peerDeviceNames)
+                }
+                .padding(.top, 8)
+                .padding(.bottom, 24)
+            }
+            .scrollPosition(id: $position, anchor: .top)
+            .onChange(of: position) { _, first in if hasRestoredPosition { library.scrollAnchor = first } }
+            .scrollDismissesKeyboard(.immediately)
+            .refreshable {
+                await SyncExchange.onPull(appState.sync)
+                library.resort()
+            }
+            .overlay { LibraryEmptyState(isEmpty: hasListed && ids.isEmpty, hasClips: !store.items.isEmpty) }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if library.isSelecting {
-                MobileSelectionBar(collections: collections, allVisibleIDs: ids)
+                MobileSelectionBar(collections: collections, listing: listing)
             }
         }
-        .scrollPosition(id: $position, anchor: .top)
-        .onChange(of: position) { _, first in if hasRestoredPosition { library.scrollAnchor = first } }
-        .scrollDismissesKeyboard(.immediately)
-        .refreshable {
-            await SyncExchange.onPull(appState.sync)
-            library.resort()
-        }
         .background(ground.ignoresSafeArea())
-        .overlay { LibraryEmptyState(isEmpty: hasListed && ids.isEmpty, hasClips: !store.items.isEmpty) }
         .onChange(of: listingKey, initial: true) { _, key in relist(key) }
         .libraryBanners()
         .sensoryFeedback(.success, trigger: library.copyCount)
@@ -85,8 +86,29 @@ struct LibraryGrid: View {
         .focusedSceneValue(\.listCommands, ListCommandActions(
             newNote: { library.isComposing = true },
             search: { library.isSearching = true },
-            toggleDetail: toggleDetail
+            toggleDetail: toggleDetail,
+            copySelected: library.isSelecting ? copySelectedClosure() : nil
         ))
+    }
+
+    private func copySelectedClosure() -> (() -> Void)? {
+        guard !library.isSearching,
+              library.openClipID == nil,
+              library.textEdit == nil,
+              library.snippetEditor == nil else { return nil }
+        let listing = listing
+        return {
+            guard !library.selectedClipIDs.isEmpty else { return }
+            let textual: [ClipboardItem] = library.selectedClipIDs
+                .sorted { (listing.indexByID[$0] ?? .max) < (listing.indexByID[$1] ?? .max) }
+                .compactMap { id in
+                    guard let item = store.item(for: id),
+                          item.type == .text || item.type == .code else { return nil }
+                    return item
+                }
+            guard textual.count >= 2 else { return }
+            if appState.copyJoined(textual) { library.endSelection() }
+        }
     }
 
     private var inCollection: Bool {
@@ -97,40 +119,38 @@ struct LibraryGrid: View {
     private func grid(_ ids: [UUID], columns count: Int, cardWidth: CGFloat) -> some View {
         let animatesChange = listing.animates
         let columns = Array(repeating: GridItem(.flexible(), spacing: CardGridLayout.spacing), count: count)
+        let cardHeight = CardGridLayout.cardHeight(forWidth: cardWidth)
         return LazyVGrid(columns: columns, spacing: CardGridLayout.spacing) {
             ForEach(ids, id: \.self) { id in
                 if let item = store.item(for: id) {
-                    ClipCard(
-                        item: item, width: cardWidth, collections: collections, isFocused: focusedClip == id,
+                    SelectionAwareCard(
+                        item: item,
+                        width: cardWidth,
+                        collections: collections,
+                        isFocused: focusedClip == id,
                         inCollection: inCollection,
-                        isSelected: library.isSelecting && library.selectedClipIDs.contains(id),
                         isFlashed: library.flashedClipID == id,
                         revision: ClipCard.Revision(item)
                     )
                     .focusable()
                     .focused($focusedClip, equals: id)
                     .focusEffectDisabled()
-                    .onGeometryChange(for: CGRect.self) { proxy in
-                        proxy.frame(in: .named("clipGrid"))
-                    } action: { frame in
-                        if library.isSelecting {
-                            cardFrames.frames[id] = frame
-                        }
-                    }
                     .id(CardIdentity(id: id))
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
         }
-        .coordinateSpace(name: "clipGrid")
-        .simultaneousGesture(dragSelectGesture(visibleIDs: ids), including: library.isSelecting ? .all : .none)
-        .onChange(of: library.isSelecting) { _, selecting in
-            if !selecting {
-                dragAnchorID = nil
-                cardFrames.frames.removeAll()
-            }
+        .background {
+            HorizontalSelectAttachment(
+                isEnabled: library.isSelecting,
+                itemCount: ids.count,
+                columns: count,
+                cardWidth: cardWidth,
+                cardHeight: cardHeight,
+                visibleIDs: ids,
+                library: library
+            )
         }
-        .sensoryFeedback(.selection, trigger: dragAnchorID == nil ? 0 : library.selectedClipIDs.count)
         .scrollTargetLayout()
         // A hardware keyboard's arrows move the focused card; Return copies it (`ClipCard`). At an edge the key is
         // left to the system.
@@ -157,10 +177,12 @@ struct LibraryGrid: View {
     }
 
     private var listingKey: LibraryListing.Key {
-        LibraryListing.Key(
+        let hideNSFW = NSFWMode(rawValue: nsfwModeRaw) == .hide
+            && !(library.isSearching && library.filter.sensitiveOnly)
+        return LibraryListing.Key(
             revision: store.revision, query: library.query, filter: library.filter, isSearching: library.isSearching,
             orderVersion: library.orderVersion, textEdits: appState.textEdits, byMeaning: byMeaning,
-            hidesSensitive: NSFWMode(rawValue: nsfwModeRaw) == .hide, smartRule: smartBoard?.smartPredicateData
+            hidesSensitive: hideNSFW, smartRule: smartBoard?.smartPredicateData
         )
     }
 
@@ -168,6 +190,7 @@ struct LibraryGrid: View {
         listing = HangDiagnostics.measure("libraryRelist") {
             LibraryListing.list(key, in: store, order: library.order, smartRule: smartRule)
         }
+        library.visibleResultCount = listing.ids.count
         hasListed = true
         guard !hasRestoredPosition else { return }
         hasRestoredPosition = true
@@ -247,36 +270,6 @@ struct LibraryGrid: View {
             .foregroundStyle(.secondary)
             .padding(.horizontal, CardGridLayout.margin)
     }
-
-    private func cardID(at point: CGPoint, among ids: [UUID]) -> UUID? {
-        ids.first { id in cardFrames.frames[id]?.contains(point) == true }
-    }
-
-    private func dragSelectGesture(visibleIDs: [UUID]) -> some Gesture {
-        DragGesture(minimumDistance: 14, coordinateSpace: .named("clipGrid"))
-            .onChanged { value in
-                guard library.isSelecting else { return }
-                if dragAnchorID == nil {
-                    guard abs(value.translation.width) >= abs(value.translation.height) * 0.75,
-                          let startID = cardID(at: value.startLocation, among: visibleIDs) else { return }
-                    dragAnchorID = startID
-                    dragBaseSelection = library.selectedClipIDs
-                    dragAddsSelection = !dragBaseSelection.contains(startID)
-                }
-                guard let anchorID = dragAnchorID,
-                      let currentID = cardID(at: value.location, among: visibleIDs) else { return }
-                library.applyDragSelection(
-                    from: anchorID,
-                    to: currentID,
-                    in: visibleIDs,
-                    baseSelection: dragBaseSelection,
-                    selecting: dragAddsSelection
-                )
-            }
-            .onEnded { _ in
-                dragAnchorID = nil
-            }
-    }
 }
 
 /// A card's identity in the grid: its clip and that clip's content, so an edited card is a new view.
@@ -285,6 +278,290 @@ struct CardIdentity: Hashable {
     var content = ""
 }
 
-private final class CardFrameStore {
-    var frames: [UUID: CGRect] = [:]
+private struct SelectionAwareCard: View {
+    let item: ClipboardItem
+    let width: CGFloat
+    let collections: [Pinboard]
+    let isFocused: Bool
+    let inCollection: Bool
+    let isFlashed: Bool
+    let revision: ClipCard.Revision
+    @Environment(LibraryModel.self) private var library
+
+    var body: some View {
+        ClipCard(
+            item: item,
+            width: width,
+            collections: collections,
+            isFocused: isFocused,
+            inCollection: inCollection,
+            isSelected: library.isSelecting && library.selectedClipIDs.contains(item.id),
+            isFlashed: isFlashed,
+            revision: revision
+        )
+    }
+}
+
+private struct HorizontalSelectAttachment: UIViewRepresentable {
+    let isEnabled: Bool
+    let itemCount: Int
+    let columns: Int
+    let cardWidth: CGFloat
+    let cardHeight: CGFloat
+    let visibleIDs: [UUID]
+    let library: LibraryModel
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIView(context _: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        let coordinator = context.coordinator
+        coordinator.gridView = uiView
+        coordinator.isEnabled = isEnabled
+        coordinator.itemCount = itemCount
+        coordinator.columns = columns
+        coordinator.cardWidth = cardWidth
+        coordinator.cardHeight = cardHeight
+        coordinator.visibleIDs = visibleIDs
+        coordinator.library = library
+        coordinator.attachIfNeeded(from: uiView)
+        coordinator.panGesture?.isEnabled = isEnabled
+        if !isEnabled {
+            coordinator.reset()
+        }
+    }
+
+    static func dismantleUIView(_: UIView, coordinator: Coordinator) {
+        coordinator.stopAutoScroll()
+        if let pan = coordinator.panGesture, let scrollView = coordinator.attachedScrollView {
+            scrollView.removeGestureRecognizer(pan)
+        }
+        coordinator.panGesture = nil
+        coordinator.attachedScrollView = nil
+    }
+
+    @MainActor
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        weak var gridView: UIView?
+        weak var attachedScrollView: UIScrollView?
+        var panGesture: UIPanGestureRecognizer?
+        var isEnabled = false
+        var itemCount = 0
+        var columns = 2
+        var cardWidth: CGFloat = 0
+        var cardHeight: CGFloat = 0
+        var visibleIDs: [UUID] = []
+        weak var library: LibraryModel?
+
+        private var anchorIndex: Int?
+        private var lastAppliedIndex: Int?
+        private var baseSelection: Set<UUID> = []
+        private var selecting = true
+        private let feedback = UISelectionFeedbackGenerator()
+        private var displayLink: CADisplayLink?
+        private var lastTickTimestamp: CFTimeInterval?
+        private var lastViewportPoint: CGPoint?
+        private var currentAutoScrollVelocity: CGFloat = 0
+
+        func attachIfNeeded(from view: UIView) {
+            guard attachedScrollView == nil else { return }
+            var current = view.superview
+            while let candidate = current {
+                if let scrollView = candidate as? UIScrollView {
+                    let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+                    pan.delegate = self
+                    pan.maximumNumberOfTouches = 1
+                    pan.cancelsTouchesInView = false
+                    scrollView.addGestureRecognizer(pan)
+                    attachedScrollView = scrollView
+                    panGesture = pan
+                    return
+                }
+                current = candidate.superview
+            }
+            Task { @MainActor [weak self, weak view] in
+                await Task.yield()
+                guard let self, let view, self.attachedScrollView == nil else { return }
+                self.attachIfNeeded(from: view)
+            }
+        }
+
+        func reset() {
+            stopAutoScroll()
+            lastViewportPoint = nil
+            anchorIndex = nil
+            lastAppliedIndex = nil
+            baseSelection = []
+        }
+
+        func stopAutoScroll() {
+            displayLink?.invalidate()
+            displayLink = nil
+            lastTickTimestamp = nil
+            currentAutoScrollVelocity = 0
+        }
+
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard isEnabled, let pan = gestureRecognizer as? UIPanGestureRecognizer,
+                  let gridView else { return false }
+            let velocity = pan.velocity(in: gridView)
+            guard abs(velocity.x) > abs(velocity.y) * 1.5, abs(velocity.x) > 20 else { return false }
+            let point = pan.location(in: gridView)
+            return CardGridLayout.cardIndex(
+                at: point,
+                itemCount: itemCount,
+                columns: columns,
+                cardWidth: cardWidth,
+                cardHeight: cardHeight
+            ) != nil
+        }
+
+        func gestureRecognizer(
+            _: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith _: UIGestureRecognizer
+        )
+        -> Bool {
+            false
+        }
+
+        @objc
+        private func handlePan(_ pan: UIPanGestureRecognizer) {
+            guard isEnabled, let gridView, let library else {
+                reset()
+                return
+            }
+            let point = pan.location(in: gridView)
+            switch pan.state {
+            case .began:
+                guard let startIndex = CardGridLayout.cardIndex(
+                    at: point,
+                    itemCount: itemCount,
+                    columns: columns,
+                    cardWidth: cardWidth,
+                    cardHeight: cardHeight
+                ), visibleIDs.indices.contains(startIndex) else {
+                    reset()
+                    return
+                }
+                anchorIndex = startIndex
+                lastAppliedIndex = startIndex
+                baseSelection = library.selectedClipIDs
+                selecting = !baseSelection.contains(visibleIDs[startIndex])
+                feedback.prepare()
+                library.applyDragSelection(
+                    fromIndex: startIndex,
+                    toIndex: startIndex,
+                    in: visibleIDs,
+                    baseSelection: baseSelection,
+                    selecting: selecting
+                )
+                feedback.selectionChanged()
+                updateAutoScroll(for: pan)
+
+            case .changed:
+                updateAutoScroll(for: pan)
+                guard let anchor = anchorIndex else { return }
+                applySelection(at: point, anchor: anchor, in: library)
+
+            case .ended, .cancelled, .failed:
+                reset()
+
+            default:
+                break
+            }
+        }
+
+        private func applySelection(at gridPoint: CGPoint, anchor: Int, in library: LibraryModel) {
+            guard let currentIndex = CardGridLayout.cardIndex(
+                at: gridPoint,
+                itemCount: itemCount,
+                columns: columns,
+                cardWidth: cardWidth,
+                cardHeight: cardHeight,
+                allowsGutter: true
+            ), currentIndex != lastAppliedIndex else { return }
+            lastAppliedIndex = currentIndex
+            library.applyDragSelection(
+                fromIndex: anchor,
+                toIndex: currentIndex,
+                in: visibleIDs,
+                baseSelection: baseSelection,
+                selecting: selecting
+            )
+            feedback.selectionChanged()
+        }
+
+        private func updateAutoScroll(for pan: UIPanGestureRecognizer) {
+            guard let scrollView = attachedScrollView,
+                  let viewportView = scrollView.superview else
+            {
+                stopAutoScroll()
+                return
+            }
+            let touchPoint = pan.location(in: viewportView)
+            lastViewportPoint = touchPoint
+            let visibleMinY = scrollView.frame.minY + scrollView.adjustedContentInset.top
+            let visibleMaxY = scrollView.frame.maxY - scrollView.adjustedContentInset.bottom
+            let velocity = CardGridLayout.edgeAutoScrollVelocity(
+                touchY: touchPoint.y,
+                visibleMinY: visibleMinY,
+                visibleMaxY: visibleMaxY
+            )
+            currentAutoScrollVelocity = velocity
+            guard velocity != 0 else {
+                stopAutoScroll()
+                return
+            }
+            if displayLink == nil {
+                lastTickTimestamp = nil
+                let link = CADisplayLink(target: self, selector: #selector(handleAutoScrollTick(_:)))
+                link.add(to: .main, forMode: .common)
+                displayLink = link
+            }
+        }
+
+        @objc
+        private func handleAutoScrollTick(_ link: CADisplayLink) {
+            guard isEnabled,
+                  let anchor = anchorIndex,
+                  let scrollView = attachedScrollView,
+                  let viewportView = scrollView.superview,
+                  let gridView,
+                  let library,
+                  let viewportPoint = lastViewportPoint,
+                  currentAutoScrollVelocity != 0 else
+            {
+                stopAutoScroll()
+                return
+            }
+            let dt: CGFloat = if let previous = lastTickTimestamp {
+                min(1.0 / 20.0, max(0, CGFloat(link.timestamp - previous)))
+            } else {
+                1.0 / 60.0
+            }
+            lastTickTimestamp = link.timestamp
+
+            let minY = -scrollView.adjustedContentInset.top
+            let maxY = max(
+                minY,
+                scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom
+            )
+            let nextY = min(max(scrollView.contentOffset.y + currentAutoScrollVelocity * dt, minY), maxY)
+            guard abs(nextY - scrollView.contentOffset.y) >= 0.25 else {
+                stopAutoScroll()
+                return
+            }
+            scrollView.contentOffset.y = nextY
+            let gridPoint = gridView.convert(viewportPoint, from: viewportView)
+            applySelection(at: gridPoint, anchor: anchor, in: library)
+        }
+    }
 }

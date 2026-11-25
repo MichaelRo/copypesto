@@ -38,6 +38,7 @@ public final class SyncFolderService {
 
     public private(set) var status: SyncStatus = .off
     public var onStatusChange: (@MainActor (SyncStatus) -> Void)?
+    public var onPeerDevicesChange: (@MainActor ([String: String]) -> Void)?
 
     private var group: SyncGroup?
     private var water: SyncHighWater
@@ -112,6 +113,8 @@ public final class SyncFolderService {
         watcher = nil
         if let observer { NotificationCenter.default.removeObserver(observer) }
         observer = nil
+        group = nil
+        onPeerDevicesChange?([:])
         set(.off)
     }
 
@@ -124,11 +127,12 @@ public final class SyncFolderService {
     }
 
     private func scheduleSoon() {
+        guard !stopped else { return }
         pending?.cancel()
         pending = Task { [weak self] in
             try? await Task.sleep(for: self?.timing.batchWindow ?? .seconds(1))
-            guard !Task.isCancelled else { return }
-            await self?.syncNow()
+            guard !Task.isCancelled, let self, !self.stopped else { return }
+            await self.syncNow()
         }
     }
 
@@ -143,6 +147,7 @@ public final class SyncFolderService {
     /// Writes what is waiting, then reads what arrived. Returns the state it ended in.
     @discardableResult
     public func syncNow() async -> SyncStatus {
+        guard !stopped else { return status }
         if let current {
             // A pass is running: ask for one more after it, and wait for the whole run so the caller sees its result.
             again = true
@@ -153,7 +158,7 @@ public final class SyncFolderService {
             repeat {
                 again = false
                 await pass()
-            } while again && !Task.isCancelled
+            } while again && !stopped && !Task.isCancelled
         }
         current = run
         await run.value
@@ -162,7 +167,10 @@ public final class SyncFolderService {
     }
 
     private func pass() async {
-        if isLocked() { return set(.paused) }
+        if isLocked() {
+            onPeerDevicesChange?([:])
+            return set(.paused)
+        }
         guard await Self.rootExists(at: layout.root.path) else { return set(.folderMissing) }
         do {
             try Task.checkCancellation()
@@ -217,6 +225,7 @@ public final class SyncFolderService {
         let epochChanged = group.map { $0.epoch != found.epoch } ?? false
         if announced, !epochChanged {
             group = found
+            publishPeerDevices(found)
             await sendUnstampedOnce()
             return
         }
@@ -231,7 +240,21 @@ public final class SyncFolderService {
         if !announced || epochChanged { _ = try await storage.restampForSync(.notFrom(deviceID: identity.deviceID)) }
         water.sentUnstampedHistory = true
         saveWater()
-        group = try SyncGroupManager.openGroup(layout: layout, keyStore: keyStore) ?? found
+        let updated = try SyncGroupManager.openGroup(layout: layout, keyStore: keyStore) ?? found
+        group = updated
+        publishPeerDevices(updated)
+    }
+
+    private func publishPeerDevices(_ current: SyncGroup) {
+        let names: [String: String] = Dictionary(
+            current.devices.compactMap { record in
+                guard record.deviceID != identity.deviceID else { return nil }
+                let trimmed = record.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                return trimmed.isEmpty ? nil : (record.deviceID, trimmed)
+            },
+            uniquingKeysWith: { _, latest in latest }
+        )
+        onPeerDevicesChange?(names)
     }
 
     /// A device announced before turn-on stamped its history (ADR 0056) never sent what it held from before. Once per

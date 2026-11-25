@@ -17,5 +17,6 @@ extension MobileAppState {
         await clipboardDidBecomeActive()
         await refreshWidgetPresence()
         await pruneHistory()
+        startSimilarityWork()
     }
 }

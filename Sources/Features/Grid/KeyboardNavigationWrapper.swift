@@ -111,6 +111,16 @@ struct KeyboardNavigationWrapper<Content: View>: View {
         coordinator.onFilterChipRelease = { [appState] in
             MainActor.assumeIsolated { appState.releaseFilterChipCursor() }
         }
+        coordinator.isCustomDateRangeOpen = { [appState] in
+            MainActor.assumeIsolated { appState.showsCustomDateRange }
+        }
+        coordinator.onCustomDateRangeDismiss = { [appState] in
+            MainActor.assumeIsolated {
+                guard appState.showsCustomDateRange else { return false }
+                appState.showsCustomDateRange = false
+                return true
+            }
+        }
     }
 
     private func refreshCoordinator() {

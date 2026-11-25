@@ -56,7 +56,10 @@ extension MobileAppState {
     func writeQuickInsertAsync() async {
         quickInsertRewrite?.cancel()
         quickInsertRewrite = nil
+        quickInsertGeneration &+= 1
+        let expectedGeneration = quickInsertGeneration
         guard let target = quickInsert else { return }
+        _ = isHistoryLockedNow()
         if historyLock.holdsOutsideSurfaces, target.isEnabled() { return emptyQuickInsert() }
         guard target.isEnabled(), let container = historyContainer else {
             if target.file.exists { removeQuickInsert() }
@@ -67,17 +70,24 @@ extension MobileAppState {
         let expiresAt = historyLock.outsideExpiresAt(at: now)
         let options = target.options()
         let device = CardFootLineView.device
+        let peers = peerDeviceNames
         let next = Task { [weak self] in
             await previous?.value
-            guard let self, let currentTarget = quickInsert, currentTarget.isEnabled(),
+            guard let self,
+                  self.quickInsertGeneration == expectedGeneration,
+                  let currentTarget = quickInsert, currentTarget.isEnabled(),
                   !historyLock.holdsOutsideSurfaces else { return }
             do {
                 let set = try await Self.buildQuickInsertSet(
-                    container: container, now: now, options: options, device: device
+                    container: container, now: now, options: options, device: device, peerDeviceNames: peers
                 )
                 .withExpiresAt(expiresAt)
-                try currentTarget.file.write(set, with: currentTarget.keys.loadOrCreate())
+                guard self.quickInsertGeneration == expectedGeneration,
+                      let stillTarget = quickInsert, stillTarget.isEnabled(),
+                      !historyLock.holdsOutsideSurfaces else { return }
+                try stillTarget.file.write(set, with: stillTarget.keys.loadOrCreate())
             } catch {
+                guard self.quickInsertGeneration == expectedGeneration else { return }
                 Self.quickInsertLogger
                     .error("The AutoFill set was not written: \(error.localizedDescription, privacy: .public)")
                 currentTarget.file.remove()
@@ -89,13 +99,16 @@ extension MobileAppState {
 
     @concurrent
     private static func buildQuickInsertSet(
-        container: ModelContainer, now: Date, options: QuickInsertSelection.Options, device: CardFootLine.Device
+        container: ModelContainer, now: Date, options: QuickInsertSelection.Options, device: CardFootLine.Device,
+        peerDeviceNames: [String: String]
     ) async throws
         -> QuickInsertSet
     {
         try QuickInsertSelection.set(
             in: ModelContext(container), now: now, options: options,
-            source: { CardFootLine.source(CardFootLine.origin(of: $0), device: device) }
+            source: {
+                CardFootLine.source(CardFootLine.origin(of: $0, peerDeviceNames: peerDeviceNames), device: device)
+            }
         )
     }
 
@@ -104,6 +117,7 @@ extension MobileAppState {
     func writeQuickInsert() {
         quickInsertRewrite?.cancel()
         quickInsertRewrite = nil
+        quickInsertGeneration &+= 1
         guard let target = quickInsert else { return }
         if historyLock.holdsOutsideSurfaces, target.isEnabled() { return emptyQuickInsert() }
         guard target.isEnabled(), let container = historyContainer else {
@@ -115,9 +129,10 @@ extension MobileAppState {
             // actor just edited (made secret, say) is merged only a moment after the save.
             let now = clock()
             let device = CardFootLineView.device
+            let peers = peerDeviceNames
             let set = try QuickInsertSelection.set(
                 in: ModelContext(container), now: now, options: target.options(),
-                source: { CardFootLine.source(CardFootLine.origin(of: $0), device: device) }
+                source: { CardFootLine.source(CardFootLine.origin(of: $0, peerDeviceNames: peers), device: device) }
             )
             .withExpiresAt(historyLock.outsideExpiresAt(at: now))
             try target.file.write(set, with: target.keys.loadOrCreate())
@@ -134,6 +149,7 @@ extension MobileAppState {
     func emptyQuickInsert() {
         quickInsertRewrite?.cancel()
         quickInsertRewrite = nil
+        quickInsertGeneration &+= 1
         guard let target = quickInsert, target.isEnabled() else { return }
         do {
             let options = target.options()
@@ -149,6 +165,9 @@ extension MobileAppState {
     }
 
     func removeQuickInsert() {
+        quickInsertRewrite?.cancel()
+        quickInsertRewrite = nil
+        quickInsertGeneration &+= 1
         guard let target = quickInsert else { return }
         target.file.remove()
         target.keys.remove()

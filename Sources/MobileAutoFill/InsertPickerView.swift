@@ -296,7 +296,7 @@ struct InsertPickerView: View {
             if entry.section == .pinned {
                 Image(systemName: "pin.fill")
                     .font(.caption2)
-            } else if entry.section == .snippets {
+            } else if entry.expandsOnInsert {
                 Image(systemName: isFillIn ? "curlybraces" : "text.badge.plus")
                     .font(.caption2)
             }
@@ -317,7 +317,7 @@ struct InsertPickerView: View {
 
     private func needsFillIn(_ entry: QuickInsertEntry) -> Bool {
         insertText != nil
-            && entry.section == .snippets
+            && entry.expandsOnInsert
             && !TemplateExpander.fillsWithoutAsking(entry.text)
     }
 
@@ -338,7 +338,7 @@ struct InsertPickerView: View {
 
     private func choose(_ entry: QuickInsertEntry) {
         if insertText != nil,
-           let plan = SnippetCopyPlan.plan(for: entry.text, isSnippet: entry.section == .snippets),
+           let plan = SnippetCopyPlan.plan(for: entry.text, isSnippet: entry.expandsOnInsert),
            plan.needsSheet
         {
             pendingFill = PendingSnippetFill(entry: entry, plan: plan)
@@ -361,28 +361,53 @@ private struct AutoFillSnippetSheet: View {
     let onInsert: (String) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var fills: SnippetFills
+    @FocusState private var focusedFieldID: String?
 
     init(fill: PendingSnippetFill, onInsert: @escaping (String) -> Void) {
         self.fill = fill
         self.onInsert = onInsert
-        _fills = State(initialValue: SnippetFills.initial(for: fill.plan.fields))
+        _fills = State(initialValue: SnippetFills.initial(
+            for: fill.plan.fields,
+            remembered: fill.entry.fieldMemory ?? [:]
+        ))
+    }
+
+    private var textFieldIDs: [String] {
+        fill.plan.fields.compactMap {
+            if case .text = $0.kind { return $0.id }
+            return nil
+        }
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                ForEach(fill.plan.fields) { field in
-                    Section(field.label) {
+                Section {
+                    ForEach(fill.plan.fields) { field in
                         switch field.kind {
                         case let .text(multiline):
-                            TextField(
-                                field.defaultValue ?? field.label,
-                                text: Binding(
-                                    get: { fills.values[field.id] ?? "" },
-                                    set: { fills.values[field.id] = $0 }
-                                ),
-                                axis: multiline ? .vertical : .horizontal
-                            )
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(field.label)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .accessibilityHidden(true)
+                                TextField(
+                                    field.defaultValue ?? field.label,
+                                    text: Binding(
+                                        get: { fills.values[field.id] ?? "" },
+                                        set: { fills.values[field.id] = $0 }
+                                    ),
+                                    axis: multiline ? .vertical : .horizontal
+                                )
+                                .lineLimit(multiline ? 1...6 : 1...1)
+                                .accessibilityLabel(field.label)
+                                .focused($focusedFieldID, equals: field.id)
+                                .submitLabel(multiline ? .return : .done)
+                                .onSubmit {
+                                    guard !multiline else { return }
+                                    insertExpanded()
+                                }
+                            }
                         case let .choice(choices):
                             Picker(field.label, selection: Binding(
                                 get: { fills.values[field.id] ?? choices.first ?? "" },
@@ -407,6 +432,9 @@ private struct AutoFillSnippetSheet: View {
                     }
                 }
             }
+            .onAppear {
+                focusedFieldID = textFieldIDs.first
+            }
             .navigationTitle(fill.entry.label())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -414,14 +442,17 @@ private struct AutoFillSnippetSheet: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Insert") {
-                        let expanded = fill.plan.expanded(
-                            fill.entry.text, fills: fills, pastedClipboard: "", at: .now
-                        )
-                        onInsert(expanded)
-                    }
+                    Button("Insert", action: insertExpanded)
+                        .keyboardShortcut(.return, modifiers: .command)
                 }
             }
         }
+    }
+
+    private func insertExpanded() {
+        let expanded = fill.plan.expanded(
+            fill.entry.text, fills: fills, pastedClipboard: "", at: .now
+        )
+        onInsert(expanded)
     }
 }

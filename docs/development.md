@@ -33,7 +33,7 @@ Sources/
 ├── MobileKeyboard/ — optional iOS keyboard extension (`PestoKeyboard`, ADRs 0061–0064)
 ├── MobileShare/    — iOS share extension (`PestoShare`, HPKE-sealed `SharedInbox`, ADR 0047)
 ├── MobileShared/   — iOS card & layout views shared across `PestoMobile`, `PestoKeyboard`, and `PestoMobileTests`
-├── MobileWidget/   — iOS WidgetKit extension entry point and `CopyClipIntent` (`PestoWidget`, ADR 0052)
+├── MobileWidget/   — iOS WidgetKit extensions (`RecentClipsWidget`, `LockScreenClipsWidget`, `CopyClipIntent`, ADRs 0052, 0065)
 ├── Widget/         — shared Recent Clips widget views and `WidgetSnapshotReader` (`PestoWidget` + `PestoControls`)
 ├── CLI/            — the `pesto` command-line tool (`make build-cli`)
 ├── Controls/       — the macOS Control Center & WidgetKit extension (`PestoControls`, ADR 0059)

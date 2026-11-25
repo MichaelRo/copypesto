@@ -1,6 +1,6 @@
 # 0005. Pesto uses the network only for a closed list, and every AI feature runs on the device
 
-Status: Accepted
+Status: Accepted; the link previews default for new installs is amended by ADR 0042
 
 ## Context
 Clipboard text is the most private text on a Mac, so "no clip content leaves the Mac" is worth stating only if it has no

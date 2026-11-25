@@ -18,12 +18,12 @@ public extension ClipboardType {
     /// One vocabulary for the card badge and the filter chip.
     var presentation: (label: String, symbolName: String) {
         switch self {
-        case .text: ("Text", "text.alignleft")
-        case .url: ("Link", "link")
-        case .image: ("Image", "photo")
-        case .file: ("File", "doc")
-        case .color: ("Color", "paintpalette")
-        case .code: ("Code", "chevron.left.forwardslash.chevron.right")
+        case .text: (String(localized: "Text"), "text.alignleft")
+        case .url: (String(localized: "Link"), "link")
+        case .image: (String(localized: "Image"), "photo")
+        case .file: (String(localized: "File"), "doc")
+        case .color: (String(localized: "Color"), "paintpalette")
+        case .code: (String(localized: "Code"), "chevron.left.forwardslash.chevron.right")
         }
     }
 }

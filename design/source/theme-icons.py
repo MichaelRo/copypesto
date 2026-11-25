@@ -15,11 +15,12 @@ import shutil
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "Sources/Resources/Pesto.icon"
 
-# Light ground top and bottom, the P in light, the P in dark (brand-art.py ICONS, variant A).
+# Light ground top and bottom, the P in light, the P in dark (brand-art.py ICONS, variant A). Mortar's ground is a
+# step deeper than the Mac's theme art so the garlic lid of the jar stands off it.
 THEMES = {
     "PestoParmesan": ("#3A3F37", "#1F2320", "#7A5F00", "#7A5F00"),
     "PestoPineNut": ("#EBD9B4", "#D2BA86", "#8A4F16", "#8A4F16"),
-    "PestoMortar": ("#F4F1E8", "#D8D3C4", "#3F5446", "#3F5446"),
+    "PestoMortar": ("#E6E1D4", "#C9C2AF", "#3F5446", "#3F5446"),
 }
 
 

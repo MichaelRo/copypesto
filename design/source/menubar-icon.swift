@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Draws the menu-bar template icon at 1x and 2x: `swift design/source/menubar-icon.swift <output dir>`.
 import AppKit
-import CoreText
 
 func render(scale: CGFloat) -> Data {
     let pts: CGFloat = 18
@@ -27,39 +26,41 @@ func render(scale: CGFloat) -> Data {
     ctx.setFillColor(NSColor.black.cgColor)
     ctx.setStrokeColor(NSColor.black.cgColor)
 
-    // Back card: an outline peeking out to the lower right.
-    let back = CGRect(x: 4.5, y: 1.5, width: 12, height: 12)
-    ctx.setLineWidth(1.5)
-    ctx.addPath(CGPath(roundedRect: back.insetBy(dx: 0.75, dy: 0.75), cornerWidth: 3, cornerHeight: 3, transform: nil))
-    ctx.strokePath()
+    // The jar (design board C1, expert panel 2026-11-25), in points on an 18 pt canvas, every edge on a whole pixel
+    // at 2x: a lid 8 x 2, a 1.5 gap, a body 12 x 10.5 with shoulders (radius 3.5 at the top, 2 at the base), and a
+    // P cut out of the body with a 1.5 stem and a counter of at least 1.5.
+    let lid = CGRect(x: 5, y: 14, width: 8, height: 2)
+    ctx.addPath(CGPath(roundedRect: lid, cornerWidth: 1, cornerHeight: 1, transform: nil))
+    ctx.fillPath()
 
-    // Clear a gap around the front card so it reads as a separate layer.
-    let front = CGRect(x: 1.5, y: 4.5, width: 12, height: 12)
+    let body = CGMutablePath()
+    let (left, right, base, top, shoulder, foot) = (3.0, 15.0, 2.0, 12.5, 3.5, 2.0)
+    body.move(to: CGPoint(x: left + foot, y: base))
+    body.addLine(to: CGPoint(x: right - foot, y: base))
+    body.addArc(tangent1End: CGPoint(x: right, y: base), tangent2End: CGPoint(x: right, y: base + foot), radius: foot)
+    body.addLine(to: CGPoint(x: right, y: top - shoulder))
+    body.addArc(tangent1End: CGPoint(x: right, y: top), tangent2End: CGPoint(x: right - shoulder, y: top), radius: shoulder)
+    body.addLine(to: CGPoint(x: left + shoulder, y: top))
+    body.addArc(tangent1End: CGPoint(x: left, y: top), tangent2End: CGPoint(x: left, y: top - shoulder), radius: shoulder)
+    body.addLine(to: CGPoint(x: left, y: base + foot))
+    body.addArc(tangent1End: CGPoint(x: left, y: base), tangent2End: CGPoint(x: left + foot, y: base), radius: foot)
+    body.closeSubpath()
+    ctx.addPath(body)
+    ctx.fillPath()
+
+    // The P, about half the body's height: stem 1.5 wide; bowl 4 wide and 3.5 tall with a 1.5 x 1.5 counter.
+    let stem = CGRect(x: 7, y: 4.5, width: 1.5, height: 6)
+    let bowl = CGRect(x: 7, y: 7, width: 4.5, height: 3.5)
+    let counter = CGRect(x: 8.5, y: 8, width: 1.5, height: 1.5)
+    let letter = CGMutablePath()
+    letter.addRect(stem)
+    letter.addRoundedRect(in: bowl, cornerWidth: 1.75, cornerHeight: 1.75)
     ctx.setBlendMode(.clear)
-    ctx.addPath(CGPath(
-        roundedRect: front.insetBy(dx: -1.5, dy: -1.5),
-        cornerWidth: 4.5,
-        cornerHeight: 4.5,
-        transform: nil
-    ))
+    ctx.addPath(letter)
     ctx.fillPath()
     ctx.setBlendMode(.normal)
-
-    // Front card, filled, with a P knocked out of it.
-    ctx.addPath(CGPath(roundedRect: front, cornerWidth: 3, cornerHeight: 3, transform: nil))
+    ctx.addPath(CGPath(rect: counter, transform: nil))
     ctx.fillPath()
-    let font = NSFont.systemFont(ofSize: 11.5, weight: .heavy) as CTFont
-    var glyph = CTFontGetGlyphWithName(font, "P" as CFString)
-    if glyph == 0 { var chars: [UniChar] = [0x50]
-        CTFontGetGlyphsForCharacters(font, &chars, &glyph, 1)
-    }
-    if let path = CTFontCreatePathForGlyph(font, glyph, nil) {
-        let bounds = path.boundingBox
-        var t = CGAffineTransform(translationX: front.midX - bounds.midX, y: front.midY - bounds.midY)
-        ctx.setBlendMode(.clear)
-        ctx.addPath(path.copy(using: &t)!)
-        ctx.fillPath()
-    }
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!
 }

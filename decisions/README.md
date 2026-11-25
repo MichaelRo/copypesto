@@ -74,6 +74,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0063](0063-the-keyboard-searches-in-its-own-field.md) | The keyboard has a search page: letters and numbers that type only into Pesto's own search field, never into the app, above the matching clips; the word-before-the-caret search stays. Amends 0061 and 0062 |
 | [0064](0064-keyboard-pictures-and-default-paste.md) | The iOS keyboard reads pictures in `QuickInsertFile` with Full Access, copies pictures on tap (`localOnly`, 120s expiry) with `"Copied, paste it"`, inserts secret-scanned recognized text via long-press + `text.viewfinder` badge, and covers during screen capture (proposed) |
 | [0065](0065-lock-screen-accessory-widgets.md) | iOS Lock Screen accessory widgets (`accessoryCircular`, `accessoryRectangular`, `accessoryInline`) live in `LockScreenClipsWidget` with an off-by-default per-widget opt-in (`showsClipsOnLockScreen`), use `.widgetURL` only, and never show secrets; amends 0052 |
+| [0069](0069-the-mark-is-a-jar.md) | The mark is a jar (garlic lid, gap, shouldered body, the P), the same silhouette as the 18 pt menu bar template; amends 0013's card stack |
 
 ## Template
 

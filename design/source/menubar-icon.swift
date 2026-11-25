@@ -39,9 +39,17 @@ func render(scale: CGFloat) -> Data {
     body.addLine(to: CGPoint(x: right - foot, y: base))
     body.addArc(tangent1End: CGPoint(x: right, y: base), tangent2End: CGPoint(x: right, y: base + foot), radius: foot)
     body.addLine(to: CGPoint(x: right, y: top - shoulder))
-    body.addArc(tangent1End: CGPoint(x: right, y: top), tangent2End: CGPoint(x: right - shoulder, y: top), radius: shoulder)
+    body.addArc(
+        tangent1End: CGPoint(x: right, y: top),
+        tangent2End: CGPoint(x: right - shoulder, y: top),
+        radius: shoulder
+    )
     body.addLine(to: CGPoint(x: left + shoulder, y: top))
-    body.addArc(tangent1End: CGPoint(x: left, y: top), tangent2End: CGPoint(x: left, y: top - shoulder), radius: shoulder)
+    body.addArc(
+        tangent1End: CGPoint(x: left, y: top),
+        tangent2End: CGPoint(x: left, y: top - shoulder),
+        radius: shoulder
+    )
     body.addLine(to: CGPoint(x: left, y: base + foot))
     body.addArc(tangent1End: CGPoint(x: left, y: base), tangent2End: CGPoint(x: left + foot, y: base), radius: foot)
     body.closeSubpath()

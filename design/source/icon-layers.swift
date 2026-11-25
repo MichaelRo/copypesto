@@ -16,7 +16,15 @@ func roundedRect(_ x: Double, _ y: Double, _ width: Double, _ height: Double, _ 
 
 /// A rounded rectangle with one radius at the top and another at the bottom: the jar's shoulders round in more than its
 /// base, so it reads as a jar and not a bin (expert panel, 2026-11-25).
-func shoulderedRect(_ x: Double, _ y: Double, _ width: Double, _ height: Double, top: Double, bottom: Double) -> String {
+func shoulderedRect(
+    _ x: Double,
+    _ y: Double,
+    _ width: Double,
+    _ height: Double,
+    top: Double,
+    bottom: Double
+)
+-> String {
     let (l, t, r, b) = (x, y, x + width, y + height)
     return "M\(l + top),\(t) H\(r - top) A\(top),\(top) 0 0 1 \(r),\(t + top) V\(b - bottom) "
         + "A\(bottom),\(bottom) 0 0 1 \(r - bottom),\(b) H\(l + bottom) A\(bottom),\(bottom) 0 0 1 \(l),\(b - bottom) "

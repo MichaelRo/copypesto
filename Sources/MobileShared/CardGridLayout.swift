@@ -7,6 +7,8 @@ enum CardGridLayout {
     static let margin: CGFloat = 16
     static let cornerRadius: CGFloat = 12
     static let aspectRatio: CGFloat = 10.0 / 9.0
+    static let autoScrollEdgeZone: CGFloat = 72
+    static let autoScrollMaxSpeed: CGFloat = 620
 
     static func columnCount(width: CGFloat, isAccessibilitySize: Bool) -> Int {
         guard !isAccessibilitySize else { return 1 }
@@ -61,5 +63,30 @@ enum CardGridLayout {
         }
         let index = row * columns + column
         return index < itemCount ? index : nil
+    }
+
+    /// Points-per-second vertical auto-scroll velocity while dragging near the top or bottom viewport edge.
+    static func edgeAutoScrollVelocity(
+        touchY: CGFloat,
+        visibleMinY: CGFloat,
+        visibleMaxY: CGFloat,
+        edgeZone: CGFloat = autoScrollEdgeZone,
+        maxSpeed: CGFloat = autoScrollMaxSpeed
+    )
+    -> CGFloat {
+        guard touchY.isFinite, visibleMinY.isFinite, visibleMaxY.isFinite,
+              edgeZone.isFinite, maxSpeed.isFinite,
+              visibleMaxY > visibleMinY, edgeZone > 0, maxSpeed > 0 else { return 0 }
+        let effectiveZone = min(edgeZone, (visibleMaxY - visibleMinY) / 3)
+        guard effectiveZone > 0 else { return 0 }
+        if touchY > visibleMaxY - effectiveZone {
+            let fraction = min(1, max(0, (touchY - (visibleMaxY - effectiveZone)) / effectiveZone))
+            return fraction * fraction * maxSpeed
+        }
+        if touchY < visibleMinY + effectiveZone {
+            let fraction = min(1, max(0, (visibleMinY + effectiveZone - touchY) / effectiveZone))
+            return -(fraction * fraction) * maxSpeed
+        }
+        return 0
     }
 }

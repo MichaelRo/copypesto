@@ -168,4 +168,29 @@ final class LibraryEditingUITests: MobileUITestCase {
             "vertical scroll still moves cards in selection mode"
         )
     }
+
+    func test_whenQuestionFindsNoDirectMatches_thenAskChipAndEmptyStateCTAAreShown() {
+        let app = launch()
+        waitForSeededClips(in: app)
+
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: timeout))
+        field.tap()
+        field.typeText("links from yesterday")
+
+        XCTAssertTrue(
+            element(MobileAccessibilityID.askChip, in: app).waitForExistence(timeout: timeout),
+            "Ask chip is immediately visible while searching"
+        )
+        let askCTA = element(MobileAccessibilityID.emptyStateAskButton, in: app)
+        XCTAssertTrue(
+            askCTA.waitForExistence(timeout: timeout),
+            "No-results empty state offers an Ask Pesto CTA for natural-language queries"
+        )
+        askCTA.tap()
+        XCTAssertTrue(
+            element(MobileAccessibilityID.askedChip, in: app).waitForExistence(timeout: timeout),
+            "Tapping the empty-state Ask Pesto CTA applies Ask filters"
+        )
+    }
 }

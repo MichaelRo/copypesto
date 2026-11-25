@@ -24,7 +24,7 @@ struct PhoneLibraryView: View {
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar { LibraryToolbar(showsSettings: true) }
             }
-            .searchable(text: $library.query, isPresented: $library.isSearching, prompt: Text("Search clips"))
+            .searchable(text: $library.query, isPresented: $library.isSearching, prompt: Text("Search or ask"))
             .onSubmit(of: .search) {
                 if AskHeuristic.returnAsks(text: library.query, resultCount: library.visibleResultCount) {
                     library.startAsk(

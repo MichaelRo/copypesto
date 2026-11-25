@@ -102,6 +102,7 @@ enum MobileAccessibilityID {
     static let customDateApplyButton = "custom-date-apply"
     static let customDateClearButton = "custom-date-clear"
     static let noResultsAdviceButton = "no-results-advice"
+    static let emptyStateAskButton = "empty-state-ask"
     static let copyAllButton = "selection-copy-all"
     static let insightsButton = "settings-insights"
     static let insightsView = "insights-view"

@@ -40,7 +40,7 @@ enum LibraryChip: Hashable {
         var filters: [LibraryChip] = [.when]
         if showsFrom { filters.append(.from) }
         filters.append(contentsOf: [.sensitive, .otherDevices])
-        let leading = scopes.isEmpty ? asking : scopes + [.scopeDivider] + asking
+        let leading = scopes.isEmpty ? asking : asking + scopes + [.scopeDivider]
         return leading + LibraryScope.filteredKinds.map(LibraryChip.kind) + [.filterDivider] + filters
     }
 

@@ -123,4 +123,39 @@ struct MobileSelectionTests {
             + Double(duration.components.attoseconds) / 1_000_000_000_000_000
         #expect(totalSeconds < 50, "2,000-clip selection batch took \(totalSeconds) ms")
     }
+
+    @Test("edgeAutoScrollVelocity returns 0 in the middle and ramps quadratically near top and bottom edges")
+    func whenTouchApproachesViewportEdges_thenVelocityRampsSmoothly() {
+        let minY: CGFloat = 100
+        let maxY: CGFloat = 700
+        let zone = CardGridLayout.autoScrollEdgeZone
+        let maxSpeed = CardGridLayout.autoScrollMaxSpeed
+
+        #expect(CardGridLayout.edgeAutoScrollVelocity(touchY: 400, visibleMinY: minY, visibleMaxY: maxY) == 0)
+        #expect(CardGridLayout.edgeAutoScrollVelocity(
+            touchY: maxY - zone, visibleMinY: minY, visibleMaxY: maxY
+        ) == 0)
+        #expect(CardGridLayout.edgeAutoScrollVelocity(
+            touchY: minY + zone, visibleMinY: minY, visibleMaxY: maxY
+        ) == 0)
+
+        let midBottom = CardGridLayout.edgeAutoScrollVelocity(
+            touchY: maxY - zone / 2, visibleMinY: minY, visibleMaxY: maxY
+        )
+        #expect(abs(midBottom - maxSpeed * 0.25) < 0.01)
+        #expect(CardGridLayout.edgeAutoScrollVelocity(
+            touchY: maxY + 30, visibleMinY: minY, visibleMaxY: maxY
+        ) == maxSpeed)
+
+        let midTop = CardGridLayout.edgeAutoScrollVelocity(
+            touchY: minY + zone / 2, visibleMinY: minY, visibleMaxY: maxY
+        )
+        #expect(abs(midTop + maxSpeed * 0.25) < 0.01)
+        #expect(CardGridLayout.edgeAutoScrollVelocity(
+            touchY: minY - 30, visibleMinY: minY, visibleMaxY: maxY
+        ) == -maxSpeed)
+
+        #expect(CardGridLayout.edgeAutoScrollVelocity(touchY: .nan, visibleMinY: minY, visibleMaxY: maxY) == 0)
+        #expect(CardGridLayout.edgeAutoScrollVelocity(touchY: 200, visibleMinY: 300, visibleMaxY: 300) == 0)
+    }
 }

@@ -29,20 +29,36 @@ struct LibraryEmptyState: View {
                         }
                     }
                 }
+            } else if library.isAsking {
+                ContentUnavailableView {
+                    ProgressView()
+                } description: {
+                    Text("Asking Pesto\u{2026}")
+                }
             } else if !trimmed.isEmpty || (library.isSearching && library.filter.hasAnySearchFilter) {
                 let advice = searchAdvice(query: trimmed)
+                let canAsk = !trimmed.isEmpty && !library.filter.hasAsk
+                let looksLikeQuestion = canAsk && AskHeuristic.looksLikeQuestion(trimmed)
                 ContentUnavailableView {
                     Label("Nothing Matches", systemImage: "magnifyingglass")
                 } description: {
-                    Text(advice.sentence)
+                    Text(
+                        looksLikeQuestion
+                            ? String(
+                                localized: "Tap Ask Pesto or press Search on the keyboard to turn this into filters."
+                            )
+                            : advice.sentence
+                    )
                 } actions: {
-                    Button(advice.buttonTitle) {
-                        withAnimation(Motion.animation(.pestoQuick)) {
-                            apply(advice.action)
+                    if looksLikeQuestion {
+                        askEmptyStateButton(prominent: true)
+                        adviceEmptyStateButton(advice, prominent: false)
+                    } else {
+                        adviceEmptyStateButton(advice, prominent: true)
+                        if canAsk {
+                            askEmptyStateButton(prominent: false)
                         }
                     }
-                    .buttonStyle(.pestoProminent)
-                    .accessibilityIdentifier(MobileAccessibilityID.noResultsAdviceButton)
                 }
             } else if isSnippetsScope {
                 ContentUnavailableView {
@@ -88,6 +104,37 @@ struct LibraryEmptyState: View {
         switch action {
         case .clearFilters: library.filter.clearSearchFilters()
         case .clearSearch: library.query = ""
+        }
+    }
+
+    @ViewBuilder
+    private func askEmptyStateButton(prominent: Bool) -> some View {
+        let button = Button("Ask Pesto", systemImage: "sparkles") {
+            library.startAsk(
+                using: { await appState.askPesto($0) },
+                isLocked: { appState.isHistoryLockedNow() }
+            )
+        }
+        .accessibilityIdentifier(MobileAccessibilityID.emptyStateAskButton)
+        if prominent {
+            button.buttonStyle(.pestoProminent)
+        } else {
+            button.buttonStyle(.bordered)
+        }
+    }
+
+    @ViewBuilder
+    private func adviceEmptyStateButton(_ advice: NoResultsAdvice, prominent: Bool) -> some View {
+        let button = Button(advice.buttonTitle) {
+            withAnimation(Motion.animation(.pestoQuick)) {
+                apply(advice.action)
+            }
+        }
+        .accessibilityIdentifier(MobileAccessibilityID.noResultsAdviceButton)
+        if prominent {
+            button.buttonStyle(.pestoProminent)
+        } else {
+            button.buttonStyle(.bordered)
         }
     }
 

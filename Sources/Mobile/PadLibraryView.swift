@@ -29,7 +29,7 @@ struct PadLibraryView: View {
                 .toolbar { LibraryToolbar(showsSettings: library.columns == .detailOnly) }
                 .searchable(
                     text: $library.query, isPresented: $library.isSearching,
-                    placement: .toolbar, prompt: Text("Search clips")
+                    placement: .toolbar, prompt: Text("Search or ask")
                 )
                 .onSubmit(of: .search) {
                     if AskHeuristic.returnAsks(text: library.query, resultCount: library.visibleResultCount) {

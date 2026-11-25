@@ -340,6 +340,7 @@ private struct HorizontalSelectAttachment: UIViewRepresentable {
     }
 
     static func dismantleUIView(_: UIView, coordinator: Coordinator) {
+        coordinator.stopAutoScroll()
         if let pan = coordinator.panGesture, let scrollView = coordinator.attachedScrollView {
             scrollView.removeGestureRecognizer(pan)
         }
@@ -365,6 +366,10 @@ private struct HorizontalSelectAttachment: UIViewRepresentable {
         private var baseSelection: Set<UUID> = []
         private var selecting = true
         private let feedback = UISelectionFeedbackGenerator()
+        private var displayLink: CADisplayLink?
+        private var lastTickTimestamp: CFTimeInterval?
+        private var lastViewportPoint: CGPoint?
+        private var currentAutoScrollVelocity: CGFloat = 0
 
         func attachIfNeeded(from view: UIView) {
             guard attachedScrollView == nil else { return }
@@ -390,9 +395,18 @@ private struct HorizontalSelectAttachment: UIViewRepresentable {
         }
 
         func reset() {
+            stopAutoScroll()
+            lastViewportPoint = nil
             anchorIndex = nil
             lastAppliedIndex = nil
             baseSelection = []
+        }
+
+        func stopAutoScroll() {
+            displayLink?.invalidate()
+            displayLink = nil
+            lastTickTimestamp = nil
+            currentAutoScrollVelocity = 0
         }
 
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
@@ -450,27 +464,12 @@ private struct HorizontalSelectAttachment: UIViewRepresentable {
                     selecting: selecting
                 )
                 feedback.selectionChanged()
+                updateAutoScroll(for: pan)
 
             case .changed:
-                guard let anchor = anchorIndex,
-                      let currentIndex = CardGridLayout.cardIndex(
-                          at: point,
-                          itemCount: itemCount,
-                          columns: columns,
-                          cardWidth: cardWidth,
-                          cardHeight: cardHeight,
-                          allowsGutter: true
-                      ),
-                      currentIndex != lastAppliedIndex else { return }
-                lastAppliedIndex = currentIndex
-                library.applyDragSelection(
-                    fromIndex: anchor,
-                    toIndex: currentIndex,
-                    in: visibleIDs,
-                    baseSelection: baseSelection,
-                    selecting: selecting
-                )
-                feedback.selectionChanged()
+                updateAutoScroll(for: pan)
+                guard let anchor = anchorIndex else { return }
+                applySelection(at: point, anchor: anchor, in: library)
 
             case .ended, .cancelled, .failed:
                 reset()
@@ -478,6 +477,91 @@ private struct HorizontalSelectAttachment: UIViewRepresentable {
             default:
                 break
             }
+        }
+
+        private func applySelection(at gridPoint: CGPoint, anchor: Int, in library: LibraryModel) {
+            guard let currentIndex = CardGridLayout.cardIndex(
+                at: gridPoint,
+                itemCount: itemCount,
+                columns: columns,
+                cardWidth: cardWidth,
+                cardHeight: cardHeight,
+                allowsGutter: true
+            ), currentIndex != lastAppliedIndex else { return }
+            lastAppliedIndex = currentIndex
+            library.applyDragSelection(
+                fromIndex: anchor,
+                toIndex: currentIndex,
+                in: visibleIDs,
+                baseSelection: baseSelection,
+                selecting: selecting
+            )
+            feedback.selectionChanged()
+        }
+
+        private func updateAutoScroll(for pan: UIPanGestureRecognizer) {
+            guard let scrollView = attachedScrollView,
+                  let viewportView = scrollView.superview else
+            {
+                stopAutoScroll()
+                return
+            }
+            let touchPoint = pan.location(in: viewportView)
+            lastViewportPoint = touchPoint
+            let visibleMinY = scrollView.frame.minY + scrollView.adjustedContentInset.top
+            let visibleMaxY = scrollView.frame.maxY - scrollView.adjustedContentInset.bottom
+            let velocity = CardGridLayout.edgeAutoScrollVelocity(
+                touchY: touchPoint.y,
+                visibleMinY: visibleMinY,
+                visibleMaxY: visibleMaxY
+            )
+            currentAutoScrollVelocity = velocity
+            guard velocity != 0 else {
+                stopAutoScroll()
+                return
+            }
+            if displayLink == nil {
+                lastTickTimestamp = nil
+                let link = CADisplayLink(target: self, selector: #selector(handleAutoScrollTick(_:)))
+                link.add(to: .main, forMode: .common)
+                displayLink = link
+            }
+        }
+
+        @objc
+        private func handleAutoScrollTick(_ link: CADisplayLink) {
+            guard isEnabled,
+                  let anchor = anchorIndex,
+                  let scrollView = attachedScrollView,
+                  let viewportView = scrollView.superview,
+                  let gridView,
+                  let library,
+                  let viewportPoint = lastViewportPoint,
+                  currentAutoScrollVelocity != 0 else
+            {
+                stopAutoScroll()
+                return
+            }
+            let dt: CGFloat = if let previous = lastTickTimestamp {
+                min(1.0 / 20.0, max(0, CGFloat(link.timestamp - previous)))
+            } else {
+                1.0 / 60.0
+            }
+            lastTickTimestamp = link.timestamp
+
+            let minY = -scrollView.adjustedContentInset.top
+            let maxY = max(
+                minY,
+                scrollView.contentSize.height - scrollView.bounds.height + scrollView.adjustedContentInset.bottom
+            )
+            let nextY = min(max(scrollView.contentOffset.y + currentAutoScrollVelocity * dt, minY), maxY)
+            guard abs(nextY - scrollView.contentOffset.y) >= 0.25 else {
+                stopAutoScroll()
+                return
+            }
+            scrollView.contentOffset.y = nextY
+            let gridPoint = gridView.convert(viewportPoint, from: viewportView)
+            applySelection(at: gridPoint, anchor: anchor, in: library)
         }
     }
 }

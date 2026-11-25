@@ -8,6 +8,7 @@ struct LibraryChipRow: View {
 
     @Environment(LibraryModel.self) private var library
     @Environment(MobileAppState.self) private var appState
+    @Environment(\.pestoAccent) private var accent
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
     @State private var showsCustomDateRange = false
@@ -134,7 +135,8 @@ struct LibraryChipRow: View {
     }
 
     private var askChipButton: some View {
-        Button {
+        let isQuestion = AskHeuristic.looksLikeQuestion(library.query)
+        return Button {
             library.startAsk(
                 using: { await appState.askPesto($0) },
                 isLocked: { appState.isHistoryLockedNow() }
@@ -148,8 +150,15 @@ struct LibraryChipRow: View {
                 }
                 Text("Ask")
             }
+            .foregroundStyle(isQuestion ? accent : .primary)
         }
-        .buttonStyle(MobileChipStyle(isActive: false, tint: nil, usesGlass: true))
+        .buttonStyle(MobileChipStyle(isActive: false, tint: isQuestion ? accent : nil, usesGlass: true))
+        .overlay {
+            if isQuestion {
+                Capsule().strokeBorder(accent.opacity(0.45), lineWidth: 1)
+                    .padding(.vertical, (TouchTarget.minimum - 34) / 2)
+            }
+        }
         .disabled(library.isAsking)
         .accessibilityLabel(String(localized: "Ask Pesto"))
         .accessibilityInputLabels([Text("Ask"), Text("Ask Pesto")])

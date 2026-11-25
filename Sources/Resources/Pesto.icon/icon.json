@@ -61,9 +61,10 @@
     }
   ],
   "supported-platforms": {
-    "squares": [
-      "macOS"
-    ]
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
   },
   "fill-specializations": [
     {

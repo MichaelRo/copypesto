@@ -84,6 +84,7 @@ struct SettingsView: View {
                         appState.writeQuickInsert()
                         Task { await appState.writeWidget() }
                     }
+                MobileAppIconPicker()
             }
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)

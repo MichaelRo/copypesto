@@ -14,17 +14,18 @@ struct WidgetContentTests {
         return WidgetSnapshot(createdAt: now, theme: .brand, clips: clips)
     }
 
-    @Test("small shows the latest clip, medium three, large six, fewer at an accessibility text size")
+    @Test("small shows the latest clip, medium two, large four, extra large eight, fewer at an accessibility text size")
     func whenTheFamilyDiffers_thenTheCountFollows() {
         let full = snapshot(clips: 8)
 
         #expect(WidgetContent(snapshot: full, size: .small).clips.map(\.text) == ["clip 0"])
-        #expect(WidgetContent(snapshot: full, size: .medium).clips.count == 3)
-        #expect(WidgetContent(snapshot: full, size: .large).clips.count == 6)
-        #expect(WidgetContent(snapshot: full, size: .medium, accessibilityText: true).clips.count == 2)
-        #expect(WidgetContent(snapshot: full, size: .large, accessibilityText: true).clips.count == 4)
+        #expect(WidgetContent(snapshot: full, size: .medium).clips.count == 2)
+        #expect(WidgetContent(snapshot: full, size: .large).clips.count == 4)
+        #expect(WidgetContent(snapshot: full, size: .extraLarge).clips.count == 8)
+        #expect(WidgetContent(snapshot: full, size: .medium, accessibilityText: true).clips.count == 1)
+        #expect(WidgetContent(snapshot: full, size: .large, accessibilityText: true).clips.count == 2)
         #expect(WidgetSize.large.columns(accessibilityText: false) == 2)
-        #expect(WidgetSize.medium.columns(accessibilityText: false) == 3)
+        #expect(WidgetSize.medium.columns(accessibilityText: false) == 2)
         #expect(WidgetContent(snapshot: snapshot(clips: 2), size: .large).clips.count == 2)
         for size in WidgetSize.allCases {
             #expect(WidgetContent(snapshot: full, size: size).state == .clips)

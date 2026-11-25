@@ -32,7 +32,7 @@ enum KeyboardLayout {
     }
 
     static func totalHeight(size: KeyboardSize, isRegular: Bool, isLandscape: Bool, isSearching: Bool) -> CGFloat {
-        let chrome: CGFloat = 94
+        let chrome: CGFloat = 96
         let base = chrome + shelfHeight(size: size, isRegular: isRegular, isLandscape: isLandscape)
         return isSearching ? KeyboardSearchMetrics.totalHeight(
             size: size,

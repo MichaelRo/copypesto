@@ -58,10 +58,10 @@ public final class SyncFolderService {
     private var watcher: SyncFolderWatcher?
     /// What this device last wrote to its app catalog in this run, so an unchanged list is not written again, and the
     /// last sequence it was checked at: an idle pass (nothing new written) does not look at the history again.
-    private var writtenCatalog: [SyncAppCatalog.Entry]?
-    private var catalogCheckedAt: UInt64?
+    var writtenCatalog: [SyncAppCatalog.Entry]?
+    var catalogCheckedAt: UInt64?
     /// When each other device's catalog file last changed, so an idle pass reads none of them again.
-    private var readCatalogDates: [String: Date] = [:]
+    var readCatalogDates: [String: Date] = [:]
 
     public init(
         container: ModelContainer, storage: StorageService, layout: SyncFolderLayout, identity: SyncIdentity,
@@ -372,49 +372,6 @@ public final class SyncFolderService {
         let url = layout.head(identity.deviceID)
         try folderProbe.willWrite(url)
         try folderProbe.writeData(head.sealed(syncKey: found.key, signedBy: identity.keys), url)
-    }
-
-    /// Writes this device's app catalog when its list changed (ADR 0068). A failure is logged and tried again on the
-    /// next pass; it never stops the exchange.
-    private func writeAppCatalogIfChanged(_ found: SyncGroup) async {
-        let sequence = ownLast.sequence
-        guard catalogCheckedAt != sequence else { return }
-        do {
-            let entries = try await storage.syncAppCatalogEntries()
-            guard !entries.isEmpty, entries != writtenCatalog else {
-                catalogCheckedAt = sequence
-                return
-            }
-            let catalog = SyncAppCatalog(
-                deviceID: identity.deviceID, epoch: found.epoch, entries: entries,
-                signerKeyID: identity.keys.publicKeys.keyID
-            )
-            let url = layout.appCatalog(identity.deviceID)
-            try folderProbe.willWrite(url)
-            try folderProbe.writeData(catalog.sealed(syncKey: found.key, signedBy: identity.keys), url)
-            writtenCatalog = entries
-            catalogCheckedAt = sequence
-        } catch {
-            logger.error("The app catalog was not written: \(String(describing: error), privacy: .public)")
-        }
-    }
-
-    /// Reads the other devices' app catalogs. A missing, damaged or refused one is skipped.
-    private func readAppCatalogs(of devices: [String], _ found: SyncGroup) {
-        guard let onAppCatalog else { return }
-        var entries: [SyncAppCatalog.Entry] = []
-        for device in devices {
-            let url = layout.appCatalog(device)
-            guard let changed = try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
-                  readCatalogDates[device] != changed else { continue }
-            guard let data = SyncSmallFile.read(url),
-                  let catalog = try? SyncAppCatalog.open(
-                      data, syncKey: found.key, trust: found.trust, deviceID: device, epoch: found.epoch
-                  ) else { continue }
-            readCatalogDates[device] = changed
-            entries += catalog.entries
-        }
-        if !entries.isEmpty { onAppCatalog(SyncAppCatalog.bounded(entries)) }
     }
 
     // MARK: Reading

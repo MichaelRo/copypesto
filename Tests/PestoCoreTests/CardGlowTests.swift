@@ -59,4 +59,29 @@ struct CardGlowTests {
             }
         }
     }
+
+    @Test("a card with no app color glows in the theme's own color, muted like a basil hue (design board 5)")
+    func whenNoAppColor_thenTheThemeGlows() throws {
+        let parmesan = AppTheme.parmesan.accentHex(dark: false)
+        let themed = try #require(CardGlow.decide(
+            colorHex: "#1D1D1D", themeAccentHex: parmesan, isDark: false, isGlass: false,
+            increaseContrast: false, isSelected: false
+        ))
+        #expect(themed.chroma <= 0.05 + 1e-9)
+        #expect(themed.opacity == 0.11 * 0.7)
+        let none = CardGlow.decide(
+            colorHex: nil, themeAccentHex: nil, isDark: false, isGlass: false, increaseContrast: false,
+            isSelected: false
+        )
+        #expect(none == nil)
+        let app = CardGlow.decide(
+            colorHex: "#1796F2", themeAccentHex: parmesan, isDark: false, isGlass: false, increaseContrast: false,
+            isSelected: false
+        )
+        #expect(app == glow("#1796F2"), "an app's own color wins over the theme")
+        #expect(CardGlow.decide(
+            colorHex: nil, themeAccentHex: parmesan, isDark: false, isGlass: false, increaseContrast: true,
+            isSelected: false
+        ) == nil)
+    }
 }

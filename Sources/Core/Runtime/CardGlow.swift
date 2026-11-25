@@ -18,13 +18,19 @@ public struct CardGlow: Equatable, Sendable {
     private static let basilHue = 152.0
     private static let goldHue = 90.0
 
+    /// `themeAccentHex` is the glow of a card whose app gives no color (a near-neutral icon, a clip made on the
+    /// iPhone, a snippet): the theme's own hue, always muted, so a theme is felt without saying anything about the
+    /// clip (design board 5).
     public static func decide(
-        colorHex: String?, isDark: Bool, isGlass: Bool, increaseContrast: Bool, isSelected: Bool
+        colorHex: String?, themeAccentHex: String? = nil, isDark: Bool, isGlass: Bool, increaseContrast: Bool,
+        isSelected: Bool
     )
     -> CardGlow? {
-        guard !increaseContrast, let colorHex, let sampled = OKLCH(hex: colorHex) else { return nil }
-        guard sampled.chroma >= 0.035, sampled.lightness >= 0.25, sampled.lightness <= 0.93 else { return nil }
-        let muted = near(sampled.hue, basilHue, within: 22) || near(sampled.hue, goldHue, within: 18)
+        guard !increaseContrast else { return nil }
+        let fromApp = colorHex.flatMap(OKLCH.init(hex:)).flatMap { $0.isVivid ? $0 : nil }
+        let fromTheme = themeAccentHex.flatMap(OKLCH.init(hex:)).flatMap { $0.chroma >= 0.02 ? $0 : nil }
+        guard let sampled = fromApp ?? fromTheme else { return nil }
+        let muted = fromApp == nil || near(sampled.hue, basilHue, within: 22) || near(sampled.hue, goldHue, within: 18)
         let chroma = min(sampled.chroma, muted ? 0.05 : 0.12)
         let base = isGlass ? (isDark ? 0.12 : 0.08) : (isDark ? 0.16 : 0.11)
         let opacity = base * (muted ? 0.7 : 1) * (isSelected ? 0.6 : 1)
@@ -69,6 +75,10 @@ public struct CardGlow: Equatable, Sendable {
         let lightness: Double
         let chroma: Double
         let hue: Double
+
+        var isVivid: Bool {
+            chroma >= 0.035 && lightness >= 0.25 && lightness <= 0.93
+        }
 
         init?(hex: String) {
             let digits = hex.hasPrefix("#") ? hex.dropFirst() : Substring(hex)

@@ -69,7 +69,8 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 **The foot glow and the app's icon** (ADR 0068): a clip copied on a Mac carries its app's color, and the Mac's sync
 catalog gives its icon, so the foot line leads with the icon (16 pt) and the card's foot glows faintly in that color
 (Core's `CardGlow`; not on pictures, colors or covered cards; off under Increase Contrast). A clip made on the
-iPhone keeps the capture symbol and no glow.
+iPhone, or from an app whose icon is nearly grey, glows faintly in the theme's own color instead (muted, never
+the accent's full strength).
 
 **The foot line** (`CardFootLine`, on Core's `CardMetaLine`): the app's name, or "Another device", or for a clip made on
 this device the device's symbol and how it came in (Pasted, Note, Shared, Dropped, Shortcut; ADR 0049), or the device's

@@ -31,6 +31,9 @@ proposed a fourth between the owner's two favorites, the foot glow, and the owne
   hue in both appearances: 7:1 for the content and 4.5:1 for the foot line. The panel proposed lightness 0.74 in dark,
   which failed that check.
 - **On iOS** the foot line leads with the app's icon (16 pt) when the catalog has it.
+- **A card with no app color** (a near-neutral icon, a clip made on the iPhone) glows in its theme's accent hue, always
+  muted (design board 5), and Basil's ground gets a faint wash of its own green (4% light, 3% dark), so the default
+  theme is felt too.
 
 ## Consequences
 - The glow is deliberately faint; whether it reads on a device and on the Mac's glass is a hand check, and the Mac's

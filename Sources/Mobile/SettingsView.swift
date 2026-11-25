@@ -56,22 +56,16 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Appearance") {
-                Picker("Theme", selection: activeThemeBinding) {
-                    ForEach(AppTheme.allCases, id: \.rawValue) { choice in
-                        Text(choice.displayName).tag(choice.rawValue)
+            Section {
+                MobileThemeCards(selection: activeThemeBinding)
+                    .onChange(of: theme) {
+                        appState.writeQuickInsert()
+                        Task { await appState.writeWidget() }
                     }
-                }
-                .tint(accent)
-                .id(resolvedAccentHex)
-                .onChange(of: theme) {
-                    appState.writeQuickInsert()
-                    Task { await appState.writeWidget() }
-                }
-                .onChange(of: darkTheme) {
-                    appState.writeQuickInsert()
-                    Task { await appState.writeWidget() }
-                }
+                    .onChange(of: darkTheme) {
+                        appState.writeQuickInsert()
+                        Task { await appState.writeWidget() }
+                    }
                 Picker("Appearance", selection: $appearance) {
                     ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
                         Text(mode.label).tag(mode.rawValue)
@@ -84,6 +78,8 @@ struct SettingsView: View {
                         appState.writeQuickInsert()
                         Task { await appState.writeWidget() }
                     }
+            } header: {
+                SettingsSectionHeader(title: "Appearance", symbol: "paintpalette")
             }
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
@@ -128,7 +124,7 @@ struct SettingsView: View {
                 .tint(accent)
                 .id(resolvedAccentHex)
             } header: {
-                Text("History & Capture")
+                SettingsSectionHeader(title: "History & Capture", symbol: "clock.arrow.circlepath")
             } footer: {
                 if manualCollections.isEmpty {
                     Text(
@@ -144,6 +140,7 @@ struct SettingsView: View {
                 }
             }
             Section {
+                PrivacyPromiseRow()
                 Toggle(DeviceAuthenticationWords.lockToggleTitle(for: biometry), isOn: lockBinding)
                     .disabled(!lockEnabled && !appState.historyLock.canAuthenticate)
                     .accessibilityIdentifier(MobileAccessibilityID.historyLockToggle)
@@ -186,7 +183,7 @@ struct SettingsView: View {
                 Toggle("Hide clip contents now", isOn: hiddenByHand)
                     .accessibilityIdentifier(MobileAccessibilityID.hideContentsToggle)
             } header: {
-                Text("Privacy")
+                SettingsSectionHeader(title: "Privacy", symbol: "lock.shield")
             } footer: {
                 Text(
                     "Masked secrets and screen-capture covers stay hidden until shown. Only link previews ever " +
@@ -446,7 +443,7 @@ private extension SettingsView {
             }
             .accessibilityIdentifier(MobileAccessibilityID.importHistoryButton)
         } header: {
-            Text("Data")
+            SettingsSectionHeader(title: "Data", symbol: "externaldrive")
         } footer: {
             Text("Collections share as .pesto files with their clips. History exports save text clips as JSON.")
         }
@@ -535,7 +532,7 @@ extension SettingsView {
                 )
             }
         } header: {
-            Text("Extensions & Sync")
+            SettingsSectionHeader(title: "Extensions & Sync", symbol: "puzzlepiece.extension")
         } footer: {
             Text("Secrets and explicit clips never appear in widgets. Edit a widget to choose what it shows.")
         }

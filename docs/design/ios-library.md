@@ -117,7 +117,8 @@ Only `Motion.animation` with the four named curves: cards entering and leaving t
 ## Theme
 `MobileAccent` resolves the ground and the accent with `MobileTheme` (Core's `AppTheme`, `AccentChoice` and
 `ContrastRatio.readable`, as the Mac's roots do) and sets `pestoAccent`, `pestoAccentLabel` and `pestoSurface` once.
-Settings → Appearance has the theme and System, Light or Dark, set on every window's `overrideUserInterfaceStyle`
+Settings → Appearance has the theme, System, Light or Dark, the accent and the app icon (the four theme icons, chosen
+on their own: iOS confirms each change with an alert), set on every window's `overrideUserInterfaceStyle`
 (`MobileAppearanceBridge`).
 Per device: these preferences are not synced. Liquid Glass is only the system's bars, search field, sheets and menus.
 

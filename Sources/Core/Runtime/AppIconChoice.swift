@@ -41,6 +41,20 @@ public enum AppIconChoice: String, CaseIterable, Sendable {
         }
     }
 
+    /// The iOS alternate icon (`setAlternateIconName`), or nil for the primary icon, Basil.
+    public var alternateIconName: String? {
+        switch self {
+        case .basil: nil
+        case .parmesan: "PestoParmesan"
+        case .pineNut: "PestoPineNut"
+        case .mortar: "PestoMortar"
+        }
+    }
+
+    public init(alternateIconName: String?) {
+        self = Self.allCases.first { $0.alternateIconName == alternateIconName } ?? .basil
+    }
+
     /// The asset that replaces the bundle icon, or nil to keep it.
     public var dockImageName: String? {
         self == .basil ? nil : previewImageName

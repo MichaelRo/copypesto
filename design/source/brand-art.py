@@ -49,6 +49,11 @@ renderVals() {{ return {{}}; }}
 
 PATH_P = "M324,272 H446 A108,108 0 0 1 446,488 H412 V592 H324 Z M412,342 H446 A38,38 0 0 1 446,418 H412 Z"
 LEAF = "M340,524 A190,190 0 0 1 524,340 A190,190 0 0 1 340,524 Z"
+# The jar (design board, 2026-11-25, "C1"), the same geometry as icon-layers.swift: lid, a gap, body, the P.
+RRW = lambda x, y, w, h, r: (f"M{x+r},{y} H{x+w-r} A{r},{r} 0 0 1 {x+w},{y+r} V{y+h-r} A{r},{r} 0 0 1 {x+w-r},{y+h} "
+                             f"H{x+r} A{r},{r} 0 0 1 {x},{y+h-r} V{y+r} A{r},{r} 0 0 1 {x+r},{y} Z")
+JAR = ("M389,341 H635 A184,184 0 0 1 819,525 V763 A98,98 0 0 1 721,861 H303 A98,98 0 0 1 205,763 V525 "
+       "A184,184 0 0 1 389,341 Z")
 RR = lambda x, y, s, r: (f"M{x+r},{y} H{x+s-r} A{r},{r} 0 0 1 {x+s},{y+r} V{y+s-r} A{r},{r} 0 0 1 {x+s-r},{y+s} "
                          f"H{x+r} A{r},{r} 0 0 1 {x},{y+s-r} V{y+r} A{r},{r} 0 0 1 {x+r},{y} Z")
 
@@ -73,11 +78,10 @@ def icon(pid, g1, g2, front, mid, back, mark, kind="P", mark2=None, extra="", gl
 {ringsvg}
 {extra}
 <g transform="translate(100 100) scale(0.8046)">
-<path d="{RR(o+2*step, o+2*step, card, rad)}" fill="{back[0]}" fill-opacity="{back[1]}"/>
-<path d="{RR(o+step, o+step, card, rad)}" fill="{mid[0]}" fill-opacity="{mid[1]}" filter="url(#{p}b)"/>
-<path d="{RR(o, o, card, rad)}" fill="{front}" filter="url(#{p}s)"/>
-<path d="{RR(o, o, card, rad)}" fill="url(#{p}h)"/>
-<path d="{markpath}" fill="{mark}" {markattr}/>
+<path d="{RRW(291, 162, 442, 113, 56.5)}" fill="{front}" filter="url(#{p}b)"/>
+<path d="{JAR}" fill="{front}" filter="url(#{p}s)"/>
+<path d="{JAR}" fill="url(#{p}h)"/>
+<g transform="translate(80 179)"><path d="{markpath}" fill="{mark}" {markattr}/></g>
 {vein}
 </g>
 </svg>"""
@@ -100,7 +104,7 @@ ICONS = {
                            dict(g1="#FBF5E0", g2="#E6D7A3", front="#FFFFFF", mid=("#C9A227", 0.32), back=("#C9A227", 0.18), mark="#7A5F00",
                                 ring="#D9CFAE", hl=0.0, extra=GLOW.format(p=p, o=0.55))),
     "PineNut": lambda p: dict(g1=C['pine'], g2="#D2BA86", front=C['garlic'], mid=("#8A4F16", 0.30), back=("#8A4F16", 0.16), mark="#8A4F16", ring="#CDBB8E", hl=0.0),
-    "Mortar": lambda p: (dict(g1="#F4F1E8", g2="#D8D3C4", front="#FFFFFF", mid=("#3F5446", 0.24), back=("#3F5446", 0.12), mark="#3F5446",
+    "Mortar": lambda p: (dict(g1="#E6E1D4", g2="#C9C2AF", front="#FFFFFF", mid=("#3F5446", 0.24), back=("#3F5446", 0.12), mark="#3F5446",
                               ring="#C9C4B4", hl=0.0, extra=VEIN) if VARIANT == "A" else dict(CHARCOAL, mark="#3F5446")),
 }
 

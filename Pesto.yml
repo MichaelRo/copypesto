@@ -152,6 +152,9 @@ targets:
       - path: Sources/Resources/InfoPlist.xcstrings
       - path: Sources/Resources/AppShortcuts.xcstrings
       - path: Sources/Resources/Pesto.icon
+      - path: Sources/Resources/PestoParmesan.icon
+      - path: Sources/Resources/PestoPineNut.icon
+      - path: Sources/Resources/PestoMortar.icon
     dependencies:
       - package: PestoCore
         product: PestoCore
@@ -193,6 +196,8 @@ targets:
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: "Pesto saves a picture from your history to Photos when you choose Save to Photos."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "Pesto asks for Face ID before it shows your clips when the History Lock is on, and before it shows a hidden clip."
         ASSETCATALOG_COMPILER_APPICON_NAME: Pesto
+        # The theme icons a person can pick in Settings → Appearance (design/source/theme-icons.py).
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "PestoParmesan PestoPineNut PestoMortar"
         ENABLE_USER_SCRIPT_SANDBOXING: "YES"
 
   # The iOS share extension (ADR 0047): it seals what is shared to the app's public key and writes it to the app

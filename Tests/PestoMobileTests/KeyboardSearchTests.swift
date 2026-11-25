@@ -28,10 +28,15 @@ struct KeyboardSearchTests {
 
     @Test("the search page, its keys and the model know nothing of the app's text field")
     func whenScanned_thenTheLettersCannotReachTheApp() throws {
-        // SourceTree lives in the regression target; this one reads the three files by name and throws if one moves.
+        // SourceTree lives in the regression target; this one reads the four files by name and throws if one moves.
         let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
             .deletingLastPathComponent().appendingPathComponent("Sources/MobileKeyboard")
-        for name in ["KeyboardLetters.swift", "KeyboardModel.swift", "KeyboardSearchPage.swift"] {
+        for name in [
+            "KeyboardLetters.swift",
+            "KeyboardLetterKey.swift",
+            "KeyboardModel.swift",
+            "KeyboardSearchPage.swift"
+        ] {
             let text = try String(contentsOf: folder.appendingPathComponent(name), encoding: .utf8)
             for forbidden in ["textDocumentProxy", "KeyboardKeys", "insertText", "UIInputViewController"] {
                 #expect(!text.contains(forbidden), "\(name) names \(forbidden)")
@@ -39,52 +44,34 @@ struct KeyboardSearchTests {
         }
     }
 
-    @Test("all seven search alphabets provide three rows and report RTL accurately")
-    func whenAlphabetSelected_thenRowsAndDirectionMatch() {
-        for alphabet in KeyboardLetters.Alphabet.allCases {
-            #expect(alphabet.rows.count == 3)
-            #expect(alphabet.rows.allSatisfy { !$0.isEmpty })
-        }
-        #expect(KeyboardLetters.Alphabet.azerty.rows[0].prefix(3) == ["a", "z", "e"])
-        #expect(KeyboardLetters.Alphabet.qwertz.rows[0].contains("z"))
-        #expect(KeyboardLetters.Alphabet.qwertz.rows[2].contains("y"))
-        #expect(KeyboardLetters.Alphabet.hebrew.rows[1].contains("ש"))
-        #expect(KeyboardLetters.Alphabet.arabic.rows[0].contains("ض"))
-        #expect(KeyboardLetters.Alphabet.cyrillic.rows[0].contains("й"))
-        #expect(KeyboardLetters.Alphabet.greek.rows[1].contains("α"))
-
-        #expect(KeyboardLetters.Alphabet.hebrew.isRTL)
-        #expect(KeyboardLetters.Alphabet.arabic.isRTL)
-        #expect(!KeyboardLetters.Alphabet.qwerty.isRTL)
-        #expect(!KeyboardLetters.Alphabet.azerty.isRTL)
-        #expect(!KeyboardLetters.Alphabet.qwertz.isRTL)
-        #expect(!KeyboardLetters.Alphabet.cyrillic.isRTL)
-        #expect(!KeyboardLetters.Alphabet.greek.isRTL)
-    }
-
-    @Test("active input modes resolve layouts in order and fall back to preferred languages")
-    func whenResolvingAlphabets_thenInputModesLeadAndPreferredLanguagesFallback() {
+    @Test("the page offers the layouts of the person's own keyboards, in order, and names those it cannot type")
+    func whenResolvingLayouts_thenInputModesLeadAndInputMethodsAreNamed() {
         #expect(
-            KeyboardLetters.resolvedAlphabets(
+            KeyboardLetters.resolvedLayouts(
                 inputModeLanguages: ["emoji", "fr-FR", "he-IL", "dictation", "es-ES"],
                 preferredLanguages: ["en-US"]
-            ) == [.azerty, .hebrew, .qwerty]
+            ).map(\.id) == ["azerty", "hebrew", "spanish"]
         )
         #expect(
-            KeyboardLetters.resolvedAlphabets(
-                inputModeLanguages: ["de-DE", "ar-SA", "ru-RU", "el-GR"],
-                preferredLanguages: []
-            ) == [.qwertz, .arabic, .cyrillic, .greek]
+            KeyboardLetters.resolvedLayouts(inputModeLanguages: ["emoji"], preferredLanguages: ["he-IL", "en-US"])
+                .map(\.id) == ["hebrew", "qwerty"]
         )
-        #expect(
-            KeyboardLetters.resolvedAlphabets(
-                inputModeLanguages: ["emoji"],
-                preferredLanguages: ["he-IL", "en-US"]
-            ) == [.hebrew, .qwerty]
-        )
-        #expect(
-            KeyboardLetters.resolvedAlphabets(inputModeLanguages: [], preferredLanguages: []) == [.qwerty]
-        )
+        #expect(KeyboardLetters.inputMethodLanguages(inputModeLanguages: ["en-US", "ja-JP", "zh-Hans"]) == [
+            "ja-JP",
+            "zh-Hans"
+        ])
+    }
+
+    @Test("Korean typed on the page joins into syllables, and Delete takes back one jamo")
+    func whenKorean_thenTheQueryComposes() {
+        let model = KeyboardModel()
+        model.openSearch()
+        for jamo in ["ㅎ", "ㅏ", "ㄴ"] {
+            model.typeInSearch(jamo, composingHangul: true)
+        }
+        #expect(model.searchQuery?.text == "한")
+        model.deleteInSearch(decomposingHangul: true)
+        #expect(model.searchQuery?.text == "하")
     }
 
     @Test("clip card layout direction follows the clip's own script")

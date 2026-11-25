@@ -246,3 +246,15 @@ Model the view state cleanly in a testable pure struct (similar to `QuickInsertM
 3. Register `PestoKeyboard` in `Pesto.yml` and embed it in `PestoMobile`, then run `make generate`.
 4. Update `EntitlementsTests.swift`, `MobileSubmissionTests.swift`, `VocabularyTests.swift`, `LocalizationRoutingTests.swift`, `AccentUsageTests.swift`, and add unit tests in `Tests/PestoMobileTests/` for `KeyboardMenuModel` & `KeyboardStarter` (restricted vs full access, `.unavailable` / `.empty` / `.ready`, starter expansion).
 5. Update `SettingsView.swift` copy (and `ADR 0046` amendment ADR).
+
+## 8. The keyboard after ADR 0066 (2026-11-25)
+Sections 5.1–5.3 describe the first version; ADRs 0062, 0063 and 0066 supersede them where they differ.
+- **Shelf:** the library's chips with a round search key beside them; a Pesto chip at the end of the row opens
+  settings inside the keyboard (`KeyboardSettingsPanel`: the size, with cards previewed at it, and Open Pesto
+  Settings). iOS's bottom row: 123, globe (when iOS asks for it), space, delete, return. A word search rings its first
+  match and Return reads Insert.
+- **Search page:** the field, a tray of results (one row at Small and Medium, two at Large, one in landscape, five
+  on iPad; `KeyboardSearchMetrics`), the letters of the person's own keyboards (`SearchKeyboardLayout`: 18 layouts,
+  shift layers, long-press accents, Korean composed by `HangulComposer`), and 123, globe, space (named for the layout;
+  hold for the next) and Done. iPad puts Delete on the top row and Done on the middle row, with Shift on both sides.
+- **Not typeable here:** Japanese and Chinese, which need an input method; the field's placeholder says so.

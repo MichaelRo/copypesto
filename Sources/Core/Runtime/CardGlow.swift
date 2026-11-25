@@ -4,8 +4,9 @@ import Foundation
 /// The foot glow (ADR 0068): the source app's color rising from a card's foot to 40% of its height, so a clip says
 /// where it came from without a band or a border. The sampled icon color is normalized in OKLCH (its hue kept,
 /// lightness fixed per appearance, chroma capped) so every app glows at the same strength; a hue near basil (focus) or
-/// gold (collections) is muted, and a near-neutral icon draws nothing. Dark uses lightness 0.66, not the 0.74 first
-/// proposed: brighter took the muted foot text under 4.5:1 for some hues (`CardGlowTests`). Views draw `stops`.
+/// gold (collections) is muted, and a near-neutral icon draws nothing. In dark the glow is deep (lightness 0.42, at
+/// 12%), about the card's own lightness, so it tints the foot without lifting it: the panel's 0.74 at 16%, and even
+/// 0.60, took the foot text under 4.5:1 on the Mac's Pine nut card (`CardMetaLineContrastTests`). Views draw `stops`.
 public struct CardGlow: Equatable, Sendable {
     /// `RRGGBB`, no `#`.
     public let hex: String
@@ -32,10 +33,10 @@ public struct CardGlow: Equatable, Sendable {
         guard let sampled = fromApp ?? fromTheme else { return nil }
         let muted = fromApp == nil || near(sampled.hue, basilHue, within: 22) || near(sampled.hue, goldHue, within: 18)
         let chroma = min(sampled.chroma, muted ? 0.05 : 0.12)
-        let base = isGlass ? (isDark ? 0.12 : 0.08) : (isDark ? 0.16 : 0.11)
+        let base = isGlass ? (isDark ? 0.09 : 0.08) : (isDark ? 0.12 : 0.11)
         let opacity = base * (muted ? 0.7 : 1) * (isSelected ? 0.6 : 1)
         return CardGlow(
-            hex: hex(lightness: isDark ? 0.66 : 0.70, chroma: chroma, hue: sampled.hue), opacity: opacity,
+            hex: hex(lightness: isDark ? 0.42 : 0.70, chroma: chroma, hue: sampled.hue), opacity: opacity,
             chroma: chroma
         )
     }

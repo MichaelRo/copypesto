@@ -3,8 +3,9 @@ import PestoCore
 import SwiftUI
 import WidgetKit
 
-/// The widget on the theme's ground: Pesto cards, one filling a small widget, a row of them in a medium one and a grid
-/// in a large one, each doing what "When a Clip Is Chosen" says; "No clips yet" for an empty list, "Choose a
+/// The widget on the theme's ground: Pesto cards, one filling a small widget, two side by side in a medium one, two by
+/// two in a large one and two by four in an extra large one, with page buttons on medium and large (ADR 0067), each
+/// card doing what "When a Clip Is Chosen" says; "No clips yet" for an empty list, "Choose a
 /// collection" for a collection the snapshot does not carry (ADR 0060), "Open Pesto to show your clips" when there is
 /// no snapshot to show. On the Mac a message opens the shelf, which is also when Pesto
 /// asks whether a widget is installed (ADR 0059).
@@ -17,18 +18,14 @@ struct RecentClipsView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     private var resolvedSize: WidgetSize {
-        if let size { return size }
-        return switch family {
-        case .systemSmall: .small
-        case .systemLarge, .systemExtraLarge: .large
-        default: .medium
-        }
+        size ?? WidgetSize(family: family)
     }
 
     var body: some View {
         let accessible = typeSize.isAccessibilitySize
         let content = WidgetContent(
-            snapshot: entry.snapshot, size: resolvedSize, source: entry.source, accessibilityText: accessible
+            snapshot: entry.snapshot, size: resolvedSize, source: entry.source, accessibilityText: accessible,
+            page: entry.page
         )
         let palette = WidgetPalette(theme: content.theme, isDark: colorScheme == .dark)
         let single = resolvedSize == .small ? content.clips.first : nil
@@ -71,12 +68,37 @@ struct RecentClipsView: View {
                         .accessibilityHint(WidgetClipSpeech.hint(tap(for: single), kind: single.kind))
                     }
                 } else {
-                    grid(content.clips, columns: resolvedSize.columns(accessibilityText: accessible), palette: palette)
+                    paged(content, accessible: accessible, palette: palette)
                 }
             }
         }
         .tint(palette.accent)
         .containerBackground(for: .widget) { Self.ground(single: single, palette: palette) }
+    }
+
+    @ViewBuilder
+    private func paged(_ content: WidgetContent, accessible: Bool, palette: WidgetPalette) -> some View {
+        let grid = grid(content.clips, columns: resolvedSize.columns(accessibilityText: accessible), palette: palette)
+        if content.pageCount > 1, let snapshot = entry.snapshot {
+            let control = WidgetPageControl(
+                key: WidgetPaging.key(source: entry.source, size: resolvedSize), page: content.page,
+                pageCount: content.pageCount, snapshotCreatedAt: snapshot.createdAt,
+                isVertical: resolvedSize == .medium
+            )
+            if resolvedSize == .medium {
+                HStack(spacing: 6) {
+                    grid
+                    control.frame(width: 28)
+                }
+            } else {
+                VStack(spacing: 4) {
+                    grid
+                    control.frame(height: 24)
+                }
+            }
+        } else {
+            grid
+        }
     }
 
     private func grid(_ clips: [WidgetClip], columns: Int, palette: WidgetPalette) -> some View {
@@ -89,7 +111,7 @@ struct RecentClipsView: View {
                         WidgetTapArea(tap: tap(for: clip), isWholeWidget: false) {
                             WidgetCardTile(
                                 clip: clip, now: entry.date, palette: palette, copied: entry.copiedID == clip.id,
-                                isRoomy: resolvedSize == .large && columns == 2
+                                isRoomy: resolvedSize != .medium && columns > 1
                             )
                             .accessibilityHint(WidgetClipSpeech.hint(tap(for: clip), kind: clip.kind))
                         }
@@ -99,7 +121,7 @@ struct RecentClipsView: View {
                     }
                 }
             }
-            if rows.count < 2, resolvedSize == .large { Spacer(minLength: 0) }
+            if rows.count < resolvedSize.grid(accessibilityText: false).rows { Spacer(minLength: 0) }
         }
     }
 

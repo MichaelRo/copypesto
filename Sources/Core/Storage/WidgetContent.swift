@@ -23,10 +23,13 @@ public struct WidgetContent: Equatable, Sendable {
     public let source: WidgetClipSource
     /// The collection a widget set to one shows, while the snapshot carries it.
     public let collection: WidgetCollection?
+    /// The page shown, clamped to the pages there are, and how many there are (ADR 0067).
+    public let page: Int
+    public let pageCount: Int
 
     public init(
         snapshot: WidgetSnapshot?, size: WidgetSize, source: WidgetClipSource = .recent,
-        accessibilityText: Bool = false, now: Date = .now
+        accessibilityText: Bool = false, page: Int = 0, now: Date = .now
     ) {
         self.source = source
         theme = snapshot?.theme ?? .brand
@@ -36,7 +39,10 @@ public struct WidgetContent: Equatable, Sendable {
             collection = nil
         }
         let all = snapshot?.clips(from: source) ?? []
-        clips = Array(all.prefix(size.clipCount(accessibilityText: accessibilityText)))
+        let perPage = size.clipCount(accessibilityText: accessibilityText)
+        pageCount = size.pageCount(of: all.count, accessibilityText: accessibilityText)
+        self.page = min(max(page, 0), pageCount - 1)
+        clips = Array(all.dropFirst(self.page * perPage).prefix(perPage))
         state = Self.state(of: snapshot, source: source, collection: collection, showing: clips, now: now)
     }
 

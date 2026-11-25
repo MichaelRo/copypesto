@@ -14,6 +14,7 @@ struct KeyboardRootView: View {
     weak var controller: UIInputViewController?
 
     @State private var showsPad = false
+    @State private var showsSettings = false
     @State private var chip: KeyboardMenu.Chip?
     @State private var feedback: (id: UUID, kind: KeyboardClipKey.Feedback)?
     @State private var isScreenCaptured = false
@@ -58,12 +59,20 @@ struct KeyboardRootView: View {
                         },
                         close: { setSearching(false) }
                     )
+                } else if showsSettings {
+                    KeyboardSettingsPanel(
+                        size: model.keyboardSize,
+                        sample: shown(matches),
+                        setSize: setKeyboardSize,
+                        openSettings: keys.openURL.map { open in { open(AppLink.url(for: .keyboardSettings)) } },
+                        close: { showsSettings = false }
+                    )
                 } else {
                     VStack(spacing: 6) {
                         if model.menu.state == .ready, !showsPad { chipRow(matches: matches) }
                         content(matches: matches)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        bottomRow
+                        bottomRow(matches: matches)
                     }
                 }
             }
@@ -202,54 +211,34 @@ struct KeyboardRootView: View {
                             chip = label.chip
                         }
                     }
+                    KeyboardChip(title: "Pesto", symbolName: "gearshape", isSelected: false, isDimmed: false) {
+                        showsSettings = true
+                    }
+                    .accessibilityLabel(Text("Keyboard Settings"))
                 }
             }
             .scrollEdgeEffectHidden(true, for: .all)
 
-            sizePill
-
-            if let openURL = keys.openURL {
-                Button {
-                    openURL(AppLink.url(for: .keyboardSettings))
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                        .frame(minWidth: 32, minHeight: 30)
-                        .background(.primary.opacity(0.08), in: .capsule)
-                        .contentShape(.rect)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text("Keyboard Settings"))
+            Button { setSearching(true) } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(width: 34, height: 30)
             }
+            .buttonStyle(KeyboardKeyStyle())
+            .clipShape(.capsule)
+            .accessibilityLabel(Text("Search Clips"))
         }
         .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
         .fixedSize(horizontal: false, vertical: true)
     }
 
-    private var sizePill: some View {
-        Button {
-            let next = model.keyboardSize.next
-            if let setKeyboardSize = keys.setKeyboardSize {
-                setKeyboardSize(next)
-            } else {
-                model.keyboardSize = next
-                keys.relayout()
-            }
-        } label: {
-            Text(verbatim: model.keyboardSize.shortLabel)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .padding(.horizontal, 8)
-                .frame(minWidth: 32, minHeight: 30)
-                .background(.primary.opacity(0.08), in: .capsule)
-                .contentShape(.rect)
+    private func setKeyboardSize(_ size: KeyboardSize) {
+        if let setKeyboardSize = keys.setKeyboardSize {
+            setKeyboardSize(size)
+        } else {
+            model.keyboardSize = size
+            keys.relayout()
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Text("Keyboard size"))
-        .accessibilityValue(Text(model.keyboardSize.displayName))
-        .accessibilityHint(Text("Changes how large the clip cards are"))
     }
 
     private func shelf(matches: [QuickInsertEntry]) -> some View {
@@ -288,8 +277,16 @@ struct KeyboardRootView: View {
                 ? { text in insertRecognizedText(text, for: entry) }
                 : nil
         )
+        let ringed = key.overlay {
+            // Only the clip Return would insert is ringed: a picture is copied, never inserted (ADR 0066).
+            if entry.id == returnInserts(matches)?.id {
+                RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
+                    .strokeBorder(.tint, lineWidth: 2)
+                    .accessibilityHidden(true)
+            }
+        }
         if entry.kind == .image {
-            key
+            ringed
                 .onTapGesture { copyPicture(entry) }
                 .contextMenu {
                     Button("Copy Picture", systemImage: "doc.on.doc") { copyPicture(entry) }
@@ -306,7 +303,7 @@ struct KeyboardRootView: View {
                     }
                 }
         } else {
-            key
+            ringed
                 .onTapGesture { insert(entry, longPress: false, matches: matches) }
                 .onLongPressGesture(minimumDuration: 0.4) { insert(entry, longPress: true, matches: matches) }
                 .accessibilityAction { insert(entry, longPress: false, matches: matches) }
@@ -382,41 +379,49 @@ struct KeyboardRootView: View {
         keys.relayout()
     }
 
-    private var bottomRow: some View {
+    /// The first match of the word before the caret, which Return inserts (ADR 0066); a picture is never one, since
+    /// it is copied rather than inserted.
+    private func returnInserts(_ matches: [QuickInsertEntry]) -> QuickInsertEntry? {
+        guard word != nil, !showsPad, let first = matches.first, first.kind != .image else { return nil }
+        return first
+    }
+
+    private func bottomRow(matches: [QuickInsertEntry]) -> some View {
         HStack(spacing: 6) {
-            if model.showsGlobeKey {
-                GlobeKey(controller: controller)
-                    .frame(width: 44, height: 40)
-            }
             if model.menu.state != .restricted {
                 Button { showsPad.toggle() } label: {
-                    padToggleLabel.frame(width: 52, height: 40)
+                    padToggleLabel.frame(width: 50, height: 42)
                 }
                 .buttonStyle(KeyboardKeyStyle(isFunction: true))
             }
-            if model.menu.state == .ready {
-                Button { setSearching(true) } label: {
-                    Image(systemName: "magnifyingglass").frame(width: 44, height: 40)
-                }
-                .buttonStyle(KeyboardKeyStyle(isFunction: true))
-                .accessibilityLabel(Text("Search Clips"))
+            if model.showsGlobeKey {
+                GlobeKey(controller: controller)
+                    .frame(width: 44, height: 42)
             }
             Button { keys.insert(" ") } label: {
-                Text("Space").frame(maxWidth: .infinity, minHeight: 40)
+                Text("Space").frame(maxWidth: .infinity, minHeight: 42)
             }
-            .buttonStyle(KeyboardKeyStyle(isFunction: true))
+            .buttonStyle(KeyboardKeyStyle())
             .buttonRepeatBehavior(.enabled)
-            Button { keys.insert("\n") } label: {
-                Image(systemName: "return").frame(width: 44, height: 40)
-            }
-            .buttonStyle(KeyboardKeyStyle(isFunction: true))
-            .accessibilityLabel(Text("Return"))
             Button(action: keys.deleteBackward) {
-                Image(systemName: "delete.left").frame(width: 44, height: 40)
+                Image(systemName: "delete.left").frame(width: 50, height: 42)
             }
             .buttonStyle(KeyboardKeyStyle(isFunction: true))
             .buttonRepeatBehavior(.enabled)
             .accessibilityLabel(Text("Delete"))
+            if let first = returnInserts(matches) {
+                Button { insert(first, longPress: false, matches: matches) } label: {
+                    Text("Insert").fontWeight(.semibold).frame(width: 88, height: 42)
+                }
+                .buttonStyle(KeyboardKeyStyle(isAccent: true))
+                .accessibilityHint(Text("Inserts the first match"))
+            } else {
+                Button { keys.insert("\n") } label: {
+                    Text("return").frame(width: 88, height: 42)
+                }
+                .buttonStyle(KeyboardKeyStyle(isFunction: true))
+                .accessibilityLabel(Text("Return"))
+            }
         }
         .font(.body)
         .tint(.primary)

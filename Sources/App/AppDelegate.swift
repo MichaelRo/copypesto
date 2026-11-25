@@ -120,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         scheduleTestOverlayIfNeeded()
         applyScreenShareSetting()
         applyAppearance()
+        AppIconMatching.migrate(AppDefaults.store)
         applyAppIcon()
         setupStatusItem()
         if mode == .uiTest { startUITestHarness() }

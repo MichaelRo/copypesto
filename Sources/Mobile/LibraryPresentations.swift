@@ -86,6 +86,11 @@ struct LibraryPresentations: ViewModifier {
                 .ignoresSafeArea()
             }
             .task(id: appState.sync?.isEnabled ?? false) { await watchForJoinRequests() }
+            // Settings' root also disappears when a page is pushed over it, so the icon (whose change iOS confirms
+            // with an alert) is applied only when Settings itself closes.
+            .onChange(of: library.showsSettings) { wasShown, isShown in
+                if wasShown, !isShown { MobileAppIcon.applyIfMatching() }
+            }
     }
 
     private var settingsSheetBinding: Binding<Bool> {

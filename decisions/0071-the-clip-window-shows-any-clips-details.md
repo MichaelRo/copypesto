@@ -18,8 +18,14 @@ details screen for every clip (`ClipDetailView`). The board drew two layouts; th
   (a picture, a file, a secret not shown) shows as its hover card does. Save still closes the window.
 - **On the right**, the note, the tags (each with a remove button; several may be typed at once), the collection,
   Pinned and the facts, each saved as it changes through `ClipEditor`, so ⌘Z on the shelf takes it back.
-- **A secret's text is read only while it is shown on its card** (the grid's `revealedIDs`); otherwise the window
-  never decrypts it.
+- **A secret's text is read only through Edit Text**, which its card offers after a Show with Touch ID; Show Details
+  and ⌘I never decrypt it (the grid's reveals of a covered card ask for nothing, so they cannot count).
+- **The window obeys the card's cover** (`CardConcealment`): a picture the content filter blurs, a hidden secret or a
+  clip still being judged shows its facts only; a hidden secret's title and note are hidden; while clip contents are
+  covered the whole window is covered, and a typed draft waits.
+- **Only what the person changed is saved** (`ClipDetailsEdit.personChanged`), so closing the window after the clip
+  changed on its card or through sync never writes an old value back; nothing is saved for a deleted clip or after
+  the History Lock.
 - **The rules for what is saved are Core's `ClipDetailsEdit`** (a blank title or note is none; a tag loses a leading
   `@` or `#` and is kept once whatever its case), shared with the iPhone's details form.
 

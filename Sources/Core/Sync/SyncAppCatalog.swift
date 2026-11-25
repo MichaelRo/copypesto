@@ -73,7 +73,20 @@ public struct SyncAppCatalog: Codable, Equatable, Sendable {
         return out
     }
 
+    /// The sealed catalog, with the oldest apps dropped until it fits under `SyncSmallFile.maxBytes`: 128 icons of
+    /// 8 KB come to about 1.4 MB as JSON, and a reader refuses a file over the limit without a word.
     public func sealed(syncKey: SyncKey, signedBy keys: SyncDeviceKeys) throws -> Data {
+        var fitting = self
+        while true {
+            let data = try fitting.sealedAsIs(syncKey: syncKey, signedBy: keys)
+            guard data.count > SyncSmallFile.maxBytes, fitting.entries.count > 1 else { return data }
+            let over = Double(data.count) / Double(SyncSmallFile.maxBytes)
+            let keep = max(1, min(fitting.entries.count - 1, Int(Double(fitting.entries.count) / over * 0.95)))
+            fitting.entries = Array(fitting.entries.prefix(keep))
+        }
+    }
+
+    private func sealedAsIs(syncKey: SyncKey, signedBy keys: SyncDeviceKeys) throws -> Data {
         var copy = self
         copy.signature = try keys.signing.signature(for: signingBytes()).base64EncodedString()
         let box = try AES.GCM.seal(

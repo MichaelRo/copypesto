@@ -143,4 +143,65 @@ struct SyncSourceAppTests {
         #expect(macReceived.isEmpty, "an iPhone resolves no app, so it writes no catalog")
         #expect(!FileManager.default.fileExists(atPath: layout.appCatalog(phone.identity.deviceID).path))
     }
+
+    @Test("after Reset Sync on another device the Mac writes its catalog again under the new epoch")
+    func whenTheGroupIsReset_thenTheCatalogIsWrittenAgain() async throws {
+        defer { try? FileManager.default.removeItem(at: layout.root) }
+        let mac = try SyncSite(
+            name: "mac-a", layout: layout, time: time, environment: .testing { $0.sourceApps = IconSourceApps() }
+        )
+        let phone = try SyncSite(
+            name: "iphone-b", layout: layout, time: time, environment: .testing { $0.sourceApps = UnknownSourceApps() }
+        )
+        var received: [SyncAppCatalog.Entry] = []
+        phone.service.onAppCatalog = { received = $0 }
+        let made = try SyncGroupManager.create(
+            layout: layout, identity: mac.identity, keyStore: mac.keyStore, now: time.now
+        )
+        try phone.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
+        try await mac.copy("from Notes")
+        await exchange([mac, phone])
+        #expect(received.count == 1)
+
+        let next = try SyncGroupManager.reset(
+            layout: layout, from: made.group, identity: phone.identity, keyStore: phone.keyStore, now: time.now
+        )
+        try mac.keyStore.saveSyncKey(next.group.key, vaultID: next.group.vault.vaultID, epoch: 2)
+        received = []
+        await exchange([mac, phone])
+
+        guard case let .ready(now) = try SyncGroupManager.open(layout: layout, keyStore: phone.keyStore) else {
+            Issue.record("no group")
+            return
+        }
+        let data = try #require(SyncSmallFile.read(layout.appCatalog(mac.identity.deviceID)))
+        let opened = try SyncAppCatalog.open(
+            data, syncKey: now.key, trust: now.trust, deviceID: mac.identity.deviceID, epoch: now.epoch
+        )
+        #expect(opened.entries.map(\.bundleID) == ["com.apple.Notes"])
+        #expect(received.map(\.bundleID) == ["com.apple.Notes"])
+    }
+
+    @Test("a clip that stays on the Mac (a secret) does not name its app to the other devices")
+    func whenAClipStaysHere_thenItsAppIsNotInTheCatalog() async throws {
+        defer { try? FileManager.default.removeItem(at: layout.root) }
+        let mac = try SyncSite(
+            name: "mac-a", layout: layout, time: time, environment: .testing { $0.sourceApps = IconSourceApps() }
+        )
+        let phone = try SyncSite(
+            name: "iphone-b", layout: layout, time: time, environment: .testing { $0.sourceApps = UnknownSourceApps() }
+        )
+        var received: [SyncAppCatalog.Entry] = []
+        phone.service.onAppCatalog = { received = $0 }
+        let made = try SyncGroupManager.create(
+            layout: layout, identity: mac.identity, keyStore: mac.keyStore, now: time.now
+        )
+        try phone.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
+        try await mac.copy("from Notes")
+        try await mac.copy("4111 1111 1111 1111", from: "com.example.Vault")
+
+        await exchange([mac, phone])
+
+        #expect(received.map(\.bundleID) == ["com.apple.Notes"])
+    }
 }

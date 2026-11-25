@@ -26,4 +26,12 @@ struct ClipDetailsEditTests {
     func whenCommandI_thenShowDetails() {
         #expect(ShelfCommand.resolve(characters: "i", keyCode: 34) == .showDetails)
     }
+
+    @Test("a field counts as changed only when the person typed something different from what it was filled with")
+    func whenFieldUntouched_thenNotChanged() {
+        #expect(!ClipDetailsEdit.personChanged("Trip", from: "Trip"))
+        #expect(!ClipDetailsEdit.personChanged("Trip ", from: "Trip"), "spaces alone are no change")
+        #expect(ClipDetailsEdit.personChanged("Trip to Genoa", from: "Trip"))
+        #expect(ClipDetailsEdit.personChanged("", from: "Trip"), "emptying it is a change")
+    }
 }

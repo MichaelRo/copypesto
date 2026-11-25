@@ -35,12 +35,12 @@ struct AppIconBundleTests {
             .contains { ($0["appearance"] as? String) == "dark" && ($0["value"] as? String) == "letter-dark.svg" })
     }
 
-    @Test("the P reads against the garlic front card in both appearances (3:1, a graphic)")
+    @Test("the P reads against the garlic jar in both appearances (3:1, a graphic)")
     func letterReadsOnTheFrontCard() throws {
-        let card = try fill(of: "front-card.svg")
+        let card = try fill(of: "jar.svg")
         for asset in ["letter.svg", "letter-dark.svg"] {
             let ratio = try ContrastRatio.between(fill(of: asset), card)
-            #expect(ratio >= 3, "\(asset) is \(ratio):1 on the front card")
+            #expect(ratio >= 3, "\(asset) is \(ratio):1 on the jar")
         }
     }
 

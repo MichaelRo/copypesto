@@ -28,19 +28,7 @@ final class ThemeSettingsTests: PestoUITestCase {
         XCTAssertTrue(element(AccessibilityID.settingsChoice("theme", "basil")).isSelected)
     }
 
-    func test_choosingAnIcon_leavesTheThemeAlone() {
-        openAppearance()
-        let mortarIcon = element(AccessibilityID.settingsChoice("appIcon", "mortar"))
-        XCTAssertTrue(mortarIcon.waitUntilExists(timeout: 5))
-
-        mortarIcon.click()
-
-        waitUntilSelected(mortarIcon)
-        XCTAssertTrue(mortarIcon.isSelected)
-        XCTAssertTrue(element(AccessibilityID.settingsChoice("theme", "basil")).isSelected)
-    }
-
-    func test_choosingATheme_selectsItAndItsIcon() {
+    func test_choosingATheme_selectsIt() {
         openAppearance()
         let parmesan = element(AccessibilityID.settingsChoice("theme", "parmesan"))
         XCTAssertTrue(parmesan.waitUntilExists(timeout: 5))
@@ -49,9 +37,6 @@ final class ThemeSettingsTests: PestoUITestCase {
 
         waitUntilSelected(parmesan)
         XCTAssertTrue(parmesan.isSelected)
-        let icon = element(AccessibilityID.settingsChoice("appIcon", "parmesan"))
-        waitUntilSelected(icon)
-        XCTAssertTrue(icon.isSelected, "the theme's icon")
     }
 }
 

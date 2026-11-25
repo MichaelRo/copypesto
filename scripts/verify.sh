@@ -239,7 +239,8 @@ step_mobile() {
       action="test"
       target_flags=()
     fi
-    xcodebuild -project Pesto.xcodeproj -scheme "$scheme" -configuration Debug \
+    # The test process sees only TEST_RUNNER_* variables: PESTO_CI tells hardware budgets they run on a shared runner.
+    env ${CI:+TEST_RUNNER_PESTO_CI=1} xcodebuild -project Pesto.xcodeproj -scheme "$scheme" -configuration Debug \
       -derivedDataPath .build/xcode-ios-app -destination "platform=iOS Simulator,name=${device%:*}" \
       ${target_flags[@]+"${target_flags[@]}"} \
       -resultBundlePath "$LOGS/mobile-$name.xcresult" "$action" >"$LOGS/mobile-$name.log" 2>&1 || failed=1

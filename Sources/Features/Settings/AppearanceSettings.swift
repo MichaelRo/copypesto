@@ -8,6 +8,7 @@ struct AppearanceSettings: View {
     @AppStorage(Setting.appTheme) private var appThemeRaw: String
     @AppStorage(Setting.appThemeDark) private var appThemeDarkRaw: String
     @AppStorage(Setting.appIcon) private var appIconRaw: String
+    @AppStorage(Setting.matchesAppIcon) private var matchesAppIcon: Bool
     @AppStorage(Setting.cardSize) private var cardSizeRaw: String
     @AppStorage(Setting.cardWidth) private var cardWidth: Int
     @AppStorage(Setting.shelfPosition) private var shelfPositionRaw: String
@@ -80,15 +81,17 @@ struct AppearanceSettings: View {
     private var settingsForm: some View {
         Form {
             Section("Theme") {
-                ThemePicker(theme: $appThemeRaw, accentHex: $accentColorHex, iconRaw: $appIconRaw)
-                    .settingsRow("Theme")
-                LabeledContent {
-                    AppIconPicker(selection: $appIconRaw)
-                } label: {
-                    Text("App icon")
-                        .help("Goes with the theme. Change it on its own any time.")
-                }
-                .settingsRow("App icon")
+                ThemePicker(
+                    theme: $appThemeRaw, accentHex: $accentColorHex, iconRaw: $appIconRaw, matchesIcon: matchesAppIcon
+                )
+                .settingsRow("Theme")
+                Toggle("Match App Icon", isOn: $matchesAppIcon)
+                    .help("The icon in the Dock follows the theme.")
+                    .accessibilityIdentifier(AccessibilityID.matchAppIconToggle)
+                    .onChange(of: matchesAppIcon) { _, on in
+                        if on { appIconRaw = AppTheme(stored: appThemeRaw).pairedIcon.rawValue }
+                    }
+                    .settingsRow("Match App Icon")
             }
 
             Section("Cards") {

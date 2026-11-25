@@ -23,13 +23,14 @@ proposed a fourth between the owner's two favorites, the foot glow, and the owne
   apps, emptied by Clear History). The catalog holds what the history's plain columns already say (bundle ID, name)
   plus an icon and a color, never a clip.
 - **The foot glow** (`CardGlow`, Core/Runtime): the app's color rises from the card's foot to 40% of its height
-  (stops 1, .55 at 15%, .18 at 28%, 0 at 40%), at 11% (light) or 16% (dark) on a solid ground and 8% or 12% on glass,
+  (stops 1, .55 at 15%, .18 at 28%, 0 at 40%), at 11% (light) or 12% (dark) on a solid ground and 8% or 9% on glass (dark lowered from the panel's 16% and 12%: the
+  Mac's foot text measured 4.38:1 on Pine nut, `CardMetaLineContrastTests`),
   0.6 of that on a selected card. The sampled color is normalized in OKLCH: its hue kept, lightness 0.70 (light) and
-  0.66 (dark), chroma at most 0.12. A hue within 22° of basil or 18° of gold is muted (chroma 0.05, 70% strength), so
+  0.42 (dark: a deep tint that does not lift the card toward its text), chroma at most 0.12. A hue within 22° of basil or 18° of gold is muted (chroma 0.05, 70% strength), so
   color never reads as focus or a collection; a near-neutral icon (Terminal) glows not at all. No glow on a picture,
   a color or a covered card, nor under Increase Contrast. `CardGlowTests` checks text over the strongest glow of every
-  hue in both appearances: 7:1 for the content and 4.5:1 for the foot line. The panel proposed lightness 0.74 in dark,
-  which failed that check.
+  hue in both appearances: 7:1 for the content and 4.5:1 for the foot line. The panel proposed lightness 0.74 at 16% in dark,
+  which failed that check on the Mac's dark card.
 - **On iOS** the foot line leads with the app's icon (16 pt) when the catalog has it.
 - **A card with no app color** (a near-neutral icon, a clip made on the iPhone) glows in its theme's accent hue, always
   muted (design board 5), and Basil's ground gets a faint wash of its own green (4% light, 3% dark), so the default

@@ -13,9 +13,9 @@ struct CardGlowTests {
     func whenSurfaceDiffers_thenOpacityFollows() throws {
         let safari = "#1796F2"
         #expect(try #require(glow(safari)).opacity == 0.11)
-        #expect(try #require(glow(safari, dark: true)).opacity == 0.16)
+        #expect(try #require(glow(safari, dark: true)).opacity == 0.12)
         #expect(try #require(glow(safari, glass: true)).opacity == 0.08)
-        #expect(try #require(glow(safari, dark: true, glass: true)).opacity == 0.12)
+        #expect(try #require(glow(safari, dark: true, glass: true)).opacity == 0.09)
         let selected = CardGlow.decide(
             colorHex: safari, isDark: false, isGlass: false, increaseContrast: false, isSelected: true
         )
@@ -56,6 +56,11 @@ struct CardGlowTests {
                 let muted = dark ? "B5B9AB" : "4F544C"
                 #expect(ContrastRatio.between(ink, ground) >= 7, "ink \(hex) dark \(dark)")
                 #expect(ContrastRatio.between(muted, ground) >= 4.5, "muted \(hex) dark \(dark)")
+                // The Mac's own dark card (a theme's tinted ground under white at 10%) and its foot text, measured in
+                // CardMetaLineContrastTests: the glow at full strength must keep 4.5:1 there too.
+                if dark, let macGround = glow.blended(over: "3B403B") {
+                    #expect(ContrastRatio.between("B4B6B3", macGround) >= 4.5, "Mac foot \(hex)")
+                }
             }
         }
     }

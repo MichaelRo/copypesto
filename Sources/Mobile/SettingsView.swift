@@ -56,31 +56,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section {
-                MobileThemeCards(selection: activeThemeBinding)
-                    .onChange(of: theme) {
-                        appState.writeQuickInsert()
-                        Task { await appState.writeWidget() }
-                    }
-                    .onChange(of: darkTheme) {
-                        appState.writeQuickInsert()
-                        Task { await appState.writeWidget() }
-                    }
-                Picker("Appearance", selection: $appearance) {
-                    ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
-                        Text(mode.label).tag(mode.rawValue)
-                    }
-                }
-                .tint(accent)
-                .id(resolvedAccentHex)
-                MobileAccentPicker(selection: $accentColorHex, theme: theme, darkTheme: darkTheme)
-                    .onChange(of: accentColorHex) {
-                        appState.writeQuickInsert()
-                        Task { await appState.writeWidget() }
-                    }
-            } header: {
-                SettingsSectionHeader(title: "Appearance", symbol: "paintpalette")
-            }
+            appearanceSection
             Section {
                 Toggle("Add copies when Pesto opens", isOn: $addsCopiesOnOpen)
                     .accessibilityIdentifier(MobileAccessibilityID.addsCopiesToggle)
@@ -500,6 +476,37 @@ struct SettingsSheet: View {
 }
 
 extension SettingsView {
+    var appearanceSection: some View {
+        Section {
+            MobileThemeCards(selection: activeThemeBinding)
+                .onChange(of: theme) {
+                    appState.writeQuickInsert()
+                    Task { await appState.writeWidget() }
+                }
+                .onChange(of: darkTheme) {
+                    appState.writeQuickInsert()
+                    Task { await appState.writeWidget() }
+                }
+            Picker("Appearance", selection: $appearance) {
+                ForEach(AppearanceMode.allCases, id: \.rawValue) { mode in
+                    Text(mode.label).tag(mode.rawValue)
+                }
+            }
+            .tint(accent)
+            .id(resolvedAccentHex)
+            MobileAccentPicker(selection: $accentColorHex, theme: theme, darkTheme: darkTheme)
+                .onChange(of: accentColorHex) {
+                    appState.writeQuickInsert()
+                    Task { await appState.writeWidget() }
+                }
+            MobileAppIconToggle()
+        } header: {
+            SettingsSectionHeader(title: "Appearance", symbol: "paintpalette")
+        } footer: {
+            Text("Your Home Screen icon follows the theme when you leave Settings. iOS asks to confirm.")
+        }
+    }
+
     var extensionsSection: some View {
         Section {
             NavigationLink {

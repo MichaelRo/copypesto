@@ -167,6 +167,8 @@ enum AccessibilityID {
 
     /// Settings fields
     static let excludedAppField = "settings-excluded-app-field"
+    static let matchAppIconToggle = "settings.matchAppIcon"
+
     static func settingsChoice(_ setting: String, _ value: String) -> String {
         "settings-choice-\(setting)-\(value)"
     }

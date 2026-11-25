@@ -3,14 +3,15 @@ import PestoCore
 import SwiftUI
 
 /// The four themes as cards, each half light and half dark so its real colours show whichever way Pesto is set.
-/// Choosing one sets the theme, its icon and the accent together; the accent and the icon can be changed on their own
-/// afterwards.
+/// Choosing one sets the theme and the accent together, and its icon while Match App Icon is on (`AppIconMatching`).
 struct ThemePicker: View {
     @Environment(\.colorSchemeContrast) private var contrast
     @Binding var theme: String
     /// Nil for a second picker (the dark-mode theme), which sets only its own theme.
     var accentHex: Binding<String>?
     var iconRaw: Binding<String>?
+    /// Match App Icon: when off, a theme leaves the icon as it is.
+    var matchesIcon = true
     /// What a screen reader calls the group of tiles: "Theme", or "Theme for dark mode" on the second picker.
     var groupLabel: LocalizedStringKey = "Theme"
     @Environment(\.pestoAccent) private var accent
@@ -35,7 +36,7 @@ struct ThemePicker: View {
             let applied = option.applied()
             theme = applied.theme
             accentHex?.wrappedValue = applied.accent
-            iconRaw?.wrappedValue = applied.icon
+            if matchesIcon { iconRaw?.wrappedValue = applied.icon }
         }
         return Button(action: select) {
             VStack(spacing: 5) {

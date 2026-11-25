@@ -175,9 +175,10 @@ public enum SettingsIndex {
             "dark theme", "night", "light and dark", "per mode"
         ),
         entry(
-            "App icon",
+            "Match App Icon",
             "Appearance",
-            "App icon",
+            "Match App Icon",
+            "app icon",
             "dock",
             "basil",
             "parmesan",

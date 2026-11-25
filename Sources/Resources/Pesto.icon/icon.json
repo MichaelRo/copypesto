@@ -29,8 +29,8 @@
       "layers": [
         {
           "glass": true,
-          "image-name": "front-card.svg",
-          "name": "front card"
+          "image-name": "jar.svg",
+          "name": "jar"
         }
       ],
       "shadow": {
@@ -46,8 +46,8 @@
       "layers": [
         {
           "glass": true,
-          "image-name": "stack.svg",
-          "name": "stack"
+          "image-name": "lid.svg",
+          "name": "lid"
         }
       ],
       "shadow": {
@@ -55,15 +55,16 @@
         "opacity": 0.4
       },
       "translucency": {
-        "enabled": true,
-        "value": 0.5
+        "enabled": false,
+        "value": 0
       }
     }
   ],
   "supported-platforms": {
-    "squares": [
-      "macOS"
-    ]
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
   },
   "fill-specializations": [
     {

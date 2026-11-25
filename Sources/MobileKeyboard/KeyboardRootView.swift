@@ -278,7 +278,8 @@ struct KeyboardRootView: View {
                 : nil
         )
         let ringed = key.overlay {
-            if word != nil, entry.id == matches.first?.id {
+            // Only the clip Return would insert is ringed: a picture is copied, never inserted (ADR 0066).
+            if entry.id == returnInserts(matches)?.id {
                 RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
                     .strokeBorder(.tint, lineWidth: 2)
                     .accessibilityHidden(true)

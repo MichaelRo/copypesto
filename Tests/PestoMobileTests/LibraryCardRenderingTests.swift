@@ -103,9 +103,9 @@ struct LibraryCardRenderingTests {
             image.size == CGSize(width: Self.cardSize.width + 24, height: Self.cardSize.height + 24),
             "\(entry.name)"
         )
-        let data = try #require(image.pngData())
+        let data = try RenderedImage.pixels(image)
         try FileManager.default.createDirectory(at: Self.output, withIntermediateDirectories: true)
-        try data.write(to: Self.output.appendingPathComponent("\(entry.name).png"))
+        RenderedImage.saveForReview(image, to: Self.output.appendingPathComponent("\(entry.name).png"))
         return data
     }
 

@@ -90,6 +90,7 @@ struct ClipCard: View {
                     .environment(appState)
                     .environment(library)
                     .environment(\.peerDeviceNames, appState.peerDeviceNames)
+                    .environment(\.sourceAppCatalog, appState.sourceApps)
                     .environment(\.cardClock, cardClock)
             }
             .modifier(CardDragSource(card: self))
@@ -156,6 +157,9 @@ struct ClipCard: View {
             .clipShape(shape)
             .background {
                 shape.fill(cardFill)
+                    .overlay {
+                        if CardGlowLayer.shows(on: face) { CardGlowLayer(glow: glow).clipShape(shape) }
+                    }
                     .shadow(color: .black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 4, y: 2)
             }
             .overlay(alignment: .topTrailing) {
@@ -180,6 +184,26 @@ struct ClipCard: View {
     private var borderColor: Color {
         if ringed { return accent }
         return Color.primary.opacity(contrast == .increased ? 0.45 : 0.14)
+    }
+
+    /// The source app's color at the card's foot (ADR 0068): the clip's own sampled color, else the one a Mac's catalog
+    /// gave for its app.
+    private var glow: CardGlow? {
+        Self.glow(
+            for: item, apps: appState.sourceApps, isDark: colorScheme == .dark,
+            increaseContrast: contrast == .increased, isSelected: isSelected
+        )
+    }
+
+    static func glow(
+        for item: ClipboardItem, apps: SourceAppCatalogStore?, isDark: Bool, increaseContrast: Bool, isSelected: Bool
+    )
+    -> CardGlow? {
+        guard !item.isRemote else { return nil }
+        let hex = item.sourceDominantColorHex ?? apps?.entry(for: item.sourceBundleID)?.colorHex
+        return CardGlow.decide(
+            colorHex: hex, isDark: isDark, isGlass: false, increaseContrast: increaseContrast, isSelected: isSelected
+        )
     }
 
     /// As the Mac's card on a solid shelf: opaque white on a light ground, white at 10 percent on a dark one.

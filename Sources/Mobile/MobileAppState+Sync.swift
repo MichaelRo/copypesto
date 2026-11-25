@@ -26,7 +26,7 @@ extension MobileAppState {
         let mode = LaunchMode.current
         guard mode != .hostedTests, let container = historyContainer, let storage = storageService else { return nil }
         let created = MobileSync(Self.liveSyncEnvironment(
-            container: container, storage: storage, mode: mode, isLocked: syncLockCheck
+            container: container, storage: storage, mode: mode, isLocked: syncLockCheck, sourceApps: sourceApps
         ))
         sync = created
         return created
@@ -43,7 +43,7 @@ extension MobileAppState {
 
     private static func liveSyncEnvironment(
         container: ModelContainer, storage: StorageService, mode: LaunchMode,
-        isLocked: @escaping @MainActor () -> Bool
+        isLocked: @escaping @MainActor () -> Bool, sourceApps: SourceAppCatalogStore
     )
     -> MobileSync.Environment {
         let defaults = AppDefaults.store
@@ -67,7 +67,9 @@ extension MobileAppState {
                 )
                 environment.deviceKind = kind
                 environment.isLocked = isLocked
-                return SyncController(environment)
+                let controller = SyncController(environment)
+                controller.onAppCatalog = { entries in sourceApps.merge(entries) }
+                return controller
             }
         )
     }

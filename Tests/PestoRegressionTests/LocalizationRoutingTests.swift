@@ -146,7 +146,6 @@ struct LocalizationRoutingTests {
         var files = try SourceTree.swiftFiles(in: "MobileKeyboard", minimum: 4)
         files.append(SourceTree.sources.appendingPathComponent("Mobile/KeyboardCollectionsView.swift"))
         files.append(SourceTree.sources.appendingPathComponent("Mobile/KeyboardSettingsView.swift"))
-        files.append(SourceTree.sources.appendingPathComponent("Mobile/WidgetSettingsView.swift"))
 
         var missing: [String] = []
         for file in files {

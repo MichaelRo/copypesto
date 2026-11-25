@@ -194,34 +194,7 @@ struct SettingsView: View {
                 )
             }
             AppleIntelligenceSection()
-            Section("Extensions & Sync") {
-                NavigationLink {
-                    KeyboardSettingsView()
-                } label: {
-                    LabeledContent(
-                        "Keyboard & AutoFill",
-                        value: (isAutoFillEnabled || isKeyboardAdded)
-                            ? String(localized: "On")
-                            : String(localized: "Set Up")
-                    )
-                }
-                NavigationLink {
-                    WidgetSettingsView()
-                } label: {
-                    LabeledContent(
-                        "Widgets",
-                        value: widgetsEnabled ? String(localized: "On") : String(localized: "Off")
-                    )
-                }
-                NavigationLink {
-                    SyncSettingsView()
-                } label: {
-                    LabeledContent(
-                        "Sync",
-                        value: syncEnabled ? String(localized: "On") : String(localized: "Off")
-                    )
-                }
-            }
+            extensionsSection
             hiddenCollectionsSection
             dataSection
             Section {
@@ -525,6 +498,46 @@ struct SettingsSheet: View {
             } else {
                 path = []
             }
+        }
+    }
+}
+
+extension SettingsView {
+    var extensionsSection: some View {
+        Section {
+            NavigationLink {
+                KeyboardSettingsView()
+            } label: {
+                LabeledContent(
+                    "Keyboard & AutoFill",
+                    value: (isAutoFillEnabled || isKeyboardAdded)
+                        ? String(localized: "On")
+                        : String(localized: "Set Up")
+                )
+            }
+            Toggle("Recent Clips Widgets", isOn: $widgetsEnabled)
+                .accessibilityIdentifier(MobileAccessibilityID.widgetsToggle)
+                .onChange(of: widgetsEnabled) { _, on in
+                    Task {
+                        if on {
+                            await appState.refreshWidgetPresence()
+                        } else {
+                            appState.removeWidget()
+                        }
+                    }
+                }
+            NavigationLink {
+                SyncSettingsView()
+            } label: {
+                LabeledContent(
+                    "Sync",
+                    value: syncEnabled ? String(localized: "On") : String(localized: "Off")
+                )
+            }
+        } header: {
+            Text("Extensions & Sync")
+        } footer: {
+            Text("Secrets and explicit clips never appear in widgets. Edit a widget to choose what it shows.")
         }
     }
 }

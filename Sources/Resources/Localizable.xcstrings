@@ -58336,6 +58336,88 @@
           }
         }
       }
+    },
+    "Secrets and explicit clips never appear in widgets. Edit a widget to choose what it shows.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secrets and explicit clips never appear in widgets. Edit a widget to choose what it shows."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los secretos y los clips explícitos nunca aparecen en los widgets. Edita un widget para elegir qué muestra."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les secrets et les clips explicites n’apparaissent jamais dans les widgets. Modifiez un widget pour choisir ce qu’il affiche."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geheimnisse und explizite Clips erscheinen nie in Widgets. Bearbeite ein Widget, um zu wählen, was es zeigt."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "秘密や露骨なクリップはウィジェットに表示されません。表示する内容はウィジェットを編集して選びます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "密钥和露骨内容的剪辑绝不会出现在小组件中。编辑小组件以选择其显示内容。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segredos e clips explícitos nunca aparecem nos widgets. Edite um widget para escolher o que ele mostra."
+          }
+        },
+        "he": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "סודות וקליפים בוטים לעולם לא מופיעים בווידג׳טים. ערכו ווידג׳ט כדי לבחור מה יוצג בו."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Секреты и откровенные клипы никогда не показываются в виджетах. Измените виджет, чтобы выбрать, что он показывает."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Секрети та відверті кліпи ніколи не з’являються у віджетах. Змініть віджет, щоб вибрати, що він показує."
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "비밀 정보와 선정적인 클립은 위젯에 표시되지 않습니다. 위젯을 편집해 표시할 항목을 선택하세요."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Segreti e clip espliciti non compaiono mai nei widget. Modifica un widget per scegliere cosa mostra."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tajné údaje a explicitní klipy se ve widgetech nikdy nezobrazí. Upravte widget a zvolte, co má zobrazovat."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

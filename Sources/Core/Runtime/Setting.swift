@@ -78,6 +78,9 @@ public enum Setting {
     /// In the widget extension's own preferences: the clip a tile last copied in place and when, as
     /// `<UUID>@<seconds since 1970>`, so that tile shows Copied for a moment (ADR 0052). Never any content.
     public static let widgetLastCopy = SettingKey("widgetLastCopy", default: "")
+    /// In the widget extension's own preferences: the page each medium or large widget shows (`WidgetPaging.Pages`
+    /// as JSON). Never any content; the app never reads it (ADR 0067).
+    public static let widgetPages = SettingKey("widgetPages", default: "")
     public static let deviceID = SettingKey("deviceID", default: "")
     public static let opensQuickMenuAtCursor = SettingKey("opensQuickMenuAtCursor", default: false)
     public static let screenSharingPrivacy = SettingKey("screenSharingPrivacy", default: false)
@@ -185,7 +188,7 @@ public enum Setting {
         quickInsertEnabled.name, keyboardEnabled.name, autoFillEnabled.name, widgetsEnabled.name,
         showsClipsOutsideWhileLocked.name, keyboardCollections.name, defaultPasteCollectionID.name,
         hiddenMobileCollections.name,
-        keyboardReturnsAfterInsert.name, keyboardSize.name, widgetLastCopy.name, deviceID.name,
+        keyboardReturnsAfterInsert.name, keyboardSize.name, widgetLastCopy.name, widgetPages.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,

@@ -116,13 +116,6 @@ struct InsertPickerView: View {
             LazyVStack(alignment: .leading, spacing: 18) {
                 ForEach(groups) { group in
                     VStack(alignment: .leading, spacing: 10) {
-                        if groups.count > 1 {
-                            Text(group.collection?.name ?? Self.title(of: group.section))
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(.secondary)
-                                .textCase(.uppercase)
-                                .padding(.horizontal, CardGridLayout.margin)
-                        }
                         LazyVGrid(columns: columns, spacing: CardGridLayout.spacing) {
                             ForEach(group.entries) { entry in
                                 cardButton(entry, width: cardWidth)
@@ -325,15 +318,6 @@ struct InsertPickerView: View {
         let line = entry.text.split(whereSeparator: \.isNewline).lazy
             .map { $0.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty && $0 != entry.title }
         return line.map { String($0.prefix(QuickInsertPolicy.maxTitleCharacters)) }
-    }
-
-    private static func title(of section: QuickInsertEntry.Section) -> String {
-        switch section {
-        case .pinned: String(localized: "Pinned")
-        case .snippets: String(localized: "Snippets")
-        case .recent: String(localized: "Recent")
-        case .collection: String(localized: "Collections")
-        }
     }
 
     private func choose(_ entry: QuickInsertEntry) {

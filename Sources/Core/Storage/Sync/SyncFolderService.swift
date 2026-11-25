@@ -39,6 +39,8 @@ public final class SyncFolderService {
     public private(set) var status: SyncStatus = .off
     public var onStatusChange: (@MainActor (SyncStatus) -> Void)?
     public var onPeerDevicesChange: (@MainActor ([String: String]) -> Void)?
+    /// The apps another device's clips came from (ADR 0068), each time a catalog is read.
+    public var onAppCatalog: (@MainActor ([SyncAppCatalog.Entry]) -> Void)?
 
     private var group: SyncGroup?
     private var water: SyncHighWater
@@ -54,6 +56,8 @@ public final class SyncFolderService {
     private var loop: Task<Void, Never>?
     private var observer: (any NSObjectProtocol)?
     private var watcher: SyncFolderWatcher?
+    /// What this device last wrote to its app catalog in this run, so an unchanged list is not written again.
+    private var writtenCatalog: [SyncAppCatalog.Entry]?
 
     public init(
         container: ModelContainer, storage: StorageService, layout: SyncFolderLayout, identity: SyncIdentity,
@@ -182,6 +186,7 @@ public final class SyncFolderService {
             try Task.checkCancellation()
             try await write(current)
             try Task.checkCancellation()
+            await writeAppCatalogIfChanged(current)
             try await compactIfNeeded(current)
             try Task.checkCancellation()
             try await read(current)
@@ -365,6 +370,39 @@ public final class SyncFolderService {
         try folderProbe.writeData(head.sealed(syncKey: found.key, signedBy: identity.keys), url)
     }
 
+    /// Writes this device's app catalog when its list changed (ADR 0068). A failure is logged and tried again on the
+    /// next pass; it never stops the exchange.
+    private func writeAppCatalogIfChanged(_ found: SyncGroup) async {
+        do {
+            let entries = try await storage.syncAppCatalogEntries()
+            guard !entries.isEmpty, entries != writtenCatalog else { return }
+            let catalog = SyncAppCatalog(
+                deviceID: identity.deviceID, epoch: found.epoch, entries: entries,
+                signerKeyID: identity.keys.publicKeys.keyID
+            )
+            let url = layout.appCatalog(identity.deviceID)
+            try folderProbe.willWrite(url)
+            try folderProbe.writeData(catalog.sealed(syncKey: found.key, signedBy: identity.keys), url)
+            writtenCatalog = entries
+        } catch {
+            logger.error("The app catalog was not written: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    /// Reads the other devices' app catalogs. A missing, damaged or refused one is skipped.
+    private func readAppCatalogs(of devices: [String], _ found: SyncGroup) {
+        guard let onAppCatalog else { return }
+        var entries: [SyncAppCatalog.Entry] = []
+        for device in devices {
+            guard let data = SyncSmallFile.read(layout.appCatalog(device)),
+                  let catalog = try? SyncAppCatalog.open(
+                      data, syncKey: found.key, trust: found.trust, deviceID: device, epoch: found.epoch
+                  ) else { continue }
+            entries += catalog.entries
+        }
+        if !entries.isEmpty { onAppCatalog(SyncAppCatalog.bounded(entries)) }
+    }
+
     // MARK: Reading
 
     private func read(_ found: SyncGroup) async throws {
@@ -385,6 +423,7 @@ public final class SyncFolderService {
             }
         }
         if received > 0 { lastReceived = now() }
+        readAppCatalogs(of: others, found)
         if await hasUploadQuotaError() { return set(.storageFull(isICloud: true)) }
         if let firstFailure { throw firstFailure }
         if waiting { return set(.waitingForFolder) }

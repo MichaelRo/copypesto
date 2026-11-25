@@ -10,6 +10,14 @@ private struct NamedSourceApps: SourceAppResolving {
     }
 }
 
+private struct IconSourceApps: SourceAppResolving {
+    static let icon = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x01])
+
+    func resolve(bundleID: String) async -> SourceAppRecord {
+        SourceAppRecord(bundleID: bundleID, displayName: "Notes", iconData: Self.icon, dominantColorHex: "#FAD927")
+    }
+}
+
 @Suite("A synced clip keeps the name of the app it came from", .serialized)
 @MainActor
 struct SyncSourceAppTests {
@@ -106,5 +114,33 @@ struct SyncSourceAppTests {
         let afterEcho = try #require(try phone.item("copied on phone"))
         #expect(!afterEcho.isRemote)
         #expect(afterEcho.sourceAppName != PasteboardCapture.remoteSourceName)
+    }
+
+    @Test("a device that cannot sample an app gets its color with the clip and its icon from the Mac's catalog")
+    func whenTheMacKnowsTheApp_thenThePhoneGetsColorAndIcon() async throws {
+        defer { try? FileManager.default.removeItem(at: layout.root) }
+        let mac = try SyncSite(
+            name: "mac-a", layout: layout, time: time, environment: .testing { $0.sourceApps = IconSourceApps() }
+        )
+        let phone = try SyncSite(
+            name: "iphone-b", layout: layout, time: time, environment: .testing { $0.sourceApps = UnknownSourceApps() }
+        )
+        var received: [SyncAppCatalog.Entry] = []
+        phone.service.onAppCatalog = { received = $0 }
+        var macReceived: [SyncAppCatalog.Entry] = []
+        mac.service.onAppCatalog = { macReceived = $0 }
+        let made = try SyncGroupManager.create(
+            layout: layout, identity: mac.identity, keyStore: mac.keyStore, now: time.now
+        )
+        try phone.keyStore.saveSyncKey(made.group.key, vaultID: made.group.vault.vaultID, epoch: 1)
+        try await mac.copy("from Notes")
+
+        await exchange([mac, phone])
+
+        #expect(try phone.item("from Notes")?.sourceDominantColorHex == "#FAD927")
+        #expect(received.map(\.bundleID) == ["com.apple.Notes"])
+        #expect(received.first?.icon == IconSourceApps.icon)
+        #expect(macReceived.isEmpty, "an iPhone resolves no app, so it writes no catalog")
+        #expect(!FileManager.default.fileExists(atPath: layout.appCatalog(phone.identity.deviceID).path))
     }
 }

@@ -27,6 +27,8 @@ public struct SyncItemRecord: Codable, Equatable, Sendable {
     public var timestamp: Date
     public var sourceBundleID: String?
     public var sourceAppName: String?
+    /// The source app's icon color, `#RRGGBB` (ADR 0068). Absent from records written before it existed.
+    public var sourceColorHex: String?
     public var isRemote = false
     public var blobName: String?
     public var curation = SyncCuration()

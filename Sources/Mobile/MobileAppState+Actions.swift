@@ -395,6 +395,7 @@ extension MobileAppState {
             await emptyWidget()
             ThumbnailCache.shared.clear()
             CardMedia.clearAnimationCache()
+            sourceApps.clear()
             tell(String(localized: "Cleared \(ids.count) clips."))
         }
         startSimilarityWork()

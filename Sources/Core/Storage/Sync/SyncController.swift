@@ -73,6 +73,8 @@ public final class SyncController {
     public private(set) var keepsHere = 0
     public private(set) var pendingJoin: SyncPendingJoin?
     public private(set) var peerDeviceNames: [String: String] = [:]
+    /// The apps the other devices' clips came from, each time their catalogs are read (ADR 0068).
+    @ObservationIgnored public var onAppCatalog: (@MainActor ([SyncAppCatalog.Entry]) -> Void)?
 
     private var env: Environment
     private let baseDeviceID: String
@@ -231,6 +233,7 @@ public final class SyncController {
             deviceKind: env.deviceKind
         )
         created.onStatusChange = { [weak self] new in self?.status = new }
+        created.onAppCatalog = { [weak self] entries in self?.onAppCatalog?(entries) }
         created.onPeerDevicesChange = { [weak self] names in
             guard let self, peerDeviceNames != names else { return }
             peerDeviceNames = names

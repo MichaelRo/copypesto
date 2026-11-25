@@ -15,6 +15,8 @@ struct CardFootLineView: View {
     var trailingMark: String?
     var trailingSymbol: String?
     var onTrailingSymbolTap: (() -> Void)?
+    /// The source app's icon, when this device knows it (ADR 0068); it takes the place of the line's symbol.
+    var appIcon: UIImage?
 
     var body: some View {
         HStack(spacing: 6) {
@@ -33,7 +35,13 @@ struct CardFootLineView: View {
 
     private func lead(_ line: CardFootLine) -> some View {
         HStack(spacing: 4) {
-            if let symbol = line.symbol {
+            if let appIcon {
+                Image(uiImage: appIcon)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 16, height: 16)
+                    .clipShape(.rect(cornerRadius: 4, style: .continuous))
+            } else if let symbol = line.symbol {
                 Image(systemName: symbol).imageScale(.small)
             }
             ViewThatFits(in: .horizontal) {

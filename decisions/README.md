@@ -76,6 +76,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0065](0065-lock-screen-accessory-widgets.md) | iOS Lock Screen accessory widgets (`accessoryCircular`, `accessoryRectangular`, `accessoryInline`) live in `LockScreenClipsWidget` with an off-by-default per-widget opt-in (`showsClipsOnLockScreen`), use `.widgetURL` only, and never show secrets; amends 0052 |
 | [0066](0066-the-keyboard-speaks-the-persons-languages.md) | The keyboard's search page offers the layouts of the person's own keyboards (Core `SearchKeyboardLayout`, Korean composed by `HangulComposer`), with iOS's key metrics, shift and accents; results rows follow the size; the shelf gets iOS's bottom row, a round search key and settings inside the keyboard; amends 0062 and 0063 |
 | [0067](0067-widget-grids-near-the-card-and-pages.md) | Widget grids keep the card's shape (medium 1×2, large 2×2, extra large 2×4 on iPad) and medium and large page with an App Intent; the page lives in the extension's own preferences and resets after a newer snapshot or ten minutes; amends 0052 and 0060 |
+| [0068](0068-the-source-apps-color-and-icon-and-the-foot-glow.md) | A clip's source color syncs on its record and each Mac writes a signed, sealed app catalog (icons) other devices read; cards glow at the foot in the app's OKLCH-normalized color (`CardGlow`); amends 0044 and 0018 |
 | [0069](0069-the-mark-is-a-jar.md) | The mark is a jar (garlic lid, gap, shouldered body, the P), the same silhouette as the 18 pt menu bar template; amends 0013's card stack |
 
 ## Template

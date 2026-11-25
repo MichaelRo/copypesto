@@ -39,6 +39,8 @@ public final class SyncFolderService {
     public private(set) var status: SyncStatus = .off
     public var onStatusChange: (@MainActor (SyncStatus) -> Void)?
     public var onPeerDevicesChange: (@MainActor ([String: String]) -> Void)?
+    /// The apps another device's clips came from (ADR 0068), each time a catalog is read.
+    public var onAppCatalog: (@MainActor ([SyncAppCatalog.Entry]) -> Void)?
 
     private var group: SyncGroup?
     private var water: SyncHighWater
@@ -54,6 +56,14 @@ public final class SyncFolderService {
     private var loop: Task<Void, Never>?
     private var observer: (any NSObjectProtocol)?
     private var watcher: SyncFolderWatcher?
+    /// What this device last wrote to its app catalog in this run, so an unchanged list is not written again, and the
+    /// last sequence it was checked at: an idle pass (nothing new written) does not look at the history again.
+    var writtenCatalog: [SyncAppCatalog.Entry]?
+    var catalogCheckedAt: UInt64?
+    /// The epoch the catalog was sealed under: after Reset Sync the same list is written again, or peers refuse it.
+    var catalogEpoch: UInt32?
+    /// When each other device's catalog file last changed, so an idle pass reads none of them again.
+    var readCatalogDates: [String: Date] = [:]
 
     public init(
         container: ModelContainer, storage: StorageService, layout: SyncFolderLayout, identity: SyncIdentity,
@@ -182,6 +192,7 @@ public final class SyncFolderService {
             try Task.checkCancellation()
             try await write(current)
             try Task.checkCancellation()
+            await writeAppCatalogIfChanged(current)
             try await compactIfNeeded(current)
             try Task.checkCancellation()
             try await read(current)
@@ -385,6 +396,7 @@ public final class SyncFolderService {
             }
         }
         if received > 0 { lastReceived = now() }
+        readAppCatalogs(of: others, found)
         if await hasUploadQuotaError() { return set(.storageFull(isICloud: true)) }
         if let firstFailure { throw firstFailure }
         if waiting { return set(.waitingForFolder) }

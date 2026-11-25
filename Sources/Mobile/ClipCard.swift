@@ -24,6 +24,8 @@ struct ClipCard: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.cardClock) private var cardClock
+    @AppStorage(Setting.appTheme) private var themeRaw: String
+    @AppStorage(Setting.appThemeDark) private var darkThemeRaw: String
     @State var media = CardMediaState()
     @State private var isOnScreen = false
 
@@ -90,6 +92,7 @@ struct ClipCard: View {
                     .environment(appState)
                     .environment(library)
                     .environment(\.peerDeviceNames, appState.peerDeviceNames)
+                    .environment(\.sourceAppCatalog, appState.sourceApps)
                     .environment(\.cardClock, cardClock)
             }
             .modifier(CardDragSource(card: self))
@@ -156,6 +159,9 @@ struct ClipCard: View {
             .clipShape(shape)
             .background {
                 shape.fill(cardFill)
+                    .overlay {
+                        if CardGlowLayer.shows(on: face) { CardGlowLayer(glow: glow).clipShape(shape) }
+                    }
                     .shadow(color: .black.opacity(colorScheme == .dark ? 0.24 : 0.08), radius: 4, y: 2)
             }
             .overlay(alignment: .topTrailing) {
@@ -180,6 +186,29 @@ struct ClipCard: View {
     private var borderColor: Color {
         if ringed { return accent }
         return Color.primary.opacity(contrast == .increased ? 0.45 : 0.14)
+    }
+
+    /// The source app's color at the card's foot (ADR 0068): the clip's own sampled color, else the one a Mac's catalog
+    /// gave for its app.
+    private var glow: CardGlow? {
+        let isDark = colorScheme == .dark
+        let theme = AppTheme.resolve(light: themeRaw, dark: darkThemeRaw, isDark: isDark)
+        return Self.glow(
+            for: item, apps: appState.sourceApps, themeAccentHex: theme.accentHex(dark: isDark), isDark: isDark,
+            increaseContrast: contrast == .increased, isSelected: isSelected
+        )
+    }
+
+    static func glow(
+        for item: ClipboardItem, apps: SourceAppCatalogStore?, themeAccentHex: String? = nil, isDark: Bool,
+        increaseContrast: Bool, isSelected: Bool
+    )
+    -> CardGlow? {
+        let hex = item.isRemote ? nil : item.sourceDominantColorHex ?? apps?.entry(for: item.sourceBundleID)?.colorHex
+        return CardGlow.decide(
+            colorHex: hex, themeAccentHex: themeAccentHex, isDark: isDark, isGlass: false,
+            increaseContrast: increaseContrast, isSelected: isSelected
+        )
     }
 
     /// As the Mac's card on a solid shelf: opaque white on a light ground, white at 10 percent on a dark one.

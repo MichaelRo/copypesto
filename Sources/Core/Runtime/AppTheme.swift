@@ -65,7 +65,9 @@ public enum AppTheme: String, CaseIterable, Sendable {
     /// The wash over the shelf's glass, or nil for none. A wash, never a recolour: the glass stays visible.
     public func tint(dark: Bool) -> Tint? {
         switch (self, dark) {
-        case (.basil, _): nil
+        // A breath of basil, so the default theme is felt on the ground too (design board 5, 2026-11-25).
+        case (.basil, false): Tint(hex: BrandPalette.accentLight, opacity: 0.04)
+        case (.basil, true): Tint(hex: BrandPalette.accentDark, opacity: 0.03)
         case (.parmesan, false): Tint(hex: BrandPalette.parmesan, opacity: 0.55)
         case (.parmesan, true): Tint(hex: BrandPalette.goldTextDark, opacity: 0.06)
         case (.pineNut, false): Tint(hex: BrandPalette.pineNut, opacity: 0.45)

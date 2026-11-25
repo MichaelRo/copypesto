@@ -51,6 +51,8 @@ struct LibraryCardRenderingTests {
         )
         item.customTitle = title
         item.sourceAppName = "Notes"
+        // Mail's sampled color, so every text card renders with the foot glow (ADR 0068).
+        item.sourceDominantColorHex = "#0B8BFD"
         context.insert(item)
         return item
     }
@@ -75,7 +77,16 @@ struct LibraryCardRenderingTests {
             inCollection: entry.inCollection
         )
         .frame(width: Self.cardSize.width, height: Self.cardSize.height)
-        .background(dark ? Color.white.opacity(0.10) : Color.white)
+        .background {
+            ZStack {
+                dark ? Color.white.opacity(0.10) : Color.white
+                if PestoMobile.CardGlowLayer.shows(on: entry.face) {
+                    PestoMobile.CardGlowLayer(glow: ClipCard.glow(
+                        for: entry.item, apps: nil, isDark: dark, increaseContrast: false, isSelected: false
+                    ))
+                }
+            }
+        }
         .clipShape(shape)
         .overlay {
             shape.strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.75)
@@ -92,9 +103,9 @@ struct LibraryCardRenderingTests {
             image.size == CGSize(width: Self.cardSize.width + 24, height: Self.cardSize.height + 24),
             "\(entry.name)"
         )
-        let data = try #require(image.pngData())
+        let data = try RenderedImage.pixels(image)
         try FileManager.default.createDirectory(at: Self.output, withIntermediateDirectories: true)
-        try data.write(to: Self.output.appendingPathComponent("\(entry.name).png"))
+        RenderedImage.saveForReview(image, to: Self.output.appendingPathComponent("\(entry.name).png"))
         return data
     }
 

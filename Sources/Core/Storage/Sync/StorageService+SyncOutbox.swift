@@ -187,6 +187,7 @@ public extension StorageService {
         )
         meta.sourceBundleID = item.sourceBundleID
         meta.sourceAppName = item.sourceAppName
+        meta.sourceColorHex = Self.adoptedSourceColor(current: nil, arrived: item.sourceDominantColorHex)
         meta.isRemote = item.isRemote
         let metadata = item.metadata
         meta.curation.customTitle = metadata.customTitle

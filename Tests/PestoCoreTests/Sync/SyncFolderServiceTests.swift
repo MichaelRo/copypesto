@@ -61,11 +61,11 @@ final class SyncSite {
     var lockedFlag = LockedFlag()
     deinit { SyncJournal.disable(for: container) }
 
-    func copy(_ text: String) async throws {
+    func copy(_ text: String, from bundleID: String = "com.apple.Notes") async throws {
         let payload = Data(text.utf8)
         try await storage.ingest(PasteboardCapture(
             typeIdentifier: "public.utf8-plain-text", payload: payload, payloadString: text,
-            frontmostBundleID: "com.apple.Notes", timestamp: .now,
+            frontmostBundleID: bundleID, timestamp: .now,
             contentHash: SHA256.hash(data: payload).map { String(format: "%02x", $0) }.joined()
         ))
     }

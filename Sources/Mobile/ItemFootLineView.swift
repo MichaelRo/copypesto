@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import CryptoKit
 import PestoCore
 import SwiftUI
 
@@ -12,6 +13,7 @@ struct ItemFootLineView: View {
     @Environment(\.clipRevision) private var revision
     @Environment(\.cardClock) private var clock
     @Environment(\.peerDeviceNames) private var peerDeviceNames
+    @Environment(\.sourceAppCatalog) private var sourceApps
 
     var body: some View {
         CardFootLineView(
@@ -24,8 +26,25 @@ struct ItemFootLineView: View {
             onPicture: onPicture,
             ink: ink,
             showsGIF: showsGIF,
-            trailingMark: trailingMark
+            trailingMark: trailingMark,
+            appIcon: item.isRemote ? nil : sourceApps?.entry(for: item.sourceBundleID).flatMap(Self.icon)
         )
+    }
+}
+
+extension ItemFootLineView {
+    @MainActor private static let icons = NSCache<NSString, UIImage>()
+
+    /// An app's icon, decoded once per app and icon.
+    @MainActor
+    static func icon(_ entry: SyncAppCatalog.Entry) -> UIImage? {
+        // The whole icon's digest: an app's new icon must not hit its old one in the cache.
+        let digest = SHA256.hash(data: entry.icon).prefix(8).map { String(format: "%02x", $0) }.joined()
+        let key = "\(entry.bundleID)#\(digest)" as NSString
+        if let cached = icons.object(forKey: key) { return cached }
+        guard let image = UIImage(data: entry.icon) else { return nil }
+        icons.setObject(image, forKey: key)
+        return image
     }
 }
 
@@ -51,4 +70,6 @@ extension EnvironmentValues {
     /// each.
     @Entry var cardClock: Date?
     @Entry var peerDeviceNames: [String: String] = [:]
+    /// The apps other devices named (ADR 0068); a card shows the app's icon from it.
+    @Entry var sourceAppCatalog: SourceAppCatalogStore?
 }

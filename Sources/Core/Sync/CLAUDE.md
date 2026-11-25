@@ -16,6 +16,8 @@ touches the store lives in `Core/Storage/Sync/` (journal, outbox, `applySync`, `
 
 ## Key invariants
 
+- **A Mac's app catalog (`apps.pestoapps`, ADR 0068) is the one place an app's icon travels.** A new record kind would make an older device refuse the whole segment (`SyncRecord.parse`), so additions to what a clip says go in optional fields of `SyncItemRecord`, and anything per app in that file.
+
 - **Wall-clock timestamps drift across devices.** Sort by `(timestamp, sequenceNumber, deviceID)`, not by `timestamp` alone.
 
 - **Slices crash CryptoKit and HPKE** when `startIndex` is not zero: copy with `Data(...)` before sealing, opening or indexing.
@@ -23,7 +25,7 @@ touches the store lives in `Core/Storage/Sync/` (journal, outbox, `applySync`, `
 - **A snapshot is a segment whose manifest says so** (`snapshot`): a reader that is behind applies it despite the gap. Compaction (`SyncFolderService+Compaction.swift`) re-sends only what this Mac last wrote, never what it received.
 - **A segment the Mac refuses is not recorded as read**: it is read again once the cause (a key, a clock, a damaged file) is fixed.
 - **A clip with no stamp never leaves.** The journal stamps only while sync is on, so the history from before needs a stamp: a joining or new-epoch device restamps everything (`.notFrom`), the device that makes the group restamps at `turnOn`, and an announced device stamps whatever is still unstamped once per store (`.unstamped`, remembered in `SyncHighWater.sentUnstampedHistory`), which repairs a first device that made its group before `turnOn` did. Only once: a clip copied during Pause Sync stays on the device, and a received clip (`syncOrigin`) is never stamped as this device's.
-- **A small file in the folder (vault, device record, identity, grant, join request) is read through `SyncSmallFile`, never `Data(contentsOf:)`** (ADR 0038, `SyncSmallFileScanTests`): the folder is untrusted and a planted multi-gigabyte file would be loaded whole. A tombstone carries no hash of a clip that holds a secret.
+- **A small file in the folder (vault, device record, identity, grant, join request, app catalog) is read through `SyncSmallFile`, never `Data(contentsOf:)`** (ADR 0038, `SyncSmallFileScanTests`): the folder is untrusted and a planted multi-gigabyte file would be loaded whole. A tombstone carries no hash of a clip that holds a secret.
 - **Where the folder comes from is a `SyncFolderSource`** (`Core/Storage/Sync`): the Mac passes a path, the iOS app a
   `BookmarkedSyncFolder` (the picked folder as a security-scoped bookmark in `Setting.syncFolderBookmark`, held open
   from `resolve` or `choose` to `relinquish`, in balance). `SyncController` only ever sees the URL. A stale bookmark

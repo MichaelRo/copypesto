@@ -238,6 +238,9 @@ extension StorageService {
             // This device cannot name the app (iOS, or a Mac without it): keep the name the sender knew.
             inserted.sourceAppName = arrived
         }
+        inserted.sourceDominantColorHex = Self.adoptedSourceColor(
+            current: inserted.sourceDominantColorHex, arrived: meta.sourceColorHex
+        )
         apply(meta.curation, to: inserted)
         inserted.adoptFirstCopy(meta.curation.copiedAt)
         markApplied(inserted, stamp: stamp)

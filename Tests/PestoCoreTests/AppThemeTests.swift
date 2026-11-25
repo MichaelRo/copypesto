@@ -38,10 +38,11 @@ struct AppThemeTests {
         #expect(AppTheme(stored: "parmesan") == .parmesan)
     }
 
-    @Test("Basil is today's look exactly: no tint, the brand accent")
-    func whenBasil_thenNoTintAndBrandAccent() {
-        #expect(AppTheme.basil.tint(dark: false) == nil)
-        #expect(AppTheme.basil.tint(dark: true) == nil)
+    @Test("Basil has a breath of its own green on the ground (4% light, 3% dark) and the brand accent")
+    func whenBasil_thenFaintWashAndBrandAccent() {
+        #expect(AppTheme.basil.tint(dark: false)?.opacity == 0.04)
+        #expect(AppTheme.basil.tint(dark: true)?.opacity == 0.03)
+        #expect(AppTheme.basil.tint(dark: false)?.hex == BrandPalette.accentLight)
         #expect(AppTheme.basil.accentHex(dark: false) == BrandPalette.accentLight)
         #expect(AppTheme.basil.accentHex(dark: true) == BrandPalette.accentDark)
     }

@@ -419,6 +419,16 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
 - **Search page** (ADR 0063): tap the magnifying glass: the field, a row of clips and the letters show and the keyboard
   grows; type `bas`: the row narrows and nothing appears in the app's field; 123 types digits into the search; pick a
   clip: it is inserted and the page closes; Done closes it without inserting.
+- **Layouts and keys** (ADR 0066): with English and Hebrew keyboards added in iOS Settings, the space bar names the
+  layout and holding it switches to Hebrew (Delete at the end of the top row); a held key shows its callout, a longer
+  hold on `e` offers é, and sliding picks one; Shift once, a double tap locks caps. Add Korean: ㅎ ㅏ ㄴ types 한 and
+  Delete leaves 하. Add Japanese: the field says it needs the system keyboard. Compare the keys side by side with
+  Apple's keyboard (height, gaps, the callout).
+- **Return inserts** (ADR 0066): type `bas` in Notes and switch to Pesto: the first match is ringed and Return reads
+  Insert; it replaces `bas`. Without a word, Return types a new line.
+- **Settings inside the keyboard**: the Pesto chip at the end of the chips opens them; Small, Medium and Large resize
+  the keyboard while the cards preview the size; More opens Pesto at Keyboard & AutoFill. The AutoFill picker's gear
+  opens the same page (it may do nothing in a credential provider: note what happens).
 - **After inserting**: with "Stay in Pesto" chosen, a tap stays and a long press returns; the default is the reverse.
 - **Bottom row**: Space, Return and Delete act in the field, Space and Delete repeat while held, 123 opens the pad and
   its other face brings the clips back. The globe key

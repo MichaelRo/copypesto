@@ -140,8 +140,7 @@ leads the chips in quotes, and picking a card replaces it. A "123" pad of number
 Delete, with the globe key when iOS asks for it. A tap inserts and returns to the person's keyboard, or stays, as
 "After inserting a clip" says; a long press does the other. Without Full Access the pad and one line on Full Access;
 with no set one line on turning on Insert from Pesto; with an empty one "No text clips yet." The magnifying glass opens
-the search page (ADR 0063): Pesto's own search field, the matches in one row, letters or numbers that type only into
-that field, and Done; the keyboard grows 40 points while it is open.
+the search page (ADRs 0063, 0066): Pesto's own search field, a tray of matches whose rows follow the keyboard's size, the letters of the person's own keyboards with shift and accents (Korean composed), and Done; the page is 340 to 438 points tall on an iPhone. The shelf's bottom row is iOS's (123, globe, space, delete, return); a Pesto chip at the end of the chips opens settings inside the keyboard.
 
 ## FAQ for the release notes: Add Clipboard to Pesto
 The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to

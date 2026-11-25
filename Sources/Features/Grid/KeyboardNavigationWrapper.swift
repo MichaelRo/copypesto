@@ -38,6 +38,7 @@ struct KeyboardNavigationWrapper<Content: View>: View {
     var onCopy: (() -> Void)?
     var onAskFromSearch: (() -> Void)?
     var onShowHidden: (() -> Void)?
+    var onShowDetails: (() -> Void)?
     var onConfirm: (() -> Void)?
     var onCancelConfirmation: (() -> Void)?
     var onSearch: (() -> Void)?
@@ -157,6 +158,7 @@ struct KeyboardNavigationWrapper<Content: View>: View {
         coordinator.onCopy = onCopy
         coordinator.onAskFromSearch = onAskFromSearch
         coordinator.onShowHidden = onShowHidden
+        coordinator.onShowDetails = onShowDetails
         coordinator.onConfirm = onConfirm
         coordinator.onCancelConfirmation = onCancelConfirmation
         coordinator.onSearch = onSearch

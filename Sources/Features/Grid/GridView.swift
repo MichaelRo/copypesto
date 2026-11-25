@@ -239,6 +239,7 @@ struct GridView: View {
                 onCopy: copyFocused,
                 onAskFromSearch: { Task { await appState.askPesto() } },
                 onShowHidden: showFocusedHidden,
+                onShowDetails: showFocusedDetails,
                 onConfirm: confirmDelete,
                 onCancelConfirmation: { pendingDelete = nil },
                 onSearch: { appState.isSearchActive = true },

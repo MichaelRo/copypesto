@@ -363,7 +363,8 @@ final class AppState {
     @ObservationIgnored var showToast: (@MainActor (StatusToast) -> Void)?
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?
     /// Opens the Edit Text window for a clip above the shelf. Set by the delegate.
-    @ObservationIgnored var openTextEditor: (@MainActor (ClipboardItem) -> Void)?
+    /// Opens the Clip window; the flag says the clip's secret is shown on its card now, so its text may be edited.
+    @ObservationIgnored var openTextEditor: (@MainActor (ClipboardItem, Bool) -> Void)?
     /// Closes the Edit Text window and drops its draft: the History Lock calls it. Set by the delegate.
     @ObservationIgnored var closeTextEditor: (@MainActor () -> Void)?
     /// Exports a collection to a file the person chooses; closes the shelf first when it is open. Set by the delegate.

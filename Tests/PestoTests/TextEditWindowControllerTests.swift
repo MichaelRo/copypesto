@@ -25,7 +25,7 @@ extension HostedGlobals {
             editor.open(clipID: id, text: "hello", isMonospaced: true)
 
             let window = try #require(editor.window)
-            #expect(window.title == "Edit Text")
+            #expect(window.title == "Clip")
             #expect(window.level.rawValue > NSWindow.Level.floating.rawValue)
             #expect(window.identifier?.rawValue == AccessibilityID.textEditWindow)
             #expect(window.styleMask.contains(.resizable))

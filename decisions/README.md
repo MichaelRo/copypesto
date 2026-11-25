@@ -76,6 +76,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0065](0065-lock-screen-accessory-widgets.md) | iOS Lock Screen accessory widgets (`accessoryCircular`, `accessoryRectangular`, `accessoryInline`) live in `LockScreenClipsWidget` with an off-by-default per-widget opt-in (`showsClipsOnLockScreen`), use `.widgetURL` only, and never show secrets; amends 0052 |
 | [0068](0068-the-source-apps-color-and-icon-and-the-foot-glow.md) | A clip's source color syncs on its record and each Mac writes a signed, sealed app catalog (icons) other devices read; cards glow at the foot in the app's OKLCH-normalized color (`CardGlow`); amends 0044 and 0018 |
 | [0070](0070-the-find-bar-has-three-zones.md) | The Find bar is one 28 pt row in the 46 pt block: scope strip left, a centered 320–480 pt field, every filter right as one-click chips; chosen filters are tokens in the field; amends 0023 |
+| [0071](0071-the-clip-window-shows-any-clips-details.md) | One Clip window for every clip (Show Details…, ⌘I): title and content on the left, the text editable when Edit Text would be, note, tags, collection, Pinned and facts on the right, saved as they change; amends 0050 |
 
 ## Template
 

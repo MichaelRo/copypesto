@@ -24,16 +24,19 @@ public enum ShelfCommand: Equatable, Sendable {
     case pasteNth(Int)
     case returnKey
     case showHidden
+    /// ⌘I: the Clip Inspector for the focused clip (ADR 0071).
+    case showDetails
 
     private static let byCharacter: [String: ShelfCommand] = [
         "f": .search, "[": .previousCollection, "]": .nextCollection, ",": .settings, "n": .newCollection,
         "p": .pasteAll, "z": .undo, "k": .actions, "c": .copy, "s": .saveImage, "y": .quickLook, "a": .selectAll,
-        "e": .showHidden
+        "e": .showHidden, "i": .showDetails
     ]
 
     private static let byUSKeyCode: [UInt16: ShelfCommand] = [
         3: .search, 33: .previousCollection, 30: .nextCollection, 43: .settings, 45: .newCollection, 35: .pasteAll,
-        40: .actions, 8: .copy, 1: .saveImage, 16: .quickLook, 0: .selectAll, 6: .undo, 14: .showHidden
+        40: .actions, 8: .copy, 1: .saveImage, 16: .quickLook, 0: .selectAll, 6: .undo, 14: .showHidden,
+        34: .showDetails
     ]
 
     private static let digitKeyCodes: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9]

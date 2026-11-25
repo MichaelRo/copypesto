@@ -119,6 +119,16 @@ extension GridView {
         }
     }
 
+    /// ⌘I: the Clip Inspector for the focused clip (ADR 0071); the shelf stays open behind it.
+    func showFocusedDetails() {
+        guard displayedItems.indices.contains(focusedIndex) else { return }
+        showDetails(of: displayedItems[focusedIndex])
+    }
+
+    func showDetails(of item: ClipboardItem) {
+        appState.openTextEditor?(item, revealedIDs.contains(item.id))
+    }
+
     /// Return in the search field pastes the focused result, so a search can be finished without the mouse.
     func handleReturnFromSearch() {
         let hasQuery = !appState.searchText.trimmingCharacters(in: .whitespaces).isEmpty

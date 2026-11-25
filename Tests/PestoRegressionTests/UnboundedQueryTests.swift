@@ -6,8 +6,9 @@ import Testing
 struct UnboundedQueryTests {
     /// The shelf filters sealed fields in memory, so it needs every clip, and gets them from `HistoryStore`, not a
     /// query.
-    /// The quick menu sets its five-clip descriptor in `init` (`QuickMenuTests` pins it).
-    private static let mayQueryEveryClip: Set<String> = ["QuickMenuView.swift"]
+    /// The quick menu sets its five-clip descriptor in `init` (`QuickMenuTests` pins it), and the Clip Inspector a
+    /// descriptor of its one clip, by id, with a limit of one.
+    private static let mayQueryEveryClip: Set<String> = ["QuickMenuView.swift", "ClipInspectorView.swift"]
 
     @Test(
         "no view holds a live query over every clip: the shelf reads HistoryStore, the rest bound the fetch"

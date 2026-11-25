@@ -99,6 +99,12 @@ enum AccessibilityID {
     static let textEditSaveButton = "edit-text-save"
     static let textEditCancelButton = "edit-text-cancel"
     static let textEditMessage = "edit-text-message"
+    static let clipInspectorTitle = "clip-inspector-title"
+    static let clipInspectorRevert = "clip-inspector-revert"
+    static let clipInspectorNote = "clip-inspector-note"
+    static let clipInspectorTagField = "clip-inspector-tag-field"
+    static let clipInspectorCollection = "clip-inspector-collection"
+    static let clipInspectorPinned = "clip-inspector-pinned"
 
     static let accessibilityBanner = "overlay-accessibility-banner"
     static let userErrorBanner = "overlay-user-error-banner"

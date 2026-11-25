@@ -189,6 +189,14 @@ extension ClipboardCard {
             }
         }
 
+        if let showDetails = actions.showDetails {
+            Button {
+                showDetails(item)
+            } label: {
+                Label("Show Details\u{2026}", systemImage: "info.circle")
+            }
+        }
+
         if offers(.editText), let editText = actions.editText, offersTextEdit {
             Button {
                 editText(item)

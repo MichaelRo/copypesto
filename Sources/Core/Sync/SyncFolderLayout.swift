@@ -34,6 +34,10 @@ public struct SyncFolderLayout: Sendable, Equatable {
         device(id).appendingPathComponent("blobs", isDirectory: true)
     }
 
+    public func appCatalog(_ id: String) -> URL {
+        device(id).appendingPathComponent("apps.pestoapps")
+    }
+
     public func head(_ id: String) -> URL {
         device(id).appendingPathComponent("head.pestohead")
     }

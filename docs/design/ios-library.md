@@ -33,15 +33,15 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
   when chosen; never glass.
 - **Grid** (`CardGridLayout`): `LazyVGrid`, 12 pt gaps and 16 pt margins, columns of at least 190 pt: two on an iPhone
   in portrait, three in landscape, four or five on an iPad, one at an accessibility text size. Cards keep the Mac
-  card's 10 by 9 shape and 12 pt continuous corners, a 0.75 pt hairline (0.45 under Increase Contrast), no shadow,
+  card's 10 by 9 shape and 12 pt continuous corners, a 0.75 pt hairline (0.45 under Increase Contrast), a soft shadow (4 pt, 8% in light, 24% in dark),
   white on a light ground and white at 10 percent on a dark one, on the theme's solid ground.
 - **Order while looking** (`GridOrder`): a copy moves the clip to the front of the history at once, but the grid keeps
   the order it had until the app returns to the front, a pull to refresh, or a change of scope or search; a clip new to
   the grid (a capture, a sync, one that left the scope and came back) is placed by the history's order: after the
   nearest clip above it that the grid already shows, or at the top when none is. Ages at the cards' feet move once a minute (one task in the grid moves
   the minute its cards read; a `TimelineView` around the grid kept it from drawing any change until its next tick).
-- **Pull to refresh** runs one sync exchange when sync is on, then takes the history's order again. There is no Sync
-  Now; a background refresh exchanges now and then while the app is away (`SyncExchange`).
+- **Pull to refresh** runs one sync exchange when sync is on, then takes the history's order again (Settings → Sync
+  also has Sync Now); a background refresh exchanges now and then while the app is away (`SyncExchange`).
 - **New Collection and Edit Collection** are one sheet: a name, an icon from Core's `CollectionSymbols` and a color from
   `CollectionPalette` (the Mac's lists; an emoji or another icon a Mac set stays offered), saved through
   `CollectionStore` as one undoable change. Sidebar rows and chips show the icon in the collection's color.
@@ -65,6 +65,12 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 | Secret | The mask, a lock, the category at the foot, an eye that asks for Face ID (`SecretReveal`); after Show, the start of the text and Hide. |
 | Covered otherwise | The eye-slash symbol and the kind, nothing else; under the screen-capture cover or Hide Clip Contents (ADR 0054) a Show button that uncovers that card until the cover returns. |
 | Locked | No card at all: the lock screen replaces the library (ADR 0054). |
+
+**The foot glow and the app's icon** (ADR 0068): a clip copied on a Mac carries its app's color, and the Mac's sync
+catalog gives its icon, so the foot line leads with the icon (16 pt) and the card's foot glows faintly in that color
+(Core's `CardGlow`; not on pictures, colors or covered cards; off under Increase Contrast). A clip made on the
+iPhone, or from an app whose icon is nearly grey, glows faintly in the theme's own color instead (muted, never
+the accent's full strength).
 
 **The foot line** (`CardFootLine`, on Core's `CardMetaLine`): the app's name, or "Another device", or for a clip made on
 this device the device's symbol and how it came in (Pasted, Note, Shared, Dropped, Shortcut; ADR 0049), or the device's
@@ -133,7 +139,7 @@ clip (`Copy Clip`, default via `WidgetLink.url(for: clip.id)`), open Pesto (`Ope
 (`Open Clip`), always unlocking iOS first via `.widgetURL`.
 
 ## The keyboard (ADR 0061)
-Optional, added in iOS Settings. No letter keys. A small shelf (ADR 0062): chips like the Mac shelf's (Recent, Pinned,
+Optional, added in iOS Settings. No letter keys. A small shelf (ADR 0062): chips like the Mac shelf's (All, Pinned,
 Snippets, then the collections chosen in Settings → AutoFill and keyboard → Collections), and the clips as small Pesto
 cards in a row that scrolls sideways, two rows on iPhone and one on iPad, each with the kind's glyph and a laptop when
 it came from another device; snippets shown as they would insert. The word typed before switching is the search: it

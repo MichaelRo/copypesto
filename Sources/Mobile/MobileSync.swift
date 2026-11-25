@@ -17,6 +17,8 @@ final class MobileSync {
         var authenticator: any UserAuthenticating
         var grace: AuthenticationGrace
         var makeController: @MainActor (URL) -> SyncController?
+        /// Empties what sync brought that is not history (the app catalog) when this device leaves.
+        var didLeave: @MainActor () -> Void = {}
     }
 
     private(set) var controller: SyncController?
@@ -228,5 +230,6 @@ final class MobileSync {
 
     func leave() {
         controller?.leave()
+        env.didLeave()
     }
 }

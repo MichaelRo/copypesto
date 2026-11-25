@@ -49,6 +49,7 @@ struct LibraryGrid: View {
                     grid(ids, columns: count, cardWidth: cardWidth)
                         .environment(\.cardClock, minute)
                         .environment(\.peerDeviceNames, appState.peerDeviceNames)
+                        .environment(\.sourceAppCatalog, appState.sourceApps)
                 }
                 .padding(.top, 8)
                 .padding(.bottom, 24)

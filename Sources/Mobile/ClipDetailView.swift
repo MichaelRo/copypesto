@@ -115,6 +115,7 @@ struct ClipDetailView: View {
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .environment(\.peerDeviceNames, appState.peerDeviceNames)
+            .environment(\.sourceAppCatalog, appState.sourceApps)
             .animation(Motion.animation(.pestoQuick), value: isEditingText(item))
         }
     }

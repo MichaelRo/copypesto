@@ -31,6 +31,8 @@ final class MobileAppState: ClipboardShortcutHandling {
     var textEdits = 0
     /// Sync with the person's other devices, once the history is open (`MobileAppState+Sync.swift`).
     var sync: MobileSync?
+    /// The apps a Mac's clips came from, with their icons and colors (ADR 0068), read from the sync folder.
+    let sourceApps = SourceAppCatalogStore()
     var peerDeviceNames: [String: String] {
         isHistoryLocked ? [:] : (sync?.peerDeviceNames ?? [:])
     }

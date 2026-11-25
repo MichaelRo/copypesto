@@ -87,6 +87,7 @@ struct AppearanceSettings: View {
                 .settingsRow("Theme")
                 Toggle("Match App Icon", isOn: $matchesAppIcon)
                     .help("The icon in the Dock follows the theme.")
+                    .accessibilityIdentifier(AccessibilityID.matchAppIconToggle)
                     .onChange(of: matchesAppIcon) { _, on in
                         if on { appIconRaw = AppTheme(stored: appThemeRaw).pairedIcon.rawValue }
                     }

@@ -52,7 +52,9 @@ struct RecentClipsProvider: AppIntentTimelineProvider {
         let page = snapshot.map {
             WidgetPageStore.page(
                 for: key, snapshotCreatedAt: $0.createdAt,
-                pageCount: size.pageCount(of: count, accessibilityText: false), now: .now
+                // The most pages any text size has: the view clamps to its own count (WidgetContent), so a page past
+                // the standard count is kept for an accessibility size rather than pulled back here.
+                pageCount: size.pageCount(of: count, accessibilityText: true), now: .now
             )
         } ?? 0
         return Self.timeline(

@@ -101,4 +101,21 @@ struct SearchKeyboardLayoutTests {
         #expect(arabic.variants(for: "ا").contains("أ"))
         #expect(qwerty.variants(for: "e", shifted: true).contains("É"))
     }
+
+    @Test("the Cyrillic grid types each neighbour language's own letters, and Serbian in Latin gets a Latin grid")
+    func whenCyrillicNeighbour_thenItsLettersAreOnALongPress() throws {
+        let serbian = try #require(SearchKeyboardLayout.layout(forLanguageCode: "sr"))
+        let letters = Set(serbian.rows.joined()).union(serbian.rows.joined().flatMap { serbian.variants(for: $0) })
+        for letter in ["љ", "њ", "ђ", "ћ", "џ", "ј", "ѓ", "ќ", "ѕ", "і", "ў", "ә", "ң", "қ", "ө", "ұ", "ү", "һ"] {
+            #expect(letters.contains(letter), "\(letter) cannot be typed")
+        }
+        #expect(SearchKeyboardLayout.layout(forLanguageCode: "sr-Latn")?.id == "qwertz")
+    }
+
+    @Test("a shifted variant that has no one-letter capital stays one letter (ß, not SS)")
+    func whenShiftedVariantHasNoCapital_thenItStaysOneLetter() throws {
+        let german = try #require(SearchKeyboardLayout.layout(forLanguageCode: "de"))
+        let shifted = german.variants(for: "s", shifted: true)
+        #expect(shifted.allSatisfy { $0.count == 1 }, "\(shifted)")
+    }
 }

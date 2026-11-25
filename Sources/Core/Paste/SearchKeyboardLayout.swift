@@ -52,7 +52,11 @@ public struct SearchKeyboardLayout: Equatable, Identifiable, Sendable {
         let found = variantTable[key] ?? []
         guard shifted, isCased else { return found }
         let locale = Locale(identifier: languageCode)
-        return found.map { $0.uppercased(with: locale) }
+        // ß has no one-letter capital in uppercased(): "SS" would type two letters from one key.
+        return found.map { variant in
+            let upper = variant.uppercased(with: locale)
+            return upper.count == variant.count ? upper : variant
+        }
     }
 }
 
@@ -61,7 +65,9 @@ public extension SearchKeyboardLayout {
         let parts = code.lowercased().replacingOccurrences(of: "_", with: "-").split(separator: "-").map(String.init)
         guard let language = parts.first, !language.isEmpty else { return nil }
         if ["emoji", "dictation", "intl"].contains(language) || needsInputMethod(languageCode: language) { return nil }
-        let id = if language == "fr" {
+        let id = if language == "sr", parts.contains("latn") {
+            "qwertz"
+        } else if language == "fr" {
             parts.contains("ca") ? "qwerty" : parts.contains("ch") ? "qwertz" : "azerty"
         } else {
             layoutIDByLanguage[language] ?? "qwerty"

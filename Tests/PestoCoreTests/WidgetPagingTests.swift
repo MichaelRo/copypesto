@@ -66,4 +66,21 @@ struct WidgetPagingTests {
         let clamped = WidgetContent(snapshot: snapshot, size: .large, page: 9)
         #expect(clamped.page == 1)
     }
+
+    @Test("a snapshot date that crossed an intent as a Double still matches, so a tap is not undone")
+    func whenDateRoundTripsThroughADouble_thenThePageHolds() {
+        let created = Date(timeIntervalSince1970: 1_800_000_000.123_456_7)
+        let crossed = Date(timeIntervalSince1970: created.timeIntervalSince1970)
+        let stored = WidgetPaging.Stored(page: 2, setAt: created, snapshotCreatedAt: crossed)
+        for wobble in [-0.000_000_5, 0, 0.000_000_5] {
+            let page = WidgetPaging.page(
+                stored: stored, snapshotCreatedAt: created.addingTimeInterval(wobble), pageCount: 4, now: created
+            )
+            #expect(page == 2)
+        }
+        let newer = WidgetPaging.page(
+            stored: stored, snapshotCreatedAt: created.addingTimeInterval(1), pageCount: 4, now: created
+        )
+        #expect(newer == 0, "a newer snapshot still starts at the first page")
+    }
 }

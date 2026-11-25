@@ -74,7 +74,13 @@ final class KeyboardViewController: UIInputViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         heightConstraint?.constant = currentHeight
+        followHostAppearance()
         refresh()
+    }
+
+    private func followHostAppearance() {
+        let style = KeyboardAppearanceStyle.style(for: textDocumentProxy.keyboardAppearance)
+        if view.overrideUserInterfaceStyle != style { view.overrideUserInterfaceStyle = style }
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -95,6 +101,7 @@ final class KeyboardViewController: UIInputViewController {
 
     override func textDidChange(_ textInput: (any UITextInput)?) {
         super.textDidChange(textInput)
+        followHostAppearance()
         refresh()
     }
 

@@ -53,7 +53,8 @@ public enum WidgetPaging {
     }
 
     public static func page(stored: Stored?, snapshotCreatedAt: Date, pageCount: Int, now: Date) -> Int {
-        guard let stored, stored.snapshotCreatedAt >= snapshotCreatedAt,
+        // The date crosses an App Intent parameter as a Double, which can come back a fraction of a microsecond early.
+        guard let stored, stored.snapshotCreatedAt.timeIntervalSince(snapshotCreatedAt) > -0.001,
               now.timeIntervalSince(stored.setAt) < timeout else { return 0 }
         return min(max(stored.page, 0), max(pageCount - 1, 0))
     }

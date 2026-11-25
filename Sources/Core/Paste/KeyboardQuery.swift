@@ -25,7 +25,11 @@ public struct KeyboardQuery: Equatable, Sendable {
     /// Korean jamo join the syllable before them (`HangulComposer`); anything else is typed as it is.
     public mutating func type(_ characters: String, composingHangul: Bool) {
         guard composingHangul else { return type(characters) }
-        text = String(HangulComposer.appending(characters, to: text).prefix(Self.maxLength))
+        // A vowel can carry the last syllable's final into a new syllable: past the limit the key is refused, never
+        // cut after composing (which dropped a consonant and the vowel).
+        let composed = HangulComposer.appending(characters, to: text)
+        guard composed.count <= Self.maxLength else { return }
+        text = composed
     }
 
     public mutating func deleteBackward() {

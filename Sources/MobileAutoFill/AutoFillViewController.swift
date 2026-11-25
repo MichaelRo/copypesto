@@ -23,7 +23,9 @@ final class AutoFillViewController: ASCredentialProviderViewController {
             },
             openSettings: { [weak self] in
                 guard let self else { return }
-                HostURLOpener.open(AppLink.url(for: .keyboardSettings), from: self, context: extensionContext)
+                HostURLOpener.open(
+                    AppLink.url(for: .keyboardSettings), from: self, context: extensionContext, contextFirst: true
+                )
             },
             cancel: { [weak self] in self?.cancel(.userCanceled) }
         )

@@ -22,13 +22,13 @@ struct ShowClipPageIntent: AppIntent {
         self.step = step
         self.page = page
         self.pageCount = pageCount
-        self.snapshotCreatedAt = snapshotCreatedAt.timeIntervalSince1970
+        self.snapshotCreatedAt = snapshotCreatedAt.timeIntervalSinceReferenceDate
     }
 
     func perform() async throws -> some IntentResult {
         WidgetPageStore.save(
             page: WidgetPaging.step(from: page, by: step, pageCount: pageCount), for: key,
-            snapshotCreatedAt: Date(timeIntervalSince1970: snapshotCreatedAt), at: .now
+            snapshotCreatedAt: Date(timeIntervalSinceReferenceDate: snapshotCreatedAt), at: .now
         )
         return .result()
     }

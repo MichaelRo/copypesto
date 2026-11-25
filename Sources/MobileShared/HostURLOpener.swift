@@ -10,7 +10,17 @@ import UIKit
 enum HostURLOpener {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "HostURLOpener")
 
-    static func open(_ url: URL, from start: UIResponder, context: NSExtensionContext?) {
+    /// `contextFirst` (AutoFill) asks the context first and goes through the responder chain only when that opens
+    /// nothing, so the chain is used only where the documented way fails.
+    static func open(_ url: URL, from start: UIResponder, context: NSExtensionContext?, contextFirst: Bool = false) {
+        guard contextFirst, let context else { return openThroughApplication(url, from: start, context: context) }
+        Task { @MainActor in
+            if await context.open(url) { return }
+            openThroughApplication(url, from: start, context: nil)
+        }
+    }
+
+    private static func openThroughApplication(_ url: URL, from start: UIResponder, context: NSExtensionContext?) {
         let selector = NSSelectorFromString("openURL:options:completionHandler:")
         var responder: UIResponder? = start
         while let current = responder {

@@ -59,7 +59,13 @@ enum SearchKeyboardLayouts {
     static let russian = SearchKeyboardLayout(
         id: "russian", languageCode: "ru",
         rows: grid("й ц у к е н г ш щ з х", "ф ы в а п р о л д ж э", "я ч с м и т ь б ю"),
-        variants: ["е": ["ё"], "ь": ["ъ"]]
+        // The Cyrillic grid also serves Belarusian, Kazakh, Kyrgyz, Tajik, Mongolian, Bulgarian, Serbian and
+        // Macedonian: their own letters are on a long press of the nearest key.
+        variants: [
+            "е": ["ё"], "ь": ["ъ"], "и": keys("і ї ӣ"), "у": keys("ў ү ұ ӯ"), "а": ["ә"], "г": keys("ғ ѓ ґ"),
+            "к": keys("қ ќ"), "н": keys("ң њ"), "о": ["ө"], "х": keys("һ ҳ"), "ч": keys("ҷ џ"), "л": ["љ"],
+            "й": ["ј"], "д": ["ђ"], "т": ["ћ"], "з": ["ѕ"], "ж": ["җ"], "э": ["є"]
+        ]
     )
     static let ukrainian = SearchKeyboardLayout(
         id: "ukrainian", languageCode: "uk",

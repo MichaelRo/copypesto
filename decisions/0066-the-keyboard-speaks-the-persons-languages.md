@@ -41,6 +41,11 @@ an Opus designer critique and the owner's picks settled the details.
 - A homemade letter keyboard is compared key by key with Apple's; it has no autocorrect, swipe or dictation, and
   that is accepted: it types a search, not prose.
 - Hebrew's Delete position and the Thai and Hindi rows are copied from the standard layouts, not measured on a device.
+- `HostURLOpener` reaches `UIApplication.open` through the responder chain, which App Review may question (guidelines
+  2.5.1, and 4.4.1 for keyboards); AutoFill asks `extensionContext.open` first and uses the chain only when that opens nothing. If review objects, the
+  gear and the Pesto chip fall back to saying where the settings are.
+- Belarusian, Kazakh, Kyrgyz, Tajik, Mongolian, Bulgarian, Serbian and Macedonian share the Cyrillic grid with their
+  own letters on long presses (review, 2026-11-25); Serbian in Latin script gets QWERTZ.
 
 ## Docs affected
 - `docs/design/ios-keyboard.md`, `docs/design/ios-library.md` (the keyboard section)

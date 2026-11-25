@@ -70,7 +70,9 @@ struct KeyboardRenderingTests {
         )
         let size = CGSize(
             width: width,
-            height: (regular ? 300 : 280) + (search == nil ? 0 : KeyboardModel.searchExtraHeight)
+            height: search == nil
+                ? (regular ? 300 : 280)
+                : KeyboardSearchMetrics.totalHeight(size: model.keyboardSize, isRegular: regular, isLandscape: false)
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: nil))
         host.view.backgroundColor = .systemGroupedBackground
@@ -102,9 +104,9 @@ struct KeyboardRenderingTests {
                 for dark in [false, true] {
                     let image = try await render(menu, width: width, regular: regular, dark: dark)
                     #expect(image.size == CGSize(width: width, height: regular ? 300 : 280), "\(name) \(device)")
-                    let data = try #require(image.pngData())
+                    let data = try RenderedImage.pixels(image)
                     let file = "\(name)-\(device)-\(dark ? "dark" : "light").png"
-                    try data.write(to: Self.output.appendingPathComponent(file))
+                    RenderedImage.saveForReview(image, to: Self.output.appendingPathComponent(file))
                 }
             }
         }
@@ -116,8 +118,11 @@ struct KeyboardRenderingTests {
         #expect(menu.entries(matching: "basil").count == 2)
         for dark in [false, true] {
             let image = try await render(menu, width: 402, regular: false, dark: dark, word: "basil")
-            let data = try #require(image.pngData())
-            try data.write(to: Self.output.appendingPathComponent("matching-iphone-\(dark ? "dark" : "light").png"))
+            let data = try RenderedImage.pixels(image)
+            RenderedImage.saveForReview(
+                image,
+                to: Self.output.appendingPathComponent("matching-iphone-\(dark ? "dark" : "light").png")
+            )
         }
     }
 
@@ -127,16 +132,24 @@ struct KeyboardRenderingTests {
         for (name, search) in [("search-empty", ""), ("search-basil", "basil")] {
             for dark in [false, true] {
                 let image = try await render(menu, width: 402, regular: false, dark: dark, search: search)
-                let data = try #require(image.pngData())
-                try data.write(to: Self.output.appendingPathComponent("\(name)-iphone-\(dark ? "dark" : "light").png"))
+                let data = try RenderedImage.pixels(image)
+                RenderedImage.saveForReview(
+                    image,
+                    to: Self.output.appendingPathComponent("\(name)-iphone-\(dark ? "dark" : "light").png")
+                )
             }
         }
     }
 
     @Test("the clips replace the note once the set is ready")
     func whenReady_thenThePictureDiffersFromRestricted() async throws {
-        let restricted = try await render(Self.menus[0].1, width: 402, regular: false, dark: false).pngData()
-        let ready = try await render(Self.menus[3].1, width: 402, regular: false, dark: false).pngData()
+        let restricted = try await RenderedImage.pixels(render(
+            Self.menus[0].1,
+            width: 402,
+            regular: false,
+            dark: false
+        ))
+        let ready = try await RenderedImage.pixels(render(Self.menus[3].1, width: 402, regular: false, dark: false))
         #expect(restricted != ready)
     }
 
@@ -247,9 +260,10 @@ struct KeyboardRenderingTests {
                 renderer.scale = 2
                 let image = try #require(renderer.uiImage)
                 #expect(image.size == CGSize(width: cardSize.width + 16, height: cardSize.height + 16), "\(name)")
-                let data = try #require(image.pngData())
-                renders[dark] = data
-                try data.write(to: Self.output.appendingPathComponent("card-\(name)-\(dark ? "dark" : "light").png"))
+                renders[dark] = try RenderedImage.pixels(image)
+                RenderedImage.saveForReview(
+                    image, to: Self.output.appendingPathComponent("card-\(name)-\(dark ? "dark" : "light").png")
+                )
             }
             if name != "color" {
                 #expect(renders[false] != renders[true], "\(name) should differ between light and dark")

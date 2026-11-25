@@ -55,7 +55,10 @@ struct ClipboardCard: View {
     /// Files of a file clip that are gone, read off the main thread (see `FileClip.missing(inText:)`).
     @State var missingFileCount = 0
     @State var isHovered = false
-    @State var thumbnailLoaded = false
+    @State var thumbnail: NSImage?
+    @State var thumbnailIsAnimated = false
+    /// The clip's size when `thumbnail` was made (a still that becomes its GIF has another).
+    @State var thumbnailByteSize = 0
     @State var urlOGImage: NSImage?
     @State var urlOGImageIsAnimated = false
     @State var urlFavicon: NSImage?
@@ -137,6 +140,9 @@ struct ClipboardCard: View {
                 hideSecret()
                 isRenamingTitle = false
             }
+            .onChange(of: previewsAllowed) { _, allowed in
+                if !allowed { releaseOffscreenThumbnail() }
+            }
             .onChange(of: isPrivacyBlurred) { _, covered in
                 if covered {
                     hideSecret()
@@ -149,7 +155,7 @@ struct ClipboardCard: View {
             .onChange(of: revealedFromOutside) { _, outside in
                 if !outside { isNSFWRevealed = false }
             }
-            .task(id: CardLoadKey(id: item.id, isPending: item.analysisPending, byteSize: item.byteSize)) {
+            .task(id: loadKey) {
                 await loadThumbnailIfNeeded()
                 await loadURLMetadataIfNeeded()
             }
@@ -583,13 +589,6 @@ struct ClipboardCard: View {
         case .url where urlOGImage != nil: urlImageBody
         default: cardBody
         }
-    }
-
-    /// What the card shows for its picture: the one it loaded, or the cached one at once so a card built again does not
-    /// flash the placeholder first.
-    var shownThumbnail: (image: NSImage, isAnimated: Bool)? {
-        _ = thumbnailLoaded
-        return ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize).map { ($0.image, $0.isAnimated) }
     }
 }
 

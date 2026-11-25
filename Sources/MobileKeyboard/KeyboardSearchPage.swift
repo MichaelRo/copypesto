@@ -13,19 +13,28 @@ struct KeyboardSearchPage: View {
     let close: () -> Void
 
     @State private var showsDigits = false
-    @State private var alphabetIndex = 0
+    @State private var layoutIndex = 0
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
 
-    private var alphabets: [KeyboardLetters.Alphabet] {
-        KeyboardLetters.resolvedAlphabets()
+    private var isRegular: Bool {
+        sizeClass == .regular
     }
 
-    private var activeAlphabet: KeyboardLetters.Alphabet {
-        alphabets[alphabetIndex % alphabets.count]
+    private var isLandscape: Bool {
+        verticalSizeClass == .compact
+    }
+
+    private var layouts: [SearchKeyboardLayout] {
+        KeyboardLetters.resolvedLayouts()
+    }
+
+    private var activeLayout: SearchKeyboardLayout {
+        layouts[layoutIndex % layouts.count]
     }
 
     private var searchDirection: LayoutDirection {
-        activeAlphabet.isRTL ? .rightToLeft : .leftToRight
+        activeLayout.isRTL ? .rightToLeft : .leftToRight
     }
 
     private var query: KeyboardQuery {
@@ -37,16 +46,28 @@ struct KeyboardSearchPage: View {
         return model.menu.chips.first.map { model.menu.entries(for: $0.chip) } ?? []
     }
 
+    private var placeholder: Text {
+        if let missing = KeyboardLetters.inputMethodLanguages().first,
+           let name = Locale.current.localizedString(forLanguageCode: missing)
+        {
+            return Text("Search your clips (\(name) needs the system keyboard)")
+        }
+        return Text("Search your clips")
+    }
+
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: KeyboardSearchMetrics.sectionSpacing(isRegular: isRegular, isLandscape: isLandscape)) {
             field
                 .environment(\.layoutDirection, searchDirection)
-            resultRow
+            resultTray
                 .environment(\.layoutDirection, KeyboardLetters.isActiveLocaleRTL ? .rightToLeft : .leftToRight)
-                .frame(height: 58)
-            KeyboardLetters(model: model, layout: showsDigits ? .digits : .letters(activeAlphabet))
+            KeyboardLetters(
+                model: model, layout: showsDigits ? .digits : .letters(activeLayout), done: isRegular ? close : nil
+            )
+            .zIndex(1)
             bottomRow
         }
+        .padding(.vertical, isRegular ? 9 : isLandscape ? 5 : 7)
     }
 
     private var field: some View {
@@ -57,7 +78,7 @@ struct KeyboardSearchPage: View {
                     .accessibilityHidden(true)
                 Group {
                     if query.text.isEmpty {
-                        Text("Search your clips").foregroundStyle(.secondary)
+                        placeholder.foregroundStyle(.secondary)
                     } else {
                         Text(verbatim: query.text).foregroundStyle(.primary)
                     }
@@ -76,10 +97,23 @@ struct KeyboardSearchPage: View {
                 .accessibilityLabel(Text("Clear Search"))
             }
         }
-        .font(.subheadline)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color.primary.opacity(0.08), in: Capsule())
+        .font(isRegular ? .title3 : .body)
+        .padding(.horizontal, 12)
+        .frame(height: KeyboardSearchMetrics.fieldHeight(isRegular: isRegular, isLandscape: isLandscape))
+        .background(Color(.systemBackground), in: Capsule())
+        .padding(.horizontal, 6)
+    }
+
+    private var resultTray: some View {
+        resultRow
+            .padding(6)
+            .frame(
+                height: KeyboardSearchMetrics.trayHeight(
+                    size: model.keyboardSize, isRegular: isRegular, isLandscape: isLandscape
+                )
+            )
+            .background(Color(.systemBackground).opacity(0.55), in: RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 6)
     }
 
     @ViewBuilder
@@ -91,9 +125,17 @@ struct KeyboardSearchPage: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollView(.horizontal, showsIndicators: false) {
-                let width: CGFloat = sizeClass == .regular ? 180 : 150
-                let cardSize = CGSize(width: width, height: 58)
-                LazyHStack(spacing: 6) {
+                let cardSize = KeyboardSearchMetrics.landscapeAdjusted(
+                    KeyboardSearchMetrics.resultCard(size: model.keyboardSize, isRegular: isRegular),
+                    isLandscape: isLandscape
+                )
+                let rowCount = KeyboardSearchMetrics.resultRows(
+                    size: model.keyboardSize, isRegular: isRegular, isLandscape: isLandscape
+                )
+                LazyHGrid(
+                    rows: Array(repeating: GridItem(.fixed(cardSize.height), spacing: 6), count: rowCount),
+                    spacing: 6
+                ) {
                     ForEach(results) { entry in
                         let key = KeyboardClipKey(
                             entry: entry,
@@ -139,38 +181,56 @@ struct KeyboardSearchPage: View {
     }
 
     private var bottomRow: some View {
-        HStack(spacing: 6) {
-            if let globe {
-                globe.frame(width: 44, height: 40)
-            }
+        let height = KeyboardSearchMetrics.bottomKeyHeight(isRegular: isRegular, isLandscape: isLandscape)
+        return HStack(spacing: KeyboardSearchMetrics.keyGap(isRegular: isRegular)) {
             Button { showsDigits.toggle() } label: {
-                Text(verbatim: showsDigits ? activeAlphabet.badge : "123").frame(width: 52, height: 40)
+                Text(verbatim: showsDigits ? "ABC" : "123").frame(width: isRegular ? 86 : 50, height: height)
             }
             .buttonStyle(KeyboardKeyStyle(isFunction: true))
             .accessibilityLabel(showsDigits ? Text("Letters") : Text("Numbers"))
-            if alphabets.count > 1, !showsDigits {
-                let next = alphabets[(alphabetIndex + 1) % alphabets.count]
-                Button { alphabetIndex = (alphabetIndex + 1) % alphabets.count } label: {
-                    Text(verbatim: next.badge).frame(width: 44, height: 40)
+            if let globe {
+                globe.frame(width: 44, height: height)
+            }
+            spaceKey(height: height)
+            if !isRegular {
+                Button(action: close) {
+                    Text("Done").fontWeight(.semibold).frame(width: 88, height: height)
                 }
-                .buttonStyle(KeyboardKeyStyle(isFunction: true))
-                .accessibilityLabel(Text("Switch Search Keyboard"))
+                .buttonStyle(KeyboardKeyStyle(isAccent: true))
             }
-            Button { model.typeInSearch(" ") } label: {
-                Text("Space").frame(maxWidth: .infinity, minHeight: 40)
-            }
-            .buttonStyle(KeyboardKeyStyle(isFunction: true))
-            Button(action: model.deleteInSearch) {
-                Image(systemName: "delete.left").frame(width: 44, height: 40)
-            }
-            .buttonStyle(KeyboardKeyStyle(isFunction: true))
-            .buttonRepeatBehavior(.enabled)
-            .accessibilityLabel(Text("Delete"))
-            Button(action: close) {
-                Text("Done").fontWeight(.semibold).frame(width: 64, height: 40)
-            }
-            .buttonStyle(KeyboardKeyStyle(isAccent: true))
         }
         .font(.body)
+        .padding(.horizontal, 3)
+    }
+
+    /// Space types a space; held, it moves to the next of the person's own layouts, whose name it shows.
+    private func spaceKey(height: CGFloat) -> some View {
+        let name = Locale(identifier: activeLayout.languageCode)
+            .localizedString(forLanguageCode: activeLayout.languageCode)?.localizedCapitalized
+        return Group {
+            if layouts.count > 1, !showsDigits, let name { Text(verbatim: name) } else { Text("Space") }
+        }
+        .lineLimit(1)
+        .frame(maxWidth: .infinity, minHeight: height)
+        .background {
+            RoundedRectangle(cornerRadius: isRegular ? 7 : 5, style: .continuous)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.35), radius: 0, x: 0, y: 1)
+        }
+        .contentShape(.rect)
+        // A tap and a hold are told apart here; a Button would also type a space at the end of the hold.
+        .onTapGesture { model.typeInSearch(" ") }
+        .onLongPressGesture(minimumDuration: 0.5) { nextLayout() }
+        .accessibilityElement()
+        .accessibilityLabel(Text("Space"))
+        .accessibilityAddTraits([.isKeyboardKey, .isButton])
+        .accessibilityAction { model.typeInSearch(" ") }
+        .accessibilityAction(named: Text("Next Search Keyboard")) { nextLayout() }
+    }
+
+    private func nextLayout() {
+        guard layouts.count > 1 else { return }
+        showsDigits = false
+        layoutIndex = (layoutIndex + 1) % layouts.count
     }
 }

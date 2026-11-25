@@ -290,6 +290,9 @@ extension ClipboardCard {
     }
 
     func releaseOffscreenThumbnail() {
+        thumbnail = nil
+        thumbnailIsAnimated = false
+        thumbnailByteSize = 0
         urlOGImage = nil
         urlFavicon = nil
     }

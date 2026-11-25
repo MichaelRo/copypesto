@@ -14,6 +14,7 @@ struct CardLoadKey: Hashable {
     let id: UUID
     let isPending: Bool
     let byteSize: Int
+    let previewsAllowed: Bool
 }
 
 // MARK: - Thumbnail loading
@@ -21,19 +22,45 @@ struct CardLoadKey: Hashable {
 let cardLoadingLogger = Logger(subsystem: AppIdentity.logSubsystem, category: "CardLoading")
 
 extension ClipboardCard {
+    var loadKey: CardLoadKey {
+        CardLoadKey(
+            id: item.id,
+            isPending: item.analysisPending,
+            byteSize: item.byteSize,
+            previewsAllowed: previewsAllowed
+        )
+    }
+
+    /// What the card shows for its picture: the one it loaded, or the cached one at once so a card built again does not
+    /// flash the placeholder first.
+    var shownThumbnail: (image: NSImage, isAnimated: Bool)? {
+        if let thumbnail, thumbnailByteSize == item.byteSize { return (thumbnail, thumbnailIsAnimated) }
+        return ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize).map { ($0.image, $0.isAnimated) }
+    }
+
     func loadThumbnailIfNeeded() async {
         PerfSignposts.shelf.event("cardAppear", item.id.uuidString)
         let byteSize = item.byteSize
-        guard item.type == .image || item.isSVGSource else { return }
-        if ThumbnailCache.shared.entry(for: item.id, byteSize: byteSize) != nil { return }
+        guard previewsAllowed, item.type == .image || item.isSVGSource else { return }
+        if thumbnail != nil, thumbnailByteSize == byteSize { return }
+        if let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: byteSize) {
+            thumbnail = cached.image
+            thumbnailIsAnimated = cached.isAnimated
+            thumbnailByteSize = byteSize
+            return
+        }
         defer { PerfSignposts.shelf.event("cardThumbnail", item.id.uuidString) }
         let id = item.id
         let service = await ThumbnailServices.shared.service(for: modelContext.container)
+        guard !Task.isCancelled else { return }
         // Twice the card width covers a Retina display; the full-resolution bitmap is never decoded.
         guard let result = await service.thumbnail(for: id, maxPixel: 480),
-              let image = await PreparedImage.image(from: result.data, animated: result.isAnimated) else { return }
+              let image = await PreparedImage.image(from: result.data, animated: result.isAnimated),
+              !Task.isCancelled else { return }
         ThumbnailCache.shared.store(.init(image: image, isAnimated: result.isAnimated, byteSize: byteSize), for: id)
-        thumbnailLoaded.toggle()
+        thumbnail = image
+        thumbnailIsAnimated = result.isAnimated
+        thumbnailByteSize = byteSize
     }
 
     func storeFetched(_ result: URLPreviewResult, storedImage: Data?, itemID: UUID) {

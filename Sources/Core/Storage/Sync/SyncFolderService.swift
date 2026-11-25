@@ -60,6 +60,8 @@ public final class SyncFolderService {
     /// last sequence it was checked at: an idle pass (nothing new written) does not look at the history again.
     var writtenCatalog: [SyncAppCatalog.Entry]?
     var catalogCheckedAt: UInt64?
+    /// The epoch the catalog was sealed under: after Reset Sync the same list is written again, or peers refuse it.
+    var catalogEpoch: UInt32?
     /// When each other device's catalog file last changed, so an idle pass reads none of them again.
     var readCatalogDates: [String: Date] = [:]
 

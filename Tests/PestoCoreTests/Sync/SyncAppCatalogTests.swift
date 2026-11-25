@@ -56,6 +56,21 @@ struct SyncAppCatalogTests {
         }
     }
 
+    @Test("a full catalog of the largest icons still fits the small-file limit its readers enforce")
+    func whenEveryIconIsAtItsLimit_thenTheSealedFileStillOpens() throws {
+        let icon = Self
+            .png +
+            Data((0..<(SyncAppCatalog.maxIconBytes - Self.png.count)).map { UInt8(truncatingIfNeeded: $0 &* 31) })
+        let full = (0..<SyncAppCatalog.maxEntries).map {
+            SyncAppCatalog.Entry(bundleID: "app.\($0)", name: "App \($0)", colorHex: "#112233", icon: icon)
+        }
+        let data = try catalog(full).sealed(syncKey: key, signedBy: device)
+        #expect(data.count <= SyncSmallFile.maxBytes)
+        let opened = try SyncAppCatalog.open(data, syncKey: key, trust: trust, deviceID: "mac-a", epoch: 1)
+        #expect(opened.entries.count > 64, "the newest apps are kept")
+        #expect(opened.entries.first == full.first)
+    }
+
     @Test("entries that are not a PNG, too large, badly colored, repeated or past the limit are dropped")
     func whenEntriesAreOutOfBounds_thenDropped() {
         let big = SyncAppCatalog.Entry(

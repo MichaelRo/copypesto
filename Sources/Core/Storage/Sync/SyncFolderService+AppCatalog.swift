@@ -10,10 +10,10 @@ extension SyncFolderService {
     /// next pass; it never stops the exchange.
     func writeAppCatalogIfChanged(_ found: SyncGroup) async {
         let sequence = ownLast.sequence
-        guard catalogCheckedAt != sequence else { return }
+        guard catalogCheckedAt != sequence || catalogEpoch != found.epoch else { return }
         do {
             let entries = try await storage.syncAppCatalogEntries()
-            guard !entries.isEmpty, entries != writtenCatalog else {
+            guard !entries.isEmpty, entries != writtenCatalog || catalogEpoch != found.epoch else {
                 catalogCheckedAt = sequence
                 return
             }
@@ -26,6 +26,7 @@ extension SyncFolderService {
             try folderProbe.writeData(catalog.sealed(syncKey: found.key, signedBy: identity.keys), url)
             writtenCatalog = entries
             catalogCheckedAt = sequence
+            catalogEpoch = found.epoch
         } catch {
             logger.error("The app catalog was not written: \(String(describing: error), privacy: .public)")
         }

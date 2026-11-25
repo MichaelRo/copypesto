@@ -38,7 +38,8 @@ final class SyncMac {
     /// The same store, keys, preferences and high-water marks under a new controller, as after a relaunch. Drive only
     /// the new one afterwards.
     func relaunched() -> SyncController {
-        SyncController(environment)
+        controller.suspend()
+        return SyncController(environment)
     }
 
     /// The high-water record as a Pesto from before the unsent-history repair wrote it.

@@ -13,6 +13,7 @@ struct SyncFirstDeviceHistoryTests {
     func whenTheFirstDeviceHadHistory_thenItIsWrittenToTheFolder() async throws {
         defer { try? FileManager.default.removeItem(at: folder) }
         let first = try SyncMac(name: "mac-a", folder: folder, time: time)
+        defer { first.controller.suspend() }
         SyncJournal.disable(for: first.container)
         try await first.site.copy("copied before sync was on")
         await first.controller.turnOn()
@@ -24,6 +25,7 @@ struct SyncFirstDeviceHistoryTests {
         await first.controller.syncNow()
 
         let second = try SyncMac(name: "mac-b", folder: folder, time: time)
+        defer { second.controller.suspend() }
         await second.controller.turnOn()
         await second.controller.useRecoveryKey(key)
         second.controller.confirmJoin()
@@ -43,6 +45,7 @@ struct SyncFirstDeviceHistoryTests {
     func whenAnAnnouncedDeviceHoldsUnstampedClips_thenTheNextLaunchSendsThem() async throws {
         defer { try? FileManager.default.removeItem(at: folder) }
         let first = try SyncMac(name: "mac-a", folder: folder, time: time)
+        defer { first.controller.suspend() }
         await first.controller.turnOn()
         guard case let .recoveryKey(key) = first.controller.flow else {
             Issue.record("expected the recovery key, got \(first.controller.flow)")
@@ -54,11 +57,14 @@ struct SyncFirstDeviceHistoryTests {
         try await first.site.copy("left behind by the old turn-on")
 
         let second = try SyncMac(name: "mac-b", folder: folder, time: time)
+        defer { second.controller.suspend() }
         await second.controller.turnOn()
         await second.controller.useRecoveryKey(key)
         second.controller.confirmJoin()
+        first.controller.suspend()
         first.forgetUnstampedRepair()
         let relaunched = first.relaunched()
+        defer { relaunched.suspend() }
         relaunched.resumeIfEnabled()
         for _ in 0..<2 {
             for controller in [relaunched, second.controller] {
@@ -74,6 +80,7 @@ struct SyncFirstDeviceHistoryTests {
     func whenSyncWasPaused_thenWhatWasCopiedMeanwhileIsNotSent() async throws {
         defer { try? FileManager.default.removeItem(at: folder) }
         let first = try SyncMac(name: "mac-a", folder: folder, time: time)
+        defer { first.controller.suspend() }
         await first.controller.turnOn()
         guard case let .recoveryKey(key) = first.controller.flow else {
             Issue.record("expected the recovery key, got \(first.controller.flow)")
@@ -87,6 +94,7 @@ struct SyncFirstDeviceHistoryTests {
         first.controller.confirmJoin()
 
         let second = try SyncMac(name: "mac-b", folder: folder, time: time)
+        defer { second.controller.suspend() }
         await second.controller.turnOn()
         await second.controller.useRecoveryKey(key)
         second.controller.confirmJoin()

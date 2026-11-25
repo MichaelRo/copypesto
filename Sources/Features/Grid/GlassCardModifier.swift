@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import PestoCore
 import SwiftUI
 
 // MARK: - Glass card background modifier
@@ -15,6 +16,25 @@ struct GlassCardModifier: ViewModifier {
     let isLifted: Bool
     var isSuggested: Bool = false
     let cornerRadius: CGFloat
+    /// The source app's color at the card's foot (ADR 0068); `showsGlow` is false on a picture, a color or a covered
+    /// card.
+    var glowColorHex: String?
+    var showsGlow = false
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.shelfDrawsGlass) private var shelfDrawsGlass
+    @AppStorage(Setting.appTheme) private var themeRaw: String
+    @AppStorage(Setting.appThemeDark) private var darkThemeRaw: String
+
+    private var glow: CardGlow? {
+        guard showsGlow else { return nil }
+        let isDark = colorScheme == .dark
+        let theme = AppTheme.resolve(light: themeRaw, dark: darkThemeRaw, isDark: isDark)
+        return CardGlow.decide(
+            colorHex: glowColorHex, themeAccentHex: theme.accentHex(dark: isDark), isDark: isDark,
+            isGlass: shelfDrawsGlass ?? false, increaseContrast: contrast == .increased, isSelected: isSelected
+        )
+    }
+
     @Environment(\.colorSchemeContrast) private var contrast
 
     private var borderColor: Color {
@@ -35,6 +55,7 @@ struct GlassCardModifier: ViewModifier {
                 // The shadow belongs to this fill alone: cast by the whole card it re-blurred the text and pictures
                 // on top of it each frame.
                 RoundedRectangle(cornerRadius: cornerRadius).adaptiveCardFill()
+                    .overlay { CardGlowView(glow: glow).clipShape(RoundedRectangle(cornerRadius: cornerRadius)) }
                     .shadow(
                         color: .black.opacity(isLifted ? 0.28 : 0.10),
                         radius: isLifted ? 14 : 4,

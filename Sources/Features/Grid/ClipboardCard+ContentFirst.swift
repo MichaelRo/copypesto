@@ -33,6 +33,24 @@ extension ClipboardCard {
         CardInkOverlay.onPicture(scheme: colorScheme)
     }
 
+    // MARK: - The foot glow (ADR 0068)
+
+    /// Whether the card's foot glows: only a card drawn on its fill, never a picture, a color, a covered or a pending
+    /// one. `GlassCardModifier` decides the color (the app's, or for an app with none, the theme's, muted).
+    var showsFootGlow: Bool {
+        guard !isBlurredAsSensitive, !isCoveredForPrivacy, !item.analysisPending, item.type != .image else {
+            return false
+        }
+        switch treatment {
+        case .fullBleedPicture, .fullBleedColor: return false
+        default: return true
+        }
+    }
+
+    var footGlowColorHex: String? {
+        item.isRemote ? nil : item.sourceDominantColorHex
+    }
+
     // MARK: - Which treatment
 
     var treatment: CardTreatment {

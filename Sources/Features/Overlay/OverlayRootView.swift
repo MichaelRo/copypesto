@@ -215,8 +215,8 @@ struct OverlayRootView: View {
                         // (D-01).
                         .blur(radius: appState.isHistoryLocked ? ShelfLockCover.blurRadius : 0)
                         .padding(.horizontal, 16)
-                        .padding(.top, 12)
-                        .padding(.bottom, 8)
+                        .padding(.top, ShelfHeight.commandTopInset)
+                        .padding(.bottom, ShelfHeight.commandBottomInset)
                 }
                 .onGeometryChange(for: CGFloat.self) { proxy in
                     proxy.size.height

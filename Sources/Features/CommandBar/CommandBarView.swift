@@ -19,6 +19,8 @@ struct CommandBarView: View {
     /// from a binding that only runs when something else happens to redraw the bar. It used to work only because
     /// `AppState` republished every second while the shelf was open.
     @State private var showsRecentSearches = false
+    /// The command bar's width, which sets the Find field's (`ShelfHeight.searchFieldWidth`).
+    @State var commandBarWidth: CGFloat = 1512
     @AppStorage(Setting.searchHistory) private var searchHistoryRaw: String
     @AppStorage(Setting.shelfPosition) private var shelfPositionRaw: String
     @AppStorage(Setting.nsfwMode) var nsfwModeRaw: String
@@ -54,21 +56,31 @@ struct CommandBarView: View {
     var body: some View {
         HStack(spacing: 8) {
             if appState.isSearchActive {
-                // Opens in place of the chip strip inside the exact 46 pt command block so cards never shift.
-                HStack(spacing: 8) {
-                    searchInput
-                        .frame(minWidth: 190, idealWidth: 230, maxWidth: 260)
-                    searchTrailingButtons
-                    filterGroupDivider
+                // Design board 1b: where you search on the left (today's strip), the field in the middle, every filter
+                // on the right; one 28 pt row in the same 46 pt block as the chip strip, so no card moves.
+                HStack(spacing: 14) {
+                    searchScopeStrip
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(spacing: 8) {
+                        searchInput
+                            .frame(width: ShelfHeight.searchFieldWidth(shelfWidth: commandBarWidth))
+                        searchTrailingButtons
+                            .fixedSize()
+                    }
+                    .layoutPriority(1)
                     filterBar
+                        .mask(Self.edgeFade(leading: false))
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(minHeight: 26)
+                .frame(minHeight: ShelfHeight.commandRowHeight)
                 .transition(.opacity)
             } else {
                 chipsRow
+                    .frame(minHeight: ShelfHeight.commandRowHeight)
                     .transition(.opacity)
             }
         }
+        .onGeometryChange(for: CGFloat.self, of: \.size.width) { commandBarWidth = $0 }
         .animation(Motion.animation(.pestoMove), value: appState.isSearchActive)
         .onChange(of: appState.showsCustomDateRange) { _, shown in
             if !shown, appState.isSearchActive {
@@ -320,7 +332,7 @@ struct CommandBarView: View {
     }
 
     /// Every chip in the order Tab walks them.
-    private var allFilterEntries: [FilterEntry] {
+    var allFilterEntries: [FilterEntry] {
         typeEntries + [formatEntry] + dayEntries + [whenMoreEntry] + (fromEntry.map { [$0] } ?? []) + [sensitiveEntry] +
             remoteEntries +
             hiddenEntries
@@ -432,6 +444,7 @@ struct CommandBarView: View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .pestoQuiet()
+            filterTokens
 
             TextField("Search clips…", text: Binding(
                 get: { appState.searchText },
@@ -490,10 +503,11 @@ struct CommandBarView: View {
                 .accessibilityIdentifier(AccessibilityID.searchClearButton)
             }
         }
-        // Matches the 26 pt chip strip height (24 + 2 = 26 pt -> 46 pt total command block) so Find causes 0 pt shift.
-        .frame(height: 24)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 1)
+        // The command row's 28 pt (ShelfHeight.commandRowHeight), the same as the chip strip's row, so Find moves no
+        // card.
+        .font(.title3)
+        .frame(height: ShelfHeight.commandRowHeight)
+        .padding(.horizontal, 10)
         .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.searchFieldFrame)

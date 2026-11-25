@@ -62,9 +62,18 @@ public enum ShelfPaste: Equatable, Sendable {
     case ignore
     case inPlace
     case closeShelfThenPaste
+    /// The floating window set to copy only: the clip goes to the clipboard and nothing is pasted.
+    case copy
 
-    public static func route(isLocked: Bool, isPasting: Bool, pinnedWindow: Bool) -> ShelfPaste {
+    public static func route(
+        isLocked: Bool,
+        isPasting: Bool,
+        pinnedWindow: Bool,
+        copyOnly: Bool = false
+    )
+    -> ShelfPaste {
         if isLocked || isPasting { return .ignore }
+        if copyOnly { return .copy }
         return pinnedWindow ? .inPlace : .closeShelfThenPaste
     }
 }

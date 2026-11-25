@@ -18,9 +18,6 @@ final class KeyboardModel {
     /// has no way to reach the app's text field.
     private(set) var searchQuery: KeyboardQuery?
 
-    /// How much taller the keyboard is while the search page is open: a row for the field and the letters.
-    static let searchExtraHeight: CGFloat = 40
-
     var isSearching: Bool {
         searchQuery != nil
     }
@@ -33,12 +30,12 @@ final class KeyboardModel {
         searchQuery = nil
     }
 
-    func typeInSearch(_ characters: String) {
-        searchQuery?.type(characters)
+    func typeInSearch(_ characters: String, composingHangul: Bool = false) {
+        searchQuery?.type(characters, composingHangul: composingHangul)
     }
 
-    func deleteInSearch() {
-        searchQuery?.deleteBackward()
+    func deleteInSearch(decomposingHangul: Bool = false) {
+        searchQuery?.deleteBackward(decomposingHangul: decomposingHangul)
     }
 
     func clearSearch() {

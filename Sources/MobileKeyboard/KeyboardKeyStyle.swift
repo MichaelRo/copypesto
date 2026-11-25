@@ -14,12 +14,15 @@ struct KeyboardKeyStyle: ButtonStyle {
     @Environment(\.pestoAccentLabel) private var accentLabel
 
     func makeBody(configuration: Configuration) -> some View {
-        let radius: CGFloat = sizeClass == .regular ? 8 : 6
+        let radius: CGFloat = sizeClass == .regular ? 7 : 5
         configuration.label
             .foregroundStyle(isAccent ? accentLabel : Color.primary)
             .background {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(fill(pressed: configuration.isPressed))
+                    .fill(Self.fill(
+                        isAccent: isAccent, isFunction: isFunction, pressed: configuration.isPressed,
+                        dark: colorScheme == .dark, accent: accent
+                    ))
                     .shadow(
                         color: .black.opacity(colorScheme == .dark ? 0.6 : 0.35),
                         radius: 0, x: 0, y: 1
@@ -29,9 +32,9 @@ struct KeyboardKeyStyle: ButtonStyle {
             .contentShape(.rect(cornerRadius: radius))
     }
 
-    private func fill(pressed: Bool) -> Color {
+    static func fill(isAccent: Bool, isFunction: Bool, pressed: Bool, dark: Bool, accent: Color) -> Color {
         if isAccent { return accent.opacity(pressed ? 0.75 : 1) }
-        switch (isFunction, colorScheme == .dark) {
+        switch (isFunction, dark) {
         case (false, false):
             return pressed ? Color(white: 0.85) : .white
         case (false, true):

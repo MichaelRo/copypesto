@@ -47,4 +47,13 @@ struct KeyboardQueryTests {
         #expect(KeyboardQuery.normalizedForSearch("עיר") == "עיר")
         #expect(KeyboardQuery.normalizedForSearch("Basil 123") == "Basil 123")
     }
+
+    @Test("at the limit a Korean vowel that would start a new syllable is refused, never cut after composing")
+    func whenHangulVowelWouldPassTheLimit_thenTheKeyIsRefused() {
+        var query = KeyboardQuery()
+        query.type(String(repeating: "가", count: KeyboardQuery.maxLength - 1) + "각")
+        let before = query.text
+        query.type("ㅏ", composingHangul: true)
+        #expect(query.text == before, "the final ㄱ was dropped")
+    }
 }

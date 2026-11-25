@@ -19,7 +19,7 @@ struct WidgetRenderingTests {
 
     private static let sizes: [WidgetSize: CGSize] = [
         .small: CGSize(width: 170, height: 170), .medium: CGSize(width: 364, height: 170),
-        .large: CGSize(width: 364, height: 382)
+        .large: CGSize(width: 364, height: 382), .extraLarge: CGSize(width: 715, height: 342)
     ]
 
     private func picture(width: CGFloat, height: CGFloat) throws -> Data {

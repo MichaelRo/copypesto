@@ -70,7 +70,9 @@ struct KeyboardRenderingTests {
         )
         let size = CGSize(
             width: width,
-            height: (regular ? 300 : 280) + (search == nil ? 0 : KeyboardModel.searchExtraHeight)
+            height: search == nil
+                ? (regular ? 300 : 280)
+                : KeyboardSearchMetrics.totalHeight(size: model.keyboardSize, isRegular: regular, isLandscape: false)
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: nil))
         host.view.backgroundColor = .systemGroupedBackground

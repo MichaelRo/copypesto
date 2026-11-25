@@ -116,8 +116,9 @@ Settings → Appearance has the theme and System, Light or Dark, set on every wi
 Per device: these preferences are not synced. Liquid Glass is only the system's bars, search field, sheets and menus.
 
 ## The Recent Clips widget (ADR 0052)
-Pesto cards at widget scale on the theme's ground carried in the snapshot: one card fills the small widget, three sit
-in a row in the medium one, six in two columns in the large one. A color fills its card, a picture fills it near a
+Pesto cards at widget scale on the theme's ground carried in the snapshot: one card fills the small widget, two sit
+side by side in the medium one, two by two in the large one and two by four in the extra large one on iPad (ADR 0067);
+medium and large page with chevrons and dots, back to the first page after a newer snapshot or ten minutes. A color fills its card, a picture fills it near a
 card's shape, a link leads with its host, short text is large, one foot line gives the source and `CardAge`. The
 widget's own setting chooses what a tap does: Copy (in place for a short text, else Pesto copies and flashes the card),
 Open in Pesto (the detail) or Open the Clip (a link in Safari); Show chooses Recent, Pinned or Collection, and then
@@ -140,8 +141,7 @@ leads the chips in quotes, and picking a card replaces it. A "123" pad of number
 Delete, with the globe key when iOS asks for it. A tap inserts and returns to the person's keyboard, or stays, as
 "After inserting a clip" says; a long press does the other. Without Full Access the pad and one line on Full Access;
 with no set one line on turning on Insert from Pesto; with an empty one "No text clips yet." The magnifying glass opens
-the search page (ADR 0063): Pesto's own search field, the matches in one row, letters or numbers that type only into
-that field, and Done; the keyboard grows 40 points while it is open.
+the search page (ADRs 0063, 0066): Pesto's own search field, a tray of matches whose rows follow the keyboard's size, the letters of the person's own keyboards with shift and accents (Korean composed), and Done; the page is 340 to 438 points tall on an iPhone. The shelf's bottom row is iOS's (123, globe, space, delete, return); a Pesto chip at the end of the chips opens settings inside the keyboard.
 
 ## FAQ for the release notes: Add Clipboard to Pesto
 The guide has no iPhone section until the app is released (ADR 0046), so this entry waits here and moves to

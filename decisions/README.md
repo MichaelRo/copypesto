@@ -76,6 +76,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0065](0065-lock-screen-accessory-widgets.md) | iOS Lock Screen accessory widgets (`accessoryCircular`, `accessoryRectangular`, `accessoryInline`) live in `LockScreenClipsWidget` with an off-by-default per-widget opt-in (`showsClipsOnLockScreen`), use `.widgetURL` only, and never show secrets; amends 0052 |
 | [0066](0066-the-keyboard-speaks-the-persons-languages.md) | The keyboard's search page offers the layouts of the person's own keyboards (Core `SearchKeyboardLayout`, Korean composed by `HangulComposer`), with iOS's key metrics, shift and accents; results rows follow the size; the shelf gets iOS's bottom row, a round search key and settings inside the keyboard; amends 0062 and 0063 |
 | [0067](0067-widget-grids-near-the-card-and-pages.md) | Widget grids keep the card's shape (medium 1×2, large 2×2, extra large 2×4 on iPad) and medium and large page with an App Intent; the page lives in the extension's own preferences and resets after a newer snapshot or ten minutes; amends 0052 and 0060 |
+| [0072](0072-extensions-open-pesto-only-as-apple-allows.md) | The keyboard opens Pesto with the plain `UIApplication.open` through the responder chain (DTS sample), only with Full Access; AutoFill's gear says where the settings are; no extension calls an API through a string selector; amends 0066 |
 
 ## Template
 

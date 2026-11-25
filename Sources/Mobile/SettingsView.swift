@@ -221,7 +221,6 @@ struct SettingsView: View {
         }
         .tint(accent)
         .navigationTitle("Settings")
-        .onDisappear { MobileAppIcon.applyIfMatching() }
         .onAppear {
             MobileAppState.migrateQuickInsertSettingsIfNeeded()
             Task { await refreshQuickInsertStatus() }

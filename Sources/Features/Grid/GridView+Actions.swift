@@ -198,6 +198,11 @@ extension GridView {
         }
     }
 
+    /// No results offers Ask Pesto as the iPhone does (ADR 0070).
+    var offersAskOnNoResults: Bool {
+        emptyState == .noResults && !copyOnly && appState.offersAsk
+    }
+
     var noResultsAdvice: NoResultsAdvice? {
         guard emptyState == .noResults else { return nil }
         let apps = appState.searchSourceFilter.sorted().map {

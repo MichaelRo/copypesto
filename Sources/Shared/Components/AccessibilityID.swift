@@ -99,6 +99,7 @@ enum AccessibilityID {
     static let textEditSaveButton = "edit-text-save"
     static let textEditCancelButton = "edit-text-cancel"
     static let textEditMessage = "edit-text-message"
+    static let shelfEmptyStateAsk = "shelf-empty-state-ask"
     static let clipInspectorTitle = "clip-inspector-title"
     static let clipInspectorRevert = "clip-inspector-revert"
     static let clipInspectorNote = "clip-inspector-note"

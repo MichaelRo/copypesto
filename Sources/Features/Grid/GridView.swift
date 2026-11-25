@@ -315,7 +315,9 @@ struct GridView: View {
                             case .resumeCapturing: appState.resumeCapturing?()
                             }
                         },
-                        onAdvice: apply
+                        onAdvice: apply,
+                        asksFirst: offersAskOnNoResults && AskHeuristic.looksLikeQuestion(appState.searchText),
+                        onAsk: offersAskOnNoResults ? { Task { await appState.askPesto() } } : nil
                     )
                 }
             }

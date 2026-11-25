@@ -174,6 +174,8 @@ final class AppState {
     /// The chips on screen, in order, as the keyboard can act on them. Set by the command bar.
     @ObservationIgnored var filterChipActions: [FilterChipAction] = []
     @ObservationIgnored var askTask: Task<Void, Never>?
+    var isAsking = false
+    var lastAskedKeywords: String? // Ask is put away while the field still holds it (`AskHeuristic.offersAsk`).
     @ObservationIgnored var askGeneration = 0
 
     /// When the shelf last closed; `ShelfContextPolicy` decides from it whether the next open starts from All.

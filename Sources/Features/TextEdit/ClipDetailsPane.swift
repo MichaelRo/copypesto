@@ -8,10 +8,12 @@ struct ClipDetailsPane: View {
     let item: ClipboardItem
     let editor: ClipEditor
     let collections: [Pinboard]
+    var showsNote = true
     @Environment(AppState.self) private var appState
     @Environment(\.calendar) private var calendar
     @Environment(\.locale) private var locale
     @State private var note = ""
+    @State private var noteBaseline = ""
     @State private var newTag = ""
     @FocusState private var focused: Field?
 
@@ -22,7 +24,7 @@ struct ClipDetailsPane: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                noteSection
+                if showsNote { noteSection }
                 tagSection
                 collectionSection
                 factsSection
@@ -30,7 +32,15 @@ struct ClipDetailsPane: View {
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .onAppear { note = item.userNote ?? "" }
+        .onAppear {
+            note = item.userNote ?? ""
+            noteBaseline = note
+        }
+        .onChange(of: item.userNote) { _, stored in
+            guard focused != .note, !ClipDetailsEdit.personChanged(note, from: noteBaseline) else { return }
+            note = stored ?? ""
+            noteBaseline = note
+        }
         .onChange(of: focused) { old, _ in
             if old == .note { saveNote() }
             if old == .tag { addTags() }
@@ -74,7 +84,7 @@ struct ClipDetailsPane: View {
         HStack(spacing: 4) {
             Text("@\(tag)")
             Button {
-                editor.edit(item) { $0.tags = ClipDetailsEdit.removing(tag, from: $0.tags) }
+                if canSave { editor.edit(item) { $0.tags = ClipDetailsEdit.removing(tag, from: $0.tags) } }
             } label: {
                 Image(systemName: "xmark")
                     .imageScale(.small)
@@ -93,7 +103,7 @@ struct ClipDetailsPane: View {
             heading("Collection")
             Picker("Collection", selection: Binding(
                 get: { item.collectionID },
-                set: { id in editor.edit(item) { $0.collectionID = id } }
+                set: { id in if canSave { editor.edit(item) { $0.collectionID = id } } }
             )) {
                 Text("None").tag(UUID?.none)
                 ForEach(collections) { collection in
@@ -135,15 +145,25 @@ struct ClipDetailsPane: View {
             .pestoQuiet()
     }
 
+    /// A save waits for a change the person made, and never touches a deleted clip or a locked history (the pane
+    /// can disappear after either).
+    private var canSave: Bool {
+        !item.isDeleted && item.modelContext != nil && !appState.isHistoryLockedNow()
+    }
+
     private func saveNote() {
+        guard showsNote, canSave, ClipDetailsEdit.personChanged(note, from: noteBaseline) else { return }
         let saved = ClipDetailsEdit.note(note)
+        noteBaseline = note
         guard saved != item.userNote else { return }
         editor.edit(item) { $0.userNote = saved }
     }
 
     private func addTags() {
-        let updated = ClipDetailsEdit.adding(newTag, to: item.tags)
+        let typed = newTag
         newTag = ""
+        guard canSave, !typed.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let updated = ClipDetailsEdit.adding(typed, to: item.tags)
         guard updated != item.tags else { return }
         editor.edit(item) { $0.tags = updated }
     }

@@ -125,8 +125,10 @@ extension GridView {
         showDetails(of: displayedItems[focusedIndex])
     }
 
+    /// The details of any clip; a secret's text is edited only from Edit Text, which its card offers after a Show with
+    /// Touch ID (`revealedIDs` holds the cover's reveals, which ask for nothing).
     func showDetails(of item: ClipboardItem) {
-        appState.openTextEditor?(item, revealedIDs.contains(item.id))
+        appState.openTextEditor?(item, false)
     }
 
     /// Return in the search field pastes the focused result, so a search can be finished without the mouse.

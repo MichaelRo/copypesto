@@ -15,6 +15,12 @@ public enum ClipDetailsEdit {
         return trimmed.isEmpty ? nil : trimmed
     }
 
+    /// Whether the person changed a title or note field since it was filled (`baseline`): only then is it saved, so a
+    /// window closed after the clip changed elsewhere (the card, sync) never writes the old value back.
+    public static func personChanged(_ typed: String, from baseline: String) -> Bool {
+        note(typed) != note(baseline)
+    }
+
     public static func adding(_ typed: String, to tags: [String]) -> [String] {
         var result = tags
         for part in typed.split(separator: ",") {

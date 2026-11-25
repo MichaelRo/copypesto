@@ -10,11 +10,14 @@ struct TextEditView: View {
     @Bindable var model: TextEditModel
     let item: ClipboardItem?
     let editor: ClipEditor?
+    var showsPreview = true
+    var showsPersonalDetails = true
     @Environment(AppState.self) private var appState
     @AppStorage(Setting.screenSharingPrivacy) private var screenSharingPrivacy: Bool
     @FocusState private var editorFocused: Bool
     @FocusState private var titleFocused: Bool
     @State private var title = ""
+    @State private var titleBaseline = ""
 
     private var isCovered: Bool {
         appState.isContentCovered(screenSharingPrivacy: screenSharingPrivacy)
@@ -22,7 +25,7 @@ struct TextEditView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if item != nil { titleField }
+            if item != nil, showsPersonalDetails { titleField }
             content
             if let message = model.message {
                 Label(message, systemImage: "exclamationmark.circle")
@@ -57,7 +60,16 @@ struct TextEditView: View {
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
         }
-        .onAppear { title = item?.customTitle ?? "" }
+        .onAppear {
+            title = item?.customTitle ?? ""
+            titleBaseline = title
+        }
+        .onChange(of: item?.customTitle) { _, stored in
+            // Renamed elsewhere (the card, sync) while untouched here: show the new title.
+            guard !titleFocused, !ClipDetailsEdit.personChanged(title, from: titleBaseline) else { return }
+            title = stored ?? ""
+            titleBaseline = title
+        }
         .onChange(of: titleFocused) { _, isFocused in if !isFocused { saveTitle() } }
         .onDisappear(perform: saveTitle)
         .task {
@@ -76,9 +88,13 @@ struct TextEditView: View {
             .accessibilityIdentifier(AccessibilityID.clipInspectorTitle)
     }
 
+    /// Saved only when the person changed it, the clip still exists and the history is not locked (the window can
+    /// close after a delete or the lock, which has already emptied Undo).
     private func saveTitle() {
-        guard let item, let editor else { return }
+        guard let item, let editor, showsPersonalDetails, !item.isDeleted, item.modelContext != nil,
+              !appState.isHistoryLockedNow(), ClipDetailsEdit.personChanged(title, from: titleBaseline) else { return }
         let saved = ClipDetailsEdit.title(title)
+        titleBaseline = title
         guard saved != item.customTitle else { return }
         editor.edit(item) { $0.customTitle = saved }
     }
@@ -87,6 +103,11 @@ struct TextEditView: View {
     private var content: some View {
         if isCovered {
             Label("Hidden while clip contents are covered", systemImage: "eye.slash")
+                .pestoCaption()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(.quaternary.opacity(0.4), in: .rect(cornerRadius: 8))
+        } else if !model.isEditable, !showsPreview {
+            Label("Hidden on the shelf. Show reveals it.", systemImage: "lock")
                 .pestoCaption()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.quaternary.opacity(0.4), in: .rect(cornerRadius: 8))

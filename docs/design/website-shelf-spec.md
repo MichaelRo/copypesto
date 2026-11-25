@@ -198,7 +198,61 @@ Filter groups, in order: Kind, Format, When, From, Other.
 - **On the website (`Shelf.astro`, `src/lib/shelf-demo.ts`):** the same five groups in the same order (`filterGroups`), pinned by `tests/shelf-filter.test.ts` and `tests/shelf-spec.test.ts`, which read the line above. Format, More and From are `<details>` menus with no script that open upward from the docked shelf; Today and Yesterday are radio chips (the menu's Any Time clears them). The sample clips are all from the last two days, so Last 7 and 30 Days leave them all. Four app chips on the top row. **Intentional differences:** a menu stays open until its chip is pressed again (no script to close it); From is a plain list without the clip counts; Format lists only the formats the sample clips have.
 - **The row (ADR 0070):** Find opens in the chip strip's 28 pt row: the collections and apps scroll on the left, a
   centered field of 320 to 480 pt (title-3 type, a token for each chosen filter, then Ask and Cancel), and every filter
-  scrolls on the right; each strip fades where it runs out. Nothing below the row moves. The website's demo follows
-  (backlog).
+  scrolls on the right; each strip fades where it runs out. Nothing below the row moves. The website's CSS is
+  in Part 5.
 - **Changing the groups:** edit the line above, `CommandBarView.swift` and the site's `filterGroups` together; `CardSpecDriftTests` fails for the app and the site's test fails for the site.
 
+
+## Part 5: the Find row, the foot glow and Ask (2026-11-25, ADRs 0068, 0070, #211)
+
+The site's demo shelf should look just like the app's after the design batch. 1 pt = 1 px. Each rule below names the
+app's source so a change there is a change here.
+
+**Find row (`ShelfHeight`, `CommandBarView`, `CommandBarView+FindBar`):**
+
+| Part | App | Website CSS |
+|---|---|---|
+| Command block | 10 pt above, a 28 pt row, 8 pt below, in both modes | `.shelf-command { padding: 10px 0 8px; } .shelf-command-row { height: 28px; }` |
+| Layout | scope strip, field, filter strip | `display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 12px` |
+| Field width | about a third of the shelf, 320 to 480 pt | `.find-field { width: clamp(320px, 32cqw, 480px); }` (the shelf is `container-type: inline-size`) |
+| Field | 28 pt high, 10 pt sides, 8 pt corners, title-3 type (15 pt), the quaternary fill at half | `height: 28px; padding: 0 10px; border-radius: 8px; font-size: 15px; background: color-mix(in srgb, var(--text) 5%, transparent)` (about; match the picture) |
+| Filter tokens | a chosen filter is a token inside the field, before the text | `.find-token { font-size: 11px; padding: 2px 6px; border-radius: 999px; }` with a remove × |
+| Strips | scroll sideways; the last 12% fades at the edge that runs out (scope strip: leading side; filters: trailing) | `overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(to right, #000 88%, transparent)` (mirrored for the scope strip) |
+| Ask and Cancel | right of the field, in that order | see Ask below; Cancel is the quiet text button |
+
+**Ask (`AskButton`):** a capsule beside the field whenever text is typed (`AskHeuristic.offersAsk`): a sparkles glyph,
+"Ask", then "⌘↩" in the quiet color, all at the subheadline size (11 pt), padding 3 × 8 pt. When the text reads like a
+question (three words or more, a "?", or two words with one of `AskHeuristic`'s words) it turns the accent color with
+a 1 pt accent border at 45%: `.ask { color: var(--text); } .ask.is-question { color: var(--accent); box-shadow: inset 0
+0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }`. The site has no model: Ask may simply apply the demo's
+filters for its sample sentence, or be drawn without an action.
+
+**No results:** for a question, "Press Return to ask Pesto to turn this into filters." with **Ask Pesto** as the
+prominent button and the advice button bordered after it.
+
+**Foot glow (`CardGlow`, tested in `CardGlowTests`):** the source app's color rises from a card's foot to 40% of its
+height. CSS draws it directly in OKLCH:
+
+```css
+.sc { --glow: oklch(0.70 var(--glow-c) var(--glow-h)); --glow-a: 0.11; }   /* light, solid shelf */
+:root[data-theme="dark"] .sc { --glow: oklch(0.42 var(--glow-c) var(--glow-h)); --glow-a: 0.12; }
+.sc::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(to top,
+    color-mix(in oklch, var(--glow) calc(var(--glow-a) * 100%), transparent) 0%,
+    color-mix(in oklch, var(--glow) calc(var(--glow-a) * 55%), transparent) 15%,
+    color-mix(in oklch, var(--glow) calc(var(--glow-a) * 18%), transparent) 28%,
+    transparent 40%);
+}
+.sc:has(input:checked)::after { opacity: 0.6; }
+```
+
+- `--glow-h` is the app icon's OKLCH hue; `--glow-c` its chroma capped at 0.12. A hue within 22° of basil (152°) or 18°
+  of gold (90°) is muted: chroma 0.05 and `--glow-a` × 0.7. A grey or near-black icon (chroma under 0.035) draws no
+  glow; such a card glows in the theme's hue, muted the same way.
+- On a glass shelf the strengths are 0.08 (light) and 0.09 (dark).
+- No glow on a picture, a color card or a covered card, nor under `prefers-contrast: more`.
+- Take each demo app's hue from its icon's main color (convert to OKLCH); do not guess one.
+
+**Check:** screenshots of the demo shelf with Find open and a question typed, light and dark, next to
+`Tests/PestoSnapshotTests/__Snapshots__/AskOfferSnapshotTests/` and `FilterBarWidthSnapshotTests/`.

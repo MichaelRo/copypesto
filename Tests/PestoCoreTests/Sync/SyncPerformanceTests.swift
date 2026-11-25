@@ -114,7 +114,11 @@ struct SyncPerformanceTests {
         receive \(receiveSeconds) s (cpu \(receiveCPU) s, +\(memoryAfterReceive - memoryAfterSend) MB), \
         idle pass \(idleMs) ms (every 30 s: \(idleMs / 300) % of one core)
         """)
-        #expect(idleMs < 100, "an idle pass every 30 s must stay far under 0.5% CPU")
+        // A budget of this Mac or simulator, measured on CI but asserted only off it: on a shared runner the same pass
+        // took 7 to 247 ms from one run to the next (AGENTS.md, "Performance budgets").
+        let onCI = ProcessInfo.processInfo.environment["PESTO_CI"] != nil
+            || ProcessInfo.processInfo.environment["CI"] != nil
+        if !onCI { #expect(idleMs < 100, "an idle pass every 30 s must stay far under 0.5% CPU") }
         #expect(memoryAfterReceive - memoryBefore < 150)
     }
 }

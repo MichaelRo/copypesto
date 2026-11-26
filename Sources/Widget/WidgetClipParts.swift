@@ -10,9 +10,18 @@ struct WidgetFootLine: View {
     let accent: Color
     var ink: Color?
     var copied = false
+    var appIcon: Data?
 
     var body: some View {
         HStack(spacing: 4) {
+            if !copied, let appIcon, let image = PlatformImage(data: appIcon) {
+                WidgetPicture.image(image)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 13, height: 13)
+                    .clipShape(.rect(cornerRadius: 3, style: .continuous))
+                    .accessibilityHidden(true)
+            }
             if copied {
                 Label("Copied", systemImage: "checkmark.circle.fill")
                     .fontWeight(.semibold)

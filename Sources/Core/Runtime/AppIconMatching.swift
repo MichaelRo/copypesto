@@ -5,6 +5,16 @@ import Foundation
 /// consult of 2026-11-25): two pickers that nearly always agree were one too many. On iOS the icon changes once,
 /// when the person leaves the settings, because each change shows a system alert.
 public enum AppIconMatching {
+    /// iOS shows an alert for every icon change that the app cannot suppress, so there the switch starts off and the
+    /// icon changes only after the person turns it on (ADR 0076). The Mac changes its icon silently.
+    public static var isOnByDefault: Bool {
+        #if os(iOS)
+        false
+        #else
+        true
+        #endif
+    }
+
     public static func icon(for theme: AppTheme, matches: Bool, current: AppIconChoice) -> AppIconChoice {
         matches ? theme.pairedIcon : current
     }

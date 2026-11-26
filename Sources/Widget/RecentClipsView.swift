@@ -63,7 +63,7 @@ struct RecentClipsView: View {
                     WidgetTapArea(tap: tap(for: single), isWholeWidget: true) {
                         WidgetCardTile(
                             clip: single, now: entry.date, palette: palette, copied: entry.copiedID == single.id,
-                            isWholeWidget: true
+                            isWholeWidget: true, appIcon: appIcon(for: single)
                         )
                         .accessibilityHint(WidgetClipSpeech.hint(tap(for: single), kind: single.kind))
                     }
@@ -111,7 +111,7 @@ struct RecentClipsView: View {
                         WidgetTapArea(tap: tap(for: clip), isWholeWidget: false) {
                             WidgetCardTile(
                                 clip: clip, now: entry.date, palette: palette, copied: entry.copiedID == clip.id,
-                                isRoomy: resolvedSize != .medium && columns > 1
+                                isRoomy: resolvedSize != .medium && columns > 1, appIcon: appIcon(for: clip)
                             )
                             .accessibilityHint(WidgetClipSpeech.hint(tap(for: clip), kind: clip.kind))
                         }
@@ -123,6 +123,10 @@ struct RecentClipsView: View {
             }
             if rows.count < resolvedSize.grid(accessibilityText: false).rows { Spacer(minLength: 0) }
         }
+    }
+
+    private func appIcon(for clip: WidgetClip) -> Data? {
+        clip.sourceBundleID.flatMap { entry.snapshot?.appIcons[$0] }
     }
 
     private func emptyMessage(_ collection: WidgetCollection?) -> WidgetMessage {

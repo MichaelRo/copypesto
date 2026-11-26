@@ -137,13 +137,16 @@ struct KeyboardSearchPage: View {
                     spacing: 6
                 ) {
                     ForEach(results) { entry in
-                        KeyboardClipKey(entry: entry, cardSize: cardSize, feedback: nil)
-                            .modifier(KeyboardCardActions(
-                                entry: entry,
-                                returnsAfterInsert: model.menu.returnsAfterInsert,
-                                choose: { longPress in pick(entry, longPress) },
-                                useRecognizedText: { text in pickRecognizedText(entry, text) }
-                            ))
+                        KeyboardClipKey(
+                            entry: entry, cardSize: cardSize, feedback: nil, theme: model.menu.accent,
+                            appIcon: model.menu.appIcon(for: entry)
+                        )
+                        .modifier(KeyboardCardActions(
+                            entry: entry,
+                            returnsAfterInsert: model.menu.returnsAfterInsert,
+                            choose: { longPress in pick(entry, longPress) },
+                            useRecognizedText: { text in pickRecognizedText(entry, text) }
+                        ))
                     }
                 }
             }
@@ -163,6 +166,7 @@ struct KeyboardSearchPage: View {
             if let globe {
                 globe.frame(width: 44, height: height)
             }
+            if layouts.count > 1 { languageKey(height: height) }
             spaceKey(height: height)
             if !isRegular {
                 Button(action: close) {
@@ -175,29 +179,41 @@ struct KeyboardSearchPage: View {
         .padding(.horizontal, 3)
     }
 
-    /// Space types a space; held, it moves to the next of the person's own layouts, whose name it shows.
+    /// The next of the person's own layouts, named in two capitals. Not a globe: iOS's globe leaves Pesto for the next
+    /// keyboard, and a second one that only changes these letters would mean two things.
+    private func languageKey(height: CGFloat) -> some View {
+        let name = Locale.current.localizedString(forLanguageCode: activeLayout.languageCode)?.localizedCapitalized
+        return Button(action: nextLayout) {
+            Text(verbatim: activeLayout.shortName)
+                .font(.callout.weight(.medium))
+                .frame(width: isRegular ? 60 : 44, height: height)
+        }
+        .buttonStyle(KeyboardKeyStyle(isFunction: true))
+        .accessibilityLabel(Text("Search Keyboard"))
+        .accessibilityAddTraits(.isKeyboardKey)
+        .accessibilityValue(Text(verbatim: name ?? activeLayout.shortName))
+        .accessibilityHint(Text("Switches to the letters of your next keyboard"))
+    }
+
+    /// Space types a space; held, it moves to the next of the person's own layouts, as the language key does.
     private func spaceKey(height: CGFloat) -> some View {
-        let name = Locale(identifier: activeLayout.languageCode)
-            .localizedString(forLanguageCode: activeLayout.languageCode)?.localizedCapitalized
-        return Group {
-            if layouts.count > 1, !showsDigits, let name { Text(verbatim: name) } else { Text("Space") }
-        }
-        .lineLimit(1)
-        .frame(maxWidth: .infinity, minHeight: height)
-        .background {
-            RoundedRectangle(cornerRadius: isRegular ? 7 : 5, style: .continuous)
-                .fill(Color(.systemBackground))
-                .shadow(color: .black.opacity(0.35), radius: 0, x: 0, y: 1)
-        }
-        .contentShape(.rect)
-        // A tap and a hold are told apart here; a Button would also type a space at the end of the hold.
-        .onTapGesture { model.typeInSearch(" ") }
-        .onLongPressGesture(minimumDuration: 0.5) { nextLayout() }
-        .accessibilityElement()
-        .accessibilityLabel(Text("Space"))
-        .accessibilityAddTraits([.isKeyboardKey, .isButton])
-        .accessibilityAction { model.typeInSearch(" ") }
-        .accessibilityAction(named: Text("Next Search Keyboard")) { nextLayout() }
+        Text("Space")
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, minHeight: height)
+            .background {
+                RoundedRectangle(cornerRadius: isRegular ? 7 : 5, style: .continuous)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.35), radius: 0, x: 0, y: 1)
+            }
+            .contentShape(.rect)
+            // A tap and a hold are told apart here; a Button would also type a space at the end of the hold.
+            .onTapGesture { model.typeInSearch(" ") }
+            .onLongPressGesture(minimumDuration: 0.5) { nextLayout() }
+            .accessibilityElement()
+            .accessibilityLabel(Text("Space"))
+            .accessibilityAddTraits([.isKeyboardKey, .isButton])
+            .accessibilityAction { model.typeInSearch(" ") }
+            .accessibilityAction(named: Text("Next Search Keyboard")) { nextLayout() }
     }
 
     private func nextLayout() {

@@ -104,8 +104,9 @@ struct KeystrokeSynthesizerTests {
     @Test("when triggered by a hotkey like ⌃⌥⌘V, Tier 2 waits for Control/Option/Shift release before posting ⌘V")
     func whenConflictingHotkeyModifiersAreHeld_thenPasteWaitsForReleaseBeforePostingCommandV() async {
         let checks = Mutex(0)
+        // The timeout only bounds a hang: in a full run the thread pool was once starved for over 5 s.
         let waited = await PasteCoordinator.waitForConflictingModifiersRelease(
-            timeout: .seconds(5),
+            timeout: .seconds(60),
             pollInterval: .milliseconds(1),
             heldModifiers: {
                 let count = checks.withLock { value -> Int in

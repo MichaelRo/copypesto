@@ -12,6 +12,12 @@ struct AppIconMatchingTests {
         #expect(AppIconMatching.icon(for: .basil, matches: true, current: .pineNut) == .basil)
     }
 
+    @Test("on the Mac the icon follows the theme until the person turns it off")
+    func whenNothingIsStoredOnTheMac_thenMatchingIsOn() {
+        #expect(Setting.matchesAppIcon.defaultValue == true)
+        #expect(ThrowawayDefaults.make().value(for: Setting.matchesAppIcon) == true)
+    }
+
     @Test("an install that kept an icon other than its theme's starts with matching off, once")
     func whenMigrating_thenAChosenIconIsKept() {
         let defaults = ThrowawayDefaults.make()

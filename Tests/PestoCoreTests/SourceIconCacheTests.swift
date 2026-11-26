@@ -16,6 +16,13 @@ struct SourceIconCacheTests {
         #expect(SourceIconCache().image(forBundleID: "com.apple.finder") != nil)
     }
 
+    @Test("an app this Mac cannot find hands out no icon to share, rather than the disk's")
+    func whenAppIsUnknown_thenNoPNG() {
+        let cache = SourceIconCache()
+        #expect(cache.pngData(forBundleID: "net.copypesto.no-such-app-\(UUID().uuidString)") == nil)
+        #expect(cache.pngData(forBundleID: "com.apple.finder") != nil)
+    }
+
     @Test("the same bundle ID is resolved once and shared by every card")
     func whenAskedTwice_thenSameInstance() throws {
         let cache = SourceIconCache()

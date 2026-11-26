@@ -16,6 +16,7 @@ public enum QuickInsertSelection {
         public var source: (ClipboardItem) -> (name: String?, isThisDevice: Bool)
         public var isAnimated: (ClipboardItem) -> Bool
         public var fieldMemory: (ClipboardItem) -> [String: String]?
+        public var sourceApp: (ClipboardItem) -> SourceAppLook
 
         public init(
             text: @escaping (ClipboardItem) -> String?,
@@ -29,7 +30,8 @@ public enum QuickInsertSelection {
             },
             fieldMemory: @escaping (ClipboardItem) -> [String: String]? = {
                 $0.sensitivityRaw == nil ? $0.metadata.fieldMemory : nil
-            }
+            },
+            sourceApp: @escaping (ClipboardItem) -> SourceAppLook = { $0.sourceAppLook }
         ) {
             self.text = text
             self.thumbnail = thumbnail
@@ -37,6 +39,7 @@ public enum QuickInsertSelection {
             self.source = source
             self.isAnimated = isAnimated
             self.fieldMemory = fieldMemory
+            self.sourceApp = sourceApp
         }
     }
 
@@ -145,6 +148,7 @@ public enum QuickInsertSelection {
         in context: ModelContext, now: Date, options: Options = Options(),
         recognizedTexts: RecognizedTextStore = RecognizedTextStore(),
         source: ((ClipboardItem) -> (name: String?, isThisDevice: Bool))? = nil,
+        sourceApp: @escaping (ClipboardItem) -> SourceAppLook = { $0.sourceAppLook },
         text: @escaping (ClipboardItem) -> String? = { $0.blob?.decryptedText() }
     ) throws
         -> QuickInsertSet
@@ -155,7 +159,8 @@ public enum QuickInsertSelection {
             recognizedText: { item in
                 RecognizedText.text(of: item, store: recognizedTexts)
             },
-            source: source ?? { defaultSource(for: $0) }
+            source: source ?? { defaultSource(for: $0) },
+            sourceApp: sourceApp
         )
         return try set(in: context, now: now, options: options, reader: reader)
     }
@@ -209,7 +214,7 @@ public enum QuickInsertSelection {
                     var newest = FetchDescriptor<ClipboardItem>(
                         sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
                     )
-                    newest.fetchLimit = WidgetSnapshotPolicy.smartScanLimit
+                    newest.fetchLimit = QuickInsertPolicy.smartScanLimit
                     window = try context.fetch(newest)
                 }
                 items = WidgetSnapshotSelection.smartMatches(
@@ -221,7 +226,7 @@ public enum QuickInsertSelection {
                     predicate: #Predicate { $0.collectionID == id },
                     sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
                 )
-                newest.fetchLimit = WidgetSnapshotPolicy.collectionScanLimit
+                newest.fetchLimit = QuickInsertPolicy.collectionScanLimit
                 items = try CollectionOrder.sorted(context.fetch(newest))
             }
             found.append(Members(collection: collection, items: items))
@@ -383,6 +388,7 @@ private extension QuickInsertSelection {
         }
         budget -= thumb.count + (ocr.map(EncodedText.bytes) ?? 0)
         let src = trimmedSource(for: item, reader: reader)
+        let look = reader.sourceApp(item)
         return QuickInsertEntry(
             id: item.id, section: section, kind: .image,
             title: title(of: item, text: ocr ?? ""), text: "",
@@ -390,7 +396,8 @@ private extension QuickInsertSelection {
             fromAnotherDevice: item.syncOrigin != nil || item.isRemote,
             customTitle: boundedTitle(item.customTitle), ogTitle: nil,
             date: item.timestamp, source: src.name, sourceIsThisDevice: src.isThisDevice,
-            thumbnail: thumb, recognizedText: ocr, isAnimated: reader.isAnimated(item)
+            thumbnail: thumb, recognizedText: ocr, isAnimated: reader.isAnimated(item),
+            sourceBundleID: look.bundleID, sourceColorHex: look.colorHex
         )
     }
 
@@ -434,6 +441,7 @@ private extension QuickInsertSelection {
     )
     -> QuickInsertEntry {
         let src = trimmedSource(for: item, reader: reader)
+        let look = reader.sourceApp(item)
         return QuickInsertEntry(
             id: item.id, section: draft.section, kind: item.type,
             title: title(of: item, text: draft.body), text: draft.body,
@@ -441,7 +449,7 @@ private extension QuickInsertSelection {
             fromAnotherDevice: item.syncOrigin != nil || item.isRemote,
             customTitle: boundedTitle(item.customTitle), ogTitle: boundedTitle(item.ogTitle),
             date: item.timestamp, source: src.name, sourceIsThisDevice: src.isThisDevice,
-            fieldMemory: draft.fieldMemory
+            fieldMemory: draft.fieldMemory, sourceBundleID: look.bundleID, sourceColorHex: look.colorHex
         )
     }
 

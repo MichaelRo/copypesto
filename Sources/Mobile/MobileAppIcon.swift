@@ -4,10 +4,10 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// The Home Screen icon follows the theme while Match App Icon is on (`AppIconMatching`). iOS confirms every change
-/// with an alert, so the icon changes once, when Settings closes (`LibraryPresentations`), not on every theme they look
-/// at; turning
-/// the switch on applies it at once, because that is a deliberate act.
+/// The Home Screen icon follows the theme while Match App Icon is on (`AppIconMatching`), which on iOS starts off
+/// (ADR 0076). iOS confirms every change with an alert, so the icon changes once, when Settings closes
+/// (`LibraryPresentations`), not on every theme they look at; turning the switch on applies it at once, because that is
+/// a deliberate act.
 enum MobileAppIcon {
     private static let logger = Logger(subsystem: AppIdentity.logSubsystem, category: "AppIcon")
 

@@ -87,18 +87,20 @@ extension HostedGlobals {
             }
         }
 
-        @Test("a full-screen 5K screenshot is ingested under 200 ms without blocking on OCR or perceptual hash")
+        /// Three screenshots unlike each other, so none is nominated as a lookalike: this times the hash at copy time
+        /// and the save. A lookalike (the same window again) also pays a full decode for each nominee, which this
+        /// budget does not cover yet (`docs/perf/budgets-2026-10.md`).
+        @Test("a full-screen 5K screenshot becomes a card under 200 ms without blocking on OCR")
         func fullScreenScreenshot_ingestsUnder200ms() async throws {
             let (container, directory) = try makeStore()
             defer { try? FileManager.default.removeItem(at: directory) }
             let service = StorageService(modelContainer: container)
             let clock = ContinuousClock()
-            let png = PictureFixtures.png(width: 5120, height: 2880)
             var durations: [Double] = []
-            for variant in 0..<3 {
+            for (variant, pattern) in [0b1010_1010, 0b0101_0101, 0b1111_0000].enumerated() {
                 let capture = PasteboardCapture(
                     typeIdentifier: "public.png",
-                    payload: png,
+                    payload: PictureFixtures.png(width: 5120, height: 2880, fill: .bands(pattern: pattern)),
                     frontmostBundleID: "com.apple.screencaptureui",
                     contentHash: "5k-screenshot-\(variant)"
                 )
@@ -108,6 +110,11 @@ extension HostedGlobals {
             }
             let timing = PerfReport.timing(of: durations)
             PerfReport.emit("ingest 5K screenshot 5120x2880: \(timing.text)")
+            let imageType = ClipboardType.image.rawValue
+            let cards = try ModelContext(container).fetchCount(
+                FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.typeRaw == imageType })
+            )
+            #expect(cards == 3, "each screenshot is a new card, not a duplicate")
             if !RunEnvironment.isCI {
                 #expect(
                     timing.median < 200,
@@ -116,5 +123,6 @@ extension HostedGlobals {
             }
             await service.waitForBackgroundWork()
         }
+
     }
 }

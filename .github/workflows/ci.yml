@@ -102,10 +102,11 @@ jobs:
   # The same gate as `scripts/verify.sh` on a developer machine, minus the UI tests (they drive real windows and need
   # a Mac that has granted the runner automation permission; run them locally, see docs/testing.md).
   #
-  # It does not run on a pull request stacked on another branch (its base is not main; it runs when it is retargeted),
-  # and it does not run again on code that already passed: a green run leaves a marker keyed by a hash of the merge's code
-  # paths, and a later run with the same hash (a rebase that changed nothing, a re-run) skips every step and reports
-  # success in about a minute.
+  # It does not run on a pull request stacked on another branch (its base is not main), and a skip reports success:
+  # retargeting it to main starts this workflow by hand on its branch (`retarget.yml`), and that run is the check
+  # main's ruleset waits for. It does not run again on code that already passed: a green run leaves a marker keyed by
+  # a hash of the merge's code paths, and a later run with the same hash (a rebase that changed nothing, a re-run)
+  # skips every step and reports success in about a minute.
   verify:
     needs: [detect-changes]
     if: >-

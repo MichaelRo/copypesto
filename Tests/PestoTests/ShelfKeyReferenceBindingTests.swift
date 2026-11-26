@@ -36,6 +36,7 @@ private final class HandlerLog {
         coordinator.onPasteNth = { _ in self.fired.append("onPasteNth") }
         coordinator.onShowActions = { self.fired.append("onShowActions") }
         coordinator.onCopy = { self.fired.append("onCopy") }
+        coordinator.onShowDetails = { self.fired.append("onShowDetails") }
         coordinator.onAskFromSearch = { self.fired.append("onAskFromSearch") }
         coordinator.onShowHidden = { self.fired.append("onShowHidden") }
         coordinator.onSearch = { self.fired.append("onSearch") }
@@ -77,6 +78,7 @@ struct ShelfKeyReferenceBindingTests {
         "⌘ F Search": ["onSearch"],
         "⌘ K Open the focused clip's actions": ["onShowActions"],
         "⌘ C Copy the focused clip": ["onCopy"],
+        "⌘ I Show the clip's details: its title, note, tags and text": ["onShowDetails"],
         "⌘ Y Quick Look the focused clip": ["onQuickLook"],
         "⌘ S Save the focused picture to Downloads": ["onSaveImage"],
         "⌘ [ ] Switch collections": ["onPrevPinboard", "onNextPinboard"],

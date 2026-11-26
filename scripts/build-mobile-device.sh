@@ -3,7 +3,7 @@
 # Builds PestoMobile for a connected iPhone or iPad without shell-quoting DEVICE names (apostrophes, spaces, quotes).
 set -euo pipefail
 
-dry_run=0
+dry_run="${PESTO_MOBILE_DRY_RUN:-0}"
 if [[ "${1:-}" == "--dry-run" ]]; then
   dry_run=1
   shift

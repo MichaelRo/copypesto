@@ -81,12 +81,68 @@ struct MobileDeviceBuildTests {
         let noTeam = try runDryRun(env: ["DEVICE": "Alex's iPhone"])
         #expect(noTeam.status != 0)
         #expect(noTeam.stderr.contains("APPLE_TEAM_ID"))
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.currentDirectoryURL = root
+        process.arguments = [
+            "bash",
+            root.appendingPathComponent("scripts/build-mobile-device.sh").path,
+            "--unexpected"
+        ]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        try process.run()
+        process.waitUntilExit()
+        #expect(process.terminationStatus == 2)
     }
 
-    @Test("Makefile delegates build-mobile-device to scripts/build-mobile-device.sh without single-quoted DEVICE")
-    func whenInspectingMakefile_thenNoSingleQuotedDevice() throws {
+    @Test("Makefile delegates build-mobile-device safely via GNU Make CLI and environment")
+    func whenInvokedViaMake_thenApostrophesAndMetacharactersHold() throws {
         let makefile = try String(contentsOf: root.appendingPathComponent("Makefile"), encoding: .utf8)
         #expect(!makefile.contains("'platform=iOS,name=$(DEVICE)'"))
+        #expect(!makefile.contains("build-mobile-device: export"))
         #expect(makefile.contains("scripts/build-mobile-device.sh"))
+
+        func runMake(_ args: [String], env: [String: String] = [:]) throws -> DryRunResult {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/make")
+            process.currentDirectoryURL = root
+            process.arguments = [
+                "PESTO_SKIP_GENERATE=1",
+                "APPLE_TEAM_ID=TEAM123456",
+                "build-mobile-device"
+            ] + args
+            var environment = ProcessInfo.processInfo.environment
+            environment["PESTO_MOBILE_DRY_RUN"] = "1"
+            for key in ["DEVICE", "DEVICE_ID"] {
+                environment.removeValue(forKey: key)
+            }
+            for (key, value) in env {
+                environment[key] = value
+            }
+            process.environment = environment
+            let stdoutPipe = Pipe()
+            let stderrPipe = Pipe()
+            process.standardOutput = stdoutPipe
+            process.standardError = stderrPipe
+            try process.run()
+            process.waitUntilExit()
+            let stdout = String(data: stdoutPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            let stderr = String(data: stderrPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+            return DryRunResult(status: process.terminationStatus, stdout: stdout, stderr: stderr)
+        }
+
+        let cliApostrophe = try runMake(["DEVICE=Alex's iPhone"])
+        #expect(cliApostrophe.status == 0, "stderr: \(cliApostrophe.stderr)")
+        #expect(cliApostrophe.stdout.split(separator: "\n").contains("platform=iOS,name=Alex's iPhone"))
+
+        let envDollar = try runMake([], env: ["DEVICE": #"Pat $(whoami) iPhone"#])
+        #expect(envDollar.status == 0, "stderr: \(envDollar.stderr)")
+        #expect(envDollar.stdout.split(separator: "\n").contains(#"platform=iOS,name=Pat $(whoami) iPhone"#))
+
+        let cliID = try runMake(["DEVICE_ID=00000000-0000000000000000"])
+        #expect(cliID.status == 0, "stderr: \(cliID.stderr)")
+        #expect(cliID.stdout.split(separator: "\n").contains("platform=iOS,id=00000000-0000000000000000"))
     }
 }

@@ -108,6 +108,7 @@ pinned in `scripts/tool-versions.env`):
 |---|---|
 | `no-analytics` | Grep for forbidden SDK imports (Sentry, Firebase, etc.) |
 | `verify` | `scripts/verify.sh --no-ui`: SwiftFormat + SwiftLint, every SPM test (Core and Regression), a Debug build with warnings as errors, and the hosted `PestoTests` |
+| `benchmarks` | `scripts/bench-ci.sh`: CPU, memory, and latency regression shield on pushes to `main` (`.github/workflows/benchmarks.yml`) |
 
 The UI tests and snapshot tests drive real windows, so they run locally (`scripts/verify.sh`, `docs/testing.md`).
 
@@ -121,8 +122,7 @@ would also test each pull request against the newest `main`, but GitHub offers i
 organization.) `gh pr merge --squash --auto` merges a pull request the moment its checks pass.
 
 Two files gain a little in nearly every pull request and conflicted on every merge (2026-11-25: five rounds):
-`.gitattributes` keeps both sides' new rows of `decisions/README.md` (`merge=union`; the rows may land out of number
-order, which a later edit can sort), and merges `*.xcstrings` entry by entry with `scripts/merge-xcstrings.py` once
+`.gitattributes` keeps both sides' new rows of `decisions/README.md` (`merge=union`; run `make sort-decisions` if rows land out of number order — `DecisionReferenceTests` and the pre-commit hook verify it), and merges `*.xcstrings` entry by entry with `scripts/merge-xcstrings.py` once
 `make setup-merge-drivers` has registered it in your clone. A string both sides changed differently is still a conflict
 for a person. GitHub's own "This branch has conflicts" does not run custom drivers: merge `main` into the branch locally
 (`git merge origin/main`), where they do, and push.

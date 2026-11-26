@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "metrics": {
+    "sync_copy_off_ms": {
+      "label": "Sync ingest per clip (sync off)",
+      "unit": "ms",
+      "local_max": 50.0,
+      "ci_max": 125.0,
+      "optional_in_ci": false
+    },
+    "sync_copy_on_ms": {
+      "label": "Sync ingest per clip (sync on)",
+      "unit": "ms",
+      "local_max": 50.0,
+      "ci_max": 125.0,
+      "optional_in_ci": false
+    },
+    "sync_idle_pass_ms": {
+      "label": "Sync idle pass",
+      "unit": "ms",
+      "local_max": 100.0,
+      "ci_max": 350.0,
+      "optional_in_ci": false
+    },
+    "similarity_index_build_ms": {
+      "label": "Similarity index build (5,000 clips)",
+      "unit": "ms",
+      "local_max": 2500.0,
+      "ci_max": 6000.0,
+      "optional_in_ci": false
+    },
+    "similarity_lookup_us": {
+      "label": "Similarity average lookup",
+      "unit": "us",
+      "local_max": 4000.0,
+      "ci_max": 10000.0,
+      "optional_in_ci": false
+    },
+    "widget_snapshot_24_collections_ms": {
+      "label": "Widget snapshot (24 collections, 5,000 clips)",
+      "unit": "ms",
+      "local_max": 400.0,
+      "ci_max": 1200.0,
+      "optional_in_ci": false
+    },
+    "widget_snapshot_1_collection_ms": {
+      "label": "Widget snapshot (1 collection, 5,000 clips)",
+      "unit": "ms",
+      "local_max": 50.0,
+      "ci_max": 150.0,
+      "optional_in_ci": false
+    },
+    "search_keystroke_5000_ms": {
+      "label": "Search keystroke over 5,000 clips (slowest)",
+      "unit": "ms",
+      "local_max": 4.0,
+      "ci_max": 12.0,
+      "optional_in_ci": false
+    },
+    "collection_switch_cold_ms": {
+      "label": "Collection switch cold (5,000 clips)",
+      "unit": "ms",
+      "local_max": 4.0,
+      "ci_max": 12.0,
+      "optional_in_ci": false
+    },
+    "collection_switch_warm_ms": {
+      "label": "Collection switch warm (5,000 clips)",
+      "unit": "ms",
+      "local_max": 4.0,
+      "ci_max": 12.0,
+      "optional_in_ci": false
+    },
+    "watcher_idle_200ms_cpu_pct": {
+      "label": "Watcher idle CPU (200 ms poll)",
+      "unit": "%",
+      "local_max": 0.5,
+      "ci_max": 1.5,
+      "optional_in_ci": false
+    },
+    "watcher_idle_60ms_cpu_pct": {
+      "label": "Watcher idle CPU (60 ms fast tier)",
+      "unit": "%",
+      "local_max": 0.5,
+      "ci_max": 1.5,
+      "optional_in_ci": false
+    },
+    "paste_write_text_ms": {
+      "label": "Pasteboard write (text)",
+      "unit": "ms",
+      "local_max": 5.0,
+      "ci_max": 15.0,
+      "optional_in_ci": false
+    },
+    "paste_write_picture_ms": {
+      "label": "Pasteboard write (picture 1920x1080)",
+      "unit": "ms",
+      "local_max": 35.0,
+      "ci_max": 100.0,
+      "optional_in_ci": false
+    },
+    "paste_write_large_clip_ms": {
+      "label": "Pasteboard write (large clip 5 MB)",
+      "unit": "ms",
+      "local_max": 20.0,
+      "ci_max": 60.0,
+      "optional_in_ci": false
+    },
+    "hover_card_open_short_text_ms": {
+      "label": "Hover card open (short text)",
+      "unit": "ms",
+      "local_max": 30.0,
+      "ci_max": 90.0,
+      "optional_in_ci": false
+    },
+    "hover_card_open_picture_ms": {
+      "label": "Hover card open (picture)",
+      "unit": "ms",
+      "local_max": 30.0,
+      "ci_max": 90.0,
+      "optional_in_ci": false
+    },
+    "hover_card_memory_growth_mb": {
+      "label": "Hover card memory growth (opens 51-100)",
+      "unit": "MB",
+      "local_max": 10.0,
+      "ci_max": 20.0,
+      "optional_in_ci": false
+    },
+    "history_fetch_5000_mb": {
+      "label": "History fetch resident delta (5,000 items)",
+      "unit": "MB",
+      "local_max": 40.0,
+      "ci_max": 80.0,
+      "optional_in_ci": true
+    },
+    "memory_steady_open_mb": {
+      "label": "Steady-state footprint (5,000 clips, shelf open)",
+      "unit": "MB",
+      "local_max": 150.0,
+      "ci_max": 150.0,
+      "optional_in_ci": true
+    },
+    "idle_cpu_sync_pct": {
+      "label": "App idle CPU (30 s, SyncFolderWatcher active)",
+      "unit": "%",
+      "local_max": 0.5,
+      "ci_max": 1.5,
+      "optional_in_ci": true
+    }
+  }
+}

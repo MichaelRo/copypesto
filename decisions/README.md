@@ -87,6 +87,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0076](0076-smaller-widget-window-and-ios-icon-default.md) | A widget orders a plain collection from its newest 60 members (the keyboard keeps 300); on iOS Match App Icon starts off; amends 0060 and 0069 |
 | [0077](0077-a-fingerprint-rules-out-lookalike-pictures.md) | A sealed fingerprint, taken at copy time, rules out a lookalike picture without decoding it; only identical pixels still make a duplicate |
 | [0078](0078-ios-backs-up-and-restores-by-hand.md) | The iPhone and iPad back up by hand to a `.pestobackup` saved through Files and restore any backup, a Mac's included; the backup key and recovery key as on the Mac; no schedule, no remembered folder; extends 0010 |
+| [0079](0079-a-picture-shows-only-after-its-verdict.md) | A pending picture shows only its placeholder until its verdict while the content filter is on (Mac and iOS), and a browser's GIF is fetched and screened after it; amends 0006 |
 
 ## Template
 

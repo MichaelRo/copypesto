@@ -202,6 +202,15 @@ struct LibraryCardRenderingTests {
                 ))
             ),
             RenderCase(
+                name: "picture-checking",
+                item: {
+                    let item = makeItem(in: context, type: .image, preview: "")
+                    item.analysisPending = true
+                    return item
+                }(),
+                face: PestoMobile.CardFace.decide(.init(type: .image, text: "", isConcealed: true))
+            ),
+            RenderCase(
                 name: "privacy-covered",
                 item: makeItem(in: context, type: .color, preview: "#2F7A49"),
                 face: PestoMobile.CardFace.decide(.init(type: .color, text: "#2F7A49", isConcealed: true))
@@ -209,7 +218,7 @@ struct LibraryCardRenderingTests {
         ]
     }
 
-    @Test("all 10 card kinds and states render in light and dark")
+    @Test("every card kind and state renders in light and dark")
     func whenAllCardKindsRendered_thenLightAndDarkDiffer() async throws {
         let library = try await MobileTestLibrary()
         let context = try ModelContext(ModelContainerSetup.makeInMemory())

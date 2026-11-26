@@ -1,6 +1,6 @@
 # 0006. The watcher polls on an input-driven timer, a copy shows at once and is judged afterwards, and ingest is bounded
 
-Status: Accepted
+Status: Accepted; the pending-picture cover is amended by ADR 0079
 
 ## Context
 `NSPasteboard` posts no notification when it changes, only `changeCount`, so a clipboard manager polls. A copy nearly

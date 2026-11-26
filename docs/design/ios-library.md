@@ -63,6 +63,7 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 | Color | The card is the color; the text and facts in black or white by Core's `CardInk`. |
 | File | Document symbol, name and folder. |
 | Secret | The mask, a lock, the category at the foot, an eye that asks for Face ID (`SecretReveal`); after Show, the start of the text and Hide. |
+| Picture being checked | With the content filter on, the same quiet placeholder a picture shows while it loads (a faint ground and the photo symbol, no words) until its verdict; nothing of the picture is decoded meanwhile (ADR 0079). A large text being checked shows a small spinner and Checking. |
 | Covered otherwise | The eye-slash symbol and the kind, nothing else; under the screen-capture cover or Hide Clip Contents (ADR 0054) a Show button that uncovers that card until the cover returns. |
 | Locked | No card at all: the lock screen replaces the library (ADR 0054). |
 
@@ -106,7 +107,7 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and
 order: after the text matches) when the on-device model is available. While searching the chip row also offers `When` (Today, Yesterday, Last 7/30 Days, Last 1/3/12 Hours, or a Custom Date Range sheet), `From` (source apps with clip counts), `Sensitive`, `Other Devices` (clips that arrived by sync), and `Ask` (`PadLibraryView` keeps the filter chips visible while searching even with the sidebar open). `Copy All` in `MobileSelectionBar` joins multiple selected text/code clips (`⌘C` or the action bar button) while preserving secret protection. `ClipDetailView` surfaces look-alike clips (`Similar Clips` + `Save as Snippet…`), peer device names, and source apps, while `Settings → Data → Insights` presents `MobileInsightsView`. Link previews are fetched once for a
 link card on screen (`LinkPreviewLoader`), only with Settings → Privacy → Load link previews on (off until the welcome's step two switches it on, with the switch in view, or the person does; ADR 0057) and never while locked. A GIF copied in Safari arrives as a still and its address,
-and the whole GIF is fetched under the same switch (`RemoteGIFFetcher`). Settings → History has Keep clips for and Keep
+and the whole GIF is fetched under the same switch (`RemoteGIFFetcher`), only after the still's content-filter verdict, and screened itself when the still passed (ADR 0079). Settings → History has Keep clips for and Keep
 at most with the Mac's choices and defaults, swept at launch and, at most hourly, on return to the foreground.
 
 ## Motion

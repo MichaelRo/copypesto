@@ -106,6 +106,7 @@ struct ClipCard: View {
             )) {
                 await media.load(
                     item, container: appState.historyContainer, isShown: appState.secretReveal.isShown(item.id),
+                    isConcealed: concealment.isConcealed,
                     fetchPreview: { await appState.loadLinkPreview(for: item) }
                 )
             }

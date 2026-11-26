@@ -16,6 +16,8 @@ Run them from the repository root. `make help` lists the `make` targets that wra
 |---|---|
 | `bench-latency.sh` (+ `bench-latency/`) | Paste, copy, shelf-open, hover and memory timings with a real target app (`make bench-latency`). |
 | `bench-scroll.sh`, `profile-scroll.sh` (+ `profile-scroll/`) | Animation Hitches traces of the shelf while a scroll runs (`make bench-scroll`). A trace that hangs is stopped after two minutes, and `bench-scroll.sh` goes on to the next history. |
+| `bench-ci.sh`, `bench_report.py`, `bench-thresholds.json` | `make bench-ci`: headless CPU, memory, and latency suite + threshold report (used on pushes to `main` by `.github/workflows/benchmarks.yml`). |
+| `review_grid.py` | `make review-grid`: maps a git diff onto Pesto's 6 scoped review lenses and runs static diff guards (`--json` emits sequential subagent prompts). |
 | `run-with-deadline.sh` | Runs a command and stops it, and what it started, after a number of seconds (exit 124); macOS has no `timeout`. |
 
 ## Release
@@ -32,6 +34,7 @@ Run them from the repository root. `make help` lists the `make` targets that wra
 | `take-pictures.sh` | `make pictures`: retakes the documentation and website pictures from one build and stamps the commit (`docs/pictures.md`). |
 | `export-marketing-images.sh` | Copies the website pictures out of the newest UI-test result (`make marketing-images`). |
 | `clean-test-defaults.sh` | Removes throwaway preferences files that old test runs left in `~/Library/Preferences` (`--dry-run` lists them). |
+| `sort-decisions-readme.py` | `make sort-decisions`: sorts `decisions/README.md` rows ascending by ADR number after `merge=union` (`--check` verifies order without modifying). |
 
 ## Developer tools (`dev/`)
 | Script | What it does |

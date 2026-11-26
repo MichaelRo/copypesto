@@ -38,7 +38,7 @@ struct QuickMenuView: View {
         return descriptor
     }
 
-    private static let lockedSlack = 15
+    private nonisolated static let lockedSlack = 15
 
     nonisolated static func shown(_ fetched: [ClipboardItem], locked: Set<UUID>) -> [ClipboardItem] {
         Array(fetched.filter { !ShortcutClipSearch.isInLockedCollection($0, locked: locked) }.prefix(5))

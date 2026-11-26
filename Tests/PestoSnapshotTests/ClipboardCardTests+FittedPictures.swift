@@ -2,6 +2,7 @@
 import AppKit
 import PestoCore
 import SnapshotTesting
+import SwiftData
 import SwiftUI
 import XCTest
 @testable import Pesto

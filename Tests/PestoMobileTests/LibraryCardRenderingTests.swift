@@ -110,7 +110,7 @@ struct LibraryCardRenderingTests {
     }
 
     private func sampleCases(in context: ModelContext, pic: UIImage) -> [RenderCase] {
-        textCases(in: context) + mediaAndCoveredCases(in: context, pic: pic)
+        textCases(in: context) + mediaAndCoveredCases(in: context, pic: pic) + fittedPictureCases(in: context)
     }
 
     private func textCases(in context: ModelContext) -> [RenderCase] {
@@ -159,6 +159,29 @@ struct LibraryCardRenderingTests {
                 name: "snippet",
                 item: makeItem(in: context, type: .text, preview: "Thanks, {{date}}"),
                 face: PestoMobile.CardFace.decide(.init(type: .text, text: "Thanks, {{date}}", isConcealed: false))
+            )
+        ]
+    }
+
+    /// ADR 0080: a phone screenshot shown whole from the top, a receipt filled from its top.
+    private func fittedPictureCases(in context: ModelContext) -> [RenderCase] {
+        [
+            RenderCase(
+                name: "picture-phone-screenshot",
+                item: makeItem(in: context, type: .image, preview: ""),
+                face: PestoMobile.CardFace.decide(.init(
+                    type: .image, text: "", isConcealed: false, pictureAspect: 0.4615, isScreenCapture: true,
+                    cardSize: Self.cardSize
+                )),
+                media: CardMediaState(picture: .init(image: sampleImage(width: 120, height: 260), isAnimated: false))
+            ),
+            RenderCase(
+                name: "picture-receipt",
+                item: makeItem(in: context, type: .image, preview: ""),
+                face: PestoMobile.CardFace.decide(.init(
+                    type: .image, text: "", isConcealed: false, pictureAspect: 0.3, cardSize: Self.cardSize
+                )),
+                media: CardMediaState(picture: .init(image: sampleImage(width: 90, height: 300), isAnimated: false))
             )
         ]
     }

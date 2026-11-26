@@ -84,7 +84,7 @@ struct WidgetCardTile: View {
         if let hex = clip.colorHex, let color = WidgetPalette.color(hex) {
             color
         } else if clip.kind == .image {
-            WidgetPicture(data: clip.thumbnail).privacySensitive()
+            WidgetPicture(data: clip.thumbnail, sourceBundleID: clip.sourceBundleID).privacySensitive()
         } else {
             palette.card
         }

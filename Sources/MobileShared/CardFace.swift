@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
+import CoreGraphics
 import Foundation
 import PestoCore
 
 enum CardFace: Equatable {
     case covered(isSecret: Bool)
     case shownSecret
-    case picture(fillsCard: Bool, isAnimated: Bool)
+    case picture(PictureFit, isAnimated: Bool)
     case linkPicture
     case color(HexColorComponents, ink: CardInk)
     case largeText(points: Double)
@@ -21,12 +22,12 @@ enum CardFace: Equatable {
         var isSecret = false
         var pictureAspect: Double?
         var isAnimated = false
+        var isScreenCapture = false
+        var pixelSize: CGSize?
+        var cardSize: CGSize?
         var hasLinkPicture = false
         var isDark = false
     }
-
-    /// ADR 0041: a picture fills the card only near the card's own shape; anything else is shown whole.
-    static let fillRange = CardTreatment.pictureFillRange
 
     static func decide(_ input: Input) -> CardFace {
         if input.isConcealed { return .covered(isSecret: input.isSecret) }
@@ -36,7 +37,12 @@ enum CardFace: Equatable {
             type: input.type,
             text: input.text,
             isConcealed: false,
-            picture: input.pictureAspect.map { .init(aspectRatio: $0, isAnimated: input.isAnimated) },
+            picture: input.pictureAspect.map {
+                .init(
+                    aspectRatio: $0, isAnimated: input.isAnimated, isScreenCapture: input.isScreenCapture,
+                    pixelSize: input.pixelSize, cardSize: input.cardSize
+                )
+            },
             linkPictureShown: input.hasLinkPicture,
             hasLinkMetadata: false,
             colorFill: colorFill,
@@ -44,11 +50,7 @@ enum CardFace: Equatable {
         ))
         switch treatment {
         case let .fullBleedPicture(fit, isAnimated):
-            if isAnimated, let aspect = input.pictureAspect {
-                let gifFit = PictureFit.decide(aspectRatio: aspect, isAnimated: true)
-                return .picture(fillsCard: gifFit == .fill, isAnimated: true)
-            }
-            return .picture(fillsCard: fit == .fill, isAnimated: isAnimated)
+            return .picture(fit, isAnimated: isAnimated)
         case let .fullBleedColor(ink):
             return colorFill.map { .color($0, ink: ink) } ?? .text
         case let .largeText(points):
@@ -62,7 +64,7 @@ enum CardFace: Equatable {
 
     private static func standard(_ input: Input) -> CardFace {
         switch input.type {
-        case .image: .picture(fillsCard: false, isAnimated: input.isAnimated)
+        case .image: .picture(.fit, isAnimated: input.isAnimated)
         case .url: input.hasLinkPicture ? .linkPicture : .text
         case .code: .code
         case .file: .file

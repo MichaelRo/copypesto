@@ -32,7 +32,8 @@ extension ClipboardCard {
             age: timeAgo,
             measure: [footerDetail(withLines: true), footerDetail(withLines: false)].compactMap(\.self),
             isActive: isFocused || isPointed,
-            showsTitleOnFace: showsTitleOnCardFace
+            showsTitleOnFace: showsTitleOnCardFace,
+            measureOutlastsSource: item.type == .image
         )
     }
 
@@ -42,7 +43,8 @@ extension ClipboardCard {
     func metaLine(_ style: MetaLineStyle) -> some View {
         var facts = metaFacts
         facts.showsWholeClip = style.wholeClip
-        if style.over != nil { facts.measure = [] }
+        // A picture's dimensions join its line on the focused card (ADR 0080); a color's measure is its own label.
+        if style.over != nil, item.type != .image { facts.measure = [] }
         let texts = CardMetaLine.candidates(facts)
         return VStack(alignment: .leading, spacing: 4) {
             if !item.tags.isEmpty {

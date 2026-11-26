@@ -134,14 +134,14 @@ extension MobilePasteboardGlobals {
             let shape = RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
             let cardSize = CGSize(width: 170, height: 153)
             let stack = VStack(spacing: 12) {
-                PictureCardFace(image: tallPortrait, fillsCard: false) {
+                PictureCardFace(image: tallPortrait, fit: .fit) {
                     Text("Card 1")
                 }
                 .frame(width: cardSize.width, height: cardSize.height)
                 .clipShape(shape)
                 .contentShape(shape)
 
-                PictureCardFace(image: tallPortrait, fillsCard: false) {
+                PictureCardFace(image: tallPortrait, fit: .fit) {
                     Text("Card 2")
                 }
                 .frame(width: cardSize.width, height: cardSize.height)

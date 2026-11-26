@@ -73,7 +73,7 @@ struct PictureFitTests {
     }
 
     @Test("wide and tall pictures are fitted whole over a blurred copy", arguments: [
-        0.3, 0.4, 0.6, 0.79, 1.36, 1.5, 1.78, 2.0, 3.0
+        0.4, 0.6, 0.79, 1.36, 1.5, 1.78, 2.0, 3.0
     ])
     func whenOutsideFillRange_thenFit(aspect: Double) {
         #expect(PictureFit.decide(aspectRatio: aspect) == .fit)

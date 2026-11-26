@@ -49,15 +49,16 @@ struct ClipCard: View {
             isSecret: item.sensitivityRaw != nil && !isCoveredForPrivacy,
             pictureAspect: pictureAspect,
             isAnimated: media.picture?.isAnimated ?? false,
+            isScreenCapture: ScreenCaptureApps.isCapture(sourceBundleID: item.sourceBundleID),
+            pixelSize: item.pixelSize,
+            cardSize: CGSize(width: width, height: width / CardGridLayout.aspectRatio),
             hasLinkPicture: media.linkPicture != nil,
             isDark: colorScheme == .dark
         ))
     }
 
     private var pictureAspect: Double? {
-        if let width = item.pixelWidth, let height = item.pixelHeight, width > 0, height > 0 {
-            return Double(width) / Double(height)
-        }
+        if let pixelSize = item.pixelSize { return Double(pixelSize.width / pixelSize.height) }
         guard let size = media.picture?.image.size, size.height > 0 else { return nil }
         return size.width / size.height
     }

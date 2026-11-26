@@ -35,6 +35,9 @@ struct QuickInsertCardFace: View {
             isConcealed: false,
             pictureAspect: aspect,
             isAnimated: entry.isAnimated,
+            isScreenCapture: ScreenCaptureApps.isCapture(sourceBundleID: entry.sourceBundleID),
+            pixelSize: picture?.size,
+            cardSize: size,
             isDark: colorScheme == .dark
         ))
         let title = CardFace.faceTitle(
@@ -96,8 +99,8 @@ struct QuickInsertCardFace: View {
     )
     -> some View {
         switch face {
-        case let .picture(fills, _):
-            pictureBody(fills: fills, title: title, showsTitleOnFace: showsTitleOnFace)
+        case let .picture(fit, _):
+            pictureBody(fit: fit, title: title, showsTitleOnFace: showsTitleOnFace)
         case let .color(fill, ink):
             ColorCardFace(text: displayBody, fill: fill, ink: ink, metrics: metrics, title: title) {
                 footLine(ink: ink == .white ? .white : .black, showsTitleOnFace: showsTitleOnFace)
@@ -140,14 +143,19 @@ struct QuickInsertCardFace: View {
         .padding(CardMetrics.inset)
     }
 
-    private func pictureBody(fills: Bool, title: String?, showsTitleOnFace: Bool) -> some View {
+    private func pictureBody(fit: PictureFit, title: String?, showsTitleOnFace: Bool) -> some View {
         ZStack(alignment: .bottom) {
             if let picture {
-                if fills {
+                if fit.fills {
                     Color.clear
-                        .overlay { Image(uiImage: picture).resizable().scaledToFill() }
+                        .overlay(alignment: fit == .fillFromTop ? .top : .center) {
+                            Image(uiImage: picture).resizable().scaledToFill()
+                        }
                         .clipped()
                 } else {
+                    let aspect = Double(picture.size.width / max(picture.size.height, 1))
+                    let band: CGFloat = title == nil ? 28 : 48
+                    let pixels = picture.size
                     ZStack {
                         // A tiny copy stretched smooth (`KeyboardThumbnails`), not a live blur on every frame.
                         Color.clear
@@ -156,8 +164,12 @@ struct QuickInsertCardFace: View {
                             }
                             .clipped()
                             .overlay(Color.black.opacity(0.35))
-                        Image(uiImage: picture).resizable().scaledToFit()
-                            .padding(.bottom, title == nil ? 28 : 48)
+                        let placement = PictureFrameLayout { size in
+                            PictureFrame.fitted(aspectRatio: aspect, in: size, footerBand: band, pixelSize: pixels)
+                        }
+                        placement {
+                            Image(uiImage: picture).resizable().scaledToFill()
+                        }
                     }
                 }
             } else {

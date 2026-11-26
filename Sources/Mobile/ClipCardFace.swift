@@ -48,9 +48,9 @@ struct ClipCardFace: View {
             framed(title: title) {
                 SecretShownBody(item: item, text: media.revealedText, metrics: metrics, hasTitle: showsTitleInBody)
             }
-        case let .picture(fills, isAnimated):
+        case let .picture(fit, isAnimated):
             PictureCardFace(
-                image: media.picture?.image, fillsCard: fills,
+                image: media.picture?.image, fit: fit, pixelSize: item.pixelSize,
                 animation: playsAnimation ? media.picture?.animation : nil,
                 title: title
             ) {
@@ -63,7 +63,7 @@ struct ClipCardFace: View {
             let linkSubtitle = LinkDisplay.parse(item.gridPreview)?.host ?? (linkText.isEmpty ? nil : linkText)
             PictureCardFace(
                 image: media.linkPicture,
-                fillsCard: true,
+                fit: .fill,
                 animation: playsAnimation ? media.linkAnimation : nil,
                 title: title,
                 subtitle: linkSubtitle

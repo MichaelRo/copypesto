@@ -29,6 +29,20 @@ struct CardMetaLineTests {
         ])
     }
 
+    @Test("a focused picture keeps its dimensions over the app's name, whose icon stays on the line (ADR 0080)")
+    func whenPictureActive_thenDimensionsOutlastTheAppName() {
+        let lines = CardMetaLine.candidates(.init(
+            source: "Preview", age: "4m ago", measure: ["1920 \u{00D7} 1080"], isActive: true,
+            measureOutlastsSource: true
+        ))
+        #expect(lines == [
+            "Preview \u{00B7} 4m ago \u{00B7} 1920 \u{00D7} 1080",
+            "4m ago \u{00B7} 1920 \u{00D7} 1080",
+            "Preview \u{00B7} 4m ago",
+            "4m ago"
+        ])
+    }
+
     @Test("a title the person gave always leads, at rest too, and is the last thing given up")
     func whenTitled_thenTitleAlwaysShown() {
         let rest = CardMetaLine.candidates(.init(title: "Thank you", source: "Notes", age: "2d ago", measure: measure))

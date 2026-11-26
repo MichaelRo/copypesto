@@ -17,6 +17,8 @@ public enum CardMetaLine {
         public var isActive: Bool
         /// True when the card face already shows the custom title, so the foot line keeps the source app and age.
         public var showsTitleOnFace: Bool
+        /// A picture's dimensions say more than the app's name, whose icon is on the line anyway (ADR 0080).
+        public var measureOutlastsSource: Bool
 
         public init(
             title: String? = nil,
@@ -25,7 +27,8 @@ public enum CardMetaLine {
             measure: [String] = [],
             showsWholeClip: Bool = false,
             isActive: Bool = false,
-            showsTitleOnFace: Bool = false
+            showsTitleOnFace: Bool = false,
+            measureOutlastsSource: Bool = false
         ) {
             self.title = title
             self.source = source
@@ -34,6 +37,7 @@ public enum CardMetaLine {
             self.showsWholeClip = showsWholeClip
             self.isActive = isActive
             self.showsTitleOnFace = showsTitleOnFace
+            self.measureOutlastsSource = measureOutlastsSource
         }
     }
 
@@ -44,6 +48,9 @@ public enum CardMetaLine {
         let lead = footTitle ?? facts.source
         let measures = facts.isActive && !facts.showsWholeClip ? facts.measure : []
         var lines = measures.map { join([lead, facts.age, $0]) }
+        if facts.measureOutlastsSource, footTitle == nil {
+            lines += measures.map { join([facts.age, $0]) }
+        }
         lines.append(join([lead, facts.age]))
         lines.append(footTitle ?? facts.age)
         var seen: Set<String> = []

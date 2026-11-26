@@ -36,18 +36,43 @@ struct CardTreatmentTests {
         #expect(CardTreatment.decide(input(.image, picture: pass)) == .fullBleedPicture(.fit, isAnimated: false))
     }
 
-    @Test("a GIF fills the card and says it is one; a wide GIF fits whole")
+    @Test("a GIF fills the card in the animated range and says it is one; a very wide GIF fits whole (ADR 0080)")
     func whenGIF_thenAnimatedFullBleed() {
         let gif = CardTreatmentInput.Picture(aspectRatio: 1, isAnimated: true)
         #expect(CardTreatment.decide(input(.image, picture: gif)) == .fullBleedPicture(.fill, isAnimated: true))
         let wideGif = CardTreatmentInput.Picture(aspectRatio: 1.5, isAnimated: true)
-        #expect(CardTreatment.decide(input(.image, picture: wideGif)) == .fullBleedPicture(.fit, isAnimated: true))
+        #expect(CardTreatment.decide(input(.image, picture: wideGif)) == .fullBleedPicture(.fill, isAnimated: true))
+        let bannerGif = CardTreatmentInput.Picture(aspectRatio: 2.5, isAnimated: true)
+        #expect(CardTreatment.decide(input(.image, picture: bannerGif)) == .fullBleedPicture(.fit, isAnimated: true))
     }
 
-    @Test("a tall screenshot is shown whole over a blurred copy (ADR 0041)")
+    @Test("a phone screenshot is shown whole over a blurred copy (ADR 0041)")
     func whenTallScreenshot_thenFit() {
-        let tall = CardTreatmentInput.Picture(aspectRatio: 0.3, isAnimated: false)
+        let tall = CardTreatmentInput.Picture(aspectRatio: 0.46, isAnimated: false)
         #expect(CardTreatment.decide(input(.image, picture: tall)) == .fullBleedPicture(.fit, isAnimated: false))
+    }
+
+    @Test("a receipt fills from its top (ADR 0080)")
+    func whenReceipt_thenFillFromTop() {
+        let receipt = CardTreatmentInput.Picture(aspectRatio: 0.3, isAnimated: false)
+        #expect(
+            CardTreatment.decide(input(.image, picture: receipt)) == .fullBleedPicture(.fillFromTop, isAnimated: false)
+        )
+    }
+
+    @Test("a square screen capture is not cropped; the card's own size and shape decide (ADR 0080)")
+    func whenScreenCaptureOrSmall_thenFit() {
+        let capture = CardTreatmentInput.Picture(aspectRatio: 1, isAnimated: false, isScreenCapture: true)
+        #expect(CardTreatment.decide(input(.image, picture: capture)) == .fullBleedPicture(.fit, isAnimated: false))
+        let icon = CardTreatmentInput.Picture(
+            aspectRatio: 1, isAnimated: false, pixelSize: CGSize(width: 64, height: 64),
+            cardSize: CGSize(width: 180, height: 160)
+        )
+        #expect(CardTreatment.decide(input(.image, picture: icon)) == .fullBleedPicture(.fit, isAnimated: false))
+        let onKeyboard = CardTreatmentInput.Picture(
+            aspectRatio: 1, isAnimated: false, cardSize: CGSize(width: 150, height: 88)
+        )
+        #expect(CardTreatment.decide(input(.image, picture: onKeyboard)) == .fullBleedPicture(.fit, isAnimated: false))
     }
 
     @Test("a picture still loading keeps the standard card, with its placeholder")

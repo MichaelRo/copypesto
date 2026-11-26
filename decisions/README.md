@@ -82,6 +82,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0071](0071-the-clip-window-shows-any-clips-details.md) | One Clip window for every clip (Show Details…, ⌘I): title and content on the left, the text editable when Edit Text would be, note, tags, collection, Pinned and facts on the right, saved as they change; amends 0050 |
 | [0072](0072-extensions-open-pesto-only-as-apple-allows.md) | The keyboard opens Pesto with the plain `UIApplication.open` through the responder chain (DTS sample), only with Full Access; AutoFill's gear says where the settings are; no extension calls an API through a string selector; amends 0066 |
 | [0073](0073-autofill-has-no-settings-button.md) | The AutoFill picker has no settings button; its settings are reached from the app; amends 0072 |
+| [0075](0075-a-clip-becomes-a-snippet-in-place.md) | Make Snippet turns the clip itself into a snippet (one Undo for text and pin, a placeholder required, never a secret), inside the Clip window on the Mac and through the editor on the iPhone; the window shows pictures and files larger; amends 0071 |
 
 ## Template
 

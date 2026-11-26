@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import PestoCore
 import SwiftUI
+import WidgetKit
 
 /// One clip as a Pesto card at widget scale: the card's white (white at 10 percent on a dark ground) with its
 /// hairline, or the color itself, or the picture; the content set as the card sets it; one quiet foot line. In the

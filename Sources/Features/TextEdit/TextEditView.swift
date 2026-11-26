@@ -3,9 +3,9 @@ import PestoCore
 import SwiftUI
 
 /// The Clip window's left pane (ADRs 0050, 0071): the title, then the clip's whole text to edit, with Revert and Save
-/// (⌘Return or ⌘S) while it is changed and Close (Esc). A clip whose text is not editable (a picture, a file, a hidden
-/// secret) shows as its hover card does. While the contents are covered (a screen share, Hide Clip Contents) the
-/// content is covered too and the draft waits.
+/// (⌘Return or ⌘S) while it is changed and Close (Esc), or the snippet editor after Make Snippet (ADR 0075). A clip
+/// whose text is not editable (a picture, a file, a hidden secret) shows through `ClipInspectorPreview`. While the
+/// contents are covered (a screen share, Hide Clip Contents) the content is covered too and the draft waits.
 struct TextEditView: View {
     @Bindable var model: TextEditModel
     let item: ClipboardItem?
@@ -158,10 +158,7 @@ struct TextEditView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.quaternary.opacity(0.4), in: .rect(cornerRadius: 8))
         } else if !model.isEditable {
-            ScrollView {
-                if let item { CardDetailPopover(item: item).frame(maxWidth: .infinity) }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if let item { ClipInspectorPreview(item: item) }
         } else {
             TextEditor(text: $model.draft)
                 .font(model.isMonospaced ? .body.monospaced() : .body)

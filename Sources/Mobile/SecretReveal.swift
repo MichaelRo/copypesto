@@ -102,16 +102,17 @@ final class SecretReveal {
         if !shownNSFW.isEmpty { shownNSFW = [] }
     }
 
-    /// Pictures still being judged wait behind the checking cover when explicit filtering is active (`nsfwMode !=
-    /// .show`)
-    /// so an explicit image or GIF never flashes before screening finishes.
+    /// A picture still being judged waits behind its placeholder while the content filter is on, so an explicit
+    /// picture or GIF never flashes before screening finishes (ADR 0079).
     func concealment(for item: ClipboardItem, nsfwMode: NSFWMode = .current()) -> CardConcealment {
         CardConcealment(
             screenShareBlur: isCoveredForPrivacy(item.id),
             nsfwBlurred: item.isNSFW && nsfwMode != .show && !isNSFWShown(item.id),
             maskedSecret: item.sensitivityRaw != nil,
             secretShown: isShown(item.id),
-            pendingAnalysis: item.analysisPending && (item.type != .image || nsfwMode != .show)
+            pendingAnalysis: CardConcealment.waitsForVerdict(
+                type: item.type, analysisPending: item.analysisPending, nsfwMode: nsfwMode
+            )
         )
     }
 }

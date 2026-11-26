@@ -74,7 +74,7 @@ struct PictureCardFace<Foot: View>: View {
                 .contentShape(.rect)
             }
         } else {
-            Color.secondary.opacity(0.10)
+            PicturePlaceholder()
         }
     }
 

@@ -97,4 +97,20 @@ struct CardConcealmentTests {
         #expect(!CardConcealment(screenShareBlur: false, sensitiveBlur: true).allowsDecode)
         #expect(!CardConcealment(screenShareBlur: false, sensitiveBlur: false).allowsDecode)
     }
+
+    @Test("a picture waits behind the cover for its verdict only while the content filter looks at pictures")
+    func whenPictureIsPending_thenItWaitsOnlyWhileFiltering() {
+        #expect(CardConcealment.waitsForVerdict(type: .image, analysisPending: true, nsfwMode: .blur))
+        #expect(CardConcealment.waitsForVerdict(type: .image, analysisPending: true, nsfwMode: .hide))
+        #expect(!CardConcealment.waitsForVerdict(type: .image, analysisPending: true, nsfwMode: .show))
+    }
+
+    @Test("a large text waits for its verdict in every mode, and a judged clip never waits")
+    func whenTextIsPending_thenItAlwaysWaits() {
+        for mode in NSFWMode.allCases {
+            #expect(CardConcealment.waitsForVerdict(type: .text, analysisPending: true, nsfwMode: mode))
+            #expect(!CardConcealment.waitsForVerdict(type: .image, analysisPending: false, nsfwMode: mode))
+            #expect(!CardConcealment.waitsForVerdict(type: .text, analysisPending: false, nsfwMode: mode))
+        }
+    }
 }

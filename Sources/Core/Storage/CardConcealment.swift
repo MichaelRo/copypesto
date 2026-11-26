@@ -29,6 +29,13 @@ public struct CardConcealment: Equatable, Sendable {
         allowsDecode = !screenShareBlur && !nsfwBlurred && !pendingAnalysis
     }
 
+    /// A clip saved before it was judged stays covered until its verdict (ADR 0079). A picture waits only while the
+    /// content filter screens pictures: with it off, nothing in the verdict could hide the picture, so it shows at once
+    /// rather than after its text is read.
+    public static func waitsForVerdict(type: ClipboardType, analysisPending: Bool, nsfwMode: NSFWMode) -> Bool {
+        analysisPending && (type != .image || nsfwMode.detectsContent)
+    }
+
     public var allowsHoverDetail: Bool {
         !isConcealed
     }

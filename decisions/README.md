@@ -86,6 +86,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0075](0075-a-clip-becomes-a-snippet-in-place.md) | Make Snippet turns the clip itself into a snippet (one Undo for text and pin, a placeholder required, never a secret), inside the Clip window on the Mac and through the editor on the iPhone; the window shows pictures and files larger; amends 0071 |
 | [0076](0076-smaller-widget-window-and-ios-icon-default.md) | A widget orders a plain collection from its newest 60 members (the keyboard keeps 300); on iOS Match App Icon starts off; amends 0060 and 0069 |
 | [0077](0077-a-fingerprint-rules-out-lookalike-pictures.md) | A sealed fingerprint, taken at copy time, rules out a lookalike picture without decoding it; only identical pixels still make a duplicate |
+| [0079](0079-a-picture-shows-only-after-its-verdict.md) | A pending picture shows only its placeholder until its verdict while the content filter is on (Mac and iOS), and a browser's GIF is fetched and screened after it; amends 0006 |
 
 ## Template
 

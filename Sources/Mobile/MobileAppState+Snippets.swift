@@ -58,7 +58,7 @@ extension MobileAppState {
         let mark = service.undoHistory.recordedCount
         do {
             let outcome = try await service.convertToSnippet(id: id, title: cleanTitle, text: prepared)
-            if case let .refused(words) = TextEditPolicy.result(for: outcome) {
+            if case let .refused(words) = TextEditPolicy.snippetResult(for: outcome) {
                 tell(words, isProblem: true)
                 return false
             }

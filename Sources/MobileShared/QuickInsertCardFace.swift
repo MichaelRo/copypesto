@@ -149,9 +149,11 @@ struct QuickInsertCardFace: View {
                         .clipped()
                 } else {
                     ZStack {
-                        // Blurred once when decoded (`KeyboardThumbnails`), not live on every frame of a scroll.
+                        // A tiny copy stretched smooth (`KeyboardThumbnails`), not a live blur on every frame of a scroll.
                         Color.clear
-                            .overlay { Image(uiImage: backdrop ?? picture).resizable().scaledToFill() }
+                            .overlay {
+                                Image(uiImage: backdrop ?? picture).resizable().interpolation(.high).scaledToFill()
+                            }
                             .clipped()
                             .overlay(Color.black.opacity(0.35))
                         Image(uiImage: picture).resizable().scaledToFit()

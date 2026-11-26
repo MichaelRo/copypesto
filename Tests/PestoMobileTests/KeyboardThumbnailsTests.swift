@@ -28,12 +28,12 @@ struct KeyboardThumbnailsTests {
         #expect(first.backdrop === second.backdrop)
     }
 
-    @Test("a picture comes with a backdrop the size of the picture or smaller")
+    @Test("a picture comes with a backdrop a few pixels across, made without Core Image")
     func whenDecoded_thenBackdropIsMade() throws {
         let thumbnails = KeyboardThumbnails()
         let picture = try #require(thumbnails.picture(for: UUID(), data: Self.jpeg(width: 240, height: 120)))
         let backdrop = try #require(picture.backdrop)
-        #expect(backdrop.size.width <= picture.image.size.width)
+        #expect(max(backdrop.size.width, backdrop.size.height) <= KeyboardThumbnails.backdropPixels)
     }
 
     @Test("data that is not a picture gives nothing and is not kept")

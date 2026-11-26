@@ -122,19 +122,19 @@ struct DecisionReferenceTests {
             encoding: .utf8
         )
         var numbers: [Int] = []
-        var seen: Set<String> = []
+        var seenNumbers: Set<Int> = []
         var duplicates: [String] = []
         for rawLine in readme.split(separator: "\n", omittingEmptySubsequences: false) {
             let line = String(rawLine)
             guard let match = line.firstMatch(of: /^\| \[(\d{4})\]\([^)]+\) \|/) else { continue }
-            if !seen.insert(line).inserted {
-                duplicates.append(String(match.1))
-            }
             if let number = Int(match.1) {
+                if !seenNumbers.insert(number).inserted {
+                    duplicates.append(String(match.1))
+                }
                 numbers.append(number)
             }
         }
-        #expect(duplicates.isEmpty, "duplicate rows in decisions/README.md: \(duplicates)")
+        #expect(duplicates.isEmpty, "duplicate ADR numbers in decisions/README.md: \(duplicates)")
         #expect(numbers == numbers.sorted(), "decisions/README.md rows are out of number order: \(numbers)")
     }
 

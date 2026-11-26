@@ -50,7 +50,8 @@ if git diff --cached --name-only --diff-filter=ACMR -- 'decisions/README.md' | g
     python3 scripts/sort-decisions-readme.py
     git add -- 'decisions/README.md'
   else
-    python3 scripts/sort-decisions-readme.py --check || fail "partly staged decisions/README.md is out of order: run 'make sort-decisions'"
+    git show :decisions/README.md | python3 scripts/sort-decisions-readme.py --check - \
+      || fail "staged decisions/README.md is out of order: stage the sorted file with 'make sort-decisions'"
   fi
 fi
 

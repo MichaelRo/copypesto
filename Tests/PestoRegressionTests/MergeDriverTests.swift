@@ -134,4 +134,30 @@ struct MergeDriverTests {
         """
         #expect(sorted == expected)
     }
+
+    @Test("sort-decisions-readme flags conflicting duplicate ADR numbers and supports stdin --check")
+    func whenDuplicateNumberHasDifferentText_thenCheckFails() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("adr-conflict-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("README.md")
+        let content = """
+        | ADR | Decision |
+        |---|---|
+        | [0077](0077-a.md) | First |
+        | [0077](0077-b.md) | Second |
+        """
+        try content.write(to: file, atomically: true, encoding: .utf8)
+        let conflict = try runSortScript(arguments: ["--check", file.path])
+        #expect(conflict.status == 1)
+        #expect(conflict.stderr.contains("0077"))
+
+        let empty = folder.appendingPathComponent("Empty.md")
+        try "# Decisions\n\nNo rows yet.\n".write(to: empty, atomically: true, encoding: .utf8)
+        #expect(try runSortScript(arguments: ["--check", empty.path]).status == 0)
+
+        let hook = try String(contentsOf: root.appendingPathComponent(".githooks/pre-commit"), encoding: .utf8)
+        #expect(hook.contains("git show :decisions/README.md"))
+        #expect(hook.contains("sort-decisions-readme.py --check -"))
+    }
 }

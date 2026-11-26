@@ -13,7 +13,6 @@ struct KeyboardClipKey: View {
     let entry: QuickInsertEntry
     let cardSize: CGSize
     let feedback: Feedback?
-    var onInsertRecognizedText: ((String) -> Void)?
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var contrast
@@ -23,27 +22,12 @@ struct KeyboardClipKey: View {
     @Environment(\.pestoAccentLabel) private var accentLabel
     @Environment(\.pestoSurface) private var surface
 
-    @MainActor private static let thumbnailCache: NSCache<NSUUID, UIImage> = {
-        let cache = NSCache<NSUUID, UIImage>()
-        cache.countLimit = 40
-        return cache
-    }()
-
-    private static func decodedThumbnail(for entry: QuickInsertEntry) -> UIImage? {
-        guard let data = entry.thumbnail else { return nil }
-        let key = entry.id as NSUUID
-        if let cached = thumbnailCache.object(forKey: key) { return cached }
-        guard let image = UIImage(data: data) else { return nil }
-        thumbnailCache.setObject(image, forKey: key)
-        return image
-    }
-
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
         let metrics = CardMetrics(width: cardSize.width, height: cardSize.height, typeSize: typeSize)
         let displayBody = entry.expandsOnInsert ? entry.insertionText() : entry.text
-        let image = Self.decodedThumbnail(for: entry)
-        let aspect = image.map { Double($0.size.width / max($0.size.height, 1)) }
+        let picture = entry.thumbnail.flatMap { KeyboardThumbnails.shared.picture(for: entry.id, data: $0) }
+        let aspect = picture.map { Double($0.image.size.width / max($0.image.size.height, 1)) }
         let face = CardFace.decide(.init(
             type: entry.kind,
             text: displayBody,
@@ -58,7 +42,7 @@ struct KeyboardClipKey: View {
         )
         let cardDirection = Self.layoutDirection(for: entry.label()) ?? environmentDirection
 
-        cardBody(face: face, image: image, displayBody: displayBody, title: title, metrics: metrics)
+        cardBody(face: face, picture: picture, displayBody: displayBody, title: title, metrics: metrics)
             .frame(width: cardSize.width, height: cardSize.height)
             .environment(\.layoutDirection, cardDirection)
             .background(colorScheme == .dark ? Color.white.opacity(0.10) : .white)
@@ -94,7 +78,7 @@ struct KeyboardClipKey: View {
 
     @ViewBuilder
     private func cardBody(
-        face: CardFace, image: UIImage?, displayBody: String, title: String?, metrics: CardMetrics
+        face: CardFace, picture: KeyboardThumbnails.Picture?, displayBody: String, title: String?, metrics: CardMetrics
     )
     -> some View {
         let showsTitleOnFace = CardFace.showsCustomTitleOnFace(
@@ -102,7 +86,7 @@ struct KeyboardClipKey: View {
         )
         switch face {
         case let .picture(fills, _):
-            pictureBody(image: image, fills: fills, title: title, showsTitleOnFace: showsTitleOnFace)
+            pictureBody(picture: picture, fills: fills, title: title, showsTitleOnFace: showsTitleOnFace)
         case let .color(fill, ink):
             ColorCardFace(text: displayBody, fill: fill, ink: ink, metrics: metrics, title: title) {
                 footLine(
@@ -151,23 +135,29 @@ struct KeyboardClipKey: View {
     }
 
     private func pictureBody(
-        image: UIImage?, fills: Bool, title: String?, showsTitleOnFace: Bool
+        picture: KeyboardThumbnails.Picture?, fills: Bool, title: String?, showsTitleOnFace: Bool
     )
     -> some View {
         ZStack(alignment: .bottom) {
-            if let image {
+            if let picture {
                 if fills {
                     Color.clear
-                        .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                        .overlay { Image(uiImage: picture.image).resizable().scaledToFill() }
                         .clipped()
                 } else {
                     ZStack {
+                        // A tiny copy stretched smooth (`KeyboardThumbnails`), not a live blur on every frame of a
+                        // scroll.
                         Color.clear
-                            .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                            .overlay {
+                                Image(uiImage: picture.backdrop ?? picture.image)
+                                    .resizable()
+                                    .interpolation(.high)
+                                    .scaledToFill()
+                            }
                             .clipped()
-                            .blur(radius: 14, opaque: true)
                             .overlay(Color.black.opacity(0.35))
-                        Image(uiImage: image).resizable().scaledToFit()
+                        Image(uiImage: picture.image).resizable().scaledToFit()
                             .padding(.bottom, title == nil ? 28 : 48)
                     }
                 }
@@ -213,19 +203,13 @@ struct KeyboardClipKey: View {
         let trailingSymbol: String? = entry.expandsOnInsert
             ? "curlybraces"
             : (entry.hasRecognizedText ? "text.viewfinder" : nil)
-        let tapOCR: (() -> Void)? = if entry.hasRecognizedText, let ocr = entry.recognizedText {
-            { onInsertRecognizedText?(ocr) }
-        } else {
-            nil
-        }
         return CardFootLineView(
             line: line,
             isPinned: showsPin,
             onPicture: onPicture,
             ink: ink,
             showsGIF: entry.isAnimated,
-            trailingSymbol: trailingSymbol,
-            onTrailingSymbolTap: tapOCR
+            trailingSymbol: trailingSymbol
         )
     }
 

@@ -1,6 +1,6 @@
 # 0072. The keyboard opens Pesto only as Apple shows; AutoFill says where the settings are
 
-Status: Accepted (owner, 2026-11-25, after an App Review consult)
+Status: Accepted (owner, 2026-11-25, after an App Review consult); the AutoFill gear is removed by ADR 0073
 
 Amends ADR 0066 (the keyboard's Pesto chip and AutoFill's gear, through `HostURLOpener`). Numbers 0068 to 0071 are taken
 by records on other branches.

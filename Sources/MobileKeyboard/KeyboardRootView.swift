@@ -269,50 +269,27 @@ struct KeyboardRootView: View {
     )
     -> some View {
         let entryFeedback = feedback?.id == entry.id ? feedback?.kind : nil
-        let key = KeyboardClipKey(
-            entry: entry,
-            cardSize: cardSize,
-            feedback: entryFeedback,
-            onInsertRecognizedText: entry.hasRecognizedText
-                ? { text in insertRecognizedText(text, for: entry) }
-                : nil
-        )
-        let ringed = key.overlay {
-            // Only the clip Return would insert is ringed: a picture is copied, never inserted (ADR 0066).
-            if entry.id == returnInserts(matches)?.id {
-                RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
-                    .strokeBorder(.tint, lineWidth: 2)
-                    .accessibilityHidden(true)
+        KeyboardClipKey(entry: entry, cardSize: cardSize, feedback: entryFeedback)
+            .overlay {
+                // Only the clip Return would insert is ringed: a picture is copied, never inserted (ADR 0066).
+                if entry.id == returnInserts(matches)?.id {
+                    RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
+                        .strokeBorder(.tint, lineWidth: 2)
+                        .accessibilityHidden(true)
+                }
             }
-        }
-        if entry.kind == .image {
-            ringed
-                .onTapGesture { copyPicture(entry) }
-                .contextMenu {
-                    Button("Copy Picture", systemImage: "doc.on.doc") { copyPicture(entry) }
-                    if let ocr = entry.recognizedText, !ocr.isEmpty {
-                        Button("Insert Text", systemImage: "text.viewfinder") {
-                            insertRecognizedText(ocr, for: entry)
-                        }
+            .modifier(KeyboardCardActions(
+                entry: entry,
+                returnsAfterInsert: model.menu.returnsAfterInsert,
+                choose: { longPress in
+                    if entry.kind == .image {
+                        copyPicture(entry)
+                    } else {
+                        insert(entry, longPress: longPress, matches: matches)
                     }
-                }
-                .accessibilityAction { copyPicture(entry) }
-                .accessibilityAction(named: Text("Insert Text")) {
-                    if let ocr = entry.recognizedText, !ocr.isEmpty {
-                        insertRecognizedText(ocr, for: entry)
-                    }
-                }
-        } else {
-            ringed
-                .onTapGesture { insert(entry, longPress: false, matches: matches) }
-                .onLongPressGesture(minimumDuration: 0.4) { insert(entry, longPress: true, matches: matches) }
-                .accessibilityAction { insert(entry, longPress: false, matches: matches) }
-                .accessibilityAction(named: model.menu.returnsAfterInsert
-                    ? Text("Insert and Stay") : Text("Insert and Return"))
-                {
-                    insert(entry, longPress: true, matches: matches)
-                }
-        }
+                },
+                useRecognizedText: { text in insertRecognizedText(text, for: entry) }
+            ))
     }
 
     /// A new chip or search starts the row at its first card.
@@ -335,20 +312,22 @@ struct KeyboardRootView: View {
             }
             model.dismissedWord = word
         }
-        keys.insert(entry.insertionText())
-        finishInsert(entry: entry, longPress: longPress)
+        let text = entry.insertionText()
+        keys.insert(text)
+        finishInsert(entry: entry, longPress: longPress, inserted: text)
     }
 
     private func insertRecognizedText(_ text: String, for entry: QuickInsertEntry) {
         keys.insert(text)
-        finishInsert(entry: entry, longPress: false)
+        finishInsert(entry: entry, longPress: false, inserted: text)
     }
 
-    private func finishInsert(entry: QuickInsertEntry, longPress: Bool) {
+    private func finishInsert(entry: QuickInsertEntry, longPress: Bool, inserted: String) {
         if model.menu.returnsAfterInsert != longPress {
             keys.switchKeyboard()
             return
         }
+        model.noteInsert(inserted)
         showFeedback(.inserted, for: entry.id, duration: .milliseconds(600))
     }
 

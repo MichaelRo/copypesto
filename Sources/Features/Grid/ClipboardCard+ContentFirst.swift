@@ -59,9 +59,11 @@ extension ClipboardCard {
         default: ""
         }
         var picture: CardTreatmentInput.Picture?
-        if item.type == .image, let shown = shownThumbnail, shown.image.size.height > 0 {
+        if item.type == .image, let shown = shownThumbnail, let aspect = pictureAspect(shown.image) {
             picture = .init(
-                aspectRatio: Double(shown.image.size.width / shown.image.size.height), isAnimated: shown.isAnimated
+                aspectRatio: aspect, isAnimated: shown.isAnimated,
+                isScreenCapture: ScreenCaptureApps.isCapture(sourceBundleID: item.sourceBundleID),
+                pixelSize: item.pixelSize, cardSize: cardDimensions
             )
         }
         return CardTreatment.decide(CardTreatmentInput(
@@ -86,7 +88,6 @@ extension ClipboardCard {
                 pictureBackdrop(shown.image)
             }
             pictureLayer(fit: fit)
-                .padding(.bottom, fit == .fit ? CardLayout.footerReserve + (trimmedCustomTitle == nil ? 0 : 20) : 0)
             contentFirstChrome(
                 MetaLineStyle(over: over, onPicture: true, showsGIF: isAnimated),
                 title: trimmedCustomTitle,
@@ -122,27 +123,58 @@ extension ClipboardCard {
         }
     }
 
+    /// The stored pixel size first (the picture's own shape), the thumbnail's when the clip has none.
+    private func pictureAspect(_ image: NSImage) -> Double? {
+        if let size = item.pixelSize { return Double(size.width / size.height) }
+        return image.size.height > 0 ? Double(image.size.width / image.size.height) : nil
+    }
+
+    /// The band a fitted picture clears: the line of facts, and a title's chip above it.
+    private var pictureFooterBand: CGFloat {
+        CardLayout.footerReserve + (trimmedCustomTitle == nil ? 0 : 20)
+    }
+
     @ViewBuilder
     private func pictureLayer(fit: PictureFit) -> some View {
         if let shown = shownThumbnail {
-            let aspect = shown.image.size.height > 0 ? shown.image.size.width / shown.image.size.height : 1
-            Color.clear
-                .overlay {
-                    if shown.isAnimated {
-                        if fit == .fill {
-                            AnimatedImageView(image: shown.image, animates: playsAnimations)
-                                .aspectRatio(aspect, contentMode: .fill)
-                        } else {
-                            AnimatedImageView(image: shown.image, animates: playsAnimations, aspectFit: true)
-                                .aspectRatio(aspect, contentMode: .fit)
-                        }
-                    } else {
-                        Image(nsImage: shown.image)
-                            .resizable()
-                            .aspectRatio(contentMode: fit == .fill ? .fill : .fit)
+            let aspect = pictureAspect(shown.image) ?? 1
+            switch fit {
+            case .fill, .fillFromTop:
+                Color.clear
+                    .overlay(alignment: fit == .fillFromTop ? .top : .center) {
+                        pictureImage(shown, aspect: aspect, contentMode: .fill)
                     }
+                    .clipped()
+            case .fit:
+                let band = pictureFooterBand
+                let pixels = item.pixelSize
+                let placement = PictureFrameLayout { size in
+                    PictureFrame.fitted(aspectRatio: aspect, in: size, footerBand: band, pixelSize: pixels)
                 }
-                .clipped()
+                placement {
+                    pictureImage(shown, aspect: aspect, contentMode: .fill)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func pictureImage(
+        _ shown: (image: NSImage, isAnimated: Bool), aspect: Double, contentMode: ContentMode
+    )
+    -> some View {
+        if shown.isAnimated {
+            AnimatedImageView(image: shown.image, animates: playsAnimations, aspectFit: contentMode == .fit)
+                .aspectRatio(aspect, contentMode: contentMode)
+        } else if item.pixelSize.map(PictureFrame.drawsPixelsSharp) == true {
+            Image(nsImage: shown.image)
+                .resizable()
+                .interpolation(.none)
+                .aspectRatio(aspect, contentMode: contentMode)
+        } else {
+            Image(nsImage: shown.image)
+                .resizable()
+                .aspectRatio(aspect, contentMode: contentMode)
         }
     }
 

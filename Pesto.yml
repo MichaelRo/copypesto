@@ -115,6 +115,7 @@ targets:
       - path: Sources/Controls
         excludes: ["Info.plist", "*.entitlements"]
       - path: Sources/Widget
+      - path: Sources/Shared/Extensions/PictureFrameLayout.swift
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
@@ -241,6 +242,7 @@ targets:
       - path: Sources/Shared/Extensions/Color+Hex.swift
       - path: Sources/Shared/Extensions/PestoAccentEnvironment.swift
       - path: Sources/Shared/Extensions/ScaledFont.swift
+      - path: Sources/Shared/Extensions/PictureFrameLayout.swift
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
@@ -273,6 +275,7 @@ targets:
       - path: Sources/Shared/Extensions/Color+Hex.swift
       - path: Sources/Shared/Extensions/PestoAccentEnvironment.swift
       - path: Sources/Shared/Extensions/ScaledFont.swift
+      - path: Sources/Shared/Extensions/PictureFrameLayout.swift
       - path: Sources/MobileShare/BrandAccent.swift
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
@@ -304,6 +307,7 @@ targets:
       - path: Sources/Mobile/AddClipboardToPestoIntent.swift
       - path: Sources/Mobile/ClipboardShortcutHandling.swift
       - path: Sources/Widget
+      - path: Sources/Shared/Extensions/PictureFrameLayout.swift
       - path: Sources/Resources/Localizable.xcstrings
     dependencies:
       - package: PestoCore
@@ -345,6 +349,7 @@ targets:
       - path: Sources/Shared/Extensions/Color+Hex.swift
       - path: Sources/Shared/Extensions/PestoAccentEnvironment.swift
       - path: Sources/Shared/Extensions/ScaledFont.swift
+      - path: Sources/Shared/Extensions/PictureFrameLayout.swift
       - path: Sources/MobileShare/BrandAccent.swift
     dependencies:
       - target: PestoMobile

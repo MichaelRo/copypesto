@@ -49,19 +49,35 @@ struct WidgetFootLine: View {
 /// blurred, darkened copy of itself; the picture symbol when the snapshot has no thumbnail.
 struct WidgetPicture: View {
     let data: Data?
+    var sourceBundleID: String?
+
+    /// The foot line's height in a tile, which a wide picture shown whole clears (ADR 0080).
+    private nonisolated static let footerBand: CGFloat = 28
 
     var body: some View {
         if let data, let image = PlatformImage(data: data) {
-            let aspect = image.size.height > 0 ? image.size.width / image.size.height : 1
-            if CardTreatment.pictureFillRange.contains(aspect) {
+            let aspect = image.size.height > 0 ? Double(image.size.width / image.size.height) : 1
+            let fit = PictureFit.decide(
+                aspectRatio: aspect, isScreenCapture: ScreenCaptureApps.isCapture(sourceBundleID: sourceBundleID)
+            )
+            if fit.fills {
                 Color.clear
-                    .overlay { Self.image(image).resizable().scaledToFill() }
+                    .overlay(alignment: fit == .fillFromTop ? .top : .center) {
+                        Self.image(image).resizable().scaledToFill()
+                    }
                     .clipped()
                     .contentShape(.rect)
             } else {
                 Color.black
                     .overlay { Self.image(image).resizable().scaledToFill().blur(radius: 14).opacity(0.7) }
-                    .overlay { Self.image(image).resizable().scaledToFit() }
+                    .overlay {
+                        let placement = PictureFrameLayout { size in
+                            PictureFrame.fitted(aspectRatio: aspect, in: size, footerBand: Self.footerBand)
+                        }
+                        placement {
+                            Self.image(image).resizable().scaledToFill()
+                        }
+                    }
                     .clipped()
                     .contentShape(.rect)
             }

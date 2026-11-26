@@ -370,29 +370,6 @@ final class ClipboardCardTests: XCTestCase {
 
     // MARK: - Content first (ADR 0026)
 
-    private func samplePicture(aspect: CGFloat) -> NSImage {
-        let size = CGSize(width: 480, height: 480 / aspect)
-        return NSImage(size: size, flipped: false) { rect in
-            NSGradient(colors: [.systemTeal, .systemYellow, .white])?.draw(in: rect, angle: 35)
-            NSColor.systemOrange.setFill()
-            NSBezierPath(ovalIn: rect.insetBy(dx: rect.width * 0.3, dy: rect.height * 0.3)).fill()
-            return true
-        }
-    }
-
-    func pictureItem(
-        in ctx: ModelContext, aspect: CGFloat, animated: Bool = false, source: String = "Preview"
-    )
-    -> ClipboardItem {
-        let item = makeItem(in: ctx, type: .image, preview: "")
-        item.sourceAppName = source
-        item.byteSize = 98_304
-        ThumbnailCache.shared.store(
-            .init(image: samplePicture(aspect: aspect), isAnimated: animated, byteSize: item.byteSize), for: item.id
-        )
-        return item
-    }
-
     func test_pictureCard_fillsTheCard() throws {
         defer { ThumbnailCache.shared.clear() }
         let ctx = try makeContext()

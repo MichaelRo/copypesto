@@ -59,7 +59,7 @@ and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 | Text | 48 characters or fewer on one line: Core's 24 or 18 pt semibold. Longer: callout, whole lines only. |
 | Code | Footnote monospaced. |
 | Link | Host semibold on one line (Core's size, shrinks to 0.7), path in caption and secondary; its stored preview picture fills the card instead when there is one. |
-| Picture, GIF | Fills the card when its shape is 0.8 to 1.35 (ADR 0041); otherwise shown whole over a blurred, darkened still copy. Facts on pills; a GIF pill. A GIF plays while its card is on screen and not covered, from frames decoded off the main thread within a memory budget (`GIFFrames`); under Reduce Motion it shows its first frame. |
+| Picture, GIF | Fills the card when its shape is near the card's (0.8 to 1.35 on a 10:9 card, a GIF 0.55 to 1.85; a screen capture only when that crops a tenth or less), a very tall one (a receipt) from its top; otherwise shown whole over a blurred, darkened still copy, from the top to 18 pt above the foot for a tall one, just above the facts for a wide one, at most twice its size for a small one (ADR 0041, ADR 0080). Facts on pills; a GIF pill. A GIF plays while its card is on screen and not covered, from frames decoded off the main thread within a memory budget (`GIFFrames`); under Reduce Motion it shows its first frame. |
 | Color | The card is the color; the text and facts in black or white by Core's `CardInk`. |
 | File | Document symbol, name and folder. |
 | Secret | The mask, a lock, the category at the foot, an eye that asks for Face ID (`SecretReveal`); after Show, the start of the text and Hide. |

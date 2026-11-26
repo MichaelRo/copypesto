@@ -14,9 +14,6 @@ public enum CardTreatment: Equatable, Sendable {
     }
 
     public static let shortTextLimit = 48
-    /// ADR 0041: a picture fills an iPhone or iPad card (and a widget tile) only when its width over its height is in
-    /// this range; anything else is shown whole.
-    public static let pictureFillRange: ClosedRange<Double> = PictureFit.fillRange
     public static let lineHeightFactor = 1.25
     public static let headlineLimit = 24
     public static let headlinePoints = 24.0
@@ -29,10 +26,7 @@ public enum CardTreatment: Equatable, Sendable {
         switch input.type {
         case .image:
             guard let picture = input.picture else { return .standard }
-            return .fullBleedPicture(
-                PictureFit.decide(aspectRatio: picture.aspectRatio),
-                isAnimated: picture.isAnimated
-            )
+            return .fullBleedPicture(picture.fit, isAnimated: picture.isAnimated)
         case .color:
             guard let fill = input.colorFill else { return .standard }
             return .fullBleedColor(CardInk.forFill(fill, backdropIsDark: input.backdropIsDark))

@@ -317,7 +317,12 @@ extension ClipboardCard {
         switch item.type {
         case .text, .code: characterCountText(withLines: withLines)
         case .color: item.gridPreview
-        case .image: ByteCountFormatter.string(fromByteCount: Int64(item.byteSize), countStyle: .file)
+        case .image:
+            if let width = item.pixelWidth, let height = item.pixelHeight, width > 0, height > 0 {
+                "\(width) × \(height)"
+            } else {
+                ByteCountFormatter.string(fromByteCount: Int64(item.byteSize), countStyle: .file)
+            }
         default: nil
         }
     }

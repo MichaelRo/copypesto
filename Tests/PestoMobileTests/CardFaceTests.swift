@@ -34,20 +34,34 @@ struct CardFaceTests {
 
     @Test("a picture fills the card only near the card's shape (ADR 0041)", arguments: [0.8, 1.0, 1.11, 1.35])
     func whenPictureIsNearTheCardsShape_thenItFills(aspect: Double) {
-        #expect(face(.image, aspect: aspect) == .picture(fillsCard: true, isAnimated: false))
+        #expect(face(.image, aspect: aspect) == .picture(.fill, isAnimated: false))
     }
 
     @Test("a wide, tall or unmeasured picture is shown whole", arguments: [0.5625, 0.79, 1.36, 1.5, 1.78, nil])
     func whenPictureIsFarFromTheCardsShape_thenItIsShownWhole(aspect: Double?) {
-        #expect(face(.image, aspect: aspect) == .picture(fillsCard: false, isAnimated: false))
+        #expect(face(.image, aspect: aspect) == .picture(.fit, isAnimated: false))
     }
 
     @Test("a GIF fills the card across portrait and 16:9 shapes and keeps its badge; extreme panoramas fit whole")
     func whenAnimated_thenTheFaceSaysSo() {
-        #expect(face(.image, aspect: 1, animated: true) == .picture(fillsCard: true, isAnimated: true))
-        #expect(face(.image, aspect: 1.78, animated: true) == .picture(fillsCard: true, isAnimated: true))
-        #expect(face(.image, aspect: 0.5625, animated: true) == .picture(fillsCard: true, isAnimated: true))
-        #expect(face(.image, aspect: 3, animated: true) == .picture(fillsCard: false, isAnimated: true))
+        #expect(face(.image, aspect: 1, animated: true) == .picture(.fill, isAnimated: true))
+        #expect(face(.image, aspect: 1.78, animated: true) == .picture(.fill, isAnimated: true))
+        #expect(face(.image, aspect: 0.5625, animated: true) == .picture(.fill, isAnimated: true))
+        #expect(face(.image, aspect: 3, animated: true) == .picture(.fit, isAnimated: true))
+    }
+
+    @Test("a receipt fills from its top; a square screenshot and a small icon are shown whole (ADR 0080)")
+    func whenReceiptCaptureOrIcon_thenThePlacementFollowsTheirKind() {
+        #expect(face(.image, aspect: 0.3) == .picture(.fillFromTop, isAnimated: false))
+        let capture = CardFace.decide(.init(
+            type: .image, text: "", isConcealed: false, pictureAspect: 1, isScreenCapture: true
+        ))
+        #expect(capture == .picture(.fit, isAnimated: false))
+        let icon = CardFace.decide(.init(
+            type: .image, text: "", isConcealed: false, pictureAspect: 1,
+            pixelSize: CGSize(width: 64, height: 64), cardSize: CGSize(width: 190, height: 171)
+        ))
+        #expect(icon == .picture(.fit, isAnimated: false))
     }
 
     @Test("a color fills its card, with the ink Core picks for contrast")

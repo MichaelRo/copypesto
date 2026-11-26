@@ -11,7 +11,7 @@ struct CoveredCardFace: View {
 
     var body: some View {
         if waitsAsAPicture {
-            PictureCardFace(image: nil, fillsCard: true) { ItemFootLineView(item: item, onPicture: true) }
+            PictureCardFace(image: nil, fit: .fill) { ItemFootLineView(item: item, onPicture: true) }
         } else {
             VStack(alignment: .leading, spacing: CardMetrics.footGap) {
                 if isSecret { secretBody } else { coveredBody }

@@ -169,7 +169,7 @@ struct RecentClipsView: View {
             color
         } else if let single, single.kind == .image {
             ZStack {
-                WidgetPicture(data: single.thumbnail).privacySensitive()
+                WidgetPicture(data: single.thumbnail, sourceBundleID: single.sourceBundleID).privacySensitive()
                 WidgetCardTile.scrim
             }
         } else if single != nil {

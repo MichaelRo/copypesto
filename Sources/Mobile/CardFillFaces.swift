@@ -3,11 +3,14 @@ import PestoCore
 import SwiftUI
 import UIKit
 
-/// A picture fills its card edge to edge when its shape is near the card's; otherwise it is shown whole over a blurred,
-/// darkened still copy of itself (ADR 0041). The line of facts sits on pills, never on a scrim.
+/// A picture fills its card edge to edge when its shape is near the card's (a very tall one from its top); otherwise it
+/// is
+/// shown whole over a blurred, darkened still copy of itself, placed by `PictureFrame` (ADR 0041, ADR 0080). The line
+/// of facts sits on pills, never on a scrim.
 struct PictureCardFace<Foot: View>: View {
     let image: UIImage?
-    let fillsCard: Bool
+    let fit: PictureFit
+    var pixelSize: CGSize?
     var animation: GIFFrames.Animation?
     var title: String?
     var subtitle: String?
@@ -57,19 +60,26 @@ struct PictureCardFace<Foot: View>: View {
     @ViewBuilder
     private var picture: some View {
         if let image {
-            if fillsCard {
+            if fit.fills {
                 filled(image)
             } else {
+                let aspect = Double(image.size.width / max(image.size.height, 1))
+                let band: CGFloat = title == nil && subtitle == nil ? 30 : 54
+                let pixels = pixelSize
                 ZStack {
                     Color.clear
                         .overlay { Image(uiImage: image).resizable().scaledToFill() }
                         .clipped()
                         .contentShape(.rect)
-                        .blur(radius: 12, opaque: true)
+                        .blur(radius: 14, opaque: true)
                         .overlay(Color.black.opacity(0.35))
                         .drawingGroup(opaque: true)
-                    still(image, fills: false)
-                        .padding(.bottom, title == nil ? 30 : 54)
+                    let placement = PictureFrameLayout { size in
+                        PictureFrame.fitted(aspectRatio: aspect, in: size, footerBand: band, pixelSize: pixels)
+                    }
+                    placement {
+                        still(image, fills: true)
+                    }
                 }
                 .contentShape(.rect)
             }
@@ -80,7 +90,7 @@ struct PictureCardFace<Foot: View>: View {
 
     private func filled(_ image: UIImage) -> some View {
         Color.clear
-            .overlay { still(image, fills: true) }
+            .overlay(alignment: fit == .fillFromTop ? .top : .center) { still(image, fills: true) }
             .clipped()
             .contentShape(.rect)
     }
@@ -89,6 +99,8 @@ struct PictureCardFace<Foot: View>: View {
     private func still(_ image: UIImage, fills: Bool) -> some View {
         if let animation {
             AnimatedPicture(animation: animation, fills: fills)
+        } else if pixelSize.map(PictureFrame.drawsPixelsSharp) == true {
+            Image(uiImage: image).resizable().interpolation(.none).scaledToFill()
         } else if fills {
             Image(uiImage: image).resizable().scaledToFill()
         } else {

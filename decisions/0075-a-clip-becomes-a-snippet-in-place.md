@@ -36,8 +36,7 @@ the clip never appeared in Snippets; text with `{name}` became a second clip.
 - A snippet made from a clip is the same row on every Mac and iPhone that syncs; there is no duplicate to clean up.
 - Making a snippet from several look-alike clips (the shelf's suggestion, Similar Clips on the iPhone) still makes a
   new clip, because no one clip is the template.
-- The Make Snippet flow is covered by `ClipWindowUITests` on the Mac; on the iPhone by unit tests, with the editor
-  itself a hand check.
+- The Make Snippet flow is covered by `ClipWindowUITests` on the Mac and `SnippetFillUITests` on the iPhone.
 
 ## Docs affected
 - `docs/guide/using-pesto.md`, `README.md`, `decisions/README.md`

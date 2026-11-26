@@ -1,0 +1,50 @@
+name: Benchmarks
+
+# Automated CPU, memory, and latency regression shield on pushes to main and manual runs.
+# Uses pinned action SHAs matching ci.yml and minimal read-only permissions.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Sources/**"
+      - "Package.swift"
+      - "Pesto.yml"
+      - "Pesto.resolved"
+      - "scripts/bench*"
+      - "scripts/check-memory-budget.sh"
+      - ".github/workflows/benchmarks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    env:
+      PESTO_CI: "1"
+      PESTO_BENCH_MODE: "ci"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select the newest Xcode
+        run: scripts/select-xcode.sh
+      - name: Install pinned tools (XcodeGen, SwiftFormat, SwiftLint)
+        run: |
+          tools="$(scripts/install-tools.sh)"
+          echo "$tools" >> "$GITHUB_PATH"
+      - name: Run CPU, memory, and latency benchmarks
+        run: scripts/bench-ci.sh
+      - name: Upload benchmark report and logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: benchmark-report
+          path: .build/benchmarks/**
+          retention-days: 90

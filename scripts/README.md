@@ -16,6 +16,8 @@ Run them from the repository root. `make help` lists the `make` targets that wra
 |---|---|
 | `bench-latency.sh` (+ `bench-latency/`) | Paste, copy, shelf-open, hover and memory timings with a real target app (`make bench-latency`). |
 | `bench-scroll.sh`, `profile-scroll.sh` (+ `profile-scroll/`) | Animation Hitches traces of the shelf while a scroll runs (`make bench-scroll`). A trace that hangs is stopped after two minutes, and `bench-scroll.sh` goes on to the next history. |
+| `bench-ci.sh`, `bench_report.py`, `bench-thresholds.json` | `make bench-ci`: headless CPU, memory, and latency suite + threshold report (used on pushes to `main` by `.github/workflows/benchmarks.yml`). |
+| `review_grid.py` | `make review-grid`: maps a git diff onto Pesto's 6 scoped review lenses and runs static diff guards (`--json` emits sequential subagent prompts). |
 | `run-with-deadline.sh` | Runs a command and stops it, and what it started, after a number of seconds (exit 124); macOS has no `timeout`. |
 
 ## Release

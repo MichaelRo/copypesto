@@ -55,8 +55,15 @@ enum BackupText {
     }
 
     static func written(_ summary: BackupExportSummary) -> String {
-        let words = CountText.list([CountText.clips(summary.items), CountText.collections(summary.collections)])
-        return String(localized: "This backup holds \(words).")
+        String(localized: "This backup holds \(counts(clips: summary.items, collections: summary.collections)).")
+    }
+
+    /// The clips always, the collections and deletions only when there are some.
+    static func counts(clips: Int, collections: Int, deletions: Int = 0) -> String {
+        var parts = [CountText.clips(clips)]
+        if collections > 0 { parts.append(CountText.collections(collections)) }
+        if deletions > 0 { parts.append(CountText.deletions(deletions)) }
+        return CountText.list(parts)
     }
 
     static func saved(_ summary: BackupExportSummary) -> String {
@@ -65,10 +72,7 @@ enum BackupText {
     }
 
     static func contents(of preview: BackupPreview) -> String {
-        CountText.list([
-            CountText.clips(preview.itemCount), CountText.collections(preview.collectionCount),
-            CountText.deletions(preview.deletionCount)
-        ])
+        counts(clips: preview.itemCount, collections: preview.collectionCount, deletions: preview.deletionCount)
     }
 
     /// What the file holds and what a restore would do here, the first line the plain facts.
@@ -77,7 +81,9 @@ enum BackupText {
         var lines = [String(localized: "\(contents(of: preview)), saved \(saved).")]
         guard let counts else { return lines }
         let added = CountText.clips(counts.wouldAdd)
-        lines.append(String(localized: "Up to \(added) would be added. \(CountText.alreadyHere(counts.alreadyHere))"))
+        let already = counts.alreadyHere > 0 ? CountText.alreadyHere(counts.alreadyHere) : ""
+        lines.append(String(localized: "Up to \(added) would be added. \(already)")
+            .trimmingCharacters(in: .whitespaces))
         if counts.deletedHere > 0 {
             lines.append(String(localized: "\(CountText.clips(counts.deletedHere)) you deleted stay deleted."))
         }
@@ -91,8 +97,15 @@ enum BackupText {
     }
 
     static func restored(_ summary: BackupRestoreSummary) -> String {
-        let words = CountText.list([CountText.clips(summary.restored), CountText.collections(summary.collections)])
-        var text = String(localized: "Restored \(words). \(CountText.alreadyHere(summary.alreadyHad))")
+        let already = summary.alreadyHad > 0 ? CountText.alreadyHere(summary.alreadyHad) : ""
+        var text = if summary.restored == 0, summary.collections == 0 {
+            String(localized: "Nothing new to restore.") + (already.isEmpty ? "" : " " + already)
+        } else {
+            String(
+                localized: "Restored \(counts(clips: summary.restored, collections: summary.collections)). \(already)"
+            )
+            .trimmingCharacters(in: .whitespaces)
+        }
         if summary.failed > 0 {
             text += " " + String(localized: "\(CountText.clips(summary.failed)) could not be restored.")
         }

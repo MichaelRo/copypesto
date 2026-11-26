@@ -69,6 +69,10 @@ struct RestoreBackupSheet: View {
                 Text("Recovery Key").tag(Kind.recoveryKey)
             }
             .pickerStyle(.segmented)
+            .onChange(of: kind) {
+                secret = ""
+                problem = nil
+            }
             if kind == .passphrase {
                 SecureField("Passphrase", text: $secret).textContentType(.password)
             } else {

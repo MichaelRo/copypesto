@@ -38,6 +38,26 @@ struct BackupTextTests {
         ])
     }
 
+    @Test("a count of nothing is left out of a sentence, except the clips")
+    func counts_leaveOutZeros() {
+        #expect(BackupText.counts(clips: 2, collections: 0) == "2 clips")
+        #expect(BackupText.counts(clips: 0, collections: 1, deletions: 3) == "0 clips, 1 collection, and 3 deletions")
+        var summary = BackupExportSummary()
+        summary.items = 2
+        #expect(BackupText.written(summary) == "This backup holds 2 clips.")
+    }
+
+    @Test("a restore that brought nothing new says so instead of counting zeros")
+    func restored_nothingNew() {
+        var summary = BackupRestoreSummary()
+        summary.alreadyHad = 2
+        #expect(BackupText.restored(summary) == "Nothing new to restore. 2 were already here.")
+        summary.restored = 1
+        #expect(BackupText.restored(summary) == "Restored 1 clip. 2 were already here.")
+        summary.alreadyHad = 0
+        #expect(BackupText.restored(summary) == "Restored 1 clip.")
+    }
+
     @Test("a restore that could not bring every clip back says how many")
     func restored_mentionsFailures() {
         var summary = BackupRestoreSummary()

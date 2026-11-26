@@ -90,6 +90,7 @@ Git hooks (`pre-commit`, `pre-push`) run SwiftFormat, SwiftLint, and the Core te
 
 ```bash
 git config core.hooksPath .githooks
+make setup-merge-drivers   # String Catalogs merge entry by entry (see "Merging")
 ```
 
 ## CI
@@ -109,6 +110,25 @@ pinned in `scripts/tool-versions.env`):
 | `verify` | `scripts/verify.sh --no-ui`: SwiftFormat + SwiftLint, every SPM test (Core and Regression), a Debug build with warnings as errors, and the hosted `PestoTests` |
 
 The UI tests and snapshot tests drive real windows, so they run locally (`scripts/verify.sh`, `docs/testing.md`).
+
+## Merging
+
+`main`'s ruleset ("Branch protection") requires a pull request and the `verify` and `no-analytics` checks, with no
+bypass. A skipped check reports success, and `verify` skips a pull request stacked on another branch, so retargeting
+one to `main` starts CI by hand on its branch (`.github/workflows/retarget.yml`); that run's `verify` lands on the same
+commit and is the check the ruleset waits for. A title or description edit adds no `verify` result. (A merge queue
+would also test each pull request against the newest `main`, but GitHub offers it only to repositories owned by an
+organization.) `gh pr merge --squash --auto` merges a pull request the moment its checks pass.
+
+Two files gain a little in nearly every pull request and conflicted on every merge (2026-11-25: five rounds):
+`.gitattributes` keeps both sides' new rows of `decisions/README.md` (`merge=union`; the rows may land out of number
+order, which a later edit can sort), and merges `*.xcstrings` entry by entry with `scripts/merge-xcstrings.py` once
+`make setup-merge-drivers` has registered it in your clone. A string both sides changed differently is still a conflict
+for a person. GitHub's own "This branch has conflicts" does not run custom drivers: merge `main` into the branch locally
+(`git merge origin/main`), where they do, and push.
+
+Prefer pull requests branched from `main`. A stack is fine for work that builds on work, but squash merging rewrites the
+base's commits, so merge a stack bottom-up and merge `main` into the next branch at once.
 Releasing is described in `docs/release.md`. Signing the iPhone and iPad app for a device, and what the developer portal needs, is in `docs/ios-signing.md`; the App Store listing, privacy answers and review notes are in `docs/app-store-ios.md`.
 
 ## Security invariants

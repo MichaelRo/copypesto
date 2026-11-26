@@ -28,6 +28,21 @@ struct CIVerifyRulesTests {
         )
     }
 
+    @Test("a stacked pull request retargeted to main runs verify again, so its earlier skip never lands it")
+    func whenRetargeted_thenVerifyRunsAgain() throws {
+        let retarget = try String(
+            contentsOf: SourceTree.repositoryRoot.appendingPathComponent(".github/workflows/retarget.yml"),
+            encoding: .utf8
+        )
+        #expect(retarget.contains("types: [edited]"))
+        #expect(retarget
+            .contains("github.event.changes.base && github.base_ref == github.event.repository.default_branch"))
+        #expect(retarget.contains(#"gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF""#))
+        #expect(!retarget.contains("\n  verify:"), "a job named verify here would add a skipped verify on a title edit")
+        #expect(!retarget.contains("actions/checkout"), "it runs no code from the pull request")
+        #expect(try !workflow().contains("edited"), "ci.yml itself never runs on an edit")
+    }
+
     @Test("a green run leaves a marker keyed by the pull request's tree, and a run that finds it skips the work")
     func whenTheTreeAlreadyPassed_thenEveryStepIsSkipped() throws {
         let text = try workflow()

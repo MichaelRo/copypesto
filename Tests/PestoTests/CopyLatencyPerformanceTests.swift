@@ -123,6 +123,5 @@ extension HostedGlobals {
             }
             await service.waitForBackgroundWork()
         }
-
     }
 }

@@ -24,7 +24,8 @@ Amends ADR 0060's plain-collection window and ADR 0069's Match App Icon switch o
 - **Match App Icon on iOS starts off** (`AppIconMatching.isOnByDefault`, the default of `Setting.matchesAppIcon`). The
   icon changes only after the person turns the switch on (it applies at once) or, with it on, when they close
   Settings. A value the person stored is kept. The Mac still starts on, because macOS changes the icon without asking.
-  There is no iOS migration: no iOS release had shipped with the switch.
+  There is no iOS migration: the iOS app had not been submitted to the App Store when the switch arrived, so only
+  test installs ever had it on by default.
 
 ## Consequences
 - A clip placed by hand in a plain collection but older than its newest 60 members is not on that collection's widget,

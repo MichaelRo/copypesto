@@ -47,7 +47,7 @@ Amends ADR 0006's decode bound. The rest of it stands.
 - Peak memory, standalone optimized probe at 6000×4000, side by side against in turn: 21 against 13 MB (flat), 95
   against 88 MB (noise), 181 against 168 MB (16-bit noise), 265 against 172 MB (interlaced, hence in turn).
 - Still over 200 ms at 5K, each paying full decodes as before:
-  - a copy of pixels already in the history in another file (209 to 213 ms: the new picture and the one match);
+  - a copy of pixels already in the history in another file (209 to 216 ms: the new picture and the one match);
   - lookalikes saved before this change or before a system update, until 5 newer lookalikes replace them;
   - a lookalike read differently (interlaced, another bit depth or profile), a change too small to show at 512 px,
     and TIFF and lossy pictures.

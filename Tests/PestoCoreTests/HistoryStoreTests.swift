@@ -2,6 +2,7 @@
 import CryptoKit
 import Foundation
 import SwiftData
+import Synchronization
 import Testing
 @testable import PestoCore
 
@@ -22,6 +23,41 @@ struct HistoryStoreTests {
             timestamp: Date(timeIntervalSince1970: seconds),
             contentHash: SHA256.hash(data: Data(text.utf8)).map { String(format: "%02x", $0) }.joined()
         ))
+    }
+
+    /// Holds the calling thread until `done` is true: main-thread work that does not yield while another context saves.
+    private nonisolated static func hold(until done: borrowing Mutex<Bool>) {
+        while !done.withLock({ $0 }) {
+            Thread.sleep(forTimeInterval: 0.002)
+        }
+    }
+
+    @Test(
+        "a title another context saved reaches the search index, even when the save lands while the main thread is busy"
+    )
+    func whenAnotherContextRenamesWhileMainIsBusy_thenTheIndexHasTheNewTitle() async throws {
+        try await ingest("rename me", at: 1000)
+        let store = HistoryStore(container: container)
+        store.setVisible(true)
+        store.refresh()
+        _ = store.searchIndex()
+        let id = try #require(store.items.first?.id)
+        #expect(store.item(for: id)?.customTitle == nil)
+        let done = Mutex(false)
+        let container = container
+        let rename = Task.detached {
+            let context = ModelContext(container)
+            let item = try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first)
+            item.customTitle = "ZetaTitle"
+            try context.saveOrRollback()
+            done.withLock { $0 = true }
+        }
+        Self.hold(until: done)
+        try await rename.value
+        try await store.waitForRefresh()
+
+        #expect(store.searchIndex()?.matching(HistoryCriteria(query: "zetatitle")) == [id])
+        #expect(store.item(for: id)?.customTitle == "ZetaTitle")
     }
 
     @Test("a save that says nothing, from another container, does not make this store read its history again")

@@ -168,9 +168,10 @@ public final class FocusRestoration {
     }
 
     /// Returns once the system reports `pid` as the process with the keyboard, or when `ceiling` has passed, or when
-    /// the
-    /// task is cancelled. The probe runs off the main actor: an Accessibility call can wait for its timeout.
-    func waitForKeyboardFocus(of pid: pid_t, ceiling: Duration) async {
+    /// the task is cancelled. Nonisolated, so neither the probe (an Accessibility call can wait for its timeout) nor
+    /// the deadline waits for the main thread: as a main-actor loop, every 5 ms poll resumed on the main thread, and a
+    /// busy one (the shelf hiding, a heavy redraw) stretched a 120 ms ceiling to seconds.
+    nonisolated func waitForKeyboardFocus(of pid: pid_t, ceiling: Duration) async {
         let clock = ContinuousClock()
         let deadline = clock.now.advanced(by: ceiling)
         let probe = focusProbe

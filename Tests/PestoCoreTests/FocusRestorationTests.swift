@@ -178,10 +178,12 @@ struct FocusRestorationTests {
         #expect(probe.asked == 3)
     }
 
+    /// The timing tests run off the main actor: a suite running beside them held the main thread for about 12 s, and
+    /// what they measure is the wait, not the main thread.
     @Test("when the system never says, the wait runs to its ceiling, as the fixed sleep did")
-    func whenTheSystemNeverSays_thenTheCeilingApplies() async {
+    nonisolated func whenTheSystemNeverSays_thenTheCeilingApplies() async {
         let probe = ScriptedProbe([nil])
-        let restoration = FocusRestoration(focusProbe: probe, pollInterval: .milliseconds(5))
+        let restoration = await FocusRestoration(focusProbe: probe, pollInterval: .milliseconds(5))
         let clock = ContinuousClock()
 
         let waited = await clock.measure { await restoration.waitForKeyboardFocus(of: 1, ceiling: .milliseconds(120)) }
@@ -190,12 +192,37 @@ struct FocusRestorationTests {
         #expect(waited < .seconds(10))
     }
 
-    @Test("a cancelled wait returns at once")
-    func whenCancelled_thenTheWaitReturns() async {
+    /// Stands for main-thread work that does not yield, as a heavy view update or a long test beside this one.
+    private nonisolated static func holdTheThread(for seconds: TimeInterval) {
+        Thread.sleep(forTimeInterval: seconds)
+    }
+
+    @Test("a busy main thread does not stretch the wait past its ceiling")
+    nonisolated func whenMainThreadIsBusy_thenTheCeilingStillHolds() async {
         let probe = ScriptedProbe([nil])
-        let restoration = FocusRestoration(focusProbe: probe, pollInterval: .milliseconds(5))
+        let restoration = await FocusRestoration(focusProbe: probe, pollInterval: .milliseconds(5))
         let clock = ContinuousClock()
-        let task = Task { @MainActor in await restoration.waitForKeyboardFocus(of: 1, ceiling: .seconds(30)) }
+        let started = AsyncStream<Void>.makeStream()
+        let busy = Task { @MainActor in
+            started.continuation.yield()
+            Self.holdTheThread(for: 0.6)
+        }
+        for await _ in started.stream {
+            break
+        }
+
+        let waited = await clock.measure { await restoration.waitForKeyboardFocus(of: 1, ceiling: .milliseconds(120)) }
+        await busy.value
+
+        #expect(waited < .milliseconds(450), "the wait took \(waited) while the main thread was busy for 600 ms")
+    }
+
+    @Test("a cancelled wait returns at once")
+    nonisolated func whenCancelled_thenTheWaitReturns() async {
+        let probe = ScriptedProbe([nil])
+        let restoration = await FocusRestoration(focusProbe: probe, pollInterval: .milliseconds(5))
+        let clock = ContinuousClock()
+        let task = Task { await restoration.waitForKeyboardFocus(of: 1, ceiling: .seconds(30)) }
         task.cancel()
 
         let waited = await clock.measure { await task.value }

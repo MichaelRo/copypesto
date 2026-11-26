@@ -32,6 +32,7 @@ Run them from the repository root. `make help` lists the `make` targets that wra
 | `take-pictures.sh` | `make pictures`: retakes the documentation and website pictures from one build and stamps the commit (`docs/pictures.md`). |
 | `export-marketing-images.sh` | Copies the website pictures out of the newest UI-test result (`make marketing-images`). |
 | `clean-test-defaults.sh` | Removes throwaway preferences files that old test runs left in `~/Library/Preferences` (`--dry-run` lists them). |
+| `sort-decisions-readme.py` | `make sort-decisions`: sorts `decisions/README.md` rows ascending by ADR number after `merge=union` (`--check` verifies order without modifying). |
 
 ## Developer tools (`dev/`)
 | Script | What it does |

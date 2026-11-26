@@ -44,6 +44,16 @@ else
   exit 1
 fi
 
+# 1b. Keep decisions/README.md sorted by ADR number (after merge=union)
+if git diff --cached --name-only --diff-filter=ACMR -- 'decisions/README.md' | grep -q .; then
+  if git diff --quiet -- 'decisions/README.md'; then
+    python3 scripts/sort-decisions-readme.py
+    git add -- 'decisions/README.md'
+  else
+    python3 scripts/sort-decisions-readme.py --check || fail "partly staged decisions/README.md is out of order: run 'make sort-decisions'"
+  fi
+fi
+
 # 2. swiftlint (strict)
 if command -v swiftlint >/dev/null; then
   yellow "[pre-commit] swiftlint --strict..."

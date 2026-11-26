@@ -58,4 +58,80 @@ struct MergeDriverTests {
         let makefile = try String(contentsOf: root.appendingPathComponent("Makefile"), encoding: .utf8)
         #expect(makefile.contains(#"git config merge.xcstrings.driver "python3 scripts/merge-xcstrings.py %O %A %B""#))
     }
+
+    private struct ScriptOutput {
+        let status: Int32
+        let stdout: String
+        let stderr: String
+    }
+
+    private func runSortScript(arguments: [String]) throws -> ScriptOutput {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["python3", root.appendingPathComponent("scripts/sort-decisions-readme.py").path]
+            + arguments
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+        try process.run()
+        process.waitUntilExit()
+        let stdout = String(data: stdoutPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let stderr = String(data: stderrPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        return ScriptOutput(status: process.terminationStatus, stdout: stdout, stderr: stderr)
+    }
+
+    @Test("sort-decisions-readme sorts out-of-order rows, deduplicates, and preserves surrounding prose")
+    func whenDecisionsReadmeIsUnsorted_thenScriptSortsAndPreservesProse() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("adr-sort-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let file = folder.appendingPathComponent("README.md")
+        let unsorted = """
+        # Decisions
+
+        Intro paragraph.
+
+        | ADR | Decision |
+        |---|---|
+        | [0002](0002-two.md) | Two |
+        | [0076](0076-last.md) | Last |
+        | [0075](0075-mid.md) | Mid |
+        | [0076](0076-last.md) | Last |
+
+        ## Template
+        ```
+        # NNNN. Title
+        ```
+        """
+        try unsorted.write(to: file, atomically: true, encoding: .utf8)
+
+        let checkBefore = try runSortScript(arguments: ["--check", file.path])
+        #expect(checkBefore.status == 1)
+
+        let fix = try runSortScript(arguments: [file.path])
+        #expect(fix.status == 0)
+
+        let checkAfter = try runSortScript(arguments: ["--check", file.path])
+        #expect(checkAfter.status == 0)
+
+        let sorted = try String(contentsOf: file, encoding: .utf8)
+        let expected = """
+        # Decisions
+
+        Intro paragraph.
+
+        | ADR | Decision |
+        |---|---|
+        | [0002](0002-two.md) | Two |
+        | [0075](0075-mid.md) | Mid |
+        | [0076](0076-last.md) | Last |
+
+        ## Template
+        ```
+        # NNNN. Title
+        ```
+        """
+        #expect(sorted == expected)
+    }
 }

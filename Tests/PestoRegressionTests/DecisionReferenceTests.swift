@@ -115,6 +115,29 @@ struct DecisionReferenceTests {
         )
     }
 
+    @Test("the README index rows are sorted by ADR number with no duplicates")
+    func readmeRowsAreSortedByNumber() throws {
+        let readme = try String(
+            contentsOf: SourceTree.repositoryRoot.appendingPathComponent("decisions/README.md"),
+            encoding: .utf8
+        )
+        var numbers: [Int] = []
+        var seen: Set<String> = []
+        var duplicates: [String] = []
+        for rawLine in readme.split(separator: "\n", omittingEmptySubsequences: false) {
+            let line = String(rawLine)
+            guard let match = line.firstMatch(of: /^\| \[(\d{4})\]\([^)]+\) \|/) else { continue }
+            if !seen.insert(line).inserted {
+                duplicates.append(String(match.1))
+            }
+            if let number = Int(match.1) {
+                numbers.append(number)
+            }
+        }
+        #expect(duplicates.isEmpty, "duplicate rows in decisions/README.md: \(duplicates)")
+        #expect(numbers == numbers.sorted(), "decisions/README.md rows are out of number order: \(numbers)")
+    }
+
     @Test("no accepted record is tagged proposed in the README or docs")
     func acceptedRecordsAreNotTaggedProposed() throws {
         let directory = SourceTree.repositoryRoot.appendingPathComponent("decisions")

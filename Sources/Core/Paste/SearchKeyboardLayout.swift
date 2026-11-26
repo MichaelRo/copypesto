@@ -8,6 +8,12 @@ public struct SearchKeyboardLayout: Equatable, Identifiable, Sendable {
     public let id: String
     /// The language whose name the space bar shows and whose rules uppercase its letters.
     public let languageCode: String
+
+    /// Two capitals for the search page's language key, as iOS writes a language on its space bar ("EN", "HE").
+    public var shortName: String {
+        String(languageCode.prefix(2)).uppercased()
+    }
+
     public let rows: [[String]]
     /// A fixed second layer (Thai, Hindi, Korean); nil where Shift means capitals or nothing.
     public let shiftedRows: [[String]]?

@@ -12,6 +12,11 @@ struct WidgetCardTile: View {
     var copied = false
     var isWholeWidget = false
     var isRoomy = false
+    /// The app's icon from the snapshot (ADR 0074).
+    var appIcon: Data?
+
+    @Environment(\.widgetRenderingMode) private var renderingMode
+    @Environment(\.colorSchemeContrast) private var contrast
 
     private static let corner: CGFloat = 12
     /// Under the foot line of a picture, so its white text reads on any picture.
@@ -31,18 +36,20 @@ struct WidgetCardTile: View {
                     .privacySensitive()
             }
             WidgetFootLine(
-                clip: clip, now: now, accent: palette.accent, ink: clip.kind == .image ? .white : ink, copied: copied
+                clip: clip, now: now, accent: palette.accent, ink: clip.kind == .image ? .white : ink, copied: copied,
+                appIcon: renderingMode == .fullColor ? appIcon : nil
             )
         }
         .multilineTextAlignment(.leading)
         .padding(inset)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background {
-            if !isWholeWidget {
-                ZStack {
+            ZStack {
+                if !isWholeWidget {
                     ground
                     if clip.kind == .image { Self.scrim }
                 }
+                if let glow { WidgetGlow(glow: glow) }
             }
         }
         .clipShape(.rect(cornerRadius: isWholeWidget ? 0 : Self.corner, style: .continuous))
@@ -55,6 +62,16 @@ struct WidgetCardTile: View {
         .foregroundStyle(Color.primary)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(copied ? String(localized: "Copied") : WidgetClipSpeech.label(clip, now: now))
+    }
+
+    /// The foot glow in the app's color, as Pesto's card draws it (ADR 0068): only in full color, where a tinted or
+    /// clear Home Screen and the Mac's desktop would turn it into a grey smear, and never on a picture or a color.
+    private var glow: CardGlow? {
+        guard renderingMode == .fullColor, clip.kind != .image, clip.kind != .color else { return nil }
+        return CardGlow.decide(
+            colorHex: clip.sourceColorHex, themeAccentHex: palette.accentHex, isDark: palette.isDark, isGlass: false,
+            increaseContrast: contrast == .increased, isSelected: false
+        )
     }
 
     private var inset: CGFloat {

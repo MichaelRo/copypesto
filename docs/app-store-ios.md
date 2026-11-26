@@ -92,7 +92,7 @@ To publish with the Mac's privacy page at release. Check each line against the b
 >
 > **Extensions.** The share extension, AutoFill, the keyboard and the widget never open your history. The app gives
 > them small sealed files: AutoFill and the keyboard share one of pinned clips, snippets and recent text, the widget
-> gets recent clips, and none ever gets a secret. With the History Lock on they stay empty unless you choose otherwise.
+> gets recent clips, each with the name, color and icon of the app it came from, and none ever gets a secret. With the History Lock on they stay empty unless you choose otherwise.
 >
 > **The keyboard.** Optional, and off until you add it in iOS Settings. Its letters type only into its own search
 > field, never into your apps; it sees taps on its own keys and, with Full Access, only the last word before the cursor,

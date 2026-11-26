@@ -102,6 +102,21 @@ struct SourceAppLookTests {
         #expect(set.withExpiresAt(.now).appIcons == set.appIcons)
     }
 
+    @Test("the keyboard and AutoFill menus hand over the icons, and none while locked or without Full Access")
+    func whenMenusOpen_thenIconsFollowTheState() {
+        let entry = QuickInsertEntry(
+            id: UUID(), section: .recent, kind: .text, title: "a", text: "a", expandsOnInsert: false,
+            sourceBundleID: "x"
+        )
+        let set = QuickInsertSet(createdAt: .now, entries: [entry], appIcons: ["x": Self.png])
+        let locked = QuickInsertSet(createdAt: .now, entries: [entry], isLocked: true, appIcons: ["x": Self.png])
+        #expect(KeyboardMenu(hasFullAccess: true) { set }.appIcons == ["x": Self.png])
+        #expect(KeyboardMenu(hasFullAccess: true) { locked }.appIcons.isEmpty)
+        #expect(KeyboardMenu(hasFullAccess: false) { set }.appIcons.isEmpty)
+        #expect(QuickInsertMenu(set: set).appIcons == ["x": Self.png])
+        #expect(QuickInsertMenu(set: locked).appIcons.isEmpty)
+    }
+
     @Test("widget clips carry the app and color, and the snapshot the icons of the apps it shows")
     func whenWidgetSnapshotIsMade_thenItCarriesLooks() throws {
         let context = try ModelContext(ModelContainerSetup.makeInMemory())

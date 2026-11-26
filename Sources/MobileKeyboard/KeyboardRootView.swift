@@ -63,6 +63,8 @@ struct KeyboardRootView: View {
                     KeyboardSettingsPanel(
                         size: model.keyboardSize,
                         sample: shown(matches),
+                        theme: model.menu.accent,
+                        appIcons: model.menu.appIcons,
                         setSize: setKeyboardSize,
                         openSettings: keys.openURL.map { open in { open(AppLink.url(for: .keyboardSettings)) } },
                         close: { showsSettings = false }
@@ -211,7 +213,7 @@ struct KeyboardRootView: View {
                             chip = label.chip
                         }
                     }
-                    KeyboardChip(title: "Pesto", symbolName: "gearshape", isSelected: false, isDimmed: false) {
+                    KeyboardChip(title: nil, symbolName: "gearshape", isSelected: false, isDimmed: false) {
                         showsSettings = true
                     }
                     .accessibilityLabel(Text("Keyboard Settings"))
@@ -269,27 +271,30 @@ struct KeyboardRootView: View {
     )
     -> some View {
         let entryFeedback = feedback?.id == entry.id ? feedback?.kind : nil
-        KeyboardClipKey(entry: entry, cardSize: cardSize, feedback: entryFeedback)
-            .overlay {
-                // Only the clip Return would insert is ringed: a picture is copied, never inserted (ADR 0066).
-                if entry.id == returnInserts(matches)?.id {
-                    RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
-                        .strokeBorder(.tint, lineWidth: 2)
-                        .accessibilityHidden(true)
-                }
+        KeyboardClipKey(
+            entry: entry, cardSize: cardSize, feedback: entryFeedback, theme: model.menu.accent,
+            appIcon: model.menu.appIcon(for: entry)
+        )
+        .overlay {
+            // Only the clip Return would insert is ringed: a picture is copied, never inserted (ADR 0066).
+            if entry.id == returnInserts(matches)?.id {
+                RoundedRectangle(cornerRadius: CardGridLayout.cornerRadius, style: .continuous)
+                    .strokeBorder(.tint, lineWidth: 2)
+                    .accessibilityHidden(true)
             }
-            .modifier(KeyboardCardActions(
-                entry: entry,
-                returnsAfterInsert: model.menu.returnsAfterInsert,
-                choose: { longPress in
-                    if entry.kind == .image {
-                        copyPicture(entry)
-                    } else {
-                        insert(entry, longPress: longPress, matches: matches)
-                    }
-                },
-                useRecognizedText: { text in insertRecognizedText(text, for: entry) }
-            ))
+        }
+        .modifier(KeyboardCardActions(
+            entry: entry,
+            returnsAfterInsert: model.menu.returnsAfterInsert,
+            choose: { longPress in
+                if entry.kind == .image {
+                    copyPicture(entry)
+                } else {
+                    insert(entry, longPress: longPress, matches: matches)
+                }
+            },
+            useRecognizedText: { text in insertRecognizedText(text, for: entry) }
+        ))
     }
 
     /// A new chip or search starts the row at its first card.

@@ -33,7 +33,7 @@ final class EditTextUITests: PestoUITestCase {
         let original = "Meet at the north gate"
         let edited = "Meet at the south gate"
         openEditor(for: original)
-        waitForNonExistence(overlay, timeout: 5, "the shelf should close while the editor is open")
+        XCTAssertTrue(overlay.exists, "the shelf stays open behind the Clip window (ADR 0071)")
 
         replaceText(with: edited)
         capture("edit-text-window")
@@ -111,7 +111,7 @@ final class EditTextUITests: PestoUITestCase {
         XCTAssertEqual(cardCount(containing: "4242"), 0, "old secret remained")
     }
 
-    func test_contentCoverWhileEditorOpen_hidesTextDisablesSaveAndPreservesDraft() {
+    func test_contentCoverWhileEditorOpen_coversTheWindowAndPreservesDraft() {
         openEditor(for: "Clip before cover")
         replaceText(with: "Draft kept across cover")
         let save = editWindow.buttons.matching(identifier: AccessibilityID.textEditSaveButton).firstMatch
@@ -125,7 +125,7 @@ final class EditTextUITests: PestoUITestCase {
             )
         ).firstMatch
         XCTAssertTrue(covered.waitUntilExists(timeout: 5), "editor did not cover text")
-        XCTAssertFalse(save.isEnabled, "Save must be disabled while covered")
+        waitForNonExistence(save, timeout: 5, "the whole Clip window is covered, Save too (ADR 0071)")
 
         send(.toggleHideContents)
         let editor = editWindow.descendants(matching: .any).matching(identifier: AccessibilityID.textEditor).firstMatch

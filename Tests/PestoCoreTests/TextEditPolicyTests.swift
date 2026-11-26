@@ -121,9 +121,9 @@ struct TextEditPolicyTests {
 
     @Test("each conversion outcome closes the window or says why it did not")
     func whenConversionEnds_thenTheResultIsSaidPlainly() {
-        #expect(TextEditPolicy.result(for: .converted) == .saved)
-        #expect(!TextEditPolicy.result(for: .needsPlaceholder).closesEditor)
-        #expect(!TextEditPolicy.result(for: .notConvertible).closesEditor)
-        #expect(!TextEditPolicy.result(for: .missing).closesEditor)
+        #expect(TextEditPolicy.snippetResult(for: .converted) == .saved)
+        #expect(!TextEditPolicy.snippetResult(for: .needsPlaceholder).closesEditor)
+        #expect(!TextEditPolicy.snippetResult(for: .notConvertible).closesEditor)
+        #expect(!TextEditPolicy.snippetResult(for: .missing).closesEditor)
     }
 }

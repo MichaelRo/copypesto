@@ -45,7 +45,11 @@ extension AppState {
                 result = try await service.updateSnippet(id: id, title: name, text: text)
                     ? .saved : .refused(TextEditPolicy.failedMessage)
             } else {
-                result = try await TextEditPolicy.result(for: service.convertToSnippet(id: id, title: name, text: text))
+                result = try await TextEditPolicy.snippetResult(for: service.convertToSnippet(
+                    id: id,
+                    title: name,
+                    text: text
+                ))
             }
         } catch let refusal as ClipSizePolicy.TooLarge {
             return .refused(refusal.message)

@@ -53,7 +53,7 @@ public enum TextEditPolicy {
         (type == .text || type == .code) && !analysisPending && !isSecret && !isSnippet && !concealment.isConcealed
     }
 
-    public static func result(for conversion: SnippetConversion) -> TextEditSaveResult {
+    public static func snippetResult(for conversion: SnippetConversion) -> TextEditSaveResult {
         switch conversion {
         case .converted: .saved
         case .needsPlaceholder: .refused(String(localized: "Add a placeholder, such as {{date}}, to make a snippet."))

@@ -235,14 +235,14 @@ struct QuickInsertCollectionsTests {
         let store = try Store()
         let work = try store.collection("Work", order: 0)
         let fillIn = store.add("Hi {{input:Name}}", pinned: true, in: work)
-        fillIn.updateMetadata { $0.fieldMemory = ["Name": "Stephanie"] }
+        fillIn.updateMetadata { $0.fieldMemory = ["Name": "Alex"] }
         store.add("On {{date}}", pinned: true, in: work)
         store.add("Paste {{clipboard}}", pinned: true, in: work)
         store.add("Plain note", in: work)
         let set = try store.set([work.id])
         let entry = try #require(set.entries.first { $0.id == fillIn.id })
         #expect(entry.expandsOnInsert)
-        #expect(entry.fieldMemory == ["Name": "Stephanie"])
+        #expect(entry.fieldMemory == ["Name": "Alex"])
         #expect(!set.entries.contains { $0.text.contains("{{clipboard}}") })
 
         let autoFill = QuickInsertMenu(set: set)

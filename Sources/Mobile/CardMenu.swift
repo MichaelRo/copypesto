@@ -51,9 +51,12 @@ struct CardMenu: View {
                 }
             }
         }
-        if card.appState.canSaveAsSnippet(item) {
-            Button("Save as Snippet", systemImage: "text.badge.plus") {
-                Task { await card.appState.saveAsSnippet(item) }
+        if card.appState.canMakeSnippet(item) {
+            Button("Make Snippet\u{2026}", systemImage: "text.badge.plus") {
+                Task {
+                    guard let text = await loadPlainText(item) else { return }
+                    card.library.beginMakeSnippet(of: item, text: text)
+                }
             }
         }
         if card.isCoveredForPrivacy

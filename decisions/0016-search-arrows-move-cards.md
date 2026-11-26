@@ -4,7 +4,7 @@ Status: Accepted. Supersedes only the key-handling part of [0009](0009-the-shelf
 
 ## Context
 With the search field active, only ↓ and ↑ moved between result cards; ← and → moved the text cursor. The shelf is a
-horizontal row, so a person looking at the cards reached for ← and →, and nothing happened to the cards. Michael's
+horizontal row, so a person looking at the cards reached for ← and →, and nothing happened to the cards. The maintainer's
 October 26 notes called this confusing.
 
 Three options were compared:

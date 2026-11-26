@@ -46,6 +46,7 @@ extension StorageService {
             blob.mimeType = "com.compuserve.gif"
             blob.aadBound = true
             item.byteSize = data.count
+            item.updateMetadata { $0.pictureFingerprint = nil }
             if let dimensions = ImageDownsampler.pixelDimensions(of: data) {
                 item.pixelWidth = dimensions.width
                 item.pixelHeight = dimensions.height

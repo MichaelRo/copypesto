@@ -68,7 +68,7 @@ it types a new line (shelf) or there is none (search page).
 |---|---|---|
 | AutoFill picker, search field | Ends editing; a tap on a card inserts it | `InsertPickerView` |
 | Mac snippet prompt | In a one-line field, pastes at once; in a multi-line field, a new line; ⌘Return pastes | `FillInPromptView` |
-| iPhone snippet sheet | Nothing; only Copy finishes | `SnippetFillSheet` |
+| iPhone snippet sheet | Done in a one-line field copies; in a multi-line field, a new line; ⌘Return copies | `SnippetFillSheet` |
 | AutoFill snippet sheet | Done in a one-line field inserts; ⌘Return inserts | `InsertPickerView` |
 
 ## Where the same key differs, on purpose or not
@@ -76,6 +76,6 @@ it types a new line (shelf) or there is none (search page).
 - **Return in search**: the Mac pastes the focused result; iOS never copies a result (a tap does). On purpose: the
   Mac shelf is a keyboard tool, the iOS library is touch-first.
 - **The keyboard's Return** inserts only on the shelf with a word match (#205); the search page has no Return.
-- **Snippet prompts** treat Return three ways (Mac pastes, iPhone does nothing, AutoFill inserts). The iPhone sheet
-  should insert on Return from a one-line field like the other two: backlog.
+- **Snippet prompts** finish on Return from a one-line field everywhere: the Mac pastes, the iPhone copies, AutoFill
+  inserts.
 - **Space** toggles selection on the Mac shelf; on the keyboard's search page a hold switches layout.

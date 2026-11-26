@@ -333,7 +333,7 @@ struct MobileQuickInsertTests {
         try await library.refreshed()
         let context = try #require(library.state.historyContainer?.mainContext)
         snippet.customTitle = "Greeting"
-        snippet.updateMetadata { $0.fieldMemory = ["name": "Michael"] }
+        snippet.updateMetadata { $0.fieldMemory = ["name": "Alex"] }
         try context.saveOrRollback()
 
         let options = QuickInsertSelection.Options(
@@ -349,6 +349,6 @@ struct MobileQuickInsertTests {
         }
         let collectionEntry = try #require(set.entries.first { $0.section == .collection })
         #expect(collectionEntry.expandsOnInsert)
-        #expect(collectionEntry.fieldMemory?["name"] == "Michael")
+        #expect(collectionEntry.fieldMemory?["name"] == "Alex")
     }
 }

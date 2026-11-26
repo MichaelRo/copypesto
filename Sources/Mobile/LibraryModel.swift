@@ -70,11 +70,14 @@ final class LibraryModel {
     enum SnippetEditorTarget: Equatable, Identifiable {
         case new(initialText: String = "")
         case edit(id: UUID, title: String, text: String)
+        /// A text clip being made a snippet in place (ADR 0075).
+        case convert(id: UUID, title: String, text: String)
 
         var id: String {
             switch self {
             case .new: "new"
             case let .edit(id, _, _): id.uuidString
+            case let .convert(id, _, _): "convert-\(id.uuidString)"
             }
         }
     }
@@ -118,6 +121,10 @@ final class LibraryModel {
 
     func beginSnippetEdit(of item: ClipboardItem, text: String) {
         snippetEditor = .edit(id: item.id, title: item.customTitle ?? "", text: text)
+    }
+
+    func beginMakeSnippet(of item: ClipboardItem, text: String) {
+        snippetEditor = .convert(id: item.id, title: item.customTitle ?? "", text: text)
     }
 
     func beginSelection(with initialID: UUID? = nil) {

@@ -18,7 +18,8 @@ final class PasteItemCommand: NSScriptCommand {
             let context = ModelContext(container)
             var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
             descriptor.fetchLimit = 1
-            guard let item = try? context.fetch(descriptor).first else { return }
+            guard let item = try? context.fetch(descriptor).first,
+                  !ShortcutClipSearch.isInLockedCollection(item, locked: LockedCollections.current()) else { return }
             Self.logger.notice("[paste] trigger=applescript-paste id=\(id, privacy: .private)")
             // ScriptingContext.pasteItem writes the pasteboard content, captures focus, and triggers
             // the paste flow. This avoids duplicating the decrypt + write logic here.

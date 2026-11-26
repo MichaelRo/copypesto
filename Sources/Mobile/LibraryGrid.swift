@@ -29,6 +29,7 @@ struct LibraryGrid: View {
     @State private var hasRestoredPosition = false
     @State private var ranking = SemanticRanking()
     @AppStorage(Setting.nsfwMode) private var nsfwModeRaw: String
+    @AppStorage(Setting.lockedCollections) private var lockedCollectionsStored: String
     @AppStorage(Setting.dismissedSnippetHint) private var dismissedSnippetHint: Bool
 
     var body: some View {
@@ -61,7 +62,13 @@ struct LibraryGrid: View {
                 await SyncExchange.onPull(appState.sync)
                 library.resort()
             }
-            .overlay { LibraryEmptyState(isEmpty: hasListed && ids.isEmpty, hasClips: !store.items.isEmpty) }
+            .overlay {
+                if let locked = lockedScope {
+                    LockedCollectionView(collectionID: locked)
+                } else {
+                    LibraryEmptyState(isEmpty: hasListed && ids.isEmpty, hasClips: !store.items.isEmpty)
+                }
+            }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if library.isSelecting {
@@ -177,13 +184,21 @@ struct LibraryGrid: View {
         .accessibilityIdentifier(MobileAccessibilityID.clipGrid)
     }
 
+    /// The collection on screen when it is locked on this device and not opened (ADR 0081).
+    private var lockedScope: UUID? {
+        guard case let .collection(id) = library.filter.scope else { return nil }
+        let lock = appState.secretReveal.collectionLock(locked: lockedCollectionsStored)
+        return lock.isLocked(id) && !lock.isOpen(id) ? id : nil
+    }
+
     private var listingKey: LibraryListing.Key {
         let hideNSFW = NSFWMode(rawValue: nsfwModeRaw) == .hide
             && !(library.isSearching && library.filter.sensitiveOnly)
         return LibraryListing.Key(
             revision: store.revision, query: library.query, filter: library.filter, isSearching: library.isSearching,
             orderVersion: library.orderVersion, textEdits: appState.textEdits, byMeaning: byMeaning,
-            hidesSensitive: hideNSFW, smartRule: smartBoard?.smartPredicateData
+            hidesSensitive: hideNSFW, smartRule: smartBoard?.smartPredicateData,
+            collectionLock: appState.secretReveal.collectionLock(locked: lockedCollectionsStored)
         )
     }
 

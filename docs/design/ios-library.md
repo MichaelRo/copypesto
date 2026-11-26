@@ -103,6 +103,13 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
 - **VoiceOver**: a card is one element ("Link, copypesto.net, Safari, 4 minutes ago, Pinned"); activating copies (or toggles selection during multi-select);
   actions Edit Details, Pin, Share, Show (Hide once shown) and Delete. The detail's picture says its kind, its size and the start of any text read in it.
 
+### A locked collection (ADR 0081)
+- The chip's menu (and the sidebar's) has Lock Collection / Unlock Collection for a plain collection; a locked chip shows
+  a lock as its icon and says Locked to VoiceOver. Until it is opened, the library shows "This collection is locked"
+  and Unlock (`LockedCollectionView`); opening asks through `SecretReveal` and closes with `hideAll()` (leaving the
+  foreground, the History Lock). Its clips never appear in All, Pinned, search or a smart collection
+  (`LibraryScope.ids(collectionLock:)`), nor in the widget, the keyboard, AutoFill or Shortcuts.
+
 ## Search and filters
 Search reads the history index, then adds clips that match by meaning (`SemanticSearch`, the Mac's threshold and
 order: after the text matches) when the on-device model is available. While searching the chip row also offers `When` (Today, Yesterday, Last 7/30 Days, Last 1/3/12 Hours, or a Custom Date Range sheet), `From` (source apps with clip counts), `Sensitive`, `Other Devices` (clips that arrived by sync), and `Ask` (`PadLibraryView` keeps the filter chips visible while searching even with the sidebar open). `Copy All` in `MobileSelectionBar` joins multiple selected text/code clips (`⌘C` or the action bar button) while preserving secret protection. `ClipDetailView` surfaces look-alike clips (`Similar Clips` + `Save as Snippet…`), peer device names, and source apps, while `Settings → Data → Insights` presents `MobileInsightsView`. Link previews are fetched once for a

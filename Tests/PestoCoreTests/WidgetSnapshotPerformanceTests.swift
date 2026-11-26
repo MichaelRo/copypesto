@@ -53,7 +53,7 @@ struct WidgetSnapshotPerformanceTests {
         var snapshot: WidgetSnapshot?
         let time = try ContinuousClock().measure {
             snapshot = try WidgetSnapshotSelection.snapshot(
-                in: ModelContext(container), now: .now, theme: .brand, source: { _ in nil }
+                in: ModelContext(container), now: .now, theme: .brand, lockedCollections: [], source: { _ in nil }
             )
         }
         report("\(name): \(String(format: "%.1f", milliseconds(time))) ms")

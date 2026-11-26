@@ -43,10 +43,12 @@ extension AppState {
 
     /// Deletes a collection through the service, which remembers it. `fromShelf` offers the banner.
     func deleteCollection(id: UUID, fromShelf: Bool) {
-        if selectedCollectionID == id { selectedCollectionID = nil }
         guard let service = storageService else { return }
-        let mark = service.undoHistory.recordedCount
         Task {
+            let reason = String(localized: "delete a locked collection")
+            guard await confirmsLockedCollectionAction(id, reason: reason) else { return }
+            if selectedCollectionID == id { selectedCollectionID = nil }
+            let mark = service.undoHistory.recordedCount
             await attempt("Couldn\u{2019}t delete the collection") {
                 try await service.deleteCollection(id: id)
                 if fromShelf { offerUndo(since: mark) }

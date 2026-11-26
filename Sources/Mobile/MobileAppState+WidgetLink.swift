@@ -44,7 +44,10 @@ extension MobileAppState {
         let id = target.id
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
-        guard let item = try? context.fetch(descriptor).first, WidgetSnapshotSelection.isEligible(item) else {
+        guard let item = try? context.fetch(descriptor).first, WidgetSnapshotSelection.isEligible(
+            item,
+            locked: LockedCollections.current()
+        ) else {
             return .ignored
         }
         switch target.action {

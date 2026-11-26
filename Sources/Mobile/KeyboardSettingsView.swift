@@ -23,6 +23,7 @@ struct KeyboardSettingsView: View {
         QuickInsertSelection.Options(
             storedCollections: storedCollections,
             hiddenCollectionIDs: HiddenCollections.ids(from: hiddenCollections),
+            lockedCollectionIDs: LockedCollections.current(),
             returnsAfterInsert: true
         )
     }

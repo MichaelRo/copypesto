@@ -15,6 +15,7 @@ struct QuickInsertTarget {
             storedCollections: AppDefaults.store.value(for: Setting.keyboardCollections),
             hiddenCollectionIDs: HiddenCollections
                 .ids(from: AppDefaults.store.value(for: Setting.hiddenMobileCollections)),
+            lockedCollectionIDs: LockedCollections.current(),
             returnsAfterInsert: AppDefaults.store.value(for: Setting.keyboardReturnsAfterInsert),
             keyboardSize: KeyboardSize(rawValue: AppDefaults.store.value(for: Setting.keyboardSize)) ?? .medium,
             accent: MobileAppState.widgetTheme(),

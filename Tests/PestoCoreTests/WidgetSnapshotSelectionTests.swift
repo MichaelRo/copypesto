@@ -67,7 +67,8 @@ struct WidgetSnapshotSelectionTests {
 
         func snapshot(fullText: @escaping (ClipboardItem) -> String? = { _ in nil }) throws -> WidgetSnapshot {
             try WidgetSnapshotSelection.snapshot(
-                in: context, now: .now, theme: .brand, reader: .init(source: { _ in nil }, fullText: fullText)
+                in: context, now: .now, theme: .brand, reader: .init(source: { _ in nil }, fullText: fullText),
+                lockedCollections: []
             )
         }
     }
@@ -348,7 +349,7 @@ struct WidgetSnapshotSelectionTests {
         await service.waitForBackgroundWork()
 
         let snapshot = try WidgetSnapshotSelection.snapshot(
-            in: ModelContext(container), now: .now, theme: .brand, source: { _ in nil }
+            in: ModelContext(container), now: .now, theme: .brand, lockedCollections: [], source: { _ in nil }
         )
 
         #expect(snapshot.clips.count == 1)
@@ -424,7 +425,8 @@ struct WidgetSnapshotSelectionTests {
         try store.save(String(repeating: "receipt ", count: 80) + "\n4111 1111 1111 1111", for: deepCardImage.id)
 
         let snapshot = try WidgetSnapshotSelection.snapshot(
-            in: clips.context, now: .now, theme: .brand, recognizedTexts: store, source: { _ in nil }
+            in: clips.context, now: .now, theme: .brand, recognizedTexts: store, lockedCollections: [],
+            source: { _ in nil }
         )
 
         #expect(snapshot.clips.map(\.text) == ["safe note"])

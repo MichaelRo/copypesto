@@ -35,6 +35,7 @@ extension AppDelegate {
         ))
         widgetKeeper = keeper
         appState.onContentCoverChanged = { [weak keeper] in Task { await keeper?.stateMayHaveChanged() } }
+        appState.collectionLockChanged = { [weak keeper] in Task { await keeper?.write() } }
         let interval = Self.widgetPresenceInterval
         widgetPresenceTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak keeper] _ in
             Task { @MainActor in await keeper?.refreshPresence() }

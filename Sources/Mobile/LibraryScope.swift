@@ -43,11 +43,12 @@ enum LibraryScope: Hashable {
         in index: HistoryIndex, query: String, kind: ClipboardType? = nil, kinds: Set<ClipboardType> = [],
         smartRule: ((UUID) -> Bool)? = nil, hidesSensitive: Bool = false, dateCutoff: Date? = nil,
         dateBefore: Date? = nil, sourceBundleID: String? = nil, sensitiveOnly: Bool = false,
-        otherDevicesOnly: Bool = false, now: Date = .now
+        otherDevicesOnly: Bool = false, now: Date = .now, collectionLock: CollectionLock = .none
     )
     -> [UUID] {
         var criteria = HistoryCriteria(
-            hidesSensitive: hidesSensitive, query: query.trimmingCharacters(in: .whitespaces), now: now
+            hidesSensitive: hidesSensitive, query: query.trimmingCharacters(in: .whitespaces), now: now,
+            collectionLock: collectionLock
         )
         let narrowed = kind.map { Set([$0]) } ?? kinds
         if !narrowed.isEmpty {

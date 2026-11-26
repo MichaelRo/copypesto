@@ -25,6 +25,8 @@ final class SecretReveal {
 
     private(set) var shownUnderCover: Set<UUID> = []
     private(set) var shownNSFW: Set<UUID> = []
+    /// Locked collections opened since the app last left the foreground or locked (ADR 0081).
+    private(set) var openedCollections: Set<UUID> = []
     @ObservationIgnored private let authenticator: any UserAuthenticating
     @ObservationIgnored private let grace: AuthenticationGrace
 
@@ -80,6 +82,20 @@ final class SecretReveal {
         await HiddenClipReveal.permitted(isHidden: true, using: authenticator, reason: reason, grace: grace)
     }
 
+    func openCollection(_ id: UUID, reason: String) async -> Bool {
+        guard await authenticate(reason: reason) else { return false }
+        openedCollections.insert(id)
+        return true
+    }
+
+    func closeCollection(_ id: UUID) {
+        openedCollections.remove(id)
+    }
+
+    func collectionLock(locked stored: String) -> CollectionLock {
+        CollectionLock(locked: LockedCollections.ids(from: stored), opened: openedCollections)
+    }
+
     func isNSFWShown(_ id: UUID) -> Bool {
         shownNSFW.contains(id)
     }
@@ -97,6 +113,7 @@ final class SecretReveal {
     }
 
     func hideAll() {
+        openedCollections = []
         if !shown.isEmpty { shown = [] }
         if !shownUnderCover.isEmpty { shownUnderCover = [] }
         if !shownNSFW.isEmpty { shownNSFW = [] }

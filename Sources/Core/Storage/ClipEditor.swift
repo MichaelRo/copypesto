@@ -55,6 +55,7 @@ public struct ClipEditor: Equatable {
         if saved, let before, let edit = ClipEdit(id: item.id, before: before, after: ClipFieldState(item)) {
             undoHistory?.record(UndoEntry(.clipsEdited([edit])))
         }
+        if saved { Self.forgetOutsideIfLocked([item]) }
         if refreshesRow { historyStore?.refreshRow(for: item) }
         if changesFilter { didEdit() }
     }
@@ -93,8 +94,19 @@ public struct ClipEditor: Equatable {
             let edits = zip(items, before).compactMap { ClipEdit(id: $0.id, before: $1, after: ClipFieldState($0)) }
             if !edits.isEmpty { undoHistory?.record(UndoEntry(.clipsEdited(edits))) }
         }
+        if saved { Self.forgetOutsideIfLocked(items) }
         if refreshesRow { items.forEach { historyStore?.refreshRow(for: $0) } }
         if changesFilter { didEdit() }
+    }
+
+    /// A clip moved into a collection locked on this device leaves the last-item file, which `pesto` and AppleScript
+    /// read without asking (ADR 0081).
+    private static func forgetOutsideIfLocked(_ items: [ClipboardItem]) {
+        let locked = LockedCollections.current()
+        guard !locked.isEmpty else { return }
+        for item in items where ShortcutClipSearch.isInLockedCollection(item, locked: locked) {
+            LastItemStore.clear(ifItemID: item.id)
+        }
     }
 
     /// For an edit that was already saved by the caller (a tag added, a note typed in a popover that saves itself).

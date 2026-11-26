@@ -39,7 +39,8 @@ extension MobileAppState {
     }
 
     func exportCollection(_ board: Pinboard) async -> URL? {
-        guard !isHistoryLockedNow(), let container = historyContainer else { return nil }
+        guard !isHistoryLockedNow(), let container = historyContainer,
+              await confirmsLockedCollectionAction(board.id, reason: Self.exportLockedReason) else { return nil }
         let boardID = board.id
         let boardName = board.name
         var exportedURL: URL?

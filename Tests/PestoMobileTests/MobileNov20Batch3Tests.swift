@@ -16,13 +16,13 @@ struct MobileBatch3Tests {
         #expect(!PrivacyCoverHost.covers(in: .background, isLocked: true))
     }
 
-    @Test("iOS keyboard, AutoFill, widgets, and showsClipsOutsideWhileLocked default to true")
+    @Test("iOS keyboard, AutoFill and widgets default to on; clips outside while locked default to off (ADR 0055)")
     func whenFreshDefaults_thenOutsideSurfacesDefaultOn() {
         #expect(Setting.quickInsertEnabled.defaultValue == true)
         #expect(Setting.keyboardEnabled.defaultValue == true)
         #expect(Setting.autoFillEnabled.defaultValue == true)
         #expect(Setting.widgetsEnabled.defaultValue == true)
-        #expect(Setting.showsClipsOutsideWhileLocked.defaultValue == true)
+        #expect(Setting.showsClipsOutsideWhileLocked.defaultValue == false)
     }
 
     @Test("MobileHistoryLock locks immediately on background when timeoutMinutes is zero or unset")

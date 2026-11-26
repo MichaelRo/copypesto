@@ -268,7 +268,13 @@ struct AutomationURLHandlerTests {
         let item = try #require(context.fetch(FetchDescriptor<ClipboardItem>()).first { $0.id == id })
         item.collectionID = board.id
         try context.saveOrRollback()
-        let shown = try WidgetSnapshotSelection.snapshot(in: context, now: .now, theme: .brand, source: { _ in nil })
+        let shown = try WidgetSnapshotSelection.snapshot(
+            in: context,
+            now: .now,
+            theme: .brand,
+            lockedCollections: [],
+            source: { _ in nil }
+        )
         #expect(shown.clips(inCollection: board.id).map(\.id) == [id])
 
         item.sensitivityRaw = SensitivityCategory.apiKey.rawValue

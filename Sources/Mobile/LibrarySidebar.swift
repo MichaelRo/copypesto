@@ -83,6 +83,7 @@ struct CollectionMenu: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
     @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
+    @AppStorage(Setting.lockedCollections) private var lockedStored: String
     @State private var isExporting = false
 
     private var index: Int? {
@@ -97,6 +98,9 @@ struct CollectionMenu: View {
                 isExporting = true
                 Task {
                     defer { isExporting = false }
+                    guard await appState.confirmsLockedCollectionAction(
+                        board.id, reason: String(localized: "export a locked collection")
+                    ) else { return }
                     if let url = await appState.exportCollection(board) {
                         library.sharing = ClipShare(file: url)
                     }
@@ -122,6 +126,16 @@ struct CollectionMenu: View {
                 }
             }
         }
+        if !board.isSmart {
+            let isLocked = LockedCollections.ids(from: lockedStored).contains(board.id)
+            Button(
+                isLocked ? "Unlock Collection" : "Lock Collection",
+                systemImage: isLocked ? "lock.open" : "lock"
+            ) {
+                let id = board.id
+                Task { _ = await appState.setCollection(id, locked: !isLocked) }
+            }
+        }
         if allowsHideOnPhone {
             Button("Hide Collection", systemImage: "eye.slash") {
                 hiddenStored = HiddenCollections.toggle(board.id, in: hiddenStored)
@@ -134,7 +148,12 @@ struct CollectionMenu: View {
         Divider()
         Button("Delete Collection", systemImage: "trash", role: .destructive) {
             let id = board.id
-            Task { await appState.deleteCollection(id) }
+            Task {
+                guard await appState.confirmsLockedCollectionAction(
+                    id, reason: String(localized: "delete a locked collection")
+                ) else { return }
+                await appState.deleteCollection(id)
+            }
         }
     }
 }

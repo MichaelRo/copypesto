@@ -53,6 +53,8 @@ public enum QuickInsertSelection {
     public struct Options: Equatable, Sendable {
         public var collectionMode: CollectionMode
         public var hiddenCollectionIDs: Set<UUID>
+        /// Collections locked on this device (ADR 0081): neither their chips nor their clips are carried.
+        public var lockedCollectionIDs: Set<UUID>
         public var returnsAfterInsert: Bool
         public var keyboardSize: KeyboardSize
         public var accent: WidgetSnapshot.Theme
@@ -69,6 +71,7 @@ public enum QuickInsertSelection {
             collectionIDs: [UUID] = [],
             collectionMode: CollectionMode? = nil,
             hiddenCollectionIDs: Set<UUID> = [],
+            lockedCollectionIDs: Set<UUID> = [],
             returnsAfterInsert: Bool = true,
             keyboardSize: KeyboardSize = .medium,
             accent: WidgetSnapshot.Theme = .brand,
@@ -78,6 +81,7 @@ public enum QuickInsertSelection {
         ) {
             self.collectionMode = collectionMode ?? .custom(collectionIDs)
             self.hiddenCollectionIDs = hiddenCollectionIDs
+            self.lockedCollectionIDs = lockedCollectionIDs
             self.returnsAfterInsert = returnsAfterInsert
             self.keyboardSize = keyboardSize
             self.accent = accent
@@ -91,6 +95,7 @@ public enum QuickInsertSelection {
         public init(
             storedCollections: String,
             hiddenCollectionIDs: Set<UUID> = [],
+            lockedCollectionIDs: Set<UUID> = [],
             returnsAfterInsert: Bool,
             keyboardSize: KeyboardSize = .medium,
             accent: WidgetSnapshot.Theme = .brand,
@@ -109,6 +114,7 @@ public enum QuickInsertSelection {
                 collectionMode = .custom(ids)
             }
             self.hiddenCollectionIDs = hiddenCollectionIDs
+            self.lockedCollectionIDs = lockedCollectionIDs
             self.returnsAfterInsert = returnsAfterInsert
             self.keyboardSize = keyboardSize
             self.accent = accent
@@ -128,10 +134,15 @@ public enum QuickInsertSelection {
             case .all:
                 boards
                     .sorted { $0.sortOrder < $1.sortOrder }
-                    .filter { !$0.isSnippetsSmartCollection && !hiddenCollectionIDs.contains($0.id) }
+                    .filter {
+                        !$0.isSnippetsSmartCollection && !hiddenCollectionIDs.contains($0.id)
+                            && !lockedCollectionIDs.contains($0.id)
+                    }
             case let .custom(ids):
                 ids.compactMap { id in
-                    boards.first { $0.id == id && !hiddenCollectionIDs.contains($0.id) }
+                    boards.first {
+                        $0.id == id && !hiddenCollectionIDs.contains($0.id) && !lockedCollectionIDs.contains($0.id)
+                    }
                 }
             }
             return Array(eligible.prefix(QuickInsertPolicy.maxCollections))
@@ -182,7 +193,7 @@ public enum QuickInsertSelection {
         let chosen = try members(of: options, in: context)
         let lists = try lists(
             pinned: context.fetch(pinned), recent: context.fetch(recent), collections: chosen, reader: reader,
-            rememberFillIns: options.rememberFillIns
+            rememberFillIns: options.rememberFillIns, locked: options.lockedCollectionIDs
         )
         return QuickInsertSet(
             createdAt: now, entries: lists.entries, collections: lists.collections,
@@ -194,7 +205,9 @@ public enum QuickInsertSelection {
 
     public static func members(of options: Options, in context: ModelContext) throws -> [Members] {
         let boards = try context.fetch(FetchDescriptor<Pinboard>(sortBy: [SortDescriptor(\.sortOrder)]))
-        return try members(ofBoards: options.resolvedCollections(from: boards), in: context)
+        return try members(
+            ofBoards: options.resolvedCollections(from: boards), in: context, locked: options.lockedCollectionIDs
+        )
     }
 
     /// The chosen collections that still exist, in the person's order, at most `maxCollections`: a plain one's newest
@@ -204,7 +217,10 @@ public enum QuickInsertSelection {
         return try members(ofBoards: Options(collectionIDs: ids).resolvedCollections(from: boards), in: context)
     }
 
-    private static func members(ofBoards boards: [Pinboard], in context: ModelContext) throws -> [Members] {
+    private static func members(
+        ofBoards boards: [Pinboard], in context: ModelContext, locked: Set<UUID> = []
+    ) throws
+    -> [Members] {
         var window: [ClipboardItem]?
         var found: [Members] = []
         for collection in boards.prefix(QuickInsertPolicy.maxCollections) {
@@ -218,7 +234,7 @@ public enum QuickInsertSelection {
                     window = try context.fetch(newest)
                 }
                 items = WidgetSnapshotSelection.smartMatches(
-                    of: collection, in: window ?? [], limit: QuickInsertPolicy.maxCollectionClips
+                    of: collection, in: window ?? [], limit: QuickInsertPolicy.maxCollectionClips, locked: locked
                 )
             } else {
                 let id = collection.id
@@ -257,7 +273,7 @@ public enum QuickInsertSelection {
 
     public static func lists(
         pinned: [ClipboardItem], recent: [ClipboardItem], collections: [Members], reader: Reader,
-        rememberFillIns: Bool = true
+        rememberFillIns: Bool = true, locked: Set<UUID> = []
     )
     -> (entries: [QuickInsertEntry], collections: [QuickInsertCollection]) {
         var budget = QuickInsertPolicy.maxTotalBytes
@@ -266,7 +282,7 @@ public enum QuickInsertSelection {
         var latest: [QuickInsertEntry] = []
         var chosen: Set<UUID> = []
         func entry(_ item: ClipboardItem, section: QuickInsertEntry.Section) -> QuickInsertEntry? {
-            guard isEligible(item) else { return nil }
+            guard isEligible(item, locked: locked) else { return nil }
             if item.type == .image {
                 guard !isFullSection(section, pins: pins.count, snippets: snippets.count, latest: latest.count),
                       let made = makeImageEntry(item, section: section, reader: reader, budget: &budget) else
@@ -476,7 +492,7 @@ public extension QuickInsertSelection {
         return (nil, true)
     }
 
-    static func isEligible(_ item: ClipboardItem) -> Bool {
-        insertableTypes.contains(item.type) && ShortcutClipSearch.isOfferedOutsidePesto(item)
+    static func isEligible(_ item: ClipboardItem, locked: Set<UUID>) -> Bool {
+        insertableTypes.contains(item.type) && ShortcutClipSearch.isOfferedOutsidePesto(item, locked: locked)
     }
 }

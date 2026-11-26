@@ -25,13 +25,13 @@ struct ShortcutClipSearchTests {
         await service.waitForBackgroundWork()
         let context = ModelContext(container)
 
-        let everything = try ShortcutClipSearch.search("", in: context, nsfwMode: .blur)
+        let everything = try ShortcutClipSearch.search("", in: context, nsfwMode: .blur, locked: [])
         #expect(everything.map(\.title) == ["dinner at eight, token below"])
-        #expect(try ShortcutClipSearch.search("ghp_", in: context, nsfwMode: .blur).isEmpty)
-        #expect(try ShortcutClipSearch.search("dinner", in: context, nsfwMode: .blur).first?.type == .text)
+        #expect(try ShortcutClipSearch.search("ghp_", in: context, nsfwMode: .blur, locked: []).isEmpty)
+        #expect(try ShortcutClipSearch.search("dinner", in: context, nsfwMode: .blur, locked: []).first?.type == .text)
 
         let ids = try context.fetch(FetchDescriptor<ClipboardItem>()).map(\.id)
-        let byID = try ShortcutClipSearch.clips(ids: ids, in: context, nsfwMode: .blur)
+        let byID = try ShortcutClipSearch.clips(ids: ids, in: context, nsfwMode: .blur, locked: [])
         #expect(byID.count == 1)
         #expect(!byID.contains { $0.title.contains("ghp_") })
     }
@@ -45,10 +45,10 @@ struct ShortcutClipSearchTests {
         )
         context.insert(item)
         item.isNSFW = true
-        #expect(!ShortcutClipSearch.isOffered(item, nsfwMode: .blur))
-        #expect(ShortcutClipSearch.isOffered(item, nsfwMode: .show))
+        #expect(!ShortcutClipSearch.isOffered(item, nsfwMode: .blur, locked: []))
+        #expect(ShortcutClipSearch.isOffered(item, nsfwMode: .show, locked: []))
         item.isNSFW = false
         item.analysisPending = true
-        #expect(!ShortcutClipSearch.isOffered(item, nsfwMode: .show))
+        #expect(!ShortcutClipSearch.isOffered(item, nsfwMode: .show, locked: []))
     }
 }

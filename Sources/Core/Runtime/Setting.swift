@@ -60,7 +60,10 @@ public enum Setting {
     public static let keyboardEnabled = SettingKey("keyboardEnabled", default: true)
     public static let autoFillEnabled = SettingKey("autoFillEnabled", default: true)
     public static let widgetsEnabled = SettingKey("widgetsEnabled", default: true)
-    public static let showsClipsOutsideWhileLocked = SettingKey("showsClipsOutsideWhileLocked", default: true)
+    /// Off by default (ADR 0055, restored by ADR 0081): with the History Lock on, widgets, AutoFill and the keyboard
+    /// are
+    /// empty unless the person turns this on.
+    public static let showsClipsOutsideWhileLocked = SettingKey("showsClipsOutsideWhileLocked", default: false)
     /// iOS: the collections the keyboard and AutoFill carry, in the person's order, as comma-separated ids or `*` for
     /// all eligible collections (ADR 0062).
     public static let keyboardCollections = SettingKey(
@@ -71,6 +74,9 @@ public enum Setting {
     public static let defaultPasteCollectionID = SettingKey("defaultPasteCollectionID", default: "")
     /// iOS: collections hidden from the iPhone chip bar on this device only, as comma-separated UUID strings.
     public static let hiddenMobileCollections = SettingKey("hiddenMobileCollections", default: "")
+    /// Collections locked on this device (ADR 0081), as comma-separated UUID strings: their clips show only inside
+    /// the collection, after Touch ID, Face ID or the password, and never leave Pesto.
+    public static let lockedCollections = SettingKey("lockedCollections", default: "")
     /// iOS: after a tap inserts a clip, the keyboard moves to the person's own keyboard (ADR 0062).
     public static let keyboardReturnsAfterInsert = SettingKey("keyboardReturnsAfterInsert", default: true)
     /// iOS: how large the keyboard's clip cards are (Small, Medium, Large).
@@ -189,7 +195,7 @@ public enum Setting {
         syncFolderBookmark.name, syncDeviceSerial.name, addsCopiesOnOpen.name, lastSeenPasteboardChange.name,
         quickInsertEnabled.name, keyboardEnabled.name, autoFillEnabled.name, widgetsEnabled.name,
         showsClipsOutsideWhileLocked.name, keyboardCollections.name, defaultPasteCollectionID.name,
-        hiddenMobileCollections.name,
+        hiddenMobileCollections.name, lockedCollections.name,
         keyboardReturnsAfterInsert.name, keyboardSize.name, widgetLastCopy.name, widgetPages.name, deviceID.name,
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,

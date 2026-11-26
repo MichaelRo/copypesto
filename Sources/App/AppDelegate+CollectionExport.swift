@@ -7,6 +7,16 @@ import SwiftData
 extension AppDelegate {
     /// The one way a collection is exported, from its menu on the shelf and from Settings. The shelf closes first: a
     /// save panel that took the keyboard would close it under the panel.
+    /// A locked collection is exported only after Touch ID or the password (ADR 0081).
+    func requestCollectionExportAfterAsking(id: UUID) {
+        Task { @MainActor in
+            guard await appState.confirmsLockedCollectionAction(
+                id, reason: String(localized: "export a locked collection")
+            ) else { return }
+            requestCollectionExport(id: id)
+        }
+    }
+
     func requestCollectionExport(id: UUID) {
         guard appState.isOverlayVisible else {
             runCollectionExport(id: id)

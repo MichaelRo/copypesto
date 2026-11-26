@@ -80,12 +80,13 @@ struct ShelfEmptyStateView: View {
         switch action {
         case .openPrivacySettings: "Open Privacy Settings"
         case .resumeCapturing: "Resume Capturing"
+        case .unlockCollection: "Unlock"
         }
     }
 
     private var illustration: String {
         switch state {
-        case .storageUnavailable: "IllustrationUnavailable"
+        case .storageUnavailable, .lockedCollection: "IllustrationUnavailable"
         case .noResults: "IllustrationNoResults"
         case .emptyCollection, .noClips, .emptyAppFilter: "IllustrationNoClips"
         case .captureBlocked: "IllustrationBlocked"
@@ -96,6 +97,7 @@ struct ShelfEmptyStateView: View {
     private var title: String {
         switch state {
         case .storageUnavailable: "History is unavailable"
+        case .lockedCollection: "This collection is locked"
         case .noResults: "No results"
         case .emptyCollection: "This collection is empty"
         case let .emptyAppFilter(name): "No clips from \(name)"
@@ -115,6 +117,8 @@ struct ShelfEmptyStateView: View {
                 : advice?.sentence ?? NoResultsAdvice.make(query: query).sentence
         case .emptyCollection:
             "Drag a clip onto the collection to add it."
+        case .lockedCollection:
+            "Its clips show only here, after Touch ID or your password."
         case let .emptyAppFilter(name):
             "Clips you copy while using \(name) will appear here."
         case .captureBlocked:

@@ -46,6 +46,23 @@ struct LibraryScopeTests {
         #expect(LibraryScope.collection(board.id).ids(in: index, query: "") == [kept.id])
     }
 
+    @Test("a locked collection's clips leave All and search, and show on its chip only once opened (ADR 0081)")
+    func whenACollectionIsLocked_thenItsClipsShowOnlyOnItsOpenedChip() async throws {
+        let library = try await MobileTestLibrary()
+        let hidden = try await library.add("salad secret")
+        let free = try await library.add("salad recipe")
+        let board = try #require(library.state.addCollection(named: "Vault", existing: []))
+        library.state.moveToCollection(hidden, collectionID: board.id)
+        let index = try #require(library.store.searchIndex())
+        let closed = CollectionLock(locked: [board.id])
+        let opened = CollectionLock(locked: [board.id], opened: [board.id])
+
+        #expect(LibraryScope.all.ids(in: index, query: "", collectionLock: opened) == [free.id])
+        #expect(LibraryScope.all.ids(in: index, query: "salad", collectionLock: opened) == [free.id])
+        #expect(LibraryScope.collection(board.id).ids(in: index, query: "", collectionLock: closed).isEmpty)
+        #expect(LibraryScope.collection(board.id).ids(in: index, query: "", collectionLock: opened) == [hidden.id])
+    }
+
     @Test("the kinds the library filters by are the six kinds of clip")
     func whenListingKinds_thenEveryKindIsThere() {
         #expect(Set(LibraryScope.filteredKinds) == Set(ClipboardType.allCases))

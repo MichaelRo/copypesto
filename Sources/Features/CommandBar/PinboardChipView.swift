@@ -26,8 +26,19 @@ struct PinboardChipView: View {
     var onReorderChip: ((UUID, CollectionReorder.Side) -> Void)?
 
     @Environment(AppState.self) private var appState: AppState
+    @AppStorage(Setting.lockedCollections) private var lockedCollectionsStored: String
     @State private var isEditing = false
     @State private var isDropTarget = false
+
+    private var isLocked: Bool {
+        LockedCollections.ids(from: lockedCollectionsStored).contains(pinboard.id)
+    }
+
+    private func toggleLock() {
+        let id = pinboard.id
+        let locks = !isLocked
+        Task { _ = await appState.setCollection(id, locked: locks) }
+    }
 
     private var isDragSource: Bool {
         appState.draggingPinboardID == pinboard.id
@@ -39,6 +50,7 @@ struct PinboardChipView: View {
             symbolName: pinboard.symbolName,
             color: Color(hex: pinboard.colorHex) ?? accent,
             isSelected: isSelected,
+            isLocked: isLocked,
             onSelect: onSelect
         )
         // The chip being dragged stays in the row at 35% opacity so the row never changes width, and one accent bar
@@ -107,6 +119,10 @@ struct PinboardChipView: View {
                 Divider()
                 Button("Move Left") { onMove?(-1) }.disabled(!canMoveLeft)
                 Button("Move Right") { onMove?(1) }.disabled(!canMoveRight)
+                if !pinboard.isSmart {
+                    Divider()
+                    Button(isLocked ? "Unlock Collection" : "Lock Collection") { toggleLock() }
+                }
                 Divider()
                 Button("Delete", role: .destructive) { onDelete() }
             }
@@ -115,6 +131,9 @@ struct PinboardChipView: View {
             .accessibilityAction(named: "Export") { onExport() }
             .accessibilityAction(named: "Import") { appState.importCollection?() }
             .accessibilityAction(named: "Delete") { onDelete() }
+            .accessibilityAction(named: isLocked ? "Unlock Collection" : "Lock Collection") {
+                if !pinboard.isSmart { toggleLock() }
+            }
             .accessibilityAction(named: "Move Left") { if canMoveLeft { onMove?(-1) } }
             .accessibilityAction(named: "Move Right") { if canMoveRight { onMove?(1) } }
             .help("\(pinboard.name) — right-click for options")

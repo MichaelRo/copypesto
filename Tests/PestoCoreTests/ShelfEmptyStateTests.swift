@@ -85,4 +85,14 @@ struct ShelfEmptyStateTests {
             #expect(state.action == nil)
         }
     }
+
+    @Test("a locked collection that is not opened says it is locked and offers Unlock, even while searching")
+    func whenCollectionLocked_thenLockedWithUnlock() {
+        let state = ShelfEmptyState.evaluate(.init(
+            hasStorage: true, visibleCount: 0, isSearching: true, inCollection: true, isPaused: false,
+            captureBlocked: false, collectionIsLocked: true
+        ))
+        #expect(state == .lockedCollection)
+        #expect(state?.action == .unlockCollection)
+    }
 }

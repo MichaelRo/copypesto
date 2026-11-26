@@ -19,7 +19,9 @@ final class SearchHistoryCommand: NSScriptCommand {
             )
             descriptor.fetchLimit = 200
             guard let items = try? context.fetch(descriptor) else { return [] }
+            let locked = LockedCollections.current()
             let matches = items
+                .filter { !ShortcutClipSearch.isInLockedCollection($0, locked: locked) }
                 .filter { $0.displayPreviewText.localizedCaseInsensitiveContains(query) }
                 .prefix(20)
                 .map(\.displayPreviewText)

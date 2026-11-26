@@ -15,6 +15,8 @@ public enum WidgetSnapshotSelection {
         public var fullText: (ClipboardItem) -> String?
         public var recognizedText: (ClipboardItem) -> String?
         public var sourceApp: (ClipboardItem) -> SourceAppLook
+        /// Collections locked on this device (ADR 0081), whose clips are never shown.
+        public var lockedCollections: Set<UUID> = []
 
         public init(
             source: @escaping (ClipboardItem) -> String?, thumbnail: @escaping (ClipboardItem) -> Data? = { _ in nil },
@@ -62,6 +64,7 @@ public enum WidgetSnapshotSelection {
         in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, previous: WidgetSnapshot? = nil,
         recognizedTexts: RecognizedTextStore = RecognizedTextStore(),
         sourceApp: @escaping (ClipboardItem) -> SourceAppLook = { $0.sourceAppLook },
+        lockedCollections: Set<UUID>,
         source: @escaping (ClipboardItem) -> String?
     ) throws
         -> WidgetSnapshot
@@ -86,13 +89,16 @@ public enum WidgetSnapshotSelection {
             },
             sourceApp: sourceApp
         )
-        return try snapshot(in: context, now: now, theme: theme, reader: reader)
+        return try snapshot(in: context, now: now, theme: theme, reader: reader, lockedCollections: lockedCollections)
     }
 
     public static func snapshot(
-        in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, reader: Reader
+        in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, reader: Reader,
+        lockedCollections: Set<UUID>
     ) throws
     -> WidgetSnapshot {
+        var reader = reader
+        reader.lockedCollections = lockedCollections
         var newest = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
         newest.fetchLimit = WidgetSnapshotPolicy.scanLimit
         var pinned = FetchDescriptor<ClipboardItem>(
@@ -101,7 +107,10 @@ public enum WidgetSnapshotSelection {
         )
         pinned.fetchLimit = WidgetSnapshotPolicy.scanLimit
         let lists = try lists(
-            newest: context.fetch(newest), pinned: context.fetch(pinned), collections: members(in: context),
+            newest: context.fetch(newest), pinned: context.fetch(pinned), collections: members(
+                in: context,
+                locked: lockedCollections
+            ),
             reader: reader
         )
         return WidgetSnapshot(
@@ -113,10 +122,10 @@ public enum WidgetSnapshotSelection {
     /// The first collections by `sortOrder` (as Pesto's own lists sort them), each with the clips that may be shown, in
     /// its order: a plain collection's newest `collectionScanLimit` members as `CollectionOrder` lists them, a smart
     /// one's matches among the newest `smartScanLimit` clips, newest first.
-    public static func members(in context: ModelContext) throws -> [Members] {
-        var boards = FetchDescriptor<Pinboard>(sortBy: [SortDescriptor(\.sortOrder)])
-        boards.fetchLimit = WidgetSnapshotPolicy.maxCollections
-        let collections = try context.fetch(boards)
+    public static func members(in context: ModelContext, locked: Set<UUID> = []) throws -> [Members] {
+        let boards = FetchDescriptor<Pinboard>(sortBy: [SortDescriptor(\.sortOrder)])
+        let collections = try context.fetch(boards).filter { !locked.contains($0.id) }
+            .prefix(WidgetSnapshotPolicy.maxCollections)
         var window: [ClipboardItem]?
         var members: [Members] = []
         for board in collections {
@@ -127,7 +136,7 @@ public enum WidgetSnapshotSelection {
                     newest.fetchLimit = WidgetSnapshotPolicy.smartScanLimit
                     window = try context.fetch(newest)
                 }
-                items = smartMatches(of: board, in: window ?? [], limit: WidgetSnapshotPolicy.maxClips)
+                items = smartMatches(of: board, in: window ?? [], limit: WidgetSnapshotPolicy.maxClips, locked: locked)
             } else {
                 let id = board.id
                 var newest = FetchDescriptor<ClipboardItem>(
@@ -135,7 +144,7 @@ public enum WidgetSnapshotSelection {
                     sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
                 )
                 newest.fetchLimit = WidgetSnapshotPolicy.collectionScanLimit
-                let window = try context.fetch(newest).filter(isEligible)
+                let window = try context.fetch(newest).filter { isEligible($0, locked: locked) }
                 items = Array(CollectionOrder.sorted(window).prefix(WidgetSnapshotPolicy.maxClips))
             }
             members.append(Members(collection: widgetCollection(board), items: items))
@@ -199,12 +208,12 @@ public enum WidgetSnapshotSelection {
         lists(newest: newest, pinned: [], reader: reader).clips
     }
 
-    public static func isEligible(_ item: ClipboardItem) -> Bool {
-        ShortcutClipSearch.isOfferedOutsidePesto(item)
+    public static func isEligible(_ item: ClipboardItem, locked: Set<UUID>) -> Bool {
+        ShortcutClipSearch.isOfferedOutsidePesto(item, locked: locked)
     }
 
     private static func mayInclude(_ item: ClipboardItem, reader: Reader) -> Bool {
-        guard isEligible(item) else { return false }
+        guard isEligible(item, locked: reader.lockedCollections) else { return false }
         guard item.type == .image else { return true }
         if SensitiveContentDetector.detectAnywhere(in: item.displayPreviewText) != nil {
             return false
@@ -216,11 +225,14 @@ public enum WidgetSnapshotSelection {
     }
 
     /// A smart collection whose rules do not decode or compile shows nothing, as it does in Pesto.
-    static func smartMatches(of board: Pinboard, in window: [ClipboardItem], limit: Int) -> [ClipboardItem] {
+    static func smartMatches(
+        of board: Pinboard, in window: [ClipboardItem], limit: Int, locked: Set<UUID>
+    )
+    -> [ClipboardItem] {
         guard let data = board.smartPredicateData, let rules = try? SmartCollectionPredicate.decodeRuleSet(data),
               SmartCollectionPredicate.canCompileRuleSet(rules) else { return [] }
         var matches: [ClipboardItem] = []
-        for item in window where matches.count < limit && isEligible(item) {
+        for item in window where matches.count < limit && isEligible(item, locked: locked) {
             if rules.matches(item) { matches.append(item) }
         }
         return matches

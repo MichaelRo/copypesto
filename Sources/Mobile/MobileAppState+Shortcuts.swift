@@ -62,14 +62,25 @@ extension MobileAppState {
         boot()
         guard let context = historyContainer?.mainContext else { throw ShortcutFailure.notReady }
         guard !isHistoryLockedNow() else { return [] }
-        return try ShortcutClipSearch.search(query, in: context, nsfwMode: .current(), limit: limit)
+        return try ShortcutClipSearch.search(
+            query,
+            in: context,
+            nsfwMode: .current(),
+            locked: LockedCollections.current(),
+            limit: limit
+        )
     }
 
     func shortcutClips(ids: [UUID]) throws -> [ShortcutClip] {
         boot()
         guard let context = historyContainer?.mainContext else { throw ShortcutFailure.notReady }
         guard !isHistoryLockedNow() else { return [] }
-        return try ShortcutClipSearch.clips(ids: ids, in: context, nsfwMode: .current())
+        return try ShortcutClipSearch.clips(
+            ids: ids,
+            in: context,
+            nsfwMode: .current(),
+            locked: LockedCollections.current()
+        )
     }
 
     static func shortcutCapture(text: String?, file: Data?, fileType: UTType?) -> PasteboardCapture? {

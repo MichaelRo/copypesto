@@ -11,6 +11,7 @@ struct LibraryChipRow: View {
     @Environment(\.pestoAccent) private var accent
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
+    @AppStorage(Setting.lockedCollections) private var lockedStored: String
     @State private var showsCustomDateRange = false
 
     private var visibleCollections: [Pinboard] {
@@ -85,10 +86,12 @@ struct LibraryChipRow: View {
             chipButton(chip, label: LibraryScope.pinned.title, symbol: "pin")
         case let .collection(id):
             if let board = collections.first(where: { $0.id == id }) {
+                let isLocked = LockedCollections.ids(from: lockedStored).contains(id)
                 chipButton(
-                    chip, label: board.name, symbol: board.symbolName,
+                    chip, label: board.name, symbol: isLocked ? "lock.fill" : board.symbolName,
                     tint: Color(hex: board.colorHex)
                 )
+                .accessibilityValue(isLocked ? String(localized: "Locked") : "")
                 .contextMenu {
                     CollectionMenu(board: board, collections: visibleCollections, allowsHideOnPhone: true)
                 }

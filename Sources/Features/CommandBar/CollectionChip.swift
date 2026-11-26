@@ -14,6 +14,8 @@ struct CollectionChip: View {
     let symbolName: String
     let color: Color
     var isSelected: Bool = false
+    /// Locked on this Mac (ADR 0081): a small lock follows the name.
+    var isLocked = false
     /// What VoiceOver says when it should differ from the visible name ("All" is "All collections").
     var spokenName: String?
     var onSelect: (() -> Void)?
@@ -46,6 +48,7 @@ struct CollectionChip: View {
             }
             .help(name)
             .accessibilityLabel(spokenName ?? name)
+            .accessibilityValue(isLocked ? String(localized: "Locked") : "")
             .accessibilityAddTraits(isSelected ? .isSelected : [])
             .accessibilityIdentifier(AccessibilityID.collectionChip(name))
             .animation(Motion.animation(.pestoQuick), value: isSelected)
@@ -61,6 +64,12 @@ struct CollectionChip: View {
                 .truncationMode(.tail)
                 .frame(maxWidth: 200)
                 .fixedSize(horizontal: true, vertical: false)
+            if isLocked {
+                Image(systemName: "lock.fill")
+                    .imageScale(.small)
+                    .pestoQuiet()
+                    .accessibilityHidden(true)
+            }
         }
         .font(.caption.weight(.medium))
         .padding(.horizontal, 9)

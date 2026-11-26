@@ -82,7 +82,13 @@ struct CollectionListView: View {
                 )
             } onDelete: {
                 guard let board = editing else { return }
-                appState.deleteCollection(id: board.id, fromShelf: false)
+                let id = board.id
+                Task {
+                    guard await appState.confirmsLockedCollectionAction(
+                        id, reason: String(localized: "delete a locked collection")
+                    ) else { return }
+                    appState.deleteCollection(id: id, fromShelf: false)
+                }
             }
         }
     }

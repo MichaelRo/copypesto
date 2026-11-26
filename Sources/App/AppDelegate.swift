@@ -342,7 +342,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         appState.openAbout = { [weak self] in self?.openAboutWindow() }
         appState.showWelcome = { [weak self] in self?.showOnboarding() }
-        appState.exportCollection = { [weak self] id in self?.requestCollectionExport(id: id) }
+        appState.exportCollection = { [weak self] id in self?.requestCollectionExportAfterAsking(id: id) }
         appState.importCollection = { [weak self] in self?.requestCollectionImport() }
         appState.openFloatingWindowFromOverlay = { [weak self] in
             guard let self else { return }
@@ -495,6 +495,7 @@ extension AppDelegate {
                 // A Mac that slept or locked its screen is not the person who just authenticated.
                 AuthenticationGrace.shared.clear()
                 Task { @MainActor [weak self] in
+                    self?.appState.openedLockedCollections = []
                     if self?.pasteTasks.isRunning == true {
                         Self.pasteLogger.notice("[cancel] reason=wake-or-screen-unlock")
                     }

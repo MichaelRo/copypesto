@@ -153,7 +153,13 @@ extension CommandBarView {
     }
 
     func deletePinboard(_ pinboard: Pinboard) {
-        appState.deleteCollection(id: pinboard.id, fromShelf: true)
+        let id = pinboard.id
+        Task {
+            guard await appState.confirmsLockedCollectionAction(
+                id, reason: String(localized: "delete a locked collection")
+            ) else { return }
+            appState.deleteCollection(id: id, fromShelf: true)
+        }
     }
 
     func persistPinboardOrder(_ order: [UUID], moved id: UUID? = nil) {

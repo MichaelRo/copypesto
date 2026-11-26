@@ -90,6 +90,8 @@ public enum Setting {
     )
     /// When the History Lock was last switched on; an unlock from before it does not count (`HistoryLockPolicy`).
     public static let historyLockSwitchedOnAt = SettingKey("historyLockSwitchedOnAt", default: Date.distantPast)
+    /// When the person last saved a backup from the iPhone or iPad by hand (ADR 0078); distant past until then.
+    public static let lastManualBackup = SettingKey("lastManualBackup", default: Date.distantPast)
     public static let authenticationGraceMinutes = SettingKey(
         "authenticationGraceMinutes", default: 5
     )
@@ -192,7 +194,7 @@ public enum Setting {
         opensQuickMenuAtCursor.name,
         screenSharingPrivacy.name,
         biometricLockEnabled.name,
-        biometricLockTimeoutMinutes.name, historyLockSwitchedOnAt.name,
+        biometricLockTimeoutMinutes.name, historyLockSwitchedOnAt.name, lastManualBackup.name,
         authenticationGraceMinutes.name, linkPreviews.name,
         appleIntelligenceEnabled.name, pinnedWindowAutoPaste.name, pictureSaveFolder.name, soundEffects.name,
         searchHistory.name,

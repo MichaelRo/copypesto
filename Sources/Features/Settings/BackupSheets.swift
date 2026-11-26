@@ -4,8 +4,6 @@ import PestoCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-private let backupFileType = UTType(filenameExtension: "pestobackup") ?? .data
-
 /// Shown once, when a backup key is first made. Copying uses the concealed marker, so Pesto's own watcher does not save
 /// the key into the history it protects.
 struct RecoveryKeyNotice: View {
@@ -308,7 +306,7 @@ struct RestoreSheet: View {
 
     private func chooseFile() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [backupFileType, .data]
+        panel.allowedContentTypes = [BackupFileType.utType, .data]
         panel.allowsMultipleSelection = false
         let configuration = RuntimeConfiguration.current
         if configuration.mode == .uiTest, configuration.keyLossFixture {

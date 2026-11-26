@@ -398,6 +398,10 @@ private extension SettingsView {
                 Label("Insights", systemImage: "chart.bar.xaxis")
             }
             .accessibilityIdentifier(MobileAccessibilityID.insightsButton)
+            NavigationLink(value: LibraryModel.SettingsDestination.backup) {
+                Label("Backup", systemImage: "lock.doc")
+            }
+            .accessibilityIdentifier(MobileAccessibilityID.backupSettingsButton)
             Button("Import Collection (.pesto)\u{2026}") {
                 activeImport = .collection
             }
@@ -421,7 +425,10 @@ private extension SettingsView {
         } header: {
             SettingsSectionHeader(title: "Data", symbol: "externaldrive")
         } footer: {
-            Text("Collections share as .pesto files with their clips. History exports save text clips as JSON.")
+            Text(
+                "Backups are encrypted files you can restore on any iPhone, iPad or Mac. " +
+                    "Collections share as .pesto files with their clips. History exports save text clips as JSON."
+            )
         }
     }
 }
@@ -455,6 +462,7 @@ struct SettingsSheet: View {
                     case .keyboard: KeyboardSettingsView()
                     case .sync: SyncSettingsView()
                     case .insights: MobileInsightsView()
+                    case .backup: BackupSettingsView()
                     }
                 }
         }

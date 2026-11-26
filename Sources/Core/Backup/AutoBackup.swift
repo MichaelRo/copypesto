@@ -153,6 +153,21 @@ public struct AutoBackupSettings {
         return "Pesto Backup \u{2013} \(safeMacName(name)) (\(fragment)).pestobackup"
     }
 
+    /// A backup saved by hand from an iPhone or iPad (ADR 0078): named like the Mac's, with the minute it was made,
+    /// so two saved on one day do not replace each other in the folder the person picks.
+    public static func exportFileName(
+        device name: String, deviceID: String, date: Date, timeZone: TimeZone = .current
+    )
+    -> String {
+        let stem = fileName(forMac: name, deviceID: deviceID).replacingOccurrences(of: ".pestobackup", with: "")
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "yyyy-MM-dd HH.mm"
+        return "\(stem) \(formatter.string(from: date)).\(BackupFileType.fileExtension)"
+    }
+
     /// The name used before the device id was added; a file under it is adopted when it carries this Mac's header.
     public static func legacyFileName(forMac name: String) -> String {
         "Pesto Backup \u{2013} \(safeMacName(name)).pestobackup"

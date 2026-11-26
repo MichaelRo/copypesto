@@ -96,8 +96,9 @@ The full list of what is stored and sent, including what encryption does *not* p
   translate (into English, or English into Spanish), extract, describe a picture. Grayed out with the reason when your Mac cannot.
 - **Encrypted backup.** One encrypted file for this Mac in iCloud Drive or a folder you choose, protected by a
   passphrase or a recovery key you can show again later. The *Back up this Mac* switch is off until you turn it on, and
-  per Mac. Restoring on another Mac is a manual step that counts what it would add before you confirm it. Pesto has no
-  server that receives the file.
+  per Mac. Restoring on another Mac is a manual step that counts what it would add before you confirm it. On iPhone and
+  iPad, *Back Up Now…* saves the same kind of file through Files, and *Restore from Backup…* opens one from any device.
+  Pesto has no server that receives the file.
 - **Sync between your Macs.** *Sync with my other Macs* is off until you turn it on, and per Mac. Each Mac writes its
   own encrypted files into a folder in iCloud Drive and merges the others', with a key separate from the one that
   protects your history, no list of Macs to manage, *Reset Sync* if one is lost, and secrets staying on the Mac that

@@ -69,6 +69,12 @@ backup (off by default, per Mac), the file goes to iCloud Drive or a folder you 
 sees only encrypted bytes. Pesto has no server of its own that receives it. The recovery key is kept in this Mac's
 Keychain so it can be shown again, only after Touch ID or your password.
 
+On iPhone and iPad a backup is made only when you tap *Back Up Now…* (Settings → Data → Backup). It is the same
+encrypted file, written to a temporary folder that is emptied when Pesto locks or closes, and saved only where you choose
+in Files. Its recovery key is kept in that device's Keychain, never synced, and shown again only after Face ID, Touch ID
+or the passcode. Clips with secrets stay out unless you include them. *Restore from Backup…* opens a backup from this
+device or from a Mac; a Mac's settings in it are not applied.
+
 Sync (off by default, per Mac) works the same way: each Mac writes its own encrypted files into a folder in iCloud Drive and reads the others', and iCloud sees file names, sizes and when they change, never your clips. Each file is sealed with a sync key that is separate from the key that protects your history here; the history key never leaves this Mac. The sync key lives in iCloud Keychain when the app carries Apple's entitlement for it, and otherwise in this Mac's Keychain, joined by a recovery key or by approval from another Mac that shows the same eight words. Files are signed, chained and checked, so a changed, replayed or cut-off file is refused and shown as such. Clips that hold secrets are not sent unless you choose *Also sync clips with secrets*. A copy kept from a password manager under an allowance, and any clip over 10 MB, are never sent. Your settings, shortcuts and ignored apps never sync. *Reset Sync* replaces the key on every Mac; *Leave Sync* removes this Mac's own files from the folder.
 
 What that protects: someone who copies your database file or your disk. What it does not protect: someone who is

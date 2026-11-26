@@ -461,6 +461,8 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
 - **Lock Screen widgets** (ADR 0065): add circular, rectangular, and inline Pesto widgets on the Lock Screen; verify they show "Hidden on Lock Screen" by default with zero clip data exposed, turn on **Show Clips on Lock Screen** in Edit Widget to show the latest non-secret clip (secrets never appear), verify History Lock hides clips unless allowed, and verify opening prompts Face ID/passcode and opens the clip in Pesto.
 - **iPad**: the cards in three columns, and the same states with a hardware keyboard attached.
 
+Backup by hand (ADR 0078) is unit-tested in `MobileBackupTests` (a backup made on one state restored on another, the recovery key shown only when needed, a weak passphrase, secrets left out, saved and cancelled) and on screen in `BackupUITests` (iPhone: a recovery-key-only backup shows its key before Save to Files is enabled; the key store is in memory and Files is never opened). Hand checks on a device: save to iCloud Drive and restore from a file that is not downloaded yet (the coordinated read brings it down), restore a Mac's backup with its passphrase and with its recovery key, and send the app away during a large restore.
+
 ## Lessons from the test suite
 
 - **A run that prints nothing may be stuck, not slow.** `swift test` with its output in a file looks the same either

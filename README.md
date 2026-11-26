@@ -3,12 +3,13 @@
 <p align="center"><b>Everything you copy. Readable only by you.</b></p>
 
 <p align="center">
-Pesto is a native clipboard manager for the Mac. It remembers the text, code, links, pictures, files and colors you copy, and brings them back with one shortcut. Free and open source under the MIT license, for macOS 15 and later. The history is encrypted on disk and in backups; a program running as you can still ask for it, which [Privacy and security](docs/guide/privacy-and-security.md) spells out.
+Pesto is a native clipboard manager for Mac, iPhone and iPad. It remembers the text, code, links, pictures, files and colors you copy, encrypted on your device and ready whenever you need them. Free and open source under the MIT license, for macOS 15+ and iOS/iPadOS 26+. The history is encrypted on disk and in backups; a program running as you on an unlocked Mac can still ask for it, which [Privacy and security](docs/guide/privacy-and-security.md) spells out.
 </p>
 
 <p align="center">
   <img alt="MIT License" src="https://img.shields.io/badge/license-MIT-2F7A49">
   <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-2F7A49">
+  <img alt="iOS 26+" src="https://img.shields.io/badge/iOS%20%26%20iPadOS-26%2B-2F7A49">
   <img alt="Free" src="https://img.shields.io/badge/price-free-2F7A49">
   <img alt="No analytics" src="https://img.shields.io/badge/analytics-none-2F7A49">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-2F7A49">
@@ -21,9 +22,8 @@ Pesto is a native clipboard manager for the Mac. It remembers the text, code, li
   </picture>
 </p>
 
-> **Status:** Pesto is available from the [Releases page](https://github.com/MichaelRo/copypesto/releases) and
-> from [copypesto.net/download](https://copypesto.net/download), with its SHA-256. Requires **macOS 15 or later**. Some
-> features use Apple Intelligence and say so where they do. Signed with an Apple Developer ID and notarized by Apple.
+> **Status:** Pesto for Mac is available from the [Releases page](https://github.com/MichaelRo/copypesto/releases) and
+> from [copypesto.net/download](https://copypesto.net/download), with its SHA-256 (requires **macOS 15 or later**, signed with an Apple Developer ID and notarized by Apple). Pesto for iPhone and iPad (**iOS 26 / iPadOS 26 or later**) is free on the App Store with every feature included. Some features use Apple Intelligence and say so where they do.
 
 > **Official downloads:** Pesto is published only at [copypesto.net](https://copypesto.net). Any other site that
 > offers Pesto is not ours.
@@ -146,19 +146,30 @@ The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 </p>
 
 
+## On iPhone and iPad
+
+Pesto for iPhone and iPad (**iOS 26 / iPadOS 26 and later**) brings encrypted clip cards, search, OCR, Ask Pesto, snippets, collections and a Face ID lock to your phone and tablet, with an iPad sidebar and keyboard shortcuts.
+
+- **Add clips intentionally:** use the Paste button, New Clip, the Share sheet, **Add Clipboard to Pesto** in Shortcuts (or the Action Button, Back Tap and Control Center), or *Add copies when Pesto opens*.
+- **Insert anywhere:** insert text clips and snippets through **AutoFill** (text only, never passwords), the optional **Pesto Keyboard** (numbers and punctuation without Full Access; your clips and search-only letters with Full Access, never reading your clipboard), or Home Screen and Lock Screen **Recent Clips** widgets.
+- **Sync and encrypted backup:** sync through a folder you choose (such as iCloud Drive) using the same encrypted log format as your Mac, or save and restore `.pestobackup` files by hand through Files.
+
+More in [Pesto on iPhone and iPad](docs/guide/iphone-and-ipad.md).
+
 ## Install
 
-- **Homebrew (optional).** Run `brew install michaelro/copypesto/pesto` to install the notarized disk image from the
+- **iPhone and iPad (App Store).** Free on the App Store (`<!-- TODO: add App Store URL before merge -->`) for iOS 26 and iPadOS 26 or later. Every feature is free, with no in-app purchase.
+- **Mac — Homebrew (optional).** Run `brew install michaelro/copypesto/pesto` to install the notarized disk image from the
   Releases page. If Homebrew prompts to trust the tap, run `brew trust michaelro/copypesto`. Homebrew checks its
   SHA-256 and can be a version behind. Pesto updates itself, so `brew upgrade` leaves it alone unless you add `--greedy`.
   Remove it with `brew uninstall --cask pesto`.
-- **Download.** Get Pesto from the [Releases page](https://github.com/MichaelRo/copypesto/releases) or from
+- **Mac — Download.** Get Pesto from the [Releases page](https://github.com/MichaelRo/copypesto/releases) or from
   [copypesto.net/download](https://copypesto.net/download), check the SHA-256 shown there, open the disk image and drag
   Pesto to Applications.
-- **Source.** Build it yourself; see For developers below. The `pesto` command-line tool is in the source tree and is
+- **Mac — Source.** Build it yourself; see For developers below. The `pesto` command-line tool is in the source tree and is
   not part of the download yet (`make build-cli`).
 
-Then press **⇧⌘V**. Pesto asks for **Accessibility** access once, so it can paste into other apps for you and notice a
+On Mac, press **⇧⌘V**. Pesto asks for **Accessibility** access once, so it can paste into other apps for you and notice a
 double ⌘C (the optional append shortcut). Everything else works without it.
 
 [Getting started](docs/guide/getting-started.md) walks through it.
@@ -168,6 +179,7 @@ double ⌘C (the optional append shortcut). Everything else works without it.
 | | |
 |---|---|
 | [Using Pesto](docs/guide/using-pesto.md) | The shelf, search, collections, pasting, shortcuts |
+| [Pesto on iPhone and iPad](docs/guide/iphone-and-ipad.md) | Library, Share sheet, Shortcuts, AutoFill, keyboard, widgets and sync on iOS |
 | [Settings](docs/guide/settings.md) | Every setting, pane by pane |
 | [Privacy and security](docs/guide/privacy-and-security.md) | What is stored, what is encrypted, what is never captured |
 | [Automation](docs/guide/automation.md) | URL scheme, AppleScript, command line, Shortcuts |

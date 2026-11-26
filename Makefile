@@ -252,11 +252,14 @@ build-mobile: generate ## [Develop] Build the iPhone and iPad app for the simula
 	$(XCODEBUILD_MOBILE) -destination 'generic/platform=iOS Simulator' build
 
 .PHONY: build-mobile-device
-build-mobile-device: generate ## [Develop] Build the iPhone and iPad app for a connected device, signed for APPLE_TEAM_ID (DEVICE="name"; docs/ios-signing.md)
-	@test -n "$(DEVICE)" || { echo 'Name the device: make build-mobile-device DEVICE="My iPhone"'; exit 1; }
-	@test -n "$(APPLE_TEAM_ID)" || { echo "No team: install a Developer ID certificate or pass APPLE_TEAM_ID=..."; exit 1; }
-	$(XCODEBUILD_MOBILE) -destination 'platform=iOS,name=$(DEVICE)' -allowProvisioningUpdates \
-		DEVELOPMENT_TEAM=$(APPLE_TEAM_ID) CODE_SIGN_STYLE=Automatic build
+build-mobile-device: export DEVELOPER_DIR := $(DEVELOPER_DIR)
+build-mobile-device: export APPLE_TEAM_ID := $(APPLE_TEAM_ID)
+build-mobile-device: export MOBILE_SCHEME := $(MOBILE_SCHEME)
+build-mobile-device: export MOBILE_BUILD_DIR := $(MOBILE_BUILD_DIR)
+build-mobile-device: export DEVICE := $(DEVICE)
+build-mobile-device: export DEVICE_ID := $(DEVICE_ID)
+build-mobile-device: generate ## [Develop] Build the iPhone and iPad app for a connected device, signed for APPLE_TEAM_ID (DEVICE="name" or DEVICE_ID=<udid>; docs/ios-signing.md)
+	scripts/build-mobile-device.sh
 
 .PHONY: archive-mobile
 archive-mobile: generate ## [Release] Archive the iPhone and iPad app for App Store Connect, signed for APPLE_TEAM_ID (docs/ios-signing.md, "Uploading to App Store Connect")

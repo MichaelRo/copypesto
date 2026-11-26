@@ -162,11 +162,11 @@ struct QuickInsertMenuTests {
     func whenFieldMemoryEncodedOrAbsent_thenDecodesCleanly() throws {
         let withMemory = QuickInsertEntry(
             id: UUID(), section: .snippets, kind: .text, title: "Greeting", text: "Hi {{Name}}",
-            expandsOnInsert: true, fieldMemory: ["Name": "Michael"]
+            expandsOnInsert: true, fieldMemory: ["Name": "Alex"]
         )
         let encoded = try JSONEncoder().encode(withMemory)
         let decoded = try JSONDecoder().decode(QuickInsertEntry.self, from: encoded)
-        #expect(decoded.fieldMemory == ["Name": "Michael"])
+        #expect(decoded.fieldMemory == ["Name": "Alex"])
 
         let legacyJSON = """
         {

@@ -7,7 +7,7 @@ Supersedes the ledger and suppression part (section 3) of [0014](0014-shelf-sugg
 ## Context
 ADR 0014 said a declined clip needs double its paste count before it can be suggested again. The code never did that:
 a decline made the kind final for the clip, an ignored suggestion muted every kind for the clip after three shows, and
-the doubling rule only lifted the mute for other kinds. Michael pasted one clip many times and saw no offer, which also
+the doubling rule only lifted the mute for other kinds. The maintainer pasted one clip many times and saw no offer, which also
 exposed why: offers appear only when the shelf opens (after a 1.5 s dwell, never around a paste), the first open after
 launch had no facts loaded, and Paste As, the floating window and the quick menu did not count toward the tally.
 

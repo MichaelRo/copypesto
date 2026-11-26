@@ -12,10 +12,17 @@ struct PersonalDataTests {
         "/Users/" + "mroytman"
     ]
 
+    private static let forbiddenCaseInsensitive: [String] = [
+        "steph" + "anie",
+        "mich" + "ael's",
+        "mich" + "ael’s",
+        "00008140" + "-"
+    ]
+
     private static let folders = ["docs", "decisions", "scripts", "Sources", "Tests", ".github", ".githooks"]
     private static let extensions: Set<String> = ["md", "swift", "sh", "py", "yml", "yaml", "txt", "json", "plist", ""]
 
-    @Test("no document, script or source names the owner's email or a home folder")
+    @Test("no document, script or source names the owner's email, home folder, family or personal devices")
     func noPersonalDataInTrackedFiles() throws {
         var files: [URL] = []
         for folder in Self.folders {
@@ -37,6 +44,10 @@ struct PersonalDataTests {
         for file in files {
             guard let text = try? String(contentsOf: file, encoding: .utf8) else { continue }
             for needle in Self.forbidden where text.contains(needle) {
+                offenders.append("\(SourceTree.relativePath(file)): \(needle.prefix(8))…")
+            }
+            let lowercased = text.lowercased()
+            for needle in Self.forbiddenCaseInsensitive where lowercased.contains(needle) {
                 offenders.append("\(SourceTree.relativePath(file)): \(needle.prefix(8))…")
             }
         }

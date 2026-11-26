@@ -24,4 +24,17 @@ struct ExtensionRuntimeCallTests {
         }
         #expect(offenders.isEmpty, "\(offenders)")
     }
+
+    /// ADR 0073: AutoFill can open nothing, so a settings button there only shows directions; it has none.
+    @Test("AutoFill shows no settings button")
+    func whenScanningAutoFill_thenNoSettingsButton() throws {
+        var offenders: [String] = []
+        for file in try SourceTree.swiftFiles(in: "MobileAutoFill", minimum: 1) {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            for mark in ["gearshape", "\"Pesto Settings\""] where text.contains(mark) {
+                offenders.append("\(file.lastPathComponent): \(mark)")
+            }
+        }
+        #expect(offenders.isEmpty, "\(offenders)")
+    }
 }

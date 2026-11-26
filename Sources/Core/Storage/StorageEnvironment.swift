@@ -33,6 +33,8 @@ public struct StorageEnvironment: Sendable {
     public var wipeSuggestionLedger: (@Sendable () -> Void)?
     /// Provides the current NSFWMode for content screening. Defaults to reading AppDefaults.store in live mode.
     public var nsfwMode: (@Sendable () -> NSFWMode)?
+    /// The full decode that settles whether two pictures hold the same pixels. A test counts the calls.
+    public var pixelDigest: @Sendable (Data) -> Data? = { PerceptualHasher.pixelDigest(imageData: $0) }
     /// Names the app a bundle ID belongs to. iOS cannot look one up (`UnknownSourceApps`).
     public var sourceApps: any SourceAppResolving = SourceApps.resolver()
 

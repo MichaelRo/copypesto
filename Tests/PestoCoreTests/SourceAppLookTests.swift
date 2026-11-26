@@ -169,7 +169,7 @@ struct SourceAppLookTests {
         try context.save()
         let snapshot = try WidgetSnapshotSelection.snapshot(
             in: context, now: .now, theme: .brand,
-            reader: WidgetSnapshotSelection.Reader(source: { _ in "Notes" })
+            reader: WidgetSnapshotSelection.Reader(source: { _ in "Notes" }), lockedCollections: []
         )
         .attachingAppIcons { _ in Self.icon(size: 500) }
         let clip = try #require(snapshot.clips.first)

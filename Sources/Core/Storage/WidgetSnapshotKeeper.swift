@@ -221,7 +221,8 @@ public final class WidgetSnapshotKeeper {
     ) async throws
     -> WidgetSnapshot {
         try WidgetSnapshotSelection.snapshot(
-            in: ModelContext(container), now: now, theme: theme, previous: previous, source: source
+            in: ModelContext(container), now: now, theme: theme, previous: previous,
+            lockedCollections: LockedCollections.current(), source: source
         )
     }
 }

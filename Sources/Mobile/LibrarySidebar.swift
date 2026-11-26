@@ -83,6 +83,7 @@ struct CollectionMenu: View {
     @Environment(MobileAppState.self) private var appState
     @Environment(LibraryModel.self) private var library
     @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
+    @AppStorage(Setting.lockedCollections) private var lockedStored: String
     @State private var isExporting = false
 
     private var index: Int? {
@@ -120,6 +121,16 @@ struct CollectionMenu: View {
                 ) {
                     appState.moveCollection(board, direction: 1, among: collections)
                 }
+            }
+        }
+        if !board.isSmart {
+            let isLocked = LockedCollections.ids(from: lockedStored).contains(board.id)
+            Button(
+                isLocked ? "Unlock Collection" : "Lock Collection",
+                systemImage: isLocked ? "lock.open" : "lock"
+            ) {
+                let id = board.id
+                Task { _ = await appState.setCollection(id, locked: !isLocked) }
             }
         }
         if allowsHideOnPhone {

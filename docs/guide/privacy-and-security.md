@@ -118,6 +118,16 @@ The lock stops someone at your unattended Mac. It does not stop another program 
 your files. Pesto encrypts what it stores, but a process running as you on an unlocked Mac is not a threat model any
 app can fully defend against.
 
+### Locking one collection
+Right-click a collection chip (on iPhone and iPad, touch and hold it) and choose **Lock Collection** to put that
+collection behind Touch ID, Face ID or your password while the rest of your history stays at hand. Its clips then show
+only on its own chip, after you choose **Unlock**, and never in *All*, Pinned, a search across everything or a smart
+collection. They never leave Pesto: widgets, the keyboard, AutoFill, Shortcuts, AppleScript and the `pesto` tool do
+not see them. What you opened closes again when the shelf closes or Pesto leaves the screen, when the History Lock
+locks and when the screen sleeps. Locking needs nothing; unlocking, deleting and exporting a locked collection ask
+first. The lock belongs to the device: a collection locked on your Mac is not locked on your iPhone until you lock it
+there too. Smart collections cannot be locked, because they are rules over your whole history.
+
 ## Screen sharing and sensitive content (the blur)
 Hide during screen sharing is off until you turn it on (*Settings → Privacy*). With it on, clips are blurred while your screen is being shared or mirrored, or while a known sharing app is open. macOS gives apps no way to see that a share is under way, so Pesto watches for a mirrored display, for sharing or recording apps such as Zoom, Teams, FaceTime and OBS, and for the "sharing your screen" bar that Chrome, Firefox, Edge, Brave and Arc show while a page shares your screen or a window; a share of one tab, and shares from Safari, are not seen. For those, choose **Hide Clip Contents** in the menu bar before you share (and **Show Clip Contents** afterwards; a single covered clip also has its own **Show**, in the clip's menu or on the cover), or use the *Hide Clip Contents* action in Shortcuts, where it can have a keyboard shortcut, or as a Focus filter. Links to adult sites are detected on your Mac by their address, and by their page title when link previews are on. Pictures, and the pictures on linked pages, are screened by your Mac's on-device model when Apple Intelligence is on (macOS 27): its safety guardrails refusing a picture is the signal, so it is best-effort and can miss things. Nothing is stored or sent anywhere by this. Matches are blurred, hidden or shown as you choose (*Settings → Privacy*); right-click any clip and choose **Mark as Sensitive** to blur one yourself. A covered clip shows only its **⌘** number (clips 1 to 9), its kind as one word (a hidden secret reads *Text*) and how long ago you copied it; never the app it came from, a title, a file name, a link's address, a size, a color or what kind of secret it is, and VoiceOver says no more than that. Return, **⌘1** to **⌘9** and a double click paste a blurred clip without showing it; choose **Show** to look at it. After you reveal a blurred clip, the menu offers **Hide Again** or **Mark as Not Sensitive**.
 

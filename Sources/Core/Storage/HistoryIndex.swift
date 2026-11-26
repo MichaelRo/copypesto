@@ -19,6 +19,8 @@ public struct HistoryCriteria: Sendable {
     public var pinnedOnly: Bool
     public var query: String
     public var now: Date?
+    /// Locked collections (ADR 0081): their clips only on their own opened chip.
+    public var collectionLock: CollectionLock
 
     public init(
         hidesSensitive: Bool = false,
@@ -33,7 +35,8 @@ public struct HistoryCriteria: Sendable {
         remoteOnly: Bool = false,
         pinnedOnly: Bool = false,
         query: String = "",
-        now: Date? = nil
+        now: Date? = nil,
+        collectionLock: CollectionLock = .none
     ) {
         self.hidesSensitive = hidesSensitive
         self.appBundleIDs = appBundleIDs
@@ -48,6 +51,7 @@ public struct HistoryCriteria: Sendable {
         self.pinnedOnly = pinnedOnly
         self.query = query
         self.now = now
+        self.collectionLock = collectionLock
     }
 }
 
@@ -209,6 +213,8 @@ public struct HistoryIndex: Sendable {
         if !apps.isEmpty, !(row.sourceBundleID.map(apps.contains) ?? false) {
             return false
         }
+        let scope = smartCollection == nil ? criteria.collectionID : nil
+        if !criteria.collectionLock.admits(collectionID: row.collectionID, in: scope) { return false }
         if let smartCollection { return smartCollection(row.id) }
         guard let collection = criteria.collectionID else { return true }
         return row.collectionID == collection

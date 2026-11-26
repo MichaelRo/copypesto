@@ -53,6 +53,7 @@ struct GridView: View {
     @AppStorage(Setting.cardSize) var cardSizeRaw: String
     @AppStorage(Setting.cardWidth) var cardWidth: Int
     @AppStorage(Setting.nsfwMode) var nsfwModeRaw: String
+    @AppStorage(Setting.lockedCollections) var lockedCollectionsStored: String
     @State var previousCollectionID: UUID?
     @State var collectionShift: CGFloat = 0
     @State var detail = ShelfDetail()
@@ -109,6 +110,7 @@ struct GridView: View {
         let editGeneration: Int
         /// A smart collection's rules can be edited without the number of collections changing.
         let collectionRules: Int
+        let collectionLock: CollectionLock
     }
 
     var filterKey: FilterKey {
@@ -131,7 +133,10 @@ struct GridView: View {
             searchDateFilter: appState.searchDateFilter,
             semanticCount: semanticSupplement.count,
             editGeneration: filterEditGeneration,
-            collectionRules: pinboards.reduce(0) { $0 &+ ($1.smartPredicateData?.hashValue ?? 0) }
+            collectionRules: pinboards.reduce(0) { $0 &+ ($1.smartPredicateData?.hashValue ?? 0) },
+            collectionLock: CollectionLock(
+                locked: LockedCollections.ids(from: lockedCollectionsStored), opened: appState.openedLockedCollections
+            )
         )
     }
 
@@ -173,7 +178,11 @@ struct GridView: View {
             inCollection: appState.selectedCollectionID != nil,
             selectedAppName: selectedAppFilterName,
             isPaused: appState.isCapturingPaused,
-            captureBlocked: PasteboardCaptureAccess.current() == .blocked
+            captureBlocked: PasteboardCaptureAccess.current() == .blocked,
+            collectionIsLocked: appState.selectedCollectionID.map {
+                LockedCollections.ids(from: lockedCollectionsStored).contains($0)
+                    && !appState.openedLockedCollections.contains($0)
+            } ?? false
         ))
     }
 
@@ -313,6 +322,10 @@ struct GridView: View {
                             switch action {
                             case .openPrivacySettings: PasteboardAccessSettings.open()
                             case .resumeCapturing: appState.resumeCapturing?()
+                            case .unlockCollection:
+                                if let id = appState.selectedCollectionID {
+                                    Task { _ = await appState.openLockedCollection(id) }
+                                }
                             }
                         },
                         onAdvice: apply,

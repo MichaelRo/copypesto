@@ -400,6 +400,8 @@ public actor StorageService: ModelActor {
     func mirrorToLastItemFile(_ item: ClipboardItem) {
         if AppDefaults.store.value(for: Setting.biometricLockEnabled) {
             lastItemStore.clear()
+        } else if ShortcutClipSearch.isInLockedCollection(item, locked: LockedCollections.current()) {
+            lastItemStore.clear(ifItemID: item.id)
         } else if item.sensitivityRaw == nil {
             lastItemStore.write(
                 id: item.id,

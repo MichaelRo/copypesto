@@ -27,8 +27,10 @@ struct QuickMenuTests {
         insert(40, hiddenNewest: false, into: context)
         try context.save()
 
-        let shown = try context.fetch(QuickMenuView.descriptor(hidesSensitive: false))
+        let fetched = try context.fetch(QuickMenuView.descriptor(hidesSensitive: false))
+        let shown = QuickMenuView.shown(fetched, locked: [])
 
+        #expect(fetched.count < 40)
         #expect(shown.count == 5)
         #expect(shown.first?.previewText == "clip 39")
     }
@@ -40,11 +42,30 @@ struct QuickMenuTests {
         insert(8, hiddenNewest: true, into: context)
         try context.save()
 
-        let shown = try context.fetch(QuickMenuView.descriptor(hidesSensitive: true))
+        let shown = try QuickMenuView.shown(context.fetch(QuickMenuView.descriptor(hidesSensitive: true)), locked: [])
 
         #expect(shown.count == 5)
         #expect(shown.allSatisfy { !$0.isNSFW })
         #expect(shown.first?.previewText == "clip 6")
+    }
+
+    @Test("a clip of a locked collection is never in the quick menu, and others take its place (ADR 0081)")
+    func lockedClipIsNotOffered() throws {
+        let container = try ModelContainerSetup.makeInMemory()
+        let context = ModelContext(container)
+        insert(8, hiddenNewest: false, into: context)
+        let vault = UUID()
+        let newest = try context.fetch(QuickMenuView.descriptor(hidesSensitive: false))
+        newest.first?.collectionID = vault
+        try context.save()
+
+        let shown = try QuickMenuView.shown(
+            context.fetch(QuickMenuView.descriptor(hidesSensitive: false)),
+            locked: [vault]
+        )
+
+        #expect(shown.count == 5)
+        #expect(shown.allSatisfy { $0.collectionID != vault })
     }
 
     @Test("a paste counts and moves the clip to the front, in the quick menu as on the shelf")

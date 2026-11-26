@@ -153,7 +153,7 @@ extension AppState {
     func writeItem(_ item: ClipboardItem) -> PasteCoordinator.PayloadKind? {
         // Every route that puts a clip on the board ends here, so the lock is checked here as well as by the callers:
         // copy-only taps, number shortcuts and the context menu would otherwise skip it.
-        guard !isHistoryLockedNow() else { return nil }
+        guard !isHistoryLockedNow(), !isWithheldByCollectionLock(item) else { return nil }
         let writing = PerfSignposts.paste.begin("writeItem")
         defer { writing.end() }
         let fileURLs = item.type == .file ? FileClip.urls(from: item.displayPreviewText) : []

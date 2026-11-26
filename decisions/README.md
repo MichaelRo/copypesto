@@ -89,6 +89,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0078](0078-ios-backs-up-and-restores-by-hand.md) | The iPhone and iPad back up by hand to a `.pestobackup` saved through Files and restore any backup, a Mac's included; the backup key and recovery key as on the Mac; no schedule, no remembered folder; extends 0010 |
 | [0079](0079-a-picture-shows-only-after-its-verdict.md) | A pending picture shows only its placeholder until its verdict while the content filter is on (Mac and iOS), and a browser's GIF is fetched and screened after it; amends 0006 |
 | [0080](0080-a-picture-is-placed-by-its-shape-and-its-kind.md) | A picture fills or fits by its shape relative to the card, its kind (screen capture, very tall, small) and keeps the foot without a fixed band; the Mac's focused picture says its dimensions; supersedes 0041's placement |
+| [0081](0081-a-collection-can-be-locked-on-this-device.md) | A plain collection can be locked on this device: its clips only on its own chip after authentication, never in All, search, widgets, the keyboard, AutoFill, Shortcuts or AppleScript; clips outside while the History Lock is on are off by default again |
 
 ## Template
 

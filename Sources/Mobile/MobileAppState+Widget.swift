@@ -165,6 +165,7 @@ extension MobileAppState {
         try WidgetSnapshotSelection.snapshot(
             in: ModelContext(container), now: request.now, theme: request.theme, previous: request.previous,
             sourceApp: { sourceAppLook(of: $0, catalogColors: request.catalogColors) },
+            lockedCollections: LockedCollections.current(),
             source: {
                 CardFootLine.source(
                     CardFootLine.origin(of: $0, peerDeviceNames: request.peerDeviceNames), device: request.device

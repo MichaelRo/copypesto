@@ -17,6 +17,7 @@ struct SnippetsView: View {
     ) private var pastedOften: [ClipboardItem]
     @AppStorage(Setting.dismissedSnippetSuggestions) private var dismissedRaw: String
     @AppStorage(Setting.rememberFillIns) private var remembersFillIns: Bool
+    @AppStorage(Setting.lockedCollections) private var lockedCollectionsStored: String
 
     @Environment(\.modelContext) private var modelContext
     @Environment(AppState.self) private var appState: AppState
@@ -36,7 +37,9 @@ struct SnippetsView: View {
     }
 
     private var fromYourClips: [SnippetCandidate] {
-        let candidates = pastedOften.prefix(50).map { item in
+        let locked = LockedCollections.ids(from: lockedCollectionsStored)
+        let visible = pastedOften.filter { !ShortcutClipSearch.isInLockedCollection($0, locked: locked) }
+        let candidates = visible.prefix(50).map { item in
             SnippetCandidate(
                 id: item.id, text: item.displayPreviewText, pasteCount: item.pasteCount, isPinned: item.isPinned,
                 isTextual: item.typeRaw == ClipboardType.text.rawValue || item.typeRaw == ClipboardType.code.rawValue,
@@ -47,7 +50,8 @@ struct SnippetsView: View {
     }
 
     private var snippets: [ClipboardItem] {
-        pinnedItems.filter(\.isTemplate)
+        let locked = LockedCollections.ids(from: lockedCollectionsStored)
+        return pinnedItems.filter { $0.isTemplate && !ShortcutClipSearch.isInLockedCollection($0, locked: locked) }
             .sorted { $0.timestamp > $1.timestamp }
     }
 

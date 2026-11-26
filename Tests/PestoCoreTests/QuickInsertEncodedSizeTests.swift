@@ -172,7 +172,7 @@ struct QuickInsertEncodedSizeTests {
 
         let snapshot = try WidgetSnapshotSelection.snapshot(
             in: clips.context, now: .now, theme: .brand,
-            reader: WidgetSnapshotSelection.Reader(source: { _ in Self.hugeCharacter })
+            reader: WidgetSnapshotSelection.Reader(source: { _ in Self.hugeCharacter }), lockedCollections: []
         )
         let sealed = try SealedFileEnvelope.seal(snapshot, as: .widgetSnapshot, with: SymmetricKey(size: .bits256))
 

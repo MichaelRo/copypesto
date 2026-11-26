@@ -120,7 +120,8 @@ public final class AutomationURLHandler {
             guard let host else { return }
             var acted = false
             withItem(id: target.id, in: host.historyContainer) { item in
-                guard ShortcutClipSearch.isOfferedOutsidePesto(item) else { return }
+                let locked = LockedCollections.current()
+                guard ShortcutClipSearch.isOfferedOutsidePesto(item, locked: locked) else { return }
                 acted = true
                 switch target.action {
                 case .copy:

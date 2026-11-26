@@ -63,7 +63,7 @@ final class AppState {
     /// Whether this Mac can ask for Touch ID or a password. Refreshed at launch, every 15 s by the lock watchdog and
     /// when Settings opens, so a view never calls LocalAuthentication itself.
     private(set) var authenticationAvailability = AuthenticationAvailability.available
-    @ObservationIgnored private var lastBiometricUnlock: Date?
+    @ObservationIgnored var lastBiometricUnlock: Date?
     @ObservationIgnored private var lockWatchdog: Task<Void, Never>?
     @ObservationIgnored var similarityTask: Task<Void, Never>?
     @ObservationIgnored static let similarityLogger = Logger(
@@ -88,6 +88,8 @@ final class AppState {
     }
 
     var selectedCollectionID: UUID?
+    /// Locked collections opened with Touch ID or the password since the shelf last closed (ADR 0081).
+    var openedLockedCollections: Set<UUID> = []
     var hasAccessibilityPermission = false
     /// How far the block above the row (the banners, then the command bar) passes its budget
     /// (`ShelfHeight.commandBlock`), as the shelf measured it. The panel grows by it, so the cards and what sits under
@@ -345,6 +347,7 @@ final class AppState {
         guard isOverlayVisible || exit.actsWhenAlreadyClosed else { return }
         cancelAsk()
         shelfDidClose()
+        openedLockedCollections = []
         pendingExit = exit
         isOverlayVisible = false
     }
@@ -371,6 +374,8 @@ final class AppState {
     @ObservationIgnored var closeTextEditor: (@MainActor () -> Void)?
     /// Exports a collection to a file the person chooses; closes the shelf first when it is open. Set by the delegate.
     @ObservationIgnored var exportCollection: (@MainActor (UUID) -> Void)?
+    /// A collection was locked or unlocked on this Mac: the widget's snapshot is written again without it (ADR 0081).
+    @ObservationIgnored var collectionLockChanged: (@MainActor () -> Void)?
     /// Asks for a collection file and imports it; closes the shelf first when it is open. Set by the delegate.
     @ObservationIgnored var importCollection: (@MainActor () -> Void)?
     @ObservationIgnored var resumeCapturing: (@MainActor () -> Void)?
@@ -485,6 +490,7 @@ final class AppState {
         // Decrypted previews must not outlive the lock, and neither may what could be undone.
         if isHistoryLocked {
             cancelAsk()
+            openedLockedCollections = []
             if closesTextEditor { closeTextEditor?() }
             clipboardBeforeLastItemWrite = ""
             storageService?.undoHistory.clear()
@@ -504,43 +510,6 @@ final class AppState {
     func isHistoryLockedNow() -> Bool {
         checkAndApplyBiometricLock()
         return isHistoryLocked
-    }
-
-    /// Unlocks only if the user authenticates; with nothing able to authenticate, history stays locked.
-    func performBiometricUnlock() async {
-        let unlocked = await withSystemAuthenticationDialog {
-            await HistoryLockPolicy.unlock(using: UserAuthenticator.current)
-        }
-        guard unlocked else { return }
-        completeUnlock()
-    }
-
-    func completeUnlock(at date: Date = Date()) {
-        AuthenticationGrace.shared.record()
-        let wasLocked = isHistoryLocked
-        isHistoryLocked = false
-        lastBiometricUnlock = date
-        if wasLocked { startSimilarityWork() }
-    }
-
-    /// Immediately locks history and purges decrypted previews from memory.
-    func lockHistory() {
-        guard AppDefaults.store.value(for: Setting.biometricLockEnabled) else { return }
-        cancelAsk()
-        lastBiometricUnlock = nil
-        isHistoryLocked = true
-        closeTextEditor?()
-        clipboardBeforeLastItemWrite = ""
-        aiResult = nil
-        storageService?.undoHistory.clear()
-        stopSimilarityWork()
-        dismissUndoOffer()
-        suppressShelfSuggestions()
-        PreviewTextCache.shared.clear()
-        historyStore?.dropSearchText()
-        ThumbnailCache.shared.clear()
-        AuthenticationGrace.shared.clear()
-        QuickLookPreviewController.sweepStaleTempFiles()
     }
 
     /// Locks an unlocked history whose idle timeout has passed. Surfaces that stay on screen (the floating window,

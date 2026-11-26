@@ -20,6 +20,23 @@ extension MobilePasteboardGlobals {
             #expect(!reveal.isShown(id))
         }
 
+        @Test("a locked collection opens only after authentication, and closes with everything shown (ADR 0081)")
+        func whenACollectionIsOpened_thenItClosesWithHideAll() async {
+            let id = UUID()
+            let refused = SecretReveal(
+                authenticator: StubUserAuthenticator(available: true, grants: false), grace: AuthenticationGrace()
+            )
+            #expect(await !refused.openCollection(id, reason: "test"))
+            #expect(refused.collectionLock(locked: id.uuidString).isOpen(id) == false)
+            let reveal = SecretReveal(
+                authenticator: StubUserAuthenticator(available: true, grants: true), grace: AuthenticationGrace()
+            )
+            #expect(await reveal.openCollection(id, reason: "test"))
+            #expect(reveal.collectionLock(locked: id.uuidString).isOpen(id))
+            reveal.hideAll()
+            #expect(!reveal.collectionLock(locked: id.uuidString).isOpen(id))
+        }
+
         @Test("inside the authentication window Show does not ask again")
         func whenGraceIsOpen_thenShowDoesNotAsk() async {
             let grace = AuthenticationGrace()

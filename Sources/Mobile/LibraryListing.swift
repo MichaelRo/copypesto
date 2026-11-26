@@ -16,6 +16,7 @@ enum LibraryListing {
         var byMeaning: [UUID]
         var hidesSensitive: Bool
         var smartRule: Data?
+        var collectionLock: CollectionLock = .none
     }
 
     struct Result: Equatable {
@@ -45,7 +46,7 @@ enum LibraryListing {
             key.filter.scope.ids(
                 in: index, query: query, kinds: kinds, smartRule: smartRule, hidesSensitive: key.hidesSensitive,
                 dateCutoff: window.cutoff, dateBefore: window.before, sourceBundleID: sourceBundleID,
-                sensitiveOnly: sensitive, otherDevicesOnly: remote, now: now
+                sensitiveOnly: sensitive, otherDevicesOnly: remote, now: now, collectionLock: key.collectionLock
             )
         }
         let kindNames = kinds.map(\.rawValue).sorted().joined(separator: ",")

@@ -37,13 +37,17 @@ extension GridView {
             }
         }
         let now = Date.now
+        let lock = CollectionLock(
+            locked: LockedCollections.ids(from: lockedCollectionsStored), opened: appState.openedLockedCollections
+        )
+        let lockScope = smart == nil ? plainCollection : nil
         var ids = index.matching(
             HistoryCriteria(
                 hidesSensitive: filter.hidesSensitive, appBundleIDs: filter.appBundleIDs,
                 collectionID: plainCollection, searchActive: filter.searchActive, types: filter.types,
                 sources: filter.sources, dateCutoff: filter.dateCutoff, dateBefore: filter.dateBefore,
                 sensitiveOnly: filter.sensitiveOnly, remoteOnly: filter.remoteOnly, query: query,
-                now: now
+                now: now, collectionLock: lock
             ),
             smartCollection: smart
         )
@@ -51,7 +55,9 @@ extension GridView {
         if !query.isEmpty, !query.hasPrefix("@"), !semanticSupplement.isEmpty {
             let present = Set(ids)
             var addedAny = false
-            for item in filter.apply(to: semanticSupplement) where !present.contains(item.id) {
+            for item in filter.apply(to: semanticSupplement) where !present.contains(item.id)
+                && lock.admits(collectionID: item.collectionID, in: lockScope)
+            {
                 if !item.isPinned, let expiry = item.expiresAt, expiry != .distantPast, expiry <= now {
                     continue
                 }

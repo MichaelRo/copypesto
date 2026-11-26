@@ -34,7 +34,11 @@ struct PasteFromPestoIntent: AppIntent {
         let items = (try? ctx.fetch(descriptor)) ?? []
         let query = search
         // Clips holding a secret are masked on screen; a Shortcut must not be a way round the masking.
-        guard let match = items.first(where: { ShortcutClipSearch.matches($0, query: query) }) else {
+        guard let match = items.first(where: { ShortcutClipSearch.matches(
+            $0,
+            query: query,
+            locked: LockedCollections.current()
+        ) }) else {
             throw PasteFromPestoError.noMatch(query)
         }
 

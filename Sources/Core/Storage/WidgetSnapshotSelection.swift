@@ -14,16 +14,19 @@ public enum WidgetSnapshotSelection {
         public var thumbnail: (ClipboardItem) -> Data?
         public var fullText: (ClipboardItem) -> String?
         public var recognizedText: (ClipboardItem) -> String?
+        public var sourceApp: (ClipboardItem) -> SourceAppLook
 
         public init(
             source: @escaping (ClipboardItem) -> String?, thumbnail: @escaping (ClipboardItem) -> Data? = { _ in nil },
             fullText: @escaping (ClipboardItem) -> String? = { _ in nil },
-            recognizedText: @escaping (ClipboardItem) -> String? = { _ in nil }
+            recognizedText: @escaping (ClipboardItem) -> String? = { _ in nil },
+            sourceApp: @escaping (ClipboardItem) -> SourceAppLook = { $0.sourceAppLook }
         ) {
             self.source = source
             self.thumbnail = thumbnail
             self.fullText = fullText
             self.recognizedText = recognizedText
+            self.sourceApp = sourceApp
         }
     }
 
@@ -58,9 +61,11 @@ public enum WidgetSnapshotSelection {
     public static func snapshot(
         in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, previous: WidgetSnapshot? = nil,
         recognizedTexts: RecognizedTextStore = RecognizedTextStore(),
+        sourceApp: @escaping (ClipboardItem) -> SourceAppLook = { $0.sourceAppLook },
         source: @escaping (ClipboardItem) -> String?
     ) throws
-    -> WidgetSnapshot {
+        -> WidgetSnapshot
+    {
         let earlier = (previous?.allClips ?? []).compactMap { clip in clip.thumbnail.map { (clip.id, $0) } }
         let kept = Dictionary(earlier) { first, _ in first }
         let reader = Reader(
@@ -78,12 +83,15 @@ public enum WidgetSnapshotSelection {
             },
             recognizedText: { item in
                 item.type == .image && recognizedTexts.exists(for: item.id) ? recognizedTexts.load(for: item.id) : nil
-            }
+            },
+            sourceApp: sourceApp
         )
         return try snapshot(in: context, now: now, theme: theme, reader: reader)
     }
 
-    public static func snapshot(in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, reader: Reader) throws
+    public static func snapshot(
+        in context: ModelContext, now: Date, theme: WidgetSnapshot.Theme, reader: Reader
+    ) throws
     -> WidgetSnapshot {
         var newest = FetchDescriptor<ClipboardItem>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)])
         newest.fetchLimit = WidgetSnapshotPolicy.scanLimit
@@ -253,6 +261,7 @@ public enum WidgetSnapshotSelection {
         let preview = item.displayPreviewText
         let link = item.type == .url ? LinkDisplay.parse(preview) : nil
         let shown = item.type == .file ? URL(fileURLWithPath: preview).lastPathComponent : preview
+        let look = reader.sourceApp(item)
         return WidgetClip(
             id: item.id, kind: item.type, text: cut(shown, WidgetSnapshotPolicy.maxPreviewCharacters),
             fullText: whole,
@@ -261,7 +270,8 @@ public enum WidgetSnapshotSelection {
             colorHex: colorHex(of: item, preview: preview),
             source: reader.source(item)
                 .flatMap { $0.isEmpty ? nil : cut($0, WidgetSnapshotPolicy.maxSourceCharacters) },
-            date: item.timestamp, isPinned: item.isPinned, thumbnail: picture
+            date: item.timestamp, isPinned: item.isPinned, thumbnail: picture,
+            sourceBundleID: look.bundleID, sourceColorHex: look.colorHex
         )
     }
 

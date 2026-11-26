@@ -16,13 +16,15 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
     public let autoFillEnabled: Bool
     public let isLocked: Bool
     public let expiresAt: Date?
+    /// Each listed app's icon once, by bundle ID (ADR 0074): a PNG of at most `SourceAppIcons.maxIconBytes`.
+    public let appIcons: [String: Data]
 
     public init(
         createdAt: Date, entries: [QuickInsertEntry], collections: [QuickInsertCollection] = [],
         returnsAfterInsert: Bool = true, accent: WidgetSnapshot.Theme = .brand,
         keyboardSize: KeyboardSize = .medium,
         keyboardEnabled: Bool = true, autoFillEnabled: Bool = true,
-        isLocked: Bool = false, expiresAt: Date? = nil
+        isLocked: Bool = false, expiresAt: Date? = nil, appIcons: [String: Data] = [:]
     ) {
         self.createdAt = createdAt
         self.entries = entries
@@ -34,6 +36,7 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
         self.autoFillEnabled = autoFillEnabled
         self.isLocked = isLocked
         self.expiresAt = expiresAt
+        self.appIcons = appIcons
     }
 
     public init(from decoder: any Decoder) throws {
@@ -48,6 +51,7 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
         autoFillEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoFillEnabled) ?? true
         isLocked = try container.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
         expiresAt = try container.decodeIfPresent(Date.self, forKey: .expiresAt)
+        appIcons = try container.decodeIfPresent([String: Data].self, forKey: .appIcons) ?? [:]
     }
 
     public func withExpiresAt(_ expiresAt: Date?) -> QuickInsertSet {
@@ -55,7 +59,22 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
             createdAt: createdAt, entries: entries, collections: collections,
             returnsAfterInsert: returnsAfterInsert, accent: accent, keyboardSize: keyboardSize,
             keyboardEnabled: keyboardEnabled, autoFillEnabled: autoFillEnabled,
-            isLocked: isLocked, expiresAt: expiresAt
+            isLocked: isLocked, expiresAt: expiresAt, appIcons: appIcons
+        )
+    }
+
+    /// The same set with the icons of the apps it lists, as `icon` gives them (read where the app's icons live: the
+    /// iPhone's catalog of apps the Macs named).
+    public func attachingAppIcons(_ icon: (String) -> Data?) -> QuickInsertSet {
+        QuickInsertSet(
+            createdAt: createdAt, entries: entries, collections: collections,
+            returnsAfterInsert: returnsAfterInsert, accent: accent, keyboardSize: keyboardSize,
+            keyboardEnabled: keyboardEnabled, autoFillEnabled: autoFillEnabled,
+            isLocked: isLocked, expiresAt: expiresAt,
+            appIcons: SourceAppIcons.collect(
+                for: entries.map(\.sourceBundleID), maxApps: QuickInsertPolicy.maxAppIcons,
+                maxBytes: QuickInsertPolicy.maxAppIconBytes, icon: icon
+            )
         )
     }
 

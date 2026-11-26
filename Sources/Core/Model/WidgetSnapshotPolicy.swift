@@ -17,6 +17,9 @@ public enum WidgetSnapshotPolicy {
     public static let thumbnailMaxPixel = 240
     public static let maxThumbnailBytes = 24 * 1024
     public static let maxThumbnailTotalBytes = 160 * 1024
+    /// The apps' icons (ADR 0074), on top of the thumbnails' budget so an icon never pushes a clip out.
+    public static let maxAppIcons = 24
+    public static let maxAppIconBytes = 96 * 1024
     /// JSON escapes a control character as six bytes and base64 grows a thumbnail by a third: the fullest snapshot the
     /// bounds allow (`WidgetSnapshotSelectionTests`) still fits. With every collection full of clips no list shares it
     /// measured 1,099,583 bytes, over the 512 KB of ADR 0052; this bound leaves it a third to spare (ADR 0060).

@@ -71,6 +71,7 @@ extension MobileAppState {
         let options = target.options()
         let device = CardFootLineView.device
         let peers = peerDeviceNames
+        let colors = sourceApps.colorsByBundleID
         let next = Task { [weak self] in
             await previous?.value
             guard let self,
@@ -79,9 +80,11 @@ extension MobileAppState {
                   !historyLock.holdsOutsideSurfaces else { return }
             do {
                 let set = try await Self.buildQuickInsertSet(
-                    container: container, now: now, options: options, device: device, peerDeviceNames: peers
+                    container: container, now: now, options: options,
+                    origin: QuickInsertOrigin(device: device, peerDeviceNames: peers, catalogColors: colors)
                 )
                 .withExpiresAt(expiresAt)
+                .attachingAppIcons(appIcon)
                 guard self.quickInsertGeneration == expectedGeneration,
                       let stillTarget = quickInsert, stillTarget.isEnabled(),
                       !historyLock.holdsOutsideSurfaces else { return }
@@ -99,17 +102,39 @@ extension MobileAppState {
 
     @concurrent
     private static func buildQuickInsertSet(
-        container: ModelContainer, now: Date, options: QuickInsertSelection.Options, device: CardFootLine.Device,
-        peerDeviceNames: [String: String]
+        container: ModelContainer, now: Date, options: QuickInsertSelection.Options, origin: QuickInsertOrigin
     ) async throws
         -> QuickInsertSet
     {
         try QuickInsertSelection.set(
             in: ModelContext(container), now: now, options: options,
             source: {
-                CardFootLine.source(CardFootLine.origin(of: $0, peerDeviceNames: peerDeviceNames), device: device)
-            }
+                CardFootLine.source(
+                    CardFootLine.origin(of: $0, peerDeviceNames: origin.peerDeviceNames), device: origin.device
+                )
+            },
+            sourceApp: { sourceAppLook(of: $0, catalogColors: origin.catalogColors) }
         )
+    }
+
+    /// What a clip's foot line and glow are read from, handed to the build off the main actor.
+    struct QuickInsertOrigin {
+        let device: CardFootLine.Device
+        let peerDeviceNames: [String: String]
+        let catalogColors: [String: String]
+    }
+
+    /// A card's app and color outside Pesto, as the library's card draws them (ADR 0068): the clip's own sampled
+    /// color, else the one a Mac's catalog gave its app.
+    nonisolated static func sourceAppLook(of item: ClipboardItem, catalogColors: [String: String]) -> SourceAppLook {
+        let own = item.sourceAppLook
+        guard own.colorHex == nil, let bundleID = own.bundleID else { return own }
+        return SourceAppLook(bundleID: bundleID, colorHex: catalogColors[bundleID])
+    }
+
+    /// An app's icon from the catalog the Macs wrote; an iPhone resolves none of its own.
+    func appIcon(_ bundleID: String) -> Data? {
+        sourceApps.entry(for: bundleID)?.icon
     }
 
     /// Writes the set now: the current one with the setting on and a history open, otherwise no file and no key. With
@@ -130,11 +155,14 @@ extension MobileAppState {
             let now = clock()
             let device = CardFootLineView.device
             let peers = peerDeviceNames
+            let colors = sourceApps.colorsByBundleID
             let set = try QuickInsertSelection.set(
                 in: ModelContext(container), now: now, options: target.options(),
-                source: { CardFootLine.source(CardFootLine.origin(of: $0, peerDeviceNames: peers), device: device) }
+                source: { CardFootLine.source(CardFootLine.origin(of: $0, peerDeviceNames: peers), device: device) },
+                sourceApp: { Self.sourceAppLook(of: $0, catalogColors: colors) }
             )
             .withExpiresAt(historyLock.outsideExpiresAt(at: now))
+            .attachingAppIcons(appIcon)
             try target.file.write(set, with: target.keys.loadOrCreate())
         } catch {
             Self.quickInsertLogger

@@ -16,6 +16,9 @@ public enum QuickInsertPolicy {
     /// A longer clip is not offered: inserting a whole document into a text field is not what this is for.
     public static let maxEntryBytes = 32 * 1024
     public static let maxTotalBytes = 256 * 1024
+    /// The apps' icons (ADR 0074), on top of the clips' budget so an icon never pushes a clip out.
+    public static let maxAppIcons = 12
+    public static let maxAppIconBytes = 48 * 1024
     public static let maxTitleCharacters = 120
     public static let maxSourceCharacters = 60
     public static let thumbnailMaxPixel = 240

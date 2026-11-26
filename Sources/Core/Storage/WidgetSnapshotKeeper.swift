@@ -38,17 +38,21 @@ public final class WidgetSnapshotKeeper {
         /// The source line a clip's card shows (its app, or Another device), read off the main actor.
         public var source: @Sendable (ClipboardItem) -> String?
         public var now: @MainActor () -> Date
+        /// An app's icon as a PNG, read on the main actor once the clips are chosen (ADR 0074).
+        public var appIcon: @MainActor (String) -> Data?
 
         public init(
             gate: @escaping @MainActor () -> WidgetSnapshotGate, theme: @escaping @MainActor () -> WidgetSnapshot.Theme,
             canRead: @escaping @MainActor () -> Bool = { true },
-            source: @escaping @Sendable (ClipboardItem) -> String?, now: @escaping @MainActor () -> Date = { Date() }
+            source: @escaping @Sendable (ClipboardItem) -> String?, now: @escaping @MainActor () -> Date = { Date() },
+            appIcon: @escaping @MainActor (String) -> Data? = { _ in nil }
         ) {
             self.gate = gate
             self.theme = theme
             self.canRead = canRead
             self.source = source
             self.now = now
+            self.appIcon = appIcon
         }
     }
 
@@ -176,7 +180,7 @@ public final class WidgetSnapshotKeeper {
             guard after == .clips else {
                 return store(after.placeholder(theme: theme, at: inputs.now()), as: Written(gate: after, theme: theme))
             }
-            store(snapshot, as: Written(gate: gate, theme: theme))
+            store(snapshot.attachingAppIcons(inputs.appIcon), as: Written(gate: gate, theme: theme))
         } catch {
             Self.logger.error("The widget snapshot was not read: \(error.localizedDescription, privacy: .public)")
             dropFile()

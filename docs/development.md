@@ -108,6 +108,7 @@ pinned in `scripts/tool-versions.env`):
 |---|---|
 | `no-analytics` | Grep for forbidden SDK imports (Sentry, Firebase, etc.) |
 | `verify` | `scripts/verify.sh --no-ui`: SwiftFormat + SwiftLint, every SPM test (Core and Regression), a Debug build with warnings as errors, and the hosted `PestoTests` |
+| `benchmarks` | `scripts/bench-ci.sh`: CPU, memory, and latency regression shield on pushes to `main` (`.github/workflows/benchmarks.yml`) |
 
 The UI tests and snapshot tests drive real windows, so they run locally (`scripts/verify.sh`, `docs/testing.md`).
 

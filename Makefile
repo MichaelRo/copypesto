@@ -424,6 +424,10 @@ bench-scroll: ## [Benchmarks] Measure shelf scrolling (hitches) on a mixed histo
 soak-memory: ## [Benchmarks] Run multi-cycle Profile soak test (footprint < 150 MB, 0 leaks, flat slope, MallocLargeCache=0)
 	scripts/soak-memory.sh
 
+.PHONY: bench-ci
+bench-ci: ## [Benchmarks] Run headless CPU, memory, and latency benchmarks and check scripts/bench-thresholds.json
+	scripts/bench-ci.sh
+
 .PHONY: check-flash
 check-flash: ## [Test] Capture OverlayPanel at 120 Hz while cycling collections (⌘]/⌘[) to catch blank/stale frames
 	scripts/check-collection-switch-flash.sh
@@ -570,6 +574,10 @@ doctor: ## [Develop] Print dev-environment diagnostics — signing identity, CDH
 .PHONY: audit-converge
 audit-converge: ## [Test] Audit working tree and git diff against SDD invariants (scripts/audit-converge.py)
 	scripts/audit-converge.py
+
+.PHONY: review-grid
+review-grid: ## [Test] Build scoped multi-agent review grid and run static diff guards (scripts/review_grid.py)
+	python3 scripts/review_grid.py --base origin/main --check
 
 .PHONY: verify
 verify: ## [Test] Full gate: lint, Core tests, build, hosted + UI tests, screenshots (scripts/verify.sh; about an hour with the UI tests)

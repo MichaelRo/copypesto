@@ -29,7 +29,8 @@ final class KeyboardThumbnails {
         return cache
     }()
 
-    private let context = CIContext(options: [.useSoftwareRenderer: false])
+    /// Made on the first picture, not when the keyboard opens without any.
+    private lazy var context = CIContext(options: [.useSoftwareRenderer: false])
 
     func picture(for id: UUID, data: Data) -> Picture? {
         let key = id as NSUUID

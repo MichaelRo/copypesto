@@ -190,6 +190,7 @@ struct KeyboardSearchPage: View {
         }
         .buttonStyle(KeyboardKeyStyle(isFunction: true))
         .accessibilityLabel(Text("Search Keyboard"))
+        .accessibilityAddTraits(.isKeyboardKey)
         .accessibilityValue(Text(verbatim: name ?? activeLayout.shortName))
         .accessibilityHint(Text("Switches to the letters of your next keyboard"))
     }

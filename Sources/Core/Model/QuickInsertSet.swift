@@ -71,8 +71,11 @@ public struct QuickInsertSet: Codable, Equatable, Sendable {
             returnsAfterInsert: returnsAfterInsert, accent: accent, keyboardSize: keyboardSize,
             keyboardEnabled: keyboardEnabled, autoFillEnabled: autoFillEnabled,
             isLocked: isLocked, expiresAt: expiresAt,
+            // Text first: AutoFill shows no pictures, so their apps must not take an icon a card it shows needs.
             appIcons: SourceAppIcons.collect(
-                for: entries.map(\.sourceBundleID), maxApps: QuickInsertPolicy.maxAppIcons,
+                for: (entries.filter { $0.kind != .image } + entries.filter { $0.kind == .image })
+                    .map(\.sourceBundleID),
+                maxApps: QuickInsertPolicy.maxAppIcons,
                 maxBytes: QuickInsertPolicy.maxAppIconBytes, icon: icon
             )
         )

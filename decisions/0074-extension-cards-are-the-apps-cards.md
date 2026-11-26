@@ -36,6 +36,10 @@ The search page switched layouts only by holding space, which Apple's keyboard u
 
 ## Consequences
 - A clip from the iPhone itself has no app, so its card glows in the theme's hue only, as in the library.
+- Past the 12th app in the quick-insert set (the 24th in the snapshot), or past the icons' bytes, a card has no icon
+  and its foot line falls back to its device symbol; text clips' apps are counted before pictures', which AutoFill
+  does not show. An app the Mac cannot find gives no icon rather than the disk's. A bundle ID is carried only as
+  Apple spells one (letters, digits, dots, hyphens, underscores; at most 160 characters).
 - The language key names the layout, not the language: a Serbian (Latin) keyboard uses QWERTZ and shows "DE", as the
   space bar named it before.
 - Whether the glow and the 13–16 pt icons read on a keyboard and a widget, and the key's fit on a small iPhone in

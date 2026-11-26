@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+import CryptoKit
 import Foundation
 import SwiftData
 import Testing
@@ -46,6 +47,10 @@ struct SourceAppLookTests {
         #expect(SourceAppLook(bundleID: "a", colorHex: "red").colorHex == nil)
         #expect(SourceAppLook(bundleID: "a", colorHex: "#12345").colorHex == nil)
         #expect(SourceAppLook(bundleID: " ", colorHex: nil).bundleID == nil)
+        #expect(SourceAppLook(bundleID: "com.apple.mobilenotes", colorHex: nil).bundleID == "com.apple.mobilenotes")
+        #expect(SourceAppLook(bundleID: "com.example.\u{1}app", colorHex: nil).bundleID == nil)
+        #expect(SourceAppLook(bundleID: "com.\"quote\"", colorHex: nil).bundleID == nil)
+        #expect(SourceAppLook(bundleID: String(repeating: "a", count: 161), colorHex: nil).bundleID == nil)
     }
 
     @Test("icons are collected once per app, in order, PNG only, within the count and byte caps")
@@ -78,6 +83,23 @@ struct SourceAppLookTests {
         #expect(set.entries.contains { $0.sourceBundleID == "com.apple.Safari" && $0.sourceColorHex == nil })
         #expect(Set(set.appIcons.keys) == ["com.apple.Notes"])
         #expect(set.appIcons.values.reduce(0) { $0 + $1.count } <= QuickInsertPolicy.maxAppIconBytes)
+    }
+
+    @Test("a text clip's app gets its icon before the apps of pictures, which AutoFill does not show")
+    func whenAppsExceedTheCap_thenTextComesFirst() {
+        let pictures = (0..<QuickInsertPolicy.maxAppIcons).map { index in
+            QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .image, title: "p", text: "", expandsOnInsert: false,
+                sourceBundleID: "com.example.photos\(index)"
+            )
+        }
+        let text = QuickInsertEntry(
+            id: UUID(), section: .recent, kind: .text, title: "t", text: "t", expandsOnInsert: false,
+            sourceBundleID: "com.example.notes"
+        )
+        let set = QuickInsertSet(createdAt: .now, entries: pictures + [text]).attachingAppIcons { _ in Self.png }
+        #expect(set.appIcons["com.example.notes"] != nil)
+        #expect(set.appIcons.count == QuickInsertPolicy.maxAppIcons)
     }
 
     @Test("a set written before icons opens with none, and one with icons survives a round trip")
@@ -115,6 +137,29 @@ struct SourceAppLookTests {
         #expect(KeyboardMenu(hasFullAccess: false) { set }.appIcons.isEmpty)
         #expect(QuickInsertMenu(set: set).appIcons == ["x": Self.png])
         #expect(QuickInsertMenu(set: locked).appIcons.isEmpty)
+    }
+
+    /// Plain text: the clips' own budget counts UTF-8 bytes, so a set of text that JSON must escape is over the file's
+    /// bound already without the looks (a gap of its own, not this test's).
+    @Test("the fullest quick-insert set, every entry at its bound with an app and a color, and every icon, still seals")
+    func whenQuickInsertSetIsFullest_thenItStillSeals() throws {
+        let bundle = String(repeating: "a", count: SourceAppLook.maxBundleIDCharacters - 4)
+        let count = QuickInsertPolicy.maxPinned + QuickInsertPolicy.maxSnippets + QuickInsertPolicy.maxRecent
+            + QuickInsertPolicy.maxCollections * QuickInsertPolicy.maxCollectionClips
+        let perEntry = QuickInsertPolicy.maxTotalBytes / count
+        let entries = (0..<count).map { index in
+            QuickInsertEntry(
+                id: UUID(), section: .recent, kind: .text,
+                title: String(repeating: "a", count: QuickInsertPolicy.maxTitleCharacters),
+                text: String(repeating: "a", count: perEntry), expandsOnInsert: false,
+                source: String(repeating: "a", count: QuickInsertPolicy.maxSourceCharacters),
+                sourceBundleID: "\(index)." + bundle, sourceColorHex: "#FFFFFF"
+            )
+        }
+        let set = QuickInsertSet(createdAt: .now, entries: entries).attachingAppIcons { _ in Self.icon(size: 8192) }
+        #expect(set.appIcons.count == QuickInsertPolicy.maxAppIconBytes / SourceAppIcons.maxIconBytes)
+        let sealed = try SealedFileEnvelope.seal(set, as: .quickInsert, with: SymmetricKey(size: .bits256))
+        #expect(sealed.count <= QuickInsertPolicy.maxFileBytes)
     }
 
     @Test("widget clips carry the app and color, and the snapshot the icons of the apps it shows")

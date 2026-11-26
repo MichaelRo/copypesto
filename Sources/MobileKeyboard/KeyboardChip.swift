@@ -21,6 +21,9 @@ struct KeyboardChip: View {
         .buttonStyle(MobileChipStyle(
             isActive: isSelected, tint: tint, isDimmed: isDimmed, chipHeight: 30, touchMinimum: nil
         ))
+        // A symbol alone is narrow: give it a finger's width to hit.
+        .frame(minWidth: title == nil ? 44 : nil)
+        .contentShape(.rect)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

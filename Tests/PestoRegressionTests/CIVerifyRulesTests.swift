@@ -28,16 +28,19 @@ struct CIVerifyRulesTests {
         )
     }
 
-    @Test("main's merge queue always runs verify on the PR merged with the newest main, a skip never lands a PR")
-    func whenQueued_thenVerifyRuns() throws {
-        let text = try workflow()
-        #expect(text.contains("\n  merge_group:\n"), "the merge queue's event triggers the workflow")
-        let job = try verifyJob(text)
-        #expect(job.contains("github.event_name == 'merge_group'"), "verify runs in the merge queue")
-        let detect = try #require(text.components(separatedBy: "\n  verify:\n").first)
-        let tree = try #require(detect.range(of: "echo \"tree=")?.lowerBound)
-        let shortcut = try #require(detect.range(of: "!= \"pull_request\" ]; then")?.lowerBound)
-        #expect(tree < shortcut, "the queue's run gets the tree hash, so a PR that already passed passes there fast")
+    @Test("a stacked pull request retargeted to main runs verify again, so its earlier skip never lands it")
+    func whenRetargeted_thenVerifyRunsAgain() throws {
+        let retarget = try String(
+            contentsOf: SourceTree.repositoryRoot.appendingPathComponent(".github/workflows/retarget.yml"),
+            encoding: .utf8
+        )
+        #expect(retarget.contains("types: [edited]"))
+        #expect(retarget
+            .contains("github.event.changes.base && github.base_ref == github.event.repository.default_branch"))
+        #expect(retarget.contains(#"gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF""#))
+        #expect(!retarget.contains("\n  verify:"), "a job named verify here would add a skipped verify on a title edit")
+        #expect(!retarget.contains("actions/checkout"), "it runs no code from the pull request")
+        #expect(try !workflow().contains("edited"), "ci.yml itself never runs on an edit")
     }
 
     @Test("a green run leaves a marker keyed by the pull request's tree, and a run that finds it skips the work")

@@ -113,12 +113,12 @@ The UI tests and snapshot tests drive real windows, so they run locally (`script
 
 ## Merging
 
-`main`'s ruleset ("Branch protection") requires a pull request, the `verify` and `no-analytics` checks and **the merge
-queue**. A skipped check reports success, so a pull request whose `verify` was skipped (it was stacked on another branch
-when it ran) could land untested; in the queue, `verify` always runs, on the pull request merged with the newest `main`
-(`merge_group`), and the pull request lands only if it passes. A pull request that already passed on that exact code
-passes there in about a minute (the tree marker above). Press **Merge when ready** (or `gh pr merge --squash --auto`);
-queue several at once, and the queue merges them one after another without asking you to update any branch.
+`main`'s ruleset ("Branch protection") requires a pull request and the `verify` and `no-analytics` checks, with no
+bypass. A skipped check reports success, and `verify` skips a pull request stacked on another branch, so retargeting
+one to `main` starts CI by hand on its branch (`.github/workflows/retarget.yml`); that run's `verify` lands on the same
+commit and is the check the ruleset waits for. A title or description edit adds no `verify` result. (A merge queue
+would also test each pull request against the newest `main`, but GitHub offers it only to repositories owned by an
+organization.) `gh pr merge --squash --auto` merges a pull request the moment its checks pass.
 
 Two files gain a little in nearly every pull request and conflicted on every merge (2026-11-25: five rounds):
 `.gitattributes` keeps both sides' new rows of `decisions/README.md` (`merge=union`; the rows may land out of number

@@ -595,3 +595,7 @@ clean-test-defaults: ## [Maintenance] Remove leftover test preference files from
 clean-test-keychain: ## [Maintenance] Remove leftover test Keychain items from the login keychain
 	scripts/clean-test-keychain.sh --delete
 
+.PHONY: sort-decisions
+sort-decisions: ## [Maintenance] Sort decisions/README.md index rows by ADR number (after merge=union)
+	python3 scripts/sort-decisions-readme.py
+

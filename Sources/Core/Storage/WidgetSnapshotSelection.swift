@@ -276,7 +276,7 @@ public enum WidgetSnapshotSelection {
     }
 
     private static func cut(_ text: String, _ limit: Int) -> String {
-        String(text.prefix(limit))
+        EncodedText.prefix(text, maxCharacters: limit)
     }
 
     private static func hex(_ color: HexColorComponents) -> String {

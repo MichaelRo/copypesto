@@ -19,4 +19,4 @@ Pesto is a clipboard manager for Mac, iPhone and iPad. It remembers what you cop
 
 Click any picture in the guide to view it full size.
 
-Requires macOS 15 or later on Mac, or iOS 26 / iPadOS 26 or later on iPhone and iPad. On-device AI needs Apple Intelligence on macOS 26 or iOS 26 or later; Describe Image and picture screening need macOS 27 on Mac.
+Requires macOS 15 or later on Mac, or iOS 26 / iPadOS 26 or later on iPhone and iPad. On-device AI needs Apple Intelligence on macOS 26 or iOS 26 or later; Describe Image and picture screening need macOS 27 on Mac and iOS 27 or iPadOS 27 on iPhone and iPad.

@@ -69,7 +69,7 @@ More in [Using Pesto](docs/guide/using-pesto.md).
   marks as concealed, such as those from password managers, are ignored.
 - **No clip is sent to an AI service.** On-device AI runs with Apple Intelligence on your Mac, and only there.
 - Pesto makes only a few requests: update checks (switchable in Settings) and link previews (on from setup for a new install, switchable in Privacy) and links you open.
-- Optional Touch ID lock, and **Clear Everything** in Settings, under Data.
+- Optional Touch ID or Face ID lock, plus **Clear Everything** on Mac (and **Clear History** on iPhone and iPad) in Settings, under Data.
 
 The full list of what is stored and sent, including what encryption does *not* protect, is in
 [Privacy and security](docs/guide/privacy-and-security.md).
@@ -151,14 +151,14 @@ The shelf in each theme: Basil, Parmesan, Pine nut and Mortar.
 Pesto for iPhone and iPad (**iOS 26 / iPadOS 26 and later**) brings encrypted clip cards, search, OCR, Ask Pesto, snippets, collections and a Face ID lock to your phone and tablet, with an iPad sidebar and keyboard shortcuts.
 
 - **Add clips intentionally:** use the Paste button, New Clip, the Share sheet, **Add Clipboard to Pesto** in Shortcuts (or the Action Button, Back Tap and Control Center), or *Add copies when Pesto opens*.
-- **Insert anywhere:** insert text clips and snippets through **AutoFill** (text only, never passwords), the optional **Pesto Keyboard** (numbers and punctuation without Full Access; your clips and search-only letters with Full Access, never reading your clipboard), or Home Screen and Lock Screen **Recent Clips** widgets.
+- **Insert anywhere:** insert text clips and snippets through **AutoFill** (text only, never passwords; prompting snippets included), the optional **Pesto Keyboard** (numbers and punctuation without Full Access; recent, pinned and chosen-collection clips plus non-prompting snippets and pictures with Full Access, and search-only letters, never reading your clipboard), or Home Screen and opt-in Lock Screen **Recent Clips** widgets.
 - **Sync and encrypted backup:** sync through a folder you choose (such as iCloud Drive) using the same encrypted log format as your Mac, or save and restore `.pestobackup` files by hand through Files.
 
 More in [Pesto on iPhone and iPad](docs/guide/iphone-and-ipad.md).
 
 ## Install
 
-- **iPhone and iPad (App Store).** Free on the App Store (`<!-- TODO: add App Store URL before merge -->`) for iOS 26 and iPadOS 26 or later. Every feature is free, with no in-app purchase.
+- **iPhone and iPad (App Store).** Free on the App Store <!-- App Store URL added at approval --> for iOS 26 and iPadOS 26 or later. Every feature is free, with no in-app purchase.
 - **Mac — Homebrew (optional).** Run `brew install michaelro/copypesto/pesto` to install the notarized disk image from the
   Releases page. If Homebrew prompts to trust the tap, run `brew trust michaelro/copypesto`. Homebrew checks its
   SHA-256 and can be a version behind. Pesto updates itself, so `brew upgrade` leaves it alone unless you add `--greedy`.

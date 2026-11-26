@@ -3,7 +3,7 @@
 Bring your clipboard history, pinned clips or snippets into Pesto from other apps.
 
 ## Before you switch
-- **Importing runs on your Mac; sync brings clips to iPhone and iPad.** Pesto imports libraries from other clipboard managers on macOS (it reads the file on your Mac, not iCloud data), and you can sync those clips and collections to Pesto on iPhone and iPad through a folder you choose (*Settings → Data → Sync with my other Macs* on Mac, and *Sync* in Settings on iPhone or iPad, off until you turn it on), or restore an encrypted Mac `.pestobackup` file on iOS. You can also keep one encrypted backup file per device.
+- **Importing runs on your Mac; sync brings clips to iPhone and iPad.** Pesto imports libraries from other clipboard managers on macOS (it reads the file on your Mac, not iCloud data), and you can sync those clips and collections to Pesto on iPhone and iPad through a folder you choose (*Settings → Data → Sync with my other Macs* on Mac, and *Sync* under *Extensions & Sync* in iPhone and iPad Settings, off until you turn it on), or restore an encrypted Mac `.pestobackup` file on iOS. You can also keep one encrypted backup file per device.
 - **⇧⌘V may collide with your old app.** Paste also uses it. Quit the old app first, or record another shortcut in
   *Settings → Shortcuts*; the second app to start loses the key. Maccy's default is ⇧⌘C. Some apps use ⇧⌘V for "paste
   without formatting".

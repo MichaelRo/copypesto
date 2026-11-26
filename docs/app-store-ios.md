@@ -81,11 +81,9 @@ To publish with the Mac's privacy page at release. Check each line against the b
 > **Sync.** Optional. Your devices exchange sealed files through a folder you choose, such as iCloud Drive. Only your
 > devices hold the keys that open them.
 >
-> **Link previews.** When on (the welcome offers them, and Settings can turn them off), Pesto asks a link's own site
-> for its title and picture. That site sees your IP address, as it would if you opened the link.
+> **Link previews.** Link previews start off on step 1, turn on when onboarding reaches step 2 (with the switch in view), and can be switched off in Settings; when on, Pesto asks a link's own site for its title and picture, so that site sees your IP address, as it would if you opened the link.
 >
-> **Apple Intelligence.** AI actions, Describe Image and Ask Pesto run on the device's own model. No clip is sent
-> anywhere.
+> **Apple Intelligence.** AI actions and Ask Pesto run on the device's own model on iOS 26 and later (Describe Image requires iOS 27 or iPadOS 27 and later). No clip is sent anywhere.
 >
 > **Face ID.** The History Lock asks iOS to check your face or passcode. Pesto never sees your face data.
 >
@@ -102,8 +100,7 @@ To publish with the Mac's privacy page at release. Check each line against the b
 > needs Full Access to open the sealed file of clips; without it, it types numbers and punctuation. It makes no network requests and never reads your
 > clipboard.
 >
-> **Sharing out.** When you share a picture or a GIF, iOS needs a file: Pesto writes one for the share and deletes it
-> when the share ends, when the history locks or is cleared, and at the next launch.
+> **Sharing out.** Temporary files written to share a GIF or export files are deleted when the share ends, when the history locks or is cleared, and at the next launch.
 >
 > **No analytics, no tracking, no ads.**
 
@@ -133,11 +130,11 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 >   keyboard with Full Access alone; it uses them to read one sealed file the app writes. It makes no network requests,
 >   reads only the last word before the cursor (to find matching clips, in memory, never kept), never reads the
 >   pasteboard, and sees nothing else typed on another keyboard. Without Full Access it still works
->   (the numbers-and-punctuation pad) and explains where settings live in Pesto. Its search-page letters type only into
+>   (the numbers-and-punctuation pad) and points to Settings → General → Keyboard → Keyboards → Pesto in iOS Settings. Its search-page letters type only into
 >   Pesto's own search field to find a clip, never into the host app; a keyboard that typed letters into apps would see
 >   everything the person writes, which Pesto chooses not to. With Full Access on, the keyboard's **Pesto** gear chip
->   opens an inline size panel whose **More** button (and the **Open Pesto Settings** / **Keyboard Settings** buttons when
->   no clips are ready) opens Pesto's own Keyboard & AutoFill settings (`UIApplication.open` via the responder chain,
+>   opens an inline size panel with an **Open Pesto** button (and the **Open Pesto Settings** / **Keyboard Settings** buttons when
+>   no clips are ready) that opens Pesto's own Keyboard & AutoFill settings (`UIApplication.open` via the responder chain,
 >   permitted for a keyboard's own container app under Guideline 4.4.1's "other apps" rule). To try it: Settings →
 >   General → Keyboard → Keyboards → Add New Keyboard → Pesto, tap Pesto and turn on Allow Full Access; pin a clip in
 >   Pesto (choose collections under **Settings → Keyboard & AutoFill** if needed); then in any text field switch

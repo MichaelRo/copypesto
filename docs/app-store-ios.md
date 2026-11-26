@@ -24,14 +24,13 @@ App Store and does not change (Developer ID, notarized). Signing and the develop
 | Field | Value |
 |---|---|
 | Name | Pesto |
-| Subtitle (30) | Keep what you copy |
+| Subtitle (30) | Private clipboard manager |
 | Category | Productivity (secondary: Utilities) |
 | Price | Free. Every feature, no in-app purchase (ADR 0001) |
 | Age rating | 4+ (no web browser, no user-to-user content, nothing from a server) |
 | Support URL | The GitHub repository's issues page, or the website's support page |
 
-**Promotional text (170):** Your copies, kept and searchable on iPhone and iPad. Sealed on your device, and in step
-across iPhone, iPad and Mac through a chosen folder. No account, no server.
+**Promotional text (170):** Your copies, kept and searchable on iPhone and iPad. Encrypted on your device, with optional folder sync to your Mac. No account, no server.
 
 **Description:**
 
@@ -45,12 +44,12 @@ across iPhone, iPad and Mac through a chosen folder. No account, no server.
 > on each and choose the same folder, such as iCloud Drive. Clips are sealed so that only your own devices can open
 > them; there is no Pesto server and no account.
 >
-> • One page of clip cards, with search that finds words inside pictures
+> • One page of clip cards, with search that finds words inside pictures and understands natural questions on-device with Ask Pesto
 > • Pinned clips, collections and smart collections
 > • Snippets with fill-ins
 > • Edit a clip's text
 > • Insert clips in any app through AutoFill (text only, never passwords) or the optional Pesto keyboard
-> • A Home Screen widget with your recent clips
+> • Home Screen and Lock Screen widgets with your recent clips and collections
 > • Lock your history with Face ID
 > • On iPad: a sidebar, keyboard shortcuts, drag and drop, and every multitasking size
 >
@@ -59,7 +58,7 @@ across iPhone, iPad and Mac through a chosen folder. No account, no server.
 
 Check each line against the build being submitted: a feature that is not in it comes out of the description.
 
-**Keywords (100):** clipboard,clipboard manager,copy paste,history,snippets,notes,paste,clips,text,sync
+**Keywords (100):** clipboard,manager,copy,paste,history,snippets,notes,clips,sync,ocr,autofill,keyboard,widget,private
 
 Localized App Store metadata for Spanish (`es`), French (`fr`), German (`de`), Japanese (`ja`), Simplified Chinese (`zh-Hans`), Portuguese (`pt-BR`), Hebrew (`he`), Russian (`ru`), Ukrainian (`uk`), Korean (`ko`), Italian (`it`), and Czech (`cs`) is in [app-store-localizations.md](app-store-localizations.md).
 
@@ -125,15 +124,17 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 >   Turn On AutoFill…** in Pesto (or Settings → General → AutoFill & Passwords → turn on Pesto), pin a clip in
 >   Pesto, then in a plain text field (such as Notes) long-press → **AutoFill → Pesto** (not a password field) and
 >   tap a clip.
-> - Keyboard: Pesto's keyboard (`net.copypesto.pesto.keyboard`) has no letter keys: it shows the person's own pinned
->   clips, snippets and recent text, a numbers-and-punctuation pad (typed input, available without Full Access),
+> - Keyboard: Pesto's keyboard (`net.copypesto.pesto.keyboard`) has no general typing keyboard: it shows the person's own
+>   pinned clips, snippets and recent text, a numbers-and-punctuation pad (typed input, available without Full Access),
 >   Space, Return, Delete and the Next Keyboard key. It requests Full Access only because iOS opens the app group and the shared Keychain group to a
 >   keyboard with Full Access alone; it uses them to read one sealed file the app writes. It makes no network requests,
 >   reads only the last word before the cursor (to find matching clips, in memory, never kept), never reads the
 >   pasteboard, and sees nothing else typed on another keyboard. Without Full Access it still works
->   (the numbers-and-punctuation pad) and explains what Full Access adds. Its letters (on the search page) type only into
->   Pesto's own search field to find a clip, never into the app; a keyboard that typed letters into apps would see
->   everything the person writes, which Pesto chooses not to. To try it: Settings → General → Keyboard →
+>   (the numbers-and-punctuation pad) and explains where settings live in Pesto. Its search-page letters type only into
+>   Pesto's own search field to find a clip, never into the host app; a keyboard that typed letters into apps would see
+>   everything the person writes, which Pesto chooses not to. With Full Access on, the keyboard's gear button opens
+>   Pesto's own Keyboard & AutoFill settings (`UIApplication.open` via the responder chain, permitted for a keyboard's own
+>   container app under Guideline 4.4.1's "other apps" rule). To try it: Settings → General → Keyboard →
 >   Keyboards → Add New Keyboard → Pesto, tap Pesto and turn on Allow Full Access; in Pesto turn on Settings → Insert
 >   from Pesto in other apps and pin a clip; then in any text field switch keyboards with the globe key and tap the
 >   clip.

@@ -43,12 +43,20 @@ struct MobileSnippetEditorView: View {
         case let .new(initialText):
             initialTitle = ""
             self.initialText = initialText
-        case let .edit(_, title, text):
+        case let .edit(_, title, text), let .convert(_, title, text):
             initialTitle = title
             initialText = text
         }
         _title = State(initialValue: initialTitle)
         _text = State(initialValue: initialText)
+    }
+
+    private var screenTitle: LocalizedStringKey {
+        switch target {
+        case .new: "New Snippet"
+        case .edit: "Edit Snippet"
+        case .convert: "Make Snippet"
+        }
     }
 
     private var isNew: Bool {
@@ -88,7 +96,7 @@ struct MobileSnippetEditorView: View {
                     editorForm
                 }
             }
-            .navigationTitle(isNew ? "New Snippet" : "Edit Snippet")
+            .navigationTitle(screenTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -441,6 +449,8 @@ private extension MobileSnippetEditorView {
                 await appState.createSnippet(title: draftTitle, text: prepared)
             case let .edit(id, _, _):
                 await appState.updateSnippet(id: id, title: draftTitle, text: prepared)
+            case let .convert(id, _, _):
+                await appState.convertToSnippet(id: id, title: draftTitle, text: prepared)
             }
             isSaving = false
             if saved { dismiss() }

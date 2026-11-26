@@ -146,10 +146,14 @@ struct KeyboardClipKey: View {
                         .clipped()
                 } else {
                     ZStack {
-                        // Blurred once when decoded (`KeyboardThumbnails`), not live on every frame of a scroll.
+                        // A tiny copy stretched smooth (`KeyboardThumbnails`), not a live blur on every frame of a
+                        // scroll.
                         Color.clear
                             .overlay {
-                                Image(uiImage: picture.backdrop ?? picture.image).resizable().scaledToFill()
+                                Image(uiImage: picture.backdrop ?? picture.image)
+                                    .resizable()
+                                    .interpolation(.high)
+                                    .scaledToFill()
                             }
                             .clipped()
                             .overlay(Color.black.opacity(0.35))

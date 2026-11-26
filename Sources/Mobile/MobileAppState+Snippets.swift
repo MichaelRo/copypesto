@@ -48,7 +48,7 @@ extension MobileAppState {
     /// the clip's and the clip is pinned; one Undo takes back both.
     @discardableResult
     func convertToSnippet(id: UUID, title: String?, text: String) async -> Bool {
-        guard let service = storageService, let existingItem = historyStore?.item(for: id),
+        guard let service = storageService, !isHistoryLockedNow(), let existingItem = historyStore?.item(for: id),
               canMakeSnippet(existingItem) else { return false }
         let prepared = FillInParser.convertingAllVariables(in: text)
         let oldHash = existingItem.contentHash

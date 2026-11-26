@@ -122,6 +122,24 @@ extension MobilePasteboardGlobals {
             #expect(try #require(library.store.item(for: item.id)).isPinned == false)
         }
 
+        @Test("while the history is locked nothing is made a snippet")
+        func whenLocked_thenTheClipIsLeftAlone() async throws {
+            let lock = MobileHistoryLock(
+                authenticator: StubUserAuthenticator(available: true, grants: true), grace: AuthenticationGrace(),
+                isEnabled: { true }
+            )
+            let library = try await MobileTestLibrary(lock: lock)
+            let item = try await library.add("Hi Ana")
+            library.state.lockHistory()
+            #expect(library.state.isHistoryLockedNow())
+
+            let made = await library.state.convertToSnippet(id: item.id, title: nil, text: "Hi {{input:Name}}")
+
+            #expect(!made)
+            try await library.refreshed()
+            #expect(try #require(library.store.item(for: item.id)).isPinned == false)
+        }
+
         @Test("a secret is never offered Make Snippet")
         func whenSecret_thenMakeSnippetIsNotOffered() async throws {
             let library = try await MobileTestLibrary()

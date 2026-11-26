@@ -48,12 +48,14 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
     /// When History Lock grace expires on iOS (if `showsClipsOutsideWhileLocked` is off): once reached, the widget
     /// switches to Locked even while Pesto is suspended in the background.
     public let expiresAt: Date?
+    /// Each shown app's icon once, by bundle ID (ADR 0074): a PNG of at most `SourceAppIcons.maxIconBytes`.
+    public let appIcons: [String: Data]
 
     public init(
         createdAt: Date, theme: Theme, clips: [WidgetClip], pinned: [WidgetClip] = [],
         collections: [WidgetCollection] = [], collectionClipIDs: [UUID: [UUID]] = [:],
         collectionClips: [WidgetClip] = [], isLocked: Bool = false, isHidden: Bool = false,
-        expiresAt: Date? = nil
+        expiresAt: Date? = nil, appIcons: [String: Data] = [:]
     ) {
         self.createdAt = createdAt
         self.theme = theme
@@ -65,6 +67,7 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
         self.isLocked = isLocked
         self.isHidden = isHidden
         self.expiresAt = expiresAt
+        self.appIcons = appIcons
     }
 
     public init(from decoder: any Decoder) throws {
@@ -79,6 +82,7 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
         isLocked = try values.decodeIfPresent(Bool.self, forKey: .isLocked) ?? false
         isHidden = try values.decodeIfPresent(Bool.self, forKey: .isHidden) ?? false
         expiresAt = try values.decodeIfPresent(Date.self, forKey: .expiresAt)
+        appIcons = try values.decodeIfPresent([String: Data].self, forKey: .appIcons) ?? [:]
     }
 
     public func isLockedAt(_ now: Date) -> Bool {
@@ -90,7 +94,23 @@ public struct WidgetSnapshot: Codable, Equatable, Sendable {
             createdAt: createdAt, theme: theme, clips: clips, pinned: pinned,
             collections: collections, collectionClipIDs: collectionClipIDs,
             collectionClips: collectionClips, isLocked: isLocked, isHidden: isHidden,
-            expiresAt: date
+            expiresAt: date, appIcons: appIcons
+        )
+    }
+
+    /// The same snapshot with the icons of the apps it shows, as `icon` gives them (read where the app's icons live:
+    /// the Mac's icon cache, the iPhone's catalog).
+    public func attachingAppIcons(_ icon: (String) -> Data?) -> WidgetSnapshot {
+        WidgetSnapshot(
+            createdAt: createdAt, theme: theme, clips: clips, pinned: pinned,
+            collections: collections, collectionClipIDs: collectionClipIDs,
+            collectionClips: collectionClips, isLocked: isLocked, isHidden: isHidden,
+            expiresAt: expiresAt,
+            appIcons: SourceAppIcons.collect(
+                for: (clips + pinned + collectionClips).map(\.sourceBundleID),
+                maxApps: WidgetSnapshotPolicy.maxAppIcons, maxBytes: WidgetSnapshotPolicy.maxAppIconBytes,
+                icon: icon
+            )
         )
     }
 

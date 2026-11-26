@@ -29,6 +29,10 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
     public let recognizedText: String?
     public let isAnimated: Bool
     public let fieldMemory: [String: String]?
+    /// The app it came from, a key of `QuickInsertSet.appIcons` (ADR 0074).
+    public let sourceBundleID: String?
+    /// The app's color as `#RRGGBB`, for the card's foot glow (ADR 0068).
+    public let sourceColorHex: String?
 
     public var hasRecognizedText: Bool {
         recognizedText?.isEmpty == false
@@ -39,7 +43,7 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
         fromAnotherDevice: Bool = false, customTitle: String? = nil, ogTitle: String? = nil,
         date: Date = Date(timeIntervalSince1970: 0), source: String? = nil, sourceIsThisDevice: Bool = false,
         thumbnail: Data? = nil, recognizedText: String? = nil, isAnimated: Bool = false,
-        fieldMemory: [String: String]? = nil
+        fieldMemory: [String: String]? = nil, sourceBundleID: String? = nil, sourceColorHex: String? = nil
     ) {
         self.id = id
         self.section = section
@@ -57,6 +61,8 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
         self.recognizedText = recognizedText
         self.isAnimated = isAnimated
         self.fieldMemory = fieldMemory
+        self.sourceBundleID = sourceBundleID
+        self.sourceColorHex = sourceColorHex
     }
 
     public init(from decoder: any Decoder) throws {
@@ -77,5 +83,7 @@ public struct QuickInsertEntry: Codable, Equatable, Identifiable, Sendable {
         recognizedText = try container.decodeIfPresent(String.self, forKey: .recognizedText)
         isAnimated = try container.decodeIfPresent(Bool.self, forKey: .isAnimated) ?? false
         fieldMemory = try container.decodeIfPresent([String: String].self, forKey: .fieldMemory)
+        sourceBundleID = try container.decodeIfPresent(String.self, forKey: .sourceBundleID)
+        sourceColorHex = try container.decodeIfPresent(String.self, forKey: .sourceColorHex)
     }
 }

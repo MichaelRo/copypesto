@@ -56,6 +56,8 @@ public struct QuickInsertMenu: Equatable, Sendable {
     public let state: State
     public let accent: WidgetSnapshot.Theme?
     public let chips: [ChipLabel]
+    /// The icons of the listed clips' apps (ADR 0074); none while locked.
+    public let appIcons: [String: Data]
     private let entries: [QuickInsertEntry]
     private let collections: [QuickInsertCollection]
 
@@ -72,6 +74,7 @@ public struct QuickInsertMenu: Equatable, Sendable {
         let loadedCollections = isLocked ? [] : (activeSet?.collections ?? [])
         entries = loadedEntries
         collections = loadedCollections
+        appIcons = isLocked ? [:] : (activeSet?.appIcons ?? [:])
         if activeSet == nil {
             state = .unavailable
         } else if isLocked {
@@ -141,5 +144,11 @@ public struct QuickInsertMenu: Equatable, Sendable {
         case .snippets: .snippets
         case .all, .collection: nil
         }
+    }
+}
+
+public extension QuickInsertMenu {
+    func appIcon(for entry: QuickInsertEntry) -> Data? {
+        entry.sourceBundleID.flatMap { appIcons[$0] }
     }
 }

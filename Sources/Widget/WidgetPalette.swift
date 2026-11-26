@@ -7,9 +7,12 @@ struct WidgetPalette {
     let ground: Color
     let accent: Color
     let isDark: Bool
+    /// The theme's accent as hex, the glow of a card whose app gives no color (ADR 0068).
+    let accentHex: String
 
     init(theme: WidgetSnapshot.Theme, isDark: Bool) {
         self.isDark = isDark
+        accentHex = theme.accent(dark: isDark)
         ground = Self.color(theme.ground(dark: isDark)) ?? .clear
         accent = Self.color(theme.accent(dark: isDark)) ?? .green
     }

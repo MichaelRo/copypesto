@@ -104,10 +104,11 @@ extension MobileAppState {
         do {
             let options = WidgetSnapshotRequest(
                 now: now, theme: Self.widgetTheme(), previous: previous,
-                device: CardFootLineView.device, peerDeviceNames: peers
+                device: CardFootLineView.device, peerDeviceNames: peers, catalogColors: sourceApps.colorsByBundleID
             )
             let snapshot = try await Self.widgetSnapshot(container: container, request: options)
                 .withExpiresAt(expiresAt)
+                .attachingAppIcons(appIcon)
             guard !historyLock.holdsOutsideSurfaces else { return performWidgetEmpty() }
             guard target.isEnabled() else { return }
             try target.file.write(snapshot, with: target.keys.loadOrCreate())
@@ -153,6 +154,7 @@ extension MobileAppState {
         let previous: WidgetSnapshot?
         let device: CardFootLine.Device
         let peerDeviceNames: [String: String]
+        let catalogColors: [String: String]
     }
 
     @concurrent
@@ -161,12 +163,14 @@ extension MobileAppState {
     ) async throws
     -> WidgetSnapshot {
         try WidgetSnapshotSelection.snapshot(
-            in: ModelContext(container), now: request.now, theme: request.theme, previous: request.previous
-        ) {
-            CardFootLine.source(
-                CardFootLine.origin(of: $0, peerDeviceNames: request.peerDeviceNames), device: request.device
-            ).name
-        }
+            in: ModelContext(container), now: request.now, theme: request.theme, previous: request.previous,
+            sourceApp: { sourceAppLook(of: $0, catalogColors: request.catalogColors) },
+            source: {
+                CardFootLine.source(
+                    CardFootLine.origin(of: $0, peerDeviceNames: request.peerDeviceNames), device: request.device
+                ).name
+            }
+        )
     }
 
     static func widgetTheme() -> WidgetSnapshot.Theme {

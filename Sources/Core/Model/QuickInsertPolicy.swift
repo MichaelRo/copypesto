@@ -22,6 +22,9 @@ public enum QuickInsertPolicy {
     /// What all the clips' text, recognized text, thumbnails and fill-in values may take, text counted as it is encoded
     /// (`EncodedText`).
     public static let maxTotalBytes = 256 * 1024
+    /// The apps' icons (ADR 0074), on top of the clips' budget so an icon never pushes a clip out.
+    public static let maxAppIcons = 12
+    public static let maxAppIconBytes = 48 * 1024
     public static let maxTitleCharacters = 120
     public static let maxSourceCharacters = 60
     public static let thumbnailMaxPixel = 240

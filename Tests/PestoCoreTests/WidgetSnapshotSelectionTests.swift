@@ -412,7 +412,9 @@ struct WidgetSnapshotSelectionTests {
                     nil,
                 linkHost: worstPart, linkPath: worstPart, colorHex: "FFFFFF",
                 source: String(repeating: "\u{1}", count: WidgetSnapshotPolicy.maxSourceCharacters), date: .now,
-                isPinned: true, thumbnail: Data(repeating: 0xFF, count: perThumbnail)
+                isPinned: true, thumbnail: Data(repeating: 0xFF, count: perThumbnail),
+                sourceBundleID: "\(index)." + String(repeating: "a", count: SourceAppLook.maxBundleIDCharacters - 4),
+                sourceColorHex: "#FFFFFF"
             )
         }
         let others = Array(all.dropFirst(lists))
@@ -427,11 +429,16 @@ struct WidgetSnapshotSelectionTests {
             let start = index * WidgetSnapshotPolicy.maxClips
             return (collection.id, others[start..<start + WidgetSnapshotPolicy.maxClips].map(\.id))
         }
+        // Every app's icon at its largest, as many as the icons' cap lets in (ADR 0074).
+        let largestIcon = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+            + Data(repeating: 0xFF, count: SourceAppIcons.maxIconBytes - 8)
         let snapshot = WidgetSnapshot(
             createdAt: .now, theme: .brand, clips: Array(all.prefix(WidgetSnapshotPolicy.maxClips)),
             pinned: Array(all.prefix(lists).dropFirst(WidgetSnapshotPolicy.maxClips)), collections: collections,
             collectionClipIDs: Dictionary(uniqueKeysWithValues: members), collectionClips: others
         )
+        .attachingAppIcons { _ in largestIcon }
+        #expect(snapshot.appIcons.count == WidgetSnapshotPolicy.maxAppIconBytes / SourceAppIcons.maxIconBytes)
 
         let sealed = try SealedFileEnvelope.seal(snapshot, as: .widgetSnapshot, with: SymmetricKey(size: .bits256))
         #expect(sealed.count <= WidgetSnapshotPolicy.maxFileBytes)

@@ -83,6 +83,7 @@ suggestions work, the notch proposal) live in `docs/design/`.
 | [0072](0072-extensions-open-pesto-only-as-apple-allows.md) | The keyboard opens Pesto with the plain `UIApplication.open` through the responder chain (DTS sample), only with Full Access; AutoFill's gear says where the settings are; no extension calls an API through a string selector; amends 0066 |
 | [0073](0073-autofill-has-no-settings-button.md) | The AutoFill picker has no settings button; its settings are reached from the app; amends 0072 |
 | [0076](0076-smaller-widget-window-and-ios-icon-default.md) | A widget orders a plain collection from its newest 60 members (the keyboard keeps 300); on iOS Match App Icon starts off; amends 0060 and 0069 |
+| [0074](0074-extension-cards-are-the-apps-cards.md) | The keyboard, AutoFill and widget cards are the app's cards (app icon and foot glow, carried in the sealed sets); the size preview shows real rows; a gear chip and a language key, not a globe; closes 0068's consequence, amends 0063 and 0066 |
 
 ## Template
 

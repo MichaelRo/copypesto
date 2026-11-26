@@ -21,11 +21,15 @@ public struct WidgetClip: Codable, Equatable, Identifiable, Sendable {
     public let isPinned: Bool
     /// A JPEG at most `WidgetSnapshotPolicy.thumbnailMaxPixel` on its longer side.
     public let thumbnail: Data?
+    /// The app it came from, a key of `WidgetSnapshot.appIcons` (ADR 0074).
+    public let sourceBundleID: String?
+    /// The app's color as `#RRGGBB`, for the card's foot glow (ADR 0068).
+    public let sourceColorHex: String?
 
     public init(
         id: UUID, kind: ClipboardType, text: String, fullText: String? = nil, linkHost: String? = nil,
         linkPath: String? = nil, colorHex: String? = nil, source: String? = nil, date: Date, isPinned: Bool = false,
-        thumbnail: Data? = nil
+        thumbnail: Data? = nil, sourceBundleID: String? = nil, sourceColorHex: String? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -38,5 +42,7 @@ public struct WidgetClip: Codable, Equatable, Identifiable, Sendable {
         self.date = date
         self.isPinned = isPinned
         self.thumbnail = thumbnail
+        self.sourceBundleID = sourceBundleID
+        self.sourceColorHex = sourceColorHex
     }
 }

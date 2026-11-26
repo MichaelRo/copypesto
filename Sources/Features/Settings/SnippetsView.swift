@@ -225,13 +225,16 @@ struct SnippetsView: View {
         .settingsRow("Suggestion statistics")
     }
 
+    /// Seeds the editor with the clip's whole text, never its 500-character preview; a secret is never seeded.
     private func seedFromClip(_ seedID: UUID) {
         if let item = pastedOften.first(where: { $0.id == seedID }) ?? pinnedItems.first(where: { $0.id == seedID }) {
-            editor = .new(text: item.displayPreviewText, anchorID: item.id.uuidString)
+            guard item.sensitivity == nil else { return }
+            editor = .new(text: ClipText.full(of: item), anchorID: item.id.uuidString)
         } else if let item = try? modelContext
             .fetch(FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == seedID })).first
         {
-            editor = .new(text: item.displayPreviewText)
+            guard item.sensitivity == nil else { return }
+            editor = .new(text: ClipText.full(of: item))
         }
     }
 

@@ -44,6 +44,23 @@ public enum TextEditPolicy {
         }
     }
 
+    /// Whether a clip offers Make Snippet (ADR 0075): text or code the person can see, not a secret, not still being
+    /// judged and not a snippet already. The Mac's Clip window and the iPhone's menus ask the same question.
+    public static func offersMakeSnippet(
+        type: ClipboardType, analysisPending: Bool, isSecret: Bool, isSnippet: Bool, concealment: CardConcealment
+    )
+    -> Bool {
+        (type == .text || type == .code) && !analysisPending && !isSecret && !isSnippet && !concealment.isConcealed
+    }
+
+    public static func result(for conversion: SnippetConversion) -> TextEditSaveResult {
+        switch conversion {
+        case .converted: .saved
+        case .needsPlaceholder: .refused(String(localized: "Add a placeholder, such as {{date}}, to make a snippet."))
+        case .notConvertible, .missing: .refused(String(localized: "This clip can\u{2019}t be made a snippet."))
+        }
+    }
+
     public static var lockedMessage: String {
         String(localized: "Your history is locked. Unlock it, then save again.")
     }

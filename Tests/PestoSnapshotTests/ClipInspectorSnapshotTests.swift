@@ -7,11 +7,12 @@ import SwiftUI
 import XCTest
 @testable import Pesto
 
-/// The Clip window (ADR 0071): a text clip with a title, note and tags, editable; and a hidden secret, details only.
+/// The Clip window (ADR 0071): a text clip with a title, note and tags, editable, and as a snippet being made (ADR
+/// 0075); and a hidden secret, details only.
 @MainActor
 final class ClipInspectorSnapshotTests: XCTestCase {
     private func snapshot(
-        editable: Bool, secret: Bool, colorScheme: ColorScheme,
+        editable: Bool, secret: Bool, colorScheme: ColorScheme, makingSnippet: Bool = false,
         file: StaticString = #filePath, testName: String = #function, line: UInt = #line
     ) throws {
         let container = try ModelContainerSetup.makeInMemory()
@@ -39,6 +40,7 @@ final class ClipInspectorSnapshotTests: XCTestCase {
         let model = TextEditModel(
             clipID: item.id, text: editable ? text : "", isMonospaced: false, isEditable: editable
         ) { _, _ in .saved }
+        if makingSnippet { model.beginSnippet(title: "Mom's arrival") }
         let size = TextEditWindowController.defaultSize
         let root = ClipInspectorRoot(model: model)
             .frame(width: size.width, height: size.height)
@@ -60,6 +62,10 @@ final class ClipInspectorSnapshotTests: XCTestCase {
 
     func test_whenTextClipInDark_thenTitleTextAndDetailsShow() throws {
         try snapshot(editable: true, secret: false, colorScheme: .dark)
+    }
+
+    func test_whenMakingSnippet_thenTheSnippetEditorTakesTheTextPane() throws {
+        try snapshot(editable: true, secret: false, colorScheme: .light, makingSnippet: true)
     }
 
     func test_whenHiddenSecret_thenOnlyDetailsShow() throws {

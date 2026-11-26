@@ -67,10 +67,39 @@ public extension StorageService {
     @discardableResult
     func updateSnippet(id: UUID, title: String?, text: String) throws -> Bool {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        guard let item = try clip(id: id) else { return false }
+        let before = ClipSnapshot(item: item, linkPreviewFile: nil)
+        try writeSnippet(text, title: title, to: item)
+        recordReplacement(of: item, before: before, kind: .snippet)
+        return true
+    }
+
+    /// Makes a text or code clip a snippet in place (ADR 0075): the same clip takes the new text and is pinned, so its
+    /// note, tags, collection and place stay, and one Undo takes back both the text and the pin. The text must hold a
+    /// `{{placeholder}}` (`ClipboardItem.isTemplate`); a caller turns `{name}` into fill-ins first. A secret, a clip
+    /// still being judged or one that is not text is refused. Throws `ClipSizePolicy.TooLarge` for a text over the
+    /// limit.
+    @discardableResult
+    func convertToSnippet(id: UUID, title: String?, text: String) throws -> SnippetConversion {
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, text.contains("{{") else {
+            return .needsPlaceholder
+        }
+        guard let item = try clip(id: id) else { return .missing }
+        guard item.type == .text || item.type == .code, !item.analysisPending, item.sensitivityRaw == nil,
+              item.blob != nil else { return .notConvertible }
+        let before = ClipSnapshot(item: item, linkPreviewFile: nil)
+        try writeSnippet(text, title: title, to: item, pinning: true)
+        recordReplacement(of: item, before: before, kind: .made)
+        return .converted
+    }
+
+    private func clip(id: UUID) throws -> ClipboardItem? {
         var descriptor = FetchDescriptor<ClipboardItem>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
-        guard let item = try modelContext.fetch(descriptor).first else { return false }
-        let before = ClipSnapshot(item: item, linkPreviewFile: nil)
+        return try modelContext.fetch(descriptor).first
+    }
+
+    private func writeSnippet(_ text: String, title: String?, to item: ClipboardItem, pinning: Bool = false) throws {
         let payload = Data(text.utf8)
         let typeIdentifier = "public.utf8-plain-text"
         if ClipSizePolicy.isTooLarge(byteCount: payload.count, typeIdentifier: typeIdentifier) {
@@ -81,15 +110,14 @@ public extension StorageService {
         try sealText(payload, mimeType: typeIdentifier, into: item)
         try applySnippetText(text, payload: payload, to: item)
         item.updateMetadata { $0.signature = nil }
-        similarity.remove(id)
+        similarity.remove(item.id)
         let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines)
         item.customTitle = trimmedTitle?.isEmpty == false ? trimmedTitle : nil
+        if pinning { item.isPinned = true }
         PreviewTextCache.shared.clear()
         try ensureSnippetsCollection()
         try saveOrRollback()
-        recordReplacement(of: item, before: before, kind: .snippet)
-        lastItemStore.clear(ifItemID: id)
-        return true
+        lastItemStore.clear(ifItemID: item.id)
     }
 
     private func applySnippetText(_ text: String, payload: Data, to item: ClipboardItem) throws {

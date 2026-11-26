@@ -52,7 +52,7 @@ struct WidgetPicture: View {
     var sourceBundleID: String?
 
     /// The foot line's height in a tile, which a wide picture shown whole clears (ADR 0080).
-    private static let footerBand: CGFloat = 28
+    private nonisolated static let footerBand: CGFloat = 28
 
     var body: some View {
         if let data, let image = PlatformImage(data: data) {

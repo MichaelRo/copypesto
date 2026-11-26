@@ -22,10 +22,13 @@ public final class SourceIconCache {
         return image
     }
 
+    /// The app's icon to hand to another surface (the widget), or nil for an app this Mac cannot find, whose record
+    /// holds the disk's icon in its place.
     public func pngData(forBundleID bundleID: String?) -> Data? {
         guard let bundleID else { return nil }
-        let data = record(for: bundleID).iconData
-        return data.isEmpty ? nil : data
+        let record = record(for: bundleID)
+        guard record.displayName != SourceAppRecord.unknownDisplayName, !record.iconData.isEmpty else { return nil }
+        return record.iconData
     }
 
     public func displayName(forBundleID bundleID: String?) -> String? {

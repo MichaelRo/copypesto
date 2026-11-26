@@ -419,16 +419,23 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
 - **Search page** (ADR 0063): tap the magnifying glass: the field, a row of clips and the letters show and the keyboard
   grows; type `bas`: the row narrows and nothing appears in the app's field; 123 types digits into the search; pick a
   clip: it is inserted and the page closes; Done closes it without inserting.
-- **Layouts and keys** (ADR 0066): with English and Hebrew keyboards added in iOS Settings, the space bar names the
-  layout and holding it switches to Hebrew (Delete at the end of the top row); a held key shows its callout, a longer
+- **Layouts and keys** (ADR 0066): with English and Hebrew keyboards added in iOS Settings, the language key names the
+  layout and holding space switches to Hebrew (Delete at the end of the top row); a held key shows its callout, a longer
   hold on `e` offers é, and sliding picks one; Shift once, a double tap locks caps. Add Korean: ㅎ ㅏ ㄴ types 한 and
   Delete leaves 하. Add Japanese: the field says it needs the system keyboard. Compare the keys side by side with
   Apple's keyboard (height, gaps, the callout).
 - **Return inserts** (ADR 0066): type `bas` in Notes and switch to Pesto: the first match is ringed and Return reads
   Insert; it replaces `bas`. Without a word, Return types a new line.
-- **Settings inside the keyboard**: the Pesto chip at the end of the chips opens them; Small, Medium and Large resize
-  the keyboard while the cards preview the size; More opens Pesto at Keyboard & AutoFill. The AutoFill picker has no
-  gear (ADR 0073).
+- **Settings inside the keyboard** (ADR 0074): the gear chip at the end of the chips (no word) opens them; Small,
+  Medium and Large resize the keyboard while your cards preview the size, two rows at Medium and Large upright; the
+  Large preview fits without clipping the header; the ↗ button opens Pesto at Keyboard & AutoFill. Pesto's own
+  Keyboard & AutoFill page shows the same preview framed as the keyboard and follows the size picker. The AutoFill
+  picker has no gear (ADR 0073).
+- **Cards like the app's** (ADR 0074): with sync on and clips from the Mac, keyboard, AutoFill and widget cards lead
+  their foot line with the app's icon and glow faintly in its color, light and dark; Increase Contrast turns the glow
+  off; a tinted or clear Home Screen and the Mac's desktop widget show no glow or icon.
+- **Language key** (ADR 0074): with English and Hebrew keyboards, the search page shows EN beside 123; a tap shows HE
+  and Hebrew letters; with one keyboard there is no key. Holding space still switches.
 - **Scrolling the row** (with 20 or more clips, some pictures): fling the cards left, and while they still glide fling
   them back; start some drags slowly on a card, some near the screen's edges. Pass: the row always follows the finger
   at once, no card inserts during a drag, a tap still inserts and a hold still does the other insert. With "Stay in

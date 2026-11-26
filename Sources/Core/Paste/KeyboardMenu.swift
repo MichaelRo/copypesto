@@ -45,6 +45,8 @@ public struct KeyboardMenu: Equatable, Sendable {
     public let accent: WidgetSnapshot.Theme
     public let keyboardSize: KeyboardSize
     public let setCreatedAt: Date?
+    /// The icons of the listed clips' apps (ADR 0074); none while locked.
+    public let appIcons: [String: Data]
     private let entries: [QuickInsertEntry]
     private let collections: [QuickInsertCollection]
 
@@ -60,6 +62,7 @@ public struct KeyboardMenu: Equatable, Sendable {
             accent = .brand
             keyboardSize = .medium
             setCreatedAt = nil
+            appIcons = [:]
             entries = []
             collections = []
             return
@@ -72,6 +75,7 @@ public struct KeyboardMenu: Equatable, Sendable {
             !$0.expandsOnInsert || TemplateExpander.fillsWithoutAsking($0.text)
         }
         collections = isLocked ? [] : (activeSet?.collections ?? [])
+        appIcons = isLocked ? [:] : (activeSet?.appIcons ?? [:])
         returnsAfterInsert = activeSet?.returnsAfterInsert ?? true
         accent = activeSet?.accent ?? .brand
         keyboardSize = activeSet?.keyboardSize ?? .medium
@@ -145,5 +149,11 @@ public struct KeyboardMenu: Equatable, Sendable {
         case .snippets: .snippets
         case .all, .collection: nil
         }
+    }
+}
+
+public extension KeyboardMenu {
+    func appIcon(for entry: QuickInsertEntry) -> Data? {
+        entry.sourceBundleID.flatMap { appIcons[$0] }
     }
 }

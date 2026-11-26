@@ -76,12 +76,12 @@ struct KeyboardSearchTests {
 
     @Test("clip card layout direction follows the clip's own script")
     func whenClipHasText_thenCardDirectionMatchesScript() {
-        #expect(KeyboardClipKey.layoutDirection(for: "שלום עולם") == .rightToLeft)
-        #expect(KeyboardClipKey.layoutDirection(for: "مرحبا بالعالم") == .rightToLeft)
-        #expect(KeyboardClipKey.layoutDirection(for: "Basil pesto") == .leftToRight)
-        #expect(KeyboardClipKey.layoutDirection(for: "Привет мир") == .leftToRight)
-        #expect(KeyboardClipKey.layoutDirection(for: "Γεια σου") == .leftToRight)
-        #expect(KeyboardClipKey.layoutDirection(for: "12345") == nil)
+        #expect(QuickInsertCardFace.layoutDirection(for: "שלום עולם") == .rightToLeft)
+        #expect(QuickInsertCardFace.layoutDirection(for: "مرحبا بالعالم") == .rightToLeft)
+        #expect(QuickInsertCardFace.layoutDirection(for: "Basil pesto") == .leftToRight)
+        #expect(QuickInsertCardFace.layoutDirection(for: "Привет мир") == .leftToRight)
+        #expect(QuickInsertCardFace.layoutDirection(for: "Γεια σου") == .leftToRight)
+        #expect(QuickInsertCardFace.layoutDirection(for: "12345") == nil)
     }
 
     @Test("keyboard interface direction follows preferred UI language, not active RTL input mode")

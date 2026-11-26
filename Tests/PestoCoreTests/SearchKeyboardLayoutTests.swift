@@ -59,6 +59,13 @@ struct SearchKeyboardLayoutTests {
         #expect(ids([], []) == ["qwerty"])
     }
 
+    @Test("the search page's language key names the layout in two capitals, as iOS writes it on its space bar")
+    func whenShortNamed_thenTwoCapitals() throws {
+        #expect(try #require(SearchKeyboardLayout.layout(forLanguageCode: "en")).shortName == "EN")
+        #expect(try #require(SearchKeyboardLayout.layout(forLanguageCode: "he")).shortName == "HE")
+        #expect(try #require(SearchKeyboardLayout.layout(forLanguageCode: "ru")).shortName == "RU")
+    }
+
     @Test("the rows match iOS's own Hebrew, Turkish, German and Russian keyboards")
     func whenSpecificLayouts_thenRowsMatchTheSystem() throws {
         let hebrew = try #require(SearchKeyboardLayout.layout(forLanguageCode: "he"))

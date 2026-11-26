@@ -1,6 +1,6 @@
 # 0068. A clip's source app reaches every device, and a card's foot glows in its color
 
-Status: Accepted (owner picks on the design board, 2026-11-25: "foot glow", board 2b)
+Status: Accepted (owner picks on the design board, 2026-11-25: "foot glow", board 2b); the keyboard, AutoFill and widgets follow in ADR 0074
 
 Amends ADR 0044, which removed the source app's color wash with the card header, and ADR 0018's sync format with two
 additions an older device ignores. Encryption at rest, what syncs about a clip's content and the one-writer rule are

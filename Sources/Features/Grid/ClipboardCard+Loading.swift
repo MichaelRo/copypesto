@@ -8,7 +8,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// What the card's loading task depends on: the clip, whether it is still waiting to be judged (a picture is not
-/// decoded while it waits for its verdict, ADR 0077), and its size (a still picture that becomes its GIF has another,
+/// decoded while it waits for its verdict, ADR 0079), and its size (a still picture that becomes its GIF has another,
 /// and is loaded again).
 struct CardLoadKey: Hashable {
     let id: UUID

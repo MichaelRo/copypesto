@@ -5,7 +5,7 @@ import UIKit
 @testable import PestoCore
 @testable import PestoMobile
 
-@Suite("A covered iPhone card holds no pixels of its picture (ADR 0077)")
+@Suite("A covered iPhone card holds no pixels of its picture (ADR 0079)")
 @MainActor
 struct CardMediaCoverTests {
     private func still() -> CardMedia.Picture {

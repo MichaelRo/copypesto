@@ -8,7 +8,7 @@ extension StorageService {
     static let largestUpgradedGIFBytes = 16 * 1024 * 1024
 
     /// Starts the fetch for a clip saved from a still picture and the address of its GIF, once the still's verdict is
-    /// in (ADR 0077). With `screens`, the still passed and the GIF is screened before it replaces it: a GIF the model
+    /// in (ADR 0079). With `screens`, the still passed and the GIF is screened before it replaces it: a GIF the model
     /// flags is still kept, so Show plays it, and the clip is flagged. Tracked, so `waitForBackgroundWork()` waits for
     /// it.
     func startGIFUpgrade(of itemID: UUID, from address: URL, screens: Bool) {
@@ -53,6 +53,7 @@ extension StorageService {
             blob.aadBound = true
             item.byteSize = data.count
             if flagged { item.isNSFW = true }
+            item.updateMetadata { $0.pictureFingerprint = nil }
             if let dimensions = ImageDownsampler.pixelDimensions(of: data) {
                 item.pixelWidth = dimensions.width
                 item.pixelHeight = dimensions.height

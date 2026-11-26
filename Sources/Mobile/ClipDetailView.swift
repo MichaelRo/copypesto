@@ -395,9 +395,9 @@ struct ClipDetailView: View {
                         library.beginSnippetEdit(of: item, text: text)
                     }
                 }
-                if appState.canSaveAsSnippet(item) {
-                    Button("Save as Snippet", systemImage: "text.badge.plus") {
-                        Task { await appState.saveAsSnippet(item) }
+                if appState.canMakeSnippet(item), let text = content?.plainText {
+                    Button("Make Snippet\u{2026}", systemImage: "text.badge.plus") {
+                        library.beginMakeSnippet(of: item, text: text)
                     }
                 }
                 Divider()

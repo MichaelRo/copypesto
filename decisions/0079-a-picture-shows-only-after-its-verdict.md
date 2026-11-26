@@ -1,4 +1,4 @@
-# 0077. A picture shows only after its verdict, and a browser's GIF is fetched after it
+# 0079. A picture shows only after its verdict, and a browser's GIF is fetched after it
 
 Status: Accepted (owner, 2026-11-26, backlog triage)
 

@@ -70,6 +70,7 @@ extension StorageService {
     func perceptualDuplicate(
         of candidateHash: String,
         payload: Data,
+        fingerprint: PictureFingerprint? = nil,
         pixelWidth: Int? = nil,
         pixelHeight: Int? = nil
     )
@@ -89,12 +90,16 @@ extension StorageService {
         let nominatedIDs = Set(PerceptualHasher.nominees(
             for: candidateHash, among: dimensionMatched.map { (id: $0.id, hash: $0.perceptualHash) }
         ))
-        let nominated = dimensionMatched.filter { nominatedIDs.contains($0.id) }
-        guard !nominated.isEmpty else { return nil }
-        let digest = PerceptualHasher.pixelDigest(imageData: payload)
-        return nominated.first { item in
+        let comparable = dimensionMatched.filter { item in
+            guard nominatedIDs.contains(item.id) else { return false }
+            guard let fingerprint, let stored = item.metadata.pictureFingerprint else { return true }
+            return !fingerprint.rulesOut(stored)
+        }
+        guard !comparable.isEmpty else { return nil }
+        let digest = pixelDigest(payload)
+        return comparable.first { item in
             guard let existingData = item.blob?.decryptedData() else { return false }
-            if let digest, PerceptualHasher.pixelDigest(imageData: existingData) == digest {
+            if let digest, pixelDigest(existingData) == digest {
                 return true
             }
             guard let width = item.pixelWidth, let height = item.pixelHeight,

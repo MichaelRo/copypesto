@@ -68,14 +68,9 @@ struct SnippetFillSheet: View {
                     Button("Cancel") { appState.pendingFill = nil }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Copy") {
-                        if appState.copyFilled(
-                            request, fills: fills, pastedClipboard: pasted, selectedText: selectedText
-                        ) {
-                            library.didCopy(request.id)
-                        }
-                    }
-                    .accessibilityIdentifier(MobileAccessibilityID.snippetCopyButton)
+                    Button("Copy", action: copy)
+                        .keyboardShortcut(.return, modifiers: .command)
+                        .accessibilityIdentifier(MobileAccessibilityID.snippetCopyButton)
                 }
             }
         }
@@ -88,12 +83,25 @@ struct SnippetFillSheet: View {
         case let .text(multiline):
             TextField(field.label, text: textBinding(field), axis: multiline ? .vertical : .horizontal)
                 .lineLimit(multiline ? 1...6 : 1...1)
+                .submitLabel(multiline ? .return : .done)
+                .onSubmit {
+                    // Return in a one-line field copies, as the Mac prompt and AutoFill do; a multi-line one breaks
+                    // the line (docs/design/search-and-return.md).
+                    guard !multiline else { return }
+                    copy()
+                }
         case let .choice(options):
             Picker(field.label, selection: textBinding(field)) {
                 ForEach(options, id: \.self) { Text($0).tag($0) }
             }
         case .optional:
             Toggle(field.label, isOn: includedBinding(field))
+        }
+    }
+
+    private func copy() {
+        if appState.copyFilled(request, fills: fills, pastedClipboard: pasted, selectedText: selectedText) {
+            library.didCopy(request.id)
         }
     }
 

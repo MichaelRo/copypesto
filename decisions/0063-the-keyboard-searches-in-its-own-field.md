@@ -7,7 +7,7 @@ decide stands.
 
 ## Context
 ADR 0062 made the word typed before switching the search: fast for one word, but it means typing into the app first,
-it holds one word, and it cannot browse. Michael: real search needs a keyboard. Ask (the on-device natural-language
+it holds one word, and it cannot browse. The maintainer: real search needs a keyboard. Ask (the on-device natural-language
 search the Mac and the iOS app have) needs a sentence too, and reading a sentence from the app's field would read
 much more of what was typed elsewhere than one word. ADR 0061 kept letter keys out because a keyboard with letters
 sees everything typed on it; that holds for letters that type into the app, not for letters that type into Pesto's own

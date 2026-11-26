@@ -100,7 +100,7 @@ final class CardMediaState {
     }
 
     /// A covered card holds no pixels of its clip: a picture waiting for its verdict, or one the content filter
-    /// blurred, is not decoded until the cover lifts, and what was held goes (ADR 0077). The task key carries the
+    /// blurred, is not decoded until the cover lifts, and what was held goes (ADR 0079). The task key carries the
     /// cover, so lifting it loads the picture at its current size, a GIF fetched meanwhile included.
     private func releaseMedia() {
         if picture != nil { picture = nil }

@@ -112,10 +112,10 @@ struct SnippetPackReaderTests {
 
     @Test("an entry with no placeholder is kept as plain text, not listed as a snippet")
     func whenNoPlaceholder_thenPlainText() throws {
-        let pack = try read(#"[{"name":"Sign-off","text":"Best regards, Michael"}]"#)
+        let pack = try read(#"[{"name":"Sign-off","text":"Best regards, Alex"}]"#)
 
         #expect(pack.snippets.isEmpty)
-        #expect(pack.plainText == [ImportedSnippet(name: "Sign-off", text: "Best regards, Michael")])
+        #expect(pack.plainText == [ImportedSnippet(name: "Sign-off", text: "Best regards, Alex")])
     }
 
     @Test("tokens Pesto does not fill in are counted and left as typed")

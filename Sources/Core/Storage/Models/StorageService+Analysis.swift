@@ -121,7 +121,7 @@ extension StorageService {
 
     /// Judges a clip that was saved without being judged, then fills in what was found. Tracked, so
     /// `waitForBackgroundWork()` and a test can wait for it. `gifSource` is the address of a browser's GIF for this
-    /// still picture: it is fetched once the picture's content-filter verdict is in, never before (ADR 0077).
+    /// still picture: it is fetched once the picture's content-filter verdict is in, never before (ADR 0079).
     func startAnalysis(of itemID: UUID, input: IngestAnalysisInput, gifSource: URL? = nil) {
         let recognizer = textRecognizer
         let screener = imageScreener

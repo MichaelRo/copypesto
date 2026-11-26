@@ -13,7 +13,7 @@ extension ClipboardCard {
         )
     }
 
-    /// Covered until the verdict: a large text always, a picture while the content filter screens pictures (ADR 0077).
+    /// Covered until the verdict: a large text always, a picture while the content filter screens pictures (ADR 0079).
     var waitsForVerdict: Bool {
         CardConcealment.waitsForVerdict(type: item.type, analysisPending: item.analysisPending, nsfwMode: nsfwMode)
     }

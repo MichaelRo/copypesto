@@ -1,4 +1,4 @@
-# Sync key in iCloud Keychain: Apple portal steps (Michael)
+# Sync key in iCloud Keychain: Apple portal steps
 
 Needed only for the invisible iCloud Keychain key. Without it, sync works with the recovery key or the eight-word approval.
 

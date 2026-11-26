@@ -103,7 +103,7 @@ final class SecretReveal {
     }
 
     /// A picture still being judged waits behind its placeholder while the content filter is on, so an explicit
-    /// picture or GIF never flashes before screening finishes (ADR 0077).
+    /// picture or GIF never flashes before screening finishes (ADR 0079).
     func concealment(for item: ClipboardItem, nsfwMode: NSFWMode = .current()) -> CardConcealment {
         CardConcealment(
             screenShareBlur: isCoveredForPrivacy(item.id),

@@ -22,7 +22,7 @@ struct CoveredCardFace: View {
     }
 
     /// A picture waiting only for its verdict is drawn as a picture that has not loaded yet, edge to edge with its
-    /// facts on pills, so it becomes the picture with no step between (ADR 0077). Nothing of the picture is drawn.
+    /// facts on pills, so it becomes the picture with no step between (ADR 0079). Nothing of the picture is drawn.
     private var waitsAsAPicture: Bool {
         !isSecret && item.type == .image && item.analysisPending && !item.isNSFW
             && !appState.secretReveal.isCoveredForPrivacy(item.id)

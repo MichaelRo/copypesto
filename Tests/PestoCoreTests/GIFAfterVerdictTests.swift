@@ -38,7 +38,7 @@ private struct SlowRecognizer: TextRecognizing {
     }
 }
 
-@Suite("A browser's GIF is fetched only after the picture's verdict (ADR 0077)", .serialized)
+@Suite("A browser's GIF is fetched only after the picture's verdict (ADR 0079)", .serialized)
 struct GIFAfterVerdictTests {
     private let container: ModelContainer
     private let address = URL(string: "https://media.example.com/cats/dance.gif")

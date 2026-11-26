@@ -12,6 +12,11 @@ import UniformTypeIdentifiers
 struct MobileWidgetTests {
     private let secret = "ghp_8fK2mQ9xLr4TzW7nB1vC6yH3sJ5dE0aGpU2i"
 
+    /// The Widgets setting, held by the test: read through `UserDefaults`, a missing value counts as on.
+    private final class Switch {
+        var isOn = true
+    }
+
     private final class Home {
         var installed: Bool
         var reloads = 0
@@ -388,10 +393,9 @@ struct MobileWidgetTests {
     func whenWidgetsDisabled_thenSnapshotAndKeyAreRemoved() async throws {
         let fixture = try fixture(installed: true)
         defer { try? FileManager.default.removeItem(at: fixture.file.root) }
-        let defaults = ThrowawayDefaults.make()
-        defaults.set(true, for: Setting.widgetsEnabled)
+        let setting = Switch()
         var target = fixture.target
-        target.isEnabled = { defaults.value(for: Setting.widgetsEnabled) }
+        target.isEnabled = { setting.isOn }
         let library = try await MobileTestLibrary()
         library.state.widget = target
         try await library.add("12 Basil Lane")
@@ -399,7 +403,7 @@ struct MobileWidgetTests {
         await library.state.refreshWidgetPresence()
         #expect(fixture.file.exists)
 
-        defaults.set(false, for: Setting.widgetsEnabled)
+        setting.isOn = false
         await library.state.writeWidget()
 
         #expect(!fixture.file.exists)

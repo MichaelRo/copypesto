@@ -92,11 +92,39 @@
       "ci_max": 15.0,
       "optional_in_ci": false
     },
-    "paste_write_image_ms": {
-      "label": "Pasteboard write (image)",
+    "paste_write_picture_ms": {
+      "label": "Pasteboard write (picture 1920x1080)",
       "unit": "ms",
       "local_max": 35.0,
       "ci_max": 100.0,
+      "optional_in_ci": false
+    },
+    "paste_write_large_clip_ms": {
+      "label": "Pasteboard write (large clip 5 MB)",
+      "unit": "ms",
+      "local_max": 20.0,
+      "ci_max": 60.0,
+      "optional_in_ci": false
+    },
+    "hover_card_open_short_text_ms": {
+      "label": "Hover card open (short text)",
+      "unit": "ms",
+      "local_max": 30.0,
+      "ci_max": 90.0,
+      "optional_in_ci": false
+    },
+    "hover_card_open_picture_ms": {
+      "label": "Hover card open (picture)",
+      "unit": "ms",
+      "local_max": 30.0,
+      "ci_max": 90.0,
+      "optional_in_ci": false
+    },
+    "hover_card_memory_growth_mb": {
+      "label": "Hover card memory growth (opens 51-100)",
+      "unit": "MB",
+      "local_max": 10.0,
+      "ci_max": 20.0,
       "optional_in_ci": false
     },
     "history_fetch_5000_mb": {
@@ -110,7 +138,7 @@
       "label": "Steady-state footprint (5,000 clips, shelf open)",
       "unit": "MB",
       "local_max": 150.0,
-      "ci_max": 180.0,
+      "ci_max": 150.0,
       "optional_in_ci": true
     },
     "idle_cpu_sync_pct": {

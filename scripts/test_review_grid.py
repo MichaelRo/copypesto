@@ -19,23 +19,31 @@ class ReviewGridTests(unittest.TestCase):
         ids = [cell["id"] for cell in grid]
         self.assertEqual(ids, ["core-concurrency", "security-crypto", "perf-budgets"])
 
-    def test_routes_tooling_only(self) -> None:
-        grid = review_grid.build_grid(["Makefile", ".github/workflows/benchmarks.yml"])
+    def test_routes_tooling_and_encryption_test(self) -> None:
+        grid = review_grid.build_grid(
+            ["Makefile", ".github/workflows/benchmarks.yml", "Tests/PestoCoreTests/OnDiskEncryptionTests.swift"]
+        )
         ids = [cell["id"] for cell in grid]
-        self.assertEqual(ids, ["security-crypto", "tooling-ci-docs"])
+        self.assertEqual(ids, ["core-concurrency", "security-crypto", "tooling-ci-docs"])
 
     def test_empty_diff_produces_empty_grid(self) -> None:
         self.assertEqual(review_grid.build_grid([]), [])
         self.assertIn("No changed files detected", review_grid.render_markdown([], []))
 
-    def test_static_checks_catch_boundary_and_sdk_violations(self) -> None:
+    def test_static_checks_catch_code_violations_and_ignore_comments(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             bad = root / "Sources/Core/Bad.swift"
             bad.parent.mkdir(parents=True, exist_ok=True)
             bad.write_text("import SwiftUI\nimport Sentry\nlet d = UserDefaults.standard\n", encoding="utf-8")
 
-            violations = review_grid.run_static_checks(["Sources/Core/Bad.swift"], root)
+            doc_only = root / "Sources/Core/Runtime/DocOnly.swift"
+            doc_only.parent.mkdir(parents=True, exist_ok=True)
+            doc_only.write_text("/// Mentions `NSPasteboard.general` and `UserDefaults.standard`.\n", encoding="utf-8")
+
+            violations = review_grid.run_static_checks(
+                ["Sources/Core/Bad.swift", "Sources/Core/Runtime/DocOnly.swift"], root
+            )
             self.assertEqual(len(violations), 3)
 
     def test_json_output_includes_prompts(self) -> None:

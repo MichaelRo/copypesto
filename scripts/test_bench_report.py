@@ -17,6 +17,7 @@ THRESHOLDS = json.loads(
     (pathlib.Path(__file__).resolve().parent / "bench-thresholds.json").read_text(encoding="utf-8")
 )
 
+# Real PERF lines matching Tests/PestoCoreTests and Tests/PestoTests (ClipKindFixtures, HoverCardPerformanceTests, etc.).
 SAMPLE_LOG = """\
 PERF sync ingest per clip: off 2.15 ms, on 3.10 ms (2000 clips)
 PERF sync 2000 clips: send 0.12 s (cpu 0.10 s, +1.2 MB), receive 0.15 s (cpu 0.11 s, +1.5 MB), idle pass 1.45 ms (every 30 s: 0.0048 % of one core)
@@ -28,8 +29,12 @@ PERF search keystroke over 5,000 clips: slowest 1.32 ms of [0.8, 1.32]
 PERF collection switch over 5,000 clips: collection of 1,000 cold 2.10 ms, warm 0.45 ms; all 0.60 ms
 PERF watcher idle at 0.2 seconds: 0.24% of a core (7.2 ms in 3.0 s, quietest window)
 PERF watcher idle at 0.06 seconds: 0.31% of a core (9.3 ms in 3.0 s, quietest window)
-PERF paste-write text (12 bytes): median 0.42 ms (min 0.30, max 0.90)
-PERF paste-write image (4096 bytes): median 14.50 ms (min 12.10, max 20.00)
+PERF paste-write text (61 bytes): median 0.42 ms (min 0.30, max 0.90)
+PERF paste-write picture 1920x1080 (4120390 bytes): median 14.50 ms (min 12.10, max 20.00)
+PERF paste-write large clip 5 MB (5400010 bytes): median 8.10 ms (min 7.40, max 11.20)
+PERF hover-card open short text (text, 52 bytes): median 4.10 ms (min 3.20, max 5.60)
+PERF hover-card open picture (image, 2100400 bytes): median 9.80 ms (min 8.10, max 14.20)
+PERF hover-card memory, opens 51 to 100 of a picture: +2.8 MB resident
 PERF history fetch of 5000 items: +18.2 MB resident
 memory: 69.5 MB footprint on the large history, shelf open (budget 150 MB)
 idle-cpu: 0.180% over 30s with SyncFolderWatcher active (budget < 0.5%)
@@ -70,6 +75,10 @@ class BenchReportTests(unittest.TestCase):
         measured = bench_report.parse_logs([""])
         _, passed = bench_report.evaluate(measured, THRESHOLDS, "ci")
         self.assertFalse(passed)
+
+    def test_every_threshold_key_has_an_extractor(self) -> None:
+        extracted_keys = {key for _, targets in bench_report.EXTRACTORS for key, _ in targets}
+        self.assertEqual(set(THRESHOLDS["metrics"].keys()), extracted_keys)
 
     def test_cli_writes_json_and_summary(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

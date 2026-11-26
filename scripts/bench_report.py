@@ -58,8 +58,24 @@ EXTRACTORS: list[tuple[re.Pattern[str], list[tuple[str, int]]]] = [
         [("paste_write_text_ms", 1)],
     ),
     (
-        re.compile(r"PERF paste-write image\b.*median\s+([\d.]+)\s+ms"),
-        [("paste_write_image_ms", 1)],
+        re.compile(r"PERF paste-write picture 1920x1080\b.*median\s+([\d.]+)\s+ms"),
+        [("paste_write_picture_ms", 1)],
+    ),
+    (
+        re.compile(r"PERF paste-write large clip 5 MB\b.*median\s+([\d.]+)\s+ms"),
+        [("paste_write_large_clip_ms", 1)],
+    ),
+    (
+        re.compile(r"PERF hover-card open short text\b.*median\s+([\d.]+)\s+ms"),
+        [("hover_card_open_short_text_ms", 1)],
+    ),
+    (
+        re.compile(r"PERF hover-card open picture\b.*median\s+([\d.]+)\s+ms"),
+        [("hover_card_open_picture_ms", 1)],
+    ),
+    (
+        re.compile(r"PERF hover-card memory, opens 51 to 100 of a picture:\s*([+-]?[\d.]+)\s+MB"),
+        [("hover_card_memory_growth_mb", 1)],
     ),
     (
         re.compile(r"PERF history fetch of 5000 items:\s*\+?(-?[\d.]+)\s+MB"),

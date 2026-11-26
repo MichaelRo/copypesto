@@ -7,11 +7,17 @@ on:
     branches: [main]
     paths:
       - "Sources/**"
+      - "Tests/**"
       - "Package.swift"
       - "Pesto.yml"
       - "Pesto.resolved"
+      - "Makefile"
       - "scripts/bench*"
       - "scripts/check-memory-budget.sh"
+      - "scripts/select-xcode.sh"
+      - "scripts/install-tools.sh"
+      - "scripts/tool-versions.env"
+      - "scripts/clear-stale-module-cache.sh"
       - ".github/workflows/benchmarks.yml"
   workflow_dispatch:
 
@@ -29,6 +35,8 @@ jobs:
     env:
       PESTO_CI: "1"
       PESTO_BENCH_MODE: "ci"
+      # Shared macOS CI runners lack an unlocked WindowServer session for Pesto.app -UITestMode.
+      PESTO_BENCH_SKIP_PROFILE: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

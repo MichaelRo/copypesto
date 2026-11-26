@@ -33,8 +33,12 @@ LENSES: list[dict[str, Any]] = [
             r"^Sources/Core/(Crypto|Security|Sync|Backup|Pasteboard)/",
             r"^Sources/CoreNetworking/",
             r"^Sources/.*\.entitlements$",
+            r"^Sources/Resources/PrivacyInfo\.xcprivacy$",
             r"^\.github/",
-            r"^Tests/PestoRegressionTests/(NetworkGuard|OnDiskEncryption|Entitlements|PersonalData|ExtensionBinaryNetwork)Tests\.swift$",
+            r"^\.gitleaks\.toml$",
+            r"^SECURITY\.md$",
+            r"^Tests/PestoCoreTests/OnDiskEncryptionTests\.swift$",
+            r"^Tests/PestoRegressionTests/(NetworkGuard|Entitlements|PersonalData|ExtensionBinaryNetwork|SyncNetworkScan)Tests\.swift$",
         ],
         "invariants": [
             "No third-party analytics SDKs or unauthorized network endpoints (NetworkGuardTests).",
@@ -51,6 +55,7 @@ LENSES: list[dict[str, Any]] = [
         "role": "macOS Native UI & Accessibility Reviewer",
         "patterns": [
             r"^Sources/(App|Features|Shared|Controls|Widget)/",
+            r"^Sources/Resources/",
             r"^Tests/(PestoTests|PestoSnapshotTests|PestoUITests)/",
         ],
         "invariants": [
@@ -96,14 +101,19 @@ LENSES: list[dict[str, Any]] = [
         "role": "Tooling, Shell Safety & Release Integrity Reviewer",
         "patterns": [
             r"^Makefile$",
-            r"^Pesto\.yml$",
+            r"^Pesto\.(yml|resolved)$",
             r"^Package\.swift$",
+            r"^exportOptions\.plist$",
             r"^scripts/",
             r"^\.github/",
             r"^\.githooks/",
+            r"^\.claude/",
+            r"^\.(gitattributes|gitleaks\.toml|swiftformat|swiftlint\.yml)$",
             r"^decisions/",
             r"^docs/",
-            r"^(AGENTS|README|CONTRIBUTING)\.md$",
+            r"^(AGENTS|README|CONTRIBUTING|GOVERNANCE|CODE_OF_CONDUCT|TRADEMARKS|SECURITY|SUPPORT)\.md$",
+            r"^Sources/CLI/",
+            r"^Tests/(PestoRegressionTests|SyncPeerTool)/",
         ],
         "invariants": [
             "Shell/Makefile scripts avoid unsafe quoting on user strings and guard destructive targets with require-dev-reset.",
@@ -133,18 +143,24 @@ FORBIDDEN_SDKS = (
 FORBIDDEN_FILE_PATTERNS = (r"\.key$", r"\.pem$", r"\.p12$", r"\.mobileprovision$", r"\.DS_Store$")
 
 
+def _strip_swift_comments(source: str) -> str:
+    """Remove // and /* ... */ comments so doc comments do not trip static code checks."""
+    without_blocks = re.sub(r"/\*.*?\*/", "", source, flags=re.DOTALL)
+    return re.sub(r"//[^\n]*", "", without_blocks)
+
+
 def changed_files_from_git(base: str | None, staged: bool) -> list[str]:
     if staged:
-        cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMR"]
+        cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACDMR"]
     elif base:
         merge_base = subprocess.check_output(["git", "merge-base", base, "HEAD"], text=True).strip()
-        cmd = ["git", "diff", "--name-only", "--diff-filter=ACMR", merge_base]
+        cmd = ["git", "diff", "--name-only", "--diff-filter=ACDMR", merge_base]
     else:
-        cmd = ["git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD"]
+        cmd = ["git", "diff", "--name-only", "--diff-filter=ACDMR", "HEAD"]
     out = subprocess.check_output(cmd, text=True)
     files = [line.strip() for line in out.splitlines() if line.strip()]
     if not staged:
-        status = subprocess.check_output(["git", "status", "--porcelain"], text=True)
+        status = subprocess.check_output(["git", "status", "--porcelain", "-uall"], text=True)
         for line in status.splitlines():
             if line.startswith("?? "):
                 files.append(line[3:].strip())
@@ -187,16 +203,20 @@ def run_static_checks(files: list[str], root: pathlib.Path) -> list[str]:
         path = root / rel
         if not path.is_file() or not rel.endswith(".swift"):
             continue
-        content = path.read_text(encoding="utf-8", errors="replace")
-        if rel.startswith("Sources/Core/") and re.search(r"^\s*import\s+SwiftUI\b", content, re.MULTILINE):
+        code = _strip_swift_comments(path.read_text(encoding="utf-8", errors="replace"))
+        if rel.startswith("Sources/Core/") and re.search(r"^\s*import\s+SwiftUI\b", code, re.MULTILINE):
             violations.append(f"Module boundary violation: {rel} imports SwiftUI inside Core/")
         for sdk in FORBIDDEN_SDKS:
-            if re.search(rf"\b(import|@import)\s+{sdk}\b", content):
+            if re.search(rf"\b(import|@import)\s+{sdk}\b", code):
                 violations.append(f"Forbidden analytics SDK ({sdk}) imported in: {rel}")
         if rel.startswith("Sources/") and not rel.startswith("Sources/CLI/"):
-            if "UserDefaults.standard" in content:
+            if "UserDefaults.standard" in code and not rel.startswith("Sources/Core/Runtime/"):
                 violations.append(f"Runtime seam bypass: UserDefaults.standard in {rel}")
-            if "NSPasteboard.general" in content and not rel.startswith("Sources/Core/Paste/"):
+            if (
+                "NSPasteboard.general" in code
+                and not rel.startswith("Sources/Core/Runtime/")
+                and not rel.startswith("Sources/Core/Paste/")
+            ):
                 violations.append(f"Runtime seam bypass: NSPasteboard.general in {rel}")
     return violations
 

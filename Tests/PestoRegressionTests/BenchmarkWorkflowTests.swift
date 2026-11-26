@@ -19,6 +19,7 @@ struct BenchmarkWorkflowTests {
         #expect(text.contains("contents: read"))
         #expect(!text.contains("contents: write"))
         #expect(text.contains("persist-credentials: false"))
+        #expect(text.contains("PESTO_BENCH_SKIP_PROFILE: \"1\""))
         #expect(text.contains("scripts/bench-ci.sh"))
 
         for line in text.split(separator: "\n") {
@@ -44,5 +45,20 @@ struct BenchmarkWorkflowTests {
             _ = try #require(entry["unit"] as? String, "\(key) missing unit")
             _ = try #require(entry["label"] as? String, "\(key) missing label")
         }
+    }
+
+    @Test("bench_report.py and review_grid.py unit test suites pass")
+    func whenRunningPythonToolingTests_thenAllPass() throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.currentDirectoryURL = root
+        process.arguments = ["python3", "-m", "unittest", "scripts/test_bench_report.py", "scripts/test_review_grid.py"]
+        let stderrPipe = Pipe()
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = stderrPipe
+        try process.run()
+        process.waitUntilExit()
+        let stderr = String(data: stderrPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        #expect(process.terminationStatus == 0, "python unittest failed: \(stderr)")
     }
 }

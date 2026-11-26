@@ -87,19 +87,80 @@ extension MobilePasteboardGlobals {
             #expect(library.state.pendingFill?.initial.values["Name"] == "Ana")
         }
 
-        @Test("Save as Snippet pins the text, turns {name} into a fill-in, and is offered only for plain text clips")
-        func whenSavedAsSnippet_thenItIsPinnedWithFillIns() async throws {
+        @Test("Make Snippet turns the same clip into a snippet with fill-ins and offers one Undo")
+        func whenMadeSnippet_thenTheSameClipIsPinnedWithFillIns() async throws {
             let library = try await MobileTestLibrary()
-            let item = try await library.add("Hello {Name}, welcome")
-            #expect(library.state.canSaveAsSnippet(item))
+            let item = try await library.add("Hello Ana, welcome")
+            #expect(library.state.canMakeSnippet(item))
 
-            await library.state.saveAsSnippet(item)
+            let made = await library.state.convertToSnippet(
+                id: item.id,
+                title: "Welcome",
+                text: "Hello {Name}, welcome"
+            )
+
+            #expect(made)
             try await library.refreshed()
+            let snippet = try #require(library.store.item(for: item.id))
+            #expect(library.store.items.count == 1, "the clip becomes the snippet; no copy is left beside it")
+            #expect(snippet.isTemplate)
+            #expect(snippet.customTitle == "Welcome")
+            #expect(ClipContent.of(snippet)?.plainText == "Hello {{input:Name}}, welcome")
+            #expect(library.state.undoOffer == .makeSnippet)
+            #expect(!library.state.canMakeSnippet(snippet), "a snippet offers Edit Snippet instead")
+        }
 
-            let saved = try #require(library.store.items.first { $0.isTemplate })
-            #expect(saved.isPinned)
-            #expect(ClipContent.of(saved)?.plainText?.contains("{{") == true)
-            #expect(!library.state.canSaveAsSnippet(saved))
+        @Test("Make Snippet without a placeholder says why and leaves the clip as it was")
+        func whenNoPlaceholder_thenNothingChangesAndThePersonIsTold() async throws {
+            let library = try await MobileTestLibrary()
+            let item = try await library.add("plain words")
+
+            let made = await library.state.convertToSnippet(id: item.id, title: nil, text: "plain words")
+
+            #expect(!made)
+            try await library.refreshed()
+            #expect(try #require(library.store.item(for: item.id)).isPinned == false)
+        }
+
+        @Test("while the history is locked nothing is made a snippet")
+        func whenLocked_thenTheClipIsLeftAlone() async throws {
+            let lock = MobileHistoryLock(
+                authenticator: StubUserAuthenticator(available: true, grants: true), grace: AuthenticationGrace(),
+                isEnabled: { true }
+            )
+            let library = try await MobileTestLibrary(lock: lock)
+            let item = try await library.add("Hi Ana")
+            library.state.lockHistory()
+            #expect(library.state.isHistoryLockedNow())
+
+            let made = await library.state.convertToSnippet(id: item.id, title: nil, text: "Hi {{input:Name}}")
+
+            #expect(!made)
+            try await library.refreshed()
+            #expect(try #require(library.store.item(for: item.id)).isPinned == false)
+        }
+
+        @Test("a secret is never offered Make Snippet")
+        func whenSecret_thenMakeSnippetIsNotOffered() async throws {
+            let library = try await MobileTestLibrary()
+            try await library.service.ingest(#require(
+                ClipCapture.text("sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef")
+            ))
+            let item = try await library.settle()
+
+            #expect(item.sensitivityRaw != nil)
+            #expect(!library.state.canMakeSnippet(item))
+        }
+
+        @Test("the editor opened by Make Snippet is a conversion of that clip, with its title and whole text")
+        func whenMakeSnippetBegins_thenTheEditorTargetsTheClip() async throws {
+            let library = try await MobileTestLibrary()
+            let item = try await library.add("Order 1234 ships today")
+            let model = LibraryModel()
+
+            model.beginMakeSnippet(of: item, text: "Order 1234 ships today")
+
+            #expect(model.snippetEditor == .convert(id: item.id, title: "", text: "Order 1234 ships today"))
         }
 
         @Test("createSnippet saves a pinned snippet with its title, refreshes the library, and offers Undo")

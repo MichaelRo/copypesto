@@ -46,7 +46,7 @@ struct SnippetStorageTests {
     @Test("a snippet is part of the backup")
     func addSnippet_isBackedUp() async throws {
         let service = await service()
-        _ = try await service.addSnippet("Best regards,\nMichael")
+        _ = try await service.addSnippet("Best regards,\nAlex")
 
         let export = try await service.backupRecords(includeSensitive: false)
 

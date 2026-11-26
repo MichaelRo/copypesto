@@ -169,9 +169,11 @@ final class StoreScreenshotTests: XCTestCase {
         let draft = card(containing: "boards at 10:30", in: app)
         XCTAssertTrue(draft.waitForExistence(timeout: timeout))
         draft.press(forDuration: 1.0)
-        let saveSnippet = app.buttons["Save as Snippet"].firstMatch
-        XCTAssertTrue(saveSnippet.waitForExistence(timeout: timeout))
-        saveSnippet.tap()
+        let makeSnippet = app.buttons["Make Snippet\u{2026}"].firstMatch
+        XCTAssertTrue(makeSnippet.waitForExistence(timeout: timeout))
+        makeSnippet.tap()
+        XCTAssertTrue(element(MobileAccessibilityID.snippetEditor, in: app).waitForExistence(timeout: timeout))
+        element(MobileAccessibilityID.snippetSaveButton, in: app).tap()
 
         let snippet = card(containing: "{{input:Name}}", in: app)
         XCTAssertTrue(snippet.waitForExistence(timeout: timeout))

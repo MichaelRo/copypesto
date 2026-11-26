@@ -72,5 +72,5 @@ auto-hidden menu bar, Stage Manager, a crowded menu bar, and VoiceOver's focus o
 accepted only after those pass, or dropped.
 
 ## How we got here
-Michael's design brief of 2026-10-18 asked whether the top shelf can embrace the notch. The canvas "Pesto nav, tiles,
+The design brief of 2026-10-18 asked whether the top shelf can embrace the notch. The canvas "Pesto nav, tiles,
 icon, notch" shows the four states. The idle curve was refused first because of the listener rule above.

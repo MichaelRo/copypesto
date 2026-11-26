@@ -3,6 +3,7 @@ import Foundation
 import Observation
 import os
 import SwiftData
+import Synchronization
 
 /// The whole history, newest first, for the two surfaces that show it: the shelf and the floating window. Each used to
 /// hold its own live `@Query` over every clip (two whole-table fetches, both kept live for the life of the app once a
@@ -34,6 +35,8 @@ public final class HistoryStore {
     @ObservationIgnored private var isStale = true
     @ObservationIgnored private var isVisible = false
     @ObservationIgnored private var pendingRefresh: Task<Void, Never>?
+    /// Saves of this history posted but not yet handled on the main actor (`waitForRefresh`).
+    @ObservationIgnored private let savesInFlight = SavesInFlight()
     @ObservationIgnored private var itemsByID: [UUID: ClipboardItem] = [:]
     @ObservationIgnored private var index: HistoryIndex?
     @ObservationIgnored private var build: IndexBuild?
@@ -52,9 +55,15 @@ public final class HistoryStore {
     public init(container: ModelContainer) {
         self.container = container
         context = container.mainContext
-        observer = ModelSaveObserver.observeChanges(in: container) { [weak self] change in
-            self?.historyWasSaved(change)
-        }
+        let savesInFlight = savesInFlight
+        observer = ModelSaveObserver.observeChanges(
+            in: container,
+            posted: { savesInFlight.add(1) },
+            { [weak self] change in
+                savesInFlight.add(-1)
+                self?.historyWasSaved(change)
+            }
+        )
         let pressure = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .main)
         pressure.setEventHandler { [weak self] in
             MainActor.assumeIsolated { self?.trim() }
@@ -147,10 +156,19 @@ public final class HistoryStore {
         }
     }
 
-    /// Returns once a refresh that a save started has run. For tests.
+    /// Returns once every save of this history already made has been handled, and any refresh one started has run.
+    /// For tests. It waits on those conditions, not on a guess: a save reaches the main actor through a task of the
+    /// saving context's priority, so under load it could still be queued when a fixed sleep ran out.
     public func waitForRefresh() async throws {
         try await Task.sleep(for: .milliseconds(150))
-        await pendingRefresh?.value
+        let deadline = ContinuousClock.now.advanced(by: .seconds(10))
+        while savesInFlight.isPending || pendingRefresh != nil, ContinuousClock.now < deadline {
+            if let pendingRefresh {
+                await pendingRefresh.value
+            } else {
+                try await Task.sleep(for: .milliseconds(5))
+            }
+        }
     }
 
     // MARK: - Following saves
@@ -241,5 +259,18 @@ public final class HistoryStore {
         while build != nil {
             buildSlice(Self.indexSlice)
         }
+    }
+}
+
+/// A count shared by the saving thread and the main actor.
+private final class SavesInFlight: Sendable {
+    private let value = Mutex(0)
+
+    var isPending: Bool {
+        value.withLock { $0 > 0 }
+    }
+
+    func add(_ delta: Int) {
+        value.withLock { $0 += delta }
     }
 }

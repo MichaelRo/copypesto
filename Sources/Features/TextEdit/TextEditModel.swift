@@ -16,11 +16,17 @@ final class TextEditModel {
     var draft: String
     private(set) var message: String?
     private(set) var isSaving = false
+    /// The snippet being made from this clip (ADR 0075); nil while the window edits the plain text.
+    private(set) var snippetDraft: SnippetEditorDraft?
     @ObservationIgnored private let save: (UUID, String) async -> TextEditSaveResult
+    @ObservationIgnored private let saveSnippet: (UUID, String, String) async -> TextEditSaveResult
     @ObservationIgnored var onClose: (() -> Void)?
 
     init(
         clipID: UUID, text: String, isMonospaced: Bool, isEditable: Bool = true,
+        saveSnippet: @escaping (UUID, String, String) async -> TextEditSaveResult = { _, _, _ in
+            .refused(TextEditPolicy.failedMessage)
+        },
         save: @escaping (UUID, String) async -> TextEditSaveResult
     ) {
         self.clipID = clipID
@@ -28,11 +34,12 @@ final class TextEditModel {
         self.isMonospaced = isMonospaced
         self.isEditable = isEditable
         draft = text
+        self.saveSnippet = saveSnippet
         self.save = save
     }
 
     var hasUnsavedChanges: Bool {
-        draft != original
+        draft != original || snippetDraft != nil
     }
 
     var canSave: Bool {
@@ -48,6 +55,7 @@ final class TextEditModel {
     /// Gives the window another clip; only while nothing is typed, so a draft is never thrown away.
     func load(clipID: UUID, text: String, isMonospaced: Bool, isEditable: Bool = true) {
         guard !hasUnsavedChanges else { return }
+        snippetDraft = nil
         self.clipID = clipID
         original = text
         self.isMonospaced = isMonospaced
@@ -69,7 +77,44 @@ final class TextEditModel {
         onClose?()
     }
 
+    /// Turns the window to the snippet editor, seeded with the text as it is typed now, so an unsaved edit is kept.
+    func beginSnippet(title: String) {
+        guard isEditable, !isSaving else { return }
+        snippetDraft = SnippetEditorDraft(clipID: clipID, title: title, text: draft)
+        message = nil
+    }
+
+    /// Back to the plain text, as it was typed before the snippet editor opened.
+    func endSnippet() {
+        snippetDraft = nil
+        message = nil
+    }
+
+    func commitSnippet(_ snippet: SnippetEditorDraft) async {
+        guard snippetDraft != nil, !isSaving else { return }
+        snippetDraft = snippet
+        isSaving = true
+        message = nil
+        let result = await saveSnippet(clipID, snippet.title, snippet.text)
+        isSaving = false
+        if case let .refused(words) = result {
+            message = words
+            return
+        }
+        onClose?()
+    }
+
+    /// Closes the window whatever it shows (the cover's Close): a covered window drops its draft, as before.
+    func close() {
+        onClose?()
+    }
+
+    /// Esc and Cancel: out of the snippet editor first, then the window.
     func cancel() {
+        if snippetDraft != nil {
+            endSnippet()
+            return
+        }
         onClose?()
     }
 }

@@ -10,12 +10,7 @@ extension AppState {
 
     func saveEditedText(id: UUID, text: String) async -> TextEditSaveResult {
         guard let service = storageService else { return .refused(TextEditPolicy.failedMessage) }
-        // The window keeps the draft: Save asks for the unlock, and saves once it is given.
-        checkAndApplyBiometricLock(closesTextEditor: false)
-        if isHistoryLocked {
-            await performBiometricUnlock()
-            guard !isHistoryLocked else { return .refused(TextEditPolicy.lockedMessage) }
-        }
+        guard await unlockForWindowSave() else { return .refused(TextEditPolicy.lockedMessage) }
         let mark = service.undoHistory.recordedCount
         let before = shownContentHashes(of: [id])
         let result: TextEditSaveResult
@@ -32,6 +27,48 @@ extension AppState {
             Task { await redrawWhenTextArrives(changedFrom: before) }
         }
         return result
+    }
+
+    /// Saves the Clip window's snippet (ADR 0075): an existing snippet is edited, any other text clip becomes one in
+    /// place, so one Undo takes back the text and the pin together.
+    func saveClipAsSnippet(id: UUID, title: String, text: String) async -> TextEditSaveResult {
+        guard let service = storageService else { return .refused(TextEditPolicy.failedMessage) }
+        guard await unlockForWindowSave() else { return .refused(TextEditPolicy.lockedMessage) }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = trimmed.isEmpty ? nil : trimmed
+        let isSnippet = historyStore?.item(for: id)?.isTemplate == true
+        let mark = service.undoHistory.recordedCount
+        let before = shownContentHashes(of: [id])
+        let result: TextEditSaveResult
+        do {
+            if isSnippet {
+                result = try await service.updateSnippet(id: id, title: name, text: text)
+                    ? .saved : .refused(TextEditPolicy.failedMessage)
+            } else {
+                result = try await TextEditPolicy.snippetResult(for: service.convertToSnippet(
+                    id: id,
+                    title: name,
+                    text: text
+                ))
+            }
+        } catch let refusal as ClipSizePolicy.TooLarge {
+            return .refused(refusal.message)
+        } catch {
+            Self.textEditLogger.error("Making a snippet failed: \(error.localizedDescription, privacy: .public)")
+            return .refused(TextEditPolicy.failedMessage)
+        }
+        if result == .saved {
+            offerUndo(since: mark)
+            Task { await redrawWhenTextArrives(changedFrom: before) }
+        }
+        return result
+    }
+
+    /// The window keeps the draft: a save asks for the unlock, and goes on once it is given.
+    private func unlockForWindowSave() async -> Bool {
+        checkAndApplyBiometricLock(closesTextEditor: false)
+        if isHistoryLocked { await performBiometricUnlock() }
+        return !isHistoryLocked
     }
 
     /// The content hash of the given clips as the shelf shows them, before a change whose new text must be drawn.

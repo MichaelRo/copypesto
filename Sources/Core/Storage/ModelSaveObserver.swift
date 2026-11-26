@@ -14,17 +14,22 @@ public enum ModelSaveObserver {
 
     /// The same, handing over which clips the save inserted, updated and deleted (nil when the save did not say). A
     /// save in a container other than `container` is not reported, so a store follows only its own history.
+    /// `posted` runs on the saving thread before the hop, so a caller can tell a save that is on its way to the main
+    /// actor from one already handled.
     public static func observeChanges(
         in container: ModelContainer,
+        posted: @escaping @Sendable () -> Void = {},
         _ handler: @escaping @MainActor @Sendable (HistorySaveChange?) -> Void
     )
-    -> any NSObjectProtocol {
+        -> any NSObjectProtocol
+    {
         NotificationCenter.default
             .addObserver(forName: ModelContext.didSave, object: nil, queue: nil) { [weak container] note in
                 guard let container,
                       let saved = note.object as? ModelContext,
                       saved.container === container else { return }
                 let change = HistorySaveChange(userInfo: note.userInfo)
+                posted()
                 Task { @MainActor in handler(change) }
             }
     }

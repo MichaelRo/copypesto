@@ -11,6 +11,9 @@ enum PictureFixtures {
         /// Dark bands on a light ground where `pattern`'s low eight bits are set: pictures of one size that are
         /// neither lookalikes nor pixel-identical, as two screenshots of different windows are.
         case bands(pattern: Int)
+        /// A window of word-sized blocks in which line `edit` reads differently: the 8×8 hash cannot tell two of them
+        /// apart, as with screenshots taken of one window a moment apart.
+        case window(edit: Int)
     }
 
     /// A PNG of the given size. `.flat` compresses to a few megabytes at any size; `.noise` does not compress, so its
@@ -37,6 +40,8 @@ enum PictureFixtures {
             for index in 0..<8 where (pattern >> index) & 1 == 1 {
                 context.fill(CGRect(x: index * band, y: 0, width: band, height: height))
             }
+        case let .window(edit):
+            drawWindow(in: context, width: width, height: height, edit: edit)
         case .noise:
             var state: UInt64 = 0x9E37_79B9_7F4A_7C15
             for index in 0..<(width * height) {
@@ -57,5 +62,24 @@ enum PictureFixtures {
         CGImageDestinationAddImage(destination, image, nil)
         precondition(CGImageDestinationFinalize(destination))
         return output as Data
+    }
+
+    private static func drawWindow(in context: CGContext, width: Int, height: Int, edit: Int) {
+        func fill(_ gray: CGFloat, _ x: Int, _ y: Int, _ blockWidth: Int, _ blockHeight: Int) {
+            context.setFillColor(CGColor(srgbRed: gray, green: gray, blue: gray, alpha: 1))
+            context.fill(CGRect(x: x, y: y, width: blockWidth, height: blockHeight))
+        }
+        let sidebar = width / 6
+        fill(0.96, 0, 0, width, height)
+        fill(0.3, 0, 0, sidebar, height)
+        fill(0.7, sidebar, height - height / 24, width - sidebar, height / 24)
+        let column = (width - sidebar) / 13
+        for line in 0..<40 {
+            for word in 0..<12 {
+                let shift = line == edit ? 71 : 0
+                let length = column / 3 + (line * 37 + word * 53 + shift) % (column / 2)
+                fill(0.15, sidebar + column / 3 + word * column, height - height / 14 - line * height / 45, length, 26)
+            }
+        }
     }
 }

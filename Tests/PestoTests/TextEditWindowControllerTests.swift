@@ -376,4 +376,86 @@ struct TextEditModelTests {
         await model.commit()
         #expect(calls == 0)
     }
+
+    @Test("Make Snippet starts from the text as typed, and Esc goes back to it without closing the window")
+    func whenSnippetBegunAndCancelled_thenTheTypedTextStays() {
+        var closed = false
+        let model = TextEditModel(clipID: UUID(), text: "Hi Anna", isMonospaced: false) { _, _ in .saved }
+        model.onClose = { closed = true }
+        model.draft = "Hi Anna, thanks"
+
+        model.beginSnippet(title: "Reply")
+
+        #expect(model.snippetDraft?.text == "Hi Anna, thanks")
+        #expect(model.snippetDraft?.title == "Reply")
+        #expect(model.snippetDraft?.clipID == model.clipID)
+        model.cancel()
+        #expect(model.snippetDraft == nil)
+        #expect(!closed)
+        #expect(model.draft == "Hi Anna, thanks")
+        model.cancel()
+        #expect(closed)
+    }
+
+    @Test("a snippet save sends the clip, the name and the text, and a refusal keeps the editor open with its words")
+    func whenSnippetSaved_thenItClosesOrSaysWhy() async throws {
+        struct Sent: Equatable {
+            let clip: UUID
+            let title: String
+            let text: String
+        }
+        var sent: [Sent] = []
+        var answer = TextEditSaveResult.refused("Add a placeholder")
+        var closed = false
+        let id = UUID()
+        let model = TextEditModel(
+            clipID: id, text: "Hi Anna", isMonospaced: false,
+            saveSnippet: { clip, title, text in
+                sent.append(Sent(clip: clip, title: title, text: text))
+                return answer
+            },
+            save: { _, _ in .saved }
+        )
+        model.onClose = { closed = true }
+        model.beginSnippet(title: "")
+        var snippet = try #require(model.snippetDraft)
+        snippet.text = "Hi {{input:name}}"
+        snippet.title = "Greeting"
+
+        await model.commitSnippet(snippet)
+
+        #expect(model.message == "Add a placeholder")
+        #expect(!closed)
+        #expect(model.snippetDraft?.text == "Hi {{input:name}}", "the typed snippet survives a refusal")
+
+        answer = .saved
+        await model.commitSnippet(snippet)
+
+        #expect(closed)
+        #expect(sent.count == 2)
+        #expect(sent.last == Sent(clip: id, title: "Greeting", text: "Hi {{input:name}}"))
+    }
+
+    @Test("another clip never replaces a snippet being made")
+    func whenSnippetOpen_thenLoadKeepsIt() {
+        let model = TextEditModel(clipID: UUID(), text: "first", isMonospaced: false) { _, _ in .saved }
+        model.beginSnippet(title: "")
+
+        model.load(clipID: UUID(), text: "second", isMonospaced: false)
+
+        #expect(model.original == "first")
+        #expect(model.snippetDraft != nil)
+    }
+
+    @Test("closing the window (the cover's Close) closes it even while a snippet is being made")
+    func whenClosedInSnippetMode_thenTheWindowCloses() {
+        var closed = false
+        let model = TextEditModel(clipID: UUID(), text: "words", isMonospaced: false) { _, _ in .saved }
+        model.onClose = { closed = true }
+        model.beginSnippet(title: "")
+
+        model.close()
+
+        #expect(closed)
+    }
 }

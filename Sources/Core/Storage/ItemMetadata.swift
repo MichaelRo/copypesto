@@ -23,13 +23,17 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
     public var copiedAt: Date?
     /// How the clip was made on this iPhone or iPad (ADR 0049). Never synced or backed up.
     public var captureMethod: CaptureMethod?
+    /// What rules a lookalike picture out without decoding it (ADR 0077). Derived from this device's decoder: never
+    /// synced or backed up.
+    public var pictureFingerprint: PictureFingerprint?
 
     public init(
         customTitle: String? = nil, userNote: String? = nil, tags: [String] = [],
         customSymbolName: String? = nil, collectionOrder: Int? = nil, ogTitle: String? = nil,
         ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil, fieldMemory: [String: String]? = nil,
         signature: [UInt32]? = nil,
-        pasteDays: [Int]? = nil, copiedAt: Date? = nil, captureMethod: CaptureMethod? = nil
+        pasteDays: [Int]? = nil, copiedAt: Date? = nil, captureMethod: CaptureMethod? = nil,
+        pictureFingerprint: PictureFingerprint? = nil
     ) {
         self.customTitle = customTitle
         self.userNote = userNote
@@ -44,13 +48,14 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
         self.pasteDays = pasteDays
         self.copiedAt = copiedAt
         self.captureMethod = captureMethod
+        self.pictureFingerprint = pictureFingerprint
     }
 
     public var isEmpty: Bool {
         customTitle == nil && userNote == nil && tags.isEmpty && customSymbolName == nil
             && collectionOrder == nil && ogTitle == nil && ogSiteName == nil && linkPreviewFetched != true
             && (fieldMemory ?? [:]).isEmpty && signature == nil && (pasteDays ?? []).isEmpty
-            && copiedAt == nil && captureMethod == nil
+            && copiedAt == nil && captureMethod == nil && pictureFingerprint == nil
     }
 
     public static let pasteDayWindow = 30

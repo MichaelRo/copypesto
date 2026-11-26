@@ -160,9 +160,9 @@ struct CardFootLineTests {
         let now = copied.addingTimeInterval(120)
 
         let line = PestoMobile.CardFootLineView.line(
-            for: item, now: now, device: mobilePhone, peerDeviceNames: ["peer-mac": "Michael's Mac"]
+            for: item, now: now, device: mobilePhone, peerDeviceNames: ["peer-mac": "Alex's Mac"]
         )
-        #expect(line.texts.first == "Michael's Mac \u{00B7} 2m ago")
+        #expect(line.texts.first == "Alex's Mac \u{00B7} 2m ago")
         #expect(line.symbol == nil)
     }
 }

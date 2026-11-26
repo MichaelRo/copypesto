@@ -142,7 +142,7 @@ struct SyncKeysTests {
         let layout = layout(), store = ThisDeviceSyncKeyStore(secrets: MemorySecrets())
         let device = SyncDeviceKeys.generate()
         let made = try SyncGroupManager.create(
-            layout: layout, identity: .init(deviceID: "mac-a", name: "Michael's MacBook", keys: device),
+            layout: layout, identity: .init(deviceID: "mac-a", name: "Alex's MacBook", keys: device),
             keyStore: store,
             now: now
         )

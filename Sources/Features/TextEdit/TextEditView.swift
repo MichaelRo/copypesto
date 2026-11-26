@@ -3,9 +3,9 @@ import PestoCore
 import SwiftUI
 
 /// The Clip window's left pane (ADRs 0050, 0071): the title, then the clip's whole text to edit, with Revert and Save
-/// (⌘Return or ⌘S) while it is changed and Close (Esc). A clip whose text is not editable (a picture, a file, a hidden
-/// secret) shows as its hover card does. While the contents are covered (a screen share, Hide Clip Contents) the
-/// content is covered too and the draft waits.
+/// (⌘Return or ⌘S) while it is changed and Close (Esc), or the snippet editor after Make Snippet (ADR 0075). A clip
+/// whose text is not editable (a picture, a file, a hidden secret) shows through `ClipInspectorPreview`. While the
+/// contents are covered (a screen share, Hide Clip Contents) the content is covered too and the draft waits.
 struct TextEditView: View {
     @Bindable var model: TextEditModel
     let item: ClipboardItem?
@@ -24,42 +24,15 @@ struct TextEditView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if item != nil, showsPersonalDetails { titleField }
-            content
-            if let message = model.message {
-                Label(message, systemImage: "exclamationmark.circle")
-                    .pestoCaption()
-                    .accessibilityIdentifier(AccessibilityID.textEditMessage)
-            }
-            HStack {
-                Spacer()
-                if model.hasUnsavedChanges {
-                    Button("Revert") { model.revert() }
-                        .accessibilityIdentifier(AccessibilityID.clipInspectorRevert)
-                }
-                Button(model.hasUnsavedChanges ? "Cancel" : "Close") { model.cancel() }
-                    .keyboardShortcut(.cancelAction)
-                    .accessibilityIdentifier(AccessibilityID.textEditCancelButton)
-                if model.isEditable {
-                    Button("Save") { Task { await model.commit() } }
-                        .buttonStyle(.pestoProminent)
-                        .keyboardShortcut(.return, modifiers: .command)
-                        .disabled(!model.canSave || isCovered)
-                        .accessibilityIdentifier(AccessibilityID.textEditSaveButton)
-                }
+        Group {
+            if let snippet = model.snippetDraft {
+                snippetPane(snippet)
+            } else {
+                textPane
             }
         }
         .padding(16)
         .frame(minWidth: 340, minHeight: 220)
-        .background {
-            Button("Save") { Task { await model.commit() } }
-                .keyboardShortcut("s", modifiers: .command)
-                .disabled(!model.canSave || isCovered)
-                .opacity(0)
-                .frame(width: 0, height: 0)
-                .accessibilityHidden(true)
-        }
         .onAppear {
             title = item?.customTitle ?? ""
             titleBaseline = title
@@ -77,6 +50,80 @@ struct TextEditView: View {
             try? await Task.sleep(for: .milliseconds(80))
             editorFocused = true
         }
+    }
+
+    private var textPane: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if item != nil, showsPersonalDetails { titleField }
+            content
+            if let message = model.message {
+                Label(message, systemImage: "exclamationmark.circle")
+                    .pestoCaption()
+                    .accessibilityIdentifier(AccessibilityID.textEditMessage)
+            }
+            HStack {
+                if let snippetTitle {
+                    Button(snippetTitle) { model.beginSnippet(title: title) }
+                        .disabled(isCovered)
+                        .accessibilityIdentifier(AccessibilityID.clipInspectorMakeSnippet)
+                }
+                Spacer()
+                if model.hasUnsavedChanges {
+                    Button("Revert") { model.revert() }
+                        .accessibilityIdentifier(AccessibilityID.clipInspectorRevert)
+                }
+                Button(model.hasUnsavedChanges ? "Cancel" : "Close") { model.cancel() }
+                    .keyboardShortcut(.cancelAction)
+                    .accessibilityIdentifier(AccessibilityID.textEditCancelButton)
+                if model.isEditable {
+                    Button("Save") { Task { await model.commit() } }
+                        .buttonStyle(.pestoProminent)
+                        .keyboardShortcut(.return, modifiers: .command)
+                        .disabled(!model.canSave || isCovered)
+                        .accessibilityIdentifier(AccessibilityID.textEditSaveButton)
+                }
+            }
+        }
+        .background {
+            Button("Save") { Task { await model.commit() } }
+                .keyboardShortcut("s", modifiers: .command)
+                .disabled(!model.canSave || isCovered)
+                .opacity(0)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// The snippet editor in place of the text (ADR 0075); its Cancel and Esc go back to the text as typed.
+    private func snippetPane(_ snippet: SnippetEditorDraft) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ScrollView {
+                SnippetEditorView(
+                    draft: snippet, freeShortcutSlot: nil,
+                    onSave: { edited in Task { await model.commitSnippet(edited) } },
+                    onCancel: { model.endSnippet() }
+                )
+                .id(snippet.id)
+                .disabled(model.isSaving)
+            }
+            if let message = model.message {
+                Label(message, systemImage: "exclamationmark.circle")
+                    .pestoCaption()
+                    .accessibilityIdentifier(AccessibilityID.textEditMessage)
+            }
+        }
+    }
+
+    /// Make Snippet for a text clip, Edit as Snippet for one that is already a snippet; nothing for a secret.
+    private var snippetTitle: LocalizedStringKey? {
+        guard let item, model.isEditable, item.sensitivity == nil else { return nil }
+        // The whole text is already in the model; `isTemplate` would open the sealed preview on every draw.
+        if item.isPinned, model.original.contains("{{") { return "Edit as Snippet\u{2026}" }
+        let open = CardConcealment(screenShareBlur: false, nsfwBlurred: false, maskedSecret: false, secretShown: false)
+        return TextEditPolicy.offersMakeSnippet(
+            type: item.type, analysisPending: item.analysisPending, isSecret: false, isSnippet: false,
+            concealment: open
+        ) ? "Make Snippet\u{2026}" : nil
     }
 
     private var titleField: some View {
@@ -112,10 +159,7 @@ struct TextEditView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.quaternary.opacity(0.4), in: .rect(cornerRadius: 8))
         } else if !model.isEditable {
-            ScrollView {
-                if let item { CardDetailPopover(item: item).frame(maxWidth: .infinity) }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if let item { ClipInspectorPreview(item: item) }
         } else {
             TextEditor(text: $model.draft)
                 .font(model.isMonospaced ? .body.monospaced() : .body)

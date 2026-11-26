@@ -1,6 +1,6 @@
 # The iPhone and iPad library: one page of Pesto cards
 
-Approved by Michael on 2026-11-14 after two design consults; built in `Sources/Mobile` (ADR 0046). The page has to look
+Approved on 2026-11-14 after two design consults; built in `Sources/Mobile` (ADR 0046). The page has to look
 and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 
 ## The page
@@ -83,7 +83,7 @@ leads. Then the age, then the collection and pin marks. No ⌘ numbers, no size.
   a copy. Return copies the focused card.
 - **Long press**: a large preview and Copy, Copy As (the Mac's text transforms for text, code and links; a color's
   formats), Copy Recognized Text and Save to Photos (a picture; add-only Photos permission), Edit Details, Share, Pin or
-  Unpin, Add to Collection, Save as Snippet (a plain text clip), Show (a hidden secret), Delete (last, destructive, Undo
+  Unpin, Add to Collection, Make Snippet… (a plain text clip, opens the editor, ADR 0075), Show (a hidden secret), Delete (last, destructive, Undo
   offered). A snippet that asks for values (ADR 0017) opens a small sheet before Copy: its fields, and a system Paste
   button for `{{clipboard}}` (never a silent read); selection and app name stay empty on iOS. The same copy actions are
   in the detail's More menu. SwiftUI gives a grid no "tap the preview" hook, so Edit Details is
@@ -179,3 +179,8 @@ Three steps once over the library (iPhone full screen, iPad form sheet; Skip on 
 ## Left out on purpose
 A tab bar, a list or a list/grid toggle, sort menus, swipe actions, a pushed detail screen, a Kinds
 section, a keyboard with typing keys (the optional keyboard has none, ADR 0061), glass on a card, reading a long text for AI a part at a time (the Mac does; the iOS answer says how much was read).
+
+**All Clips stays newest first, not pinned first** (assessed 2026-11-26). The keyboard and AutoFill put pinned clips
+and snippets first because they are insert pickers with room for two cards; the library is the history. Pinned first
+would push the clip just copied below every pinned card, against the habit both apps teach (the newest copy is the
+first card, as on the Mac shelf), and Pinned is already one chip away.

@@ -15,7 +15,7 @@ A snippet on iPhone and iPad uses the exact same model as the Mac (`docs/design/
 2. **Edit an existing snippet (`Edit Snippet…`):**
    - In `CardMenu` (long press on a card) and `ClipDetailView` (alongside `Edit Text` and in the `More` menu), any unlocked, non-concealed snippet (`item.isTemplate && appState.canEditText(item)`) offers **Edit Snippet…**.
    - Plain **Edit Text** remains untouched for quick raw edits.
-   - **Save as Snippet** stays in `CardMenu` and `ClipDetailView` for unpinned plain text and code clips (`canSaveAsSnippet`), converting `{variable}` placeholders into fill-ins and pinning in place.
+   - **Make Snippet…** in `CardMenu` and `ClipDetailView` (plain text and code that is not a secret or a snippet, `canMakeSnippet`, the Mac's `TextEditPolicy.offersMakeSnippet`) opens this editor on the clip's whole text (`SnippetEditorTarget.convert`); Save turns `{variable}` into fill-ins and makes the same clip the snippet, pinned, with one Undo (ADR 0075). Without a placeholder it is refused with a reason.
 
 ---
 

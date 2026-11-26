@@ -29,8 +29,8 @@ automatic signing; an App Store build needs one per App ID).
 
 1. On the device, once: connect it, unlock it, tap Trust; then Settings → Privacy & Security → Developer Mode → on,
    and restart when asked.
-2. `make build-mobile-device DEVICE="<the device's name>"` builds the app and its extensions for that device with
-   automatic signing. The team comes from `APPLE_TEAM_ID`, which the `Makefile` reads from the Developer ID
+2. `make build-mobile-device DEVICE="<the device's name>"` (or `DEVICE_ID="<UDID>"`) builds the app and its extensions for that device with
+   automatic signing. Passing `DEVICE_ID` avoids name matching altogether when a device name has smart apostrophes or spaces, though `DEVICE` also handles apostrophes and quotes safely. The team comes from `APPLE_TEAM_ID`, which the `Makefile` reads from the Developer ID
    certificate in the keychain; pass `APPLE_TEAM_ID=…` to choose another. Xcode creates the profiles on the first run
    (`-allowProvisioningUpdates`).
 3. To run it, open `Pesto.xcodeproj`, choose the `PestoMobile` scheme and the device, and press ⌘R. On first launch

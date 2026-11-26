@@ -10,11 +10,22 @@ struct CoveredCardFace: View {
     @Environment(MobileAppState.self) private var appState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: CardMetrics.footGap) {
-            if isSecret { secretBody } else { coveredBody }
-            ItemFootLineView(item: item, trailingMark: isSecret ? item.sensitivity?.badgeLabel : nil)
+        if waitsAsAPicture {
+            PictureCardFace(image: nil, fillsCard: true) { ItemFootLineView(item: item, onPicture: true) }
+        } else {
+            VStack(alignment: .leading, spacing: CardMetrics.footGap) {
+                if isSecret { secretBody } else { coveredBody }
+                ItemFootLineView(item: item, trailingMark: isSecret ? item.sensitivity?.badgeLabel : nil)
+            }
+            .padding(CardMetrics.inset)
         }
-        .padding(CardMetrics.inset)
+    }
+
+    /// A picture waiting only for its verdict is drawn as a picture that has not loaded yet, edge to edge with its
+    /// facts on pills, so it becomes the picture with no step between (ADR 0077). Nothing of the picture is drawn.
+    private var waitsAsAPicture: Bool {
+        !isSecret && item.type == .image && item.analysisPending && !item.isNSFW
+            && !appState.secretReveal.isCoveredForPrivacy(item.id)
     }
 
     private var secretBody: some View {
@@ -64,7 +75,7 @@ struct CoveredCardFace: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if item.analysisPending {
-                PendingImageBody()
+                PendingTextBody()
             }
         }
     }
@@ -75,56 +86,12 @@ struct CoveredCardFace: View {
     }
 }
 
-private struct PendingImageBody: View {
-    @State private var shimmerOffset: CGFloat = -1
-
-    private let wellShape = RoundedRectangle(cornerRadius: 8, style: .continuous)
-
+/// A large text still being judged: the Mac's opaque "Checking" surface, a small spinner over one quiet word.
+private struct PendingTextBody: View {
     var body: some View {
-        ZStack {
-            wellShape
-                .fill(Color.primary.opacity(0.05))
-                .overlay {
-                    if !Motion.reduceMotion {
-                        GeometryReader { proxy in
-                            LinearGradient(
-                                colors: [.clear, Color.primary.opacity(0.045), .clear],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            .frame(width: proxy.size.width * 1.4)
-                            .offset(x: shimmerOffset * proxy.size.width * 1.4)
-                            .onAppear {
-                                withAnimation(Motion.animation(.pestoWash)?.repeatForever(autoreverses: false)) {
-                                    shimmerOffset = 1
-                                }
-                            }
-                        }
-                        .clipShape(wellShape)
-                    }
-                }
-                .overlay(wellShape.strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
-
-            VStack(spacing: 8) {
-                Image(systemName: "photo")
-                    .font(.title2)
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.secondary.opacity(0.6))
-
-                HStack(spacing: 5) {
-                    if !Motion.reduceMotion {
-                        ProgressView()
-                            .controlSize(.mini)
-                    }
-                    Text("Checking image\u{2026}")
-                        .font(.caption2.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 9)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Color.primary.opacity(0.06)))
-                .overlay(Capsule().strokeBorder(Color.primary.opacity(0.10), lineWidth: 0.5))
-            }
+        VStack(spacing: 6) {
+            ProgressView().controlSize(.small)
+            Text("Checking").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityHidden(true)

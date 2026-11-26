@@ -356,11 +356,14 @@ public actor StorageService: ModelActor {
         lastIngestedHash = (hash, now)
         lastInsertedClip = (item.id, now)
 
-        if clipType == .image, let source = capture.sourceImageURL, !hasGIFMagicHeader(capture.payload) {
-            startGIFUpgrade(of: item.id, from: source)
+        // A browser's GIF is fetched only once the picture's verdict is in (ADR 0077): by the analysis when the
+        // picture is judged afterwards, here when its verdict is already known.
+        let gifSource = clipType == .image && !hasGIFMagicHeader(capture.payload) ? capture.sourceImageURL : nil
+        if let gifSource, !judgedLater {
+            startGIFUpgrade(of: item.id, from: gifSource, screens: analysisInput.screensContent && !detectedNSFW)
         }
         if judgedLater {
-            startAnalysis(of: item.id, input: analysisInput)
+            startAnalysis(of: item.id, input: analysisInput, gifSource: gifSource)
         } else {
             startEmbedding(for: item, text: payloadString)
             noteSignature(of: item, text: payloadString)

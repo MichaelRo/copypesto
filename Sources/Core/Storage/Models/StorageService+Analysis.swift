@@ -120,8 +120,9 @@ extension StorageService {
     }
 
     /// Judges a clip that was saved without being judged, then fills in what was found. Tracked, so
-    /// `waitForBackgroundWork()` and a test can wait for it.
-    func startAnalysis(of itemID: UUID, input: IngestAnalysisInput) {
+    /// `waitForBackgroundWork()` and a test can wait for it. `gifSource` is the address of a browser's GIF for this
+    /// still picture: it is fetched once the picture's content-filter verdict is in, never before (ADR 0077).
+    func startAnalysis(of itemID: UUID, input: IngestAnalysisInput, gifSource: URL? = nil) {
         let recognizer = textRecognizer
         let screener = imageScreener
         let taskID = UUID()
@@ -140,6 +141,11 @@ extension StorageService {
                 if !Task.isCancelled {
                     await finishNSFWCheck(of: itemID, isNSFW: sensitive)
                 }
+            }
+            if let gifSource, !Task.isCancelled {
+                await startGIFUpgrade(
+                    of: itemID, from: gifSource, screens: input.screensContent && precomputedNSFW != true
+                )
             }
             await acquireAnalysisSlot()
             if !Task.isCancelled {
@@ -223,7 +229,8 @@ extension StorageService {
         if item.perceptualHash == nil, let computedHash = analysis.perceptualHash {
             item.perceptualHash = computedHash
         }
-        item.isNSFW = analysis.isNSFW
+        // A flag only adds: the browser's GIF, fetched after the first verdict, may have flagged the clip already.
+        item.isNSFW = item.isNSFW || analysis.isNSFW
         item.analysisPending = false
         keepRecognizedText(analysis.recognizedText, for: item)
         do {

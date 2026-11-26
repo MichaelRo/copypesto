@@ -8,8 +8,8 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// What the card's loading task depends on: the clip, whether it is still waiting to be judged (a picture is not
-/// decoded
-/// while it is covered), and its size (a still picture that becomes its GIF has another, and is loaded again).
+/// decoded while it waits for its verdict, ADR 0077), and its size (a still picture that becomes its GIF has another,
+/// and is loaded again).
 struct CardLoadKey: Hashable {
     let id: UUID
     let isPending: Bool
@@ -34,6 +34,7 @@ extension ClipboardCard {
     /// What the card shows for its picture: the one it loaded, or the cached one at once so a card built again does not
     /// flash the placeholder first.
     var shownThumbnail: (image: NSImage, isAnimated: Bool)? {
+        if pictureWaitsForVerdict { return nil }
         if let thumbnail, thumbnailByteSize == item.byteSize { return (thumbnail, thumbnailIsAnimated) }
         return ThumbnailCache.shared.entry(for: item.id, byteSize: item.byteSize).map { ($0.image, $0.isAnimated) }
     }
@@ -41,7 +42,7 @@ extension ClipboardCard {
     func loadThumbnailIfNeeded() async {
         PerfSignposts.shelf.event("cardAppear", item.id.uuidString)
         let byteSize = item.byteSize
-        guard previewsAllowed, item.type == .image || item.isSVGSource else { return }
+        guard previewsAllowed, item.type == .image || item.isSVGSource, !pictureWaitsForVerdict else { return }
         if thumbnail != nil, thumbnailByteSize == byteSize { return }
         if let cached = ThumbnailCache.shared.entry(for: item.id, byteSize: byteSize) {
             thumbnail = cached.image

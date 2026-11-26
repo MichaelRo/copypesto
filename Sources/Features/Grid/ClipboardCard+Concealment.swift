@@ -9,8 +9,19 @@ extension ClipboardCard {
             nsfwBlurred: isBlurredAsSensitive,
             maskedSecret: item.sensitivity != nil,
             secretShown: revealedSecret != nil,
-            pendingAnalysis: item.analysisPending && item.type != .image
+            pendingAnalysis: waitsForVerdict
         )
+    }
+
+    /// Covered until the verdict: a large text always, a picture while the content filter screens pictures (ADR 0077).
+    var waitsForVerdict: Bool {
+        CardConcealment.waitsForVerdict(type: item.type, analysisPending: item.analysisPending, nsfwMode: nsfwMode)
+    }
+
+    /// A picture waiting for its verdict draws only its placeholder: its pixels are neither decoded for the card nor
+    /// shown.
+    var pictureWaitsForVerdict: Bool {
+        item.type == .image && waitsForVerdict
     }
 
     /// Covered for a screen share or by hand, until the person shows this card with its Show. Showing it is not

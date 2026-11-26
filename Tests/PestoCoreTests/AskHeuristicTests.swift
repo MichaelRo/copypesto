@@ -36,4 +36,12 @@ struct AskHeuristicTests {
         #expect(!AskHeuristic.returnAsks(text: "links from slack last week", resultCount: 4))
         #expect(!AskHeuristic.returnAsks(text: "xyz", resultCount: 0))
     }
+
+    @Test("Ask is offered for any typed text, and put away once it has applied what the field holds")
+    func whenTextTyped_thenAskOfferedUntilApplied() {
+        #expect(!AskHeuristic.offersAsk(text: "  ", lastAppliedKeywords: nil))
+        #expect(AskHeuristic.offersAsk(text: "invoice", lastAppliedKeywords: nil))
+        #expect(!AskHeuristic.offersAsk(text: "slack ", lastAppliedKeywords: "slack"))
+        #expect(AskHeuristic.offersAsk(text: "slack links", lastAppliedKeywords: "slack"))
+    }
 }

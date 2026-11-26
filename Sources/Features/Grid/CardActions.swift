@@ -48,8 +48,10 @@ struct CardActions: Equatable {
     /// Picks a pinned hotkey slot (1 to 9), or `nil` to clear it.
     var assignHotkey: (@MainActor (ClipboardItem, Int?) -> Void)?
     var togglePin: (@MainActor (ClipboardItem) -> Void)?
-    /// Opens the Edit Text window for the clip; the shelf closes first (ADR 0050).
+    /// Opens the Clip window with its text ready to edit (ADRs 0050, 0071); the shelf stays open behind it.
     var editText: (@MainActor (ClipboardItem) -> Void)?
+    /// Opens the Clip window on any clip (⌘I): its details, and its text when Edit Text is offered (ADR 0071).
+    var showDetails: (@MainActor (ClipboardItem) -> Void)?
     /// Writes the clip to the pasteboard without pasting or closing the shelf.
     var copy: (@MainActor (ClipboardItem) -> Void)?
     /// Whether a picture offers Copy Recognized Text (ADR 0034): asked when the menu opens or the hover card is about

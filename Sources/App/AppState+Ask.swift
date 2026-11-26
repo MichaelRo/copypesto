@@ -4,6 +4,7 @@ import PestoCore
 extension AppState {
     func apply(_ query: AskPestoQuery) {
         searchText = query.keywords
+        lastAsk = query
         searchTypeFilter = Set(query.types.map(\.rawValue))
         searchDateFilter = query.range
         isSearchActive = true
@@ -17,6 +18,14 @@ extension AppState {
         askGeneration &+= 1
         askTask?.cancel()
         askTask = nil
+        if isAsking { isAsking = false }
+    }
+
+    var offersAsk: Bool {
+        let stillApplied = lastAsk.map {
+            Set($0.types.map(\.rawValue)) == searchTypeFilter && $0.range == searchDateFilter
+        } ?? false
+        return AskHeuristic.offersAsk(text: searchText, lastAppliedKeywords: stillApplied ? lastAsk?.keywords : nil)
     }
 
     /// Turns the search text into filters (the Ask button, ⌘Return, and Return when a sentence finds nothing).
@@ -34,9 +43,11 @@ extension AppState {
             self.apply(query)
         }
         askTask = task
+        isAsking = true
         await task.value
         if askGeneration == generation {
             askTask = nil
+            isAsking = false
         }
     }
 

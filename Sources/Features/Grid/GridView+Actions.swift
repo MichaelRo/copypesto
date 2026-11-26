@@ -119,13 +119,27 @@ extension GridView {
         }
     }
 
+    /// ⌘I: the Clip Inspector for the focused clip (ADR 0071); the shelf stays open behind it.
+    func showFocusedDetails() {
+        guard displayedItems.indices.contains(focusedIndex) else { return }
+        showDetails(of: displayedItems[focusedIndex])
+    }
+
+    /// The details of any clip; a secret's text is edited only from Edit Text, which its card offers after a Show with
+    /// Touch ID (`revealedIDs` holds the cover's reveals, which ask for nothing).
+    func showDetails(of item: ClipboardItem) {
+        appState.openTextEditor?(item, false)
+    }
+
     /// Return in the search field pastes the focused result, so a search can be finished without the mouse.
     func handleReturnFromSearch() {
         let hasQuery = !appState.searchText.trimmingCharacters(in: .whitespaces).isEmpty
         let hasFilters = !appState.searchTypeFilter.isEmpty || appState.searchDateFilter != .all
             || appState.searchSensitiveOnly || appState.searchRemoteOnly
         // A sentence that finds nothing is a request, not a term: Return asks (⌘Return asks whatever it finds).
-        if AskHeuristic.returnAsks(text: appState.searchText, resultCount: cachedFilteredItems.count) {
+        if appState.offersAsk,
+           AskHeuristic.returnAsks(text: appState.searchText, resultCount: cachedFilteredItems.count)
+        {
             Task { await appState.askPesto() }
             return
         }
@@ -186,6 +200,11 @@ extension GridView {
             }
             appState.runImageDescription(image.data)
         }
+    }
+
+    /// No results offers Ask Pesto as the iPhone does (ADR 0070).
+    var offersAskOnNoResults: Bool {
+        emptyState == .noResults && !copyOnly && appState.offersAsk
     }
 
     var noResultsAdvice: NoResultsAdvice? {

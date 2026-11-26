@@ -11,7 +11,7 @@ extension AppDelegate {
             let shelfFrame = self.overlayWindowController?.overlayWindow.frame
             self.appState.close(.afterHide { [weak self] in self?.openSettingsWindow(shelfFrame: shelfFrame) })
         }
-        appState.openTextEditor = { [weak self] item in self?.requestTextEdit(of: item) }
+        appState.openTextEditor = { [weak self] item, shown in self?.requestTextEdit(of: item, secretShown: shown) }
         appState.closeTextEditor = { [weak self] in self?.textEditController.close() }
     }
 
@@ -28,18 +28,21 @@ extension AppDelegate {
         )
     }
 
-    /// The text is read while the card that offered Edit Text is still what the person saw (a secret only while its
-    /// Show runs). Edit Text opens above the shelf without closing it.
-    func requestTextEdit(of item: ClipboardItem) {
-        guard !appState.isHistoryLockedNow(),
-              TextEditOutcome.isEditable(type: item.type, analysisPending: item.analysisPending),
-              item.byteSize <= TextEditPolicy.maxEditableBytes,
-              let text = item.blob?.decryptedText() else { return }
+    /// The Clip window for any clip (ADR 0071), above the shelf without closing it. Its text is editable only when Edit
+    /// Text would be (ADR 0050) and the clip is no secret or its secret is shown on its card (that Show already asked
+    /// for Touch ID): a hidden clip's text is never read here.
+    func requestTextEdit(of item: ClipboardItem, secretShown: Bool) {
+        guard !appState.isHistoryLockedNow() else { return }
+        let editable = (item.sensitivityRaw == nil || secretShown)
+            && TextEditOutcome.isEditable(type: item.type, analysisPending: item.analysisPending)
+            && item.byteSize <= TextEditPolicy.maxEditableBytes
+        let text = editable ? item.blob?.decryptedText() : nil
         appState.isTextEditorOpen = true
         textEditController.open(
             clipID: item.id,
-            text: text,
-            isMonospaced: item.type == .code || item.type == .color
+            text: text ?? "",
+            isMonospaced: item.type == .code || item.type == .color,
+            isEditable: text != nil
         )
     }
 

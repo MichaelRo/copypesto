@@ -27,6 +27,7 @@ struct ShelfKeyReferenceDriftTests {
         case .pasteNth: "⌘ 1–9"
         case .returnKey: "⌘ Return"
         case .showHidden: "⌘ E"
+        case .showDetails: "⌘ I"
         }
     }
 
@@ -35,7 +36,7 @@ struct ShelfKeyReferenceDriftTests {
     private static let commands: [ShelfCommand] = [
         .search, .previousCollection, .nextCollection, .previousAppChip, .nextAppChip, .settings, .newCollection,
         .pasteAll, .pasteOneByOne, .undo, .redo, .actions, .copy, .saveImage, .quickLook, .selectAll, .pasteNth(1),
-        .returnKey, .showHidden
+        .returnKey, .showHidden, .showDetails
     ]
 
     @Test("every command the shelf takes is listed in Settings")

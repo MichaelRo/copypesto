@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import PestoCore
 
 /// The edit form's text before it is saved: an empty title or note clears it, and tags are typed comma-separated.
 struct ClipDetailsDraft: Equatable {
@@ -64,10 +65,7 @@ struct ClipDetailsDraft: Equatable {
     }
 
     var cleanTags: [String] {
-        var seen = Set<String>()
-        return tags.split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces).trimmingCharacters(in: CharacterSet(charactersIn: "#")) }
-            .filter { !$0.isEmpty && seen.insert($0.lowercased()).inserted }
+        ClipDetailsEdit.adding(tags, to: [])
     }
 
     func differs(title: String?, note: String?, tags: [String]) -> Bool {

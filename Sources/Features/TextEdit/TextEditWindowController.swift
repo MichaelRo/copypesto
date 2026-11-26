@@ -3,8 +3,9 @@ import AppKit
 import PestoCore
 import SwiftUI
 
-/// The one Edit Text window (ADR 0050): a titled, key window, since the shelf never becomes key. Asking again brings it
-/// forward; it takes the new clip only while nothing is typed in it.
+/// The one Clip window, the Clip Inspector (ADRs 0050, 0071): a titled, key window, since the shelf never becomes key,
+/// opened above the shelf without closing it. Asking again brings it forward; it takes the new clip only while nothing
+/// is typed in it.
 @MainActor
 final class TextEditWindowController {
     private let appState: AppState
@@ -14,7 +15,7 @@ final class TextEditWindowController {
     private(set) var model: TextEditModel?
     private var closeObserver: (any NSObjectProtocol)?
 
-    static let defaultSize = NSSize(width: 520, height: 360)
+    static let defaultSize = NSSize(width: 860, height: 560)
 
     init(
         appState: AppState,
@@ -26,13 +27,15 @@ final class TextEditWindowController {
         self.didClose = didClose
     }
 
-    func open(clipID: UUID, text: String, isMonospaced: Bool) {
+    func open(clipID: UUID, text: String, isMonospaced: Bool, isEditable: Bool = true) {
         if let window, let model {
-            model.load(clipID: clipID, text: text, isMonospaced: isMonospaced)
+            model.load(clipID: clipID, text: text, isMonospaced: isMonospaced, isEditable: isEditable)
             present(window)
             return
         }
-        let model = TextEditModel(clipID: clipID, text: text, isMonospaced: isMonospaced) { [appState] id, draft in
+        let model = TextEditModel(
+            clipID: clipID, text: text, isMonospaced: isMonospaced, isEditable: isEditable
+        ) { [appState] id, draft in
             await appState.saveEditedText(id: id, text: draft)
         }
         model.onClose = { [weak self] in self?.close() }
@@ -77,11 +80,12 @@ final class TextEditWindowController {
         // Keep Edit Text above the floating Pinned window (.floating) so editing a clip from the floating window
         // never opens behind it.
         window.level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue + 1)
-        window.title = String(localized: "Edit Text")
+        window.title = String(localized: "Clip")
         window.identifier = NSUserInterfaceItemIdentifier(AccessibilityID.textEditWindow)
-        window.contentMinSize = NSSize(width: 360, height: 220)
-        let hosting = SafeHostingView(pesto: TextEditView(model: model).environment(appState))
-        hosting.setAccessibilityLabel(String(localized: "Edit Text"))
+        window.contentMinSize = NSSize(width: 620, height: 380)
+        let root = ClipInspectorRoot(model: model).environment(appState)
+        let hosting = SafeHostingView(pesto: root)
+        hosting.setAccessibilityLabel(String(localized: "Clip"))
         window.contentView = hosting
         window.setContentSize(Self.defaultSize)
         if let screen = TargetScreen.current() ?? NSScreen.main {

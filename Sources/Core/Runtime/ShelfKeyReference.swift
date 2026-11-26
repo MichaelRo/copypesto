@@ -83,6 +83,10 @@ public enum ShelfKeyReference {
             needsCommand: true
         ),
         ShelfKey(
+            keys: ["⌘", "I"], action: "Show the clip's details: its title, note, tags and text", keyCodes: [34],
+            needsCommand: true
+        ),
+        ShelfKey(
             keys: ["Tab"], action: "In search, move through the filters", keyCodes: [48], needsCommand: false,
             requiresSearch: true
         ),

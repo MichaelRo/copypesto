@@ -7,7 +7,7 @@ struct InsertPickerView: View {
     let menu: QuickInsertMenu
     let insert: (QuickInsertEntry) -> Void
     var insertText: ((String) -> Void)?
-    var openSettings: (() -> Void)?
+    @State private var showsSettingsPlace = false
     let cancel: () -> Void
     @State private var query = ""
     @State private var activeChip: QuickInsertMenu.Chip = .all
@@ -44,15 +44,22 @@ struct InsertPickerView: View {
                     ToolbarItem(placement: .cancellationAction) {
                         Button("Cancel", action: cancel)
                     }
-                    if let openSettings {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button(action: openSettings) {
-                                Image(systemName: "gearshape")
-                            }
-                            .accessibilityLabel(Text("Settings"))
+                    // AutoFill says where the settings are rather than opening Pesto: no API lets a credential
+                    // provider open its app, and 4.4.1's room for keyboards does not cover it (ADR 0072).
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showsSettingsPlace = true
+                        } label: {
+                            Image(systemName: "gearshape")
                         }
+                        .accessibilityLabel(Text("Settings"))
                     }
                 }
+        }
+        .alert("Pesto Settings", isPresented: $showsSettingsPlace) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Open Pesto, then Settings → Keyboard & AutoFill.")
         }
         .tint(resolvedAccent)
         .environment(\.pestoAccent, resolvedAccent)

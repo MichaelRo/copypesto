@@ -493,6 +493,7 @@ struct CommandBarView: View {
                 Button {
                     appState.cancelAsk()
                     appState.searchText = ""
+                    appState.lastAsk = nil
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .pestoQuiet()
@@ -515,16 +516,10 @@ struct CommandBarView: View {
 
     private var searchTrailingButtons: some View {
         HStack(spacing: 8) {
-            if looksLikeQuestion {
-                Button {
+            if appState.offersAsk || appState.isAsking {
+                AskButton(isQuestion: looksLikeQuestion, isAsking: appState.isAsking) {
                     Task { await ask() }
-                } label: {
-                    Label("Ask", systemImage: "sparkles").font(.subheadline)
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(.tint)
-                .help("Turn this into filters (⌘Return)")
-                .accessibilityIdentifier(AccessibilityID.askButton)
             }
 
             Button("Cancel") { deactivateSearch() }
@@ -555,6 +550,7 @@ struct CommandBarView: View {
 
     private func deactivateSearch() {
         saveToHistory(appState.searchText)
+        appState.lastAsk = nil
         appState.isSearchActive = false
     }
 

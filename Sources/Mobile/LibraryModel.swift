@@ -284,10 +284,7 @@ final class LibraryModel {
     }
 
     var canOfferAsk: Bool {
-        let trimmed = query.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return false }
-        if !filter.hasAsk { return true }
-        return trimmed != (lastAppliedAskKeywords ?? "")
+        AskHeuristic.offersAsk(text: query, lastAppliedKeywords: filter.hasAsk ? lastAppliedAskKeywords : nil)
     }
 
     func startAsk(

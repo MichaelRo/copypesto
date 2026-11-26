@@ -32,6 +32,12 @@ struct KeyboardSettingsPanel: View {
                         .accessibilityLabel(Text("Open Pesto Settings"))
                 }
             }
+            if openSettings == nil {
+                Text("More settings are in Pesto: Settings → Keyboard & AutoFill.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Picker("Size", selection: Binding(get: { size }, set: setSize)) {
                 ForEach(KeyboardSize.allCases, id: \.self) { option in
                     Text(option.displayName).tag(option)

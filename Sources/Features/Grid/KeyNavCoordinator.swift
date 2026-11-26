@@ -66,6 +66,7 @@ final class KeyNavCoordinator {
     var onAskFromSearch: (() -> Void)?
     /// ⌘Return outside search shows or hides the focused covered clip; inside search it asks Pesto.
     var onShowHidden: (() -> Void)?
+    var onShowDetails: (() -> Void)?
     var onConfirm: (() -> Void)?
     var onCancelConfirmation: (() -> Void)?
     var onSearch: (() -> Void)?
@@ -212,6 +213,7 @@ final class KeyNavCoordinator {
         case let .pasteNth(number): onPasteNth?(number)
         case .quickLook: onQuickLook?()
         case .showHidden: onShowHidden?()
+        case .showDetails: onShowDetails?()
         case .saveImage, .selectAll, .undo, .redo,
              .search, .previousCollection, .nextCollection, .previousAppChip, .nextAppChip,
              .settings, .newCollection: break

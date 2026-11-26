@@ -9,6 +9,10 @@ struct ShelfEmptyStateView: View {
     var hasKeyboardCursor = false
     var onAction: ((ShelfEmptyState.Action) -> Void)?
     var onAdvice: ((NoResultsAdvice.Action) -> Void)?
+    /// Ask Pesto is offered on No results, first when the search reads like a question (as on the iPhone), where
+    /// Return asks too.
+    var asksFirst = false
+    var onAsk: (() -> Void)?
     @Environment(\.pestoAccent) private var accent
 
     var body: some View {
@@ -32,14 +36,13 @@ struct ShelfEmptyStateView: View {
                     .padding(.top, 6)
                     .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAction)
             }
-            if let advice {
-                Button(advice.buttonTitle) { onAdvice?(advice.action) }
-                    .buttonStyle(.pestoProminent)
-                    .controlSize(.regular)
-                    .overlay(Capsule().strokeBorder(accent, lineWidth: hasKeyboardCursor ? 2 : 0).padding(-2))
-                    .padding(.top, 6)
-                    .help(advice.buttonTitle)
-                    .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAdvice)
+            if advice != nil || onAsk != nil {
+                HStack(spacing: 8) {
+                    if asksFirst { askButton(prominent: true) }
+                    if let advice { adviceButton(advice) }
+                    if !asksFirst { askButton(prominent: false) }
+                }
+                .padding(.top, 6)
             }
         }
         .padding(.horizontal, 20)
@@ -50,6 +53,27 @@ struct ShelfEmptyStateView: View {
         .frame(maxWidth: 420)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(AccessibilityID.shelfEmptyState)
+    }
+
+    @ViewBuilder
+    private func adviceButton(_ advice: NoResultsAdvice) -> some View {
+        let button = Button(advice.buttonTitle) { onAdvice?(advice.action) }
+            .controlSize(.regular)
+            .overlay(Capsule().strokeBorder(accent, lineWidth: hasKeyboardCursor ? 2 : 0).padding(-2))
+            .help(advice.buttonTitle)
+            .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAdvice)
+        if asksFirst { button.buttonStyle(.bordered) } else { button.buttonStyle(.pestoProminent) }
+    }
+
+    @ViewBuilder
+    private func askButton(prominent: Bool) -> some View {
+        if let onAsk {
+            let button = Button("Ask Pesto", systemImage: "sparkles", action: onAsk)
+                .controlSize(.regular)
+                .help("Turn this into filters (⌘Return)")
+                .accessibilityIdentifier(AccessibilityID.shelfEmptyStateAsk)
+            if prominent { button.buttonStyle(.pestoProminent) } else { button.buttonStyle(.bordered) }
+        }
     }
 
     private func actionTitle(_ action: ShelfEmptyState.Action) -> LocalizedStringKey {
@@ -86,7 +110,9 @@ struct ShelfEmptyStateView: View {
         case .storageUnavailable:
             "Pesto couldn’t open its history. Restart Pesto, and check free disk space if it happens again."
         case .noResults:
-            advice?.sentence ?? NoResultsAdvice.make(query: query).sentence
+            asksFirst
+                ? String(localized: "Press Return to ask Pesto to turn this into filters.")
+                : advice?.sentence ?? NoResultsAdvice.make(query: query).sentence
         case .emptyCollection:
             "Drag a clip onto the collection to add it."
         case let .emptyAppFilter(name):

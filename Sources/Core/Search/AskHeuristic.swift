@@ -22,6 +22,14 @@ public enum AskHeuristic {
         return words.count == 2 && words.contains(where: intentWords.contains)
     }
 
+    /// Ask is offered for any typed text (on the Mac and iOS alike), drawn forward when it reads like a question, and
+    /// put away once Ask has applied what the field now holds, until something else is typed.
+    public static func offersAsk(text: String, lastAppliedKeywords: String?) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return false }
+        return trimmed != (lastAppliedKeywords ?? "")
+    }
+
     public static func returnAsks(text: String, resultCount: Int) -> Bool {
         resultCount == 0 && looksLikeQuestion(text)
     }

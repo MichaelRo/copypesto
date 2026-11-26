@@ -40,10 +40,12 @@ final class KeyboardViewController: UIInputViewController {
                     Self.logger.error("Saving keyboard size failed: \(error.localizedDescription, privacy: .public)")
                 }
             },
-            openURL: { [weak self] url in
+            // Opening Pesto needs Full Access on iOS 26 (ADR 0072); without it the keyboard says where the settings
+            // are.
+            openURL: hasFullAccess ? { [weak self] url in
                 guard let self else { return }
-                HostURLOpener.open(url, from: self, context: extensionContext)
-            }
+                HostURLOpener.open(url, from: self)
+            } : nil
         )
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
         host.view.backgroundColor = .clear

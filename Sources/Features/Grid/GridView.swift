@@ -239,6 +239,7 @@ struct GridView: View {
                 onCopy: copyFocused,
                 onAskFromSearch: { Task { await appState.askPesto() } },
                 onShowHidden: showFocusedHidden,
+                onShowDetails: showFocusedDetails,
                 onConfirm: confirmDelete,
                 onCancelConfirmation: { pendingDelete = nil },
                 onSearch: { appState.isSearchActive = true },
@@ -314,7 +315,9 @@ struct GridView: View {
                             case .resumeCapturing: appState.resumeCapturing?()
                             }
                         },
-                        onAdvice: apply
+                        onAdvice: apply,
+                        asksFirst: offersAskOnNoResults && AskHeuristic.looksLikeQuestion(appState.searchText),
+                        onAsk: offersAskOnNoResults ? { Task { await appState.askPesto() } } : nil
                     )
                 }
             }

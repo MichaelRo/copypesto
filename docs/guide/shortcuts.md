@@ -39,6 +39,7 @@ These work while the shelf is open.
 | **⌘1** to **⌘9** | Paste the clip in that position |
 | **⌘Return** | In search, ask Pesto. On a covered clip, show or hide it. |
 | **⌘E** | Show or hide the focused covered clip, in search or not |
+| **⌘I** | Show the focused clip's details (its title, note, tags and text) in the Clip window |
 | **⌘K** | Open the focused clip's actions, the same menu a right-click shows |
 | **⌘C** | Copy the focused clip to the clipboard without pasting (it moves to the front); with several text clips selected, copy them joined by a blank line as Paste All does; in the search field it copies the selected text |
 | **⌘Y** | Quick Look the focused clip (not for a covered or hidden one); **Esc** closes the preview and leaves the shelf open |

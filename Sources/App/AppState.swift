@@ -174,6 +174,8 @@ final class AppState {
     /// The chips on screen, in order, as the keyboard can act on them. Set by the command bar.
     @ObservationIgnored var filterChipActions: [FilterChipAction] = []
     @ObservationIgnored var askTask: Task<Void, Never>?
+    var isAsking = false
+    var lastAsk: AskPestoQuery? // Ask is put away while what it applied is still in place (`offersAsk`).
     @ObservationIgnored var askGeneration = 0
 
     /// When the shelf last closed; `ShelfContextPolicy` decides from it whether the next open starts from All.
@@ -363,7 +365,8 @@ final class AppState {
     @ObservationIgnored var showToast: (@MainActor (StatusToast) -> Void)?
     @ObservationIgnored var openFloatingWindowFromOverlay: (@MainActor () -> Void)?
     /// Opens the Edit Text window for a clip above the shelf. Set by the delegate.
-    @ObservationIgnored var openTextEditor: (@MainActor (ClipboardItem) -> Void)?
+    /// Opens the Clip window; the flag says the clip's secret is shown on its card now, so its text may be edited.
+    @ObservationIgnored var openTextEditor: (@MainActor (ClipboardItem, Bool) -> Void)?
     /// Closes the Edit Text window and drops its draft: the History Lock calls it. Set by the delegate.
     @ObservationIgnored var closeTextEditor: (@MainActor () -> Void)?
     /// Exports a collection to a file the person chooses; closes the shelf first when it is open. Set by the delegate.

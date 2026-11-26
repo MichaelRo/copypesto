@@ -158,7 +158,7 @@ extension GridView {
             },
             assignHotkey: { assignShortcut($1, toClip: $0.id) },
             togglePin: { togglePin(ofClip: $0.id) },
-            editText: { appState.openTextEditor?($0) },
+            editText: { appState.openTextEditor?($0, true) },
             copy: { copyToPasteboard($0) },
             recognizedTextOffered: { !appState.isHistoryLockedNow() && RecognizedText.isOffered(for: $0) },
             copyRecognizedText: { copyRecognizedText($0) },
@@ -173,6 +173,7 @@ extension GridView {
             }
         )
         actions.copyAsFile = { copyAsFile($0) }
+        actions.showDetails = { showDetails(of: $0) }
         if copyOnly {
             actions.paste = nil
         } else {

@@ -15,6 +15,8 @@ public enum QuickInsertPolicy {
     public static let maxCollectionNameCharacters = 40
     /// A longer clip is not offered: inserting a whole document into a text field is not what this is for.
     public static let maxEntryBytes = 32 * 1024
+    /// What all the clips' text, recognized text, thumbnails and fill-in values may take, text counted as it is encoded
+    /// (`EncodedText`).
     public static let maxTotalBytes = 256 * 1024
     public static let maxTitleCharacters = 120
     public static let maxSourceCharacters = 60
@@ -22,7 +24,8 @@ public enum QuickInsertPolicy {
     public static let maxThumbnailBytes = 24 * 1024
     /// How many clips of each kind are looked at to find the ones that may be offered.
     public static let scanLimit = 200
-    /// Encoding escapes a control character as six bytes (`\u0000`), so even a set of nothing else fits.
+    /// Above the fullest set the bounds allow: `maxTotalBytes` (a thumbnail grows by a third in base64) beside every
+    /// entry's titles and source at four bytes a character (`QuickInsertEncodedSizeTests`).
     public static let maxFileBytes = 2 * 1024 * 1024
     /// How long the app waits after a change to the history before it writes the set again.
     public static let rewriteDelay: Duration = .seconds(1)

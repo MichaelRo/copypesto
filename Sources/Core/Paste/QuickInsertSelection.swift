@@ -272,13 +272,14 @@ public enum QuickInsertSelection {
                 return made
             }
             guard let body = reader.text(item), !body.isEmpty,
-                  body.utf8.count <= QuickInsertPolicy.maxEntryBytes, body.utf8.count <= budget,
-                  SensitiveContentDetector.detectAnywhere(in: body) == nil else { return nil }
+                  body.utf8.count <= QuickInsertPolicy.maxEntryBytes else { return nil }
+            let cost = EncodedText.bytes(body)
+            guard cost <= budget, SensitiveContentDetector.detectAnywhere(in: body) == nil else { return nil }
             let isSnippet = item.isPinned && TemplateExpander.containsPlaceholders(body)
             let targetSection: QuickInsertEntry.Section = (section == .pinned && isSnippet) ? .snippets : section
             guard !isFullSection(targetSection, pins: pins.count, snippets: snippets.count, latest: latest.count),
                   !isSnippet || TemplateExpander.fillsWithoutSystemContext(body) else { return nil }
-            budget -= body.utf8.count
+            budget -= cost
             chosen.insert(item.id)
             let memory = isSnippet
                 ? safeFieldMemory(
@@ -348,9 +349,12 @@ private extension QuickInsertSelection {
     private static func makeCollection(_ board: Pinboard, entryIDs: [UUID]) -> QuickInsertCollection {
         QuickInsertCollection(
             id: board.id,
-            name: String(board.name.prefix(QuickInsertPolicy.maxCollectionNameCharacters)),
-            symbolName: String(board.symbolName.prefix(WidgetSnapshotPolicy.maxSymbolNameCharacters)),
-            color: String(board.colorHex.prefix(7)),
+            name: EncodedText.prefix(board.name, maxCharacters: QuickInsertPolicy.maxCollectionNameCharacters),
+            symbolName: EncodedText.prefix(
+                board.symbolName,
+                maxCharacters: WidgetSnapshotPolicy.maxSymbolNameCharacters
+            ),
+            color: EncodedText.prefix(board.colorHex, maxCharacters: 7),
             entryIDs: entryIDs
         )
     }
@@ -358,7 +362,8 @@ private extension QuickInsertSelection {
     private static func trimmedSource(for item: ClipboardItem, reader: Reader) -> (name: String?, isThisDevice: Bool) {
         let src = reader.source(item)
         let clean = src.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return (clean.isEmpty ? nil : String(clean.prefix(QuickInsertPolicy.maxSourceCharacters)), src.isThisDevice)
+        let name = EncodedText.prefix(clean, maxCharacters: QuickInsertPolicy.maxSourceCharacters)
+        return (name.isEmpty ? nil : name, src.isThisDevice)
     }
 
     private static func makeImageEntry(
@@ -373,17 +378,17 @@ private extension QuickInsertSelection {
         let ocr: String? = rawOCR.flatMap { value in
             let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !trimmed.isEmpty, trimmed.utf8.count <= QuickInsertPolicy.maxEntryBytes,
-                  thumb.count + trimmed.utf8.count <= budget else { return nil }
+                  thumb.count + EncodedText.bytes(trimmed) <= budget else { return nil }
             return trimmed
         }
-        budget -= thumb.count + (ocr?.utf8.count ?? 0)
+        budget -= thumb.count + (ocr.map(EncodedText.bytes) ?? 0)
         let src = trimmedSource(for: item, reader: reader)
         return QuickInsertEntry(
             id: item.id, section: section, kind: .image,
             title: title(of: item, text: ocr ?? ""), text: "",
             expandsOnInsert: false,
             fromAnotherDevice: item.syncOrigin != nil || item.isRemote,
-            customTitle: item.customTitle, ogTitle: nil,
+            customTitle: boundedTitle(item.customTitle), ogTitle: nil,
             date: item.timestamp, source: src.name, sourceIsThisDevice: src.isThisDevice,
             thumbnail: thumb, recognizedText: ocr, isAnimated: reader.isAnimated(item)
         )
@@ -408,7 +413,7 @@ private extension QuickInsertSelection {
                   value.utf8.count <= 1024,
                   SensitiveContentDetector.detectAnywhere(in: key) == nil,
                   SensitiveContentDetector.detectAnywhere(in: value) == nil else { continue }
-            let pairBytes = key.utf8.count + value.utf8.count
+            let pairBytes = EncodedText.bytes(key) + EncodedText.bytes(value)
             guard used + pairBytes <= 2048, pairBytes <= budget else { break }
             kept[key] = value
             used += pairBytes
@@ -434,7 +439,7 @@ private extension QuickInsertSelection {
             title: title(of: item, text: draft.body), text: draft.body,
             expandsOnInsert: draft.isSnippet,
             fromAnotherDevice: item.syncOrigin != nil || item.isRemote,
-            customTitle: item.customTitle, ogTitle: item.ogTitle,
+            customTitle: boundedTitle(item.customTitle), ogTitle: boundedTitle(item.ogTitle),
             date: item.timestamp, source: src.name, sourceIsThisDevice: src.isThisDevice,
             fieldMemory: draft.fieldMemory
         )
@@ -445,8 +450,13 @@ private extension QuickInsertSelection {
         let line = text.split(whereSeparator: \.isNewline).lazy
             .map { $0.trimmingCharacters(in: .whitespaces) }.first { !$0.isEmpty } ?? ""
         let chosen = named.isEmpty ? line : named
-        return String((chosen.isEmpty ? item.type.presentation.label : chosen)
-            .prefix(QuickInsertPolicy.maxTitleCharacters))
+        return boundedTitle(chosen) ?? item.type.presentation.label
+    }
+
+    static func boundedTitle(_ title: String?) -> String? {
+        guard let title else { return nil }
+        let cut = EncodedText.prefix(title, maxCharacters: QuickInsertPolicy.maxTitleCharacters)
+        return cut.isEmpty ? nil : cut
     }
 }
 

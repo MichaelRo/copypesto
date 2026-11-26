@@ -190,6 +190,12 @@ capture-real: generate ## [Maintenance] Retake the Touch ID lock and the Ask pic
 setup-signing: ## [Develop] Create a local dev signing cert so Accessibility permission survives rebuilds (run once; says what it changes)
 	@DEV_SIGN_IDENTITY="$(SELF_SIGNED_IDENTITY)" scripts/setup-signing.sh
 
+.PHONY: setup-merge-drivers
+setup-merge-drivers: ## [Develop] Register the String Catalog merge driver for this clone (run once; .gitattributes names it)
+	git config merge.xcstrings.name "String Catalog, entry by entry"
+	git config merge.xcstrings.driver "python3 scripts/merge-xcstrings.py %O %A %B"
+	@echo "String Catalogs now merge entry by entry; decisions/README.md keeps both sides' rows (merge=union)."
+
 .PHONY: setup-release-signing
 setup-release-signing: ## [Release] Create the self-signed "Pesto Release" identity that signs the unsigned 1.0 disk image (run once; says what it changes)
 	@SETUP_TARGET=setup-release-signing DEV_SIGN_IDENTITY="$(RELEASE_SIGN_IDENTITY)" scripts/setup-signing.sh

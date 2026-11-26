@@ -222,4 +222,4 @@ works, how to write a UI test and the manual checklist for what cannot be automa
 
 Pre-commit checks run automatically via `.githooks/pre-commit`. If `xcode-select -p` points to CommandLineTools rather than Xcode, prefix commands with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
-**Never stack a PR on a non-`main` base without triggering `verify` manually (or rebasing onto `main` first).** `.github/workflows/ci.yml`'s `verify` job skips pull requests where `github.base_ref != default_branch`, so every PR must run the full `verify` gate via `workflow_dispatch` or by targeting `main`.
+**Pull requests land through `main`'s merge queue** (`docs/development.md`, "Merging"): `verify` skips a pull request stacked on another branch and a skip reports success, so only the queue's `merge_group` run, on the pull request merged with the newest `main`, lets one land. Run `make setup-merge-drivers` once per clone: String Catalogs then merge entry by entry and the ADR index keeps both sides' rows; merge `main` into a branch locally rather than through GitHub's conflict editor.

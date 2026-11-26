@@ -1,0 +1,4 @@
+# Merge drivers (docs/development.md, "Merging"): the ADR index gains a row per decision, so both sides' rows are kept;
+# a String Catalog is merged entry by entry by scripts/merge-xcstrings.py once `make setup-merge-drivers` registered it.
+decisions/README.md merge=union
+*.xcstrings merge=xcstrings

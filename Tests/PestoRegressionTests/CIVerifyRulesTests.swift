@@ -28,6 +28,18 @@ struct CIVerifyRulesTests {
         )
     }
 
+    @Test("main's merge queue always runs verify on the PR merged with the newest main, a skip never lands a PR")
+    func whenQueued_thenVerifyRuns() throws {
+        let text = try workflow()
+        #expect(text.contains("\n  merge_group:\n"), "the merge queue's event triggers the workflow")
+        let job = try verifyJob(text)
+        #expect(job.contains("github.event_name == 'merge_group'"), "verify runs in the merge queue")
+        let detect = try #require(text.components(separatedBy: "\n  verify:\n").first)
+        let tree = try #require(detect.range(of: "echo \"tree=")?.lowerBound)
+        let shortcut = try #require(detect.range(of: "!= \"pull_request\" ]; then")?.lowerBound)
+        #expect(tree < shortcut, "the queue's run gets the tree hash, so a PR that already passed passes there fast")
+    }
+
     @Test("a green run leaves a marker keyed by the pull request's tree, and a run that finds it skips the work")
     func whenTheTreeAlreadyPassed_thenEveryStepIsSkipped() throws {
         let text = try workflow()

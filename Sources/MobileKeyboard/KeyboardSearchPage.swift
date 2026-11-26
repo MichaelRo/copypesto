@@ -137,41 +137,13 @@ struct KeyboardSearchPage: View {
                     spacing: 6
                 ) {
                     ForEach(results) { entry in
-                        let key = KeyboardClipKey(
-                            entry: entry,
-                            cardSize: cardSize,
-                            feedback: nil,
-                            onInsertRecognizedText: entry.hasRecognizedText
-                                ? { text in pickRecognizedText(entry, text) }
-                                : nil
-                        )
-                        if entry.kind == .image {
-                            key
-                                .onTapGesture { pick(entry, false) }
-                                .contextMenu {
-                                    Button("Copy Picture", systemImage: "doc.on.doc") { pick(entry, false) }
-                                    if let ocr = entry.recognizedText, !ocr.isEmpty {
-                                        Button("Insert Text", systemImage: "text.viewfinder") {
-                                            pickRecognizedText(entry, ocr)
-                                        }
-                                    }
-                                }
-                                .accessibilityAction { pick(entry, false) }
-                                .accessibilityAction(named: Text("Insert Text")) {
-                                    if let ocr = entry.recognizedText, !ocr.isEmpty {
-                                        pickRecognizedText(entry, ocr)
-                                    }
-                                }
-                        } else {
-                            key
-                                .onTapGesture { pick(entry, false) }
-                                .onLongPressGesture(minimumDuration: 0.4) { pick(entry, true) }
-                                .accessibilityAction { pick(entry, false) }
-                                .accessibilityAction(
-                                    named: model.menu
-                                        .returnsAfterInsert ? Text("Insert and Stay") : Text("Insert and Return")
-                                ) { pick(entry, true) }
-                        }
+                        KeyboardClipKey(entry: entry, cardSize: cardSize, feedback: nil)
+                            .modifier(KeyboardCardActions(
+                                entry: entry,
+                                returnsAfterInsert: model.menu.returnsAfterInsert,
+                                choose: { longPress in pick(entry, longPress) },
+                                useRecognizedText: { text in pickRecognizedText(entry, text) }
+                            ))
                     }
                 }
             }

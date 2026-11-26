@@ -17,9 +17,25 @@ final class KeyboardModel {
     /// The search page's query while it is open, nil when it is closed. Its letter keys change only this: the model
     /// has no way to reach the app's text field.
     private(set) var searchQuery: KeyboardQuery?
+    @ObservationIgnored private var insertedSinceWord = false
 
     var isSearching: Bool {
         searchQuery != nil
+    }
+
+    /// A clip was inserted and the keyboard stayed: the word that insert leaves before the caret is the clip's own last
+    /// word, not one the person typed, so it must not search.
+    func noteInsert() {
+        insertedSinceWord = true
+    }
+
+    /// The word before the caret after the field changed.
+    func adopt(word newWord: String?) {
+        if insertedSinceWord {
+            insertedSinceWord = false
+            if let newWord { dismissedWord = newWord }
+        }
+        if word != newWord { word = newWord }
     }
 
     func openSearch() {

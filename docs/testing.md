@@ -427,8 +427,12 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
 - **Return inserts** (ADR 0066): type `bas` in Notes and switch to Pesto: the first match is ringed and Return reads
   Insert; it replaces `bas`. Without a word, Return types a new line.
 - **Settings inside the keyboard**: the Pesto chip at the end of the chips opens them; Small, Medium and Large resize
-  the keyboard while the cards preview the size; More opens Pesto at Keyboard & AutoFill. The AutoFill picker's gear
-  opens the same page (it may do nothing in a credential provider: note what happens).
+  the keyboard while the cards preview the size; More opens Pesto at Keyboard & AutoFill. The AutoFill picker has no
+  gear (ADR 0073).
+- **Scrolling the row** (with 20 or more clips, some pictures): fling the cards left, and while they still glide fling
+  them back; start some drags slowly on a card, some near the screen's edges. Pass: the row always follows the finger
+  at once, no card inserts during a drag, a tap still inserts and a hold still does the other insert. With "Stay in
+  Pesto", insert a clip: the row stays where it was (it used to jump back to the first card).
 
 ### Widget pages on a device (ADR 0067)
 - Add a medium and a large Recent Clips widget: medium shows two cards side by side, large two by two, each near the

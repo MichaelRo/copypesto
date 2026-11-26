@@ -93,6 +93,7 @@ final class KeyboardViewController: UIInputViewController {
         model.word = nil
         model.dismissedWord = nil
         model.closeSearch()
+        KeyboardThumbnails.shared.removeAll()
         openedStamp = nil
     }
 
@@ -132,6 +133,7 @@ final class KeyboardViewController: UIInputViewController {
             model.menu = KeyboardMenu(hasFullAccess: false) { nil }
             model.keyboardSize = .medium
             model.word = nil
+            KeyboardThumbnails.shared.removeAll()
             openedStamp = nil
             heightConstraint?.constant = currentHeight
             return
@@ -139,6 +141,8 @@ final class KeyboardViewController: UIInputViewController {
         let file = QuickInsertFile.current
         let stamp = file?.modificationDate
         if openedStamp != .some(stamp) {
+            // A clip deleted in Pesto must not stay drawable from the old set's pictures.
+            KeyboardThumbnails.shared.removeAll()
             model.menu = KeyboardMenu(hasFullAccess: true) { file.flatMap(Self.open) }
             openedStamp = .some(stamp)
         }
@@ -154,11 +158,11 @@ final class KeyboardViewController: UIInputViewController {
         }
         heightConstraint?.constant = currentHeight
         // Only to search the clips: the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
-        model.word = model.menu.state == .ready
+        model.adopt(word: model.menu.state == .ready
             ? KeyboardWord.before(
                 textDocumentProxy.documentContextBeforeInput, after: textDocumentProxy.documentContextAfterInput
             )
-            : nil
+            : nil)
     }
 
     private static func open(_ file: QuickInsertFile) -> QuickInsertSet? {

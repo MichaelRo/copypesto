@@ -51,7 +51,10 @@ final class CardMediaState {
         } else {
             revealedText = nil
         }
-        if dropMedia(ifConcealed: isConcealed) { return }
+        if isConcealed {
+            releaseMedia()
+            return
+        }
         switch item.type {
         case .image where item.sensitivityRaw == nil:
             guard picture == nil || loadedByteSize != item.byteSize else { return }
@@ -80,7 +83,10 @@ final class CardMediaState {
         picture loadPicture: () async -> CardMedia.Picture?,
         linkPreview loadLinkPreview: () async -> (image: UIImage?, isAnimated: Bool)? = { nil }
     ) async {
-        if dropMedia(ifConcealed: key.isConcealed) { return }
+        if key.isConcealed {
+            releaseMedia()
+            return
+        }
         if picture == nil || loadedByteSize != key.byteSize {
             if let loaded = await loadPicture(), !Task.isCancelled {
                 picture = loaded
@@ -96,14 +102,12 @@ final class CardMediaState {
     /// A covered card holds no pixels of its clip: a picture waiting for its verdict, or one the content filter
     /// blurred, is not decoded until the cover lifts, and what was held goes (ADR 0077). The task key carries the
     /// cover, so lifting it loads the picture at its current size, a GIF fetched meanwhile included.
-    private func dropMedia(ifConcealed isConcealed: Bool) -> Bool {
-        guard isConcealed else { return false }
+    private func releaseMedia() {
         if picture != nil { picture = nil }
         if linkPicture != nil { linkPicture = nil }
         if linkAnimation != nil { linkAnimation = nil }
         if linkIsAnimated { linkIsAnimated = false }
         loadedByteSize = nil
-        return true
     }
 
     /// Plays a GIF only for a card that stayed on screen (`GIFPlayback.settleDelay`): a card scrolled past while the

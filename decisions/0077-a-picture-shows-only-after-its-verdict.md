@@ -32,6 +32,8 @@ Amends ADR 0006's pending-clip bullet for pictures. The rest of ADR 0006 stands.
   replaces it when the screener answers, a fraction of a second later; Quick Look, the hover card, AI actions and drag
   wait for it as for any covered card. With the filter set to Show, a picture shows at once, as before.
 - A browser GIF arrives a screening later than before, and costs one more screening when its still passed.
+- When the still passes, the card shows it while the GIF is fetched; if the model then flags the GIF, the card turns to
+  the content filter's blur. The GIF's frames are never drawn unflagged: the GIF and its flag are stored in one save.
 - Showing a covered iPhone card decodes its picture then, at the clip's current size, so a GIF that arrived while the
   card was covered plays after Show.
 

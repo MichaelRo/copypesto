@@ -117,7 +117,8 @@ struct TextEditView: View {
     /// Make Snippet for a text clip, Edit as Snippet for one that is already a snippet; nothing for a secret.
     private var snippetTitle: LocalizedStringKey? {
         guard let item, model.isEditable, item.sensitivity == nil else { return nil }
-        if item.isTemplate { return "Edit as Snippet\u{2026}" }
+        // The whole text is already in the model; `isTemplate` would open the sealed preview on every draw.
+        if item.isPinned, model.original.contains("{{") { return "Edit as Snippet\u{2026}" }
         let open = CardConcealment(screenShareBlur: false, nsfwBlurred: false, maskedSecret: false, secretShown: false)
         return TextEditPolicy.offersMakeSnippet(
             type: item.type, analysisPending: item.analysisPending, isSecret: false, isSnippet: false,

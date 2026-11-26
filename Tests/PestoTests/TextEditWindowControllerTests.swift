@@ -446,4 +446,16 @@ struct TextEditModelTests {
         #expect(model.original == "first")
         #expect(model.snippetDraft != nil)
     }
+
+    @Test("closing the window (the cover's Close) closes it even while a snippet is being made")
+    func whenClosedInSnippetMode_thenTheWindowCloses() {
+        var closed = false
+        let model = TextEditModel(clipID: UUID(), text: "words", isMonospaced: false) { _, _ in .saved }
+        model.onClose = { closed = true }
+        model.beginSnippet(title: "")
+
+        model.close()
+
+        #expect(closed)
+    }
 }

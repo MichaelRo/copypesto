@@ -104,6 +104,11 @@ final class TextEditModel {
         onClose?()
     }
 
+    /// Closes the window whatever it shows (the cover's Close): a covered window drops its draft, as before.
+    func close() {
+        onClose?()
+    }
+
     /// Esc and Cancel: out of the snippet editor first, then the window.
     func cancel() {
         if snippetDraft != nil {

@@ -14,6 +14,8 @@ struct ClipInspectorPreview: View {
     @State private var pictureIsAnimated = false
     @State private var fileThumbnail: NSImage?
     @State private var missing: [URL] = []
+    /// Read when the view is made, not on every draw: a file clip's paths are its sealed text.
+    @State private var fileURLs: [URL]
     @Environment(\.modelContext) private var modelContext
 
     /// Twice the pane's width on a Retina display; the full-resolution bitmap is never decoded.
@@ -26,6 +28,7 @@ struct ClipInspectorPreview: View {
         _picture = State(initialValue: picture ?? cached?.image)
         _pictureIsAnimated = State(initialValue: picture == nil ? cached?.isAnimated ?? false : pictureIsAnimated)
         _fileThumbnail = State(initialValue: fileThumbnail)
+        _fileURLs = State(initialValue: item.type == .file ? FileClip.urls(from: ClipText.full(of: item)) : [])
     }
 
     var body: some View {
@@ -67,10 +70,6 @@ struct ClipInspectorPreview: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Picture")
         .accessibilityIdentifier(AccessibilityID.clipInspectorPreview)
-    }
-
-    private var fileURLs: [URL] {
-        FileClip.urls(from: ClipText.full(of: item))
     }
 
     @ViewBuilder
@@ -142,8 +141,8 @@ struct ClipInspectorPreview: View {
     /// Read off the main thread: a file on a stalled volume must not freeze the window.
     private func loadFiles() async {
         let text = ClipText.full(of: item)
-        missing = await FileClip.missing(inText: text)
         let urls = FileClip.urls(from: text)
+        missing = await FileClip.missing(inText: text)
         guard urls.count == 1, let url = urls.first, missing.isEmpty else { return }
         guard await !Task.detached(priority: .utility, operation: { FileClip.isFolder(url) }).value else { return }
         let side = Self.fileThumbnailSide

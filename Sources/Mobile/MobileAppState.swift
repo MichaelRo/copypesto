@@ -64,6 +64,7 @@ final class MobileAppState: ClipboardShortcutHandling {
     /// Where the widget's snapshot is kept (`MobileAppState+Widget.swift`); nil in a hosted test until it names one.
     @ObservationIgnored var widget: WidgetTarget? = .current
     @ObservationIgnored var backgroundWork = BackgroundWork.system
+    @ObservationIgnored var backupKeyStore = MobileAppState.makeBackupKeyStore()
     @ObservationIgnored var linkPreviewLoader = LinkPreviewLoader()
     /// The first-run welcome is up (`MobileAppState+Welcome.swift`).
     var showsWelcome = false

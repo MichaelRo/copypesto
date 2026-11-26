@@ -35,6 +35,7 @@ final class LibraryModel {
         case keyboard
         case sync
         case insights
+        case backup
     }
 
     var columns: NavigationSplitViewVisibility = .all

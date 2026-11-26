@@ -16,6 +16,17 @@ enum ShareFile {
         _ data: Data, fileName: String = "Pesto", fileExtension: String, in root: URL = directory, now: Date = .now
     ) throws
     -> URL {
+        let file = try reserve(fileName: fileName, fileExtension: fileExtension, in: root, now: now)
+        try data.write(to: file, options: .completeFileProtection)
+        return file
+    }
+
+    /// Where a file of that name may be written, in a folder of its own that the same sweeps remove; nothing is
+    /// written yet. For a file streamed to disk rather than held in memory (a backup).
+    static func reserve(
+        fileName: String, fileExtension: String, in root: URL = directory, now: Date = .now
+    ) throws
+    -> URL {
         let manager = FileManager.default
         try manager.createDirectory(at: root, withIntermediateDirectories: true)
         sweep(in: root, now: now)
@@ -25,9 +36,7 @@ enum ShareFile {
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: "-")
         let stem = cleanName.isEmpty ? "Pesto" : cleanName
-        let file = folder.appendingPathComponent("\(stem).\(fileExtension)")
-        try data.write(to: file, options: .completeFileProtection)
-        return file
+        return folder.appendingPathComponent("\(stem).\(fileExtension)")
     }
 
     /// A shared file is plaintext, so it goes as soon as the share sheet is done with it, and with the lock, a clear,

@@ -73,6 +73,23 @@
     <array>
         <dict>
             <key>UTTypeIdentifier</key>
+            <string>net.copypesto.pesto.backup</string>
+            <key>UTTypeDescription</key>
+            <string>Pesto Backup</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>pestobackup</string>
+                </array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
             <string>net.copypesto.pesto.collection</string>
             <key>UTTypeDescription</key>
             <string>Pesto Collection</string>

@@ -30,7 +30,8 @@ extension AppDelegate {
                 )
             },
             canRead: { !state.isEncryptionKeyUnresolved },
-            source: { $0.isRemote ? PasteboardCapture.remoteSourceName : $0.knownSourceAppName }
+            source: { $0.isRemote ? PasteboardCapture.remoteSourceName : $0.knownSourceAppName },
+            appIcon: { SourceIconCache.shared.pngData(forBundleID: $0) }
         ))
         widgetKeeper = keeper
         appState.onContentCoverChanged = { [weak keeper] in Task { await keeper?.stateMayHaveChanged() } }

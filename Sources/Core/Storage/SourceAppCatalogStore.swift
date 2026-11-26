@@ -40,6 +40,11 @@ public final class SourceAppCatalogStore {
         bundleID.flatMap { entries[$0] }
     }
 
+    /// Each app's color, as a value a reader off the main actor can hold.
+    public var colorsByBundleID: [String: String] {
+        entries.mapValues(\.colorHex)
+    }
+
     public func merge(_ arrived: [SyncAppCatalog.Entry]) {
         let valid = SyncAppCatalog.bounded(arrived)
         guard valid.contains(where: { entries[$0.bundleID] != $0 }) else { return }

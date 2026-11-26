@@ -249,14 +249,18 @@ Model the view state cleanly in a testable pure struct (similar to `QuickInsertM
 
 ## 8. The keyboard after ADR 0066 (2026-11-25)
 Sections 5.1–5.3 describe the first version; ADRs 0062, 0063 and 0066 supersede them where they differ.
-- **Shelf:** the library's chips with a round search key beside them; a Pesto chip at the end of the row opens
-  settings inside the keyboard (`KeyboardSettingsPanel`: the size, with cards previewed at it, and Open Pesto
-  Settings). iOS's bottom row: 123, globe (when iOS asks for it), space, delete, return. A word search rings its first
+- **Shelf:** the library's chips with a round search key beside them; a gear chip at the end of the row (no word,
+  ADR 0074) opens settings inside the keyboard (`KeyboardSettingsPanel`: back to Clips, Keyboard Settings, an Open
+  Pesto button; the size, with the person's own cards previewed at it in as many rows as the keyboard will show,
+  `KeyboardSizePreview`). Pesto's own Keyboard & AutoFill page shows the same preview with sample clips, framed as
+  the keyboard. Cards are the app's cards (`QuickInsertCardFace`): the app's icon leads the foot line and the foot
+  glows in the app's color (ADRs 0068, 0074). iOS's bottom row: 123, globe (when iOS asks for it), space, delete, return. A word search rings its first
   match and Return reads Insert.
 - **Search page:** the field, a tray of results (one row at Small and Medium, two at Large, one in landscape, five
   on iPad; `KeyboardSearchMetrics`), the letters of the person's own keyboards (`SearchKeyboardLayout`: 18 layouts,
-  shift layers, long-press accents, Korean composed by `HangulComposer`), and 123, globe, space (named for the layout;
-  hold for the next) and Done. iPad puts Delete on the top row and Done on the middle row, with Shift on both sides.
+  shift layers, long-press accents, Korean composed by `HangulComposer`), and 123, globe, a language key with the
+  layout's two capitals when there are two or more (not a globe: iOS's globe leaves Pesto; ADR 0074), space (a hold
+  also moves to the next layout) and Done. iPad puts Delete on the top row and Done on the middle row, with Shift on both sides.
 - **Not typeable here:** Japanese and Chinese, which need an input method; the field's placeholder says so.
 - **Touches on a card** go through one UIKit recognizer (`KeyboardPressRecognizer`, decided by `KeyboardPress`), not
   SwiftUI's `onTapGesture` and `onLongPressGesture`: those held a touch that started on a card until it had moved

@@ -121,7 +121,10 @@ extension MobilePasteboardGlobals {
         @Test("a secret is never offered Make Snippet")
         func whenSecret_thenMakeSnippetIsNotOffered() async throws {
             let library = try await MobileTestLibrary()
-            let item = try await library.add("sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef")
+            try await library.service.ingest(#require(
+                ClipCapture.text("sk-ant-api03-EXAMPLEEXAMPLEEXAMPLEEXAMPLE1234567890abcdef")
+            ))
+            let item = try await library.settle()
 
             #expect(item.sensitivityRaw != nil)
             #expect(!library.state.canMakeSnippet(item))

@@ -1,6 +1,6 @@
 # The iPhone and iPad library: one page of Pesto cards
 
-Approved by Michael on 2026-11-14 after two design consults; built in `Sources/Mobile` (ADR 0046). The page has to look
+Approved on 2026-11-14 after two design consults; built in `Sources/Mobile` (ADR 0046). The page has to look
 and feel like Pesto's shelf: the clip is the card, newest first, ready to use.
 
 ## The page

@@ -21,7 +21,7 @@ final class SyncSheetsTests: XCTestCase {
             keyStore: ThisDeviceSyncKeyStore(secrets: secrets), deviceKeys: KeychainDeviceKeyStore(secrets: secrets),
             highWater: SealedHighWaterStore(url: FileManager.default.temporaryDirectory
                 .appendingPathComponent("pesto-snap-hw")),
-            defaults: AppDefaults.store, deviceID: "mac-a", deviceName: "Michael’s MacBook Air"
+            defaults: AppDefaults.store, deviceID: "mac-a", deviceName: "Alex’s MacBook Air"
         )
         environment.timing.pollInterval = .seconds(3600)
         return SyncController(environment)
@@ -74,7 +74,7 @@ final class SyncSheetsTests: XCTestCase {
     func test_pairing() throws {
         let words = ["amber", "fern", "marble", "river", "quilt", "lantern", "ginger", "copper"]
         try snapshot(
-            SyncPairingSheet(controller: makeController(), words: words, approver: "Michael’s Mac mini"),
+            SyncPairingSheet(controller: makeController(), words: words, approver: "Alex’s Mac mini"),
             size: CGSize(width: 520, height: 280)
         )
     }
@@ -82,7 +82,7 @@ final class SyncSheetsTests: XCTestCase {
     func test_approve() throws {
         let me = SyncDeviceKeys.generate()
         let request = try SyncJoinRequest(
-            deviceID: "mac-b", name: "Michael’s MacBook Air", keys: me.publicKeys, vaultID: Data(count: 16),
+            deviceID: "mac-b", name: "Alex’s MacBook Air", keys: me.publicKeys, vaultID: Data(count: 16),
             createdAt: .now
         ).signed(by: me)
         let words = ["amber", "fern", "marble", "river", "quilt", "lantern", "ginger", "copper"]

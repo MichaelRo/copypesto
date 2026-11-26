@@ -20,7 +20,7 @@ final class DataCardsSnapshotTests: XCTestCase {
             keyStore: ThisDeviceSyncKeyStore(secrets: secrets), deviceKeys: KeychainDeviceKeyStore(secrets: secrets),
             highWater: SealedHighWaterStore(url: FileManager.default.temporaryDirectory
                 .appendingPathComponent("pesto-snap-hw")),
-            defaults: AppDefaults.store, deviceID: "mac-a", deviceName: "Michael’s MacBook Air"
+            defaults: AppDefaults.store, deviceID: "mac-a", deviceName: "Alex’s MacBook Air"
         )
         environment.timing.pollInterval = .seconds(3600)
         return SyncController(environment)

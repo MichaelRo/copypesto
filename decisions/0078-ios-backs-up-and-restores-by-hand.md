@@ -23,10 +23,12 @@ Extends ADR 0010 to iOS. The file format, the key derivation and the restore are
   test launch). Each backup is protected by a passphrase (strong only, `PassphraseStrength`, typed twice) or by the
   recovery key alone (the header is locked with a random value nobody keeps). The recovery key is shown when the key
   is new and for every recovery-key-only backup, and *Save to Files…* waits until the person says it is stored.
-  *Show Recovery Key…* asks for a fresh Face ID, Touch ID or passcode. Copying it is local-only and expires in two
+  *Show Recovery Key…* asks for a fresh Face ID, Touch ID or passcode, and so does a recovery-key-only backup once
+  the key exists, because it shows the same key (the key opens every earlier backup of the device). Copying it is local-only and expires in two
   minutes (`MobileClipboard.write(protected: true)`).
 - **Written by `ManualBackupWriter`** (Core/Storage, both platforms): `streamBackupRecords` into a `StreamingWriter`
-  at `<file>.partial`, moved into place only after the manifest; a failure leaves neither. It refuses a history that is
+  at `<file>.partial`, moved into place only after the manifest (replacing an earlier file, never a folder); a
+  failure, opening included, leaves neither. It refuses a history that is
   only in memory. There is no shrink guard: the file replaces nothing. Clips with secrets are left out unless the
   person includes them, a password manager's copy and clips over 10 MB always are, and each is counted.
 - **No settings record.** An iOS backup carries clips, collections and deletions. A Mac backup's settings record is

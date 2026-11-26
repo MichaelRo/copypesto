@@ -32,13 +32,23 @@ public struct ManualBackupWriter: Sendable {
         let manager = FileManager.default
         let partial = url.appendingPathExtension("partial")
         try? manager.removeItem(at: partial)
-        let writer = try BackupFile.StreamingWriter(url: partial, key: key, header: header)
+        let writer: BackupFile.StreamingWriter
+        do {
+            writer = try BackupFile.StreamingWriter(url: partial, key: key, header: header)
+        } catch {
+            // The writer creates the file before it writes the header, so a failed header write leaves it.
+            try? manager.removeItem(at: partial)
+            throw error
+        }
         do {
             let summary = try await StorageService(modelContainer: container).streamBackupRecords(
                 includeSensitive: includeSensitive, sink: { try writer.append($0) }
             )
             let bytes = try writer.finish(origin: origin)
-            if manager.fileExists(atPath: url.path) {
+            var isDirectory: ObjCBool = false
+            if manager.fileExists(atPath: url.path, isDirectory: &isDirectory) {
+                // `replaceItemAt` would put the file in place of a whole folder; only an earlier backup is replaced.
+                guard !isDirectory.boolValue else { throw CocoaError(.fileWriteFileExists) }
                 _ = try manager.replaceItemAt(url, withItemAt: partial)
             } else {
                 try manager.moveItem(at: partial, to: url)

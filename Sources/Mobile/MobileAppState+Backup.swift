@@ -37,6 +37,9 @@ extension MobileAppState {
             return nil
         }
         if protection == .passphrase, !PassphraseStrength.evaluate(passphrase).isAcceptable { return nil }
+        // A recovery-key-only backup shows the key, which opens every earlier backup of this device, so an existing
+        // key asks for the same fresh authentication as Show Recovery Key.
+        if protection == .recoveryKey, hasBackupKey, await !permitsRecoveryKeyReveal() { return nil }
         let hold = backgroundWork.hold("Back up Pesto")
         defer { hold.finish() }
         var written: URL?
@@ -104,7 +107,13 @@ extension MobileAppState {
 
     func restorePreview(_ preview: BackupPreview) async -> BackupRestorePreview? {
         guard !isHistoryLockedNow(), let container = historyContainer else { return nil }
-        return try? await BackupCoordinator(container: container).restorePreview(preview)
+        do {
+            return try await BackupCoordinator(container: container).restorePreview(preview)
+        } catch {
+            // The counts are a courtesy; the restore itself is still offered and reports its own failure.
+            backupLogger.error("Restore preview failed: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
     }
 
     func restoreBackup(_ preview: BackupPreview) async -> BackupRestoreSummary? {
@@ -117,6 +126,7 @@ extension MobileAppState {
         defer { hold.finish() }
         do {
             let summary = try await BackupCoordinator(container: container).restore(preview)
+            guard !isHistoryLockedNow() else { return nil }
             if summary.restored > 0 || summary.removedByTombstone > 0 {
                 writeQuickInsert()
                 await writeWidget()
@@ -132,11 +142,15 @@ extension MobileAppState {
 
     /// The recovery key of this device's backups, after a fresh Face ID, Touch ID or passcode.
     func revealBackupRecoveryKey() async -> String? {
-        guard !isHistoryLockedNow(), await HistoryLockPolicy.permitsSensitiveAction(
+        guard !isHistoryLockedNow(), await permitsRecoveryKeyReveal() else { return nil }
+        return try? backupKeyStore.existingKey()?.recoveryKey
+    }
+
+    private func permitsRecoveryKeyReveal() async -> Bool {
+        await HistoryLockPolicy.permitsSensitiveAction(
             using: historyLock.authenticator, reason: String(localized: "Show the recovery key for Pesto backups"),
             requireFresh: true, grace: historyLock.grace
-        ) else { return nil }
-        return try? backupKeyStore.existingKey()?.recoveryKey
+        )
     }
 
     private nonisolated static func bringDown(_ url: URL) throws {

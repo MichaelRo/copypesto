@@ -102,6 +102,19 @@ struct ManualBackupWriterTests {
         #expect(try leftovers().isEmpty)
     }
 
+    @Test("a folder where the file would go is left alone, and no partial file stays beside it")
+    func whenTheTargetCannotBeReplaced_thenNoPartialLeft() async throws {
+        try await ingest("a clip")
+        let blocker = folder.appendingPathComponent("Pesto Backup.pestobackup", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: blocker.appendingPathComponent("inside"), withIntermediateDirectories: true
+        )
+
+        await #expect(throws: (any Error).self) { try await write(key: .generate()) }
+        #expect(try leftovers() == ["Pesto Backup.pestobackup"], "only what was there before")
+        #expect(FileManager.default.fileExists(atPath: blocker.appendingPathComponent("inside").path))
+    }
+
     @Test("a second backup to the same name replaces the first")
     func whenWrittenTwice_thenReplaced() async throws {
         try await ingest("first")

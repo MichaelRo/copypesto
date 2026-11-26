@@ -74,6 +74,25 @@ struct MobileBackupTests {
         }
     }
 
+    @Test("an existing recovery key is not shown by a recovery-key-only backup without a fresh Face ID")
+    func whenRecoveryKeyOnlyAndAuthenticationRefused_thenNoBackupAndNoKey() async throws {
+        let library = try await MobileTestLibrary(lock: MobileHistoryLock(
+            authenticator: StubUserAuthenticator(available: true, grants: false), grace: AuthenticationGrace(),
+            isEnabled: { false }
+        ))
+        try await library.add("A clip")
+        let first = try await backUp(library)
+        defer { library.state.backupNotSaved(first) }
+        #expect(first.recoveryKey != nil, "a new key is shown once, as on the Mac")
+
+        let keyOnly = await library.state.backUp(
+            protection: .recoveryKey, passphrase: "", includeHidden: false, iterations: 1000
+        )
+
+        #expect(keyOnly == nil)
+        #expect(await library.state.revealBackupRecoveryKey() == nil)
+    }
+
     @Test("a wrong passphrase does not open the file and says so")
     func whenWrongPassphrase_thenRefused() async throws {
         let library = try await MobileTestLibrary()

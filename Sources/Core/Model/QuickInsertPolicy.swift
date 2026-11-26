@@ -13,11 +13,18 @@ public enum QuickInsertPolicy {
     public static let allCollectionsToken = "*"
     public static let maxCollectionClips = 30
     public static let maxCollectionNameCharacters = 40
+    /// How many of a plain collection's newest members are put in its order, and how many of the newest clips a smart
+    /// collection's rules are matched against: wider than the widget's, which shows eight (ADR 0076).
+    public static let collectionScanLimit = 300
+    public static let smartScanLimit = 300
     /// A longer clip is not offered: inserting a whole document into a text field is not what this is for.
     public static let maxEntryBytes = 32 * 1024
     /// What all the clips' text, recognized text, thumbnails and fill-in values may take, text counted as it is encoded
     /// (`EncodedText`).
     public static let maxTotalBytes = 256 * 1024
+    /// The apps' icons (ADR 0074), on top of the clips' budget so an icon never pushes a clip out.
+    public static let maxAppIcons = 12
+    public static let maxAppIconBytes = 48 * 1024
     public static let maxTitleCharacters = 120
     public static let maxSourceCharacters = 60
     public static let thumbnailMaxPixel = 240

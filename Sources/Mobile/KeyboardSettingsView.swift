@@ -17,6 +17,7 @@ struct KeyboardSettingsView: View {
     @State private var showsSetupGuide = false
     @State private var isAutoFillEnabled = false
     @State private var isKeyboardAdded = false
+    @State private var previewEntries = KeyboardPreviewSamples.entries()
 
     private var parsedOptions: QuickInsertSelection.Options {
         QuickInsertSelection.Options(
@@ -85,6 +86,11 @@ struct KeyboardSettingsView: View {
             }
 
             Section("Keyboard") {
+                KeyboardSizePreview(
+                    size: KeyboardSize(rawValue: keyboardSize) ?? .medium, entries: previewEntries,
+                    theme: MobileAppState.widgetTheme(), showsKeys: true
+                )
+                .listRowInsets(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))
                 Picker("Keyboard size", selection: $keyboardSize) {
                     Text("Small").tag(KeyboardSize.small.rawValue)
                     Text("Medium").tag(KeyboardSize.medium.rawValue)

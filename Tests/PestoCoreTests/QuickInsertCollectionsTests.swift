@@ -65,6 +65,21 @@ struct QuickInsertCollectionsTests {
         #expect(!set.entries.contains { $0.text == "not chosen" && $0.section == .collection })
     }
 
+    @Test("the keyboard orders a collection from its newest 300 members, more than the widget's 60")
+    func whenAHandPlacedClipIsPastTheWidgetWindow_thenTheKeyboardStillCarriesIt() throws {
+        let store = try Store()
+        let work = try store.collection("Work", order: 0)
+        store.add("placed by hand", in: work).collectionOrder = 0
+        for index in 0..<150 {
+            store.add("note \(index)", in: work)
+        }
+
+        let set = try store.set([work.id])
+
+        let byID = Dictionary(uniqueKeysWithValues: set.entries.map { ($0.id, $0.text) })
+        #expect(set.collections.first?.entryIDs.first.flatMap { byID[$0] } == "placed by hand")
+    }
+
     @Test("a clip already in the set is listed by the collection, not carried twice")
     func whenAClipIsAlsoRecent_thenItIsCarriedOnce() throws {
         let store = try Store()

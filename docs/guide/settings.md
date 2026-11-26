@@ -27,7 +27,7 @@ The header shows the version and opens **About Pesto**.
   Settings pane.
 
 ## Appearance
-![The Appearance pane: the theme, accent color, app icon and card size choices.](../images/settings-appearance-light.png)
+![The Appearance pane: the theme, Match App Icon, card size, shelf and accent color choices.](../images/settings-appearance-light.png)
 
 A picture of the shelf stays at the top of the pane and follows every choice below it.
 
@@ -38,11 +38,9 @@ menu bar at the top of the screen (below the notch, if your Mac has one). It sli
 
 **Theme** sets the look in one choice: Basil (Pesto as it has always looked), Parmesan (warm
 cream with a gold accent), Pine nut (sand and toasted amber) or Mortar (cool stone and sage). Each card is drawn half light and half dark, so you see
-the theme as it will look either way. A theme sets the accent and the app icon that
-goes with it (Parmesan, Pine nut and Mortar also put a light wash over the shelf, and every theme sets its color on the shelf), and you can still change the accent or the icon on their own afterwards. The themes are checked so that no
-two look alike and every one keeps its text and accent readable in light and dark. **App icon** sits under the themes,
-with one icon for each theme, named after it and in the same order: Basil, Parmesan, Pine nut and Mortar. The icon's ground carries the theme and its P is the theme's accent. It shows in the Dock and the app switcher while a Pesto window is open; Finder and
-Launchpad keep the default Basil icon, because changing the icon of the installed app would break its code signature.
+the theme as it will look either way. A theme sets the accent and, while **Match App Icon** is on, the app icon that
+goes with it (Parmesan, Pine nut and Mortar also put a light wash over the shelf, and every theme sets its color on the shelf), and you can still change the accent on its own afterwards. The themes are checked so that no
+two look alike and every one keeps its text and accent readable in light and dark. **Match App Icon** sits under the themes (on by default): when it is on, Pesto's jar icon in the Dock and the app switcher follows the theme while a Pesto window is open, with the theme's own jar colors and P; turning it off leaves the current icon as it is when you switch themes. Finder and Launchpad always keep the default Basil icon, because changing the icon of the installed app would break its code signature.
 
 ![The shelf in the Parmesan theme: a warm cream wash and a gold accent.](../images/theme-parmesan-light.png)
 ![The shelf in the Mortar theme: cool stone and a sage accent.](../images/theme-mortar-light.png)
@@ -51,7 +49,7 @@ Launchpad keep the default Basil icon, because changing the icon of the installe
 it). The text on a card grows and shrinks with it. **Light and dark:** light, dark or follow the system, each shown in the current theme. **Accent color:** the
 theme's own (the first swatch, named under the row), Blue, Purple, Pink, Red, Orange, Graphite, or *Other* for any color
 (the color panel closes when you choose a preset). **Dark mode:** *Use another theme in dark mode* gives dark its own
-theme; the app icon follows the one you picked for light.
+theme; when **Match App Icon** is on, the app icon follows the theme you picked for light.
 
 ## Privacy
 ![The Privacy pane: the history lock, apps Pesto ignores, and what is blurred or kept hidden.](../images/settings-privacy-light.png)
@@ -152,7 +150,7 @@ Three tiles at the top: how many clips, how much disk they take and the oldest c
 - **Clean up copied text:** strip tracking parameters (so a link you paste can differ from the one you copied: the
   `utm_` and ad-click tags are removed), normalize line endings, trim whitespace, collapse duplicate spaces. Each is a
   switch, and they apply as the text is stored.
-- **Backup:** a card with the switch *Back up this Mac*, one sentence and the buttons. Turning the switch on opens the same set-up sheet as *Set Up Backup…* (a folder and a way to unlock the file come first), and cancelling leaves it off. It is off until you set it up, and it is per Mac. It keeps one encrypted file
+- **Backup:** a card with the switch *Back up this Mac*, one sentence and the buttons. Turning the switch on opens the same set-up sheet as *Set Up Backup…* (a folder and a way to unlock the file come first), and canceling leaves it off. It is off until you set it up, and it is per Mac. It keeps one encrypted file
   of your clips (with their pins and their place in a collection), snippets, collections and settings, which you can restore on any Mac. A backup never
   changes another Mac, and it is not sync: a clip you delete on this Mac stays in the file until the next backup, and
   another Mac gets it only if you restore the file there. Turning the switch on opens a short set-up: choose where the

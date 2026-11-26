@@ -40,7 +40,7 @@ Amends ADR 0006's decode bound. The rest of it stands.
 - No migration. A clip without one is compared by its pixels.
 
 ## Consequences
-- Measured (debug, `CopyLatencyPerformanceTests`, 5,000-clip store, 5K, three runs): a lookalike new card takes 40 to
+- Measured (debug, `CopyLatencyPerformanceTests`, 5,000-clip store, 5K, four runs): a lookalike new card takes 40 to
   52 ms (262 to 620 ms with the ruling-out switched off), an unlike one 42 to 53 ms (38 to 45 ms before this change).
   With the two passes in turn, two runs gave 73 to 85 ms for both.
 - Side by side, the passes use a second core. On a busy Mac a copy takes up to the in-turn time.

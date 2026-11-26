@@ -21,6 +21,14 @@ extension MobileAppState {
         return true
     }
 
+    static var deleteLockedReason: String {
+        String(localized: "delete a locked collection")
+    }
+
+    static var exportLockedReason: String {
+        String(localized: "export a locked collection")
+    }
+
     func confirmsLockedCollectionAction(_ id: UUID, reason: String) async -> Bool {
         guard LockedCollections.current().contains(id) else { return true }
         return await secretReveal.authenticate(reason: reason)

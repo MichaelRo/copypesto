@@ -98,9 +98,6 @@ struct CollectionMenu: View {
                 isExporting = true
                 Task {
                     defer { isExporting = false }
-                    guard await appState.confirmsLockedCollectionAction(
-                        board.id, reason: String(localized: "export a locked collection")
-                    ) else { return }
                     if let url = await appState.exportCollection(board) {
                         library.sharing = ClipShare(file: url)
                     }
@@ -148,12 +145,7 @@ struct CollectionMenu: View {
         Divider()
         Button("Delete Collection", systemImage: "trash", role: .destructive) {
             let id = board.id
-            Task {
-                guard await appState.confirmsLockedCollectionAction(
-                    id, reason: String(localized: "delete a locked collection")
-                ) else { return }
-                await appState.deleteCollection(id)
-            }
+            Task { await appState.deleteCollection(id) }
         }
     }
 }

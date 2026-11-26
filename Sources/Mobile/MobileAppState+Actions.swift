@@ -364,7 +364,8 @@ extension MobileAppState {
     }
 
     func deleteCollection(_ id: UUID) async {
-        guard let service = storageService else { return }
+        guard let service = storageService,
+              await confirmsLockedCollectionAction(id, reason: Self.deleteLockedReason) else { return }
         let mark = service.undoHistory.recordedCount
         await reportAsync("Couldn\u{2019}t delete the collection.") {
             try await service.deleteCollection(id: id)

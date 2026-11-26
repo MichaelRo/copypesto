@@ -12,6 +12,7 @@ struct QuickMenuView: View {
     @Environment(AppState.self) private var appState: AppState
     @Environment(\.modelContext) private var modelContext
     @AppStorage(Setting.screenSharingPrivacy) private var screenSharingPrivacy: Bool
+    @AppStorage(Setting.lockedCollections) private var lockedCollectionsStored: String
 
     /// Called with the chosen item and raw payload kind when the user selects an item.
     var onSelect: ((ClipboardItem, PasteCoordinator.PayloadKind) -> Void)?
@@ -26,18 +27,25 @@ struct QuickMenuView: View {
         _items = Query(Self.descriptor(hidesSensitive: NSFWMode.current().hidesFromGrid))
     }
 
-    /// Five clips, newest first, with the shelf's rule that clips hidden as sensitive stay out of sight.
+    /// Five clips, newest first, with the shelf's rule that clips hidden as sensitive stay out of sight. A clip of a
+    /// locked collection never shows here (ADR 0081), so a few more are fetched to make up for them.
     nonisolated static func descriptor(hidesSensitive: Bool) -> FetchDescriptor<ClipboardItem> {
         var descriptor = FetchDescriptor<ClipboardItem>(
             predicate: hidesSensitive ? #Predicate { !$0.isNSFW } : nil,
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
-        descriptor.fetchLimit = 5
+        descriptor.fetchLimit = 5 + lockedSlack
         return descriptor
     }
 
+    private static let lockedSlack = 15
+
+    nonisolated static func shown(_ fetched: [ClipboardItem], locked: Set<UUID>) -> [ClipboardItem] {
+        Array(fetched.filter { !ShortcutClipSearch.isInLockedCollection($0, locked: locked) }.prefix(5))
+    }
+
     private var displayItems: [ClipboardItem] {
-        items
+        Self.shown(items, locked: LockedCollections.ids(from: lockedCollectionsStored))
     }
 
     var body: some View {

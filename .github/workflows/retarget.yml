@@ -1,0 +1,26 @@
+name: Verify after retarget
+
+# `verify` skips a pull request stacked on another branch, and a skipped check reports success, so a stacked pull
+# request retargeted to main would land on that skip (2026-11-25, #211). This starts CI by hand on the pull request's
+# branch when its base changes to main; its `verify` run lands on the same commit and is the check main's ruleset waits
+# for. It is a job of its own name, so an edit that keeps the base (a new title) adds no `verify` result at all.
+on:
+  pull_request:
+    types: [edited]
+
+# Starting a workflow is all it does (`actions: write`); it checks nothing out and runs no code from the pull request.
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  rerun-verify:
+    if: github.event.changes.base && github.base_ref == github.event.repository.default_branch
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Run CI on the retargeted branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Passed through the environment, never pasted into the script: a branch name is the author's text.
+          HEAD_REF: ${{ github.head_ref }}
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_REF"

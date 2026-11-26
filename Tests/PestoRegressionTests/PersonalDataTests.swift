@@ -60,6 +60,9 @@ struct PersonalDataTests {
                 (Self.extensions.contains($0.pathExtension) || $0.lastPathComponent == "Makefile")
         }
 
+        let ignored = SourceTree.ignoredByGit(files.map(SourceTree.relativePath))
+        files.removeAll { ignored.contains(SourceTree.relativePath($0)) }
+
         let standaloneRegex = try NSRegularExpression(pattern: Self.standaloneNamePattern, options: [.caseInsensitive])
         var offenders: [String] = []
         for file in files {
@@ -87,5 +90,16 @@ struct PersonalDataTests {
         }
 
         #expect(offenders.isEmpty, "personal data in tracked files: \(offenders.sorted())")
+    }
+
+    @Test("the scan skips the person's git-ignored local files and keeps every tracked one")
+    func whenAFileIsIgnoredByGit_thenTheScanSkipsIt() {
+        let ignored = SourceTree.ignoredByGit([
+            "CLAUDE.local.md",
+            ".claude/settings.local.json",
+            "AGENTS.md",
+            "Makefile"
+        ])
+        #expect(ignored == ["CLAUDE.local.md", ".claude/settings.local.json"])
     }
 }

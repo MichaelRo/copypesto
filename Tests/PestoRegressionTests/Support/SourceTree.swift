@@ -42,6 +42,34 @@ enum SourceTree {
         return found
     }
 
+    /// The paths (relative to the checkout) that git ignores, such as `CLAUDE.local.md` and `.claude/*.local.json`:
+    /// they are the person's own files and never committed, so a scan of what the repository publishes skips them.
+    /// A path that is tracked is never reported, even if a pattern matches it. Empty when git cannot answer (no git,
+    /// or a copy of the sources outside a checkout), so the scan then reads everything.
+    static func ignoredByGit(_ relativePaths: [String]) -> Set<String> {
+        guard !relativePaths.isEmpty else { return [] }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["git", "-C", repositoryRoot.path, "check-ignore", "--stdin", "-z"]
+        let input = Pipe()
+        let output = Pipe()
+        process.standardInput = input
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            return []
+        }
+        input.fileHandleForWriting.write(Data(relativePaths.joined(separator: "\u{0}").utf8 + [0]))
+        try? input.fileHandleForWriting.close()
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        // 0: some paths are ignored, 1: none are; anything else is git failing to answer.
+        guard process.terminationStatus == 0 || process.terminationStatus == 1 else { return [] }
+        return Set(data.split(separator: 0).compactMap { String(data: Data($0), encoding: .utf8) })
+    }
+
     /// Agent worktrees live under the checkout's own `.claude/worktrees/`, and a scan must not read their copies. Only
     /// the part of the path below this checkout counts: a checkout that is itself such a worktree still scans itself.
     static func isInNestedWorktree(_ file: URL) -> Bool {

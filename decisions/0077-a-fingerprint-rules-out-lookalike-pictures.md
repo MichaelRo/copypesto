@@ -23,10 +23,16 @@ Amends ADR 0006's decode bound. The rest of it stands.
   `pixels` covers the picture scaled to at most 512 px.
 - It only rules a nominee **out**: same `reading`, different `pixels`. Anything else is compared by `pixelDigest`, as
   before. It never makes two pictures a duplicate.
-- Only PNG and TIFF of at most `ImageDownsampler.maxDecodedPixels` get one. A lossy file also matches a copy that is
-  merely close (`isCrossFormatNearMatch`), which a digest cannot judge.
-- It is taken at ingest, in a thumbnail pass of its own after the 8×8 hash, so the next copy always finds it. The
-  full decode of the new picture happens only if a nominee is left.
+- Only a PNG of at most `ImageDownsampler.maxDecodedPixels` gets one. A lossy file also matches a copy that is
+  merely close (`isCrossFormatNearMatch`), which a digest cannot judge. TIFF is left out: the same pixels stored
+  tiled or planar scale differently from stripped ones, and ImageIO does not report the planar layout. Screenshots are
+  PNG, which the watcher takes ahead of TIFF.
+- It is taken at ingest, so the next copy always finds it, in a thumbnail pass of its own that runs side by side
+  with the 8×8 hash's (`PictureFingerprint.withCoarseHash`). An interlaced PNG runs the two in turn. The full decode
+  of the new picture happens only if a nominee is left.
+- Rejected: computing it after the save or only when a nominee asks (a second write to the clip and new orderings
+  between copies, to save what running side by side already saves), and one decode for both passes (the 8×8 hash
+  derived from anything larger moves further than its threshold).
 - It is **sealed metadata** (`ItemMetadata.pictureFingerprint`, ADR 0002), not a column: a digest of the picture
   confirms a guess about it, nothing queries it, and metadata needs no schema stage. It is never synced or backed up:
   it depends on this device's decoder, and sync apply and restore go through `ingest`, which takes it again. Undo
@@ -34,17 +40,21 @@ Amends ADR 0006's decode bound. The rest of it stands.
 - No migration. A clip without one is compared by its pixels.
 
 ## Consequences
-- Measured (debug, `CopyLatencyPerformanceTests`, 5,000-clip store, two runs): five lookalike 5K screenshots take
-  78 to 99 ms each; the same pictures took 262 to 620 ms with the ruling-out switched off.
-- Every new PNG or TIFF picture pays the second pass: an unlike 5K screenshot takes 73 to 90 ms, from 38 to 45 ms.
-  Taking it in the background was rejected: the next copy could arrive first, and running both passes at once doubles
-  the peak memory.
+- Measured (debug, `CopyLatencyPerformanceTests`, 5,000-clip store, 5K, three runs): a lookalike new card takes 40 to
+  52 ms (262 to 620 ms with the ruling-out switched off), an unlike one 42 to 53 ms (38 to 45 ms before this change).
+  With the two passes in turn, two runs gave 73 to 85 ms for both.
+- Side by side, the passes use a second core. On a busy Mac a copy takes up to the in-turn time.
+- Peak memory, standalone optimized probe at 6000×4000, side by side against in turn: 21 against 13 MB (flat), 95
+  against 88 MB (noise), 181 against 168 MB (16-bit noise), 265 against 172 MB (interlaced, hence in turn).
 - Still over 200 ms at 5K, each paying full decodes as before:
-  - a copy of pixels already in the history in another file (253 to 260 ms: the new picture and the one match);
+  - a copy of pixels already in the history in another file (209 to 213 ms: the new picture and the one match);
   - lookalikes saved before this change or before a system update, until 5 newer lookalikes replace them;
-  - a lookalike read differently (PNG against TIFF), a change too small to show at 512 px, and lossy screenshots.
+  - a lookalike read differently (interlaced, another bit depth or profile), a change too small to show at 512 px,
+    and TIFF and lossy pictures.
 - A system update that does not change the version string but changes ImageIO's scaling could store an identical
-  picture twice, which costs a card (ADR 0006).
+  picture twice, which costs a card (ADR 0006). So would a PNG layout that scales differently and is not in `reading`.
+  Removing Apple's `iDOT` chunk changed nothing on the one large system PNG tried; a fresh macOS screenshot with it
+  was not measured.
 - Tests: `LookalikeDedupeTests`, `PictureFingerprintTests`, `PerceptualDedupeTests`, `GIFUpgradeTests`,
   `CopyLatencyPerformanceTests`.
 

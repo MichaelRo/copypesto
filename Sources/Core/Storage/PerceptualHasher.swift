@@ -12,7 +12,8 @@ import ImageIO
 public enum PerceptualHasher {
     /// Returns a 64-bit hash rendered as a 16-char lowercase hex string, or nil if the data isn't a decodable image.
     public static func hash(imageData: Data) -> String? {
-        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else {
+        let uncached = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(imageData as CFData, uncached) else {
             return nil
         }
         return hash(imageSource: source)

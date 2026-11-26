@@ -6,13 +6,6 @@ import Testing
 import UniformTypeIdentifiers
 @testable import PestoCore
 
-private extension PictureFingerprint {
-    init?(imageData: Data) {
-        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil) else { return nil }
-        self.init(imageSource: source)
-    }
-}
-
 @Suite("Picture fingerprint")
 struct PictureFingerprintTests {
     /// A picture wider than `PictureFingerprint.maxSide`, so it is compared scaled down. `mark` adds a small dark
@@ -70,7 +63,6 @@ struct PictureFingerprintTests {
     func whenReadingDiffers_thenNotRuledOut() throws {
         let png = try #require(PictureFingerprint(imageData: picture()))
         let others = try [
-            picture(mark: true, type: .tiff),
             picture(mark: true, properties: [kCGImagePropertyPNGDictionary: [kCGImagePropertyPNGInterlaceType: 1]]),
             picture(mark: true, space: CGColorSpace.displayP3),
             picture(mark: true, properties: [kCGImagePropertyOrientation: 3])
@@ -83,10 +75,49 @@ struct PictureFingerprintTests {
         }
     }
 
+    @Test("a TIFF has no fingerprint: tiled and planar files scale the same pixels differently, unannounced")
+    func whenTIFF_thenNone() throws {
+        #expect(try PictureFingerprint(imageData: picture(type: .tiff)) == nil)
+    }
+
     @Test("a lossy picture has no fingerprint, because a close copy of it counts as the same one")
     func whenLossy_thenNone() throws {
         #expect(try PictureFingerprint(imageData: picture(type: .jpeg)) == nil)
         #expect(try PictureFingerprint(imageData: picture(type: .heic)) == nil)
+    }
+
+    @Test("reading both at once gives what each pass gives on its own")
+    func whenReadSideBySide_thenSameResults() throws {
+        let pictures = try [
+            picture(),
+            picture(properties: [kCGImagePropertyPNGDictionary: [kCGImagePropertyPNGInterlaceType: 1]]),
+            picture(type: .tiff),
+            picture(type: .jpeg),
+            Data("hello".utf8)
+        ]
+
+        for data in pictures {
+            let both = PictureFingerprint.withCoarseHash(imageData: data)
+
+            #expect(both.hash == PerceptualHasher.hash(imageData: data))
+            #expect(both.fingerprint == PictureFingerprint(imageData: data))
+        }
+    }
+
+    @Test("more pictures read at once than the Mac has cores all finish")
+    func whenManyAtOnce_thenAllFinish() async throws {
+        let data = try picture()
+        let callers = ProcessInfo.processInfo.activeProcessorCount * 3
+
+        let hashes = await withTaskGroup(of: String?.self) { group in
+            for _ in 0..<callers {
+                group.addTask { PictureFingerprint.withCoarseHash(imageData: data).hash }
+            }
+            return await group.reduce(into: [String?]()) { $0.append($1) }
+        }
+
+        #expect(hashes.count == callers)
+        #expect(hashes.allSatisfy { $0 == PerceptualHasher.hash(imageData: data) })
     }
 
     @Test("data that is not a picture has no fingerprint")

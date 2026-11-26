@@ -161,11 +161,10 @@ struct LookalikeDedupeTests {
         stored.metadataNonce = nil
         try context.save()
 
-        try await service.ingest(WindowShot(dotsPerInch: 144).capture())
         try await service.ingest(WindowShot(edited: true).capture())
         await service.waitForBackgroundWork()
 
         #expect(try cards(container).count == 2)
-        #expect(decodes.value > 0)
+        #expect(decodes.value == 2, "the new picture and the one it is compared with")
     }
 }

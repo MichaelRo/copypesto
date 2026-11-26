@@ -205,9 +205,7 @@ public actor StorageService: ModelActor {
                 pixelWidth = props[kCGImagePropertyPixelWidth] as? Int
                 pixelHeight = props[kCGImagePropertyPixelHeight] as? Int
             }
-            perceptualHash = PerceptualHasher.hash(imageSource: source)
-            stages.next("fingerprint")
-            fingerprint = PictureFingerprint(imageSource: source)
+            (perceptualHash, fingerprint) = PictureFingerprint.withCoarseHash(imageData: capture.payload)
         }
         if let pHash = perceptualHash,
            let similar = perceptualDuplicate(

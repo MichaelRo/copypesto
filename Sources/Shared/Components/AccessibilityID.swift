@@ -102,6 +102,8 @@ enum AccessibilityID {
     static let shelfEmptyStateAsk = "shelf-empty-state-ask"
     static let clipInspectorTitle = "clip-inspector-title"
     static let clipInspectorRevert = "clip-inspector-revert"
+    static let clipInspectorMakeSnippet = "clip-inspector-make-snippet"
+    static let clipInspectorPreview = "clip-inspector-preview"
     static let clipInspectorNote = "clip-inspector-note"
     static let clipInspectorTagField = "clip-inspector-tag-field"
     static let clipInspectorCollection = "clip-inspector-collection"

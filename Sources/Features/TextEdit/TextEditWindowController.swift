@@ -34,10 +34,12 @@ final class TextEditWindowController {
             return
         }
         let model = TextEditModel(
-            clipID: clipID, text: text, isMonospaced: isMonospaced, isEditable: isEditable
-        ) { [appState] id, draft in
-            await appState.saveEditedText(id: id, text: draft)
-        }
+            clipID: clipID, text: text, isMonospaced: isMonospaced, isEditable: isEditable,
+            saveSnippet: { [appState] id, title, text in
+                await appState.saveClipAsSnippet(id: id, title: title, text: text)
+            },
+            save: { [appState] id, draft in await appState.saveEditedText(id: id, text: draft) }
+        )
         model.onClose = { [weak self] in self?.close() }
         let window = makeWindow(model: model)
         self.model = model

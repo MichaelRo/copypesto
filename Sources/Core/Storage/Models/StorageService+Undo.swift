@@ -79,6 +79,8 @@ extension StorageService {
             return try applyAddition(added, undoing: undoing).map { UndoEntry(.clipsAdded($0)) }
         case let .snippetsReplaced(replacements):
             return try applyReplacements(replacements, undoing: undoing) ? entry : nil
+        case let .snippetsMade(replacements):
+            return try applyReplacements(replacements, undoing: undoing, kind: .made) ? entry : nil
         case let .textReplaced(replacements):
             return try applyReplacements(replacements, undoing: undoing, kind: .text) ? entry : nil
         }
@@ -231,14 +233,19 @@ extension StorageService {
 
     // MARK: Snippets
 
-    enum ReplacementKind { case snippet, text }
+    enum ReplacementKind { case snippet, made, text }
 
     /// Remembers a clip whose text was replaced (a snippet's, or any text clip's), from the snapshot taken before.
     func recordReplacement(of item: ClipboardItem, before: ClipSnapshot, kind: ReplacementKind) {
         let after = ClipSnapshot(item: item, linkPreviewFile: nil)
         guard before.isHoldable, after.isHoldable else { return }
         let replacement = [ClipReplacement(before: before, after: after)]
-        undoHistory.record(UndoEntry(kind == .snippet ? .snippetsReplaced(replacement) : .textReplaced(replacement)))
+        let entry: UndoEntry.Kind = switch kind {
+        case .snippet: .snippetsReplaced(replacement)
+        case .made: .snippetsMade(replacement)
+        case .text: .textReplaced(replacement)
+        }
+        undoHistory.record(UndoEntry(entry))
     }
 
     /// A text edit may go back to a text another clip holds (ADR 0053); a `.text` replacement also refreshes the
@@ -255,11 +262,19 @@ extension StorageService {
             descriptor.fetchLimit = 1
             guard let item = try modelContext.fetch(descriptor).first else { continue }
             target.writeContent(to: item, in: modelContext)
+            if kind == .made {
+                item.isPinned = target.isPinned
+                if !item.isPinned { item.setShortcut(nil) }
+            }
             lastItemStore.clear(ifItemID: id)
             applied.append((item, target))
         }
         guard !applied.isEmpty else { return false }
         PreviewTextCache.shared.clear()
+        if kind == .made {
+            try ensureSnippetsCollection()
+            try pruneEmptySnippetsCollectionIfNeeded()
+        }
         try saveOrRollback()
         for (item, target) in applied {
             if let file = target.linkPreviewFile { try? linkPreviews.restoreSealedFile(file, for: item.id) }

@@ -93,7 +93,11 @@ extension MobilePasteboardGlobals {
             let item = try await library.add("Hello Ana, welcome")
             #expect(library.state.canMakeSnippet(item))
 
-            let made = await library.state.convertToSnippet(id: item.id, title: "Welcome", text: "Hello {Name}, welcome")
+            let made = await library.state.convertToSnippet(
+                id: item.id,
+                title: "Welcome",
+                text: "Hello {Name}, welcome"
+            )
 
             #expect(made)
             try await library.refreshed()

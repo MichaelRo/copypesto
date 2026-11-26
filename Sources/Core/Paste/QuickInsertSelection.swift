@@ -214,7 +214,7 @@ public enum QuickInsertSelection {
                     var newest = FetchDescriptor<ClipboardItem>(
                         sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
                     )
-                    newest.fetchLimit = WidgetSnapshotPolicy.smartScanLimit
+                    newest.fetchLimit = QuickInsertPolicy.smartScanLimit
                     window = try context.fetch(newest)
                 }
                 items = WidgetSnapshotSelection.smartMatches(
@@ -226,7 +226,7 @@ public enum QuickInsertSelection {
                     predicate: #Predicate { $0.collectionID == id },
                     sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
                 )
-                newest.fetchLimit = WidgetSnapshotPolicy.collectionScanLimit
+                newest.fetchLimit = QuickInsertPolicy.collectionScanLimit
                 items = try CollectionOrder.sorted(context.fetch(newest))
             }
             found.append(Members(collection: collection, items: items))

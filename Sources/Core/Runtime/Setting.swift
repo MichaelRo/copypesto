@@ -16,8 +16,8 @@ public enum Setting {
     /// The theme for dark appearance; empty means the same one as `appTheme`.
     public static let appThemeDark = SettingKey("appThemeDark", default: "")
     public static let appIcon = SettingKey("appIcon", default: AppIconChoice.basil.rawValue)
-    /// The app icon follows the theme (`AppIconMatching`).
-    public static let matchesAppIcon = SettingKey("matchesAppIcon", default: true)
+    /// The app icon follows the theme (`AppIconMatching`): on for the Mac, off for iPhone and iPad (ADR 0076).
+    public static let matchesAppIcon = SettingKey("matchesAppIcon", default: AppIconMatching.isOnByDefault)
     public static let cardSize = SettingKey("cardSize", default: "large")
     public static let cardWidth = SettingKey("cardWidth", default: 0)
     public static let shelfPosition = SettingKey("shelfPosition", default: ShelfPosition.bottom.rawValue)

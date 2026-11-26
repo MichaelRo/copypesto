@@ -444,3 +444,40 @@ struct WidgetSnapshotSelectionTests {
         #expect(snapshot.clips(inCollection: board.id).map(\.text) == ["collection pin"])
     }
 }
+
+extension WidgetSnapshotSelectionTests {
+    @Test("a plain collection is ordered from its newest 60 members: a hand-placed 60th shows, a 61st does not")
+    func whenAHandPlacedClipIsPastTheSixtiethMember_thenTheWidgetLeavesItOut() throws {
+        let clips = try Clips()
+        let inside = try clips.collection("Inside", order: 0)
+        clips.add("placed, 60th newest", in: inside, order: 0)
+        for index in 0..<59 {
+            clips.add("inside \(index)", in: inside)
+        }
+        let outside = try clips.collection("Outside", order: 1)
+        clips.add("placed, 61st newest", in: outside, order: 0)
+        for index in 0..<60 {
+            clips.add("outside \(index)", in: outside)
+        }
+
+        let snapshot = try clips.snapshot()
+
+        #expect(texts(snapshot, in: inside).first == "placed, 60th newest")
+        #expect(!texts(snapshot, in: outside).contains("placed, 61st newest"))
+    }
+
+    @Test("a smart collection still finds a match among the newest 300 clips")
+    func whenASmartMatchIsPastTheSixtiethClip_thenTheWidgetStillShowsIt() throws {
+        let clips = try Clips()
+        let links = try clips.collection("Links", order: 0, rules: PredicateRuleSet(
+            combinator: .and,
+            groups: [.init(combinator: .and, rules: [PredicateRule(field: .type, op: .equals, value: .string("url"))])]
+        ))
+        clips.add("https://copypesto.net/old", type: .url)
+        for index in 0..<250 {
+            clips.add("note \(index)")
+        }
+
+        #expect(try texts(clips.snapshot(), in: links) == ["https://copypesto.net/old"])
+    }
+}

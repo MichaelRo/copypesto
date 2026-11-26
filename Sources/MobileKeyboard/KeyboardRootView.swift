@@ -312,21 +312,22 @@ struct KeyboardRootView: View {
             }
             model.dismissedWord = word
         }
-        keys.insert(entry.insertionText())
-        finishInsert(entry: entry, longPress: longPress)
+        let text = entry.insertionText()
+        keys.insert(text)
+        finishInsert(entry: entry, longPress: longPress, inserted: text)
     }
 
     private func insertRecognizedText(_ text: String, for entry: QuickInsertEntry) {
         keys.insert(text)
-        finishInsert(entry: entry, longPress: false)
+        finishInsert(entry: entry, longPress: false, inserted: text)
     }
 
-    private func finishInsert(entry: QuickInsertEntry, longPress: Bool) {
+    private func finishInsert(entry: QuickInsertEntry, longPress: Bool, inserted: String) {
         if model.menu.returnsAfterInsert != longPress {
             keys.switchKeyboard()
             return
         }
-        model.noteInsert()
+        model.noteInsert(inserted)
         showFeedback(.inserted, for: entry.id, duration: .milliseconds(600))
     }
 

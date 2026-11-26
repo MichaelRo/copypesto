@@ -93,6 +93,7 @@ final class KeyboardViewController: UIInputViewController {
         model.word = nil
         model.dismissedWord = nil
         model.closeSearch()
+        model.forgetInsert()
         KeyboardThumbnails.shared.removeAll()
         openedStamp = nil
     }
@@ -158,11 +159,13 @@ final class KeyboardViewController: UIInputViewController {
         }
         heightConstraint?.constant = currentHeight
         // Only to search the clips: the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
-        model.adopt(word: model.menu.state == .ready
-            ? KeyboardWord.before(
-                textDocumentProxy.documentContextBeforeInput, after: textDocumentProxy.documentContextAfterInput
-            )
-            : nil)
+        let before = textDocumentProxy.documentContextBeforeInput
+        model.adopt(
+            word: model.menu.state == .ready
+                ? KeyboardWord.before(before, after: textDocumentProxy.documentContextAfterInput)
+                : nil,
+            contextBefore: before
+        )
     }
 
     private static func open(_ file: QuickInsertFile) -> QuickInsertSet? {

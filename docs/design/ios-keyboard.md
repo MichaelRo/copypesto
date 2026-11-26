@@ -258,3 +258,8 @@ Sections 5.1–5.3 describe the first version; ADRs 0062, 0063 and 0066 supersed
   shift layers, long-press accents, Korean composed by `HangulComposer`), and 123, globe, space (named for the layout;
   hold for the next) and Done. iPad puts Delete on the top row and Done on the middle row, with Shift on both sides.
 - **Not typeable here:** Japanese and Chinese, which need an input method; the field's placeholder says so.
+- **Touches on a card** go through one UIKit recognizer (`KeyboardPressRecognizer`, decided by `KeyboardPress`), not
+  SwiftUI's `onTapGesture` and `onLongPressGesture`: those held a touch that started on a card until it had moved
+  far enough, so reversing the row mid-glide stuck. The recognizer fails at the first movement past 10 pt and when the
+  scroll view takes the touch; a picture card has no hold, so its context menu takes a long press. Keep new card
+  gestures in it (`KeyboardCardActions`), never as SwiftUI gestures on the card.

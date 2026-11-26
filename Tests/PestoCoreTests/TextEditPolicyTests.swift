@@ -94,4 +94,36 @@ struct TextEditPolicyTests {
         #expect(TextEditPolicy.lockedMessage == "Your history is locked. Unlock it, then save again.")
         #expect(TextEditPolicy.failedMessage == "Couldn\u{2019}t save the change.")
     }
+
+    @Test("Make Snippet is offered for visible text and code, never a secret, a pending clip or a snippet")
+    func whenClipDiffers_thenMakeSnippetIsOfferedOnlyForPlainText() {
+        func offers(
+            _ type: ClipboardType, pending: Bool = false, secret: Bool = false, snippet: Bool = false,
+            concealment: CardConcealment? = nil
+        )
+        -> Bool {
+            TextEditPolicy.offersMakeSnippet(
+                type: type, analysisPending: pending, isSecret: secret, isSnippet: snippet,
+                concealment: concealment ?? open
+            )
+        }
+        #expect(offers(.text))
+        #expect(offers(.code))
+        #expect(!offers(.url))
+        #expect(!offers(.image))
+        #expect(!offers(.text, pending: true))
+        #expect(!offers(.text, secret: true))
+        #expect(!offers(.text, snippet: true))
+        #expect(!offers(.text, concealment: CardConcealment(
+            screenShareBlur: true, nsfwBlurred: false, maskedSecret: false, secretShown: false
+        )))
+    }
+
+    @Test("each conversion outcome closes the window or says why it did not")
+    func whenConversionEnds_thenTheResultIsSaidPlainly() {
+        #expect(TextEditPolicy.snippetResult(for: .converted) == .saved)
+        #expect(!TextEditPolicy.snippetResult(for: .needsPlaceholder).closesEditor)
+        #expect(!TextEditPolicy.snippetResult(for: .notConvertible).closesEditor)
+        #expect(!TextEditPolicy.snippetResult(for: .missing).closesEditor)
+    }
 }

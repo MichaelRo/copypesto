@@ -29,7 +29,7 @@ struct ClipInspectorView: View {
             if appState.isContentCovered(screenSharingPrivacy: screenSharingPrivacy) {
                 // A screen share or Hide Clip Contents covers the whole window, title and details too; a typed draft
                 // waits in the model.
-                ClipInspectorCover { model.cancel() }
+                ClipInspectorCover { model.close() }
             } else {
                 HStack(spacing: 0) {
                     TextEditView(

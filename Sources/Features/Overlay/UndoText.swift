@@ -16,6 +16,7 @@ enum UndoText {
         case let .importCollection(name): String(localized: "Imported the collection \u{201C}\(name)\u{201D}")
         case let .addClips(kind, count): added(kind, count)
         case .editSnippet: String(localized: "Changed a snippet")
+        case .makeSnippet: String(localized: "Made a snippet")
         case .editText: String(localized: "Changed the text")
         }
     }
@@ -49,13 +50,9 @@ enum UndoText {
         case .duplicateCollection: String(localized: "Duplicate Collection")
         case .reorderCollections: String(localized: "Reorder Collections")
         case .importCollection: String(localized: "Import Collection")
-        case let .addClips(kind, _):
-            if kind == .snippet {
-                String(localized: "Add Snippet")
-            } else {
-                String(localized: "Import")
-            }
+        case let .addClips(kind, _): addCommand(kind)
         case .editSnippet: String(localized: "Edit Snippet")
+        case .makeSnippet: String(localized: "Make Snippet")
         case .editText: String(localized: "Edit Text")
         }
     }
@@ -81,5 +78,10 @@ enum UndoText {
         case .expiry: String(localized: "Change Expiry")
         case .order: String(localized: "Reorder")
         }
+    }
+
+    private static func addCommand(_ kind: AddedClipsKind) -> String {
+        if kind == .snippet { return String(localized: "Add Snippet") }
+        return String(localized: "Import")
     }
 }

@@ -488,6 +488,12 @@ On a signed device build, with a pinned clip, a snippet with a date placeholder 
 - **A change to a shared test helper (`PestoUITestCase.launch`) reaches every UI test**, including ones the change was not written for: a "stale ready marker" cleanup made each launch wait for real readiness and broke an unrelated selection-bar test that only passed because it started early. Keep a fix local to the test that needs it, or run the suites that use the helper before committing.
 - **`PasteRecorder` writes no text for a link or a picture** (`kind: nonText`), so `pastedTexts()` drops those pastes. Count lines of `paste-log.jsonl` when a test pastes something other than text.
 - **A git worktree has a `.git` *file* holding the path of the main checkout**, which a scan of top-level files (`PersonalDataTests`) used to flag as the owner's home folder.
+- **A timing assertion must not measure the main thread** (2026-11-26). In a full `swift test` run some suite holds the
+  main thread for about 12 s, so a `@MainActor` test that times a 120 ms wait failed one run in two. Time it from a
+  `nonisolated` test, and keep a wait that polls off the main actor (`FocusRestoration.waitForKeyboardFocus`).
+- **Wait for a condition, not a duration.** `HistoryStore.waitForRefresh()` counts the saves posted for its history
+  and returns once each has been handled and no refresh is pending; a fixed 150 ms sleep failed about one full run in
+  sixteen.
 - **A recompile can surface old warnings.** The gate counts warnings as failures, and an incremental build had hidden three for weeks.
 
 - **A seed profile a bench measures is frozen.** `.mixed` (`MixedSeed`, 1,200 clips) is what `make bench-scroll` and `make bench-shelf` compare over weeks; pointing it at a different history in the middle of a design spike nearly invalidated every recorded number (2026-11-13). A different look (an everyday clipboard for pictures) is a new `SeedProfile`. `MixedSeedTests.whenMixedProfile_thenItIsExactlyMixedSeed` fails on a changed size or content.

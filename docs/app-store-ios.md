@@ -24,14 +24,13 @@ App Store and does not change (Developer ID, notarized). Signing and the develop
 | Field | Value |
 |---|---|
 | Name | Pesto |
-| Subtitle (30) | Keep what you copy |
+| Subtitle (30) | Private clipboard manager |
 | Category | Productivity (secondary: Utilities) |
 | Price | Free. Every feature, no in-app purchase (ADR 0001) |
 | Age rating | 4+ (no web browser, no user-to-user content, nothing from a server) |
 | Support URL | The GitHub repository's issues page, or the website's support page |
 
-**Promotional text (170):** Your copies, kept and searchable on iPhone and iPad. Sealed on your device, and in step
-across iPhone, iPad and Mac through a chosen folder. No account, no server.
+**Promotional text (170):** Your copies, kept and searchable on iPhone and iPad. Encrypted on your device, with optional folder sync to your Mac. No account, no server.
 
 **Description:**
 
@@ -45,12 +44,12 @@ across iPhone, iPad and Mac through a chosen folder. No account, no server.
 > on each and choose the same folder, such as iCloud Drive. Clips are sealed so that only your own devices can open
 > them; there is no Pesto server and no account.
 >
-> • One page of clip cards, with search that finds words inside pictures
+> • One page of clip cards, with search that finds words inside pictures and understands natural questions on-device with Ask Pesto
 > • Pinned clips, collections and smart collections
 > • Snippets with fill-ins
 > • Edit a clip's text
 > • Insert clips in any app through AutoFill (text only, never passwords) or the optional Pesto keyboard
-> • A Home Screen widget with your recent clips
+> • Home Screen and Lock Screen widgets with your recent clips and collections
 > • Lock your history with Face ID
 > • On iPad: a sidebar, keyboard shortcuts, drag and drop, and every multitasking size
 >
@@ -59,7 +58,7 @@ across iPhone, iPad and Mac through a chosen folder. No account, no server.
 
 Check each line against the build being submitted: a feature that is not in it comes out of the description.
 
-**Keywords (100):** clipboard,clipboard manager,copy paste,history,snippets,notes,paste,clips,text,sync
+**Keywords (100):** copy,paste,history,snippets,notes,clips,sync,ocr,autofill,keyboard,widget,mac,icloud,encrypt,search
 
 Localized App Store metadata for Spanish (`es`), French (`fr`), German (`de`), Japanese (`ja`), Simplified Chinese (`zh-Hans`), Portuguese (`pt-BR`), Hebrew (`he`), Russian (`ru`), Ukrainian (`uk`), Korean (`ko`), Italian (`it`), and Czech (`cs`) is in [app-store-localizations.md](app-store-localizations.md).
 
@@ -91,8 +90,11 @@ To publish with the Mac's privacy page at release. Check each line against the b
 > **Face ID.** The History Lock asks iOS to check your face or passcode. Pesto never sees your face data.
 >
 > **Extensions.** The share extension, AutoFill, the keyboard and the widget never open your history. The app gives
-> them small sealed files: AutoFill and the keyboard share one of pinned clips, snippets and recent text, the widget
-> gets recent clips, each with the name, color and icon of the app it came from, and none ever gets a secret. With the History Lock on they stay empty unless you choose otherwise.
+> them small sealed files: AutoFill and the keyboard share one of pinned clips, snippets, recent clips, and chosen
+> collections (AutoFill shows text only; the keyboard can also show pictures), the widget gets recent clips, pinned
+> clips, and collections, each with the name, color and icon of the app it came from, and none ever gets a secret. In
+> Settings, you can turn off Allow in Widgets and Keyboard while locked so they stay empty whenever the History Lock is
+> on.
 >
 > **The keyboard.** Optional, and off until you add it in iOS Settings. Its letters type only into its own search
 > field, never into your apps; it sees taps on its own keys and, with Full Access, only the last word before the cursor,
@@ -116,27 +118,30 @@ HPKE from CryptoKit) to protect it at rest and between their own devices, which 
 > Pesto needs no account and no Mac to review.
 >
 > - To add clips: copy text in any app, open Pesto and press the Paste button; or share text, a link or a picture to
->   Pesto from the share sheet; or write a note with the compose button.
+>   Pesto from the share sheet; or write a note with the **+** (New Clip) button.
 > - AutoFill: Pesto's AutoFill extension (`net.copypesto.pesto.autofill`) provides text insertion only
 >   (`ProvidesTextToInsert`). `ProvidesPasswords` is also declared in `Info.plist` solely because iOS requires it to
 >   list an extension in Settings → General → AutoFill & Passwords and for `ASSettingsHelper` to prompt; Pesto
 >   intentionally cancels all password, passkey, and one-time-code requests (`ASExtensionError.failed` /
->   `.credentialIdentityNotFound`) and never stores or fills credentials. To try it: tap **Set Up Quick Insert… →
->   Turn On AutoFill…** in Pesto (or Settings → General → AutoFill & Passwords → turn on Pesto), pin a clip in
->   Pesto, then in a plain text field (such as Notes) long-press → **AutoFill → Pesto** (not a password field) and
->   tap a clip.
-> - Keyboard: Pesto's keyboard (`net.copypesto.pesto.keyboard`) has no letter keys: it shows the person's own pinned
->   clips, snippets and recent text, a numbers-and-punctuation pad (typed input, available without Full Access),
+>   `.credentialIdentityNotFound`) and never stores or fills credentials. To try it: open **Settings → Keyboard &
+>   AutoFill → Set Up Keyboard & AutoFill… → Turn On AutoFill…** in Pesto (or Settings → General → AutoFill & Passwords →
+>   turn on Pesto), pin a clip in Pesto, then in a plain text field (such as Notes) long-press → **AutoFill → Pesto**
+>   (not a password field) and tap a clip.
+> - Keyboard: Pesto's keyboard (`net.copypesto.pesto.keyboard`) has no general typing keyboard: it shows the person's own
+>   pinned clips, snippets and recent text, a numbers-and-punctuation pad (typed input, available without Full Access),
 >   Space, Return, Delete and the Next Keyboard key. It requests Full Access only because iOS opens the app group and the shared Keychain group to a
 >   keyboard with Full Access alone; it uses them to read one sealed file the app writes. It makes no network requests,
 >   reads only the last word before the cursor (to find matching clips, in memory, never kept), never reads the
 >   pasteboard, and sees nothing else typed on another keyboard. Without Full Access it still works
->   (the numbers-and-punctuation pad) and explains what Full Access adds. Its letters (on the search page) type only into
->   Pesto's own search field to find a clip, never into the app; a keyboard that typed letters into apps would see
->   everything the person writes, which Pesto chooses not to. To try it: Settings → General → Keyboard →
->   Keyboards → Add New Keyboard → Pesto, tap Pesto and turn on Allow Full Access; in Pesto turn on Settings → Insert
->   from Pesto in other apps and pin a clip; then in any text field switch keyboards with the globe key and tap the
->   clip.
+>   (the numbers-and-punctuation pad) and explains where settings live in Pesto. Its search-page letters type only into
+>   Pesto's own search field to find a clip, never into the host app; a keyboard that typed letters into apps would see
+>   everything the person writes, which Pesto chooses not to. With Full Access on, the keyboard's **Pesto** gear chip
+>   opens an inline size panel whose **More** button (and the **Open Pesto Settings** / **Keyboard Settings** buttons when
+>   no clips are ready) opens Pesto's own Keyboard & AutoFill settings (`UIApplication.open` via the responder chain,
+>   permitted for a keyboard's own container app under Guideline 4.4.1's "other apps" rule). To try it: Settings →
+>   General → Keyboard → Keyboards → Add New Keyboard → Pesto, tap Pesto and turn on Allow Full Access; pin a clip in
+>   Pesto (choose collections under **Settings → Keyboard & AutoFill** if needed); then in any text field switch
+>   keyboards with the globe key and tap the clip.
 > - Sync is optional: any two devices with Pesto (iPhone, iPad, Mac) and a folder both can open (such as iCloud Drive). It goes through
 >   files in that folder; there is no server. It can be skipped on the welcome screen.
 > - The History Lock (Settings, or the welcome's second step) asks for Face ID before clips show.

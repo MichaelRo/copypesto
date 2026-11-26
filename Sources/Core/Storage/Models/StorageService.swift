@@ -32,6 +32,7 @@ public actor StorageService: ModelActor {
         loadDeviceID = environment.deviceID
         keyRotator = environment.keyRotator
         resolver = environment.sourceApps
+        pixelDigest = environment.pixelDigest
         undoHistory = environment.undoHistory
         wipeSuggestionLedger = environment.wipeSuggestionLedger
         nsfwModeProvider = environment.nsfwMode ?? { NSFWMode.current() }
@@ -53,6 +54,7 @@ public actor StorageService: ModelActor {
     let encryption = BlobEncryption()
     let keyRotator: @Sendable () throws -> Void
     let resolver: any SourceAppResolving
+    let pixelDigest: @Sendable (Data) -> Data?
     /// Tracks the single most-recently-ingested hash with its timestamp. Used only to suppress
     /// the very-rapid re-capture of the *current latest* item (e.g. multiple paste echoes within
     /// a few hundred ms). Any other re-copy — including copying an older item again — must
@@ -190,6 +192,7 @@ public actor StorageService: ModelActor {
         var pixelWidth: Int?
         var pixelHeight: Int?
         var perceptualHash: String?
+        var fingerprint: PictureFingerprint?
         if clipType == .image,
            let source = CGImageSourceCreateWithData(
                capture.payload as CFData,
@@ -203,10 +206,13 @@ public actor StorageService: ModelActor {
                 pixelHeight = props[kCGImagePropertyPixelHeight] as? Int
             }
             perceptualHash = PerceptualHasher.hash(imageSource: source)
+            stages.next("fingerprint")
+            fingerprint = PictureFingerprint(imageSource: source)
         }
         if let pHash = perceptualHash,
            let similar = perceptualDuplicate(
-               of: pHash, payload: capture.payload, pixelWidth: pixelWidth, pixelHeight: pixelHeight
+               of: pHash, payload: capture.payload, fingerprint: fingerprint,
+               pixelWidth: pixelWidth, pixelHeight: pixelHeight
            )
         {
             if popsLookalikePicture {
@@ -345,6 +351,7 @@ public actor StorageService: ModelActor {
         item.analysisPending = judgedLater
         item.collectionID = resolvedCollectionID
         item.takeOrigin(of: capture)
+        if let fingerprint { item.updateMetadata { $0.pictureFingerprint = fingerprint } }
         if capture.isConcealed {
             item.expiresAt = Self.concealedExpiry(timestamp: capture.timestamp, allowanceEnd: capture.concealedUntil)
         }

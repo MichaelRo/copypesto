@@ -106,6 +106,18 @@ struct GIFUpgradeTests {
         #expect(item.pixelHeight == 32)
     }
 
+    @Test("the fingerprint of the still picture goes with it: it describes bytes the clip no longer holds")
+    func whenUpgraded_thenTheStillsFingerprintIsDropped() async throws {
+        let gif = animatedGIF()
+        try await service.ingest(capture(source: nil))
+        let before = try onlyItem()
+        #expect(before.metadata.pictureFingerprint != nil)
+
+        await service.upgrade(before.id, toGIF: gif)
+
+        #expect(try onlyItem().metadata.pictureFingerprint == nil)
+    }
+
     @Test("an animation that arrives as another format is stored as a GIF with all its frames")
     func whenFetchedAnimationIsNotAGIF_thenItIsStoredAsGIF() async throws {
         let apng = try #require(animatedAPNG(), "this system cannot write an animated PNG")

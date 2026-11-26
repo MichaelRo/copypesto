@@ -98,8 +98,12 @@ public enum PerceptualHasher {
     public static func pixelDigest(imageData: Data) -> Data? {
         guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil),
-              image.width * image.height <= maxDigestPixels,
-              let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+              image.width * image.height <= maxDigestPixels else { return nil }
+        return sRGBDigest(of: image)
+    }
+
+    static func sRGBDigest(of image: CGImage) -> Data? {
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
         let bytesPerRow = image.width * 4
         var pixels = [UInt8](repeating: 0, count: bytesPerRow * image.height)
         let drawn = pixels.withUnsafeMutableBytes { buffer -> Bool in

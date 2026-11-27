@@ -153,4 +153,35 @@ struct LibraryFilterTests {
         #expect(!LibraryChrome.showsChipRow(isRegular: true, columns: .doubleColumn))
         #expect(LibraryChrome.showsChipRow(isRegular: true, columns: .all, isSearching: true))
     }
+
+    @Test("on compact iPhone while searching, scopes stay on row 1 and search filters move to row 2")
+    func whenCompactSearchingWithScopes_thenFiltersSplitToSecondRow() {
+        let kinds = LibraryScope.filteredKinds.map(LibraryChip.kind)
+        let split = LibraryChip.rows(
+            collectionIDs: [trip, work],
+            isSearching: true,
+            offersAsk: true,
+            showsScopes: true,
+            showsFrom: true,
+            splitsSearchFilters: true
+        )
+        #expect(split.count == 2)
+        #expect(split[0] == [.all, .pinned, .collection(trip), .collection(work)])
+        #expect(split[1] == [.ask] + kinds + [.filterDivider, .when, .from, .sensitive, .otherDevices])
+
+        let atRest = LibraryChip.rows(
+            collectionIDs: [trip], isSearching: false, showsScopes: true, splitsSearchFilters: true
+        )
+        #expect(atRest == [[.all, .pinned, .collection(trip), .newCollection]])
+
+        let ipadSidebarVisible = LibraryChip.rows(
+            collectionIDs: [trip], isSearching: true, showsScopes: false, splitsSearchFilters: false
+        )
+        #expect(ipadSidebarVisible == [kinds + [.filterDivider, .when, .sensitive, .otherDevices]])
+
+        let ipadCompactOrSingleRow = LibraryChip.rows(
+            collectionIDs: [trip], isSearching: true, showsScopes: true, splitsSearchFilters: false
+        )
+        #expect(ipadCompactOrSingleRow.count == 1)
+    }
 }

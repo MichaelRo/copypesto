@@ -62,12 +62,18 @@ struct CardActions: Equatable {
     var copyRecognizedText: (@MainActor (ClipboardItem) -> Bool)?
     /// Copy As on a colour clip or URL title: puts this text on the clipboard.
     var copyText: (@MainActor (ClipboardItem, String) -> Void)?
+    /// Copy plain text as protected/concealed on the pasteboard (e.g. a Wi-Fi QR password).
+    var copySecretText: (@MainActor (ClipboardItem, String) -> Void)?
     /// Writes raw image data to the pasteboard.
     var copyImageData: (@MainActor (ClipboardItem, Data) -> Void)?
     /// Writes an image (e.g. URL preview image) to the pasteboard.
     var copyImage: (@MainActor (ClipboardItem, NSImage) -> Void)?
     /// Save Image on a picture: writes it to the Downloads folder.
     var saveImage: (@MainActor (ClipboardItem) -> Void)?
+    /// Decrypted image bytes for on-demand QR/barcode menu detection (nil while locked, concealed, or pending).
+    var imageBytesForBarcodes: (@MainActor (ClipboardItem) -> Data?)?
+    /// Opens a safe URL resolved from a clip or QR code.
+    var openURL: (@MainActor (URL) -> Void)?
     /// Moves a clip to a collection; `nil` takes it out of all of them.
     var moveToCollection: (@MainActor (ClipboardItem, UUID?) -> Void)?
     /// Asks to delete. The shelf shows the confirmation, so every path to a delete shares one alert.

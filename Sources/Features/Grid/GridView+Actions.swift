@@ -503,10 +503,11 @@ extension GridView {
         }
     }
 
-    func copyText(_ item: ClipboardItem, _ text: String) {
-        appState.writeText(text, protected: item.sensitivityRaw != nil)
+    func copyText(_ item: ClipboardItem, _ text: String, protected: Bool = false) {
+        let isProtected = protected || item.sensitivityRaw != nil
+        appState.writeText(text, protected: isProtected)
         appState.noteCopied(item, in: modelContext)
-        if item.sensitivityRaw != nil {
+        if isProtected {
             Announcer.announce("Copied")
         } else {
             Announcer.announce("Copied \(text)")

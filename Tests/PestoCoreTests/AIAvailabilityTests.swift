@@ -86,4 +86,25 @@ struct AIAvailabilityTests {
         }
         #expect(!AIAvailability.available.canBeFixedInSystemSettings)
     }
+
+    @Test("non-Apple-Intelligence and turned-off states cleanly fall back without crashing")
+    func whenDeviceLacksAppleIntelligence_thenFallbacksHold() async {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(false, forKey: AIAvailability.enabledDefaultsKey)
+        #expect(!AppleIntelligenceClient.supportsVision(defaults: defaults))
+
+        let screener = OnDeviceImageScreener()
+        let tinyData = Data([0x00, 0x01, 0x02])
+        #expect(await !screener.isSensitive(imageData: tinyData))
+
+        let fallback = FallbackQueryInterpreter(primary: FailingInterpreter())
+        let parsed = await fallback.interpret("photos from today")
+        #expect(parsed.range == .today)
+    }
+}
+
+private struct FailingInterpreter: QueryInterpreting {
+    func interpret(_: String) async throws -> AskPestoQuery {
+        throw AppleIntelligenceClient.ClientError.unavailable
+    }
 }

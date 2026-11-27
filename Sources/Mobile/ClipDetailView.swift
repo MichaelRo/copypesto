@@ -380,6 +380,7 @@ struct ClipDetailView: View {
                     Task { await appState.togglePin(id) }
                 }
                 CopyActionsMenu(item: item)
+                BarcodeActionsMenu(item: item, isConcealed: concealment.isConcealed)
                 AIActionsMenu(item: item)
                 if !concealment.isConcealed, item.sensitivityRaw == nil, item.type == .image || item.type == .url {
                     Button(

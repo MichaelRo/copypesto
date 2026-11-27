@@ -26,6 +26,7 @@ public enum CardMenuItem: CaseIterable, Sendable {
     case copyAsFile
     case pasteAsFile
     case entityActions
+    case barcodeActions
     case aiActions
     case markSensitive
     case setExpiry

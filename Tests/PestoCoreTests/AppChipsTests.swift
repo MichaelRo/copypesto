@@ -77,4 +77,45 @@ struct AppChipsTests {
         )
         #expect(withFront == [notes, safari, mail, slack])
     }
+
+    @Test("pinned apps stay at the front in their pinned order without duplicating frontmost or recent")
+    func whenPinnedAppsExist_thenPinnedFirstAndDeduplicated() {
+        let chips = AppChips.chips(
+            frontmost: notes,
+            recent: [safari, notes, mail, slack],
+            ownBundleID: pesto.bundleID,
+            pinnedBundleIDs: [slack.bundleID, notes.bundleID, pesto.bundleID]
+        )
+
+        #expect(chips == [slack, notes, safari, mail])
+    }
+
+    @Test("a pinned app outside the recent list still resolves its name from known apps or the resolver")
+    func whenPinnedAppNotRecent_thenResolvedFromKnownAppsOrResolver() {
+        let terminal = SourceApp(bundleID: "com.apple.Terminal", name: "Terminal")
+        let chips = AppChips.chips(
+            frontmost: nil,
+            recent: [safari],
+            ownBundleID: pesto.bundleID,
+            pinnedBundleIDs: [terminal.bundleID, "com.example.App"],
+            knownApps: [terminal],
+            resolveAppName: { $0 == "com.example.App" ? "Example" : nil }
+        )
+
+        #expect(chips.map(\.name) == ["Terminal", "Example", "Safari"])
+    }
+
+    @Test("toggling and removing pinned bundle IDs keeps order and deduplicates")
+    func whenTogglingPinnedIDs_thenEncodedCleanly() {
+        var stored = ""
+        stored = AppChips.togglePinned(notes.bundleID, in: stored)
+        stored = AppChips.togglePinned(safari.bundleID, in: stored)
+        #expect(AppChips.pinnedIDs(from: stored) == [notes.bundleID, safari.bundleID])
+
+        stored = AppChips.togglePinned(notes.bundleID, in: stored)
+        #expect(AppChips.pinnedIDs(from: stored) == [safari.bundleID])
+
+        stored = AppChips.removePinned(safari.bundleID, in: stored)
+        #expect(AppChips.pinnedIDs(from: stored).isEmpty)
+    }
 }

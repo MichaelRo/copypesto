@@ -183,8 +183,17 @@ struct TextTransformTests {
         #expect(text.contains(.jsonMinify) && !text.contains(.markdownCodeBlock) && !text.contains(.urlMarkdownLink))
         #expect(TextTransform.available(for: .code).first == .markdownCodeBlock)
         #expect(TextTransform.available(for: .url).first == .urlMarkdownLink)
-        #expect(TextTransform.available(for: .color) == [.stripFormatting, .trimWhitespace, .uppercase, .lowercase])
+        #expect(TextTransform.available(for: .color).isEmpty)
         #expect(TextTransform.available(for: .image).isEmpty && TextTransform.available(for: .file).isEmpty)
+    }
+
+    @Test("no clip kind offers both color Copy As and text-transform Copy As")
+    func whenListedByKind_thenNoDuplicateCopyAsMenu() {
+        for type in ClipboardType.allCases {
+            let hasColorCopyAs = type == .color && !ColorCopyFormat.allCases.isEmpty
+            let hasTransformCopyAs = !TextTransform.available(for: type).isEmpty
+            #expect(!(hasColorCopyAs && hasTransformCopyAs), "\(type) would show two Copy As menus")
+        }
     }
 
     @Test("Markdown has no plain-text conversion: applied to text it returns the text")

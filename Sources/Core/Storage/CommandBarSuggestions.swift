@@ -60,21 +60,67 @@ public struct CommandBarSuggestions: Sendable, Equatable {
     }
 }
 
-/// The app chips beside the collections: the app in front, then the few others copied from most lately. Pesto itself is
-/// never one (its own windows are often in front while the shelf opens).
+/// The app chips beside the collections: pinned apps first, then the app in front, then the few others copied from
+/// most lately. Pesto itself is never one (its own windows are often in front while the shelf opens).
 public enum AppChips {
     public static let recentLimit = 3
     public static let recentDays = 7
 
+    public static func pinnedIDs(from stored: String) -> [String] {
+        var seen: Set<String> = []
+        return stored
+            .components(separatedBy: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
+    }
+
+    public static func encodePinnedIDs(_ ids: [String]) -> String {
+        var seen: Set<String> = []
+        return ids
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
+            .joined(separator: ",")
+    }
+
+    public static func togglePinned(_ bundleID: String, in stored: String) -> String {
+        var current = pinnedIDs(from: stored)
+        if let index = current.firstIndex(of: bundleID) {
+            current.remove(at: index)
+        } else {
+            current.append(bundleID)
+        }
+        return encodePinnedIDs(current)
+    }
+
+    public static func removePinned(_ bundleID: String, in stored: String) -> String {
+        encodePinnedIDs(pinnedIDs(from: stored).filter { $0 != bundleID })
+    }
+
     public static func chips(
-        frontmost: SourceApp?, recent: [SourceApp], ownBundleID: String?, recentLimit: Int = AppChips.recentLimit
+        frontmost: SourceApp?, recent: [SourceApp], ownBundleID: String?, recentLimit: Int = AppChips.recentLimit,
+        pinnedBundleIDs: [String] = [], knownApps: [SourceApp] = [], resolveAppName: (String) -> String? = { _ in nil }
     )
-    -> [SourceApp] {
-        let front = frontmost.flatMap { $0.bundleID == ownBundleID ? nil : $0 }
-        let others = recent.filter { $0.bundleID != ownBundleID && $0.bundleID != front?.bundleID }
-        // With no app in front (Pesto's own menu or Settings was), a fourth recent app stands in, so the row is never
-        // short.
-        return (front.map { [$0] } ?? []) + others.prefix(front == nil ? recentLimit + 1 : recentLimit)
+        -> [SourceApp]
+    {
+        var namesByID: [String: String] = [:]
+        for app in knownApps + recent + (frontmost.map { [$0] } ?? []) where namesByID[app.bundleID] == nil {
+            namesByID[app.bundleID] = app.name
+        }
+        let pinned: [SourceApp] = pinnedBundleIDs.compactMap { id in
+            guard id != ownBundleID else { return nil }
+            let name = namesByID[id] ?? resolveAppName(id) ?? id
+            return SourceApp(bundleID: id, name: name)
+        }
+        let pinnedSet = Set(pinned.map(\.bundleID))
+        let front = frontmost.flatMap {
+            $0.bundleID == ownBundleID || pinnedSet.contains($0.bundleID) ? nil : $0
+        }
+        let others = recent.filter {
+            $0.bundleID != ownBundleID && !pinnedSet.contains($0.bundleID) && $0.bundleID != front?.bundleID
+        }
+        // With no unpinned app in front (Pesto's own menu or Settings was, or the frontmost app is pinned), a fourth
+        // recent app stands in, so the row is never short.
+        return pinned + (front.map { [$0] } ?? []) + others.prefix(front == nil ? recentLimit + 1 : recentLimit)
     }
 }
 

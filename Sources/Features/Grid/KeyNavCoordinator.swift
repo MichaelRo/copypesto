@@ -295,14 +295,15 @@ final class KeyNavCoordinator {
         }
     }
 
-    /// ↑ ↓ move cards unless ⌃ is held. ← → move them only bare: with ⌘, ⌥ or ⇧ they edit the caret (line start, word,
-    /// selection), so those reach the text field.
+    /// ↑ ↓ move cards unless ⌃ is held. ← → move them only bare and only when the search field is empty: with text
+    /// they move the caret, and with ⌘, ⌥ or ⇧ they edit the caret (line start, word, selection).
     private func searchArrowMoves(_ event: NSEvent) -> Bool {
         let flags = event.modifierFlags
+        let empty = searchTextIsEmpty?() ?? false
         switch event.keyCode {
-        case 123 where flags.isDisjoint(with: [.command, .option, .shift, .control]):
+        case 123 where empty && flags.isDisjoint(with: [.command, .option, .shift, .control]):
             onLeft?()
-        case 124 where flags.isDisjoint(with: [.command, .option, .shift, .control]):
+        case 124 where empty && flags.isDisjoint(with: [.command, .option, .shift, .control]):
             onRight?()
         case 125 where !flags.contains(.control):
             onRight?()

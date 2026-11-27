@@ -125,7 +125,8 @@ public actor StorageService: ModelActor {
         bumpsExistingDuplicate: Bool = true,
         keepsSameText: Bool = false,
         collectionID: UUID? = nil,
-        assignCollectionOnlyIfUnfiled: Bool = false
+        assignCollectionOnlyIfUnfiled: Bool = false,
+        knownNSFW: Bool? = nil
     ) async throws {
         if ClipSizePolicy.isTooLarge(byteCount: capture.payload.count, typeIdentifier: capture.typeIdentifier) {
             throw ClipSizePolicy.TooLarge(message: ClipSizePolicy.message(
@@ -215,6 +216,7 @@ public actor StorageService: ModelActor {
         {
             if popsLookalikePicture {
                 similar.bringToFront(at: now)
+                await updateDuplicateSource(similar, isRemote: capture.isRemote, bundleID: capture.sourceBundleID)
                 if let resolved = try validatedManualCollectionID(collectionID),
                    try !assignCollectionOnlyIfUnfiled || isUnfiled(similar.collectionID)
                 {
@@ -241,16 +243,19 @@ public actor StorageService: ModelActor {
         let analysisInput = input(
             for: clipType, image: clipType == .image ? capture.payload : nil, text: payloadString,
             link: capture.payloadString, sourceURL: capture.sourceImageURL,
-            needsPerceptualHash: clipType == .image && perceptualHash == nil
+            needsPerceptualHash: clipType == .image && perceptualHash == nil,
+            knownNSFW: knownNSFW
         )
         let judgedLater = analysisInput.runsInTheBackground
         var analysis = IngestAnalysis()
         if !judgedLater {
             stages.next("analysis")
-            analysis = await Self.analyze(analysisInput, recognizer: textRecognizer, screener: imageScreener)
+            analysis = await Self.analyze(
+                analysisInput, recognizer: textRecognizer, screener: imageScreener, precomputedNSFW: knownNSFW
+            )
         }
         let ocrText = analysis.ocrText
-        let detectedNSFW = analysis.isNSFW
+        let detectedNSFW = knownNSFW ?? analysis.isNSFW
         let detectedSensitivity = analysis.sensitivity
 
         // 6. Resolve source app (bundle ID → name + icon + dominant color).
@@ -462,11 +467,10 @@ public actor StorageService: ModelActor {
         let pages = doomed.filter { $0.type == .url }
             .compactMap { URL(string: $0.displayPreviewText.trimmingCharacters(in: .whitespacesAndNewlines)) }
             .flatMap { [$0, LinkPreviewEligibility.fetchTarget(for: $0)].compactMap(\.self) }
+        if reason == .user {
+            recordUserDeletionTombstones(for: doomed, survivors: survivors)
+        }
         for item in doomed {
-            if reason == .user {
-                let textStays = !(survivors[item.contentHash] ?? []).isEmpty
-                modelContext.insert(syncTombstone(for: item, textStays: textStays))
-            }
             modelContext.delete(item)
         }
         if reason == .retention { try pruneOldTombstones() }
@@ -522,7 +526,7 @@ public actor StorageService: ModelActor {
     }
 }
 
-private func clipboardType(
+func clipboardType(
     for typeIdentifier: String,
     payloadString: String?
 )

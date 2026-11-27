@@ -34,7 +34,6 @@ final class CardMediaState {
         let id: UUID
         let isShown: Bool
         var byteSize: Int = 0
-        var isAnimatedHint: Bool = false
         var isConcealed: Bool = false
     }
 

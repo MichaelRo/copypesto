@@ -19,10 +19,10 @@ struct MobileBatch2Tests {
     @Test("CardMediaState key changes when byteSize increases after Chrome GIF upgrade or when concealed changes")
     func whenByteSizeChanges_thenMediaReloadKeyChanges() {
         let id = UUID()
-        let before = CardMediaState.Key(id: id, isShown: true, byteSize: 400, isAnimatedHint: false)
-        let after = CardMediaState.Key(id: id, isShown: true, byteSize: 4096, isAnimatedHint: true)
+        let before = CardMediaState.Key(id: id, isShown: true, byteSize: 400)
+        let after = CardMediaState.Key(id: id, isShown: true, byteSize: 4096)
         let concealed = CardMediaState.Key(
-            id: id, isShown: true, byteSize: 4096, isAnimatedHint: true, isConcealed: true
+            id: id, isShown: true, byteSize: 4096, isConcealed: true
         )
 
         #expect(before != after)
@@ -38,7 +38,7 @@ struct MobileBatch2Tests {
         var calls = 0
 
         await state.load(
-            for: CardMediaState.Key(id: id, isShown: true, byteSize: 100, isAnimatedHint: false),
+            for: CardMediaState.Key(id: id, isShown: true, byteSize: 100),
             picture: {
                 calls += 1
                 return still
@@ -49,7 +49,7 @@ struct MobileBatch2Tests {
         #expect(state.picture?.isAnimated == false)
 
         await state.load(
-            for: CardMediaState.Key(id: id, isShown: true, byteSize: 2048, isAnimatedHint: true),
+            for: CardMediaState.Key(id: id, isShown: true, byteSize: 2048),
             picture: {
                 calls += 1
                 return animated

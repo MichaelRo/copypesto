@@ -17,6 +17,7 @@ struct IngestAnalysisInput {
     let readsImages: Bool
     let screensContent: Bool
     var needsPerceptualHash = false
+    var knownNSFW: Bool?
 
     /// Text larger than this is scanned after it is saved: the scan took 430 ms for 5 MB.
     static let backgroundTextBytes = 100_000
@@ -108,14 +109,15 @@ extension StorageService {
 
     func input(
         for clipType: ClipboardType, image: Data?, text: String, link: String?, sourceURL: URL? = nil,
-        needsPerceptualHash: Bool = false
+        needsPerceptualHash: Bool = false, knownNSFW: Bool? = nil
     )
     -> IngestAnalysisInput {
         IngestAnalysisInput(
             clipType: clipType, image: image, text: text, link: link, sourceURL: sourceURL,
             readsImages: Self.readsImages(in: RuntimeConfiguration.current),
-            screensContent: nsfwModeProvider().detectsContent,
-            needsPerceptualHash: needsPerceptualHash
+            screensContent: knownNSFW == nil && nsfwModeProvider().detectsContent,
+            needsPerceptualHash: needsPerceptualHash,
+            knownNSFW: knownNSFW
         )
     }
 
@@ -132,8 +134,8 @@ extension StorageService {
             }
         }
         let task = Task.detached(priority: .utility) { [self] in
-            var precomputedNSFW: Bool?
-            if input.clipType == .image, input.screensContent, let imageData = input.image {
+            var precomputedNSFW: Bool? = input.knownNSFW
+            if precomputedNSFW == nil, input.clipType == .image, input.screensContent, let imageData = input.image {
                 let explicitSource = input.sourceURL
                     .map { NSFWURLDetector.isExplicit(urlString: $0.absoluteString) } ?? false
                 let sensitive = explicitSource ? true : await screener.isSensitive(imageData: imageData)

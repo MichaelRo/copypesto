@@ -47,6 +47,11 @@ struct LibraryPresentations: ViewModifier {
                 .sheet(item: $library.editingCollection) { board in
                     CollectionEditorView(board: board).presentationDetents([.medium, .large])
                 }
+                .sheet(item: previewBinding) { target in
+                    if let store = appState.historyStore {
+                        ClipPreviewView(store: store, itemID: target.id)
+                    }
+                }
                 .confirmationDialog("Delete this clip?", isPresented: deleteBinding, titleVisibility: .visible) {
                     Button("Delete", role: .destructive) { deletePending() }
                 }
@@ -135,7 +140,7 @@ struct LibraryPresentations: ViewModifier {
     private var anotherSheetIsUp: Bool {
         library.showsSettings || library.isComposing || library.snippetEditor != nil || library.isNamingCollection
             || library.editingCollection != nil || library.sharing != nil || appState.pendingFill != nil
-            || appState.decodedJWT != nil || appState.showsAI
+            || appState.decodedJWT != nil || appState.showsAI || library.previewClipID != nil
             || library.openClipID != nil && sizeClass == .compact
     }
 
@@ -170,11 +175,23 @@ struct LibraryPresentations: ViewModifier {
         Binding(get: { library.pendingDelete != nil }, set: { if !$0 { library.pendingDelete = nil } })
     }
 
+    private var previewBinding: Binding<PreviewTarget?> {
+        Binding(
+            get: { library.previewClipID.map(PreviewTarget.init) },
+            set: { library.previewClipID = $0?.id }
+        )
+    }
+
     private func deletePending() {
         guard let id = library.pendingDelete else { return }
         library.pendingDelete = nil
         if library.openClipID == id { library.openClipID = nil }
+        if library.previewClipID == id { library.previewClipID = nil }
         Task { await appState.delete([id]) }
+    }
+
+    private struct PreviewTarget: Identifiable {
+        let id: UUID
     }
 }
 

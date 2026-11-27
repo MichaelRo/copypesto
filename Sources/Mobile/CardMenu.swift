@@ -9,6 +9,9 @@ struct CardMenu: View {
         let item = card.item
         let concealment = card.concealment
         Button("Copy", systemImage: "doc.on.doc") { card.copy() }
+        if Self.canPreview(item: item, isConcealed: concealment.isConcealed) {
+            Button("Preview", systemImage: "eye") { card.library.preview(item.id) }
+        }
         Button("Edit Details", systemImage: "info.circle") { card.library.open(item.id) }
         if !concealment.isConcealed, item.type == .url,
            case let .openInBrowser(url) = LinkOpenPolicy.action(for: item.displayPreviewText)
@@ -83,6 +86,10 @@ struct CardMenu: View {
         }
         Divider()
         Button("Delete", systemImage: "trash", role: .destructive) { card.delete() }
+    }
+
+    static func canPreview(item: ClipboardItem, isConcealed: Bool) -> Bool {
+        item.sensitivityRaw == nil && !isConcealed
     }
 
     private func loadPlainText(_ item: ClipboardItem) async -> String? {

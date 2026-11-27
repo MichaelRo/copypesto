@@ -80,7 +80,7 @@ struct InsertPickerView: View {
             } actions: {
                 if let unlock {
                     Button("Unlock in Pesto", systemImage: "lock.open", action: unlock)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.pestoProminent)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

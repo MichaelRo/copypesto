@@ -31,8 +31,18 @@ extension MobilePasteboardGlobals {
 
         @Test("a color offers its formats, only when a color can be read from it")
         func whenColor_thenFormats() {
-            #expect(CardCopyActions.offer(for: facts(.color, color: true)).colorFormats == ColorCopyFormat.allCases)
+            let offer = CardCopyActions.offer(for: facts(.color, color: true))
+            #expect(offer.colorFormats == ColorCopyFormat.allCases)
+            #expect(offer.transforms.isEmpty && offer.structured.isEmpty)
             #expect(CardCopyActions.offer(for: facts(.color)).isEmpty)
+        }
+
+        @Test("no clip kind offers both colorFormats and text transforms")
+        func whenAnyKind_thenNoDuplicateCopyAsOffer() {
+            for type in ClipboardType.allCases {
+                let offer = CardCopyActions.offer(for: facts(type, color: true, recognized: true))
+                #expect(!(!offer.colorFormats.isEmpty && !offer.transforms.isEmpty), "\(type)")
+            }
         }
 
         @Test("a picture offers Save to Photos, and Copy Recognized Text only when it read some text")

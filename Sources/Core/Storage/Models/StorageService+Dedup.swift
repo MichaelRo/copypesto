@@ -57,6 +57,24 @@ extension StorageService {
         return true
     }
 
+    func updateDuplicateSource(_ item: ClipboardItem, isRemote: Bool?, bundleID: String?) async {
+        if let isRemote {
+            if !isRemote {
+                item.isRemote = false
+            } else if item.isRemote {
+                item.sourceBundleID = nil
+                item.sourceAppName = PasteboardCapture.remoteSourceName
+                item.sourceDominantColorHex = nil
+            }
+        }
+        if let bundleID, isRemote != true {
+            let appRecord = await resolver.resolve(bundleID: bundleID)
+            item.sourceBundleID = bundleID
+            item.sourceAppName = appRecord.displayName
+            item.sourceDominantColorHex = appRecord.dominantColorHex
+        }
+    }
+
     func validatedManualCollectionID(_ id: UUID?) throws -> UUID? {
         guard let id, let board = try pinboard(id: id), !board.isSmart else { return nil }
         return board.id

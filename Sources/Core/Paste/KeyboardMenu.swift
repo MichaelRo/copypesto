@@ -119,10 +119,15 @@ public struct KeyboardMenu: Equatable, Sendable {
             return pinnedFirst + remaining
         case .pinned, .snippets:
             guard let section = Self.section(of: chip) else { return [] }
-            return entries.filter { $0.section == section }
+            var seen = Set<UUID>()
+            return entries.filter { $0.section == section && seen.insert($0.id).inserted }
         case let .collection(id):
             let byID = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }
-            return collections.first { $0.id == id }?.entryIDs.compactMap { byID[$0] } ?? []
+            var seen = Set<UUID>()
+            return collections.first { $0.id == id }?.entryIDs.compactMap { entryID in
+                guard seen.insert(entryID).inserted else { return nil }
+                return byID[entryID]
+            } ?? []
         }
     }
 
@@ -132,11 +137,14 @@ public struct KeyboardMenu: Equatable, Sendable {
         let needle = KeyboardQuery.normalizedForSearch(word)
         guard !needle.isEmpty else { return [] }
         let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
-        let leading = entries.filter {
+        var seen = Set<UUID>()
+        let uniqueEntries = entries.filter { seen.insert($0.id).inserted }
+        let leading = uniqueEntries.filter {
             KeyboardQuery.normalizedForSearch($0.label()).range(of: needle, options: options.union(.anchored)) != nil
         }
-        let inside = entries.filter { entry in
-            !leading.contains(entry) && [entry.label(), entry.text, entry.recognizedText]
+        let leadingIDs = Set(leading.map(\.id))
+        let inside = uniqueEntries.filter { entry in
+            !leadingIDs.contains(entry.id) && [entry.label(), entry.text, entry.recognizedText]
                 .compactMap(\.self)
                 .contains { KeyboardQuery.normalizedForSearch($0).range(of: needle, options: options) != nil }
         }

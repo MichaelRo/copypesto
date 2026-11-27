@@ -113,6 +113,7 @@ public enum Setting {
     public static let hasOnboarded = SettingKey("hasOnboarded", default: false)
     public static let showMenuBarIcon = SettingKey("showMenuBarIcon", default: true)
     public static let shelfSuggestionsEnabled = SettingKey("shelfSuggestionsEnabled", default: true)
+    public static let pinnedAppChipBundleIDs = SettingKey("pinnedAppChipBundleIDs", default: "")
     public static let rememberFillIns = SettingKey("rememberFillIns", default: true)
 
     // MARK: Shortcuts (key code and modifier mask; a zero mask means the default, or none for the optional ones)
@@ -204,7 +205,8 @@ public enum Setting {
         authenticationGraceMinutes.name, linkPreviews.name,
         appleIntelligenceEnabled.name, pinnedWindowAutoPaste.name, pictureSaveFolder.name, soundEffects.name,
         searchHistory.name,
-        hasOnboarded.name, showMenuBarIcon.name, shelfSuggestionsEnabled.name, rememberFillIns.name,
+        hasOnboarded.name, showMenuBarIcon.name, shelfSuggestionsEnabled.name, pinnedAppChipBundleIDs.name,
+        rememberFillIns.name,
         overlayHotkeyKeyCode.name,
         overlayHotkeyModifiers.name,
         quickPasteHotkeyKeyCode.name,

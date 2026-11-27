@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 import Foundation
+import PestoCore
 import Testing
 
 /// After a clip is inserted and the keyboard stays, the word before the caret is the clip's last word; searching by
@@ -65,5 +66,19 @@ struct KeyboardModelWordTests {
         model.forgetInsert()
         model.adopt(word: "parmesan", contextBefore: "parmesan")
         #expect(model.dismissedWord == nil)
+    }
+
+    @Test("selected text sets wordIsSelection cleanly without triggering false insert dismissal")
+    func whenSelectionQueryAdopted_thenWordIsSelectionTracked() {
+        let model = KeyboardModel()
+        model.noteInsert("hello world")
+        model.adopt(query: KeyboardWord.Query(text: "hello world", isSelection: true), contextBefore: "hello world")
+        #expect(model.word == "hello world")
+        #expect(model.wordIsSelection)
+        #expect(model.dismissedWord == nil)
+
+        model.adopt(query: KeyboardWord.Query(text: "bas", isSelection: false), contextBefore: "bas")
+        #expect(model.word == "bas")
+        #expect(!model.wordIsSelection)
     }
 }

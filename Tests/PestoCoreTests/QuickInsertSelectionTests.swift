@@ -160,4 +160,25 @@ struct QuickInsertSelectionTests {
 
         #expect(pinnedTexts == ["standalone pin"])
     }
+
+    @Test("a clip matched by two collections is carried only once in QuickInsertSet.entries")
+    func whenClipInMultipleCollections_thenNoDuplicateEntryInSet() {
+        let boardA = Pinboard(name: "A", symbolName: "folder", colorHex: "#3F7D4E", sortOrder: 0)
+        let boardB = Pinboard(name: "B", symbolName: "star", colorHex: "#C99A2E", sortOrder: 1)
+        let clip = ClipboardItem(
+            type: .text, previewText: "shared clip", contentHash: "shared", byteSize: 11,
+            deviceID: "d", sequenceNumber: 1
+        )
+        let lists = QuickInsertSelection.lists(
+            pinned: [],
+            recent: [],
+            collections: [
+                .init(collection: boardA, items: [clip]),
+                .init(collection: boardB, items: [clip])
+            ],
+            text: { $0.previewText }
+        )
+        #expect(lists.entries.map(\.id) == [clip.id])
+        #expect(lists.collections.map(\.entryIDs) == [[clip.id], [clip.id]])
+    }
 }

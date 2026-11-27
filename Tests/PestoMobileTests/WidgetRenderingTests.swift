@@ -341,4 +341,19 @@ struct WidgetRenderingTests {
             _ = try #require(renderer.uiImage, "lockscreen-action-\(action.rawValue)")
         }
     }
+
+    @Test("RecentClipsView evaluates lock expiration against entry.date so expired entries lock on schedule")
+    func whenEntryDateReachesExpiry_thenViewRendersLockedState() throws {
+        let full = try snapshot()
+        let expiry = Date.now.addingTimeInterval(3600)
+        let expiring = full.withExpiresAt(expiry)
+        let unlockedContent = WidgetContent(snapshot: expiring, size: .medium, now: expiry - 60)
+        let lockedContent = WidgetContent(snapshot: expiring, size: .medium, now: expiry)
+        #expect(unlockedContent.state == .clips)
+        #expect(lockedContent.state == .locked)
+
+        let entry = RecentClipsEntry(date: expiry, snapshot: expiring)
+        let image = try render(entry, .medium, dark: false, name: "recent-expired-lock")
+        #expect(image.size.width > 0)
+    }
 }

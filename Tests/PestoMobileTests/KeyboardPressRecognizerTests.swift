@@ -105,4 +105,14 @@ struct KeyboardPressRecognizerTests {
         try await waitPastHold()
         #expect(recorder.outcomes == [.tap, .tap])
     }
+
+    @Test("press recognizer never cancels or delays scroll view touches and cooperates via simultaneous delegate")
+    func whenConfigured_thenScrollTouchesAreNeverBlocked() {
+        let press = recognizer()
+        #expect(!press.cancelsTouchesInView)
+        #expect(!press.delaysTouchesBegan)
+        #expect(!press.delaysTouchesEnded)
+        #expect(press.delegate === press)
+        #expect(press.gestureRecognizer(press, shouldRecognizeSimultaneouslyWith: UIPanGestureRecognizer()))
+    }
 }

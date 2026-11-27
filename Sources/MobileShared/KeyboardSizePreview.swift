@@ -9,6 +9,11 @@ import UIKit
 struct KeyboardSizePreview: View {
     let size: KeyboardSize
     let entries: [QuickInsertEntry]
+    var chipTitles: [String] = [
+        String(localized: "All"),
+        String(localized: "Pinned"),
+        String(localized: "Snippets")
+    ]
     let theme: WidgetSnapshot.Theme
     var appIcons: [String: Data] = [:]
     var showsKeys = false
@@ -16,8 +21,23 @@ struct KeyboardSizePreview: View {
 
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.colorScheme) private var colorScheme
 
     private static let gap: CGFloat = 6
+
+    private var resolvedAccent: Color {
+        Color(hex: theme.accent(dark: colorScheme == .dark)) ?? Color.accentColor
+    }
+
+    private var resolvedAccentLabel: Color {
+        let hex = theme.accent(dark: colorScheme == .dark)
+        return Color(hex: ContrastRatio.labelHex(onFill: hex)) ?? .white
+    }
+
+    private var surfaceFill: Color {
+        Color(hex: theme.ground(dark: colorScheme == .dark))
+            ?? Color(uiColor: .secondarySystemGroupedBackground)
+    }
 
     var body: some View {
         let isRegular = sizeClass == .regular
@@ -37,7 +57,7 @@ struct KeyboardSizePreview: View {
         .padding(showsKeys ? 8 : 0)
         .background {
             if showsKeys {
-                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color(.systemGray5))
+                RoundedRectangle(cornerRadius: 14, style: .continuous).fill(surfaceFill)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -68,34 +88,71 @@ struct KeyboardSizePreview: View {
     }
 
     private var chips: some View {
-        HStack(spacing: 6) {
-            stub(width: 52)
-            stub(width: 68)
-            stub(width: 60)
-            Spacer(minLength: 0)
-            Circle().fill(Color(.systemBackground)).frame(width: 30, height: 30)
+        let titles = chipTitles.isEmpty ? [String(localized: "All"), String(localized: "Pinned")] : chipTitles
+        return HStack(spacing: 6) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(Array(titles.enumerated()), id: \.offset) { index, title in
+                        chipPill(title, isSelected: index == 0)
+                    }
+                }
+            }
+            .allowsHitTesting(false)
+            Image(systemName: "magnifyingglass")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 30, height: 30)
+                .background(Color.primary.opacity(0.08), in: .circle)
         }
         .frame(height: 30)
     }
 
+    private func chipPill(_ title: String, isSelected: Bool) -> some View {
+        Text(title)
+            .font(.caption2.weight(.semibold))
+            .lineLimit(1)
+            .foregroundStyle(isSelected ? resolvedAccentLabel : .primary)
+            .padding(.horizontal, 10)
+            .frame(height: 28)
+            .background(
+                isSelected ? resolvedAccent : Color.primary.opacity(0.08),
+                in: .capsule
+            )
+    }
+
     private var keys: some View {
         HStack(spacing: 6) {
-            key(width: 50, isFunction: true)
-            key(width: nil, isFunction: false)
-            key(width: 50, isFunction: true)
-            key(width: 88, isFunction: true)
+            keyCap(width: 50, isFunction: true) {
+                Text(verbatim: "123")
+            }
+            keyCap(width: nil, isFunction: false) {
+                Text("Space")
+            }
+            keyCap(width: 50, isFunction: true) {
+                Image(systemName: "delete.left")
+            }
+            keyCap(width: 88, isFunction: true) {
+                Text("return")
+            }
         }
-        .frame(height: 42)
+        .font(.caption.weight(.medium))
+        .foregroundStyle(.primary)
+        .frame(height: 40)
     }
 
-    private func stub(width: CGFloat) -> some View {
-        Capsule().fill(Color(.systemBackground).opacity(0.7)).frame(width: width, height: 30)
-    }
-
-    private func key(width: CGFloat?, isFunction: Bool) -> some View {
-        RoundedRectangle(cornerRadius: 5, style: .continuous)
-            .fill(isFunction ? Color(.systemGray3) : Color(.systemBackground))
+    private func keyCap(width: CGFloat?, isFunction: Bool, @ViewBuilder label: () -> some View) -> some View {
+        label()
+            .frame(maxWidth: width ?? .infinity, maxHeight: .infinity)
             .frame(width: width)
-            .frame(maxWidth: width == nil ? .infinity : nil)
+            .background(keyFill(isFunction: isFunction), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+    }
+
+    private func keyFill(isFunction: Bool) -> Color {
+        switch (colorScheme == .dark, isFunction) {
+        case (true, true): Color.white.opacity(0.14)
+        case (true, false): Color.white.opacity(0.24)
+        case (false, true): Color.black.opacity(0.10)
+        case (false, false): Color(uiColor: .systemBackground)
+        }
     }
 }

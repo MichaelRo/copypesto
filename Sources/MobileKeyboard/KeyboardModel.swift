@@ -12,6 +12,7 @@ final class KeyboardModel {
     var keyboardSize: KeyboardSize = .medium
     var showsGlobeKey = true
     var word: String?
+    var wordIsSelection = false
     /// A word the person took off with its chip, or one already replaced, so it does not search again.
     var dismissedWord: String?
     /// The search page's query while it is open, nil when it is closed. Its letter keys change only this: the model
@@ -39,8 +40,14 @@ final class KeyboardModel {
     /// that word is the insert's and is taken off; a field that never shows it (the caret moved) stops waiting after
     /// two changes.
     func adopt(word newWord: String?, contextBefore: String?) {
+        adopt(query: newWord.map { KeyboardWord.Query(text: $0, isSelection: false) }, contextBefore: contextBefore)
+    }
+
+    func adopt(query newQuery: KeyboardWord.Query?, contextBefore: String?) {
+        let newWord = newQuery?.text
+        let newIsSelection = newQuery?.isSelection ?? false
         if var pending = pendingInsert {
-            if contextBefore?.hasSuffix(pending.tail) == true {
+            if !newIsSelection, contextBefore?.hasSuffix(pending.tail) == true {
                 if let newWord { dismissedWord = newWord }
                 pendingInsert = nil
             } else {
@@ -49,6 +56,7 @@ final class KeyboardModel {
             }
         }
         if word != newWord { word = newWord }
+        if wordIsSelection != newIsSelection { wordIsSelection = newIsSelection }
     }
 
     func forgetInsert() {

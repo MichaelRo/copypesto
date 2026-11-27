@@ -199,6 +199,7 @@ public extension StorageService {
         meta.curation.collectionID = item.collectionID
         meta.curation.isPinned = item.isPinned
         meta.curation.expiresAt = item.expiresAt
+        meta.curation.isNSFW = item.isNSFW
         var body = Data()
         var external: (name: String, data: Data)?
         if payload.count > Self.inlinePayloadLimit {

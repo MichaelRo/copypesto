@@ -102,7 +102,6 @@ struct ClipCard: View {
                 id: item.id,
                 isShown: appState.secretReveal.isShown(item.id),
                 byteSize: item.byteSize,
-                isAnimatedHint: media.isAnimated,
                 isConcealed: concealment.isConcealed
             )) {
                 await media.load(
@@ -118,8 +117,6 @@ struct ClipCard: View {
                 isLinkAnimated: media.isLinkAnimated
             )) {
                 guard isOnScreen, !Motion.reduceMotion, !concealment.isConcealed else { return }
-                try? await Task.sleep(for: .milliseconds(120))
-                guard !Task.isCancelled, isOnScreen else { return }
                 let id = item.id
                 let byteSize = item.byteSize
                 let container = appState.historyContainer
@@ -278,7 +275,8 @@ struct ClipCard: View {
         let isPinned: Bool
         let collectionID: UUID?
         let timestamp: Date
-        let isCovered: Bool
+        let analysisPending: Bool
+        let isNSFW: Bool
         let content: String
         let byteSize: Int
         let metadata: Data?
@@ -287,7 +285,8 @@ struct ClipCard: View {
             isPinned = item.isPinned
             collectionID = item.collectionID
             timestamp = item.timestamp
-            isCovered = item.analysisPending || item.isNSFW
+            analysisPending = item.analysisPending
+            isNSFW = item.isNSFW
             content = item.contentHash
             byteSize = item.byteSize
             metadata = item.metadataCiphertext

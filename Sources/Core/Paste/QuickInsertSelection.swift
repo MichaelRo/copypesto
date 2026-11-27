@@ -289,7 +289,6 @@ public enum QuickInsertSelection {
                 {
                     return nil
                 }
-                chosen.insert(item.id)
                 return made
             }
             guard let body = reader.text(item), !body.isEmpty,
@@ -301,7 +300,6 @@ public enum QuickInsertSelection {
             guard !isFullSection(targetSection, pins: pins.count, snippets: snippets.count, latest: latest.count),
                   !isSnippet || TemplateExpander.fillsWithoutSystemContext(body) else { return nil }
             budget -= cost
-            chosen.insert(item.id)
             let memory = isSnippet
                 ? safeFieldMemory(
                     for: item,
@@ -320,14 +318,17 @@ public enum QuickInsertSelection {
             )
         }
         for item in pinned where item.collectionID == nil {
-            guard let made = entry(item, section: .pinned) else { continue }
+            guard !chosen.contains(item.id), let made = entry(item, section: .pinned) else { continue }
+            chosen.insert(item.id)
             if made.section == .snippets { snippets.append(made) } else { pins.append(made) }
         }
         for item in recent {
-            if let made = entry(item, section: .recent) { latest.append(made) }
+            guard !chosen.contains(item.id), let made = entry(item, section: .recent) else { continue }
+            chosen.insert(item.id)
+            latest.append(made)
         }
         let (extra, carried) = collectCollections(
-            collections, chosen: chosen, makeEntry: { entry($0, section: .collection) }
+            collections, chosen: &chosen, makeEntry: { entry($0, section: .collection) }
         )
         return (pins + snippets + latest + extra, carried)
     }
@@ -345,7 +346,7 @@ private extension QuickInsertSelection {
 
     static func collectCollections(
         _ collections: [Members],
-        chosen: Set<UUID>,
+        chosen: inout Set<UUID>,
         makeEntry: (ClipboardItem) -> QuickInsertEntry?
     )
     -> (extra: [QuickInsertEntry], carried: [QuickInsertCollection]) {
@@ -359,6 +360,7 @@ private extension QuickInsertSelection {
                     ids.append(item.id)
                 } else if let made = makeEntry(item) {
                     extra.append(made)
+                    chosen.insert(item.id)
                     ids.append(item.id)
                 }
             }

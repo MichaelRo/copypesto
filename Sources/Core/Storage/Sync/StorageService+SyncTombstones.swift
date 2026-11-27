@@ -30,6 +30,46 @@ extension StorageService {
         return Dictionary(grouping: holders, by: \.contentHash).mapValues { Set($0.map(\.id)) }
     }
 
+    func syncTombstone(forID id: UUID) -> DeletedItemTombstone {
+        applyMayHaveTombstones = true
+        let tombstone = DeletedItemTombstone(id: id)
+        guard let clock = SyncJournal.clock(for: modelContainer) else { return tombstone }
+        tombstone.kindRaw = "item"
+        tombstone.changeClock = clock.next().encoded
+        tombstone.syncDirty = true
+        return tombstone
+    }
+
+    func upsertSyncTombstone(forID id: UUID) {
+        applyMayHaveTombstones = true
+        var descriptor = FetchDescriptor<DeletedItemTombstone>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        if let existing = try? modelContext.fetch(descriptor).first {
+            guard let clock = SyncJournal.clock(for: modelContainer) else { return }
+            existing.kindRaw = "item"
+            existing.changeClock = clock.next().encoded
+            existing.syncDirty = true
+        } else {
+            modelContext.insert(syncTombstone(forID: id))
+        }
+    }
+
+    func recordUserDeletionTombstones(for doomed: [ClipboardItem], survivors: [String: Set<UUID>]) {
+        let doomedIDs = Set(doomed.map(\.id))
+        var foldedAliasIDs: [UUID] = []
+        var seenFolded = doomedIDs
+        for item in doomed {
+            let textStays = !(survivors[item.contentHash] ?? []).isEmpty
+            modelContext.insert(syncTombstone(for: item, textStays: textStays))
+            for foldedID in item.metadata.foldedSyncIDs ?? [] where seenFolded.insert(foldedID).inserted {
+                foldedAliasIDs.append(foldedID)
+            }
+        }
+        for foldedID in foldedAliasIDs {
+            upsertSyncTombstone(forID: foldedID)
+        }
+    }
+
     func syncCollectionTombstone(id: UUID) -> DeletedItemTombstone {
         applyMayHaveTombstones = true
         let tombstone = DeletedItemTombstone(id: id)

@@ -19,13 +19,19 @@ struct KeyboardClipKey: View {
 
     @Environment(\.pestoAccent) private var accent
     @Environment(\.pestoAccentLabel) private var accentLabel
+    @State private var loadedPicture: KeyboardThumbnails.Picture?
 
     var body: some View {
-        let picture = entry.thumbnail.flatMap { KeyboardThumbnails.shared.picture(for: entry.id, data: $0) }
+        let picture = KeyboardThumbnails.shared.cachedPicture(for: entry.id) ?? loadedPicture
         QuickInsertCardFace(
             entry: entry, size: cardSize, theme: theme, appIcon: appIcon,
             picture: picture?.image, backdrop: picture?.backdrop
         )
+        .task(id: entry.id) {
+            guard let data = entry.thumbnail else { return }
+            if KeyboardThumbnails.shared.cachedPicture(for: entry.id) != nil { return }
+            loadedPicture = await KeyboardThumbnails.shared.loadPicture(for: entry.id, data: data)
+        }
         .overlay {
             if feedback != nil {
                 QuickInsertCardFace.shape.strokeBorder(accent, lineWidth: 2)

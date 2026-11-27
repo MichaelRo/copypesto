@@ -6,8 +6,30 @@ import Foundation
 /// and the word ends in a letter or digit, without the punctuation before it; never kept: it is read from the field's
 /// text each time.
 public enum KeyboardWord {
+    public struct Query: Equatable, Sendable {
+        public let text: String
+        public let isSelection: Bool
+
+        public init(text: String, isSelection: Bool) {
+            self.text = text
+            self.isSelection = isSelection
+        }
+    }
+
     public static let minLength = 2
     public static let maxLength = 32
+
+    /// Hybrid query: single-line selected text (when present and within `maxLength`) takes precedence over the word
+    /// before the caret so replacing a selection inserts directly without extra deletes.
+    public static func query(selected: String?, before contextBefore: String?, after contextAfter: String?) -> Query? {
+        if let selected {
+            let trimmed = selected.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty, trimmed.count <= maxLength, !trimmed.contains(where: \.isNewline) {
+                return Query(text: trimmed, isSelection: true)
+            }
+        }
+        return before(contextBefore, after: contextAfter).map { Query(text: $0, isSelection: false) }
+    }
 
     public static func before(_ text: String?, after: String?) -> String? {
         guard let text, let last = text.last, !last.isWhitespace else { return nil }

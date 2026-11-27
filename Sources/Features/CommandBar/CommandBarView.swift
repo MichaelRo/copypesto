@@ -25,6 +25,7 @@ struct CommandBarView: View {
     @AppStorage(Setting.shelfPosition) private var shelfPositionRaw: String
     @AppStorage(Setting.nsfwMode) var nsfwModeRaw: String
     @AppStorage(Setting.keepsRemoteCopies) var keepsRemoteCopies: Bool
+    @AppStorage(Setting.pinnedAppChipBundleIDs) var pinnedAppChipsRaw: String
     @State var suggestionsModel = CommandBarSuggestionsModel()
     /// Bumped by a chip's keyboard action to open that chip's menu.
     @State var openRequests: [String: Int] = [:]

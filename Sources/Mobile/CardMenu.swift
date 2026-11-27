@@ -10,6 +10,9 @@ struct CardMenu: View {
         let concealment = card.concealment
         // Group 1: primary clip actions
         Button("Copy", systemImage: "doc.on.doc") { card.copy() }
+        if Self.canPreview(item: item, isConcealed: concealment.isConcealed) {
+            Button("Preview", systemImage: "eye") { card.library.preview(item.id) }
+        }
         if !concealment.isConcealed {
             Button("Share", systemImage: "square.and.arrow.up") { card.share() }
         }
@@ -105,6 +108,10 @@ struct CardMenu: View {
 
         Divider()
         Button("Delete", systemImage: "trash", role: .destructive) { card.delete() }
+    }
+
+    static func canPreview(item: ClipboardItem, isConcealed: Bool) -> Bool {
+        item.sensitivityRaw == nil && !isConcealed
     }
 
     private func loadPlainText(_ item: ClipboardItem) async -> String? {

@@ -48,9 +48,7 @@ extension MobileAppState {
     }
 
     func requestShortcutSearch(_ query: String) {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        shortcutSearchQuery = trimmed
+        shortcutSearchQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func takeShortcutSearchQuery() -> String? {

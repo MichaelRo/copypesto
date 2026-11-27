@@ -51,4 +51,8 @@ public struct CardConcealment: Equatable, Sendable {
     public var allowsDrag: Bool {
         !isConcealed
     }
+
+    public var allowsFootGlow: Bool {
+        !isConcealed
+    }
 }

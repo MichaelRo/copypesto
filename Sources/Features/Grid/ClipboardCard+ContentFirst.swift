@@ -38,7 +38,7 @@ extension ClipboardCard {
     /// Whether the card's foot glows: only a card drawn on its fill, never a picture, a color, a covered or a pending
     /// one. `GlassCardModifier` decides the color (the app's, or for an app with none, the theme's, muted).
     var showsFootGlow: Bool {
-        guard !isBlurredAsSensitive, !isCoveredForPrivacy, !item.analysisPending, item.type != .image else {
+        guard concealment.allowsFootGlow, !item.analysisPending, item.type != .image else {
             return false
         }
         switch treatment {

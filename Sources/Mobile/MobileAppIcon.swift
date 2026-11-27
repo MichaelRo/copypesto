@@ -14,7 +14,7 @@ enum MobileAppIcon {
     @MainActor
     static func applyIfMatching(defaults: UserDefaults = AppDefaults.store) {
         guard defaults.value(for: Setting.matchesAppIcon), UIApplication.shared.supportsAlternateIcons else { return }
-        let theme = AppTheme(stored: defaults.value(for: Setting.appTheme))
+        let theme = resolvedTheme(defaults: defaults, isDark: currentIsDark(defaults: defaults))
         let wanted = AppIconMatching.icon(for: theme, matches: true, current: .basil).alternateIconName
         guard UIApplication.shared.alternateIconName != wanted else { return }
         Task {
@@ -23,6 +23,31 @@ enum MobileAppIcon {
             } catch {
                 logger.error("The app icon did not change: \(String(describing: error), privacy: .public)")
             }
+        }
+    }
+
+    static func resolvedTheme(defaults: UserDefaults = AppDefaults.store, isDark: Bool) -> AppTheme {
+        AppTheme.resolve(
+            light: defaults.value(for: Setting.appTheme),
+            dark: defaults.value(for: Setting.appThemeDark),
+            isDark: isDark
+        )
+    }
+
+    @MainActor
+    private static func currentIsDark(defaults: UserDefaults) -> Bool {
+        switch AppearanceMode(rawValue: defaults.value(for: Setting.appearanceMode)) {
+        case .dark:
+            return true
+        case .light:
+            return false
+        case .system, nil:
+            let style = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first?
+                .traitCollection
+                .userInterfaceStyle
+            return style == .dark
         }
     }
 }

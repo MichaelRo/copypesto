@@ -11,12 +11,14 @@ struct SearchPestoIntent: AppIntent {
     )
     static let openAppWhenRun = true
 
-    @Parameter(title: "Search") var query: String
+    @Parameter(title: "Search") var query: String?
     @Dependency private var state: MobileAppState
 
     @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<[ClipEntity]> {
-        state.requestShortcutSearch(query)
-        return try .result(value: state.searchForShortcut(query).map(ClipEntity.init))
+        let trimmed = query?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        state.requestShortcutSearch(trimmed)
+        guard !trimmed.isEmpty else { return .result(value: []) }
+        return try .result(value: state.searchForShortcut(trimmed).map(ClipEntity.init))
     }
 }

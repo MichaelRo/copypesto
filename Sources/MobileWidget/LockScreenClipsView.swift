@@ -44,6 +44,7 @@ struct LockScreenClipsView: View {
             }
         }
         .widgetURL(model.tapURL)
+        .invalidatableContent()
         .containerBackground(for: .widget) { Color.clear }
     }
 

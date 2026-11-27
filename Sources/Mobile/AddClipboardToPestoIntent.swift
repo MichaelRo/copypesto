@@ -14,8 +14,8 @@ struct AddClipboardToPestoIntent: AppIntent {
     @Dependency private var handler: any ClipboardShortcutHandling
 
     @MainActor
-    func perform() async throws -> some IntentResult & ProvidesDialog {
+    func perform() async throws -> some IntentResult {
         try await handler.addClipboardFromShortcut()
-        return .result(dialog: "Added to Pesto.")
+        return .result()
     }
 }

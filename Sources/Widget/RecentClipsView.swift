@@ -25,7 +25,7 @@ struct RecentClipsView: View {
         let accessible = typeSize.isAccessibilitySize
         let content = WidgetContent(
             snapshot: entry.snapshot, size: resolvedSize, source: entry.source, accessibilityText: accessible,
-            page: entry.page
+            page: entry.page, now: entry.date
         )
         let palette = WidgetPalette(theme: content.theme, isDark: colorScheme == .dark)
         let single = resolvedSize == .small ? content.clips.first : nil
@@ -79,6 +79,7 @@ struct RecentClipsView: View {
     @ViewBuilder
     private func paged(_ content: WidgetContent, accessible: Bool, palette: WidgetPalette) -> some View {
         let grid = grid(content.clips, columns: resolvedSize.columns(accessibilityText: accessible), palette: palette)
+            .invalidatableContent()
         if content.pageCount > 1, let snapshot = entry.snapshot {
             let control = WidgetPageControl(
                 key: WidgetPaging.key(source: entry.source, size: resolvedSize), page: content.page,

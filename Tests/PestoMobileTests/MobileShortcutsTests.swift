@@ -50,4 +50,16 @@ struct MobileShortcutsTests {
         #expect(entities.map(\.text) == ["ghp notes for the trip"])
         #expect(entities.map(\.kind) == ["Text"])
     }
+
+    @Test("empty Search Pesto shortcut opens the search bar with an empty query")
+    func whenShortcutSearchQueryEmpty_thenSearchOpensWithoutFilterText() async throws {
+        let library = try await MobileTestLibrary()
+        library.state.requestShortcutSearch("   ")
+        #expect(library.state.shortcutSearchQuery?.isEmpty == true)
+        #expect(library.state.takeShortcutSearchQuery()?.isEmpty == true)
+
+        library.state.requestShortcutSearch("  basil ")
+        #expect(library.state.shortcutSearchQuery == "basil")
+        #expect(library.state.takeShortcutSearchQuery() == "basil")
+    }
 }

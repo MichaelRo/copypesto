@@ -13,6 +13,7 @@ struct PlainTextBody: View {
             .font(isCode ? .footnote.monospaced() : .callout)
             .foregroundStyle(.primary.opacity(0.92))
             .lineLimit(metrics.lines(isCode ? .footnote : .callout, hasTitle: hasTitle))
+            .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 }
 
@@ -47,10 +48,11 @@ struct LinkBody: View {
                 .lineLimit(1)
                 .minimumScaleFactor(LinkDisplay.hostMinimumScale)
             if !link.rest.isEmpty {
+                let extraLines = max(hasTitle ? 2 : 3, metrics.lines(.caption1, hasTitle: hasTitle) - 1)
                 Text(link.rest)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .lineLimit(hasTitle ? 2 : 3)
+                    .lineLimit(extraLines)
                     .truncationMode(.middle)
             }
         }

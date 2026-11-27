@@ -241,6 +241,7 @@ targets:
       - path: Sources/Shared/Extensions/AdaptiveMaterial.swift
       - path: Sources/Shared/Extensions/Color+Hex.swift
       - path: Sources/Shared/Extensions/PestoAccentEnvironment.swift
+      - path: Sources/Shared/Components/PestoProminentButtonStyle.swift
       - path: Sources/Shared/Extensions/ScaledFont.swift
       - path: Sources/Shared/Extensions/PictureFrameLayout.swift
       - path: Sources/Resources/Localizable.xcstrings

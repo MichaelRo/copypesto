@@ -126,7 +126,18 @@ struct QuickInsertCardFace: View {
 
     private func framed(title: String?, showsTitleOnFace: Bool, @ViewBuilder _ content: () -> some View)
     -> some View {
-        VStack(alignment: .leading, spacing: CardMetrics.footGap) {
+        framed(title: title, showsTitleOnFace: showsTitleOnFace, inset: CardMetrics.compactInset, content)
+    }
+
+    private func framed(
+        title: String?,
+        showsTitleOnFace: Bool,
+        inset: CGFloat,
+        @ViewBuilder _ content: () -> some View
+    )
+    -> some View {
+        let gap: CGFloat = size.height < 140 ? 4 : CardMetrics.footGap
+        return VStack(alignment: .leading, spacing: gap) {
             VStack(alignment: .leading, spacing: CardMetrics.titleGap) {
                 if let title {
                     Text(title)
@@ -140,7 +151,7 @@ struct QuickInsertCardFace: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             footLine(showsTitleOnFace: showsTitleOnFace)
         }
-        .padding(CardMetrics.inset)
+        .padding(size.height < 140 ? inset : CardMetrics.inset)
     }
 
     private func pictureBody(fit: PictureFit, title: String?, showsTitleOnFace: Bool) -> some View {

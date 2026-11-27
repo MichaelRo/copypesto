@@ -546,10 +546,11 @@ extension KeyNavCoordinatorTests {
 }
 
 extension KeyNavCoordinatorTests {
-    @Test("in search mode, Right and Left move the focused result and are consumed")
+    @Test("in search mode with empty search text, Right and Left move the focused result and are consumed")
     func whenSearching_thenRightAndLeftMoveFocus() throws {
         let coordinator = makeCoordinator()
         coordinator.isSearchActive = true
+        coordinator.searchTextIsEmpty = { true }
         var moves: [String] = []
         coordinator.onRight = { moves.append("next") }
         coordinator.onLeft = { moves.append("previous") }

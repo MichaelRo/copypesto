@@ -59,7 +59,7 @@ public enum TextTransform: String, CaseIterable, Sendable {
         case .code:
             return [.markdownCodeBlock] + general
         case .color:
-            return [.stripFormatting, .trimWhitespace, .uppercase, .lowercase]
+            return []
         case .text:
             return general
         default:

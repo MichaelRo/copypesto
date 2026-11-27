@@ -4,7 +4,12 @@ import SwiftUI
 
 extension CommandBarView {
     var appChips: [SourceApp] {
-        AppChipsRow.chips(recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost)
+        AppChipsRow.chips(
+            recent: suggestionsModel.suggestions.recentApps,
+            frontmost: suggestionsModel.frontmost,
+            allApps: suggestionsModel.suggestions.allApps,
+            pinnedBundleIDs: AppChips.pinnedIDs(from: pinnedAppChipsRaw)
+        )
     }
 
     static let allChipID = AnyHashable("all-collections")
@@ -32,6 +37,7 @@ extension CommandBarView {
                 .padding(.horizontal, 2)
             AppChipsRow(
                 recent: suggestionsModel.suggestions.recentApps, frontmost: suggestionsModel.frontmost,
+                allApps: suggestionsModel.suggestions.allApps,
                 collapsesLabels: !shownPinboards.isEmpty
             )
         }

@@ -56,18 +56,34 @@ func render(scale: CGFloat) -> Data {
     ctx.addPath(body)
     ctx.fillPath()
 
-    // The P, about half the body's height: stem 1.5 wide; bowl 4 wide and 3.5 tall with a 1.5 x 1.5 counter.
-    let stem = CGRect(x: 7, y: 4.5, width: 1.5, height: 6)
-    let bowl = CGRect(x: 7, y: 7, width: 4.5, height: 3.5)
-    let counter = CGRect(x: 8.5, y: 8, width: 1.5, height: 1.5)
+    // The P, about 60% of the body's height, every horizontal/vertical edge on a whole pixel at 2x: stem 2 wide,
+    // bowl 5.5 wide and 4.5 tall with a 1.5 x 1.5 D-shaped counter, leaving balanced 2 pt vertical strokes.
+    let stem = CGRect(x: 6.5, y: 3.5, width: 2.0, height: 7.0)
+    let bowl = CGRect(x: 6.5, y: 6.0, width: 5.5, height: 4.5)
+    let counterRect = CGRect(x: 8.5, y: 7.5, width: 1.5, height: 1.5)
     let letter = CGMutablePath()
     letter.addRect(stem)
-    letter.addRoundedRect(in: bowl, cornerWidth: 1.75, cornerHeight: 1.75)
+    letter.addRoundedRect(in: bowl, cornerWidth: 2.25, cornerHeight: 2.25)
+    let counter = CGMutablePath()
+    counter.move(to: CGPoint(x: counterRect.minX, y: counterRect.minY))
+    counter.addLine(to: CGPoint(x: counterRect.maxX - 0.75, y: counterRect.minY))
+    counter.addArc(
+        tangent1End: CGPoint(x: counterRect.maxX, y: counterRect.minY),
+        tangent2End: CGPoint(x: counterRect.maxX, y: counterRect.midY),
+        radius: 0.75
+    )
+    counter.addArc(
+        tangent1End: CGPoint(x: counterRect.maxX, y: counterRect.maxY),
+        tangent2End: CGPoint(x: counterRect.maxX - 0.75, y: counterRect.maxY),
+        radius: 0.75
+    )
+    counter.addLine(to: CGPoint(x: counterRect.minX, y: counterRect.maxY))
+    counter.closeSubpath()
     ctx.setBlendMode(.clear)
     ctx.addPath(letter)
     ctx.fillPath()
     ctx.setBlendMode(.normal)
-    ctx.addPath(CGPath(rect: counter, transform: nil))
+    ctx.addPath(counter)
     ctx.fillPath()
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!

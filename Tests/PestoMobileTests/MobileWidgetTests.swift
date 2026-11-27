@@ -416,4 +416,31 @@ struct MobileWidgetTests {
         #expect(WidgetTarget.matchesInstalledKind(AppIdentity.lockScreenWidgetKind))
         #expect(!WidgetTarget.matchesInstalledKind("other.widget"))
     }
+
+    @Test("WidgetSnapshotReader caches unchanged snapshots by stamp and invalidates on rewrite or delete")
+    func whenSnapshotFileUnchangedRewrittenOrDeleted_thenReaderCachesAndInvalidates() async throws {
+        WidgetSnapshotReader.clearCache()
+        let fixture = try fixture(installed: true)
+        defer {
+            WidgetSnapshotReader.clearCache()
+            try? FileManager.default.removeItem(at: fixture.file.root)
+        }
+        let library = try await library(with: fixture)
+        try await library.add("first cached clip")
+        await library.state.refreshWidgetPresence()
+
+        let reader = SharedFileKeyStore(secrets: fixture.secrets, account: AppIdentity.widgetKeyAccount)
+        let first = try #require(WidgetSnapshotReader.read(file: fixture.file, keys: reader))
+        let second = try #require(WidgetSnapshotReader.read(file: fixture.file, keys: reader))
+        #expect(first == second)
+
+        try await Task.sleep(for: .milliseconds(50))
+        try await library.add("second updated clip")
+        await library.state.writeWidget()
+        let updated = try #require(WidgetSnapshotReader.read(file: fixture.file, keys: reader))
+        #expect(updated.clips.map(\.text).contains("second updated clip"))
+
+        fixture.file.remove()
+        #expect(WidgetSnapshotReader.read(file: fixture.file, keys: reader) == nil)
+    }
 }

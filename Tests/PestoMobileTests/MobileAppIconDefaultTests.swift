@@ -2,6 +2,7 @@
 import Foundation
 import Testing
 @testable import PestoCore
+@testable import PestoMobile
 
 @Suite("On iPhone and iPad the icon follows the theme only once the person turns it on")
 struct MobileAppIconDefaultTests {
@@ -16,5 +17,18 @@ struct MobileAppIconDefaultTests {
         let defaults = ThrowawayDefaults.make()
         defaults.set(true, for: Setting.matchesAppIcon)
         #expect(defaults.value(for: Setting.matchesAppIcon) == true)
+    }
+
+    @Test("icon resolution follows light and dark themes independently")
+    func whenDarkThemeDiffers_thenResolvedThemeFollowsAppearance() {
+        let defaults = ThrowawayDefaults.make()
+        defaults.set(AppTheme.parmesan.rawValue, for: Setting.appTheme)
+        defaults.set(AppTheme.mortar.rawValue, for: Setting.appThemeDark)
+
+        #expect(MobileAppIcon.resolvedTheme(defaults: defaults, isDark: false) == .parmesan)
+        #expect(MobileAppIcon.resolvedTheme(defaults: defaults, isDark: true) == .mortar)
+
+        defaults.set("", for: Setting.appThemeDark)
+        #expect(MobileAppIcon.resolvedTheme(defaults: defaults, isDark: true) == .parmesan)
     }
 }

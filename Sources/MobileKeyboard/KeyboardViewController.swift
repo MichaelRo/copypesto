@@ -157,18 +157,18 @@ final class KeyboardViewController: UIInputViewController {
             KeyboardThumbnails.shared.removeAll()
             model.menu = KeyboardMenu(hasFullAccess: true) { file.flatMap(Self.open) }
             openedStamp = .some(stamp)
-            let resolvedSize: KeyboardSize = if let record = KeyboardSizeStore.current?.load(),
-                                                model.menu.setCreatedAt.map({ record.updatedAt >= $0 }) ?? true
-            {
-                record.size
-            } else {
-                model.menu.keyboardSize
-            }
-            if model.keyboardSize != resolvedSize {
-                model.keyboardSize = resolvedSize
-            }
-            updateHeightIfNeeded()
         }
+        let resolvedSize: KeyboardSize = if let record = KeyboardSizeStore.current?.load(),
+                                            model.menu.setCreatedAt.map({ record.updatedAt >= $0 }) ?? true
+        {
+            record.size
+        } else {
+            model.menu.keyboardSize
+        }
+        if model.keyboardSize != resolvedSize {
+            model.keyboardSize = resolvedSize
+        }
+        updateHeightIfNeeded()
         // Selected text (or the last word before the caret) searches the clips; nothing of it is kept (ADR 0062).
         let before = textDocumentProxy.documentContextBeforeInput
         let query = model.menu.state == .ready

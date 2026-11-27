@@ -98,8 +98,12 @@ public struct AppleIntelligenceClient: Sendable {
 
     /// Whether the on-device model is ready and can read images. Cheap; call it when building a menu.
     public static var supportsVision: Bool {
+        supportsVision()
+    }
+
+    public static func supportsVision(defaults: UserDefaults = AppDefaults.store) -> Bool {
         #if canImport(FoundationModels) && compiler(>=6.4) // image input needs the macOS 27 SDK
-        guard #available(macOS 27, iOS 27, *), AIAvailability.isUserEnabled() else { return false }
+        guard #available(macOS 27, iOS 27, *), AIAvailability.isUserEnabled(defaults: defaults) else { return false }
         let model = SystemLanguageModel.default
         return model.availability == .available && model.capabilities.contains(.vision)
         #else

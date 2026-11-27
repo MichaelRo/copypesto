@@ -40,39 +40,6 @@ extension ClipboardCard {
             .keyboardShortcut("c", modifiers: .command)
         }
 
-        if offers(.copyRecognizedText), item.type == .image, actions.copyRecognizedText != nil,
-           actions.recognizedTextOffered?(item) == true
-        {
-            Button {
-                _ = actions.copyRecognizedText?(item)
-            } label: {
-                Label("Copy Recognized Text", systemImage: "text.viewfinder")
-            }
-        }
-
-        if offers(.copyLinkPreview), item.type == .url, item.sensitivity == nil, !concealment.isConcealed {
-            if let pageTitle = item.ogTitle, !pageTitle.isEmpty, actions.copyText != nil {
-                Button {
-                    actions.copyText?(item, pageTitle)
-                } label: {
-                    Label("Copy Page Title", systemImage: "text.quote")
-                }
-            }
-            if let image = urlOGImage, actions.copyImage != nil {
-                Button {
-                    actions.copyImage?(item, image)
-                } label: {
-                    Label("Copy Preview Image", systemImage: "photo")
-                }
-            } else if let thumbData = item.ogImageThumbnail, !thumbData.isEmpty, actions.copyImageData != nil {
-                Button {
-                    actions.copyImageData?(item, thumbData)
-                } label: {
-                    Label("Copy Preview Image", systemImage: "photo")
-                }
-            }
-        }
-
         if item.sensitivity == nil {
             // A covered card is read with Show (or once screen sharing stops), not Quick Look.
             if offers(.quickLook), concealment.allowsQuickLook {
@@ -105,25 +72,16 @@ extension ClipboardCard {
             }
         }
 
-        if offers(.saveImage), item.type == .image, concealment.allowsDrag, actions.saveImage != nil {
+        if isPrivacyBlurred {
             Button {
-                actions.saveImage?(item)
+                if isCoveredForPrivacy { reveal() } else { hideAgain() }
             } label: {
-                Label("Save Image", systemImage: "square.and.arrow.down")
+                Label(
+                    isCoveredForPrivacy ? "Show" : "Hide Again",
+                    systemImage: isCoveredForPrivacy ? "eye" : "eye.slash"
+                )
             }
-            .keyboardShortcut("s", modifiers: .command)
-        }
-
-        if offers(.colorCopyFormats), item.type == .color, item.sensitivity == nil, actions.copyText != nil,
-           let color = ColorLiteralParser.color(fromWholeString: item.displayPreviewText)
-        {
-            Menu {
-                ForEach(ColorCopyFormat.allCases, id: \.self) { format in
-                    Button(format.title) { actions.copyText?(item, format.string(for: color)) }
-                }
-            } label: {
-                Label("Copy As", systemImage: "eyedropper")
-            }
+            .keyboardShortcut("e", modifiers: .command)
         }
 
         if offers(.openLink), item.type == .url {
@@ -150,97 +108,58 @@ extension ClipboardCard {
             }
         }
 
-        if offers(.moveToCollection), actions.moveToCollection != nil, !availableCollections.isEmpty {
-            Divider()
+        if offers(.saveImage), item.type == .image, concealment.allowsDrag, actions.saveImage != nil {
+            Button {
+                actions.saveImage?(item)
+            } label: {
+                Label("Save Image", systemImage: "square.and.arrow.down")
+            }
+            .keyboardShortcut("s", modifiers: .command)
+        }
 
+        if offers(.barcodeActions), item.type == .image, item.sensitivity == nil, !concealment.isConcealed,
+           !item.analysisPending, let loadImageData = actions.imageBytesForBarcodes, let copyText = actions.copyText
+        {
+            BarcodeMenuSection(
+                item: item,
+                loadImageData: { loadImageData(item) },
+                openURL: actions.openURL,
+                copyText: copyText
+            )
+        }
+
+        if offers(.copyRecognizedText), item.type == .image, actions.copyRecognizedText != nil,
+           actions.recognizedTextOffered?(item) == true
+        {
+            Button {
+                _ = actions.copyRecognizedText?(item)
+            } label: {
+                Label("Copy Recognized Text", systemImage: "text.viewfinder")
+            }
+        }
+
+        if offers(.entityActions), item.type == .text || item.type == .code, let onEntityAction = actions.entityAction {
+            EntityMenuSection(text: item.gridPreview, onAction: onEntityAction)
+        }
+
+        let aiActions = AIAction.actions(for: item.type)
+        if offers(.aiActions), !aiActions.isEmpty, concealment.allowsAIActions, let onAIAction = actions.aiAction {
+            AIActionsMenuSection(actions: aiActions, onAction: { onAIAction(item, $0) })
+        }
+
+        Divider()
+
+        if offers(.colorCopyFormats), item.type == .color, item.sensitivity == nil, actions.copyText != nil,
+           let color = ColorLiteralParser.color(fromWholeString: item.displayPreviewText)
+        {
             Menu {
-                if item.collectionID != nil {
-                    Button {
-                        actions.moveToCollection?(item, nil)
-                    } label: {
-                        Label("All (Remove from Collection)", systemImage: "tray.full")
-                    }
-                    Divider()
-                }
-                ForEach(availableCollections, id: \.id) { collection in
-                    Button {
-                        actions.moveToCollection?(item, collection.id)
-                    } label: {
-                        Label {
-                            Text(collection.name)
-                        } icon: {
-                            CollectionIcon(symbolName: collection.symbolName)
-                        }
-                    }
-                    .disabled(item.collectionID == collection.id)
+                ForEach(ColorCopyFormat.allCases, id: \.self) { format in
+                    Button(format.title) { actions.copyText?(item, format.string(for: color)) }
                 }
             } label: {
-                Label("Move to Collection", systemImage: "folder")
+                Label("Copy As", systemImage: "eyedropper")
             }
         }
-
-        Divider()
-
-        if offers(.pin), actions.togglePin != nil {
-            Button {
-                actions.togglePin?(item)
-            } label: {
-                Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin")
-            }
-        }
-
-        if let showDetails = actions.showDetails {
-            Button {
-                showDetails(item)
-            } label: {
-                Label("Show Details\u{2026}", systemImage: "info.circle")
-            }
-        }
-
-        if offers(.editText), let editText = actions.editText, offersTextEdit {
-            Button {
-                editText(item)
-            } label: {
-                Label("Edit Text\u{2026}", systemImage: "character.cursor.ibeam")
-            }
-        }
-
-        if offers(.rename) {
-            Button(action: beginRenamingTitle) {
-                Label(item.customTitle == nil ? "Add Title\u{2026}" : "Rename\u{2026}", systemImage: "pencil")
-            }
-        }
-
-        if offers(.note) {
-            Button {
-                noteText = item.userNote ?? ""
-                showNotePopover = true
-            } label: {
-                Label(item.userNote == nil ? "Add Note\u{2026}" : "Edit Note\u{2026}", systemImage: "note.text")
-            }
-        }
-
-        if offers(.icon), item.offersCustomIcon {
-            Button {
-                showIconPopover = true
-            } label: {
-                Label(
-                    item.customSymbolName == nil ? "Change Icon\u{2026}" : "Edit Icon\u{2026}",
-                    systemImage: "app.dashed"
-                )
-            }
-        }
-
-        if offers(.tag) {
-            Button {
-                tagText = ""
-                showTagPopover = true
-            } label: {
-                Label("Add Tag\u{2026}", systemImage: "tag")
-            }
-        }
-
-        Divider()
 
         let pasteAsTransforms = TextTransform.available(for: item.type)
         if !pasteAsTransforms.isEmpty {
@@ -274,71 +193,175 @@ extension ClipboardCard {
             }
         }
 
-        if item.type != .file, item.sensitivity == nil, !concealment.isConcealed, !item.analysisPending {
-            if offers(.copyAsFile), let copyAsFile = actions.copyAsFile {
-                Button {
-                    copyAsFile(item)
+        if offers(.copyLinkPreview), item.type == .url, item.sensitivity == nil, !concealment.isConcealed {
+            let hasTitle = item.ogTitle.map { !$0.isEmpty } ?? false
+            let hasOGImage = urlOGImage != nil || (item.ogImageThumbnail?.isEmpty == false)
+            if hasTitle || hasOGImage {
+                Menu {
+                    if let pageTitle = item.ogTitle, !pageTitle.isEmpty, actions.copyText != nil {
+                        Button {
+                            actions.copyText?(item, pageTitle)
+                        } label: {
+                            Label("Copy Page Title", systemImage: "text.quote")
+                        }
+                    }
+                    if let image = urlOGImage, actions.copyImage != nil {
+                        Button {
+                            actions.copyImage?(item, image)
+                        } label: {
+                            Label("Copy Preview Image", systemImage: "photo")
+                        }
+                    } else if let thumbData = item.ogImageThumbnail, !thumbData.isEmpty, actions.copyImageData != nil {
+                        Button {
+                            actions.copyImageData?(item, thumbData)
+                        } label: {
+                            Label("Copy Preview Image", systemImage: "photo")
+                        }
+                    }
                 } label: {
-                    Label("Copy as File", systemImage: "doc")
-                }
-            }
-            if offers(.pasteAsFile), let pasteAsFile = actions.pasteAsFile {
-                Button {
-                    pasteAsFile(item)
-                } label: {
-                    Label("Paste as File", systemImage: "doc.on.clipboard")
+                    Label("Link Preview", systemImage: "link")
                 }
             }
         }
 
-        if offers(.entityActions), item.type == .text || item.type == .code, let onEntityAction = actions.entityAction {
-            EntityMenuSection(text: item.gridPreview, onAction: onEntityAction)
+        if item.type != .file, item.sensitivity == nil, !concealment.isConcealed, !item.analysisPending,
+           (offers(.copyAsFile) && actions.copyAsFile != nil) || (offers(.pasteAsFile) && actions.pasteAsFile != nil)
+        {
+            Menu {
+                if offers(.copyAsFile), let copyAsFile = actions.copyAsFile {
+                    Button {
+                        copyAsFile(item)
+                    } label: {
+                        Label("Copy as File", systemImage: "doc")
+                    }
+                }
+                if offers(.pasteAsFile), let pasteAsFile = actions.pasteAsFile {
+                    Button {
+                        pasteAsFile(item)
+                    } label: {
+                        Label("Paste as File", systemImage: "doc.on.clipboard")
+                    }
+                }
+            } label: {
+                Label("As File", systemImage: "doc")
+            }
         }
 
         Divider()
 
-        let aiActions = AIAction.actions(for: item.type)
-        if offers(.aiActions), !aiActions.isEmpty, concealment.allowsAIActions, let onAIAction = actions.aiAction {
-            AIActionsMenuSection(actions: aiActions, onAction: { onAIAction(item, $0) })
+        if offers(.pin), actions.togglePin != nil {
+            Button {
+                actions.togglePin?(item)
+            } label: {
+                Label(item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "pin.slash" : "pin")
+            }
         }
 
-        if isPrivacyBlurred {
-            Button {
-                if isCoveredForPrivacy { reveal() } else { hideAgain() }
+        if offers(.moveToCollection), actions.moveToCollection != nil, !availableCollections.isEmpty {
+            Menu {
+                if item.collectionID != nil {
+                    Button {
+                        actions.moveToCollection?(item, nil)
+                    } label: {
+                        Label("All (Remove from Collection)", systemImage: "tray.full")
+                    }
+                    Divider()
+                }
+                ForEach(availableCollections, id: \.id) { collection in
+                    Button {
+                        actions.moveToCollection?(item, collection.id)
+                    } label: {
+                        Label {
+                            Text(collection.name)
+                        } icon: {
+                            CollectionIcon(symbolName: collection.symbolName)
+                        }
+                    }
+                    .disabled(item.collectionID == collection.id)
+                }
             } label: {
-                Label(
-                    isCoveredForPrivacy ? "Show" : "Hide Again",
-                    systemImage: isCoveredForPrivacy ? "eye" : "eye.slash"
-                )
+                Label("Move to Collection", systemImage: "folder")
             }
-            .keyboardShortcut("e", modifiers: .command)
         }
 
-        if offers(.markSensitive), let toggleSensitive = actions.toggleSensitive {
-            if isBlurredAsSensitive {
-                Button {
-                    reveal()
-                } label: {
-                    Label("Show", systemImage: "eye")
-                }
-                .keyboardShortcut("e", modifiers: .command)
-            }
-            if item.isNSFW, nsfwMode.blursCards, isNSFWRevealed || revealedFromOutside {
-                Button {
-                    hideAgain()
-                } label: {
-                    Label("Hide Again", systemImage: "eye.slash")
-                }
-                .keyboardShortcut("e", modifiers: .command)
-            }
+        if let showDetails = actions.showDetails {
             Button {
-                hideAgain()
-                toggleSensitive(item)
+                showDetails(item)
             } label: {
-                Label(
-                    item.isNSFW ? "Mark as Not Sensitive" : "Mark as Sensitive",
-                    systemImage: item.isNSFW ? "eye" : "eye.slash"
-                )
+                Label("Show Details\u{2026}", systemImage: "info.circle")
+            }
+        }
+
+        if offers(.editText), let editText = actions.editText, offersTextEdit {
+            Button {
+                editText(item)
+            } label: {
+                Label("Edit Text\u{2026}", systemImage: "character.cursor.ibeam")
+            }
+        }
+
+        if offers(.rename) {
+            Button(action: beginRenamingTitle) {
+                Label(item.customTitle == nil ? "Add Title\u{2026}" : "Rename\u{2026}", systemImage: "pencil")
+            }
+        }
+
+        if offers(.note) || (offers(.icon) && item.offersCustomIcon) || offers(.tag) {
+            Menu {
+                if offers(.note) {
+                    Button {
+                        noteText = item.userNote ?? ""
+                        showNotePopover = true
+                    } label: {
+                        Label(item.userNote == nil ? "Add Note\u{2026}" : "Edit Note\u{2026}", systemImage: "note.text")
+                    }
+                }
+                if offers(.icon), item.offersCustomIcon {
+                    Button {
+                        showIconPopover = true
+                    } label: {
+                        Label(
+                            item.customSymbolName == nil ? "Change Icon\u{2026}" : "Edit Icon\u{2026}",
+                            systemImage: "app.dashed"
+                        )
+                    }
+                }
+                if offers(.tag) {
+                    Button {
+                        tagText = ""
+                        showTagPopover = true
+                    } label: {
+                        Label("Add Tag\u{2026}", systemImage: "tag")
+                    }
+                }
+            } label: {
+                Label("Labels & Note", systemImage: "tag")
+            }
+        }
+
+        if offers(.assignShortcut), actions.assignHotkey != nil {
+            Menu {
+                ForEach(1...9, id: \.self) { slot in
+                    let taken = unavailableHotkeySlots.contains(slot)
+                    let current = item.pinnedHotkeyIndex == slot
+                    Button {
+                        actions.assignHotkey?(item, current ? nil : slot)
+                    } label: {
+                        Label(
+                            "⌃\(slot)\(current ? "  ✓" : taken ? "  (taken)" : "")",
+                            systemImage: taken ? "keyboard.badge.ellipsis" : "keyboard"
+                        )
+                    }
+                    .disabled(taken && !current)
+                }
+                if item.pinnedHotkeyIndex != nil {
+                    Divider()
+                    Button(role: .destructive) { actions.assignHotkey?(item, nil) } label: {
+                        Label("Remove Shortcut", systemImage: "keyboard.badge.minus")
+                    }
+                }
+            } label: {
+                Label("Paste Shortcut", systemImage: "keyboard")
             }
         }
 
@@ -367,29 +390,32 @@ extension ClipboardCard {
             }
         }
 
-        if offers(.assignShortcut), actions.assignHotkey != nil {
-            Menu {
-                ForEach(1...9, id: \.self) { slot in
-                    let taken = unavailableHotkeySlots.contains(slot)
-                    let current = item.pinnedHotkeyIndex == slot
-                    Button {
-                        actions.assignHotkey?(item, current ? nil : slot)
-                    } label: {
-                        Label(
-                            "⌃\(slot)\(current ? "  ✓" : taken ? "  (taken)" : "")",
-                            systemImage: taken ? "keyboard.badge.ellipsis" : "keyboard"
-                        )
-                    }
-                    .disabled(taken && !current)
+        if offers(.markSensitive), let toggleSensitive = actions.toggleSensitive {
+            Divider()
+            if isBlurredAsSensitive {
+                Button {
+                    reveal()
+                } label: {
+                    Label("Show", systemImage: "eye")
                 }
-                if item.pinnedHotkeyIndex != nil {
-                    Divider()
-                    Button(role: .destructive) { actions.assignHotkey?(item, nil) } label: {
-                        Label("Remove Shortcut", systemImage: "keyboard.badge.minus")
-                    }
+                .keyboardShortcut("e", modifiers: .command)
+            }
+            if item.isNSFW, nsfwMode.blursCards, isNSFWRevealed || revealedFromOutside {
+                Button {
+                    hideAgain()
+                } label: {
+                    Label("Hide Again", systemImage: "eye.slash")
                 }
+                .keyboardShortcut("e", modifiers: .command)
+            }
+            Button {
+                hideAgain()
+                toggleSensitive(item)
             } label: {
-                Label("Paste Shortcut", systemImage: "keyboard")
+                Label(
+                    item.isNSFW ? "Mark as Not Sensitive" : "Mark as Sensitive",
+                    systemImage: item.isNSFW ? "eye" : "eye.slash"
+                )
             }
         }
 

@@ -29,6 +29,16 @@ fi
 
 echo "==> Generating Xcode project and running hosted performance tests..."
 make generate >/dev/null
+TEST_RUNNER_ARGS=()
+if [[ "$MODE" == "ci" || -n "${CI:-}" || -n "${PESTO_CI:-}" ]]; then
+  TEST_RUNNER_ARGS+=(
+    "TEST_RUNNER_PESTO_CI=${PESTO_CI:-1}"
+    "TEST_RUNNER_CI=${CI:-1}"
+  )
+fi
+if [[ -n "${PESTO_DISABLE_TEXT_RECOGNITION:-}" ]]; then
+  TEST_RUNNER_ARGS+=("TEST_RUNNER_PESTO_DISABLE_TEXT_RECOGNITION=$PESTO_DISABLE_TEXT_RECOGNITION")
+fi
 if ! xcodebuild \
   -project Pesto.xcodeproj \
   -scheme Pesto \
@@ -37,6 +47,7 @@ if ! xcodebuild \
   -derivedDataPath .build/xcode \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
+  "${TEST_RUNNER_ARGS[@]}" \
   -only-testing:PestoTests/WatcherPerformanceTests \
   -only-testing:PestoTests/LargeHistoryPerformanceTests \
   -only-testing:PestoTests/HostedGlobals/PasteWritePerformanceTests \

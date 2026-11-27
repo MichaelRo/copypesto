@@ -166,6 +166,13 @@ extension GridView {
             copyImageData: { copyImageData($1, from: $0) },
             copyImage: { copyImage($1, from: $0) },
             saveImage: { saveImage($0) },
+            imageBytesForBarcodes: { item in
+                guard !appState.isHistoryLockedNow(),
+                      item.sensitivity == nil,
+                      !item.analysisPending else { return nil }
+                return item.blob?.decryptedData()
+            },
+            openURL: { url in LinkOpener.perform(.openInBrowser(url)) },
             moveToCollection: { item, targetID in editor.edit(item) { $0.collectionID = targetID } },
             delete: { requestDelete(ofCard: $0.id) },
             revealChanged: { item, shown in

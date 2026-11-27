@@ -9,6 +9,7 @@ struct LibraryChipRow: View {
     @Environment(LibraryModel.self) private var library
     @Environment(MobileAppState.self) private var appState
     @Environment(\.pestoAccent) private var accent
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @Query(sort: \Pinboard.sortOrder) private var collections: [Pinboard]
     @AppStorage(Setting.hiddenMobileCollections) private var hiddenStored: String
     @AppStorage(Setting.lockedCollections) private var lockedStored: String
@@ -25,28 +26,21 @@ struct LibraryChipRow: View {
 
     var body: some View {
         let apps = availableApps
-        let chips = LibraryChip.row(
+        let chipRows = LibraryChip.rows(
             collectionIDs: collections.map(\.id), isSearching: library.isSearching,
             offersAsk: library.canOfferAsk,
             hasAsk: library.filter.hasAsk,
             hiddenIDs: HiddenCollections.ids(from: hiddenStored),
             showsScopes: showsScopes,
-            showsFrom: !apps.isEmpty || library.filter.sourceBundleID != nil
+            showsFrom: !apps.isEmpty || library.filter.sourceBundleID != nil,
+            splitsSearchFilters: sizeClass == .compact
         )
-        ScrollView(.horizontal) {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
-                    ForEach(chips, id: \.self) { chip in
-                        view(for: chip, apps: apps)
-                    }
-                }
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(Array(chipRows.enumerated()), id: \.offset) { _, rowChips in
+                chipScrollRow(rowChips, apps: apps)
             }
-            .padding(.horizontal, CardGridLayout.margin)
-            .padding(.vertical, 2)
         }
-        .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier(MobileAccessibilityID.chipRow)
         .sheet(isPresented: $showsCustomDateRange) {
             CustomDateRangeSheet(
@@ -65,6 +59,23 @@ struct LibraryChipRow: View {
                 }
             )
         }
+    }
+
+    private func chipScrollRow(_ chips: [LibraryChip], apps: [SourceApp]) -> some View {
+        ScrollView(.horizontal) {
+            GlassEffectContainer(spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(chips, id: \.self) { chip in
+                        view(for: chip, apps: apps)
+                    }
+                }
+            }
+            .padding(.horizontal, CardGridLayout.margin)
+            .padding(.vertical, 2)
+        }
+        .scrollIndicators(.hidden)
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     @ViewBuilder

@@ -31,17 +31,44 @@ enum LibraryChip: Hashable {
         showsFrom: Bool = false
     )
     -> [LibraryChip] {
+        rows(
+            collectionIDs: collectionIDs,
+            isSearching: isSearching,
+            offersAsk: offersAsk,
+            hasAsk: hasAsk,
+            hiddenIDs: hiddenIDs,
+            showsScopes: showsScopes,
+            showsFrom: showsFrom,
+            splitsSearchFilters: false
+        )[0]
+    }
+
+    static func rows(
+        collectionIDs: [UUID],
+        isSearching: Bool,
+        offersAsk: Bool = false,
+        hasAsk: Bool = false,
+        hiddenIDs: Set<UUID> = [],
+        showsScopes: Bool = true,
+        showsFrom: Bool = false,
+        splitsSearchFilters: Bool = false
+    )
+    -> [[LibraryChip]] {
         let visibleCollections = collectionIDs.filter { !hiddenIDs.contains($0) }
         let scopes: [LibraryChip] = showsScopes
             ? [.all, .pinned] + visibleCollections.map(LibraryChip.collection)
             : []
-        guard isSearching else { return scopes + [.newCollection] }
+        guard isSearching else { return [scopes + [.newCollection]] }
         let asking: [LibraryChip] = (offersAsk ? [.ask] : []) + (hasAsk ? [.asked] : [])
         var filters: [LibraryChip] = [.when]
         if showsFrom { filters.append(.from) }
         filters.append(contentsOf: [.sensitive, .otherDevices])
+        let kindAndFilters = LibraryScope.filteredKinds.map(LibraryChip.kind) + [.filterDivider] + filters
+        if splitsSearchFilters, !scopes.isEmpty {
+            return [scopes, asking + kindAndFilters]
+        }
         let leading = scopes.isEmpty ? asking : asking + scopes + [.scopeDivider]
-        return leading + LibraryScope.filteredKinds.map(LibraryChip.kind) + [.filterDivider] + filters
+        return [leading + kindAndFilters]
     }
 
     var scope: LibraryScope? {

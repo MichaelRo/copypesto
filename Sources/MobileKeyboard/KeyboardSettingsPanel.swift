@@ -8,6 +8,7 @@ import SwiftUI
 struct KeyboardSettingsPanel: View {
     let size: KeyboardSize
     let sample: [QuickInsertEntry]
+    var chipTitles: [String] = []
     let theme: WidgetSnapshot.Theme
     let appIcons: [String: Data]
     let setSize: (KeyboardSize) -> Void
@@ -30,7 +31,8 @@ struct KeyboardSettingsPanel: View {
             }
             .pickerStyle(.segmented)
             KeyboardSizePreview(
-                size: size, entries: Array(sample.prefix(8)), theme: theme, appIcons: appIcons,
+                size: size, entries: Array(sample.prefix(8)), chipTitles: chipTitles,
+                theme: theme, appIcons: appIcons,
                 picture: { entry in
                     entry.thumbnail
                         .flatMap { KeyboardThumbnails.shared.picture(for: entry.id, data: $0) }

@@ -27,12 +27,12 @@ final class KeyboardViewController: UIInputViewController {
             contextAfter: { [weak self] in self?.textDocumentProxy.documentContextAfterInput },
             relayout: { [weak self] in
                 guard let self else { return }
-                heightConstraint?.constant = currentHeight
+                self.updateHeightIfNeeded()
             },
             setKeyboardSize: { [weak self] size in
                 guard let self else { return }
                 model.keyboardSize = size
-                heightConstraint?.constant = currentHeight
+                updateHeightIfNeeded()
                 guard hasFullAccess else { return }
                 do {
                     try KeyboardSizeStore.current?.save(size)
@@ -45,8 +45,11 @@ final class KeyboardViewController: UIInputViewController {
             openURL: hasFullAccess ? { [weak self] url in
                 guard let self else { return }
                 HostURLOpener.open(url, from: self)
-            } : nil
+            } : nil,
+            selectedText: { [weak self] in self?.textDocumentProxy.selectedText }
         )
+        followHostAppearance()
+        refresh()
         let host = UIHostingController(rootView: KeyboardRootView(model: model, keys: keys, controller: self))
         host.view.backgroundColor = .clear
         addChild(host)
@@ -69,15 +72,15 @@ final class KeyboardViewController: UIInputViewController {
             UITraitHorizontalSizeClass.self,
             UITraitVerticalSizeClass.self
         ]) { (controller: Self, _) in
-            controller.heightConstraint?.constant = controller.currentHeight
+            controller.updateHeightIfNeeded()
         }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        heightConstraint?.constant = currentHeight
         followHostAppearance()
         refresh()
+        updateHeightIfNeeded()
     }
 
     private func followHostAppearance() {
@@ -119,24 +122,32 @@ final class KeyboardViewController: UIInputViewController {
         )
     }
 
+    private func updateHeightIfNeeded() {
+        let target = currentHeight
+        if heightConstraint?.constant != target {
+            heightConstraint?.constant = target
+        }
+    }
+
     /// Opens the set again only when the app has rewritten it since, so moving between text fields does not decrypt
     /// it each time; the person may switch to Pesto, pin a clip and come back without this process ending.
     private func refresh() {
-        model.showsGlobeKey = needsInputModeSwitchKey
+        let needsSwitch = needsInputModeSwitchKey
+        if model.showsGlobeKey != needsSwitch { model.showsGlobeKey = needsSwitch }
         defer {
             // Full Access taken away or the set emptied while searching: the page has nothing left to search.
             if model.isSearching, model.menu.state != .ready {
                 model.closeSearch()
-                heightConstraint?.constant = currentHeight
+                updateHeightIfNeeded()
             }
         }
         guard hasFullAccess else {
             model.menu = KeyboardMenu(hasFullAccess: false) { nil }
             model.keyboardSize = .medium
-            model.word = nil
+            model.adopt(query: nil, contextBefore: nil)
             KeyboardThumbnails.shared.removeAll()
             openedStamp = nil
-            heightConstraint?.constant = currentHeight
+            updateHeightIfNeeded()
             return
         }
         let file = QuickInsertFile.current
@@ -146,26 +157,28 @@ final class KeyboardViewController: UIInputViewController {
             KeyboardThumbnails.shared.removeAll()
             model.menu = KeyboardMenu(hasFullAccess: true) { file.flatMap(Self.open) }
             openedStamp = .some(stamp)
+            let resolvedSize: KeyboardSize = if let record = KeyboardSizeStore.current?.load(),
+                                                model.menu.setCreatedAt.map({ record.updatedAt >= $0 }) ?? true
+            {
+                record.size
+            } else {
+                model.menu.keyboardSize
+            }
+            if model.keyboardSize != resolvedSize {
+                model.keyboardSize = resolvedSize
+            }
+            updateHeightIfNeeded()
         }
-        let resolvedSize: KeyboardSize = if let record = KeyboardSizeStore.current?.load(),
-                                            model.menu.setCreatedAt.map({ record.updatedAt >= $0 }) ?? true
-        {
-            record.size
-        } else {
-            model.menu.keyboardSize
-        }
-        if model.keyboardSize != resolvedSize {
-            model.keyboardSize = resolvedSize
-        }
-        heightConstraint?.constant = currentHeight
-        // Only to search the clips: the last word, while the caret sits at its end; nothing of it is kept (ADR 0062).
+        // Selected text (or the last word before the caret) searches the clips; nothing of it is kept (ADR 0062).
         let before = textDocumentProxy.documentContextBeforeInput
-        model.adopt(
-            word: model.menu.state == .ready
-                ? KeyboardWord.before(before, after: textDocumentProxy.documentContextAfterInput)
-                : nil,
-            contextBefore: before
-        )
+        let query = model.menu.state == .ready
+            ? KeyboardWord.query(
+                selected: textDocumentProxy.selectedText,
+                before: before,
+                after: textDocumentProxy.documentContextAfterInput
+            )
+            : nil
+        model.adopt(query: query, contextBefore: before)
     }
 
     private static func open(_ file: QuickInsertFile) -> QuickInsertSet? {

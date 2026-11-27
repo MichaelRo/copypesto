@@ -8,6 +8,7 @@ struct InsertPickerView: View {
     let insert: (QuickInsertEntry) -> Void
     var insertText: ((String) -> Void)?
     let cancel: () -> Void
+    var unlock: (() -> Void)?
     @State private var query = ""
     @State private var activeChip: QuickInsertMenu.Chip = .all
     @State private var pendingFill: PendingSnippetFill?
@@ -72,11 +73,16 @@ struct InsertPickerView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(ground.ignoresSafeArea())
         case .locked:
-            ContentUnavailableView(
-                "Pesto is Locked",
-                systemImage: "lock.fill",
-                description: Text("Open Pesto and unlock to insert clips.")
-            )
+            ContentUnavailableView {
+                Label("Pesto is Locked", systemImage: "lock.fill")
+            } description: {
+                Text("Open Pesto and unlock to insert clips.")
+            } actions: {
+                if let unlock {
+                    Button("Unlock in Pesto", systemImage: "lock.open", action: unlock)
+                        .buttonStyle(.borderedProminent)
+                }
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(ground.ignoresSafeArea())
         case .empty:

@@ -17,4 +17,6 @@ struct KeyboardKeys {
     var setKeyboardSize: ((KeyboardSize) -> Void)?
     /// Opens a `pesto://` link in the host app (only works when Full Access is granted).
     var openURL: ((URL) -> Void)?
+    /// The active selection in the host text field, when supported by `UITextDocumentProxy`.
+    var selectedText: (() -> String?)?
 }

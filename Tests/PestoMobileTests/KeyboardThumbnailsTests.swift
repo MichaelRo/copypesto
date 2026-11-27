@@ -41,4 +41,15 @@ struct KeyboardThumbnailsTests {
         let thumbnails = KeyboardThumbnails()
         #expect(thumbnails.picture(for: UUID(), data: Data("not a picture".utf8)) == nil)
     }
+
+    @Test("async loadPicture decodes and populates cachedPicture on first load")
+    func whenLoadedAsync_thenCachedPictureBecomesAvailable() async throws {
+        let thumbnails = KeyboardThumbnails()
+        let id = UUID()
+        let data = try Self.jpeg(width: 240, height: 120)
+        #expect(thumbnails.cachedPicture(for: id) == nil)
+        let loaded = try #require(await thumbnails.loadPicture(for: id, data: data))
+        let cached = try #require(thumbnails.cachedPicture(for: id))
+        #expect(loaded.image === cached.image)
+    }
 }

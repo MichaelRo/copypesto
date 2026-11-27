@@ -8,6 +8,7 @@ import UIKit
 /// Type, capped at `maxTextScale`), and the whole lines of text that fit above the line of facts.
 struct CardMetrics {
     static let inset: CGFloat = 12
+    static let compactInset: CGFloat = 10
     static let footGap: CGFloat = 6
     static let titleGap: CGFloat = 4
 
@@ -23,6 +24,12 @@ struct CardMetrics {
 
     var height: CGFloat {
         fixedHeight ?? CardGridLayout.cardHeight(forWidth: width)
+    }
+
+    /// Compact keyboard cards keep slightly tighter inner margins so large cards earn an extra readable text line.
+    var cardInset: CGFloat {
+        guard let fixedHeight, fixedHeight < 140 else { return Self.inset }
+        return Self.compactInset
     }
 
     static let maxTextScale: CGFloat = 1.6
@@ -41,7 +48,9 @@ struct CardMetrics {
 
     func bodyHeight(hasTitle: Bool = false) -> CGFloat {
         let titleReserve = hasTitle ? lineHeight(.footnote) + Self.titleGap : 0
-        return max(0, height - Self.inset * 2 - Self.footGap - lineHeight(.caption1) - titleReserve)
+        let verticalPadding = cardInset * 2
+        let gap = fixedHeight.map { $0 < 140 ? CGFloat(4) : Self.footGap } ?? Self.footGap
+        return max(0, height - verticalPadding - gap - lineHeight(.caption1) - titleReserve)
     }
 
     func lines(_ style: UIFont.TextStyle, hasTitle: Bool = false) -> Int {

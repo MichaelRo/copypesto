@@ -63,6 +63,7 @@ struct KeyboardRootView: View {
                     KeyboardSettingsPanel(
                         size: model.keyboardSize,
                         sample: shown(matches),
+                        chipTitles: model.menu.chips.map(\.title),
                         theme: model.menu.accent,
                         appIcons: model.menu.appIcons,
                         setSize: setKeyboardSize,
@@ -306,14 +307,17 @@ struct KeyboardRootView: View {
     /// A clip picked from a search replaces the word it was found by.
     private func insert(_ entry: QuickInsertEntry, longPress: Bool, matches: [QuickInsertEntry]) {
         if let word, matches.contains(entry) {
-            // The field is read again now: if the caret moved, or the word was already replaced, nothing is deleted.
-            let count = KeyboardWord.deletions(
-                replacing: word,
-                before: keys.contextBefore(),
-                after: keys.contextAfter()
-            )
-            for _ in 0..<(count ?? 0) {
-                keys.deleteBackward()
+            if !model.wordIsSelection {
+                // The field is read again now: if the caret moved, or the word was already replaced, nothing is
+                // deleted. A selected range is replaced by `insert(_:)` natively without extra deletes.
+                let count = KeyboardWord.deletions(
+                    replacing: word,
+                    before: keys.contextBefore(),
+                    after: keys.contextAfter()
+                )
+                for _ in 0..<(count ?? 0) {
+                    keys.deleteBackward()
+                }
             }
             model.dismissedWord = word
         }

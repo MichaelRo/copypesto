@@ -42,6 +42,11 @@ struct KeyboardSettingsView: View {
         }
     }
 
+    private var previewChipTitles: [String] {
+        [String(localized: "All"), String(localized: "Pinned"), String(localized: "Snippets")]
+            + parsedOptions.resolvedCollections(from: collections).map(\.name)
+    }
+
     private var setupButtonTitle: LocalizedStringKey {
         (isAutoFillEnabled && isKeyboardAdded)
             ? "Manage Keyboard & AutoFill\u{2026}"
@@ -89,6 +94,7 @@ struct KeyboardSettingsView: View {
             Section("Keyboard") {
                 KeyboardSizePreview(
                     size: KeyboardSize(rawValue: keyboardSize) ?? .medium, entries: previewEntries,
+                    chipTitles: previewChipTitles,
                     theme: MobileAppState.widgetTheme(), showsKeys: true
                 )
                 .listRowInsets(EdgeInsets(top: 12, leading: 12, bottom: 12, trailing: 12))

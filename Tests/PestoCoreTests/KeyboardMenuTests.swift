@@ -109,4 +109,27 @@ struct KeyboardMenuTests {
         #expect(menu.entries(for: .all).isEmpty)
         #expect(menu.entries(matching: "Basil").isEmpty)
     }
+
+    @Test("duplicate entry IDs in a set are deduplicated in chips and search matches")
+    func whenSetHasDuplicateEntryIDs_thenMatchesAndChipsReturnEachClipOnce() {
+        let shared = entry("Basil pesto recipe", .collection, title: "Basil recipe")
+        let duplicate = QuickInsertEntry(
+            id: shared.id, section: .collection, kind: .text, title: shared.title, text: shared.text,
+            expandsOnInsert: false
+        )
+        let secondCollection = UUID()
+        let set = QuickInsertSet(
+            createdAt: .now,
+            entries: [shared, duplicate],
+            collections: [
+                QuickInsertCollection(id: work, name: "Work", symbolName: "briefcase", entryIDs: [shared.id]),
+                QuickInsertCollection(
+                    id: secondCollection, name: "Cooking", symbolName: "fork.knife", entryIDs: [shared.id, shared.id]
+                )
+            ]
+        )
+        let menu = KeyboardMenu(hasFullAccess: true) { set }
+        #expect(menu.entries(matching: "Basil").map(\.id) == [shared.id])
+        #expect(menu.entries(for: .collection(secondCollection)).map(\.id) == [shared.id])
+    }
 }

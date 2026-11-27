@@ -39,4 +39,28 @@ struct KeyboardWordTests {
         #expect(KeyboardWord.deletions(replacing: "addr", before: "Send addr 12 Basil Lane", after: nil) == nil)
         #expect(KeyboardWord.deletions(replacing: "addr", before: "Send ad", after: "dr") == nil)
     }
+
+    @Test("selected single-line text wins over word before caret and falls back when empty or multiline")
+    func whenSelectedTextPresent_thenHybridQueryPrefersSelection() {
+        #expect(
+            KeyboardWord.query(selected: "  api key ", before: "other", after: nil)
+                == KeyboardWord.Query(text: "api key", isSelection: true)
+        )
+        #expect(
+            KeyboardWord.query(selected: "x", before: "ignored", after: nil)
+                == KeyboardWord.Query(text: "x", isSelection: true)
+        )
+        #expect(
+            KeyboardWord.query(selected: "   ", before: "addr", after: nil)
+                == KeyboardWord.Query(text: "addr", isSelection: false)
+        )
+        #expect(
+            KeyboardWord.query(selected: "line1\nline2", before: "addr", after: nil)
+                == KeyboardWord.Query(text: "addr", isSelection: false)
+        )
+        #expect(
+            KeyboardWord.query(selected: String(repeating: "a", count: 33), before: "addr", after: nil)
+                == KeyboardWord.Query(text: "addr", isSelection: false)
+        )
+    }
 }

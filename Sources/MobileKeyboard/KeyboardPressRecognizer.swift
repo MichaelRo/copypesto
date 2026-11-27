@@ -5,7 +5,7 @@ import UIKit.UIGestureRecognizerSubclass
 /// A card's tap and hold as one UIKit recognizer. SwiftUI's `onTapGesture` and `onLongPressGesture` on every card held
 /// a touch that started on a card until it had moved far enough, so reversing the row mid-glide felt stuck; this one
 /// fails at the first movement past `KeyboardPress.slop` and when the scroll view cancels its touches.
-final class KeyboardPressRecognizer: UIGestureRecognizer {
+final class KeyboardPressRecognizer: UIGestureRecognizer, UIGestureRecognizerDelegate {
     var allowsHold = true
     /// Shorter in a test, which waits for it.
     var holdDelay = KeyboardPress.holdDelay
@@ -13,6 +13,22 @@ final class KeyboardPressRecognizer: UIGestureRecognizer {
     private var press: KeyboardPress?
     private var holdTask: Task<Void, Never>?
     private var isOver = false
+
+    override init(target: Any?, action: Selector?) {
+        super.init(target: target, action: action)
+        cancelsTouchesInView = false
+        delaysTouchesBegan = false
+        delaysTouchesEnded = false
+        delegate = self
+    }
+
+    func gestureRecognizer(
+        _: UIGestureRecognizer,
+        shouldRecognizeSimultaneouslyWith _: UIGestureRecognizer
+    )
+    -> Bool {
+        true
+    }
 
     override func touchesBegan(_ touches: Set<UITouch>, with _: UIEvent) {
         guard touches.count == 1, let touch = touches.first else { return fail() }

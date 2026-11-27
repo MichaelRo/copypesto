@@ -110,4 +110,26 @@ struct ExtensionCardRenderingTests {
         let top = try pixel(image, x: 150, y: 6)
         #expect(foot.red - foot.blue > top.red - top.blue + 0.01)
     }
+
+    @Test("large keyboard cards fit more text lines than small cards and size preview renders in light and dark")
+    func whenLargeKeyboardCardAndPreview_thenFitsMoreLinesAndRenders() throws {
+        let smallSize = KeyboardLayout.cardSize(size: .small, isRegular: false)
+        let largeSize = KeyboardLayout.cardSize(size: .large, isRegular: false)
+        let smallMetrics = CardMetrics(width: smallSize.width, height: smallSize.height, typeSize: .large)
+        let largeMetrics = CardMetrics(width: largeSize.width, height: largeSize.height, typeSize: .large)
+        #expect(largeMetrics.lines(.callout) > smallMetrics.lines(.callout))
+
+        let entries = KeyboardPreviewSamples.entries()
+        for dark in [false, true] {
+            let preview = KeyboardSizePreview(
+                size: .large,
+                entries: entries,
+                chipTitles: ["All", "Pinned", "Work"],
+                theme: .brand,
+                showsKeys: true
+            )
+            let rendered = try render(preview, size: CGSize(width: 360, height: 320), dark: dark, name: "keys-\(dark)")
+            #expect(rendered.size.height == 320)
+        }
+    }
 }

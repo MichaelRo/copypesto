@@ -26,6 +26,9 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
     /// What rules a lookalike picture out without decoding it (ADR 0077). Derived from this device's decoder: never
     /// synced or backed up.
     public var pictureFingerprint: PictureFingerprint?
+    /// Other devices' clip IDs folded into this clip during sync (exact-hash twins or perceptual lookalikes). Never
+    /// synced or backed up; used so deleting this clip tombstones its folded peer IDs too.
+    public var foldedSyncIDs: [UUID]?
 
     public init(
         customTitle: String? = nil, userNote: String? = nil, tags: [String] = [],
@@ -33,7 +36,7 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
         ogSiteName: String? = nil, linkPreviewFetched: Bool? = nil, fieldMemory: [String: String]? = nil,
         signature: [UInt32]? = nil,
         pasteDays: [Int]? = nil, copiedAt: Date? = nil, captureMethod: CaptureMethod? = nil,
-        pictureFingerprint: PictureFingerprint? = nil
+        pictureFingerprint: PictureFingerprint? = nil, foldedSyncIDs: [UUID]? = nil
     ) {
         self.customTitle = customTitle
         self.userNote = userNote
@@ -49,6 +52,7 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
         self.copiedAt = copiedAt
         self.captureMethod = captureMethod
         self.pictureFingerprint = pictureFingerprint
+        self.foldedSyncIDs = foldedSyncIDs
     }
 
     public var isEmpty: Bool {
@@ -56,6 +60,7 @@ public struct ItemMetadata: Codable, Equatable, Sendable {
             && collectionOrder == nil && ogTitle == nil && ogSiteName == nil && linkPreviewFetched != true
             && (fieldMemory ?? [:]).isEmpty && signature == nil && (pasteDays ?? []).isEmpty
             && copiedAt == nil && captureMethod == nil && pictureFingerprint == nil
+            && (foldedSyncIDs ?? []).isEmpty
     }
 
     public static let pasteDayWindow = 30

@@ -13,6 +13,7 @@ final class LibraryModel {
     var query = ""
     var isSearching = false
     var openClipID: UUID?
+    var previewClipID: UUID?
     /// The text editor open in the detail, kept here so a change of layout (the phone's sheet, the pad's inspector)
     /// does not lose what was typed. Memory only, never scene storage: it holds a clip's plaintext.
     var textEdit: TextEditSession?
@@ -89,7 +90,12 @@ final class LibraryModel {
 
     func open(_ id: UUID) {
         if textEdit?.clipID != id { textEdit = nil }
+        previewClipID = nil
         openClipID = id
+    }
+
+    func preview(_ id: UUID) {
+        previewClipID = id
     }
 
     func beginTextEdit(of id: UUID, text: String) {
@@ -203,6 +209,7 @@ final class LibraryModel {
         isSearching = false
         filter.endSearch()
         openClipID = nil
+        previewClipID = nil
         textEdit = nil
         snippetEditor = nil
         scrollAnchor = nil
@@ -238,6 +245,7 @@ final class LibraryModel {
         query = ""
         isSearching = false
         openClipID = nil
+        previewClipID = nil
         resort()
         if opensDetail {
             open(id)

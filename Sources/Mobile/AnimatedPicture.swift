@@ -9,7 +9,7 @@ struct AnimatedPicture: UIViewRepresentable {
     let fills: Bool
 
     func makeUIView(context _: Context) -> UIImageView {
-        let view = UIImageView()
+        let view = AnimatedImageView()
         view.clipsToBounds = true
         view.setContentHuggingPriority(.defaultLow, for: .horizontal)
         view.setContentHuggingPriority(.defaultLow, for: .vertical)
@@ -24,15 +24,29 @@ struct AnimatedPicture: UIViewRepresentable {
         let changed = view.animationImages?.first !== animation.frames.first
             || view.animationImages?.count != animation.frames.count
             || view.animationDuration != animation.duration
-        guard changed else { return }
-        view.image = animation.frames.first
-        view.animationImages = animation.frames
-        view.animationDuration = animation.duration
-        view.startAnimating()
+        if changed {
+            view.image = animation.frames.first
+            view.animationImages = animation.frames
+            view.animationDuration = animation.duration
+        }
+        if view.window != nil, !view.isAnimating {
+            view.startAnimating()
+        }
     }
 
     static func dismantleUIView(_ view: UIImageView, coordinator _: ()) {
         view.stopAnimating()
         view.animationImages = nil
+    }
+}
+
+/// UIKit silently ignores `startAnimating()` when called before the view is attached to a window; resuming on
+/// `didMoveToWindow()` prevents GIFs mounted inside lazy grids from staying frozen on their first frame.
+private final class AnimatedImageView: UIImageView {
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil, animationImages != nil, !isAnimating {
+            startAnimating()
+        }
     }
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import CryptoKit
 import Foundation
+import ImageIO
 import SwiftData
 
 public struct SyncApplySummary: Equatable, Sendable {
@@ -99,6 +100,9 @@ extension StorageService {
         item.collectionID = curation.collectionID
         item.isPinned = curation.isPinned
         item.expiresAt = curation.expiresAt
+        if let isNSFW = curation.isNSFW {
+            item.isNSFW = isNSFW
+        }
     }
 
     private func curation(of item: ClipboardItem) -> SyncCuration {
@@ -112,6 +116,7 @@ extension StorageService {
         curation.collectionID = item.collectionID
         curation.isPinned = item.isPinned
         curation.expiresAt = item.expiresAt
+        curation.isNSFW = item.isNSFW
         return curation
     }
 
@@ -151,18 +156,7 @@ extension StorageService {
             try twins(plainHash: meta.plainHash, except: meta.id).first
         }
         if let same {
-            // The earliest first copy wins whatever order records arrive in, so it is taken even from a record whose
-            // edits lose to this Mac's.
-            same.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
-            guard stampR > stamp(same.changeClock) else {
-                if modelContext.hasChanges { try saveOrRollback() }
-                summary.ignored += 1
-                return
-            }
-            apply(meta.curation, to: same)
-            markApplied(same, stamp: stampR)
-            try saveOrRollback()
-            summary.updated += 1
+            try foldExactDuplicate(same, meta: meta, stampR: stampR, summary: &summary)
             return
         }
         let payload = meta.blobName.flatMap(blob) ?? record.payload
@@ -170,32 +164,85 @@ extension StorageService {
             summary.failed += 1
             return
         }
+        if known == nil, try foldRemoteLookalike(meta: meta, payload: payload, stampR: stampR, summary: &summary) {
+            return
+        }
         if let known {
-            // The same clip with new text (an edit, a snippet edited, text appended): the old text goes, the new text
-            // comes, even when another clip here holds it.
-            guard stampR > stamp(known.changeClock) else {
-                summary.ignored += 1
-                return
-            }
-            if let text = Self.editableText(payload, mimeType: meta.mimeType, of: known) {
-                // Replaced in place, so what only this device holds about the clip stays with it.
-                known.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
-                try replaceText(
-                    of: known, with: text, plainHash: meta.plainHash, key: try? encryption.loadOrCreateKey(),
-                    mimeType: meta.mimeType
-                ) { item in
-                    apply(meta.curation, to: item)
-                    markApplied(item, stamp: stampR)
-                }
-            } else {
-                try deleteItems(ids: [meta.id], reason: .merged)
-                try await insertRemote(meta, payload: payload, stamp: stampR, keepsSameText: true)
-            }
-            summary.updated += 1
+            try await updateEditedItem(known, meta: meta, payload: payload, stampR: stampR, summary: &summary)
         } else {
             try await insertRemote(meta, payload: payload, stamp: stampR)
             summary.added += 1
         }
+    }
+
+    private func foldExactDuplicate(
+        _ same: ClipboardItem,
+        meta: SyncItemRecord,
+        stampR: SyncStamp,
+        summary: inout SyncApplySummary
+    ) throws {
+        recordFoldedSyncID(meta.id, on: same)
+        // The earliest first copy wins whatever order records arrive in, so it is taken even from a record whose
+        // edits lose to this Mac's.
+        same.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
+        guard stampR > stamp(same.changeClock) else {
+            if modelContext.hasChanges { try saveOrRollback() }
+            summary.ignored += 1
+            return
+        }
+        apply(meta.curation, to: same)
+        markApplied(same, stamp: stampR)
+        try saveOrRollback()
+        summary.updated += 1
+    }
+
+    private func foldRemoteLookalike(
+        meta: SyncItemRecord,
+        payload: Data,
+        stampR: SyncStamp,
+        summary: inout SyncApplySummary
+    ) throws
+    -> Bool {
+        guard let lookalike = remoteLookalikePicture(payload: payload, mimeType: meta.mimeType) else { return false }
+        recordFoldedSyncID(meta.id, on: lookalike)
+        lookalike.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
+        if stampR > stamp(lookalike.changeClock) {
+            apply(meta.curation, to: lookalike)
+            markApplied(lookalike, stamp: stampR)
+        }
+        if modelContext.hasChanges { try saveOrRollback() }
+        summary.folded += 1
+        return true
+    }
+
+    private func updateEditedItem(
+        _ known: ClipboardItem,
+        meta: SyncItemRecord,
+        payload: Data,
+        stampR: SyncStamp,
+        summary: inout SyncApplySummary
+    ) async throws {
+        // The same clip with new text (an edit, a snippet edited, text appended): the old text goes, the new text
+        // comes, even when another clip here holds it.
+        guard stampR > stamp(known.changeClock) else {
+            summary.ignored += 1
+            return
+        }
+        if let text = Self.editableText(payload, mimeType: meta.mimeType, of: known) {
+            // Replaced in place, so what only this device holds about the clip stays with it.
+            known.adoptFirstCopy(meta.curation.copiedAt ?? meta.timestamp)
+            try replaceText(
+                of: known, with: text, plainHash: meta.plainHash, key: try? encryption.loadOrCreateKey(),
+                mimeType: meta.mimeType
+            ) { item in
+                apply(meta.curation, to: item)
+                markApplied(item, stamp: stampR)
+            }
+        } else {
+            try deleteItems(ids: [meta.id], reason: .merged)
+            try await insertRemote(meta, payload: payload, stamp: stampR, keepsSameText: true)
+        }
+        summary.updated += 1
     }
 
     private static func editableText(_ payload: Data, mimeType: String, of item: ClipboardItem) -> String? {
@@ -229,7 +276,8 @@ extension StorageService {
                 frontmostBundleID: meta.sourceBundleID, timestamp: meta.timestamp, contentHash: meta.plainHash,
                 isRemote: meta.isRemote, isConcealed: false
             ),
-            preferredItemID: meta.id, rewritesText: false, popsLookalikePicture: false, keepsSameText: keepsSameText
+            preferredItemID: meta.id, rewritesText: false, popsLookalikePicture: false, keepsSameText: keepsSameText,
+            knownNSFW: meta.curation.isNSFW
         )
         guard let inserted = try item(id: meta.id) else { return }
         if let arrived = meta.sourceAppName, !arrived.isEmpty,
@@ -245,6 +293,32 @@ extension StorageService {
         inserted.adoptFirstCopy(meta.curation.copiedAt)
         markApplied(inserted, stamp: stamp)
         try saveOrRollback()
+    }
+
+    private func recordFoldedSyncID(_ remoteID: UUID, on item: ClipboardItem) {
+        guard remoteID != item.id else { return }
+        var existing = item.metadata.foldedSyncIDs ?? []
+        guard !existing.contains(remoteID) else { return }
+        existing.append(remoteID)
+        item.updateMetadata { $0.foldedSyncIDs = existing }
+    }
+
+    private func remoteLookalikePicture(payload: Data, mimeType: String) -> ClipboardItem? {
+        guard clipboardType(for: mimeType, payloadString: nil).0 == .image,
+              let source = CGImageSourceCreateWithData(
+                  payload as CFData, [kCGImageSourceShouldCache: false] as CFDictionary
+              ) else { return nil }
+        let props = CGImageSourceCopyPropertiesAtIndex(
+            source, 0, [kCGImageSourceShouldCache: false] as CFDictionary
+        ) as? [CFString: Any]
+        let pixelWidth = props?[kCGImagePropertyPixelWidth] as? Int
+        let pixelHeight = props?[kCGImagePropertyPixelHeight] as? Int
+        let (perceptualHash, fingerprint) = PictureFingerprint.withCoarseHash(imageData: payload)
+        guard let perceptualHash else { return nil }
+        return perceptualDuplicate(
+            of: perceptualHash, payload: payload, fingerprint: fingerprint,
+            pixelWidth: pixelWidth, pixelHeight: pixelHeight
+        )
     }
 
     private func applyTombstone(_ record: SyncRecord, summary: inout SyncApplySummary) throws {

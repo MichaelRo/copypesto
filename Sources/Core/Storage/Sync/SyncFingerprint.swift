@@ -10,6 +10,7 @@ extension ClipboardItem {
         let metadata = metadata
         let parts: [String] = [
             id.uuidString, contentHash, typeRaw, String(analysisPending), sensitivityRaw ?? "",
+            String(isNSFW),
             String(isPinned), collectionID?.uuidString ?? "", expiresAt.map { String($0.timeIntervalSince1970) } ?? "",
             metadata.customTitle ?? "", metadata.userNote ?? "", metadata.tags.joined(separator: "\u{1F}"),
             metadata.customSymbolName ?? "", metadata.collectionOrder.map(String.init) ?? ""

@@ -14,6 +14,8 @@ public struct SyncCuration: Codable, Equatable, Sendable {
     public var copiedAt: Date?
     public var isPinned = false
     public var expiresAt: Date?
+    /// Whether the clip is flagged as sensitive/NSFW (either by screening or manually). Optional for older logs.
+    public var isNSFW: Bool?
 
     public init() {}
 }

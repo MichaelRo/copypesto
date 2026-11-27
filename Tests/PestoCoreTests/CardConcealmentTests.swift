@@ -113,4 +113,20 @@ struct CardConcealmentTests {
             #expect(!CardConcealment.waitsForVerdict(type: .text, analysisPending: false, nsfwMode: mode))
         }
     }
+
+    @Test("a covered card hides its foot glow until it is shown")
+    func whenCardIsConcealed_thenAllowsFootGlowTracksConcealment() {
+        #expect(!CardConcealment(
+            screenShareBlur: false, nsfwBlurred: false, maskedSecret: true, secretShown: false
+        ).allowsFootGlow)
+        #expect(CardConcealment(
+            screenShareBlur: false, nsfwBlurred: false, maskedSecret: true, secretShown: true
+        ).allowsFootGlow)
+        #expect(!CardConcealment(screenShareBlur: true, sensitiveBlur: false).allowsFootGlow)
+        #expect(!CardConcealment(screenShareBlur: false, sensitiveBlur: true).allowsFootGlow)
+        #expect(!CardConcealment(
+            screenShareBlur: false, nsfwBlurred: false, maskedSecret: false, secretShown: false, pendingAnalysis: true
+        ).allowsFootGlow)
+        #expect(CardConcealment(screenShareBlur: false, sensitiveBlur: false).allowsFootGlow)
+    }
 }

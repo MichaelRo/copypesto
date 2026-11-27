@@ -88,7 +88,7 @@ struct AIAvailabilityTests {
     }
 
     @Test("non-Apple-Intelligence and turned-off states cleanly fall back without crashing")
-    func whenDeviceLacksAppleIntelligence_thenFallbacksHold() async throws {
+    func whenDeviceLacksAppleIntelligence_thenFallbacksHold() async {
         let defaults = ThrowawayDefaults.make()
         defaults.set(false, forKey: AIAvailability.enabledDefaultsKey)
         #expect(!AppleIntelligenceClient.supportsVision(defaults: defaults))
@@ -98,7 +98,7 @@ struct AIAvailabilityTests {
         #expect(await !screener.isSensitive(imageData: tinyData))
 
         let fallback = FallbackQueryInterpreter(primary: FailingInterpreter())
-        let parsed = try await fallback.interpret("photos from today")
+        let parsed = await fallback.interpret("photos from today")
         #expect(parsed.range == .today)
     }
 }

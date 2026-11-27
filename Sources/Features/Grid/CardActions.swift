@@ -62,6 +62,8 @@ struct CardActions: Equatable {
     var copyRecognizedText: (@MainActor (ClipboardItem) -> Bool)?
     /// Copy As on a colour clip or URL title: puts this text on the clipboard.
     var copyText: (@MainActor (ClipboardItem, String) -> Void)?
+    /// Copy plain text as protected/concealed on the pasteboard (e.g. a Wi-Fi QR password).
+    var copySecretText: (@MainActor (ClipboardItem, String) -> Void)?
     /// Writes raw image data to the pasteboard.
     var copyImageData: (@MainActor (ClipboardItem, Data) -> Void)?
     /// Writes an image (e.g. URL preview image) to the pasteboard.

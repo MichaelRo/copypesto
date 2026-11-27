@@ -124,7 +124,8 @@ extension ClipboardCard {
                 item: item,
                 loadImageData: { loadImageData(item) },
                 openURL: actions.openURL,
-                copyText: copyText
+                copyText: copyText,
+                copySecretText: actions.copySecretText
             )
         }
 

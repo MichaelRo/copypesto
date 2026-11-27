@@ -33,6 +33,7 @@ struct BarcodeMenuSection: View {
     let loadImageData: () -> Data?
     let openURL: ((URL) -> Void)?
     let copyText: (ClipboardItem, String) -> Void
+    var copySecretText: ((ClipboardItem, String) -> Void)?
 
     var body: some View {
         let payloads = BarcodeDetector.cachedOrDetect(
@@ -51,7 +52,11 @@ struct BarcodeMenuSection: View {
                         }
                     }
                     Button {
-                        copyText(item, payload.copyableValue)
+                        if payload.copiesAsSecret, let copySecretText {
+                            copySecretText(item, payload.copyableValue)
+                        } else {
+                            copyText(item, payload.copyableValue)
+                        }
                     } label: {
                         Label(payload.copyActionTitle, systemImage: payload.kind.symbolName)
                     }

@@ -101,6 +101,11 @@ public struct BarcodePayload: Equatable, Hashable, Sendable {
         return ssid
     }
 
+    public var copiesAsSecret: Bool {
+        if case .wifi(_, .some, _, _) = content { return true }
+        return false
+    }
+
     private static func parse(_ trimmed: String) -> Content {
         if let wifi = parseWiFi(trimmed) {
             return wifi

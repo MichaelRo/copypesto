@@ -53,6 +53,7 @@ struct BarcodeTests {
         #expect(payload.displaySummary.contains("Basil:Cafe"))
         #expect(!payload.displaySummary.contains("p@ss"))
         #expect(payload.copyableValue == "p@ss;word")
+        #expect(payload.copiesAsSecret)
         #expect(payload.secondaryCopyValue == "Basil:Cafe")
     }
 

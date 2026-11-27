@@ -29,8 +29,7 @@ struct BarcodeActionsMenu: View {
                         }
                     }
                     Button(payload.copyActionTitle, systemImage: payload.kind.symbolName) {
-                        let isSecret = if case .wifi(_, .some, _, _) = payload.content { true } else { false }
-                        if copyValue(payload.copyableValue, isSecret: isSecret) {
+                        if copyValue(payload.copyableValue, isSecret: payload.copiesAsSecret) {
                             library.didCopy(item.id)
                         }
                     }

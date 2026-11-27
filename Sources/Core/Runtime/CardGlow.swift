@@ -4,9 +4,9 @@ import Foundation
 /// The foot glow (ADR 0068): the source app's color rising from a card's foot to 40% of its height, so a clip says
 /// where it came from without a band or a border. The sampled icon color is normalized in OKLCH (its hue kept,
 /// lightness fixed per appearance, chroma capped) so every app glows at the same strength; a hue near basil (focus) or
-/// gold (collections) is muted, and a near-neutral icon draws nothing (falling back to the theme's accent). Dark mode
-/// uses higher chroma/opacity at lightness 0.47 so the glow reads cleanly over dark card fills without taking foot text
-/// under 4.5:1 (`CardMetaLineContrastTests`). Views draw `stops`.
+/// gold (collections) is muted, and a near-neutral icon draws nothing (falling back to the theme's accent). Both light
+/// (lightness 0.64) and dark (lightness 0.47) modes use calibrated chroma/opacity so the glow reads clearly on white
+/// and dark card fills alike without taking foot text under 4.5:1 (`CardMetaLineContrastTests`). Views draw `stops`.
 public struct CardGlow: Equatable, Sendable {
     /// `RRGGBB`, no `#`.
     public let hex: String
@@ -32,14 +32,12 @@ public struct CardGlow: Equatable, Sendable {
         let fromTheme = themeAccentHex.flatMap(OKLCH.init(hex:)).flatMap { $0.chroma >= 0.02 ? $0 : nil }
         guard let sampled = fromApp ?? fromTheme else { return nil }
         let muted = fromApp == nil || near(sampled.hue, basilHue, within: 22) || near(sampled.hue, goldHue, within: 18)
-        let vividCap = isDark ? 0.17 : 0.15
-        let mutedCap = isDark ? 0.09 : 0.08
         let targetChroma = fromApp == nil ? max(sampled.chroma, 0.06) : sampled.chroma
-        let chroma = min(targetChroma, muted ? mutedCap : vividCap)
-        let base = isGlass ? (isDark ? 0.16 : 0.10) : (isDark ? 0.21 : 0.13)
+        let chroma = min(targetChroma, muted ? 0.09 : 0.17)
+        let base = isGlass ? (isDark ? 0.16 : 0.15) : 0.21
         let opacity = base * (muted ? 0.85 : 1) * (isSelected ? 0.6 : 1)
         return CardGlow(
-            hex: hex(lightness: isDark ? 0.47 : 0.68, chroma: chroma, hue: sampled.hue), opacity: opacity,
+            hex: hex(lightness: isDark ? 0.47 : 0.64, chroma: chroma, hue: sampled.hue), opacity: opacity,
             chroma: chroma
         )
     }

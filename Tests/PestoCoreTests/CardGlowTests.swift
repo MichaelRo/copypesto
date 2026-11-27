@@ -12,14 +12,14 @@ struct CardGlowTests {
     @Test("opacity follows the appearance and the shelf's surface")
     func whenSurfaceDiffers_thenOpacityFollows() throws {
         let safari = "#1796F2"
-        #expect(try #require(glow(safari)).opacity == 0.13)
+        #expect(try #require(glow(safari)).opacity == 0.21)
         #expect(try #require(glow(safari, dark: true)).opacity == 0.21)
-        #expect(try #require(glow(safari, glass: true)).opacity == 0.10)
+        #expect(try #require(glow(safari, glass: true)).opacity == 0.15)
         #expect(try #require(glow(safari, dark: true, glass: true)).opacity == 0.16)
         let selected = CardGlow.decide(
             colorHex: safari, isDark: false, isGlass: false, increaseContrast: false, isSelected: true
         )
-        #expect(try #require(selected).opacity == 0.13 * 0.6)
+        #expect(try #require(selected).opacity == 0.21 * 0.6)
     }
 
     @Test("greens near basil and yellows near gold are muted, so color never says focus or collection")
@@ -27,9 +27,9 @@ struct CardGlowTests {
         let messages = try #require(glow("#44DC5D"))
         let notes = try #require(glow("#FAD927"))
         let safari = try #require(glow("#1796F2"))
-        #expect(messages.chroma <= 0.08 + 1e-9 && notes.chroma <= 0.08 + 1e-9)
+        #expect(messages.chroma <= 0.09 + 1e-9 && notes.chroma <= 0.09 + 1e-9)
         #expect(messages.opacity < safari.opacity && notes.opacity < safari.opacity)
-        #expect(safari.chroma <= 0.15 + 1e-9)
+        #expect(safari.chroma <= 0.17 + 1e-9)
     }
 
     @Test("a near-black, near-white or grey icon, no color, a bad value or Increase Contrast draw no glow")
@@ -72,8 +72,8 @@ struct CardGlowTests {
             colorHex: "#1D1D1D", themeAccentHex: parmesan, isDark: false, isGlass: false,
             increaseContrast: false, isSelected: false
         ))
-        #expect(themed.chroma <= 0.08 + 1e-9)
-        #expect(themed.opacity == 0.13 * 0.85)
+        #expect(themed.chroma <= 0.09 + 1e-9)
+        #expect(themed.opacity == 0.21 * 0.85)
         for theme in AppTheme.allCases {
             for dark in [false, true] {
                 let fallback = try #require(CardGlow.decide(
@@ -85,9 +85,7 @@ struct CardGlowTests {
                     isSelected: false
                 ))
                 #expect(fallback.chroma >= 0.059, "\(theme) dark \(dark) too faint")
-                if dark {
-                    #expect(fallback.opacity >= 0.17, "\(theme) dark opacity too faint")
-                }
+                #expect(fallback.opacity >= 0.17, "\(theme) dark \(dark) opacity too faint")
             }
         }
         let none = CardGlow.decide(
